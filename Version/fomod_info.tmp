@@ -1,0 +1,10 @@
+<fomod> 
+	<Name>Addictol</Name> 
+	<Author>Dear Modding FO4 Team</Author> 
+	<Version>1.0-b<BUILD></Version> 
+	<Website></Website> 
+	<Description>Engine fixes mod for Fallout 4</Description> 
+	<Groups>
+		<element>Performance</element>
+	</Groups> 
+</fomod> 
