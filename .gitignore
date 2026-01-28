@@ -41,6 +41,7 @@
 *.dwo
 
 # other
+*.exp
 /VC/.vs/Addictol
 /.vs
 /VC/Addictol/x64
