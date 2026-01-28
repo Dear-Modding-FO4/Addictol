@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.36631.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Addictol", "Addictol.vcxproj", "{D2D12A6F-D62F-4FBB-A9AC-4DF3378187CF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601} = {06E30C65-D79A-4FEC-8A60-B36D907E6601}
+		{9E771CA4-04D9-4ED8-80F2-FFD379413688} = {9E771CA4-04D9-4ED8-80F2-FFD379413688}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Depends", "Depends", "{7A31A594-72DB-4F56-BA17-DB9485E3AA99}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours_vc22", "..\Depends\detours_vc22.vcxproj", "{06E30C65-D79A-4FEC-8A60-B36D907E6601}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdeflate_vc22", "..\Depends\libdeflate_vc22.vcxproj", "{9E771CA4-04D9-4ED8-80F2-FFD379413688}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2D12A6F-D62F-4FBB-A9AC-4DF3378187CF}.Release|x64.ActiveCfg = Release|x64
+		{D2D12A6F-D62F-4FBB-A9AC-4DF3378187CF}.Release|x64.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x64.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x64.Build.0 = Release|x64
+		{9E771CA4-04D9-4ED8-80F2-FFD379413688}.Release|x64.ActiveCfg = Release|x64
+		{9E771CA4-04D9-4ED8-80F2-FFD379413688}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
+		{9E771CA4-04D9-4ED8-80F2-FFD379413688} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {589F9252-C63F-40EB-8EAE-9110734FF052}
+	EndGlobalSection
+EndGlobal
