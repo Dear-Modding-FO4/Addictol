@@ -39,3 +39,9 @@
 
 # debug information files
 *.dwo
+/VC/.vs/Addictol
+/.vs
+/VC/Addictol/x64
+*.vcxproj.filters
+*.vcxproj.user
+/.LinkConf

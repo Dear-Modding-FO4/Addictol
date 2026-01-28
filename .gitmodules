@@ -1,0 +1,9 @@
+[submodule "Depends/commonlibf4"]
+	path = Depends/commonlibf4
+	url = https://github.com/libxse/commonlibf4.git
+[submodule "Depends/detours"]
+	path = Depends/detours
+	url = https://github.com/Nukem9/detours.git
+[submodule "Depends/libdeflate"]
+	path = Depends/libdeflate
+	url = https://github.com/ebiggers/libdeflate.git
