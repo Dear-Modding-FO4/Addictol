@@ -50,5 +50,5 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ckpe-sse-master-${{env.SHORT_SHA}}
-        path: "ckpe-sse-master-${{env.SHORT_SHA}}"
+        name: addictol-${{env.SHORT_SHA}}
+        path: "addictol-${{env.SHORT_SHA}}"
