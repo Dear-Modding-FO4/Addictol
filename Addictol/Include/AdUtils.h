@@ -26,5 +26,5 @@ namespace RELEX
 	};
 
 	void WriteSafe(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept;
-	void WriteSafe(uintptr_t a_target, size_t a_size) noexcept;
+	void WriteSafeNop(uintptr_t a_target, size_t a_size) noexcept;
 }
