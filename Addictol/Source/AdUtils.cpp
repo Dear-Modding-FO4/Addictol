@@ -69,7 +69,7 @@ namespace RELEX
 		}
 	}
 
-	void WriteSafe(uintptr_t a_target, size_t a_size) noexcept
+	void WriteSafeNop(uintptr_t a_target, size_t a_size) noexcept
 	{
 		if (!a_target || !a_size) return;
 		ScopeLock Lock(a_target, a_size);
