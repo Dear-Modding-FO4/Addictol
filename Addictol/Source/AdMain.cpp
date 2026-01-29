@@ -72,7 +72,7 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4
     a_info->version = (REL::Version{ VER_FILE_VERSION }).pack();
     a_info->name = _PluginName;
 
-    if (!std::filesystem::exists(GetRuntimeDirectory() + "Data\\F4SE\\Plugins\\version-1-10-163-0.bin"))
+    if (!std::filesystem::exists(AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\version-1-10-163-0.bin"))
     {
         MessageBoxA(0, "" _PluginName ": disabled, address library needs to be updated", "Warnings", MB_OK | MB_ICONWARNING);
 

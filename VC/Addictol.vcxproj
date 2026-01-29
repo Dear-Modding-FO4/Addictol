@@ -9,13 +9,20 @@
   <ItemGroup>
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
     <ClCompile Include="..\Addictol\Source\AdMain.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdModule.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
+    <ClInclude Include="..\Addictol\Include\AdModule.h" />
+    <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
   </ItemGroup>
   <ItemGroup>
@@ -63,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
@@ -76,7 +83,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
-      <DisableSpecificWarnings>4200;4996</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4200;4996;26444</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
