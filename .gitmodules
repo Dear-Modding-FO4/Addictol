@@ -7,3 +7,12 @@
 [submodule "Depends/libdeflate"]
 	path = Depends/libdeflate
 	url = https://github.com/ebiggers/libdeflate.git
+[submodule "Depends/spdlog"]
+	path = Depends/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "Depends/toml11"]
+	path = Depends/toml11
+	url = https://github.com/ToruNiina/toml11.git
+[submodule "Depends/INI"]
+	path = Depends/INI
+	url = https://github.com/brofield/simpleini.git
