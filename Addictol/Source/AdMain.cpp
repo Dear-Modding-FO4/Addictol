@@ -1,10 +1,5 @@
-﻿//#include <windows.h>
-#include <resource_version2.h>
-#include <F4SE/F4SE.h>
-#include <AdUtils.h>
-
-#define _PluginName      "Addictol"
-#define _PluginAuthor    "Dear Modding FO4 Team"
+﻿#include <AdUtils.h>
+#include <AdPlugin.h>
 
 enum class F4SEAddressIndependence : std::uint32_t
 {
@@ -88,19 +83,34 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4
 }
 #endif // SUPPORT_OG
 
+static bool AdInitUnsafe(const F4SE::LoadInterface* a_f4se)
+{
+    return Addictol::Plugin::GetSingleton()->Init(a_f4se);
+}
+
+static bool AdInitSafe(const F4SE::LoadInterface* a_f4se)
+{
+    __try
+    {
+        return AdInitUnsafe(a_f4se);
+    }
+    __except (1)
+    {
+        return false;
+    }
+}
+
+#define AdInit AdInitSafe
+
+#if SUPPORT_PRELOAD
 // Hint: Preload no support OG
 F4SE_PLUGIN_PRELOAD(const F4SE::LoadInterface* a_f4se)
 {
-    // Init
-    //F4SE::Init(a_f4se);
-
-    return true;
+    return AdInit(a_f4se);
 }
-
+#else
 F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 {
-
-
-
-    return true;
+    return AdInit(a_f4se);
 }
+#endif

@@ -7,6 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Addictol", "Addictol.vcxpro
 	ProjectSection(ProjectDependencies) = postProject
 		{06E30C65-D79A-4FEC-8A60-B36D907E6601} = {06E30C65-D79A-4FEC-8A60-B36D907E6601}
 		{9E771CA4-04D9-4ED8-80F2-FFD379413688} = {9E771CA4-04D9-4ED8-80F2-FFD379413688}
+		{FAF05090-9B74-4FBF-8D3E-F1E2D9EA032F} = {FAF05090-9B74-4FBF-8D3E-F1E2D9EA032F}
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Depends", "Depends", "{7A31A594-72DB-4F56-BA17-DB9485E3AA99}"
@@ -14,6 +15,18 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours_vc22", "..\Depends\detours_vc22.vcxproj", "{06E30C65-D79A-4FEC-8A60-B36D907E6601}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdeflate_vc22", "..\Depends\libdeflate_vc22.vcxproj", "{9E771CA4-04D9-4ED8-80F2-FFD379413688}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "commonlibf4_vc22", "..\Depends\commonlibf4_vc22.vcxproj", "{FAF05090-9B74-4FBF-8D3E-F1E2D9EA032F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4B0C9A46-C909-40AB-929A-A3207E7F7908} = {4B0C9A46-C909-40AB-929A-A3207E7F7908}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "commonlib-shared_vc22", "..\Depends\commonlib-shared_vc22.vcxproj", "{4B0C9A46-C909-40AB-929A-A3207E7F7908}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3317C484-5B56-43BC-A2DE-37A001905E7A} = {3317C484-5B56-43BC-A2DE-37A001905E7A}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spdlog_vc22", "..\Depends\spdlog_vc22.vcxproj", "{3317C484-5B56-43BC-A2DE-37A001905E7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +39,12 @@ Global
 		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x64.Build.0 = Release|x64
 		{9E771CA4-04D9-4ED8-80F2-FFD379413688}.Release|x64.ActiveCfg = Release|x64
 		{9E771CA4-04D9-4ED8-80F2-FFD379413688}.Release|x64.Build.0 = Release|x64
+		{FAF05090-9B74-4FBF-8D3E-F1E2D9EA032F}.Release|x64.ActiveCfg = Release|x64
+		{FAF05090-9B74-4FBF-8D3E-F1E2D9EA032F}.Release|x64.Build.0 = Release|x64
+		{4B0C9A46-C909-40AB-929A-A3207E7F7908}.Release|x64.ActiveCfg = Release|x64
+		{4B0C9A46-C909-40AB-929A-A3207E7F7908}.Release|x64.Build.0 = Release|x64
+		{3317C484-5B56-43BC-A2DE-37A001905E7A}.Release|x64.ActiveCfg = Release|x64
+		{3317C484-5B56-43BC-A2DE-37A001905E7A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -33,6 +52,9 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{06E30C65-D79A-4FEC-8A60-B36D907E6601} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
 		{9E771CA4-04D9-4ED8-80F2-FFD379413688} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
+		{FAF05090-9B74-4FBF-8D3E-F1E2D9EA032F} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
+		{4B0C9A46-C909-40AB-929A-A3207E7F7908} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
+		{3317C484-5B56-43BC-A2DE-37A001905E7A} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {589F9252-C63F-40EB-8EAE-9110734FF052}

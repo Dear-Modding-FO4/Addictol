@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include "AdUtils.h"
+#include "AdAssert.h"
 
 std::string GetRuntimePath() noexcept
 {
@@ -8,7 +9,7 @@ std::string GetRuntimePath() noexcept
     if (appPath[0])
         return appPath;
 
-    GetModuleFileName(GetModuleHandle(NULL), appPath, sizeof(appPath));
+    AdAssert(GetModuleFileName(GetModuleHandle(NULL), appPath, sizeof(appPath)));
     return appPath;
 }
 

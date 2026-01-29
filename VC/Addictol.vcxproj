@@ -7,11 +7,27 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
     <ClCompile Include="..\Addictol\Source\AdMain.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Addictol\Include\AdAssert.h" />
+    <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
+    <ClInclude Include="..\Version\resource_version2.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\Version\resource_version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Version\fomod_info.tmp" />
+    <None Include="..\Version\resource_version2.tmp" />
+    <None Include="..\Version\scripts.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Version\build_version.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -47,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
@@ -60,7 +76,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
-      <DisableSpecificWarnings>4200</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4200;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -68,9 +84,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4.lib;commonlib-shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;$(SolutionDir)..\Depends\commonlibf4\build\windows\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>powershell -ExecutionPolicy Bypass -File "$(SolutionDir)..\Version\scripts.ps1"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\ASM.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Hook.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\HookObject.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\HookStore.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\IAT.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\ID.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\IDDB.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Module.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Offset.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Offset2ID.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Pattern.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\REL.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Relocation.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Segment.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Trampoline.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Utility.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REL\Version.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\BASE.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\PS4.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\PS4\SCEPAD.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\AtomicRef.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\CAST.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\CONVERT.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\Enum.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\EnumSet.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\HASH.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\INI.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\JSON.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\LOG.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\MemoryMap.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\ScopeExit.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\Setting.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\Singleton.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\StaticString.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\REX\TOML.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\ADVAPI32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\BASE.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\BCRYPT.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\COM.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\COMPTR.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3D.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3D11.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3D11_1.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3D11_2.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3D11_3.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3D11_4.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\D3DCOMPILER.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DBGHELP.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DINPUT.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DXGI.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DXGI_2.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DXGI_3.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DXGI_4.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DXGI_5.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\DXGI_6.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\KERNEL32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\NT.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\OLE32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\SHELL32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\USER32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\VERSION.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\WS2_32.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\include\REX\W32\XINPUT.h" />
+    <ClInclude Include="commonlibf4\lib\commonlib-shared\src\REX\PCH.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\HookObject.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\HookStore.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\IAT.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\IDDB.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\Module.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\Offset2ID.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\Trampoline.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\Utility.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REL\Version.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REX\REX.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REX\REX\INI.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REX\REX\JSON.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REX\REX\LOG.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REX\REX\TOML.cpp" />
+    <ClCompile Include="commonlibf4\lib\commonlib-shared\src\REX\W32.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4B0C9A46-C909-40AB-929A-A3207E7F7908}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>detours</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir)detours\detours\zydis\msvc;$(ProjectDir)detours\detours\zydis\src;$(ProjectDir)detours\detours\zydis\dependencies\zycore\include;$(ProjectDir)detours\detours\zydis\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)..\.LinkConf\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\.Lib\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;FMT_UNICODE=0;NORASTEROPS;NOGDI;NOMINMAX;SPDLOG_COMPILED_LIB;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;COMMONLIB_OPTION_TOML;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_XBYAK;XBYAK_NO_OP_NAMES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+      <UseMSVC>true</UseMSVC>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)commonlibf4\lib\commonlib-shared\include;$(ProjectDir)spdlog\include;$(ProjectDir)toml11\single_include;$(ProjectDir)INI\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Lib>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
