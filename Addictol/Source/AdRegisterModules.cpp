@@ -8,6 +8,10 @@ void AdRegisterModules()
 
 	auto& modules = plugin->GetModules();
 
-	// Registers
+	// Registers preload patches
 	modules.Register(new Addictol::ModuleThreads());
+
+	// Registers other patches
+
+	// TODO
 }

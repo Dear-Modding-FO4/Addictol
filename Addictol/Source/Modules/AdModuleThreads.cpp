@@ -34,7 +34,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleThreads::DoInstall() noexcept
+	bool ModuleThreads::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto Handle = GetModuleHandleA(NULL);
 

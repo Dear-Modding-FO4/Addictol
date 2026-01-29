@@ -5,6 +5,19 @@ extern void AdRegisterModules();
 
 namespace Addictol
 {
+	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		auto plugin = Plugin::GetSingleton();
+
+		// Install other patches by message type
+		auto& moduleManager = plugin->GetModules();
+		moduleManager.QueryAllByMessage(a_msg);
+		moduleManager.InstallAllByMessage(a_msg);
+
+		if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
+			REX::INFO("" _PluginName " Initialized!");
+	}
+
 	bool Plugin::Init(const F4SE::LoadInterface* a_f4se)
 	{
 		if (isInit)
@@ -22,11 +35,16 @@ namespace Addictol
 		config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
 		config->Load();
 
-		isInit = true;
+		// Listen for Messages (to Install PostInit Patches)
+		auto MessagingInterface = F4SE::GetMessagingInterface();
+		MessagingInterface->RegisterListener(F4SEMessageListener);
+		REX::INFO("Started Listening for F4SE Message Callbacks.");
 
-		moduleManager.QueryAll();
-		moduleManager.InstallAll();
-	
+		// Install preload patches
+		moduleManager.QueryPreloadAll();
+		moduleManager.InstallPreloadAll();
+
+		isInit = true;
 		return isInit;
 	}
 }

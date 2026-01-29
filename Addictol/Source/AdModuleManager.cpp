@@ -1,12 +1,13 @@
+#include <AdAssert.h>
 #include <AdModuleManager.h>
 
 namespace Addictol
 {
-	bool ModuleManager::SafeQueryMod(const Module* mod)
+	bool ModuleManager::SafeQueryMod(const Module* a_mod)
 	{
 		__try
 		{
-			return mod->DoQuery();
+			return a_mod->DoQuery();
 		}
 		__except (1)
 		{
@@ -14,11 +15,11 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::SafeInstallMod(Module* mod)
+	bool ModuleManager::SafeInstallMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg)
 	{
 		__try
 		{
-			return mod->DoInstall();
+			return a_mod->DoInstall(a_msg);
 		}
 		__except (1)
 		{
@@ -26,80 +27,158 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::Register(Module* mod) noexcept
+	bool ModuleManager::Register(Module* a_mod, Type a_type) noexcept
 	{
-		if (!mod)
+		if (!a_mod)
 		{
-			REX::ERROR("" __FUNCTION__ ": mod is nullptr");
+			REX::ERROR("" __FUNCTION__ ": a_mod is nullptr");
 			return false;
 		}
 
-		auto nameModule = mod->GetName();
+		auto nameModule = a_mod->GetName();
 		if (nameModule.empty())
 		{
 			REX::ERROR("" __FUNCTION__ ": The module is empty name");
 			return false;
 		}
 
-		if (modules.find(nameModule) != modules.end())
+		if (a_type == Type::kPreload)
 		{
-			REX::ERROR("" __FUNCTION__ ": The module must be unique name \"{}\"", nameModule);
-			return false;
-		}
+			if (modules.find(nameModule) != modules.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": The module must be unique name \"{}\"", nameModule);
+				return false;
+			}
 
-		modules.insert({ mod->GetName(), mod });
-		return true;
+			modules.insert({ a_mod->GetName(), a_mod });
+			return true;
+		}
+		else
+		{
+			auto msg_id = static_cast<uint8_t>(a_type) - 1;
+			auto it = rl_modules.find(msg_id);
+			if (it == rl_modules.end())
+			{
+				rl_modules.insert({ msg_id, {} });
+				it = rl_modules.find(msg_id);
+				AdAssert(it != rl_modules.end());
+			}
+
+			auto& modules_by_type = it->second;
+			if (modules_by_type.find(nameModule) != modules_by_type.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": The module must be unique name \"{}\"", nameModule);
+				return false;
+			}
+
+			modules_by_type.insert({ a_mod->GetName(), a_mod });
+			return true;
+		}
 	}
 
-	bool ModuleManager::Unregister(const Module* mod) noexcept
+	bool ModuleManager::Unregister(const Module* a_mod, Type a_type) noexcept
 	{
-		if (!mod)
+		if (!a_mod)
 		{
 			REX::ERROR("" __FUNCTION__ ": mod is nullptr");
 			return false;
 		}
 
-		auto nameModule = mod->GetName();
+		auto nameModule = a_mod->GetName();
 		if (nameModule.empty())
 		{
 			REX::ERROR("" __FUNCTION__ ": The module is empty name");
 			return false;
 		}
 
-		auto it = modules.find(nameModule);
-		if (it == modules.end())
+		if (a_type == Type::kPreload)
 		{
-			REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", nameModule);
-			return false;
-		}
+			auto it = modules.find(nameModule);
+			if (it == modules.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", nameModule);
+				return false;
+			}
 
-		modules.erase(it);
-		return true;
+			modules.erase(it);
+			return true;
+		}
+		else
+		{
+			auto msg_id = static_cast<uint8_t>(a_type) - 1;
+			auto it = rl_modules.find(msg_id);
+			if (it == rl_modules.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": No list of modules of this type \"{}\" has been found.", msg_id);
+				return false;
+			}
+
+			auto& modules_by_type = it->second;
+			auto it2 = modules_by_type.find(nameModule);
+			if (it2 == modules_by_type.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", nameModule);
+				return false;
+			}
+
+			modules_by_type.erase(it2);
+			if (!modules_by_type.size())
+				rl_modules.erase(it);
+
+			return true;
+		}
 	}
 
-	bool ModuleManager::UnregisterByName(const char* name) noexcept
+	bool ModuleManager::UnregisterByName(const char* a_name, Type a_type) noexcept
 	{
-		if (!name || !name[0])
+		if (!a_name || !a_name[0])
 		{
 			REX::ERROR("" __FUNCTION__ ": name is nullptr/empty");
 			return false;
 		}
 
-		std::string findName = name;
+		std::string findName = a_name;
 		strlwr(findName.data());
 
-		auto it = modules.find(findName);
-		if (it == modules.end())
+		if (a_type == Type::kPreload)
 		{
-			REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", findName);
-			return false;
-		}
+			auto it = modules.find(findName);
+			if (it == modules.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", findName);
+				return false;
+			}
 
-		modules.erase(it);
-		return true;
+			modules.erase(it);
+			return true;
+		}
+		else
+		{
+			auto msg_id = static_cast<uint8_t>(a_type) - 1;
+			auto it = rl_modules.find(msg_id);
+			if (it == rl_modules.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": No list of modules of this type \"{}\" has been found.", msg_id);
+				return false;
+			}
+
+			auto& modules_by_type = it->second;
+			auto it2 = modules_by_type.find(findName);
+			if (it2 == modules_by_type.end())
+			{
+				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", findName);
+				return false;
+			}
+
+			modules_by_type.erase(it2);
+			if (!modules_by_type.size())
+				rl_modules.erase(it);
+
+			return true;
+		}
 	}
 
-	void ModuleManager::QueryAll() noexcept
+	void ModuleManager::QueryPreloadAll() noexcept
 	{
 		std::vector<const Module*> needRemovedList;
 
@@ -136,12 +215,77 @@ namespace Addictol
 			Unregister(m);
 	}
 
-	void ModuleManager::InstallAll() noexcept
+	void ModuleManager::InstallPreloadAll() noexcept
 	{
 		for (auto& it : modules)
 		{
 			auto mod = it.second;
 			if(!SafeInstallMod(mod))
+				REX::ERROR("Module \"{}\": fatal installation", mod->GetName());
+			else
+				REX::INFO("Module \"{}\": installed", mod->GetName());
+		}
+	}
+
+	void ModuleManager::QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		if (a_msg)
+			return;
+
+		auto it = rl_modules.find((uint8_t)a_msg->type);
+		if (it == rl_modules.end())
+			return;
+
+		auto& modules_by_type = it->second;
+		std::vector<const Module*> needRemovedList;
+
+		for (auto it = modules_by_type.begin(); it != modules_by_type.end(); it++)
+		{
+			auto mod = it->second;
+			if (!mod)
+			{
+				REX::ERROR("" __FUNCTION__ ": mod is nullptr");
+				continue;
+			}
+
+			const auto optionName = it->second->GetOption();
+			if (optionName)
+			{
+				if (!optionName->GetValue())
+				{
+					REX::INFO("Module \"{}\": disabled", mod->GetName());
+					needRemovedList.emplace_back(mod);
+					continue;
+				}
+				else
+					REX::INFO("Module \"{}\": enabled", mod->GetName());
+			}
+
+			if (!SafeQueryMod(mod))
+			{
+				REX::ERROR("Module \"{}\": failed verification", mod->GetName());
+				needRemovedList.emplace_back(mod);
+			}
+		}
+
+		for (auto m : needRemovedList)
+			Unregister(m, (Type)(a_msg->type + 1));
+	}
+
+	void ModuleManager::InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		if (a_msg)
+			return;
+
+		auto it = rl_modules.find((uint8_t)a_msg->type);
+		if (it == rl_modules.end())
+			return;
+
+		auto& modules_by_type = it->second;
+		for (auto& it : modules_by_type)
+		{
+			auto mod = it.second;
+			if (!SafeInstallMod(mod, a_msg))
 				REX::ERROR("Module \"{}\": fatal installation", mod->GetName());
 			else
 				REX::INFO("Module \"{}\": installed", mod->GetName());

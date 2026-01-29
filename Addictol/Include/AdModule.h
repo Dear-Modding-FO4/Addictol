@@ -3,6 +3,7 @@
 #include <REX\REX\Singleton.h>
 #include <REX\REX\TOML.h>
 #include <REX\REX\LOG.h>
+#include <F4SE\F4SE.h>
 #include <string_view>
 
 namespace Addictol
@@ -20,6 +21,6 @@ namespace Addictol
 		[[nodiscard]] virtual const REX::TOML::Bool<>* GetOption() const noexcept { return option; }
 
 		[[nodiscard]] virtual bool DoQuery() const noexcept = 0;
-		[[nodiscard]] virtual bool DoInstall() noexcept = 0;
+		[[nodiscard]] virtual bool DoInstall(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
 	};
 }
