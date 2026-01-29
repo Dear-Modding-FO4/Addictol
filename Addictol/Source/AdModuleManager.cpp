@@ -229,10 +229,10 @@ namespace Addictol
 
 	void ModuleManager::QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (a_msg)
+		if (!a_msg)
 			return;
 
-		auto it = rl_modules.find((uint8_t)a_msg->type);
+		auto it = rl_modules.find((uint8_t)(a_msg->type));
 		if (it == rl_modules.end())
 			return;
 
@@ -274,10 +274,10 @@ namespace Addictol
 
 	void ModuleManager::InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (a_msg)
+		if (!a_msg)
 			return;
 
-		auto it = rl_modules.find((uint8_t)a_msg->type);
+		auto it = rl_modules.find((uint8_t)(a_msg->type));
 		if (it == rl_modules.end())
 			return;
 
