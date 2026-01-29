@@ -45,10 +45,10 @@ jobs:
 
     - name: Copy build Stuff
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: Copy-Item -Path .\.Build\*.* -Destination "addictol-${{env.SHORT_SHA}}" -Recurse -Force
+      run: Copy-Item -Path ..\.Build\*.* -Destination "addictol-${{env.SHORT_SHA}}" -Recurse -Force
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ckpe-sse-master-${{env.SHORT_SHA}}
-        path: "ckpe-sse-master-${{env.SHORT_SHA}}"
+        name: addictol-${{env.SHORT_SHA}}
+        path: "addictol-${{env.SHORT_SHA}}"
