@@ -53,7 +53,7 @@ jobs:
 
     - name: Copy build stuff
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: Get-ChildItem -Recurse -Path ".\Build\F4SE\Plugins" -Include "Addictol.dll", "Addictol.pdb", "Addictol.toml" | ForEach-Object { Copy-Item -Path $_.FullName -Destination (Join-Path "addictol-${{env.SHORT_SHA}}\data\plugins" $_.Name) -Force }
+      run: Get-ChildItem -Recurse -Path ".\.Build\F4SE\Plugins" -Include "Addictol.dll", "Addictol.pdb", "Addictol.toml" | ForEach-Object { Copy-Item -Path $_.FullName -Destination (Join-Path "addictol-${{env.SHORT_SHA}}\data\plugins" $_.Name) -Force }
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
