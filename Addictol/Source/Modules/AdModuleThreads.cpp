@@ -46,6 +46,7 @@ namespace Addictol
 		{
 			auto ErrorLast = GetLastError();
 			REX::ERROR("SetPriorityClass returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			return false;
 		}
 		else
 			REX::INFO("Set high priority has been set for process");
@@ -54,6 +55,7 @@ namespace Addictol
 		{
 			auto ErrorLast = GetLastError();
 			REX::ERROR("SetThreadPriority returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			return false;
 		}
 		else
 			REX::INFO("Set high priority has been set for main thread");
@@ -63,6 +65,7 @@ namespace Addictol
 		{
 			auto ErrorLast = GetLastError();
 			REX::ERROR("GetProcessAffinityMask returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			return false;
 		}
 		else
 		{
@@ -77,6 +80,7 @@ namespace Addictol
 				{
 					auto ErrorLast = GetLastError();
 					REX::ERROR("SetProcessAffinityMask returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+					return false;
 				}
 				else
 					REX::INFO("Restore usage of processor cores");
@@ -95,6 +99,7 @@ namespace Addictol
 				if (SetProcessAffinityMask_addr)
 					RELEX::WriteSafe((uintptr_t)SetProcessAffinityMask_addr, { 0x31, 0xC0, 0xC3, 0x90, });
 			}
+			else return false;
 		}
 
 		// The system does not display the critical-error-handler message box. 
@@ -107,6 +112,9 @@ namespace Addictol
 		{
 			auto ErrorLast = GetLastError();
 			REX::ERROR("SetThreadErrorMode returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			return false;
 		}
+
+		return true;
 	}
 }

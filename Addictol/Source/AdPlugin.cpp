@@ -8,14 +8,19 @@ namespace Addictol
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto plugin = Plugin::GetSingleton();
+		if (!plugin->IsInstall())
+		{
+			// Install other patches by message type
+			auto& moduleManager = plugin->GetModules();
+			moduleManager.QueryAllByMessage(a_msg);
+			moduleManager.InstallAllByMessage(a_msg);
 
-		// Install other patches by message type
-		auto& moduleManager = plugin->GetModules();
-		moduleManager.QueryAllByMessage(a_msg);
-		moduleManager.InstallAllByMessage(a_msg);
-
-		if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
-			REX::INFO("" _PluginName " Initialized!");
+			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
+			{
+				REX::INFO("" _PluginName " Initialized!");
+				plugin->SetAsInstall();
+			}
+		}
 	}
 
 	bool Plugin::Init(const F4SE::LoadInterface* a_f4se)

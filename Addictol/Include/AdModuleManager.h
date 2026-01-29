@@ -14,8 +14,8 @@ namespace Addictol
 		ModuleManager(const ModuleManager&) = delete;
 		ModuleManager operator=(const ModuleManager&) = delete;
 
-		[[nodiscard]] bool SafeQueryMod(const Module* mod);
-		[[nodiscard]] bool SafeInstallMod(Module* mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
+		[[nodiscard]] bool SafeQueryMod(const Module* a_mod);
+		[[nodiscard]] bool SafeInstallMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
 	public:
 		enum class Type : uint8_t
 		{

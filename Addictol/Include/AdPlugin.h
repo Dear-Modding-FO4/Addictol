@@ -14,6 +14,7 @@ namespace Addictol
 		public REX::TSingleton<Plugin>
 	{
 		bool isInit{ false };
+		bool isInstall{ false };
 		ModuleManager moduleManager;
 
 		Plugin(const Plugin&) = delete;
@@ -25,6 +26,9 @@ namespace Addictol
 		[[nodiscard]] virtual bool Init(const F4SE::LoadInterface* a_f4se);
 
 		[[nodiscard]] virtual inline bool IsInit() const noexcept { return isInit; }
+		[[nodiscard]] virtual inline bool IsInstall() const noexcept { return isInstall; }
 		[[nodiscard]] virtual inline ModuleManager& GetModules() noexcept { return moduleManager; }
+
+		inline void SetAsInstall() noexcept { isInstall = true; }
 	};
 }
