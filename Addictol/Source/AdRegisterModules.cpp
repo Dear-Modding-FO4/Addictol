@@ -4,6 +4,7 @@
 #include <Modules\AdModulePackageAllocateLocation.h>
 #include <Modules\AdModuleLibDeflate.h>
 #include <Modules\AdModuleProfile.h>
+#include <Modules\AdModuleLoadScreen.h>
 
 void AdRegisterModules()
 {
@@ -18,6 +19,7 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModulePackageAllocateLocation());
 	modules.Register(new Addictol::ModuleLibDeflate());
 	modules.Register(new Addictol::ModuleProfile());
+	modules.Register(new Addictol::ModuleLoadScreen());
 
 	// Registers other patches
 

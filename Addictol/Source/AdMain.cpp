@@ -1,5 +1,6 @@
 ﻿#include <AdUtils.h>
 #include <AdPlugin.h>
+#include <Windows.h>
 
 enum class F4SEAddressIndependence : std::uint32_t
 {

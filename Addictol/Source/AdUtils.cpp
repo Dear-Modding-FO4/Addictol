@@ -1,8 +1,9 @@
-#include <Windows.h>
 #include <REL\Module.h>
 #include <REL\Utility.h>
 #include <AdUtils.h>
 #include <AdAssert.h>
+#include <detours\Detours.h>
+#include <Windows.h>
 
 std::string AdGetRuntimePath() noexcept
 {
@@ -99,5 +100,20 @@ namespace RELEX
 		if (safe_verm.major() == 0)
 			safe_verm = REL::Module::GetSingleton()->version();
 		return safe_verm > REL::Version{ 1, 10, 984, 0 };
+	}
+
+	uintptr_t DetourJump(uintptr_t a_target, uintptr_t a_function) noexcept
+	{
+		return Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_JUMP);
+	}
+
+	uintptr_t DetourCall(uintptr_t a_target, uintptr_t a_function) noexcept
+	{
+		return Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_CALL);
+	}
+
+	void UpdateID(const REL::ID& a_id, uintptr_t a_num) noexcept
+	{
+		(*const_cast<REL::ID*>(&a_id)) = a_num;
 	}
 }

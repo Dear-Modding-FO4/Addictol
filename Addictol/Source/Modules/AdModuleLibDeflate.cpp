@@ -1,11 +1,7 @@
 #include <Modules\AdModuleLibDeflate.h>
 #include <AdUtils.h>
 #include <AdAssert.h>
-#include <Scaleform\G\GFx_ASMovieRootBase.h>
-#include <Scaleform\G\GFx_Value.h>
-#include <Scaleform\G\GFx_Movie.h>
 #include <REL\REL.h>
-#include <detours\Detours.h>
 #include <libdeflate\libdeflate.h>
 
 namespace Addictol
@@ -73,16 +69,16 @@ namespace Addictol
 			// NG/AE
 
 			auto Target = REL::ID(2192561).address() + 0x1B2;
-			Detours::X64::DetourFunction(Target, (uintptr_t)&HKInflateInit, Detours::X64Option::USE_REL32_CALL);
-			Detours::X64::DetourFunction(Target + 0x32, (uintptr_t)&HKInflate, Detours::X64Option::USE_REL32_CALL);
+			RELEX::DetourCall(Target, (uintptr_t)&HKInflateInit);
+			RELEX::DetourCall(Target + 0x32, (uintptr_t)&HKInflate);
 		}
 		else
 		{
 			// OG
 
 			auto Target = REL::ID(116758).address() + 0x17D;
-			Detours::X64::DetourFunction(Target, (uintptr_t)&HKInflateInit, Detours::X64Option::USE_REL32_CALL);
-			Detours::X64::DetourFunction(Target + 0x32, (uintptr_t)&HKInflate, Detours::X64Option::USE_REL32_CALL);
+			RELEX::DetourCall(Target, (uintptr_t)&HKInflateInit);
+			RELEX::DetourCall(Target + 0x32, (uintptr_t)&HKInflate);
 		}
 
 		return true;

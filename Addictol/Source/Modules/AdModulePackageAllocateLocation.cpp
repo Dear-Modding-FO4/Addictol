@@ -1,7 +1,6 @@
 #include <Modules\AdModulePackageAllocateLocation.h>
 #include <AdUtils.h>
 #include <REL\REL.h>
-#include <detours\Detours.h>
 
 namespace Addictol
 {
@@ -22,7 +21,7 @@ namespace Addictol
 		{
 			// NG/AE
 			auto Sub = REL::ID(2190427).address();
-			Detours::X64::DetourFunction(REL::ID(2211931).address() + 0x144, Sub, Detours::X64Option::USE_REL32_CALL);
+			RELEX::DetourCall(REL::ID(2211931).address() + 0x144, Sub);
 		}
 		else
 		{
