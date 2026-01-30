@@ -14,6 +14,10 @@
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -22,6 +26,10 @@
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
   </ItemGroup>

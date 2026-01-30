@@ -1,5 +1,9 @@
 #include <AdPlugin.h>
 #include <Modules\AdModuleThreads.h>
+#include <Modules\AdModuleGreyMovie.h>
+#include <Modules\AdModulePackageAllocateLocation.h>
+#include <Modules\AdModuleLibDeflate.h>
+#include <Modules\AdModuleProfile.h>
 
 void AdRegisterModules()
 {
@@ -10,6 +14,10 @@ void AdRegisterModules()
 
 	// Registers preload patches
 	modules.Register(new Addictol::ModuleThreads());
+	modules.Register(new Addictol::ModuleGreyMovie());
+	modules.Register(new Addictol::ModulePackageAllocateLocation());
+	modules.Register(new Addictol::ModuleLibDeflate());
+	modules.Register(new Addictol::ModuleProfile());
 
 	// Registers other patches
 

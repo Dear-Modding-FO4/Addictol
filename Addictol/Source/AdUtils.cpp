@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <REL\Module.h>
 #include <REL\Utility.h>
 #include <AdUtils.h>
 #include <AdAssert.h>
@@ -75,5 +76,28 @@ namespace RELEX
 		ScopeLock Lock(a_target, a_size);
 		if (Lock.HasUnlocked())
 			memset((LPVOID)a_target, 0x90, a_size);
+	}
+
+	static REL::Version safe_verm{ 0, 0, 0, 0 };
+
+	bool IsRuntimeOG() noexcept
+	{
+		if (safe_verm.major() == 0)
+			safe_verm = REL::Module::GetSingleton()->version();
+		return safe_verm == REL::Version{ 1, 10, 163, 0 };
+	}
+
+	bool IsRuntimeNG() noexcept
+	{
+		if (safe_verm.major() == 0)
+			safe_verm = REL::Module::GetSingleton()->version();
+		return (safe_verm > REL::Version{ 1, 10, 163, 0 }) && (safe_verm <= REL::Version{ 1, 10, 984, 0 });
+	}
+
+	bool IsRuntimeAE() noexcept
+	{
+		if (safe_verm.major() == 0)
+			safe_verm = REL::Module::GetSingleton()->version();
+		return safe_verm > REL::Version{ 1, 10, 984, 0 };
 	}
 }

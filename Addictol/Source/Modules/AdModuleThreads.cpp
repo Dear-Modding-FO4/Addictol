@@ -1,6 +1,5 @@
 #include <Modules\AdModuleThreads.h>
-#include <REL\Utility.h>
-#include <detours\Detours.h>
+#include <REL\REL.h>
 #include <AdUtils.h>
 #include <algorithm>
 #include <windows.h>
@@ -37,9 +36,9 @@ namespace Addictol
 	bool ModuleThreads::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto Handle = GetModuleHandleA(NULL);
-
-		Detours::IATHook((uintptr_t)Handle, "kernel32.dll", "SetThreadPriority", (uintptr_t)&HKSetThreadPriority);
-		Detours::IATHook((uintptr_t)Handle, "kernel32.dll", "SetThreadAffinityMask", (uintptr_t)&HKSetThreadAffinityMask);
+		
+		REL::PatchIAT((uintptr_t)&HKSetThreadPriority, "kernel32.dll", "SetThreadPriority");
+		REL::PatchIAT((uintptr_t)&HKSetThreadAffinityMask, "kernel32.dll", "SetThreadAffinityMask");
 
 		auto ProcessHandle = GetCurrentProcess();
 		if (!SetPriorityClass(ProcessHandle, HIGH_PRIORITY_CLASS))
