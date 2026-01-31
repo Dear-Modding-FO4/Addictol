@@ -1,4 +1,5 @@
 #include <AdPlugin.h>
+#include <AdIDs.h>
 #include <REX\REX\Singleton.h>
 
 extern void AdRegisterModules();
@@ -31,6 +32,9 @@ namespace Addictol
 		// Init
 		F4SE::Init(a_f4se);
 		REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
+
+		// Update IDs for commonlibf4
+		RE_MERGE::ID::UpdateIDs();
 
 		// Register all modules
 		AdRegisterModules();

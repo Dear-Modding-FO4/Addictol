@@ -8,6 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdIDs.cpp" />
     <ClCompile Include="..\Addictol\Source\AdMain.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp" />
@@ -24,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
+    <ClInclude Include="..\Addictol\Include\AdIDs.h" />
     <ClInclude Include="..\Addictol\Include\AdModule.h" />
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />

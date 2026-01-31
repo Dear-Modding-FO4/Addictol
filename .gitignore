@@ -48,5 +48,4 @@
 *.vcxproj.filters
 *.vcxproj.user
 /.LinkConf
-/.Build
 /.Lib

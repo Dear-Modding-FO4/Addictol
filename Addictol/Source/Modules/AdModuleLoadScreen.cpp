@@ -3,9 +3,6 @@
 #include <REL\REL.h>
 #include <REX\REX.h>
 #include <RE\B\BSGraphics.h>
-#include <RE\L\LoadingMenu.h>
-//#include <d3d11.h>
-//#include <dxgi.h>
 
 namespace Addictol
 {
@@ -14,7 +11,7 @@ namespace Addictol
 	static void DrawUILoadScreen(uint32_t a_unk) noexcept;
 	decltype(&DrawUILoadScreen) origDrawUI{ nullptr };
 
-	static void DrawUILoadScreen(uint32_t a_unk = 0) noexcept
+	static void DrawUILoadScreen(uint32_t a_unk) noexcept
 	{
 		// get the address of the back buffer
 		REX::W32::ID3D11Texture2D* backBuffer{ nullptr };

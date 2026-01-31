@@ -8,21 +8,82 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesProfile{ "Patches", "bProfile", true };
 
+	class SettingCollection
+	{
+	public:
+		virtual ~SettingCollection();
+
+		virtual void Unk_01() = 0;
+		virtual void Unk_02() = 0;
+		virtual void Unk_03() = 0;
+		virtual void Unk_04() = 0;
+		virtual bool Unk_05();
+		virtual bool Unk_06();
+		virtual bool Unk_07();
+		virtual bool Unk_08();		// return unk110 != 0;
+		virtual bool Unk_09();		// return unk110 != 0;
+
+		//	void	** _vtbl;		// 000
+		char	unk004[260];		// 008
+		uint32_t pad10C;			// 10C
+		void* unk110;				// 110
+	};
+
+
+	class SettingCollectionList : public SettingCollection
+	{
+	public:
+		virtual ~SettingCollectionList();
+
+		// this is almost certainly a templated linked list type
+		struct Node
+		{
+			RE::Setting* data;
+			Node* next;
+		};
+
+		void* unk118;	// 118
+		Node* data;		// 120
+
+		RE::Setting* Get(const char* name) const noexcept
+		{
+			Node* node = data;
+			do
+			{
+				RE::Setting* setting = node->data;
+				if (setting)
+				{
+					RE::BSFixedString searchName(name);
+					RE::BSFixedString settingName(setting->GetKey());
+					if (searchName == settingName)
+						return setting;
+				}
+
+				node = node->next;
+			} while (node);
+
+			return nullptr;
+		}
+	};
+
 	static bool hk_nullsub_C30008() noexcept
 	{
-		auto iniDef = RE::INISettingCollection::GetSingleton();
-		auto iniPref = RE::INIPrefSettingCollection::GetSingleton();
+		auto iniDef = (SettingCollectionList*)RE::INISettingCollection::GetSingleton();
+		auto iniPref = (SettingCollectionList*)RE::INIPrefSettingCollection::GetSingleton();
+		auto pSettingSrc = iniPref->data;
 
-		auto& pSettingSrc = iniPref->settings;
-		for (auto Setting : pSettingSrc)
+		do
 		{
-			if (Setting)
+			auto pSettingDst = iniDef->Get(pSettingSrc->data->GetKey().data());
+			if (!pSettingDst)
 			{
-				auto pFound = iniDef->GetSetting(Setting->GetKey());
-				if (!pFound)
-					iniDef->settings.push_front(Setting);
+				auto pNewNode = new SettingCollectionList::Node;
+				pNewNode->next = iniDef->data;
+				pNewNode->data = pSettingSrc->data;
+				iniDef->data = pNewNode;
 			}
-		}
+
+		} while (pSettingSrc = pSettingSrc->next);
 
 		return false;
 	}
@@ -49,9 +110,6 @@ namespace Addictol
 		else
 		{
 			// OG
-
-			RELEX::UpdateID(RE::ID::Setting::INISettingCollection::Singleton, 791183);
-			RELEX::UpdateID(RE::ID::Setting::INIPrefSettingCollection::Singleton, 767844);
 
 			auto Target = REL::ID(665510).address();
 			RELEX::DetourCall(Target + 0x3BE, (uintptr_t)&hk_nullsub_C30008);
