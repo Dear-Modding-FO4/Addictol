@@ -5,6 +5,7 @@
 #include <Modules\AdModuleLibDeflate.h>
 #include <Modules\AdModuleProfile.h>
 #include <Modules\AdModuleLoadScreen.h>
+#include <Modules\AdModuleAchievements.h>
 
 void AdRegisterModules()
 {
@@ -20,6 +21,7 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModuleLibDeflate());
 	modules.Register(new Addictol::ModuleProfile());
 	modules.Register(new Addictol::ModuleLoadScreen());
+	modules.Register(new Addictol::ModuleAchievements());
 
 	// Registers other patches
 

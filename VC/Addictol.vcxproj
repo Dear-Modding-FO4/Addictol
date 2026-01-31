@@ -14,6 +14,7 @@
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
@@ -27,6 +28,7 @@
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
