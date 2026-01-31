@@ -117,3 +117,71 @@ namespace RELEX
 		(*const_cast<REL::ID*>(&a_id)) = a_num;
 	}
 }
+
+namespace Addictol
+{
+	uint32_t Extend16(uint32_t a_in) noexcept
+	{
+		return (a_in & 0x8000) ? (0xFFFF0000 | a_in) : a_in;
+	}
+
+	uint32_t Extend8(uint32_t a_in) noexcept
+	{
+		return (a_in & 0x80) ? (0xFFFFFF00 | a_in) : a_in;
+	}
+
+	uint16_t Swap16(uint16_t a_in) noexcept
+	{
+		return	((a_in >> 8) & 0x00FF) |
+			((a_in << 8) & 0xFF00);
+	}
+
+	uint32_t Swap32(uint32_t a_in) noexcept
+	{
+		return	((a_in >> 24) & 0x000000FF) |
+			((a_in >> 8) & 0x0000FF00) |
+			((a_in << 8) & 0x00FF0000) |
+			((a_in << 24) & 0xFF000000);
+	}
+
+	uint64_t Swap64(uint64_t a_in) noexcept
+	{
+		uint64_t temp;
+
+		temp = Swap32(a_in);
+		temp <<= 32;
+		temp |= Swap32(a_in >> 32);
+
+		return temp;
+	}
+
+	void SwapFloat(float* a_in) noexcept
+	{
+		uint32_t* temp = (uint32_t*)a_in;
+		*temp = Swap32(*temp);
+	}
+
+	void SwapDouble(double* a_in) noexcept
+	{
+		uint64_t* temp = (uint64_t*)a_in;
+		*temp = Swap64(*temp);
+	}
+
+	bool IsBigEndian() noexcept
+	{
+		union
+		{
+			uint16_t	u16;
+			uint8_t		u8[2];
+		} temp{};
+
+		temp.u16 = 0x1234;
+
+		return temp.u8[0] == 0x12;
+	}
+
+	bool IsLittleEndian() noexcept
+	{
+		return !IsBigEndian();
+	}
+}

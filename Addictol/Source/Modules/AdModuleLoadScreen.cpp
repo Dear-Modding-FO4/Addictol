@@ -11,28 +11,29 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesLoadScreen{ "Patches", "bLoadScreen", true };
 	static RE::BSGraphics::RendererData* g_RendererData{ nullptr };
+	static void DrawUILoadScreen(uint32_t a_unk) noexcept;
+	decltype(&DrawUILoadScreen) origDrawUI{ nullptr };
 
-	//	// get the address of the front buffer
-	//	REX::W32::ID3D11Texture2D* frontBuffer{ nullptr };
-	//	g_RendererData->renderWindow[0].swapChain->GetBuffer(0, REX::W32::IID_ID3D11Texture2D, (void**)&frontBuffer);	
-	//	if (!frontBuffer)
-	//		return;
+	static void DrawUILoadScreen(uint32_t a_unk = 0) noexcept
+	{
+		// get the address of the back buffer
+		REX::W32::ID3D11Texture2D* backBuffer{ nullptr };
+		g_RendererData->renderWindow[0].swapChain->GetBuffer(0, REX::W32::IID_ID3D11Texture2D, (void**)&backBuffer);
+		if (!backBuffer)
+			return;
 
-	//	REX::W32::D3D11_TEXTURE2D_DESC descBuffer{};
-	//	frontBuffer->GetDesc(&descBuffer);
+		REX::W32::ID3D11RenderTargetView* backTarget{ nullptr };
+		g_RendererData->device->CreateRenderTargetView(backBuffer, NULL, &backTarget);
+		if (!backTarget)
+			return;
 
-	//	REX::INFO("lm {} {}", descBuffer.width, descBuffer.height);
-	//
-	//	//REX::W32::ID3D11RenderTargetView* frontTarget{ nullptr };
-	//	//g_RendererData->device->CreateRenderTargetView(frontBuffer, NULL, &frontTarget);	
-	//	//if (!frontTarget)
-	//	//	return;
+		// fix black screen for ultra wide monitors
+		static const float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		g_RendererData->context->ClearRenderTargetView(backTarget, color);
 
-	//	//// Clear all (fixed ultra wide monitors)
-	//	//static const float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	//	//g_RendererData->context->ClearRenderTargetView(frontTarget, color);
-
-	//	//frontTarget->Release();
+		backTarget->Release();
+		origDrawUI(a_unk);
+	}
 
 	static void GetRandomLoadScreen() noexcept
 	{
@@ -56,6 +57,8 @@ namespace Addictol
 			
 			g_RendererData = (RE::BSGraphics::RendererData*)REL::ID(2704527).address();
 			RELEX::DetourJump(REL::ID(2249232).address(), (uintptr_t)&GetRandomLoadScreen);
+			origDrawUI = (decltype(&DrawUILoadScreen))(REL::ID(2222551).address());
+			RELEX::DetourCall(REL::ID(2249225).address() + 0x3CC, (uintptr_t)&DrawUILoadScreen);
 		}
 		else
 		{
@@ -63,6 +66,8 @@ namespace Addictol
 
 			g_RendererData = (RE::BSGraphics::RendererData*)REL::ID(235166).address();
 			RELEX::DetourJump(REL::ID(316170).address(), (uintptr_t)&GetRandomLoadScreen);
+			origDrawUI = (decltype(&DrawUILoadScreen))(REL::ID(386550).address());
+			RELEX::DetourCall(REL::ID(135719).address() + 0x414, (uintptr_t)&DrawUILoadScreen);
 		}
 
 		return true;

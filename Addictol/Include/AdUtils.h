@@ -126,3 +126,16 @@ namespace RELEX
 		return (*(TR(__fastcall**)(const void*, T1, T2, T3, T4, T5))(*(__int64*)a_this + a_reloff))(a_this, a1, a2, a3, a4, a4);
 	}
 }
+
+namespace Addictol
+{
+	uint32_t Extend16(uint32_t a_in) noexcept;
+	uint32_t Extend8(uint32_t a_in) noexcept;
+	uint16_t Swap16(uint16_t a_in) noexcept;
+	uint32_t Swap32(uint32_t a_in) noexcept;
+	uint64_t Swap64(uint64_t a_in) noexcept;
+	void SwapFloat(float* a_in) noexcept;
+	void SwapDouble(double* in) noexcept;
+	bool IsBigEndian() noexcept;
+	bool IsLittleEndian() noexcept;
+}
