@@ -15,7 +15,7 @@ namespace Addictol
 		return !RELEX::IsRuntimeOG() /*true if supported OG*/;
 	}
 
-	bool ModulePackageAllocateLocation::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModulePackageAllocateLocation::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!RELEX::IsRuntimeOG())
 		{
@@ -33,7 +33,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModulePackageAllocateLocation::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModulePackageAllocateLocation::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}

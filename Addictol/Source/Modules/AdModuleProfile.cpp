@@ -4,6 +4,8 @@
 #include <REL\REL.h>
 #include <RE\IDs.h>
 
+#define strcasecmp _stricmp
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesProfile{ "Patches", "bProfile", true };
@@ -53,9 +55,9 @@ namespace Addictol
 				RE::Setting* setting = node->data;
 				if (setting)
 				{
-					RE::BSFixedString searchName(name);
-					RE::BSFixedString settingName(setting->GetKey());
-					if (searchName == settingName)
+					std::string_view searchName(name);
+					std::string_view settingName(setting->GetKey());
+					if (strcasecmp(searchName.data(), settingName.data()))
 						return setting;
 				}
 
@@ -68,10 +70,8 @@ namespace Addictol
 
 	static bool hk_nullsub_C30008() noexcept
 	{
-		// FIXME: No works in OG
-		auto iniDef = (SettingCollectionList*)RE::INISettingCollection::GetSingleton();
-		auto iniPref = (SettingCollectionList*)RE::INIPrefSettingCollection::GetSingleton();
-
+		auto iniDef = (SettingCollectionList*)RELEX::GetTSingletonByID<RE::INISettingCollection>(2704108, 2704108, 791183);
+		auto iniPref = (SettingCollectionList*)RELEX::GetTSingletonByID<RE::INIPrefSettingCollection>(2703234, 2703234, 767844);
 		auto pSettingSrc = iniPref->data;
 
 		do
@@ -99,7 +99,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleProfile::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleProfile::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!RELEX::IsRuntimeOG())
 		{
@@ -120,7 +120,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleProfile::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleProfile::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}

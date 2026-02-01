@@ -62,7 +62,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLibDeflate::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleLibDeflate::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!RELEX::IsRuntimeOG())
 		{
@@ -84,7 +84,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLibDeflate::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleLibDeflate::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}

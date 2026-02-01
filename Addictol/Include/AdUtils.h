@@ -3,6 +3,7 @@
 #include <string>
 #include <initializer_list>
 #include <stdint.h>
+#include <REL\Relocation.h>
 #include <REL\ID.h>
 
 std::string AdGetRuntimePath() noexcept;
@@ -37,6 +38,34 @@ namespace RELEX
 	uintptr_t DetourCall(uintptr_t a_target, uintptr_t a_function) noexcept;
 
 	void UpdateID(const REL::ID& a_id, uintptr_t a_num) noexcept;
+
+	template<typename T>
+	[[nodiscard]] static T* GetTSingletonByID(const REL::ID& a_id) noexcept
+	{
+		static REL::Relocation<T**> singleton{ a_id };
+		return *singleton;
+	}
+
+	template<typename T>
+	[[nodiscard]] static T* GetTSingletonByID(uintptr_t a_id, uintptr_t a_id_ng, uintptr_t a_id_og) noexcept
+	{
+		static REL::Relocation<T**> singleton{ IsRuntimeOG() ? REL::ID{ a_id_og } : IsRuntimeAE() ? REL::ID{ a_id } : REL::ID{ a_id_ng } };
+		return *singleton;
+	}
+
+	template<typename T>
+	[[nodiscard]] static T* GetTFunctionByID(const REL::ID& a_id) noexcept
+	{
+		static REL::Relocation<T*> singleton{ a_id };
+		return singleton.get();
+	}
+
+	template<typename T>
+	[[nodiscard]] static T* GetTFunctionByID(uintptr_t a_id, uintptr_t a_id_ng, uintptr_t a_id_og) noexcept
+	{
+		static REL::Relocation<T*> singleton{ IsRuntimeOG() ? REL::ID{ a_id_og } : IsRuntimeAE() ? REL::ID{ a_id } : REL::ID{ a_id_ng } };
+		return singleton.get();
+	}
 
 	// thread-safe template versions of FastCall()
 

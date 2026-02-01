@@ -33,7 +33,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleThreads::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleThreads::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto Handle = GetModuleHandleA(NULL);
 		
@@ -117,7 +117,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleThreads::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleThreads::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}

@@ -46,7 +46,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLoadScreen::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleLoadScreen::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!RELEX::IsRuntimeOG())
 		{
@@ -70,7 +70,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLoadScreen::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleLoadScreen::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}

@@ -16,7 +16,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLODDistance::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleLODDistance::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		//
 		// It is required because many STATs that are also workshop buildable have LOD
@@ -56,7 +56,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLODDistance::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleLODDistance::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}

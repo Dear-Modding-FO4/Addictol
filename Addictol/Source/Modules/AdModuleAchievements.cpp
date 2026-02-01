@@ -1,8 +1,6 @@
 #include <Modules\AdModuleAchievements.h>
 #include <AdUtils.h>
 #include <AdAssert.h>
-
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 
 namespace Addictol
@@ -27,7 +25,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAchievements::DoInstall(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleAchievements::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation<std::uintptr_t> Target;
 		std::size_t Size;
@@ -57,7 +55,7 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAchievements::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleAchievements::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}
