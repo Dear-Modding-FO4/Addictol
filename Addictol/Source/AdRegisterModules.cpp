@@ -8,6 +8,7 @@
 #include <Modules\AdModuleAchievements.h>
 #include <Modules\AdModuleLODDistance.h>
 #include <Modules\AdModuleInitTints.h>
+#include <Modules\AdModuleActorIsHostileToActor.h>
 
 void AdRegisterModules()
 {
@@ -26,6 +27,7 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModuleAchievements());
 	modules.Register(new Addictol::ModuleLODDistance());
 	modules.Register(new Addictol::ModuleInitTints());
+	modules.Register(new Addictol::ModuleActorIsHostileToActor());
 
 	// Registers other patches
 
