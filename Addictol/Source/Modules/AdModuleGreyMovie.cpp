@@ -61,4 +61,9 @@ namespace Addictol
 
 		return true;
 	}
+
+	bool ModuleGreyMovie::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
 }

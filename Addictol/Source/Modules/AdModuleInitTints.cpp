@@ -59,4 +59,9 @@ namespace Addictol
 
 		return true;
 	}
+
+	bool ModuleInitTints::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
 }

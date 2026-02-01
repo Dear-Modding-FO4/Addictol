@@ -27,6 +27,18 @@ namespace Addictol
 		}
 	}
 
+	bool ModuleManager::SafeListenerMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg)
+	{
+		__try
+		{
+			return a_mod->DoListener(a_msg);
+		}
+		__except (1)
+		{
+			return false;
+		}
+	}
+
 	bool ModuleManager::Register(Module* a_mod, Type a_type) noexcept
 	{
 		if (!a_mod)
@@ -289,6 +301,20 @@ namespace Addictol
 				REX::ERROR("Module \"{}\": fatal installation", mod->GetName());
 			else
 				REX::INFO("Module \"{}\": installed", mod->GetName());
+		}
+	}
+
+	void ModuleManager::ListenerAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		if (!a_msg)
+			return;
+
+		for (auto& it : modules)
+		{
+			auto mod = it.second;
+			if (mod->HasListener(a_msg->type))
+				if (!SafeListenerMod(mod, a_msg))
+					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})", mod->GetName(), a_msg->type);
 		}
 	}
 }

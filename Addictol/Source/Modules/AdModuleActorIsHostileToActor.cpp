@@ -11,6 +11,7 @@ namespace Addictol
 	{
 		if (!a_actor)
 		{
+			// FIXME: No works in OG
 			RE::GameScript::LogFormError(a_actor, "Cannot call IsHostileToActor with a None actor", a_vm, a_stackID);
 			return false;
 		}
@@ -53,6 +54,11 @@ namespace Addictol
 		REL::WriteSafeFill(Target.address(), REL::INT3, Size);
 		RELEX::DetourJump(Target.address(), reinterpret_cast<std::uintptr_t>(IsHostileToActor));
 
+		return true;
+	}
+
+	bool ModuleActorIsHostileToActor::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
 		return true;
 	}
 }

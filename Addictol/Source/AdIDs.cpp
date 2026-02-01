@@ -6,8 +6,6 @@ namespace RE_MERGE::ID
 {
 	static void UpdateIDs_OG() noexcept
 	{
-		MessageBoxA(0, "", "", 0);
-
 		RELEX::UpdateID(RE::ID::Setting::INISettingCollection::Singleton, 791183);
 		RELEX::UpdateID(RE::ID::Setting::INIPrefSettingCollection::Singleton, 767844);
 	}

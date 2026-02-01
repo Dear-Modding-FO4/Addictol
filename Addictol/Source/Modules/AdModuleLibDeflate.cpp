@@ -83,4 +83,9 @@ namespace Addictol
 
 		return true;
 	}
+
+	bool ModuleLibDeflate::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
 }

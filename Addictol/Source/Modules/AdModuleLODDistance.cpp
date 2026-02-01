@@ -55,4 +55,9 @@ namespace Addictol
 
 		return true;
 	}
+
+	bool ModuleLODDistance::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
 }

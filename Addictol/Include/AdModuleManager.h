@@ -16,6 +16,7 @@ namespace Addictol
 
 		[[nodiscard]] bool SafeQueryMod(const Module* a_mod);
 		[[nodiscard]] bool SafeInstallMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
+		[[nodiscard]] bool SafeListenerMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
 	public:
 		enum class Type : uint8_t
 		{
@@ -44,5 +45,6 @@ namespace Addictol
 		virtual void InstallPreloadAll() noexcept;
 		virtual void QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
+		virtual void ListenerAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 	};
 }

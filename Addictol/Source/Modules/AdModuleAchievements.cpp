@@ -56,4 +56,9 @@ namespace Addictol
 
 		return true;
 	}
+
+	bool ModuleAchievements::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
 }

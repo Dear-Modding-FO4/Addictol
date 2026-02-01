@@ -8,13 +8,16 @@
 
 namespace Addictol
 {
+	using ModuleListenerType = std::bitset<F4SE::MessagingInterface::kGameDataReady + 1>;
+
 	class Module :
 		public REX::TSingleton<Module>
 	{
 		std::string_view name{};
 		const REX::TOML::Bool<>* option{ nullptr };
+		ModuleListenerType listener_messages;
 	public:
-		Module(const char* a_name, const REX::TOML::Bool<>* a_option = nullptr);
+		Module(const char* a_name, const REX::TOML::Bool<>* a_option = nullptr, ModuleListenerType a_listeners = {});
 		virtual ~Module() = default;
 
 		[[nodiscard]] virtual std::string_view GetName() const noexcept { return name; }
@@ -22,5 +25,7 @@ namespace Addictol
 
 		[[nodiscard]] virtual bool DoQuery() const noexcept = 0;
 		[[nodiscard]] virtual bool DoInstall(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
+		[[nodiscard]] virtual bool DoListener(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
+		[[nodiscard]] virtual bool HasListener(std::uint32_t a_msgType) noexcept;
 	};
 }

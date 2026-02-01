@@ -38,7 +38,7 @@ namespace Addictol
 	}
 
 	ModuleLoadScreen::ModuleLoadScreen() :
-		Module("Module Load Screen", &bPathesLoadScreen)
+		Module("Module Load Screen", &bPathesLoadScreen, { F4SE::MessagingInterface::kGameDataReady })
 	{}
 
 	bool ModuleLoadScreen::DoQuery() const noexcept
@@ -66,6 +66,13 @@ namespace Addictol
 			origDrawUI = (decltype(&DrawUILoadScreen))(REL::ID(386550).address());
 			RELEX::DetourCall(REL::ID(135719).address() + 0x414, (uintptr_t)&DrawUILoadScreen);
 		}
+
+		return true;
+	}
+
+	bool ModuleLoadScreen::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		REX::INFO("" __FUNCTION__ ": Listener");
 
 		return true;
 	}

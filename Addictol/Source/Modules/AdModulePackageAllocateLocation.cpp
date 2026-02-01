@@ -32,4 +32,9 @@ namespace Addictol
 
 		return true;
 	}
+
+	bool ModulePackageAllocateLocation::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
 }

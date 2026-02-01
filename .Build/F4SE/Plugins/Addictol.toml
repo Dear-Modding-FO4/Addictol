@@ -10,3 +10,4 @@ bProfile=true						# Added settings Pref.ini for default .ini, This provides an 
 bInitTints=true						# Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag.
 bLODDistance=true					# Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
 bAchievements=true					# Enables achievements on modded saves.
+bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToActor with a none form.

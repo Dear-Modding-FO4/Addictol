@@ -30,6 +30,9 @@ namespace Addictol
 				plugin->SetAsInstall();
 			}
 		}
+		else
+			// Listener after installed for modules
+			plugin->GetModules().ListenerAllByMessage(a_msg);
 	}
 
 #if SUPPORT_OG
@@ -65,7 +68,7 @@ namespace Addictol
 			REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
 
 			// Update IDs for commonlibf4
-			RE_MERGE::ID::UpdateIDs();
+			//RE_MERGE::ID::UpdateIDs();
 
 			// Register all modules
 			AdRegisterModules();

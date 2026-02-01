@@ -68,8 +68,10 @@ namespace Addictol
 
 	static bool hk_nullsub_C30008() noexcept
 	{
+		// FIXME: No works in OG
 		auto iniDef = (SettingCollectionList*)RE::INISettingCollection::GetSingleton();
 		auto iniPref = (SettingCollectionList*)RE::INIPrefSettingCollection::GetSingleton();
+
 		auto pSettingSrc = iniPref->data;
 
 		do
@@ -115,6 +117,11 @@ namespace Addictol
 			RELEX::DetourCall(Target + 0x3BE, (uintptr_t)&hk_nullsub_C30008);
 		}
 
+		return true;
+	}
+
+	bool ModuleProfile::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
 		return true;
 	}
 }
