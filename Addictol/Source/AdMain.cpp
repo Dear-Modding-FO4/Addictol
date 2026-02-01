@@ -82,7 +82,7 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4
 
         return false;
     }
-
+    
     return true;
 }
 #endif // SUPPORT_OG

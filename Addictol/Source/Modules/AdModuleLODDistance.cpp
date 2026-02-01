@@ -29,15 +29,15 @@ namespace Addictol
 			// NG/AE
 
 			RELEX::WriteSafe(REL::ID(2200804).address(), { 0x31, 0xC0, 0xC3, 0x90 });	// xor eax, eax; ret;
-			RELEX::WriteSafe(REL::ID(2200806).address(), { 0x31, 0xC0, 0xC3, 0x90 });	// xor eax, eax; ret;
+			RELEX::WriteSafe(REL::ID(2200805).address(), { 0x31, 0xC0, 0xC3, 0x90 });	// xor eax, eax; ret;
 			RELEX::WriteSafe(REL::ID(2201047).address(), { 0x31, 0xC0, 0xC3, 0x90 });	// xor eax, eax; ret;
+			RELEX::WriteSafe(REL::ID(2200806).address(), { 0x31, 0xC0, 0xC3, 0x90 });	// xor eax, eax; ret;
 
 			auto Target = REL::ID(2201169).address();
 			RELEX::WriteSafe(Target + 0x6B, { 0xEB, 0x2C, 0x90 });
 			RELEX::WriteSafe(Target + 0xCC, { 0xEB, 0x28, 0x90 });
 			
 			RELEX::WriteSafe(REL::ID(2197513).address() + 0x5B, { 0xEB });
-			RELEX::WriteSafe(REL::ID(2200807).address(), { 0xC3, 0x90 });				// ret;
 		}
 		else
 		{
