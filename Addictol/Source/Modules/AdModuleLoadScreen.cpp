@@ -38,7 +38,7 @@ namespace Addictol
 	}
 
 	ModuleLoadScreen::ModuleLoadScreen() :
-		Module("Module Load Screen", &bPathesLoadScreen, { F4SE::MessagingInterface::kGameDataReady })
+		Module("Module Load Screen", &bPathesLoadScreen)
 	{}
 
 	bool ModuleLoadScreen::DoQuery() const noexcept
@@ -72,8 +72,6 @@ namespace Addictol
 
 	bool ModuleLoadScreen::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REX::INFO("" __FUNCTION__ ": Listener");
-
 		return true;
 	}
 }

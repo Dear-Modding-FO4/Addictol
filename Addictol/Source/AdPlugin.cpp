@@ -32,7 +32,7 @@ namespace Addictol
 		}
 		else
 			// Listener after installed for modules
-			plugin->GetModules().ListenerAllByMessage(a_msg);
+			plugin->GetModules().ListenerPreloadAllByMessage(a_msg);
 	}
 
 #if SUPPORT_OG

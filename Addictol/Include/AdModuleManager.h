@@ -43,8 +43,8 @@ namespace Addictol
 
 		virtual void QueryPreloadAll() noexcept;
 		virtual void InstallPreloadAll() noexcept;
+		virtual void ListenerPreloadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
-		virtual void ListenerAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 	};
 }
