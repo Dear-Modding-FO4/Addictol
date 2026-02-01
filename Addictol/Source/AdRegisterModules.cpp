@@ -6,6 +6,7 @@
 #include <Modules\AdModuleProfile.h>
 #include <Modules\AdModuleLoadScreen.h>
 #include <Modules\AdModuleAchievements.h>
+#include <Modules\AdModuleLODDistance.h>
 
 void AdRegisterModules()
 {
@@ -22,6 +23,7 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModuleProfile());
 	modules.Register(new Addictol::ModuleLoadScreen());
 	modules.Register(new Addictol::ModuleAchievements());
+	modules.Register(new Addictol::ModuleLODDistance());
 
 	// Registers other patches
 
