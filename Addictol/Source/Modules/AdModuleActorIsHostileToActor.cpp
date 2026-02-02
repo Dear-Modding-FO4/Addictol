@@ -12,15 +12,12 @@ namespace Addictol
 	{
 		if (!a_actor)
 		{
-			// FIXME: CTD OG a_vm is nullptr (start game)
 			auto func = RELEX::GetTFunctionByID<decltype(RE::GameScript::LogFormError)>(2251028, 2251028, 1081933);
 			func(a_actor, "Cannot call IsHostileToActor with a None actor", a_vm, a_stackID, RE::BSScript::ErrorLogger::Severity::kError);
 			return false;
 		}
 		else
-		{
 			return a_self->GetHostileToActor(a_actor);
-		}
 	}
 
 	ModuleActorIsHostileToActor::ModuleActorIsHostileToActor() :
@@ -50,7 +47,9 @@ namespace Addictol
 		else
 		{
 			// OG
-			Target = REL::ID(1432894);
+			// 
+			// Perchik71: fixed 1432894 to 1022223
+			Target = REL::ID(1022223);
 		}
 
 		REL::WriteSafeFill(Target.address(), REL::INT3, Size);
