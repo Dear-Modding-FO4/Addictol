@@ -54,7 +54,7 @@ namespace Addictol
 			// Sets return always 1 or true.		
 			RELEX::WriteSafe(REL::ID(1088335).address(), { 0xB0, 0x01, 0xC3, 0x90, 0x90 });
 			// Skipping the entire section, can't delete the pointer, otherwise will go back to where started.
-			RELEX::WriteSafe(REL::ID(1264833).address() + 0xF3, { 0xE9, 0x9C, 0x00, 0x00, 0x00, 0x90 });
+			RELEX::WriteSafe(REL::ID(1264833).address() + 0xF9, { 0xE9, 0x9C, 0x00, 0x00, 0x00, 0x90 });
 		}
 
 		return true;
