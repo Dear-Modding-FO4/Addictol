@@ -1,9 +1,21 @@
 #include <Modules\AdModulePackageAllocateLocation.h>
 #include <AdUtils.h>
+#include <RE\B\BGSPrimitive.h>
+#include <RE\E\ExtraDataList.h>
 
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesPackageAllocateLocation{ "Fixes", "bPackageAllocateLocation", true };
+
+	struct GetPrimitive
+	{
+		static RE::BGSPrimitive* ExtraDataList_GetPrimitive(const RE::ExtraDataList* a_this)
+		{
+			return a_this ? func(a_this) : nullptr;
+		}
+
+		static inline REL::Relocation<decltype(ExtraDataList_GetPrimitive)> func;
+	};
 
 	ModulePackageAllocateLocation::ModulePackageAllocateLocation() :
 		Module("Module Package Allocate Location", &bPathesPackageAllocateLocation)
@@ -11,7 +23,7 @@ namespace Addictol
 
 	bool ModulePackageAllocateLocation::DoQuery() const noexcept
 	{
-		return !RELEX::IsRuntimeOG() /*true if supported OG*/;
+		return true;
 	}
 
 	bool ModulePackageAllocateLocation::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
@@ -25,8 +37,10 @@ namespace Addictol
 		else
 		{
 			// OG
+			REL::Relocation<std::uintptr_t> Target{ REL::ID(1248203), 0x141 };
 
-			// TODO: Task TheGamersX20 - buffout 4 orig
+			auto& trampoline = REL::GetTrampoline();
+			GetPrimitive::func = trampoline.write_call<5>(Target.address(), GetPrimitive::ExtraDataList_GetPrimitive);
 		}
 
 		return true;

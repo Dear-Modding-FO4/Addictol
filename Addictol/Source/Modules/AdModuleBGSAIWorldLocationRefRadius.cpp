@@ -1,6 +1,5 @@
 #include <Modules\AdModuleBGSAIWorldLocationRefRadius.h>
 #include <AdUtils.h>
-#include <AdAssert.h>
 #include <xbyak/xbyak.h>
 
 namespace Addictol
