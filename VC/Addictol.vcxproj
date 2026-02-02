@@ -26,6 +26,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -46,6 +47,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
   </ItemGroup>

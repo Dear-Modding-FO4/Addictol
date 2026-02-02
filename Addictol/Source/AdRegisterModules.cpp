@@ -11,6 +11,7 @@
 #include <Modules\AdModuleActorIsHostileToActor.h>
 #include <Modules\AdModuleFacegen.h>
 #include <Modules\AdModuleBGSAIWorldLocationRefRadius.h>
+#include <Modules\AdModuleSafeExit.h>
 
 void AdRegisterModules()
 {
@@ -32,6 +33,7 @@ void AdRegisterModules()
 	static auto sModuleActorIsHostileToActor		= std::make_shared<Addictol::ModuleActorIsHostileToActor>();
 	static auto sModuleFacegen						= std::make_shared<Addictol::ModuleFacegen>();
 	static auto sModuleBGSAIWorldLocationRefRadius	= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
+	static auto sModuleSafeExit						= std::make_shared<Addictol::ModuleSafeExit>();
 
 	// Registers preload patches
 	modules.Register(sModuleThreads);
@@ -46,8 +48,8 @@ void AdRegisterModules()
 	modules.Register(sModuleActorIsHostileToActor);
 	modules.Register(sModuleFacegen);
 	modules.Register(sModuleBGSAIWorldLocationRefRadius);
+	modules.Register(sModuleSafeExit);
 
 	// Registers other patches
-
 	modules.Register(sModuleFacegen, Addictol::ModuleManager::Type::kGameDataReady);
 }
