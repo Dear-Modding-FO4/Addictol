@@ -18,7 +18,7 @@ namespace Addictol
 		"kGameDataReady"
 	};
 
-	bool ModuleManager::SafeQueryMod(const Module* a_mod)
+	bool ModuleManager::SafeQueryMod(const ModulePtr& a_mod)
 	{
 		__try
 		{
@@ -30,7 +30,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::SafeInstallMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg)
+	bool ModuleManager::SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg)
 	{
 		__try
 		{
@@ -42,7 +42,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::SafeListenerMod(Module* a_mod, F4SE::MessagingInterface::Message* a_msg)
+	bool ModuleManager::SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg)
 	{
 		__try
 		{
@@ -54,7 +54,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::Register(Module* a_mod, Type a_type) noexcept
+	bool ModuleManager::Register(const ModulePtr& a_mod, Type a_type) noexcept
 	{
 		if (!a_mod)
 		{
@@ -103,7 +103,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::Unregister(const Module* a_mod, Type a_type) noexcept
+	bool ModuleManager::Unregister(const ModulePtr& a_mod, Type a_type) noexcept
 	{
 		if (!a_mod)
 		{
@@ -207,11 +207,11 @@ namespace Addictol
 
 	void ModuleManager::QueryPreloadAll() noexcept
 	{
-		std::vector<const Module*> needRemovedList;
+		std::vector<ModulePtr> needRemovedList;
 
 		for (auto it = modules.begin(); it != modules.end(); it++)
 		{
-			auto mod = it->second;
+			auto& mod = it->second;
 			if (!mod)
 			{
 				REX::ERROR("" __FUNCTION__ ": mod is nullptr");
@@ -238,7 +238,7 @@ namespace Addictol
 			}
 		}
 
-		for (auto m : needRemovedList)
+		for (auto& m : needRemovedList)
 			Unregister(m);
 	}
 
@@ -246,7 +246,7 @@ namespace Addictol
 	{
 		for (auto& it : modules)
 		{
-			auto mod = it.second;
+			auto& mod = it.second;
 			if(!SafeInstallMod(mod))
 				REX::ERROR("Module \"{}\": fatal installation", mod->GetName());
 			else
@@ -261,7 +261,7 @@ namespace Addictol
 
 		for (auto& it : modules)
 		{
-			auto mod = it.second;
+			auto& mod = it.second;
 			if (mod->HasListener(a_msg->type))
 				if (!SafeListenerMod(mod, a_msg))
 					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})", mod->GetName(), g_msgName[a_msg->type]);
@@ -278,11 +278,11 @@ namespace Addictol
 			return;
 
 		auto& modules_by_type = it->second;
-		std::vector<const Module*> needRemovedList;
+		std::vector<ModulePtr> needRemovedList;
 
 		for (auto it = modules_by_type.begin(); it != modules_by_type.end(); it++)
 		{
-			auto mod = it->second;
+			auto& mod = it->second;
 			if (!mod)
 			{
 				REX::ERROR("" __FUNCTION__ ": mod is nullptr");
@@ -310,7 +310,7 @@ namespace Addictol
 			}
 		}
 
-		for (auto m : needRemovedList)
+		for (auto& m : needRemovedList)
 			Unregister(m, (Type)(a_msg->type + 1));
 	}
 
@@ -326,7 +326,7 @@ namespace Addictol
 		auto& modules_by_type = it->second;
 		for (auto& it : modules_by_type)
 		{
-			auto mod = it.second;
+			auto& mod = it.second;
 			if (!SafeInstallMod(mod, a_msg))
 				REX::ERROR("Module \"{}\": fatal installation by message {}", mod->GetName(), g_msgName[a_msg->type]);
 			else
