@@ -326,7 +326,7 @@ namespace Addictol
 			REX::WARN("NPC \"{}\" (0x{:08X}) don't have facegen", fullName, a_NPC->formID);
 		}
 
-		ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) have facegen", a_NPC->GetFullName(), a_NPC->formID);
+		// ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) have facegen", a_NPC->GetFullName(), a_NPC->formID);
 
 		return result;
 	}
