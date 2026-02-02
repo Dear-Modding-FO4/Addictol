@@ -3,7 +3,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesSafeExit{ "Patches", "bSafeExit", true };
+	static REX::TOML::Bool<> bPathesSafeExit{ "Fixes", "bSafeExit", true };
 
 	inline void Shutdown()
 	{

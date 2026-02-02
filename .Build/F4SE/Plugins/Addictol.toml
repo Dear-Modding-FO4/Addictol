@@ -15,6 +15,7 @@ bInitTints=true						# Removes the block on loading NPCs tints of the Fallout4.e
 bLODDistance=true					# Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
 bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToActor with a none form.
 bBGSAIWorldLocationRefRadius=true	# Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
+bSafeExit=true                      # Fixes crashes related to exiting the game that can be caused erroneously by F4SE plugin hooks.
 
 [Additional]
 bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
