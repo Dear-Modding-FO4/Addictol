@@ -12,6 +12,7 @@
 #include <Modules\AdModuleFacegen.h>
 #include <Modules\AdModuleBGSAIWorldLocationRefRadius.h>
 #include <Modules\AdModuleSafeExit.h>
+#include <Modules\AdModuleUnalignedLoad.h>
 
 void AdRegisterModules()
 {
@@ -34,6 +35,7 @@ void AdRegisterModules()
 	static auto sModuleFacegen						= std::make_shared<Addictol::ModuleFacegen>();
 	static auto sModuleBGSAIWorldLocationRefRadius	= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
 	static auto sModuleSafeExit						= std::make_shared<Addictol::ModuleSafeExit>();
+	static auto sModuleUnalignedLoad				= std::make_shared<Addictol::ModuleUnalignedLoad>();
 
 	// Registers preload patches
 	modules.Register(sModuleThreads);
@@ -49,6 +51,7 @@ void AdRegisterModules()
 	modules.Register(sModuleFacegen);
 	modules.Register(sModuleBGSAIWorldLocationRefRadius);
 	modules.Register(sModuleSafeExit);
+	modules.Register(sModuleUnalignedLoad);
 
 	// Registers other patches
 	modules.Register(sModuleFacegen, Addictol::ModuleManager::Type::kGameDataReady);

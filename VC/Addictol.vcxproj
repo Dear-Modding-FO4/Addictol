@@ -28,6 +28,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
@@ -49,6 +50,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
   </ItemGroup>
   <ItemGroup>
