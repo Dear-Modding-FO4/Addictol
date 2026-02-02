@@ -150,7 +150,7 @@ namespace Addictol
 		SI_Error rc = ini.LoadFile(FILE_NAME);
 		if (rc != SI_OK)
 		{
-			REX::WARN("[FACEGEN] Ñan't find the exception file \"{}\"", FILE_NAME);
+			REX::WARN("[FACEGEN] Can't find the exception file \"{}\"", FILE_NAME);
 			return;
 		}
 

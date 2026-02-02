@@ -3,6 +3,21 @@
 
 namespace Addictol
 {
+	std::array<std::string_view, 11> g_msgName
+	{
+		"kPostLoad",
+		"kPostPostLoad",
+		"kPreLoadGame",
+		"kPostLoadGame",
+		"kPreSaveGame",
+		"kPostSaveGame",
+		"kDeleteGame",
+		"kInputLoaded",
+		"kNewGame",
+		"kGameLoaded",
+		"kGameDataReady"
+	};
+
 	bool ModuleManager::SafeQueryMod(const Module* a_mod)
 	{
 		__try
@@ -121,7 +136,7 @@ namespace Addictol
 			auto it = rl_modules.find(msg_id);
 			if (it == rl_modules.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": No list of modules of this type \"{}\" has been found.", msg_id);
+				REX::ERROR("" __FUNCTION__ ": No list of modules of this type \"{}\" has been found.", g_msgName[msg_id]);
 				return false;
 			}
 
@@ -249,7 +264,7 @@ namespace Addictol
 			auto mod = it.second;
 			if (mod->HasListener(a_msg->type))
 				if (!SafeListenerMod(mod, a_msg))
-					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})", mod->GetName(), a_msg->type);
+					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})", mod->GetName(), g_msgName[a_msg->type]);
 		}
 	}
 
@@ -279,17 +294,18 @@ namespace Addictol
 			{
 				if (!optionName->GetValue())
 				{
-					REX::INFO("Module \"{}\": disabled", mod->GetName());
+					REX::INFO("Module \"{}\": disabled by message {}", mod->GetName(), g_msgName[a_msg->type]);
 					needRemovedList.emplace_back(mod);
 					continue;
 				}
 				else
-					REX::INFO("Module \"{}\": enabled", mod->GetName());
+					REX::INFO("Module \"{}\": enabled by message {}", mod->GetName(), g_msgName[a_msg->type]);
 			}
 
 			if (!SafeQueryMod(mod))
 			{
-				REX::ERROR("Module \"{}\": failed verification, the game version may not be supported", mod->GetName());
+				REX::ERROR("Module \"{}\": failed verification by message {}, the game version may not be supported",
+					mod->GetName(), g_msgName[a_msg->type]);
 				needRemovedList.emplace_back(mod);
 			}
 		}
@@ -312,9 +328,9 @@ namespace Addictol
 		{
 			auto mod = it.second;
 			if (!SafeInstallMod(mod, a_msg))
-				REX::ERROR("Module \"{}\": fatal installation", mod->GetName());
+				REX::ERROR("Module \"{}\": fatal installation by message {}", mod->GetName(), g_msgName[a_msg->type]);
 			else
-				REX::INFO("Module \"{}\": installed", mod->GetName());
+				REX::INFO("Module \"{}\": installed by message {}", mod->GetName(), g_msgName[a_msg->type]);
 		}
 	}
 }

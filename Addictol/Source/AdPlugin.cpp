@@ -63,13 +63,13 @@ namespace Addictol
 			F4SE::Init(a_f4se);
 #endif // SUPPORT_OG
 
-			// Get the Trampoline and Allocate
-			auto& trampoline = REL::GetTrampoline();
-			trampoline.create(1024);
-
 			auto game_ver = a_f4se->RuntimeVersion();
 			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
 			REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
+
+			// Get the Trampoline and Allocate
+			auto& trampoline = REL::GetTrampoline();
+			trampoline.create(1024);
 
 			// Register all modules
 			AdRegisterModules();
