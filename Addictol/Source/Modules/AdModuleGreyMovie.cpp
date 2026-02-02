@@ -25,7 +25,7 @@ namespace Addictol
 
 	bool ModuleGreyMovie::DoQuery() const noexcept
 	{
-		return !RELEX::IsRuntimeOG() /*true if supported OG*/;
+		return true;
 	}
 
 	bool ModuleGreyMovie::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
@@ -54,8 +54,9 @@ namespace Addictol
 		else
 		{
 			// OG
-
-			// TODO: Task TheGamersX20 - buffout 4 orig
+			const REL::Relocation<std::uintptr_t> target{ REL::ID(1526234), REL::Offset(0x216) };
+			auto& trampoline = REL::GetTrampoline();
+			trampoline.write_call<6>(target.address(), HKGfxSetBGAlpha);
 		}
 
 		return true;
