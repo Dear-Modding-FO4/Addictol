@@ -17,7 +17,11 @@ namespace Addictol
 			return false;
 		}
 		else
-			return a_self->GetHostileToActor(a_actor);
+		{
+			using func_t = decltype(&RE::Actor::GetHostileToActor);
+			static REL::Relocation<func_t> func{ RELEX::IsRuntimeOG() ? REL::ID(1148686) : REL::ID(2229968) };
+			return func(a_self, a_actor);
+		}
 	}
 
 	ModuleActorIsHostileToActor::ModuleActorIsHostileToActor() :
@@ -47,8 +51,6 @@ namespace Addictol
 		else
 		{
 			// OG
-			// 
-			// Perchik71: fixed 1432894 to 1022223
 			Target = REL::ID(1022223);
 		}
 
