@@ -54,24 +54,6 @@ namespace Addictol
 	};
 	static_assert(sizeof(ConsoleLog) == 0x20);
 
-	namespace Console
-	{
-		static uintptr_t Manager{ 0 };
-
-		static void (*PrintV)(uintptr_t a_this, const char* a_fmt, ...);
-		static void (*Print)(uintptr_t a_this, const char* a_msg);
-		static void PrintFmt(const char* fmt, ...) noexcept
-		{
-			if (Manager)
-			{
-				va_list args;
-				va_start(args, fmt);
-				PrintV(Manager, fmt, args);
-				va_end(args);
-			}
-		}
-	}
-
 	namespace BSTextureDB
 	{
 		// Working buried function.
@@ -230,15 +212,12 @@ namespace Addictol
 	bool FacegenSystem::Init() noexcept
 	{
 		facegenExceptionFormIDs = facegenPrimaryExceptionFormIDs;
-		Console::Manager = (uintptr_t)RELEX::GetTSingletonByID<uintptr_t>(4797437, 2690148, 689441);
 
 		if (!RELEX::IsRuntimeOG())
 		{
 			uintptr_t Offset = REL::ID(2209307).address() + 0x483;
 			BSTextureDB::FacegenPathPrintf = REL::ID(2207434).address();
 			BSTextureDB::CreateEntryID = REL::ID(2274880).address();
-			*(uintptr_t*)&Console::Print = REL::ID(2248593).address();
-			*(uintptr_t*)&Console::PrintV = REL::ID(2248592).address();
 
 			// Remove useless stuff.
 			RELEX::WriteSafeNop(Offset, 0x1C);
@@ -262,8 +241,6 @@ namespace Addictol
 			uintptr_t Offset = REL::ID(1211128).address() + 0x350;
 			BSTextureDB::FacegenPathPrintf = REL::ID(1464710).address();
 			BSTextureDB::CreateEntryID = REL::ID(421736).address();
-			*(uintptr_t*)&Console::Print = REL::ID(764).address();
-			*(uintptr_t*)&Console::PrintV = REL::ID(799546).address();
 
 			// Remove useless stuff.
 			RELEX::WriteSafeNop(Offset, 0x1F);
