@@ -67,9 +67,6 @@ namespace Addictol
 			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
 			REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
 
-			// Update IDs for commonlibf4
-			//RE_MERGE::ID::UpdateIDs();
-
 			// Register all modules
 			AdRegisterModules();
 

@@ -1,8 +1,6 @@
 #include <Modules\AdModuleProfile.h>
 #include <AdUtils.h>
 #include <RE\S\Setting.h>
-#include <REL\REL.h>
-#include <RE\IDs.h>
 
 #define strcasecmp _stricmp
 

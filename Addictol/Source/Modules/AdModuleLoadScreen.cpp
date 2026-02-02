@@ -1,7 +1,5 @@
 #include <Modules\AdModuleLoadScreen.h>
 #include <AdUtils.h>
-#include <REL\REL.h>
-#include <REX\REX.h>
 #include <RE\B\BSGraphics.h>
 
 namespace Addictol

@@ -1,6 +1,5 @@
 #include <Modules\AdModulePackageAllocateLocation.h>
 #include <AdUtils.h>
-#include <REL\REL.h>
 
 namespace Addictol
 {

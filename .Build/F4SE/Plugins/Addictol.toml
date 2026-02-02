@@ -6,6 +6,7 @@ bLibDeflate=true					# Replace old zlib decompression code with optimized libdef
 bLoadScreen=true					# Black loading screen.
 bProfile=true						# Added settings Pref.ini for default .ini, This provides an opportunity mods change settings Pref.ini.
 bAchievements=true					# Enables achievements on modded saves.
+bFacegen=true						# Enables facegen support and removes freezes.
 
 [Fixes]
 bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
@@ -13,3 +14,6 @@ bPackageAllocateLocation=true		# Fixes a crash when allocating the location for 
 bInitTints=true						# Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag.
 bLODDistance=true					# Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
 bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToActor with a none form.
+
+[Additional]
+bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).

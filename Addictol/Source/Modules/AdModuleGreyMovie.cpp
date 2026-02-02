@@ -3,7 +3,6 @@
 #include <Scaleform\G\GFx_ASMovieRootBase.h>
 #include <Scaleform\G\GFx_Value.h>
 #include <Scaleform\G\GFx_Movie.h>
-#include <REL\REL.h>
 
 namespace Addictol
 {

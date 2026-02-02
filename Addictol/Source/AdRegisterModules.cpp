@@ -9,6 +9,7 @@
 #include <Modules\AdModuleLODDistance.h>
 #include <Modules\AdModuleInitTints.h>
 #include <Modules\AdModuleActorIsHostileToActor.h>
+#include <Modules\AdModuleFacegen.h>
 
 void AdRegisterModules()
 {
@@ -28,8 +29,9 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModuleLODDistance());
 	modules.Register(new Addictol::ModuleInitTints());
 	modules.Register(new Addictol::ModuleActorIsHostileToActor());
+	modules.Register(new Addictol::ModuleFacegen());
 
 	// Registers other patches
 
-	// TODO
+	modules.Register(new Addictol::ModuleFacegen(), Addictol::ModuleManager::Type::kGameDataReady);
 }

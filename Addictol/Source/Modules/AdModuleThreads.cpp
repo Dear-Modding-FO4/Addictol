@@ -1,5 +1,4 @@
 #include <Modules\AdModuleThreads.h>
-#include <REL\REL.h>
 #include <AdUtils.h>
 #include <algorithm>
 #include <windows.h>

@@ -3,8 +3,7 @@
 #include <string>
 #include <initializer_list>
 #include <stdint.h>
-#include <REL\Relocation.h>
-#include <REL\ID.h>
+#include <F4SE\Impl\PCH.h>
 
 std::string AdGetRuntimePath() noexcept;
 std::string AdGetRuntimeDirectory() noexcept;
@@ -13,7 +12,7 @@ namespace RELEX
 {
 	class ScopeLock
 	{
-		bool _locked;
+		bool _unlocked;
 		uint32_t _old;
 		uintptr_t _target, _size;
 
@@ -24,11 +23,25 @@ namespace RELEX
 		ScopeLock(void* a_target, uintptr_t a_size) noexcept;
 		virtual ~ScopeLock() noexcept;
 
-		[[nodiscard]] inline virtual bool HasUnlocked() const noexcept(true) { return _locked; }
+		[[nodiscard]] inline virtual bool HasUnlocked() const noexcept(true) { return _unlocked; }
 	};
 
+	void Write(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept;
+	void WriteNop(uintptr_t a_target, size_t a_size) noexcept;
 	void WriteSafe(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept;
 	void WriteSafeNop(uintptr_t a_target, size_t a_size) noexcept;
+
+	template<typename T>
+	inline void WriteT(uintptr_t a_target, T& Data) noexcept
+	{
+		Write(a_target, reinterpret_cast<uint8_t*>(&Data), sizeof(T));
+	}
+
+	template<typename T>
+	inline void WriteSafeT(uintptr_t a_target, T& Data) noexcept
+	{
+		WriteSafe(a_target, reinterpret_cast<uint8_t*>(&Data), sizeof(T));
+	}
 
 	[[nodiscard]] bool IsRuntimeOG() noexcept;
 	[[nodiscard]] bool IsRuntimeNG() noexcept;
@@ -36,13 +49,25 @@ namespace RELEX
 
 	uintptr_t DetourJump(uintptr_t a_target, uintptr_t a_function) noexcept;
 	uintptr_t DetourCall(uintptr_t a_target, uintptr_t a_function) noexcept;
+	uintptr_t DetourVTable(uintptr_t a_target, uintptr_t a_function, uint32_t a_index) noexcept;
+	uintptr_t DetourIAT(const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
+	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
+	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
+	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
+
+	// Redirects a class member virtual function (__thiscall) to another
+	template<typename T>
+	[[nodiscard]] inline static uintptr_t DetourClassVTable(uintptr_t a_target, T a_function, uint32_t a_index) noexcept
+	{
+		return DetourVTable(a_target, *(uintptr_t*)&a_function, a_index);
+	}
 
 	void UpdateID(const REL::ID& a_id, uintptr_t a_num) noexcept;
 
 	template<typename T>
-	[[nodiscard]] static T* GetTSingletonByID(const REL::ID& a_id) noexcept
+	[[nodiscard]] static T* GetTSingletonByID(uintptr_t a_id) noexcept
 	{
-		static REL::Relocation<T**> singleton{ a_id };
+		static REL::Relocation<T**> singleton{ REL::ID{ a_id } };
 		return *singleton;
 	}
 
@@ -54,9 +79,9 @@ namespace RELEX
 	}
 
 	template<typename T>
-	[[nodiscard]] static T* GetTFunctionByID(const REL::ID& a_id) noexcept
+	[[nodiscard]] static T* GetTFunctionByID(uintptr_t a_id) noexcept
 	{
-		static REL::Relocation<T*> singleton{ a_id };
+		static REL::Relocation<T*> singleton{ REL::ID{ a_id } };
 		return singleton.get();
 	}
 
@@ -167,4 +192,5 @@ namespace Addictol
 	void SwapDouble(double* in) noexcept;
 	bool IsBigEndian() noexcept;
 	bool IsLittleEndian() noexcept;
+	std::string& Trim(std::string& String) noexcept;
 }

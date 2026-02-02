@@ -1,7 +1,6 @@
 #include <Modules\AdModuleLibDeflate.h>
 #include <AdUtils.h>
 #include <AdAssert.h>
-#include <REL\REL.h>
 #include <libdeflate\libdeflate.h>
 
 namespace Addictol

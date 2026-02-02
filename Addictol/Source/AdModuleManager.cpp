@@ -289,7 +289,7 @@ namespace Addictol
 
 			if (!SafeQueryMod(mod))
 			{
-				REX::ERROR("Module \"{}\": failed verification", mod->GetName());
+				REX::ERROR("Module \"{}\": failed verification, the game version may not be supported", mod->GetName());
 				needRemovedList.emplace_back(mod);
 			}
 		}
