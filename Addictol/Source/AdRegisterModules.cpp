@@ -10,6 +10,7 @@
 #include <Modules\AdModuleInitTints.h>
 #include <Modules\AdModuleActorIsHostileToActor.h>
 #include <Modules\AdModuleFacegen.h>
+#include <Modules\AdModuleBGSAIWorldLocationRefRadius.h>
 
 void AdRegisterModules()
 {
@@ -30,6 +31,7 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModuleInitTints());
 	modules.Register(new Addictol::ModuleActorIsHostileToActor());
 	modules.Register(new Addictol::ModuleFacegen());
+	modules.Register(new Addictol::ModuleBGSAIWorldLocationRefRadius());
 
 	// Registers other patches
 
