@@ -1,0 +1,18 @@
+#pragma once
+
+#include <AdModule.h>
+
+namespace Addictol
+{
+	class ModuleBGSAIWorldLocationRefRadius :
+		public Module
+	{
+	public:
+		ModuleBGSAIWorldLocationRefRadius();
+		virtual ~ModuleBGSAIWorldLocationRefRadius() = default;
+
+		[[nodiscard]] virtual bool DoQuery() const noexcept override;
+		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
+		[[nodiscard]] virtual bool DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
+	};
+}

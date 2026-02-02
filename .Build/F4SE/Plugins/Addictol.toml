@@ -13,3 +13,4 @@ bPackageAllocateLocation=true		# Fixes a crash when allocating the location for 
 bInitTints=true						# Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag.
 bLODDistance=true					# Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
 bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToActor with a none form.
+bBGSAIWorldLocationRefRadius=true   # Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.

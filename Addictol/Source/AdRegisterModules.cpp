@@ -9,6 +9,7 @@
 #include <Modules\AdModuleLODDistance.h>
 #include <Modules\AdModuleInitTints.h>
 #include <Modules\AdModuleActorIsHostileToActor.h>
+#include <Modules\AdModuleBGSAIWorldLocationRefRadius.h>
 
 void AdRegisterModules()
 {
@@ -16,6 +17,10 @@ void AdRegisterModules()
 	if (!plugin) return;
 
 	auto& modules = plugin->GetModules();
+
+	// Get the Trampoline and Allocate
+	auto& trampoline = REL::GetTrampoline();
+	trampoline.create(128);
 
 	// Registers preload patches
 	modules.Register(new Addictol::ModuleThreads());
@@ -28,6 +33,7 @@ void AdRegisterModules()
 	modules.Register(new Addictol::ModuleLODDistance());
 	modules.Register(new Addictol::ModuleInitTints());
 	modules.Register(new Addictol::ModuleActorIsHostileToActor());
+	modules.Register(new Addictol::ModuleBGSAIWorldLocationRefRadius());
 
 	// Registers other patches
 
