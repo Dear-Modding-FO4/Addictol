@@ -5,10 +5,10 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesLODDistance{ "Patches", "bLODDistance", true };
+	static REX::TOML::Bool<> bPathesInitTints{ "Fixes", "bInitTints", true };
 
 	ModuleInitTints::ModuleInitTints() :
-		Module("Module Init Tints", &bPathesLODDistance)
+		Module("Module Init Tints", &bPathesInitTints)
 	{}
 
 	bool ModuleInitTints::DoQuery() const noexcept

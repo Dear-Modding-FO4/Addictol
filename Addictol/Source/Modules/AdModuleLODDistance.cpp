@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesLODDistance{ "Patches", "bLODDistance", true };
+	static REX::TOML::Bool<> bPathesLODDistance{ "Fixes", "bLODDistance", true };
 
 	ModuleLODDistance::ModuleLODDistance() :
 		Module("Module LOD Distance", &bPathesLODDistance)

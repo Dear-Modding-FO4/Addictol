@@ -2,12 +2,14 @@
 
 [Patches]
 bThreads=true						# All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores.
-bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
-bPackageAllocateLocation=true		# Fixes a crash when allocating the location for a package.
 bLibDeflate=true					# Replace old zlib decompression code with optimized libdeflate https://github.com/ebiggers/libdeflate.
 bLoadScreen=true					# Black loading screen.
 bProfile=true						# Added settings Pref.ini for default .ini, This provides an opportunity mods change settings Pref.ini.
+bAchievements=true					# Enables achievements on modded saves.
+
+[Fixes]
+bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
+bPackageAllocateLocation=true		# Fixes a crash when allocating the location for a package.
 bInitTints=true						# Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag.
 bLODDistance=true					# Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
-bAchievements=true					# Enables achievements on modded saves.
 bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToActor with a none form.

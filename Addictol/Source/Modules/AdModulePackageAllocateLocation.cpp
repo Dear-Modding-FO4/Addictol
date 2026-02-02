@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesPackageAllocateLocation{ "Patches", "bPackageAllocateLocation", true };
+	static REX::TOML::Bool<> bPathesPackageAllocateLocation{ "Fixes", "bPackageAllocateLocation", true };
 
 	ModulePackageAllocateLocation::ModulePackageAllocateLocation() :
 		Module("Module Package Allocate Location", &bPathesPackageAllocateLocation)
