@@ -17,6 +17,7 @@ bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToAct
 bBGSAIWorldLocationRefRadius=true	# Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
 bSafeExit=true                      # Fixes crashes related to exiting the game that can be caused erroneously by F4SE plugin hooks.
 bUnalignedLoad=true                 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
+bCellInit=true                      # Fixes a crash where a form does not get converted to a form pointer on unloaded cells.
 
 [Additional]
 bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
