@@ -68,8 +68,8 @@ namespace Addictol
 
 	static bool hk_nullsub_C30008() noexcept
 	{
-		auto iniDef = (SettingCollectionList*)RELEX::GetTSingletonByID<RE::INISettingCollection>(2704108, 2704108, 791183);
-		auto iniPref = (SettingCollectionList*)RELEX::GetTSingletonByID<RE::INIPrefSettingCollection>(2703234, 2703234, 767844);
+		auto iniDef = (SettingCollectionList*)RE::INISettingCollection::GetSingleton();
+		auto iniPref = (SettingCollectionList*)RE::INIPrefSettingCollection::GetSingleton();
 		auto pSettingSrc = iniPref->data;
 
 		do
