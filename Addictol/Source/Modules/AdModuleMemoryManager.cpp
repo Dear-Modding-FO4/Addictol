@@ -80,13 +80,16 @@ namespace Addictol
 	{
 		using tuple_t = std::tuple<uint64_t, void*>;
 
+#if 0
 		bool tbb_mode = !strcasecmp(bAdditionalAllocatorType.GetValue().c_str(), "tbb");
+#endif
 
 		if (RELEX::IsRuntimeOG())
 		{
 			RELEX::WriteSafe(REL::ID(597736).address(), { 0xC3, 0x90 });
 			*(std::uint32_t*)REL::ID(1570354).address() = 2;
 
+#if 0
 			if (tbb_mode)
 			{
 				const std::array MMPatch
@@ -101,6 +104,7 @@ namespace Addictol
 					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
 			}
 			else
+#endif
 			{
 				const std::array MMPatch
 				{
@@ -119,6 +123,7 @@ namespace Addictol
 			RELEX::WriteSafe(REL::ID(2267875).address(), { 0xC3, 0x90 });
 			*(std::uint32_t*)REL::ID(RELEX::IsRuntimeAE() ? 4807763 : 2688723).address() = 2;
 
+#if 0
 			if (tbb_mode)
 			{
 				const std::array MMPatch
@@ -133,6 +138,7 @@ namespace Addictol
 					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
 			}
 			else
+#endif
 			{
 				const std::array MMPatch
 				{
