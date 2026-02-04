@@ -48,3 +48,5 @@
 *.vcxproj.user
 /.LinkConf
 /.Lib
+/Depends/vmm/.vs/vmm
+/Depends/vmm/x64/MemoryManager/Debug/microsoft/STL

@@ -70,6 +70,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -135,6 +138,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h">
       <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdAllocator.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
