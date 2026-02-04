@@ -98,7 +98,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>

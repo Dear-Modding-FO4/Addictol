@@ -124,7 +124,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_LIB;FMT_UNICODE=0;NORASTEROPS;NOGDI;NOMINMAX;SPDLOG_COMPILED_LIB;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;COMMONLIB_OPTION_TOML;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_XBYAK;XBYAK_NO_OP_NAMES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;FMT_UNICODE=0;NORASTEROPS;NOGDI;NOMINMAX;SPDLOG_COMPILED_LIB;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;COMMONLIB_OPTION_TOML;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_XBYAK;XBYAK_NO_OP_NAMES;COMMONLIB_RUNTIMECOUNT=3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
