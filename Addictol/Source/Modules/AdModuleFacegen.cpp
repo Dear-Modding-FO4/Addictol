@@ -21,39 +21,6 @@ namespace Addictol
 
 	static bool __stdcall CanUsePreprocessingHead(RE::TESNPC* NPC) noexcept;
 
-	class ConsoleLog :
-		public RE::ConsoleLog
-	{
-	public:
-		[[nodiscard]] static ConsoleLog* GetSingleton() noexcept
-		{
-			return RELEX::GetTSingletonByID<ConsoleLog>(4797437, 2690148, 689441);
-		}
-
-		void AddString(char const* a_str) noexcept
-		{
-			auto func = RELEX::GetTFunctionByID<decltype(&ConsoleLog::AddString)>(2248593, 2248593, 764);
-			RELEX::FastCall<void>((uintptr_t)func, this, a_str);
-		}
-
-		// std::printf rules, no compile time checking
-		void Print(const char* a_fmt, std::va_list a_args) noexcept
-		{
-			auto func = RELEX::GetTFunctionByID<decltype(&ConsoleLog::Print)>(2248592, 2248592, 799546);
-			RELEX::FastCall<void>((uintptr_t)func, this, a_fmt, a_args);
-		}
-
-		// std::format rules, has compile time checking
-		template <class... Args>
-		void Log(const std::format_string<Args...> a_fmt, Args&&... a_args) noexcept
-		{
-			auto str = std::vformat(a_fmt.get(), std::make_format_args(a_args...));
-			str += '\n';
-			AddString(str.c_str());
-		}
-	};
-	static_assert(sizeof(ConsoleLog) == 0x20);
-
 	namespace BSTextureDB
 	{
 		// Working buried function.
@@ -266,7 +233,7 @@ namespace Addictol
 	bool FacegenSystem::InitContinue([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		keywordIsChildPlayer = RELEX::GetTSingletonByID<RE::BGSKeyword>(4799417, 2692125, 533357);
-		dataHandler = RELEX::GetTSingletonByID<RE::TESDataHandler>(4796135, 2688883, 711558);
+		dataHandler = RE::TESDataHandler::GetSingleton();
 
 		ReadExceptions();
 
@@ -299,7 +266,7 @@ namespace Addictol
 			auto fullName = a_NPC->GetFullName();
 			if (!fullName) fullName = "<Unknown>";
 
-			ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) don't have facegen", fullName, a_NPC->formID);
+			RE::ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) don't have facegen", fullName, a_NPC->formID);
 			REX::WARN("NPC \"{}\" (0x{:08X}) don't have facegen", fullName, a_NPC->formID);
 		}
 
