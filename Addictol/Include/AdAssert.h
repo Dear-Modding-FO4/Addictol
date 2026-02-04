@@ -4,4 +4,4 @@ void AdAssertMsg(const char* SourceFile, int SourceLine, const char* Function, c
 
 #define AdAssert(Cond)									if(!(Cond)) AdAssertMsg(__FILE__, __LINE__, __FUNCTION__, #Cond)
 #define AdAssertWithFormattedMessage(Cond, Msg, ...)	if(!(Cond)) AdAssertMsg(__FILE__, __LINE__, __FUNCTION__, "%s\n\n" Msg, #Cond, ##__VA_ARGS__)
-#define AdAssertWithMessage(Cond, Msg)					AdAssert(Cond, Msg)
+#define AdAssertWithMessage(Cond, Msg)					AdAssertWithFormattedMessage(Cond, Msg)

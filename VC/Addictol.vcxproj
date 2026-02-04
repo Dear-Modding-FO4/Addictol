@@ -26,6 +26,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
@@ -50,6 +51,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
@@ -102,7 +104,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
@@ -125,7 +127,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>

@@ -1,20 +1,24 @@
 #include <AdAssert.h>
 #include <AdAllocator.h>
 #include <Voltek.MemoryManager.h>
+#include <REX\REX\TOML.h>
 #include <windows.h>
 
 namespace Addictol
 {
+	REX::TOML::Str<> bAdditionalAllocatorType{ "Additional", "sAllocatorType", "vmm" };
+
 	namespace tbb
 	{
-		using scalable_malloc_t				= void*		(__stdcall*)(size_t size);
-		using scalable_free_t				= void		(__stdcall*)(void* ptr);
-		using scalable_realloc_t			= void*		(__stdcall*)(void* ptr, size_t size);
-		using scalable_calloc_t				= void*		(__stdcall*)(size_t nobj, size_t size);
-		using scalable_aligned_malloc_t		= void*		(__stdcall*)(size_t size, size_t alignment);
-		using scalable_aligned_realloc_t	= void*		(__stdcall*)(void* ptr, size_t size, size_t alignment);
-		using scalable_aligned_free_t		= void		(__stdcall*)(void* ptr);
-		using scalable_msize_t				= size_t	(__stdcall*)(void* ptr);
+		using scalable_malloc_t				= void*		(__cdecl*)(size_t size);
+		using scalable_free_t				= void		(__cdecl*)(void* ptr);
+		using scalable_realloc_t			= void*		(__cdecl*)(void* ptr, size_t size);
+		using scalable_calloc_t				= void*		(__cdecl*)(size_t nobj, size_t size);
+		using scalable_aligned_malloc_t		= void*		(__cdecl*)(size_t size, size_t alignment);
+		using scalable_aligned_realloc_t	= void*		(__cdecl*)(void* ptr, size_t size, size_t alignment);
+		using scalable_aligned_free_t		= void		(__cdecl*)(void* ptr);
+		using scalable_msize_t				= size_t	(__cdecl*)(void* ptr);
+		using scalable_allocation_mode_t	= void		(__cdecl*)(int, int);
 
 		scalable_malloc_t			scalable_malloc{ nullptr };
 		scalable_free_t				scalable_free{ nullptr };
@@ -24,6 +28,7 @@ namespace Addictol
 		scalable_aligned_realloc_t	scalable_aligned_realloc{ nullptr };
 		scalable_aligned_free_t		scalable_aligned_free{ nullptr };
 		scalable_msize_t			scalable_msize{ nullptr };
+		scalable_allocation_mode_t	scalable_allocation_mode{ nullptr };
 	}
 
 	void* ICheckerPointer::CheckPtr(void* lpBlock, size_t nSize) const noexcept
@@ -43,7 +48,7 @@ namespace Addictol
 		return lpBlock;
 	}
 
-	ProxyHeap::ProxyHeap()
+	ProxyHeap::ProxyHeap() noexcept
 	{
 		auto tbb = LoadLibraryA("Data\\F4SE\\Plugins\\tbbmalloc.dll");
 		AdAssertWithMessage(tbb, "tbbmalloc.dll no found");
@@ -56,6 +61,9 @@ namespace Addictol
 		*(uintptr_t*)&tbb::scalable_aligned_realloc	= (uintptr_t)GetProcAddress(tbb, "scalable_aligned_realloc");
 		*(uintptr_t*)&tbb::scalable_aligned_free	= (uintptr_t)GetProcAddress(tbb, "scalable_aligned_free");
 		*(uintptr_t*)&tbb::scalable_msize			= (uintptr_t)GetProcAddress(tbb, "scalable_msize");
+		*(uintptr_t*)&tbb::scalable_allocation_mode = (uintptr_t)GetProcAddress(tbb, "scalable_allocation_mode");
+		
+		tbb::scalable_allocation_mode(0, 1);
 	}
 
 	void* ProxyHeap::malloc(size_t nSize) const noexcept

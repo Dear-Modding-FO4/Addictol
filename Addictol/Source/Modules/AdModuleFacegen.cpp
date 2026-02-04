@@ -17,7 +17,7 @@
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesFacegen{ "Patches", "bFacegen", true };
-	static REX::TOML::Bool<> bPathesDbgFacegenOutput{ "Patches", "bDbgFacegenOutput", false };
+	static REX::TOML::Bool<> bAdditionalDbgFacegenOutput{ "Additional", "bDbgFacegenOutput", false };
 
 	static bool __stdcall CanUsePreprocessingHead(RE::TESNPC* NPC) noexcept;
 
@@ -261,7 +261,7 @@ namespace Addictol
 		// check exists diffuse texture.
 		static char buf[REX::W32::MAX_PATH]{};
 		bool result = BSTextureDB::FormatPath__And__ExistIn(a_NPC, buf, REX::W32::MAX_PATH, 0);
-		if (!result && bPathesDbgFacegenOutput.GetValue())
+		if (!result && bAdditionalDbgFacegenOutput.GetValue())
 		{
 			auto fullName = a_NPC->GetFullName();
 			if (!fullName) fullName = "<Unknown>";

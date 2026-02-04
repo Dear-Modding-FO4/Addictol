@@ -21,3 +21,4 @@ bCellInit=true                      # Fixes a crash where a form does not get co
 
 [Additional]
 bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
+sAllocatorType= 			# 
