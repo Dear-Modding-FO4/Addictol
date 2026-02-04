@@ -1,6 +1,3 @@
-[submodule "Depends/commonlibf4"]
-	path = Depends/commonlibf4
-	url = https://github.com/libxse/commonlibf4.git
 [submodule "Depends/detours"]
 	path = Depends/detours
 	url = https://github.com/Nukem9/detours.git
@@ -16,3 +13,6 @@
 [submodule "Depends/INI"]
 	path = Depends/INI
 	url = https://github.com/brofield/simpleini.git
+[submodule "Depends/commonlibf4"]
+	path = Depends/commonlibf4
+	url = https://github.com/Dear-Modding-FO4/commonlibf4.git
