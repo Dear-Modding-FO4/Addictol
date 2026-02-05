@@ -44,4 +44,46 @@ namespace Addictol
 		[[nodiscard]] std::size_t msize(void* lpBlock) const noexcept;
 		[[nodiscard]] std::size_t aligned_msize(void* lpBlock, [[maybe_unused]] std::size_t nAlignment) const noexcept;
 	};
+
+	template<typename Heap = ProxyVoltekHeap>
+	struct StdStuff
+	{
+		[[nodiscard]] static void* calloc(std::size_t nCount, std::size_t nSize) noexcept(true)
+		{
+			auto totalSize = nCount * nSize;
+			auto ptr = Heap::GetSingleton()->malloc(totalSize);
+			if (ptr) memset(ptr, 0, totalSize);
+			return ptr;
+		}
+
+		[[nodiscard]] static void* malloc(std::size_t nSize) noexcept(true)
+		{
+			return Heap::GetSingleton()->malloc(nSize);
+		}
+
+		[[nodiscard]] static void* aligned_malloc(std::size_t nSize, size_t alignment) noexcept(true)
+		{
+			return Heap::GetSingleton()->aligned_malloc(nSize, alignment);
+		}
+
+		[[nodiscard]] static void* realloc(void* lpBlock, std::size_t nNewSize) noexcept(true)
+		{
+			return Heap::GetSingleton()->realloc(lpBlock, nNewSize);
+		}
+
+		static void free(void* block) noexcept(true)
+		{
+			Heap::GetSingleton()->free(block);
+		}
+
+		static void aligned_free(void* block) noexcept(true)
+		{
+			Heap::GetSingleton()->aligned_free(block);
+		}
+
+		[[nodiscard]] static size_t msize(void* block) noexcept(true)
+		{
+			return Heap::GetSingleton()->msize(block);
+		}
+	};
 }

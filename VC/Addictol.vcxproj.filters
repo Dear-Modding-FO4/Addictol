@@ -49,9 +49,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -70,10 +67,13 @@
     <ClCompile Include="..\Addictol\Source\AdAllocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
+    <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -121,9 +121,6 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
@@ -144,6 +141,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h">
       <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

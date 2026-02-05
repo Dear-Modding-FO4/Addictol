@@ -58,7 +58,7 @@ namespace RELEX
 		}
 	}
 
-	void Write(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept
+	void Write(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept
 	{
 		if (!a_target || !a_data.size()) return;
 		REL::Write(a_target, (const void*)a_data.begin(), a_data.size());
@@ -70,7 +70,7 @@ namespace RELEX
 		std::fill_n(reinterpret_cast<std::uint8_t*>(a_target), a_size, REL::NOP);
 	}
 
-	void WriteSafe(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept
+	void WriteSafe(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept
 	{
 		if (!a_target || !a_data.size()) return;
 

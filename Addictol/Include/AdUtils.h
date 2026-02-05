@@ -8,6 +8,18 @@
 std::string AdGetRuntimePath() noexcept;
 std::string AdGetRuntimeDirectory() noexcept;
 
+#define AD_DECLARE_CONSTRUCTOR_HOOK(Class) \
+	static Class *__ctor__(void *Instance) \
+	{ \
+		return new (Instance) Class(); \
+	} \
+	\
+	static Class *__dtor__(Class *Thisptr, unsigned __int8) \
+	{ \
+		Thisptr->~Class(); \
+		return Thisptr; \
+	}
+
 namespace RELEX
 {
 	class ScopeLock
@@ -26,9 +38,9 @@ namespace RELEX
 		[[nodiscard]] inline virtual bool HasUnlocked() const noexcept(true) { return _unlocked; }
 	};
 
-	void Write(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept;
+	void Write(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;
 	void WriteNop(uintptr_t a_target, size_t a_size) noexcept;
-	void WriteSafe(uintptr_t a_target, std::initializer_list<uint8_t> a_data) noexcept;
+	void WriteSafe(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;
 	void WriteSafeNop(uintptr_t a_target, size_t a_size) noexcept;
 
 	template<typename T>
