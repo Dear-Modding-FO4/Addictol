@@ -12,15 +12,12 @@ namespace Addictol
 	{
 		if (!a_actor)
 		{
-			auto func = RELEX::GetTFunctionByID<decltype(RE::GameScript::LogFormError)>(2251028, 2251028, 1081933);
-			func(a_actor, "Cannot call IsHostileToActor with a None actor", a_vm, a_stackID, RE::BSScript::ErrorLogger::Severity::kError);
+			RE::GameScript::LogFormError(a_actor, "Cannot call IsHostileToActor with a None actor", a_vm, a_stackID, RE::BSScript::ErrorLogger::Severity::kError);
 			return false;
 		}
 		else
 		{
-			using func_t = decltype(&RE::Actor::GetHostileToActor);
-			static REL::Relocation<func_t> func{ RELEX::IsRuntimeOG() ? REL::ID(1148686) : REL::ID(2229968) };
-			return func(a_self, a_actor);
+			return a_self->GetHostileToActor(a_actor);
 		}
 	}
 
