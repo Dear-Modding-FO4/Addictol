@@ -121,17 +121,24 @@ namespace Addictol
 
 	void* ProxyVoltekHeap::aligned_malloc(std::size_t nSize, [[maybe_unused]] std::size_t nAlignment) const noexcept
 	{
-		return CheckPtr(voltek::scalable_alloc(nSize), nSize);
+		return malloc(nSize);
 	}
 
 	void* ProxyVoltekHeap::realloc(void* lpBlock, std::size_t nNewSize) const noexcept
 	{
-		return CheckPtr(voltek::scalable_realloc(lpBlock, nNewSize), nNewSize);
+		auto mem = CheckPtr(voltek::scalable_alloc(nNewSize), nNewSize);
+
+		if (!lpBlock)
+			return mem;
+
+		auto oldSize = msize(lpBlock);
+		memcpy(mem, lpBlock, oldSize > nNewSize ? nNewSize : oldSize);
+		return mem;
 	}
 
 	void* ProxyVoltekHeap::aligned_realloc(void* lpBlock, std::size_t nNewSize, [[maybe_unused]] std::size_t nAlignment) const noexcept
 	{
-		return CheckPtr(voltek::scalable_realloc(lpBlock, nNewSize), nNewSize);
+		return realloc(lpBlock, nNewSize);
 	}
 
 	void ProxyVoltekHeap::free(void* lpBlock) const noexcept
@@ -141,7 +148,7 @@ namespace Addictol
 
 	void ProxyVoltekHeap::aligned_free(void* lpBlock) const noexcept
 	{
-		voltek::scalable_free(lpBlock);
+		free(lpBlock);
 	}
 
 	std::size_t ProxyVoltekHeap::msize(void* lpBlock) const noexcept
@@ -151,6 +158,6 @@ namespace Addictol
 
 	std::size_t ProxyVoltekHeap::aligned_msize(void* lpBlock, [[maybe_unused]] std::size_t nAlignment) const noexcept
 	{
-		return voltek::scalable_msize(lpBlock);
+		return msize(lpBlock);
 	}
 }

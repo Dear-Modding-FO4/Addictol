@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <tuple>
 
+#include <RE\M\MemoryManager.h>
+#include <RE\B\BSThreadEvent.h>
+
 #define strcasecmp _stricmp
 
 namespace Addictol
@@ -152,6 +155,9 @@ namespace Addictol
 					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
 			}
 		}
+
+		RE::MemoryManager::GetSingleton().RegisterMemoryManager();
+		RE::BSThreadEvent::InitSDM();
 
 		return true;
 	}
