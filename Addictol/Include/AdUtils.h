@@ -62,8 +62,6 @@ namespace RELEX
 		return DetourVTable(a_target, *(uintptr_t*)&a_function, a_index);
 	}
 
-	void UpdateID(const REL::ID& a_id, uintptr_t a_num) noexcept;
-
 	template<typename T>
 	[[nodiscard]] static T* GetTSingletonByID(uintptr_t a_id) noexcept
 	{

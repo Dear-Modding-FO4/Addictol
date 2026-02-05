@@ -1,5 +1,4 @@
 #include <AdPlugin.h>
-#include <AdIDs.h>
 #include <REX\REX\Singleton.h>
 #if AD_DEBUGBREAK
 #	include <windows.h>

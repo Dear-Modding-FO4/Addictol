@@ -4,9 +4,6 @@
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdIDs.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdMain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -80,9 +77,6 @@
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
     <ClInclude Include="..\Addictol\Include\AdAssert.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdIDs.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdModule.h">

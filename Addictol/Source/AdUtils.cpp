@@ -3,7 +3,6 @@
 #include <AdUtils.h>
 #include <AdAssert.h>
 #include <detours\Detours.h>
-#include <F4SE\Version.h>
 
 std::string AdGetRuntimePath() noexcept
 {
@@ -35,9 +34,6 @@ std::string AdGetRuntimeDirectory() noexcept
 
 namespace RELEX
 {
-	constexpr static auto OG_LATEST_VERSION = F4SE::RUNTIME_1_10_163;
-	constexpr static auto NG_LATEST_VERSION = F4SE::RUNTIME_1_10_984;
-
 	ScopeLock::ScopeLock(uintptr_t a_target, uintptr_t a_size) noexcept :
 		_unlocked(false), _old(0), _target(a_target), _size(a_size)
 	{
@@ -91,27 +87,19 @@ namespace RELEX
 			std::fill_n(reinterpret_cast<std::uint8_t*>(a_target), a_size, REL::NOP);
 	}
 
-	static REL::Version safe_verm{ 0, 0, 0, 0 };
-
 	bool IsRuntimeOG() noexcept
 	{
-		if (safe_verm.major() == 0)
-			safe_verm = REL::Module::GetSingleton()->version();
-		return safe_verm == OG_LATEST_VERSION;
+		return REL::Module::IsRuntimeOG();
 	}
 
 	bool IsRuntimeNG() noexcept
 	{
-		if (safe_verm.major() == 0)
-			safe_verm = REL::Module::GetSingleton()->version();
-		return (safe_verm > OG_LATEST_VERSION) && (safe_verm <= NG_LATEST_VERSION);
+		return REL::Module::IsRuntimeNG();
 	}
 
 	bool IsRuntimeAE() noexcept
 	{
-		if (safe_verm.major() == 0)
-			safe_verm = REL::Module::GetSingleton()->version();
-		return safe_verm > NG_LATEST_VERSION;
+		return REL::Module::IsRuntimeAE();
 	}
 
 	uintptr_t DetourJump(uintptr_t a_target, uintptr_t a_function) noexcept
@@ -147,11 +135,6 @@ namespace RELEX
 	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
 	{
 		return Detours::IATDelayedHook(a_targetModule, a_importModule, a_functionName, a_function);
-	}
-
-	void UpdateID(const REL::ID& a_id, uintptr_t a_num) noexcept
-	{
-		(*const_cast<REL::ID*>(&a_id)) = a_num;
 	}
 }
 
