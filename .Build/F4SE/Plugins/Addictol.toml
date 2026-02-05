@@ -22,3 +22,4 @@ bCellInit=true                      # Fixes a crash where a form does not get co
 
 [Additional]
 bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
+bUseNewRedistributable=false		# Replaces the old redistributable with a new one. If option is enabled, reports will include X-Cell in case of errors related to copying or comparing memory (Need bMemory patch).
