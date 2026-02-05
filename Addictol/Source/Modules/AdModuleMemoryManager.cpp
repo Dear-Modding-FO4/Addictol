@@ -13,9 +13,8 @@
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesMemoryManager{ "Patches", "bMemoryManager", true };
-	extern REX::TOML::Str<> bAdditionalAllocatorType;
 
-	template<typename Heap = ProxyHeap>
+	template<typename Heap = ProxyVoltekHeap>
 	class MemoryManager
 	{
 		MemoryManager(const MemoryManager&) = delete;
@@ -83,77 +82,37 @@ namespace Addictol
 	{
 		using tuple_t = std::tuple<uint64_t, void*>;
 
-#if 0
-		bool tbb_mode = !strcasecmp(bAdditionalAllocatorType.GetValue().c_str(), "tbb");
-#endif
-
 		if (RELEX::IsRuntimeOG())
 		{
 			RELEX::WriteSafe(REL::ID(597736).address(), { 0xC3, 0x90 });
 			*(std::uint32_t*)REL::ID(1570354).address() = 2;
 
-#if 0
-			if (tbb_mode)
+			const std::array MMPatch
 			{
-				const std::array MMPatch
-				{
-					tuple_t{ 652767,	&MemoryManager<>::Alloc },
-					tuple_t{ 1582181,	&MemoryManager<>::Dealloc },
-					tuple_t{ 1502917,	&MemoryManager<>::Realloc },
-					tuple_t{ 1453698,	&MemoryManager<>::Size },
-				};
+				tuple_t{ 652767,	&MemoryManager<>::Alloc },
+				tuple_t{ 1582181,	&MemoryManager<>::Dealloc },
+				tuple_t{ 1502917,	&MemoryManager<>::Realloc },
+				tuple_t{ 1453698,	&MemoryManager<>::Size },
+			};
 
-				for (const auto& [id, func] : MMPatch)
-					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-			}
-			else
-#endif
-			{
-				const std::array MMPatch
-				{
-					tuple_t{ 652767,	&MemoryManager<ProxyVoltekHeap>::Alloc },
-					tuple_t{ 1582181,	&MemoryManager<ProxyVoltekHeap>::Dealloc },
-					tuple_t{ 1502917,	&MemoryManager<ProxyVoltekHeap>::Realloc },
-					tuple_t{ 1453698,	&MemoryManager<ProxyVoltekHeap>::Size },
-				};
-
-				for (const auto& [id, func] : MMPatch)
-					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-			}
+			for (const auto& [id, func] : MMPatch)
+				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
 		}
 		else
 		{
 			RELEX::WriteSafe(REL::ID(2267875).address(), { 0xC3, 0x90 });
 			*(std::uint32_t*)REL::ID(RELEX::IsRuntimeAE() ? 4807763 : 2688723).address() = 2;
 
-#if 0
-			if (tbb_mode)
+			const std::array MMPatch
 			{
-				const std::array MMPatch
-				{
-					tuple_t{ 2267872,	&MemoryManager<>::Alloc },
-					tuple_t{ 2267874,	&MemoryManager<>::Dealloc },
-					tuple_t{ 2267873,	&MemoryManager<>::Realloc },
-					tuple_t{ 2267858,	&MemoryManager<>::Size },
-				};
+				tuple_t{ 2267872,	&MemoryManager<>::Alloc },
+				tuple_t{ 2267874,	&MemoryManager<>::Dealloc },
+				tuple_t{ 2267873,	&MemoryManager<>::Realloc },
+				tuple_t{ 2267858,	&MemoryManager<>::Size },
+			};
 
-				for (const auto& [id, func] : MMPatch)
-					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-			}
-			else
-#endif
-			{
-				const std::array MMPatch
-				{
-					tuple_t{ 2267872,	&MemoryManager<ProxyVoltekHeap>::Alloc },
-					tuple_t{ 2267874,	&MemoryManager<ProxyVoltekHeap>::Dealloc },
-					tuple_t{ 2267873,	&MemoryManager<ProxyVoltekHeap>::Realloc },
-					tuple_t{ 2267858,	&MemoryManager<ProxyVoltekHeap>::Size },
-				};
-
-				for (const auto& [id, func] : MMPatch)
-					RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-			}
+			for (const auto& [id, func] : MMPatch)
+				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
 		}
 
 		RE::MemoryManager::GetSingleton().RegisterMemoryManager();

@@ -13,6 +13,7 @@
     <ClCompile Include="..\Addictol\Source\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
@@ -113,7 +114,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;$(SolutionDir)..\Depends\tbb\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
       <DisableSpecificWarnings>4200;4996;26444;26495</DisableSpecificWarnings>
       <ForcedIncludeFiles>
