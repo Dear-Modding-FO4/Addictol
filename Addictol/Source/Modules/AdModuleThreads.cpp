@@ -24,7 +24,7 @@ namespace Addictol
 	}
 
 	ModuleThreads::ModuleThreads() :
-		Module("Threads", &bPathesThreads)
+		Module("Module Threads", &bPathesThreads)
 	{}
 
 	bool ModuleThreads::DoQuery() const noexcept

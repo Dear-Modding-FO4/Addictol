@@ -76,6 +76,9 @@
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -144,6 +147,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h">
+      <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

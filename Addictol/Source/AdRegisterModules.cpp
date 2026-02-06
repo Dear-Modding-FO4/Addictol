@@ -15,6 +15,7 @@
 #include <Modules\AdModuleUnalignedLoad.h>
 #include <Modules\AdModuleCellInit.h>
 #include <Modules\AdModuleMemoryManager.h>
+#include <Modules\AdModuleSmallblockAllocator.h>
 
 void AdRegisterModules()
 {
@@ -40,6 +41,7 @@ void AdRegisterModules()
 	static auto sModuleUnalignedLoad				= std::make_shared<Addictol::ModuleUnalignedLoad>();
 	static auto sModuleCellInit						= std::make_shared<Addictol::ModuleCellInit>();
 	static auto sModuleMemoryManager				= std::make_shared<Addictol::ModuleMemoryManager>();
+	static auto sModuleSmallblockAllocator			= std::make_shared<Addictol::ModuleSmallblockAllocator>();
 
 	// Registers preload patches
 	modules.Register(sModuleThreads);
@@ -58,6 +60,7 @@ void AdRegisterModules()
 	modules.Register(sModuleUnalignedLoad);
 	modules.Register(sModuleCellInit);
 	modules.Register(sModuleMemoryManager);
+	modules.Register(sModuleSmallblockAllocator);
 
 	// Registers other patches
 	modules.Register(sModuleFacegen, Addictol::ModuleManager::Type::kGameDataReady);

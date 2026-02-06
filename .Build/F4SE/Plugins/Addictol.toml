@@ -8,6 +8,7 @@ bProfile=true						# Added settings Pref.ini for default .ini, This provides an 
 bAchievements=true					# Enables achievements on modded saves.
 bFacegen=true						# Enables facegen support and removes freezes.
 bMemoryManager=true					# Replaces the global memory manager with vmm allocator.
+bSmallBlockAllocator=true			# Replaces the small block memory allocators with os allocators.
 
 [Fixes]
 bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.

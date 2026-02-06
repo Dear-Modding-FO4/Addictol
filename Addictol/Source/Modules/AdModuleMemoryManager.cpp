@@ -389,6 +389,14 @@ namespace Addictol
 		RELEX::DetourJump(REL::ID(RELEX::IsRuntimeOG() ? 760285 : 2281069).address(),
 			(uintptr_t)&bhkThreadMemorySource<>::__ctor__);
 
+		/////////////////////////////////////////////////////////////////////
+		// Default/Static/File heaps
+		/////////////////////////////////////////////////////////////////////
+
+		RELEX::WriteSafe(REL::ID(RELEX::IsRuntimeOG() ? 433356 : 2228360).address(), { 0xC3, 0x90 });
+
+		/////////////////////////////////////////////////////////////////////
+
 		RE::MemoryManager::GetSingleton().RegisterMemoryManager();
 		RE::BSThreadEvent::InitSDM();
 
