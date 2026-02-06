@@ -9,6 +9,7 @@ bAchievements=true					# Enables achievements on modded saves.
 bFacegen=true						# Enables facegen support and removes freezes.
 bMemoryManager=true					# Replaces the global memory manager with vmm allocator.
 bSmallBlockAllocator=true			# Replaces the small block memory allocators with os allocators.
+bScaleformAllocator=true			# Replaces the scaleform memory allocator with os allocators.
 
 [Fixes]
 bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
@@ -24,3 +25,5 @@ bCellInit=true                      # Fixes a crash where a form does not get co
 [Additional]
 bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
 bUseNewRedistributable=false		# Replaces the old redistributable with a new one. If option is enabled, reports will include X-Cell in case of errors related to copying or comparing memory (Need bMemory patch).
+uScaleformPageSize=256				# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
+uScaleformHeapSize=512				# The heap size (in MB), vanilla size is 128. This is all the available memory, out of memory = CTD. Limit 2Gb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
