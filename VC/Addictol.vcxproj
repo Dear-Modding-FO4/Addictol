@@ -30,8 +30,8 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp" />
   </ItemGroup>

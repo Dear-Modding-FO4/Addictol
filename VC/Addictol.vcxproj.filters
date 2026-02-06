@@ -76,10 +76,10 @@
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
   </ItemGroup>

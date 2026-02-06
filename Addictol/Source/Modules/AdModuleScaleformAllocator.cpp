@@ -1,150 +1,99 @@
-#include <Modules\AdModuleSmallblockAllocator.h>
+#include <Modules\AdModuleScaleformAllocator.h>
 #include <AdAllocator.h>
 #include <AdUtils.h>
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesSmallBlockAllocator{ "Patches", "bSmallBlockAllocator", true };
+	static REX::TOML::Bool<> bPathesScaleformAllocator{ "Patches", "bScaleformAllocator", true };
+	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional", "uScaleformPageSize", 256ul };
+	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional", "uScaleformHeapSize", 512ul };
 
-	// 0x1268
-	class BSSmallBlockAllocator
+	class BSScaleformSysMemMapper
 	{
-		BSSmallBlockAllocator(const BSSmallBlockAllocator&) = delete;
-		BSSmallBlockAllocator& operator=(const BSSmallBlockAllocator&) = delete;
 	public:
-		struct Pool
-		{
-			struct Entry
-			{
-				void* nodes[2];
-				// array
-				void* data;
-				uint16_t size;
-				uint16_t count;
-				// continue
-				uint16_t sizeBlock;
-				uint16_t unk;		// DEAF
-			};
+		inline static uint32_t PAGE_SIZE;
+		inline static uint32_t HEAP_SIZE;
 
-			Entry* node_start;
-			Entry* node_end;
-			uint32_t unk1[3];
-			uint32_t sizeBlock;
-			REX::W32::CRITICAL_SECTION criticalSection;
-		};
-		BSSmallBlockAllocator() = default;
-		virtual ~BSSmallBlockAllocator();
-	private:
-		Pool pools[64];
-		REX::W32::CRITICAL_SECTION criticalSection;
-		char unk[0x38];
+		static uint32_t GetPageSize(BSScaleformSysMemMapper* _this) noexcept
+		{
+			return PAGE_SIZE;
+		}
+
+		static void* Init(BSScaleformSysMemMapper* _this, size_t size) noexcept
+		{
+			return REX::W32::VirtualAlloc(nullptr, size, REX::W32::MEM_RESERVE, REX::W32::PAGE_READWRITE);
+		}
+
+		static bool Release(BSScaleformSysMemMapper* _this, void* address) noexcept
+		{
+			return REX::W32::VirtualFree(address, HEAP_SIZE, REX::W32::MEM_RELEASE);
+		}
+
+		static void* Alloc(BSScaleformSysMemMapper* _this, void* address, size_t size) noexcept
+		{
+			return REX::W32::VirtualAlloc(address, size, REX::W32::MEM_COMMIT, REX::W32::PAGE_READWRITE);
+		}
+
+		static bool Dealloc(BSScaleformSysMemMapper* _this, void* address, size_t size) noexcept
+		{
+			return REX::W32::VirtualFree(address, size, REX::W32::MEM_DECOMMIT);
+		}
 	};
-	static_assert(sizeof(BSSmallBlockAllocator) == 0x1268);
 
-	namespace BSSmallBlockAllocatorUtil
-	{
-		// 0x38
-		class UserPoolBase
-		{
-			BSSmallBlockAllocator::Pool::Entry* node_start;
-			BSSmallBlockAllocator::Pool::Entry* node_end;
-			uint32_t count;
-			uint32_t unk1;
-			uint32_t pageSize;
-			uint32_t sizeBlock;
-			BSSmallBlockAllocator* allocator;
-			uint32_t count2;
-
-			UserPoolBase(const UserPoolBase&) = delete;
-			UserPoolBase& operator=(const UserPoolBase&) = delete;
-		public:
-			UserPoolBase() = default;
-			virtual ~UserPoolBase();
-
-			[[nodiscard]] inline const BSSmallBlockAllocator::Pool::Entry* GetNodeBegin() const noexcept { return node_start; }
-			[[nodiscard]] inline const BSSmallBlockAllocator::Pool::Entry* GetNodeEnd() const noexcept { return node_end; }
-			[[nodiscard]] inline uint32_t GetPageSize() const noexcept { return pageSize; }
-			[[nodiscard]] inline uint32_t GetCountBlock() const noexcept { return count; }
-			[[nodiscard]] inline uint32_t GetSizeBlock() const noexcept { return sizeBlock; }
-
-			template<typename Heap = ProxyVoltekHeap>
-			[[nodiscard]] static void* Alloc([[maybe_unused]] UserPoolBase* a_this) noexcept
-			{
-				return Heap::GetSingleton()->aligned_malloc(a_this->sizeBlock, 0x10);
-			}
-
-			template<typename Heap = ProxyVoltekHeap>
-			static void Dealloc([[maybe_unused]] UserPoolBase* a_this, void* a_ptr) noexcept
-			{
-				if (!a_ptr) return;
-				Heap::GetSingleton()->aligned_free(a_ptr);
-			}
-		};
-		static_assert(sizeof(UserPoolBase) == 0x38);
-
-		template<uint32_t sizeBlock>
-		class TLockingUserPool :
-			public UserPoolBase
-		{
-			char unk2[0x10];
-
-			TLockingUserPool(const TLockingUserPool&) = delete;
-			TLockingUserPool& operator=(const TLockingUserPool&) = delete;
-		public:
-			TLockingUserPool() = default;
-			virtual ~TLockingUserPool();
-		};
-
-		using LockingUserPool24 = TLockingUserPool<24>;
-		using LockingUserPool32 = TLockingUserPool<32>;
-		using LockingUserPool40 = TLockingUserPool<40>;
-		using LockingUserPool48 = TLockingUserPool<48>;
-		using LockingUserPool56 = TLockingUserPool<56>;
-		using LockingUserPool64 = TLockingUserPool<64>;
-		using LockingUserPool80 = TLockingUserPool<80>;
-		using LockingUserPool88 = TLockingUserPool<88>;
-	}
-
-	ModuleSmallblockAllocator::ModuleSmallblockAllocator() :
-		Module("Module Smallblock Allocator", &bPathesSmallBlockAllocator)
+	ModuleScaleformAllocator::ModuleScaleformAllocator() :
+		Module("Module Smallblock Allocator", &bPathesScaleformAllocator)
 	{}
 
-	bool ModuleSmallblockAllocator::DoQuery() const noexcept
+	bool ModuleScaleformAllocator::DoQuery() const noexcept
 	{
 		return true;
 	}
 
-	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleScaleformAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		using tuple_t = std::tuple<uint64_t, void*>;
+		BSScaleformSysMemMapper::PAGE_SIZE = uAdditionalScaleformPageSize.GetValue();
+		BSScaleformSysMemMapper::HEAP_SIZE = uAdditionalScaleformHeapSize.GetValue();
+		BSScaleformSysMemMapper::PAGE_SIZE = std::min(BSScaleformSysMemMapper::PAGE_SIZE, (uint32_t)(2 * 1024));
+		BSScaleformSysMemMapper::PAGE_SIZE = (BSScaleformSysMemMapper::PAGE_SIZE + 7) & ~7;
+		BSScaleformSysMemMapper::HEAP_SIZE = std::min(BSScaleformSysMemMapper::HEAP_SIZE, (uint32_t)(2 * 1024));
+		BSScaleformSysMemMapper::HEAP_SIZE = (BSScaleformSysMemMapper::HEAP_SIZE + 7) & ~7;
+
+		REX::INFO("BSScaleformSysMemMapper (Page: {} Kb, Heap: {} Mb)",
+			BSScaleformSysMemMapper::PAGE_SIZE, BSScaleformSysMemMapper::HEAP_SIZE);
+
+		BSScaleformSysMemMapper::PAGE_SIZE *= 1024;
+		BSScaleformSysMemMapper::HEAP_SIZE *= 1024 * 1024;
+
+		auto vtable = reinterpret_cast<uintptr_t*>(REL::ID(40537).address());
+		if (!vtable)
+			return false;
+
+		RELEX::ScopeLock lock(vtable, 0x40);
+		vtable[0] = (std::uintptr_t)BSScaleformSysMemMapper::GetPageSize;
+		vtable[1] = (std::uintptr_t)BSScaleformSysMemMapper::Init;
+		vtable[2] = (std::uintptr_t)BSScaleformSysMemMapper::Release;
+		vtable[3] = (std::uintptr_t)BSScaleformSysMemMapper::Alloc;
+		vtable[4] = (std::uintptr_t)BSScaleformSysMemMapper::Dealloc;
 
 		if (RELEX::IsRuntimeOG())
 		{
-			const std::array MMPatch
-			{
-				tuple_t{ 674967,	&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<> },
-				tuple_t{ 1552278,	&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<> },
-			};
+			auto offset = REL::ID(466425).address();
 
-			for (const auto& [id, func] : MMPatch)
-				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
+			REL::WriteSafe(offset + 0x8B, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
+			REL::WriteSafe(offset + 0x91, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
 		}
 		else
 		{
-			const std::array MMPatch
-			{
-				tuple_t{ 2268154,	&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<> },
-				tuple_t{ 2268155,	&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<> },
-			};
+			auto offset = REL::ID(2287420).address();
 
-			for (const auto& [id, func] : MMPatch)
-				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
+			REL::WriteSafe(offset + 0xF7,  reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
+			REL::WriteSafe(offset + 0x102, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
 		}
 
 		return true;
 	}
 
-	bool ModuleSmallblockAllocator::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleScaleformAllocator::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}
