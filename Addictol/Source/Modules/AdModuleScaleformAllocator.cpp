@@ -41,7 +41,7 @@ namespace Addictol
 	};
 
 	ModuleScaleformAllocator::ModuleScaleformAllocator() :
-		Module("Module Smallblock Allocator", &bPathesScaleformAllocator)
+		Module("Module Scaleform Allocator", &bPathesScaleformAllocator)
 	{}
 
 	bool ModuleScaleformAllocator::DoQuery() const noexcept
