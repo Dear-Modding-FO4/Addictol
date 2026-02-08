@@ -9,7 +9,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesThreads{ "Patches", "bThreads", true };
+	static REX::TOML::Bool<> bPatchesThreads{ "Patches", "bThreads", true };
 
 	[[nodiscard]] static BOOL WINAPI HKSetThreadPriority(HANDLE Thread, int Priority) noexcept
 	{
@@ -24,7 +24,7 @@ namespace Addictol
 	}
 
 	ModuleThreads::ModuleThreads() :
-		Module("Module Threads", &bPathesThreads)
+		Module("Module Threads", &bPatchesThreads)
 	{}
 
 	bool ModuleThreads::DoQuery() const noexcept

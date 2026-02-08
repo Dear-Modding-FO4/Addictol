@@ -6,7 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesProfile{ "Patches", "bProfile", true };
+	static REX::TOML::Bool<> bPatchesProfile{ "Patches", "bProfile", true };
 
 	class SettingCollection
 	{
@@ -89,7 +89,7 @@ namespace Addictol
 	}
 
 	ModuleProfile::ModuleProfile() :
-		Module("Module Profile", &bPathesProfile)
+		Module("Module Profile", &bPatchesProfile)
 	{}
 
 	bool ModuleProfile::DoQuery() const noexcept

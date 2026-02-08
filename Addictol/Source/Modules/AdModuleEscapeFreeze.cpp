@@ -6,7 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesEscapeFreeze{ "Fixes", "bEscapeFreeze", true };
+	static REX::TOML::Bool<> bFixesEscapeFreeze{ "Fixes", "bEscapeFreeze", true };
 	static REX::TOML::I32<> nAdditionalSleepTimer{ "Additional", "nSleepTimer", 125 };
 	static REX::TOML::I32<> nAdditionalMaxLockCount{ "Additional", "nMaxLockCount", 8 };
 
@@ -56,7 +56,7 @@ namespace Addictol
 	}
 
 	ModuleEscapeFreeze::ModuleEscapeFreeze() :
-		Module("Module Escape Freeze", &bPathesEscapeFreeze)
+		Module("Module Escape Freeze", &bFixesEscapeFreeze)
 	{}
 
 	bool ModuleEscapeFreeze::DoQuery() const noexcept

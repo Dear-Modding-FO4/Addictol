@@ -7,7 +7,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesSafeExit{ "Fixes", "bSafeExit", true };
+	static REX::TOML::Bool<> bFixesSafeExit{ "Fixes", "bSafeExit", true };
 
 	inline static void Shutdown() noexcept
 	{
@@ -19,7 +19,7 @@ namespace Addictol
 	}
 
 	ModuleSafeExit::ModuleSafeExit() :
-		Module("Module Safe Exit", &bPathesSafeExit)
+		Module("Module Safe Exit", &bFixesSafeExit)
 	{}
 
 	bool ModuleSafeExit::DoQuery() const noexcept

@@ -3,7 +3,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesDropItems{ "Pathes", "bDropItems", true };
+	static REX::TOML::Bool<> bPathesDropItems{ "Patches", "bDropItems", true };
 
 	ModuleDropItems::ModuleDropItems() :
 		Module("Module Drop Items", &bPathesDropItems)

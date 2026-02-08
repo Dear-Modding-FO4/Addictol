@@ -18,7 +18,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesMemoryManager{ "Patches", "bMemoryManager", true };
+	static REX::TOML::Bool<> bPatchesMemoryManager{ "Patches", "bMemoryManager", true };
 	static REX::TOML::Bool<> bAdditionalUseNewRedistributable{ "Additional", "bUseNewRedistributable", true };
 
 	class AutoScrapHeap
@@ -341,7 +341,7 @@ namespace Addictol
 	};
 
 	ModuleMemoryManager::ModuleMemoryManager() :
-		Module("Module Memory Manager", &bPathesMemoryManager)
+		Module("Module Memory Manager", &bPatchesMemoryManager)
 	{}
 
 	bool ModuleMemoryManager::DoQuery() const noexcept

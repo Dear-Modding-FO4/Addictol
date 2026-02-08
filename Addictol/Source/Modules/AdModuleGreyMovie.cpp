@@ -6,7 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesGreyMovie{ "Fixes", "bGreyMovie", true };
+	static REX::TOML::Bool<> bFixesGreyMovie{ "Fixes", "bGreyMovie", true };
 
 	static void HKGfxSetBGAlpha(Scaleform::GFx::Movie* self, float) noexcept
 	{
@@ -20,7 +20,7 @@ namespace Addictol
 	}
 
 	ModuleGreyMovie::ModuleGreyMovie() :
-		Module("Module Grey Movie", &bPathesGreyMovie)
+		Module("Module Grey Movie", &bFixesGreyMovie)
 	{}
 
 	bool ModuleGreyMovie::DoQuery() const noexcept

@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesLibDeflate{ "Patches", "bLibDeflate", true };
+	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches", "bLibDeflate", true };
 
 	struct z_stream_s
 	{
@@ -53,7 +53,7 @@ namespace Addictol
 	}
 
 	ModuleLibDeflate::ModuleLibDeflate() :
-		Module("Module LibDeflate", &bPathesLibDeflate)
+		Module("Module LibDeflate", &bPatchesLibDeflate)
 	{}
 
 	bool ModuleLibDeflate::DoQuery() const noexcept

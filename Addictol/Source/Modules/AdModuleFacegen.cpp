@@ -16,7 +16,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesFacegen{ "Patches", "bFacegen", true };
+	static REX::TOML::Bool<> bPatchesFacegen{ "Patches", "bFacegen", true };
 	static REX::TOML::Bool<> bAdditionalDbgFacegenOutput{ "Additional", "bDbgFacegenOutput", false };
 
 	static bool __stdcall CanUsePreprocessingHead(RE::TESNPC* NPC) noexcept;
@@ -281,7 +281,7 @@ namespace Addictol
 	}
 
 	ModuleFacegen::ModuleFacegen() :
-		Module("Module Facegen", &bPathesFacegen)
+		Module("Module Facegen", &bPatchesFacegen)
 	{}
 
 	bool ModuleFacegen::DoQuery() const noexcept

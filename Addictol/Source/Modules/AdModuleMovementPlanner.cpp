@@ -3,7 +3,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesMovementPlanner{ "Fixes", "bMovementPlanner", true };
+	static REX::TOML::Bool<> bFixesMovementPlanner{ "Fixes", "bMovementPlanner", true };
 
 	struct CanWarpOnPathFailure
 	{
@@ -16,7 +16,7 @@ namespace Addictol
 	};
 
 	ModuleMovementPlanner::ModuleMovementPlanner() :
-		Module("Module Movement Planner", &bPathesMovementPlanner)
+		Module("Module Movement Planner", &bFixesMovementPlanner)
 	{}
 
 	bool ModuleMovementPlanner::DoQuery() const noexcept

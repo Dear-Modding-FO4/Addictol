@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesWorkbenchSwap{ "Fixes", "bWorkbenchSwap", true };
+	static REX::TOML::Bool<> bFixesWorkbenchSwap{ "Fixes", "bWorkbenchSwap", true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{
@@ -22,7 +22,7 @@ namespace Addictol
 	};
 
 	ModuleWorkbenchSwap::ModuleWorkbenchSwap() :
-		Module("Module Workbench Swap", &bPathesWorkbenchSwap)
+		Module("Module Workbench Swap", &bFixesWorkbenchSwap)
 	{}
 
 	bool ModuleWorkbenchSwap::DoQuery() const noexcept

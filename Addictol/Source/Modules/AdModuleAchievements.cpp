@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesAchievements{ "Patches", "bAchievements", true };
+	static REX::TOML::Bool<> bPatchesAchievements{ "Patches", "bAchievements", true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{
@@ -17,7 +17,7 @@ namespace Addictol
 	};
 
 	ModuleAchievements::ModuleAchievements() :
-		Module("Module Achievements", &bPathesAchievements)
+		Module("Module Achievements", &bPatchesAchievements)
 	{}
 
 	bool ModuleAchievements::DoQuery() const noexcept

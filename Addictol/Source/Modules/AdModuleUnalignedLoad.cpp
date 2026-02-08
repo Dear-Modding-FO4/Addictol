@@ -3,10 +3,10 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesUnalignedLoad{ "Fixes", "bUnalignedLoad", true };
+	static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes", "bUnalignedLoad", true };
 
 	ModuleUnalignedLoad::ModuleUnalignedLoad() :
-		Module("Module Unaligned Load", &bPathesUnalignedLoad)
+		Module("Module Unaligned Load", &bFixesUnalignedLoad)
 	{}
 
 	bool ModuleUnalignedLoad::DoQuery() const noexcept

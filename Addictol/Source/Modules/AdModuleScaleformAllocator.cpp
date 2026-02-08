@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesScaleformAllocator{ "Patches", "bScaleformAllocator", true };
+	static REX::TOML::Bool<> bPatchesScaleformAllocator{ "Patches", "bScaleformAllocator", true };
 	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional", "uScaleformPageSize", 256ul };
 	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional", "uScaleformHeapSize", 512ul };
 
@@ -41,7 +41,7 @@ namespace Addictol
 	};
 
 	ModuleScaleformAllocator::ModuleScaleformAllocator() :
-		Module("Module Scaleform Allocator", &bPathesScaleformAllocator)
+		Module("Module Scaleform Allocator", &bPatchesScaleformAllocator)
 	{}
 
 	bool ModuleScaleformAllocator::DoQuery() const noexcept

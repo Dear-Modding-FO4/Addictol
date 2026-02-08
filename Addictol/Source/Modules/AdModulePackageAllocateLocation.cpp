@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesPackageAllocateLocation{ "Fixes", "bPackageAllocateLocation", true };
+	static REX::TOML::Bool<> bFixesPackageAllocateLocation{ "Fixes", "bPackageAllocateLocation", true };
 
 	struct GetPrimitive
 	{
@@ -18,7 +18,7 @@ namespace Addictol
 	};
 
 	ModulePackageAllocateLocation::ModulePackageAllocateLocation() :
-		Module("Module Package Allocate Location", &bPathesPackageAllocateLocation)
+		Module("Module Package Allocate Location", &bFixesPackageAllocateLocation)
 	{}
 
 	bool ModulePackageAllocateLocation::DoQuery() const noexcept

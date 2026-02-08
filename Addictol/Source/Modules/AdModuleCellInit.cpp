@@ -8,7 +8,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesCellInit{ "Fixes", "bCellInit", true };
+	static REX::TOML::Bool<> bFixesCellInit{ "Fixes", "bCellInit", true };
 
 	[[nodiscard]] inline static RE::BGSLocation* GetLocation(const RE::TESObjectCELL* a_cell) noexcept
 	{
@@ -40,7 +40,7 @@ namespace Addictol
 	};
 
 	ModuleCellInit::ModuleCellInit() :
-		Module("Module Cell Init", &bPathesCellInit)
+		Module("Module Cell Init", &bFixesCellInit)
 	{}
 
 	bool ModuleCellInit::DoQuery() const noexcept

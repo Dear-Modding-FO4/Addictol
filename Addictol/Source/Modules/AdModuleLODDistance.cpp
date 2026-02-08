@@ -3,10 +3,10 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesLODDistance{ "Fixes", "bLODDistance", true };
+	static REX::TOML::Bool<> bFixesLODDistance{ "Fixes", "bLODDistance", true };
 
 	ModuleLODDistance::ModuleLODDistance() :
-		Module("Module LOD Distance", &bPathesLODDistance)
+		Module("Module LOD Distance", &bFixesLODDistance)
 	{}
 
 	bool ModuleLODDistance::DoQuery() const noexcept

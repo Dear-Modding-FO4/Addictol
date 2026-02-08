@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesBGSAIWorldLocationRefRadius{ "Fixes", "bBGSAIWorldLocationRefRadius", true };
+	static REX::TOML::Bool<> bFixesBGSAIWorldLocationRefRadius{ "Fixes", "bBGSAIWorldLocationRefRadius", true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{
@@ -32,7 +32,7 @@ namespace Addictol
 	};
 
 	ModuleBGSAIWorldLocationRefRadius::ModuleBGSAIWorldLocationRefRadius() :
-		Module("Module BGSAIWorldLocationRefRadius", &bPathesBGSAIWorldLocationRefRadius)
+		Module("Module BGSAIWorldLocationRefRadius", &bFixesBGSAIWorldLocationRefRadius)
 	{}
 
 	bool ModuleBGSAIWorldLocationRefRadius::DoQuery() const noexcept

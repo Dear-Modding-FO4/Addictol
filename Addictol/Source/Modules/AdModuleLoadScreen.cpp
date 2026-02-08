@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesLoadScreen{ "Patches", "bLoadScreen", true };
+	static REX::TOML::Bool<> bPatchesLoadScreen{ "Patches", "bLoadScreen", true };
 	static RE::BSGraphics::RendererData* g_RendererData{ nullptr };
 	static void DrawUILoadScreen(uint32_t a_unk) noexcept;
 	decltype(&DrawUILoadScreen) origDrawUI{ nullptr };
@@ -36,7 +36,7 @@ namespace Addictol
 	}
 
 	ModuleLoadScreen::ModuleLoadScreen() :
-		Module("Module Load Screen", &bPathesLoadScreen)
+		Module("Module Load Screen", &bPatchesLoadScreen)
 	{}
 
 	bool ModuleLoadScreen::DoQuery() const noexcept

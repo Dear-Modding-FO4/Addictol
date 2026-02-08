@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesSmallBlockAllocator{ "Patches", "bSmallBlockAllocator", true };
+	static REX::TOML::Bool<> bPatchesSmallBlockAllocator{ "Patches", "bSmallBlockAllocator", true };
 
 	// 0x1268
 	class BSSmallBlockAllocator
@@ -106,7 +106,7 @@ namespace Addictol
 	}
 
 	ModuleSmallblockAllocator::ModuleSmallblockAllocator() :
-		Module("Module Smallblock Allocator", &bPathesSmallBlockAllocator)
+		Module("Module Smallblock Allocator", &bPatchesSmallBlockAllocator)
 	{}
 
 	bool ModuleSmallblockAllocator::DoQuery() const noexcept

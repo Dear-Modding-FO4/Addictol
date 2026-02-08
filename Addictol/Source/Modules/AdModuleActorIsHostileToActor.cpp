@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesActorIsHostileToActor{ "Fixes", "bActorIsHostileToActor", true };
+	static REX::TOML::Bool<> bFixesActorIsHostileToActor{ "Fixes", "bActorIsHostileToActor", true };
 
 	[[nodiscard]] inline static bool IsHostileToActor(RE::BSScript::IVirtualMachine* a_vm, std::uint32_t a_stackID, 
 		RE::Actor* a_self, RE::Actor* a_actor) noexcept
@@ -22,7 +22,7 @@ namespace Addictol
 	}
 
 	ModuleActorIsHostileToActor::ModuleActorIsHostileToActor() :
-		Module("Module ActorIsHostileToActor", &bPathesActorIsHostileToActor)
+		Module("Module ActorIsHostileToActor", &bFixesActorIsHostileToActor)
 	{}
 
 	bool ModuleActorIsHostileToActor::DoQuery() const noexcept
