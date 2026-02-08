@@ -10,6 +10,7 @@
     <ClCompile Include="..\Addictol\Source\AdAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
     <ClCompile Include="..\Addictol\Source\AdMain.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdMemoryTracer.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
@@ -38,6 +39,7 @@
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
+    <ClInclude Include="..\Addictol\Include\AdMemoryTracer.h" />
     <ClInclude Include="..\Addictol\Include\AdModule.h" />
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
@@ -107,7 +109,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;AD_TRACER=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>

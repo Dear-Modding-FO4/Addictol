@@ -1,12 +1,19 @@
 #include <Modules\AdModuleSafeExit.h>
 #include <AdUtils.h>
 
+#if AD_TRACER
+#	include <AdMemoryTracer.h>
+#endif
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesSafeExit{ "Fixes", "bSafeExit", true };
 
 	inline void Shutdown()
 	{
+#if AD_TRACER
+		MemoryTracer::GetSingleton()->Dump();
+#endif
 		REX::INFO("Shutting Down Game...");
 		REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), EXIT_SUCCESS);
 	}

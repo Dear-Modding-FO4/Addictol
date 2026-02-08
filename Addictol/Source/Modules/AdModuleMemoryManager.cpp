@@ -7,6 +7,10 @@
 #include <xbyak\xbyak.h>
 #include <tuple>
 
+#if AD_TRACER
+#	include <AdMemoryTracer.h>
+#endif
+
 #undef MEM_RELEASE
 
 #include <RE\M\MemoryManager.h>
@@ -147,15 +151,23 @@ namespace Addictol
 		{
 			if (!nSize)
 				return (void*)(&EMPTY_POINTER);
-
+#if AD_TRACER
+			auto ret_addr = _ReturnAddress();
+			auto ptr = Heap::GetSingleton()->aligned_malloc(nSize, nAlignment);
+			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
+			return ptr;
+#else
 			return Heap::GetSingleton()->aligned_malloc(nSize, nAlignment);
+#endif
 		}
 
 		inline static void Deallocate([[maybe_unused]] ScrapHeap* lpSelf, void* lpBlock) noexcept(true)
 		{
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return;
-
+#if AD_TRACER
+			MemoryTracer::GetSingleton()->Remove(lpBlock);
+#endif
 			Heap::GetSingleton()->aligned_free(lpBlock);
 		}
 
@@ -184,28 +196,59 @@ namespace Addictol
 		{
 			if (!nSize)
 				return (void*)(&EMPTY_POINTER);
-
+#if AD_TRACER
+			auto ret_addr = _ReturnAddress();
+			auto ptr = bAligned ?
+				Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
+				Heap::GetSingleton()->malloc(nSize);
+			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
+			return ptr;
+#else
 			return bAligned ?
 				Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
 				Heap::GetSingleton()->malloc(nSize);
+#endif
 		}
 
 		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* lpSelf, void* lpBlock, 
 			std::size_t nSize, std::uint32_t nAlignment, bool bAligned) noexcept
 		{
+#if AD_TRACER
+			void* ptr = nullptr;
+			auto ret_addr = _ReturnAddress();
+
+			if (lpBlock == (const void*)(&EMPTY_POINTER))
+				ptr = bAligned ?
+					Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
+					Heap::GetSingleton()->malloc(nSize);
+			else
+			{
+				MemoryTracer::GetSingleton()->Remove(ptr);
+
+				ptr = bAligned ?
+					Heap::GetSingleton()->aligned_realloc(lpBlock, nSize, nAlignment) :
+					Heap::GetSingleton()->realloc(lpBlock, nSize);
+			}
+
+			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
+			return ptr;
+#else
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return Alloc(lpSelf, nSize, nAlignment, bAligned);
 
 			return bAligned ?
 				Heap::GetSingleton()->aligned_realloc(lpBlock, nSize, nAlignment) :
 				Heap::GetSingleton()->realloc(lpBlock, nSize);
+#endif
 		}
 
 		static void Dealloc([[maybe_unused]] MemoryManager* lpSelf, void* lpBlock, bool bAligned) noexcept
 		{
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return;
-
+#if AD_TRACER
+			MemoryTracer::GetSingleton()->Remove(lpBlock);
+#endif
 			if (bAligned)
 				Heap::GetSingleton()->aligned_free(lpBlock);
 			else
