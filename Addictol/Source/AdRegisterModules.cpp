@@ -21,6 +21,7 @@
 #include <Modules\AdModuleWorkbenchSwap.h>
 #include <Modules\AdModuleDropItems.h>
 #include <Modules\AdModuleMaxStdIO.h>
+#include <Modules\AdModuleMovementPlanner.h>
 
 // Create patches
 static auto sModuleThreads						= std::make_shared<Addictol::ModuleThreads>();
@@ -44,6 +45,7 @@ static auto sModuleScaleformAllocator			= std::make_shared<Addictol::ModuleScale
 static auto sModuleWorkbenchSwap				= std::make_shared<Addictol::ModuleWorkbenchSwap>();
 static auto sModuleDropItems					= std::make_shared<Addictol::ModuleDropItems>();
 static auto sModuleMaxStdIO						= std::make_shared<Addictol::ModuleMaxStdIO>();
+static auto sModuleMovementPlanner				= std::make_shared<Addictol::ModuleMovementPlanner>();
 
 void AdRegisterPreloadModules()
 {
@@ -87,6 +89,7 @@ void AdRegisterModules()
 	modules.Register(sModuleScaleformAllocator);
 	modules.Register(sModuleWorkbenchSwap);
 	modules.Register(sModuleDropItems);
+	modules.Register(sModuleMovementPlanner);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);

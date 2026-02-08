@@ -30,6 +30,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxStdIO.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxStdIO.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
