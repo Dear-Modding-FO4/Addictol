@@ -97,6 +97,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -185,6 +188,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>

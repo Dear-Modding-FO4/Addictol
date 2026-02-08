@@ -1,7 +1,5 @@
 #include <Modules\AdModuleMovementPlanner.h>
 #include <AdUtils.h>
-#include <AdAssert.h>
-#include <xbyak/xbyak.h>
 
 namespace Addictol
 {
