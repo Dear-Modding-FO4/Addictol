@@ -82,6 +82,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -155,6 +158,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
