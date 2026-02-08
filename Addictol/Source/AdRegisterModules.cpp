@@ -50,7 +50,6 @@ void AdRegisterModules()
 	static auto sModuleDropItems					= std::make_shared<Addictol::ModuleDropItems>();
 
 	// Registers preload patches
-	modules.Register(sModuleThreads);
 	modules.Register(sModuleGreyMovie);
 	modules.Register(sModulePackageAllocateLocation);
 	modules.Register(sModuleLibDeflate);
@@ -72,5 +71,7 @@ void AdRegisterModules()
 	modules.Register(sModuleDropItems);
 
 	// Registers other patches
-	modules.Register(sModuleFacegen, Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleFacegen,		Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleSafeExit,		Addictol::ModuleManager::Type::kGameDataReady);
 }
