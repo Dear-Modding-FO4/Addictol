@@ -35,6 +35,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />
@@ -62,6 +63,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
   </ItemGroup>
   <ItemGroup>

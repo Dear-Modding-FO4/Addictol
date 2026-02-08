@@ -82,11 +82,18 @@ namespace Addictol
 			REL::WriteSafe(offset + 0x8B, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
 			REL::WriteSafe(offset + 0x91, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
 		}
+		else if (RELEX::IsRuntimeNG())
+		{
+			auto offset = REL::ID(2287420).address();
+
+			REL::WriteSafe(offset + 0xF9,  reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
+			REL::WriteSafe(offset + 0x104, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
+		}
 		else
 		{
 			auto offset = REL::ID(2287420).address();
 
-			REL::WriteSafe(offset + 0xF7,  reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
+			REL::WriteSafe(offset + 0xF7, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
 			REL::WriteSafe(offset + 0x102, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
 		}
 

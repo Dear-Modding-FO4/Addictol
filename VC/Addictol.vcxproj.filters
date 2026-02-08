@@ -82,6 +82,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdMemoryTracer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -162,6 +165,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdMemoryTracer.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h">
+      <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
