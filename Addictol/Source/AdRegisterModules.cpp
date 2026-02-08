@@ -18,6 +18,7 @@
 #include <Modules\AdModuleSmallblockAllocator.h>
 #include <Modules\AdModuleScaleformAllocator.h>
 #include <Modules\AdModuleWorkbenchSwap.h>
+#include <Modules\AdModuleDropItems.h>
 
 void AdRegisterModules()
 {
@@ -46,6 +47,7 @@ void AdRegisterModules()
 	static auto sModuleSmallblockAllocator			= std::make_shared<Addictol::ModuleSmallblockAllocator>();
 	static auto sModuleScaleformAllocator			= std::make_shared<Addictol::ModuleScaleformAllocator>();
 	static auto sModuleWorkbenchSwap				= std::make_shared<Addictol::ModuleWorkbenchSwap>();
+	static auto sModuleDropItems					= std::make_shared<Addictol::ModuleDropItems>();
 
 	// Registers preload patches
 	modules.Register(sModuleThreads);
@@ -67,6 +69,7 @@ void AdRegisterModules()
 	modules.Register(sModuleSmallblockAllocator);
 	modules.Register(sModuleScaleformAllocator);
 	modules.Register(sModuleWorkbenchSwap);
+	modules.Register(sModuleDropItems);
 
 	// Registers other patches
 	modules.Register(sModuleFacegen, Addictol::ModuleManager::Type::kGameDataReady);

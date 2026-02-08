@@ -24,7 +24,8 @@ namespace Addictol
 
 	bool ModuleSafeExit::DoQuery() const noexcept
 	{
-		return true;
+		// This patch useless with BakaQuitGameFix.dll installed and no called
+		return !(RELEX::IsRuntimeAE() && REX::W32::GetModuleHandleA("BakaQuitGameFix.dll"));
 	}
 
 	bool ModuleSafeExit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

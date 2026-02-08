@@ -88,6 +88,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDropItems.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -168,6 +171,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdAllocator.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDropItems.h">
+      <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
