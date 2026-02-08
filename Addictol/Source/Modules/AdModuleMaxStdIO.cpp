@@ -1,9 +1,6 @@
 #include <Modules\AdModuleMaxStdIO.h>
 #include <AdUtils.h>
 
-#include <windows.h>
-#undef ERROR
-
 namespace Addictol
 {
 	constexpr inline static auto RESET_MAXSTDIO = -1;
@@ -24,7 +21,7 @@ namespace Addictol
 
 	bool ModuleMaxStdIO::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto handle = REX::W32::GetModuleHandleW(!RELEX::IsRuntimeOG() ? L"api-ms-win-crt-runtime-l1-1-0.dll" : L"msvcr110.dll");
+		const auto handle = REX::W32::GetModuleHandleA(!RELEX::IsRuntimeOG() ? "api-ms-win-crt-runtime-l1-1-0.dll" : "msvcr110.dll");
 		const auto _setmaxio = handle ? reinterpret_cast<decltype(&_setmaxstdio)>(REX::W32::GetProcAddress(handle, "_setmaxstdio")) : nullptr;
 		const auto _getmaxio = handle ? reinterpret_cast<decltype(&_getmaxstdio)>(REX::W32::GetProcAddress(handle, "_getmaxstdio")) : nullptr;
 
