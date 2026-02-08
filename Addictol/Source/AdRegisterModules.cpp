@@ -1,4 +1,5 @@
 #include <AdPlugin.h>
+#include <AdUtils.h>
 #include <Modules\AdModuleThreads.h>
 #include <Modules\AdModuleGreyMovie.h>
 #include <Modules\AdModulePackageAllocateLocation.h>
@@ -19,37 +20,54 @@
 #include <Modules\AdModuleScaleformAllocator.h>
 #include <Modules\AdModuleWorkbenchSwap.h>
 #include <Modules\AdModuleDropItems.h>
+#include <Modules\AdModuleMaxStdIO.h>
 
-void AdRegisterModules()
+// Create patches
+static auto sModuleThreads						= std::make_shared<Addictol::ModuleThreads>();
+static auto sModuleGreyMovie					= std::make_shared<Addictol::ModuleGreyMovie>();
+static auto sModulePackageAllocateLocation		= std::make_shared<Addictol::ModulePackageAllocateLocation>();
+static auto sModuleLibDeflate					= std::make_shared<Addictol::ModuleLibDeflate>();
+static auto sModuleProfile						= std::make_shared<Addictol::ModuleProfile>();
+static auto sModuleLoadScreen					= std::make_shared<Addictol::ModuleLoadScreen>();
+static auto sModuleAchievements					= std::make_shared<Addictol::ModuleAchievements>();
+static auto sModuleLODDistance					= std::make_shared<Addictol::ModuleLODDistance>();
+static auto sModuleInitTints					= std::make_shared<Addictol::ModuleInitTints>();
+static auto sModuleActorIsHostileToActor		= std::make_shared<Addictol::ModuleActorIsHostileToActor>();
+static auto sModuleFacegen						= std::make_shared<Addictol::ModuleFacegen>();
+static auto sModuleBGSAIWorldLocationRefRadius	= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
+static auto sModuleSafeExit						= std::make_shared<Addictol::ModuleSafeExit>();
+static auto sModuleUnalignedLoad				= std::make_shared<Addictol::ModuleUnalignedLoad>();
+static auto sModuleCellInit						= std::make_shared<Addictol::ModuleCellInit>();
+static auto sModuleMemoryManager				= std::make_shared<Addictol::ModuleMemoryManager>();
+static auto sModuleSmallblockAllocator			= std::make_shared<Addictol::ModuleSmallblockAllocator>();
+static auto sModuleScaleformAllocator			= std::make_shared<Addictol::ModuleScaleformAllocator>();
+static auto sModuleWorkbenchSwap				= std::make_shared<Addictol::ModuleWorkbenchSwap>();
+static auto sModuleDropItems					= std::make_shared<Addictol::ModuleDropItems>();
+static auto sModuleMaxStdIO						= std::make_shared<Addictol::ModuleMaxStdIO>();
+
+void AdRegisterPreloadModules()
 {
 	auto plugin = Addictol::Plugin::GetSingleton();
 	if (!plugin) return;
 
 	auto& modules = plugin->GetModules();
 
-	// Create patches
-	static auto sModuleThreads						= std::make_shared<Addictol::ModuleThreads>();
-	static auto sModuleGreyMovie					= std::make_shared<Addictol::ModuleGreyMovie>();
-	static auto sModulePackageAllocateLocation		= std::make_shared<Addictol::ModulePackageAllocateLocation>();
-	static auto sModuleLibDeflate					= std::make_shared<Addictol::ModuleLibDeflate>();
-	static auto sModuleProfile						= std::make_shared<Addictol::ModuleProfile>();
-	static auto sModuleLoadScreen					= std::make_shared<Addictol::ModuleLoadScreen>();
-	static auto sModuleAchievements					= std::make_shared<Addictol::ModuleAchievements>();
-	static auto sModuleLODDistance					= std::make_shared<Addictol::ModuleLODDistance>();
-	static auto sModuleInitTints					= std::make_shared<Addictol::ModuleInitTints>();
-	static auto sModuleActorIsHostileToActor		= std::make_shared<Addictol::ModuleActorIsHostileToActor>();
-	static auto sModuleFacegen						= std::make_shared<Addictol::ModuleFacegen>();
-	static auto sModuleBGSAIWorldLocationRefRadius	= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
-	static auto sModuleSafeExit						= std::make_shared<Addictol::ModuleSafeExit>();
-	static auto sModuleUnalignedLoad				= std::make_shared<Addictol::ModuleUnalignedLoad>();
-	static auto sModuleCellInit						= std::make_shared<Addictol::ModuleCellInit>();
-	static auto sModuleMemoryManager				= std::make_shared<Addictol::ModuleMemoryManager>();
-	static auto sModuleSmallblockAllocator			= std::make_shared<Addictol::ModuleSmallblockAllocator>();
-	static auto sModuleScaleformAllocator			= std::make_shared<Addictol::ModuleScaleformAllocator>();
-	static auto sModuleWorkbenchSwap				= std::make_shared<Addictol::ModuleWorkbenchSwap>();
-	static auto sModuleDropItems					= std::make_shared<Addictol::ModuleDropItems>();
+	// Registers preload stage patches
+	modules.Register(sModuleMaxStdIO);
+}
 
-	// Registers preload patches
+void AdRegisterModules()
+{
+	// for OG preload stage not implemented
+	if (RELEX::IsRuntimeOG())
+		AdRegisterPreloadModules();
+
+	auto plugin = Addictol::Plugin::GetSingleton();
+	if (!plugin) return;
+
+	auto& modules = plugin->GetModules();
+
+	// Registers load stage patches
 	modules.Register(sModuleGreyMovie);
 	modules.Register(sModulePackageAllocateLocation);
 	modules.Register(sModuleLibDeflate);
@@ -69,7 +87,7 @@ void AdRegisterModules()
 	modules.Register(sModuleScaleformAllocator);
 	modules.Register(sModuleWorkbenchSwap);
 	modules.Register(sModuleDropItems);
-
+	
 	// Registers other patches
 	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);
 	modules.Register(sModuleFacegen,		Addictol::ModuleManager::Type::kGameDataReady);

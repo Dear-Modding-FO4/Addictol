@@ -5,6 +5,7 @@
 #endif
 
 extern void AdRegisterModules();
+extern void AdRegisterPreloadModules();
 
 namespace Addictol
 {
@@ -31,12 +32,12 @@ namespace Addictol
 		}
 		else
 			// Listener after installed for modules
-			plugin->GetModules().ListenerPreloadAllByMessage(a_msg);
+			plugin->GetModules().ListenerLoadAllByMessage(a_msg);
 	}
 
 #if SUPPORT_OG
 	// Added F4SE 0.7.1+
-	static  const char* F4SEAPI F4SEGetSaveFolderName() noexcept
+	[[nodiscard]] inline static const char* F4SEAPI F4SEGetSaveFolderName() noexcept
 	{
 		return "Fallout4";
 	}
@@ -50,7 +51,7 @@ namespace Addictol
 		static std::once_flag once;
 		std::call_once(once, [&]() {
 #if AD_DEBUGBREAK
-			MessageBoxA(0, "Debugbreak", "DEBUG", 0);
+			MessageBoxA(0, "Debugbreak load stage", "DEBUG", 0);
 #endif
 #if SUPPORT_OG
 			memcpy(&RestoreLoadInterface, a_f4se, 48 /* OG struct size */);
@@ -62,34 +63,75 @@ namespace Addictol
 			F4SE::Init(a_f4se);
 #endif // SUPPORT_OG
 
-			auto game_ver = a_f4se->RuntimeVersion();
-			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
-			REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
+			if (!isPreloadInit)
+			{
+				auto game_ver = a_f4se->RuntimeVersion();
+				REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
+				REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
 
-			// Get the Trampoline and Allocate
-			auto& trampoline = REL::GetTrampoline();
-			trampoline.create(1024);
+				// Get the Trampoline and Allocate
+				auto& trampoline = REL::GetTrampoline();
+				trampoline.create(AD_TRAMPOLINE_SIZE);
+
+				// Load the Config
+				const auto config = REX::TOML::SettingStore::GetSingleton();
+				config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
+				config->Load();
+			}
 
 			// Register all modules
 			AdRegisterModules();
-
-			// Load the Config
-			const auto config = REX::TOML::SettingStore::GetSingleton();
-			config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
-			config->Load();
 
 			// Listen for Messages (to Install PostInit Patches)
 			auto MessagingInterface = F4SE::GetMessagingInterface();
 			MessagingInterface->RegisterListener(F4SEMessageListener);
 			REX::INFO("Started Listening for F4SE Message Callbacks.");
 
-			// Install preload patches
-			moduleManager.QueryPreloadAll();
-			moduleManager.InstallPreloadAll();
+			// Install load patches
+			moduleManager.QueryLoadAll();
+			moduleManager.InstallLoadAll();
 
 			isInit = true;
 		});
 
 		return isInit;
+	}
+
+	bool Plugin::PreloadInit(const F4SE::PreLoadInterface* a_preloadf4se)
+	{
+		if (isPreloadInit)
+			return true;
+
+		static std::once_flag once;
+		std::call_once(once, [&]() {
+#if AD_DEBUGBREAK
+			MessageBoxA(0, "Debugbreak preload stage", "DEBUG", 0);
+#endif
+			// Preload Init
+			F4SE::Init(a_preloadf4se);
+
+			auto game_ver = a_preloadf4se->RuntimeVersion();
+			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
+			REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
+
+			// Get the Trampoline and Allocate
+			auto& trampoline = REL::GetTrampoline();
+			trampoline.create(AD_TRAMPOLINE_SIZE);
+
+			// Load the Config
+			const auto config = REX::TOML::SettingStore::GetSingleton();
+			config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
+			config->Load();
+
+			AdRegisterPreloadModules();
+
+			// Install preload patches
+			moduleManager.QueryPreloadAll();
+			moduleManager.InstallPreloadAll();
+
+			isPreloadInit = true;
+		});
+
+		return isPreloadInit;
 	}
 }

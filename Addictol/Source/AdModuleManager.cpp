@@ -54,6 +54,11 @@ namespace Addictol
 		}
 	}
 
+	void ModuleManager::UnregisterPreloadAll() noexcept
+	{
+		modules.clear();
+	}
+
 	bool ModuleManager::Register(const ModulePtr& a_mod, Type a_type) noexcept
 	{
 		if (!a_mod)
@@ -69,7 +74,7 @@ namespace Addictol
 			return false;
 		}
 
-		if (a_type == Type::kPreload)
+		if (a_type == Type::kLoad)
 		{
 			if (modules.find(nameModule) != modules.end())
 			{
@@ -118,7 +123,7 @@ namespace Addictol
 			return false;
 		}
 
-		if (a_type == Type::kPreload)
+		if (a_type == Type::kLoad)
 		{
 			auto it = modules.find(nameModule);
 			if (it == modules.end())
@@ -167,7 +172,7 @@ namespace Addictol
 		std::string findName = a_name;
 		strlwr(findName.data());
 
-		if (a_type == Type::kPreload)
+		if (a_type == Type::kLoad)
 		{
 			auto it = modules.find(findName);
 			if (it == modules.end())
@@ -205,7 +210,13 @@ namespace Addictol
 		}
 	}
 
-	void ModuleManager::QueryPreloadAll() noexcept
+	void ModuleManager::InstallPreloadAll() noexcept
+	{
+		InstallLoadAll();
+		UnregisterPreloadAll();
+	}
+
+	void ModuleManager::QueryLoadAll() noexcept
 	{
 		std::vector<ModulePtr> needRemovedList;
 
@@ -230,6 +241,8 @@ namespace Addictol
 				else
 					REX::INFO("Module \"{}\": enabled", mod->GetName());
 			}
+			else
+				REX::INFO("Module \"{}\": mandatory", mod->GetName());
 
 			if (!SafeQueryMod(mod))
 			{
@@ -242,7 +255,7 @@ namespace Addictol
 			Unregister(m);
 	}
 
-	void ModuleManager::InstallPreloadAll() noexcept
+	void ModuleManager::InstallLoadAll() noexcept
 	{
 		for (auto& it : modules)
 		{
@@ -254,7 +267,7 @@ namespace Addictol
 		}
 	}
 
-	void ModuleManager::ListenerPreloadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
+	void ModuleManager::ListenerLoadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!a_msg)
 			return;
@@ -301,6 +314,8 @@ namespace Addictol
 				else
 					REX::INFO("Module \"{}\": enabled by message {}", mod->GetName(), g_msgName[a_msg->type]);
 			}
+			else
+				REX::INFO("Module \"{}\": mandatory by message {}", mod->GetName(), g_msgName[a_msg->type]);
 
 			if (!SafeQueryMod(mod))
 			{

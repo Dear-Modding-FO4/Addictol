@@ -18,10 +18,11 @@ namespace Addictol
 		[[nodiscard]] bool SafeQueryMod(const ModulePtr& a_mod);
 		[[nodiscard]] bool SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
 		[[nodiscard]] bool SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
+		void UnregisterPreloadAll() noexcept;
 	public:
 		enum class Type : uint8_t
 		{
-			kPreload = 0,
+			kLoad = 0,
 			kPostLoad,
 			kPostPostLoad,
 			kPreLoadGame,
@@ -38,13 +39,16 @@ namespace Addictol
 		ModuleManager() = default;
 		virtual ~ModuleManager() = default;
 
-		virtual bool Register(const ModulePtr& a_mod, Type a_type = Type::kPreload) noexcept;
-		virtual bool Unregister(const ModulePtr& a_mod, Type a_type = Type::kPreload) noexcept;
-		virtual bool UnregisterByName(const char* a_name, Type a_type = Type::kPreload) noexcept;
-
-		virtual void QueryPreloadAll() noexcept;
+		virtual bool Register(const ModulePtr& a_mod, Type a_type = Type::kLoad) noexcept;
+		virtual bool Unregister(const ModulePtr& a_mod, Type a_type = Type::kLoad) noexcept;
+		virtual bool UnregisterByName(const char* a_name, Type a_type = Type::kLoad) noexcept;
+		
+		virtual inline void QueryPreloadAll() noexcept { QueryLoadAll(); }
 		virtual void InstallPreloadAll() noexcept;
-		virtual void ListenerPreloadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
+
+		virtual void QueryLoadAll() noexcept;
+		virtual void InstallLoadAll() noexcept;
+		virtual void ListenerLoadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 	};

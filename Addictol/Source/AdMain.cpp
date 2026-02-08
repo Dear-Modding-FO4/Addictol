@@ -106,15 +106,50 @@ static bool AdInitSafe(const F4SE::LoadInterface* a_f4se)
 
 #define AdInit AdInitSafe
 
-#if SUPPORT_PRELOAD
-// Hint: Preload no support OG
-F4SE_PLUGIN_PRELOAD(const F4SE::LoadInterface* a_f4se)
+static bool AdPreloadInitUnsafe(const F4SE::PreLoadInterface* a_preloadf4se)
 {
-    return AdInit(a_f4se);
+    // run patches after LoadLibrary
+    return Addictol::Plugin::GetSingleton()->PreloadInit(a_preloadf4se);
 }
-#else
+
+static bool AdPreloadInitSafe(const F4SE::PreLoadInterface* a_preloadf4se)
+{
+    __try
+    {
+        return AdPreloadInitUnsafe(a_preloadf4se);
+    }
+    __except (1)
+    {
+        return false;
+    }
+}
+
+#define AdPreloadInit AdPreloadInitSafe
+
+// No supported OG
+F4SE_PLUGIN_PRELOAD(const F4SE::PreLoadInterface* a_preloadf4se)
+{
+    return AdPreloadInit(a_preloadf4se);
+}
+
 F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 {
     return AdInit(a_f4se);
+}
+
+#if 0
+BOOL APIENTRY DllMain(HMODULE hModule, [[maybe_unused]] DWORD dwReasonForCall,
+    [[maybe_unused]] LPVOID lpReserved)
+{
+    switch (dwReasonForCall)
+    {
+    case DLL_PROCESS_ATTACH:
+        AdPreloadInit(reinterpret_cast<uintptr_t>(hModule));
+        break;
+    case DLL_PROCESS_DETACH:  
+        break;
+    }
+
+    return TRUE;
 }
 #endif
