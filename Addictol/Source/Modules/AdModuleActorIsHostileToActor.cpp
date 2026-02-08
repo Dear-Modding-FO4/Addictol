@@ -7,7 +7,7 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesActorIsHostileToActor{ "Fixes", "bActorIsHostileToActor", true };
 
-	inline static bool IsHostileToActor(RE::BSScript::IVirtualMachine* a_vm, std::uint32_t a_stackID, 
+	[[nodiscard]] inline static bool IsHostileToActor(RE::BSScript::IVirtualMachine* a_vm, std::uint32_t a_stackID, 
 		RE::Actor* a_self, RE::Actor* a_actor) noexcept
 	{
 		if (!a_actor)

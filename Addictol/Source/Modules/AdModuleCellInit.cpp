@@ -10,7 +10,7 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesCellInit{ "Fixes", "bCellInit", true };
 
-	inline RE::BGSLocation* GetLocation(const RE::TESObjectCELL* a_cell)
+	[[nodiscard]] inline static RE::BGSLocation* GetLocation(const RE::TESObjectCELL* a_cell) noexcept
 	{
 		const auto xLoc =
 			a_cell && a_cell->extraList ?

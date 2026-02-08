@@ -11,13 +11,13 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesThreads{ "Patches", "bThreads", true };
 
-	static BOOL WINAPI HKSetThreadPriority(HANDLE Thread, int Priority)
+	[[nodiscard]] static BOOL WINAPI HKSetThreadPriority(HANDLE Thread, int Priority) noexcept
 	{
 		// Don't allow a priority below normal - Fallout 4 doesn't have many "idle" threads
 		return SetThreadPriority(Thread, std::max(THREAD_PRIORITY_NORMAL, Priority));
 	}
 
-	static DWORD_PTR WINAPI HKSetThreadAffinityMask(HANDLE Thread, DWORD_PTR AffinityMask)
+	[[nodiscard]] static DWORD_PTR WINAPI HKSetThreadAffinityMask(HANDLE Thread, DWORD_PTR AffinityMask) noexcept
 	{
 		// Don't change anything
 		return std::numeric_limits<DWORD_PTR>::max();

@@ -9,7 +9,7 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPathesSafeExit{ "Fixes", "bSafeExit", true };
 
-	inline void Shutdown()
+	inline static void Shutdown() noexcept
 	{
 #if AD_TRACER
 		MemoryTracer::GetSingleton()->Dump();

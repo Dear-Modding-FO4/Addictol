@@ -9,7 +9,7 @@ namespace Addictol
 
 	struct GetPrimitive
 	{
-		static RE::BGSPrimitive* ExtraDataList_GetPrimitive(const RE::ExtraDataList* a_this)
+		[[nodiscard]] inline static RE::BGSPrimitive* ExtraDataList_GetPrimitive(const RE::ExtraDataList* a_this) noexcept
 		{
 			return a_this ? func(a_this) : nullptr;
 		}
