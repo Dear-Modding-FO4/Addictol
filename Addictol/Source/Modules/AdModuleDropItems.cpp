@@ -3,10 +3,10 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPathesDropItems{ "Patches", "bDropItems", true };
+	static REX::TOML::Bool<> bPatchesDropItems{ "Patches", "bDropItems", true };
 
 	ModuleDropItems::ModuleDropItems() :
-		Module("Module Drop Items", &bPathesDropItems)
+		Module("Module Drop Items", &bPatchesDropItems)
 	{}
 
 	bool ModuleDropItems::DoQuery() const noexcept
