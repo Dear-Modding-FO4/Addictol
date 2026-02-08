@@ -8,8 +8,8 @@ bProfile=true						# Added settings Pref.ini for default .ini, This provides an 
 bAchievements=true					# Enables achievements on modded saves.
 bFacegen=true						# Enables facegen support and removes freezes.
 bMemoryManager=true					# Replaces the global memory manager with vmm allocator.
-bSmallBlockAllocator=true			# Replaces the small block memory allocators with os allocators.
-bScaleformAllocator=true			# Replaces the scaleform memory allocator with os allocators.
+bSmallBlockAllocator=true			# Replaces the small block memory allocators with vmm allocator.
+bScaleformAllocator=true			# Replaces the scaleform memory allocator with os allocator.
 bDropItems=true						# Extends structure BSExtraCount from a 16-bit number to a 32-bit number. Allows you to throw things away up to 2.147.483.647.
 
 [Fixes]
