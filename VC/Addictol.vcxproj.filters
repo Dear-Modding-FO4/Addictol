@@ -1,10 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\AdAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdMain.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdMemoryTracer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdModule.cpp">
@@ -13,96 +19,78 @@
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdAllocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdMemoryTracer.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
+      <Filter>Source\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
-    <ClInclude Include="..\Addictol\Include\AdAssert.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdModule.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdPlugin.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdUtils.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
@@ -133,6 +121,12 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
@@ -142,32 +136,38 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdAllocator.h">
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdUtils.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
+    <ClInclude Include="..\Addictol\Include\AdAssert.h">
       <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h">
-      <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdMemoryTracer.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h">
-      <Filter>Include\Modules</Filter>
+    <ClInclude Include="..\Addictol\Include\AdModule.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdPlugin.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdAllocator.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -183,16 +183,16 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
-      <UniqueIdentifier>{13cf7b08-b53b-46a3-aa10-74b7d87c88e0}</UniqueIdentifier>
+      <UniqueIdentifier>{baed3218-2937-4cad-bce6-2874ab3de333}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include">
-      <UniqueIdentifier>{a87d1b21-024a-44a0-aff0-5f23f32aebc0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Modules">
-      <UniqueIdentifier>{2e12fca5-1274-4b55-bafd-b3a1c91c51ea}</UniqueIdentifier>
+      <UniqueIdentifier>{a20d09e5-6c76-49f5-9b4e-0bc1df6b6b20}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Modules">
-      <UniqueIdentifier>{1cd98061-a3dd-43f3-bdfd-d98f7a8e20d5}</UniqueIdentifier>
+      <UniqueIdentifier>{7f9dc727-58b0-4894-9e00-e9eb155fc5f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules">
+      <UniqueIdentifier>{5150941a-fce7-4adc-addc-9be98eb0c180}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
