@@ -24,6 +24,7 @@
 #include <Modules\AdModuleMovementPlanner.h>
 #include <Modules\AdModuleEscapeFreeze.h>
 #include <Modules\AdModuleIOCacher.h>
+#include <Modules\AdModuleBSPreCulledObjects.h>
 
 // Create patches
 static auto sModuleThreads						= std::make_shared<Addictol::ModuleThreads>();
@@ -50,6 +51,7 @@ static auto sModuleMaxStdIO						= std::make_shared<Addictol::ModuleMaxStdIO>();
 static auto sModuleMovementPlanner				= std::make_shared<Addictol::ModuleMovementPlanner>();
 static auto sModuleEscapeFreeze					= std::make_shared<Addictol::ModuleEscapeFreeze>();
 static auto sModuleIOCacher						= std::make_shared<Addictol::ModuleIOCacher>();
+static auto sModuleBSPreCulledObjects			= std::make_shared<Addictol::ModuleBSPreCulledObjects>();
 
 void AdRegisterPreloadModules()
 {
@@ -96,6 +98,7 @@ void AdRegisterModules()
 	modules.Register(sModuleMovementPlanner);
 	modules.Register(sModuleEscapeFreeze);
 	modules.Register(sModuleIOCacher);
+	modules.Register(sModuleBSPreCulledObjects);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);

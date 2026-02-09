@@ -68,6 +68,7 @@ namespace Addictol
 	{
 		REX::INFO("Starting FreezeWatcher Thread");
 		std::thread(FreezeWatcherThread).detach();
+		// TODO: Graceful exit
 
 		return true;
 	}

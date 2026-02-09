@@ -11,6 +11,7 @@ bMemoryManager=true					# Replaces the global memory manager with vmm allocator.
 bSmallBlockAllocator=true			# Replaces the small block memory allocators with vmm allocator.
 bScaleformAllocator=true			# Replaces the scaleform memory allocator with os allocator.
 bDropItems=true						# Extends structure BSExtraCount from a 16-bit number to a 32-bit number. Allows you to throw things away up to 2.147.483.647.
+bBSPreCulledObjects=true            # General rendering performance improvement.
 
 [Fixes]
 bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.

@@ -20,6 +20,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSPreCulledObjects.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDropItems.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorIsHostileToActor.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBGSAIWorldLocationRefRadius.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSPreCulledObjects.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDropItems.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h" />

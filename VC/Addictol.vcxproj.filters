@@ -103,6 +103,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSPreCulledObjects.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -197,6 +200,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSPreCulledObjects.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
