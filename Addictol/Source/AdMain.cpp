@@ -136,20 +136,3 @@ F4SE_PLUGIN_LOAD(const F4SE::LoadInterface* a_f4se)
 {
     return AdInit(a_f4se);
 }
-
-#if 0
-BOOL APIENTRY DllMain(HMODULE hModule, [[maybe_unused]] DWORD dwReasonForCall,
-    [[maybe_unused]] LPVOID lpReserved)
-{
-    switch (dwReasonForCall)
-    {
-    case DLL_PROCESS_ATTACH:
-        AdPreloadInit(reinterpret_cast<uintptr_t>(hModule));
-        break;
-    case DLL_PROCESS_DETACH:  
-        break;
-    }
-
-    return TRUE;
-}
-#endif
