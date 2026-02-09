@@ -26,6 +26,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />

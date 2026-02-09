@@ -23,14 +23,15 @@ bSafeExit=true                      # Fixes crashes related to exiting the game 
 bUnalignedLoad=true                 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
 bCellInit=true                      # Fixes a crash where a form does not get converted to a form pointer on unloaded cells.
 bWorkbenchSwap=true                 # Fixes a crash when you are scrapping or swapping many inventory items in the workbench.
-nMaxStdIO=-1						# Replaces the maximum stdio handles.
+nMaxStdIO=-1						# Replaces the maximum stdio handles (max 8192, but not for everyone OS).
 bMovementPlanner=true               # Fixes a bug where the the Movement Planner crashes with non-actors.
 bEscapeFreeze=true					# "Unfreezes" your game from certain freezes caused by a deadlock during condition checks.
+bIOCacher=true						# Use disk cache for IO for less disk activity.
 
 [Additional]
 bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
 bUseNewRedistributable=false		# Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (Need bMemoryManager patch).
 uScaleformPageSize=256				# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
 uScaleformHeapSize=512				# The heap size (in MB), vanilla size is 128. This is all the available memory, out of memory = CTD. Limit 2Gb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
-nSleepTimer=125						# Waiting with an interval for EscapeFreeze (Need bEscapeFreeze fixes)
-nMaxLockCount=8						# Maximum allowable number of condition lock (Need bEscapeFreeze fixes)
+nSleepTimer=125						# Waiting (in ms) with an interval for EscapeFreeze (Need bEscapeFreeze fixes).
+nMaxLockCount=8						# Maximum allowable number of condition lock (Need bEscapeFreeze fixes).
