@@ -1,38 +1,39 @@
 # ADDICTOL FALLOUT 4 PLUGIN SETTINGS
 
 [Patches]
-bThreads=true						# All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores.
-bLibDeflate=true					# Replace old zlib decompression code with optimized libdeflate https://github.com/ebiggers/libdeflate.
-bLoadScreen=true					# Black loading screen.
-bProfile=true						# Added settings Pref.ini for default .ini, This provides an opportunity mods change settings Pref.ini.
-bAchievements=true					# Enables achievements on modded saves.
-bFacegen=true						# Enables facegen support and removes freezes.
-bMemoryManager=true					# Replaces the global memory manager with vmm allocator.
-bSmallBlockAllocator=true			# Replaces the small block memory allocators with vmm allocator.
-bScaleformAllocator=true			# Replaces the scaleform memory allocator with os allocator.
-bDropItems=true						# Extends structure BSExtraCount from a 16-bit number to a 32-bit number. Allows you to throw things away up to 2.147.483.647.
-bBSPreCulledObjects=true            # General rendering performance improvement.
+bThreads=true						    # All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores.
+bLibDeflate=true					    # Replace old zlib decompression code with optimized libdeflate https://github.com/ebiggers/libdeflate.
+bLoadScreen=true					    # Black loading screen.
+bProfile=true						    # Added settings Pref.ini for default .ini, This provides an opportunity mods change settings Pref.ini.
+bAchievements=true					    # Enables achievements on modded saves.
+bFacegen=true						    # Enables facegen support and removes freezes.
+bMemoryManager=true					    # Replaces the global memory manager with vmm allocator.
+bSmallBlockAllocator=true			    # Replaces the small block memory allocators with vmm allocator.
+bScaleformAllocator=true			    # Replaces the scaleform memory allocator with os allocator.
+bDropItems=true						    # Extends structure BSExtraCount from a 16-bit number to a 32-bit number. Allows you to throw things away up to 2.147.483.647.
+bBSPreCulledObjects=true                # General rendering performance improvement.
 
 [Fixes]
-bGreyMovies=true					# Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
-bPackageAllocateLocation=true		# Fixes a crash when allocating the location for a package.
-bInitTints=true						# Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag.
-bLODDistance=true					# Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
-bActorIsHostileToActor=true			# Fixes a crash when invoking Actor.IsHostileToActor with a none form.
-bBGSAIWorldLocationRefRadius=true	# Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
-bSafeExit=true                      # Fixes crashes related to exiting the game that can be caused erroneously by F4SE plugin hooks.
-bUnalignedLoad=true                 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
-bCellInit=true                      # Fixes a crash where a form does not get converted to a form pointer on unloaded cells.
-bWorkbenchSwap=true                 # Fixes a crash when you are scrapping or swapping many inventory items in the workbench.
-nMaxStdIO=-1						# Replaces the maximum stdio handles (max 8192, but not for everyone OS).
-bMovementPlanner=true               # Fixes a bug where the the Movement Planner crashes with non-actors.
-bEscapeFreeze=true					# "Unfreezes" your game from certain freezes caused by a deadlock during condition checks.
-bIOCacher=true						# Use disk cache for IO for less disk activity.
+bGreyMovies=true					    # Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
+bPackageAllocateLocation=true		    # Fixes a crash when allocating the location for a package.
+bInitTints=true						    # Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag.
+bLODDistance=true					    # Fixes bugs when toggling references with LOD causing LOD to briefly enable and disable by removing the "Has Distant LOD" and "Visible When Distant" flag checks: https://www.youtube.com/watch?v=hgMm9Z8lHfU.
+bActorIsHostileToActor=true			    # Fixes a crash when invoking Actor.IsHostileToActor with a none form.
+bBGSAIWorldLocationRefRadius=true	    # Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
+bSafeExit=true                          # Fixes crashes related to exiting the game that can be caused erroneously by F4SE plugin hooks.
+bUnalignedLoad=true                     # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
+bCellInit=true                          # Fixes a crash where a form does not get converted to a form pointer on unloaded cells.
+bWorkbenchSwap=true                     # Fixes a crash when you are scrapping or swapping many inventory items in the workbench.
+nMaxStdIO=-1						    # Replaces the maximum stdio handles (max 8192, but not for everyone OS).
+bMovementPlanner=true                   # Fixes a bug where the the Movement Planner crashes with non-actors.
+bEscapeFreeze=true					    # "Unfreezes" your game from certain freezes caused by a deadlock during condition checks.
+bIOCacher=true						    # Use disk cache for IO for less disk activity.
+bTESObjectREFRGetEncounterZone=true     # Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized.
 
 [Additional]
-bDbgFacegenOutput=false 			# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
-bUseNewRedistributable=false		# Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (Need bMemoryManager patch).
-uScaleformPageSize=256				# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
-uScaleformHeapSize=512				# The heap size (in MB), vanilla size is 128. This is all the available memory, out of memory = CTD. Limit 2Gb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
-nSleepTimer=125						# Waiting (in ms) with an interval for EscapeFreeze (Need bEscapeFreeze fixes).
-nMaxLockCount=8						# Maximum allowable number of condition lock (Need bEscapeFreeze fixes).
+bDbgFacegenOutput=false 			    # Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
+bUseNewRedistributable=false		    # Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (Need bMemoryManager patch).
+uScaleformPageSize=256				    # The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
+uScaleformHeapSize=512				    # The heap size (in MB), vanilla size is 128. This is all the available memory, out of memory = CTD. Limit 2Gb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
+nSleepTimer=125						    # Waiting (in ms) with an interval for EscapeFreeze (Need bEscapeFreeze fixes).
+nMaxLockCount=8						    # Maximum allowable number of condition lock (Need bEscapeFreeze fixes).
