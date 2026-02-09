@@ -26,6 +26,7 @@
 #include <Modules\AdModuleIOCacher.h>
 #include <Modules\AdModuleBSPreCulledObjects.h>
 #include <Modules\AdModuleTESObjectREFRGetEncounterZone.h>
+#include <Modules\AdModuleINISettingCollection.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -54,6 +55,7 @@ static auto sModuleEscapeFreeze						= std::make_shared<Addictol::ModuleEscapeFr
 static auto sModuleIOCacher							= std::make_shared<Addictol::ModuleIOCacher>();
 static auto sModuleBSPreCulledObjects				= std::make_shared<Addictol::ModuleBSPreCulledObjects>();
 static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::ModuleTESObjectREFRGetEncounterZone>();
+static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
 
 void AdRegisterPreloadModules()
 {
@@ -102,6 +104,7 @@ void AdRegisterModules()
 	modules.Register(sModuleIOCacher);
 	modules.Register(sModuleBSPreCulledObjects);
 	modules.Register(sModuleTESObjectREFRGetEncounterZone);
+	modules.Register(sModuleINISettingCollection);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);
