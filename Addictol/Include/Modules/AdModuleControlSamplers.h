@@ -4,12 +4,12 @@
 
 namespace Addictol
 {
-	class ModuleGreyMovie :
+	class ModuleControlSamplers :
 		public Module
 	{
 	public:
-		ModuleGreyMovie();
-		virtual ~ModuleGreyMovie() = default;
+		ModuleControlSamplers();
+		virtual ~ModuleControlSamplers() = default;
 
 		[[nodiscard]] virtual bool DoQuery() const noexcept override;
 		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;

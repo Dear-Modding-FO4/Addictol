@@ -22,6 +22,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSPreCulledObjects.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDropItems.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBGSAIWorldLocationRefRadius.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSPreCulledObjects.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDropItems.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />

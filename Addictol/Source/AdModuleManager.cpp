@@ -54,6 +54,18 @@ namespace Addictol
 		}
 	}
 
+	bool ModuleManager::SafeListenerPapyrusMod(const ModulePtr& a_mod, RE::BSScript::IVirtualMachine* a_vm)
+	{
+		__try
+		{
+			return a_mod->DoPapyrusListener(a_vm);
+		}
+		__except (1)
+		{
+			return false;
+		}
+	}
+
 	void ModuleManager::UnregisterPreloadAll() noexcept
 	{
 		modules.clear();
@@ -346,6 +358,24 @@ namespace Addictol
 				REX::ERROR("Module \"{}\": fatal installation by message {}", mod->GetName(), g_msgName[a_msg->type]);
 			else
 				REX::INFO("Module \"{}\": installed by message {}", mod->GetName(), g_msgName[a_msg->type]);
+		}
+	}
+
+	void ModuleManager::ListenerAllPapyrus(RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		if (!a_vm)
+			return;
+
+		for (auto& it : modules)
+		{
+			auto& mod = it.second;
+			if (!mod->HasPapyrusListener())
+				continue;
+
+			if (!SafeListenerPapyrusMod(mod, a_vm))
+				REX::ERROR("Module \"{}\": fatal papyrus installation", mod->GetName());
+			else
+				REX::INFO("Module \"{}\": papyrus installed", mod->GetName());
 		}
 	}
 }

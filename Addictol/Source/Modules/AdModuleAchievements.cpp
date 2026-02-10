@@ -59,4 +59,9 @@ namespace Addictol
 	{
 		return true;
 	}
+
+	bool ModuleAchievements::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		return true;
+	}
 }

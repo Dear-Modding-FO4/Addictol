@@ -118,6 +118,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -227,6 +230,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>

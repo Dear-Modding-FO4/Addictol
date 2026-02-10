@@ -1,5 +1,8 @@
 #include <AdPlugin.h>
-#include <REX\REX\Singleton.h>
+#include <AdUtils.h>
+
+#include <RE\B\BSScriptUtil.h>
+
 #if AD_DEBUGBREAK
 #	include <windows.h>
 #endif
@@ -33,6 +36,11 @@ namespace Addictol
 		else
 			// Listener after installed for modules
 			plugin->GetModules().ListenerLoadAllByMessage(a_msg);
+	}
+
+	static void F4SEPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		Plugin::GetSingleton()->GetModules().ListenerAllPapyrus(a_vm);
 	}
 
 #if SUPPORT_OG
@@ -84,8 +92,15 @@ namespace Addictol
 
 			// Listen for Messages (to Install PostInit Patches)
 			auto MessagingInterface = F4SE::GetMessagingInterface();
-			MessagingInterface->RegisterListener(F4SEMessageListener);
-			REX::INFO("Started Listening for F4SE Message Callbacks.");
+			if (MessagingInterface->RegisterListener(F4SEMessageListener))
+				REX::INFO("Started Listening for F4SE Message Callbacks.");
+
+			// Listen for Papyrus
+			auto PapyrusInterface = F4SE::GetPapyrusInterface();
+			if (PapyrusInterface->Register([](RE::BSScript::IVirtualMachine* vm) -> bool {
+				F4SEPapyrusListener(vm);
+				return true; }))
+				REX::INFO("Started Listening for Papyrus Callbacks.");	
 
 			// Install load patches
 			moduleManager.QueryLoadAll();

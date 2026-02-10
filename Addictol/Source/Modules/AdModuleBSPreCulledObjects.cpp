@@ -484,4 +484,9 @@ namespace Addictol
 	{
 		return true;
 	}
+
+	bool ModuleBSPreCulledObjects::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		return true;
+	}
 }

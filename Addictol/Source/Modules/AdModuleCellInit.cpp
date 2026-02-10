@@ -65,4 +65,9 @@ namespace Addictol
 	{
 		return true;
 	}
+
+	bool ModuleCellInit::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		return true;
+	}
 }

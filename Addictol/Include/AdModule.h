@@ -15,12 +15,13 @@ namespace Addictol
 		std::string_view name{};
 		const REX::TOML::Bool<>* option{ nullptr };
 		std::bitset<F4SE::MessagingInterface::kGameDataReady + 1> listener_messages;
+		bool papyrusListener{ false };
 
 		Module(const Module&) = delete;
 		Module& operator=(const Module&) = delete;
 	public:
 		Module(const char* a_name, const REX::TOML::Bool<>* a_option = nullptr, 
-			std::initializer_list<std::uint32_t> a_listeners = {});
+			std::initializer_list<std::uint32_t> a_listeners = {}, bool a_papyrusListener = false);
 		virtual ~Module() = default;
 
 		[[nodiscard]] virtual std::string_view GetName() const noexcept { return name; }
@@ -29,6 +30,8 @@ namespace Addictol
 		[[nodiscard]] virtual bool DoQuery() const noexcept = 0;
 		[[nodiscard]] virtual bool DoInstall(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
 		[[nodiscard]] virtual bool DoListener(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
+		[[nodiscard]] virtual bool DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept = 0;
 		[[nodiscard]] virtual bool HasListener(std::uint32_t a_msgType) noexcept;
+		[[nodiscard]] virtual bool HasPapyrusListener() noexcept;
 	};
 }

@@ -18,6 +18,7 @@ namespace Addictol
 		[[nodiscard]] bool SafeQueryMod(const ModulePtr& a_mod);
 		[[nodiscard]] bool SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
 		[[nodiscard]] bool SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
+		[[nodiscard]] bool SafeListenerPapyrusMod(const ModulePtr& a_mod, RE::BSScript::IVirtualMachine* a_vm);
 		void UnregisterPreloadAll() noexcept;
 	public:
 		enum class Type : uint8_t
@@ -51,5 +52,6 @@ namespace Addictol
 		virtual void ListenerLoadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
+		virtual void ListenerAllPapyrus(RE::BSScript::IVirtualMachine* a_vm) noexcept;
 	};
 }

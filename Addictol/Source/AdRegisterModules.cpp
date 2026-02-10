@@ -29,6 +29,7 @@
 #include <Modules\AdModuleINISettingCollection.h>
 #include <Modules\AdModulePipBoyLightInv.h>
 #include <Modules\AdModuleInteriorNavCut.h>
+#include <Modules\AdModuleControlSamplers.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -60,6 +61,7 @@ static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::Mo
 static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
 static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
+static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
 
 void AdRegisterPreloadModules()
 {
@@ -111,10 +113,12 @@ void AdRegisterModules()
 	modules.Register(sModuleINISettingCollection);
 	modules.Register(sModulePipBoyLightInv);
 	modules.Register(sModuleInteriorNavCut);
+	modules.Register(sModuleControlSamplers);
 	
 	// Registers other patches
-	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleFacegen,		Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleSafeExit,		Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleInteriorNavCut,	Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleThreads,			Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleFacegen,			Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleSafeExit,			Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleInteriorNavCut,		Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleControlSamplers,	Addictol::ModuleManager::Type::kGameDataReady);
 }
