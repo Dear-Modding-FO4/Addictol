@@ -47,13 +47,21 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: New-Item -ItemType Directory -Path "addictol-${{env.SHORT_SHA}}\f4se"
       
+    - name: Make Scripts Directory
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: New-Item -ItemType Directory -Path "addictol-${{env.SHORT_SHA}}\scripts"
+      
     - name: Make F4SE/Plugins Directory
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: New-Item -ItemType Directory -Path "addictol-${{env.SHORT_SHA}}\f4se\plugins"
 
     - name: Copy build stuff
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: Get-ChildItem -Recurse -Path ".\.Build\F4SE\Plugins" -Include "Addictol.dll", "Addictol.pdb", "Addictol.toml" | ForEach-Object { Copy-Item -Path $_.FullName -Destination (Join-Path "addictol-${{env.SHORT_SHA}}\f4se\plugins" $_.Name) -Force }
+      run: Get-ChildItem -Recurse -Path ".\.Build\F4SE\Plugins" -Include "Addictol.dll", "Addictol.pdb", "Addictol.toml", "Addictol_FacegenExceptions.ini" | ForEach-Object { Copy-Item -Path $_.FullName -Destination (Join-Path "addictol-${{env.SHORT_SHA}}\f4se\plugins" $_.Name) -Force }
+      
+    - name: Copy scripts stuff
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: Copy-Item -Path ".\.Build\Scripts\*" -Destination addictol-${{env.SHORT_SHA}}\scripts" -recurse -Force
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4

@@ -4,16 +4,20 @@
 #include <comdef.h>
 #include <wrl/client.h>
 
+#undef ERROR
+#undef MAX_PATH
 #undef MEM_RELEASE
 
+#include <RE\B\BSScriptUtil.h>
 #include <RE\B\BSGraphics.h>
 #include <RE\S\Setting.h>
 
 namespace Addictol
 {
 	// Does not exist in Pref list
-	static constexpr char MIPBIAS_OPTION_NAME[] = "fMipBias:Display";
-	static constexpr char MAXANISTROPY_OPTION_NAME[] = "iMaxAnisotropy:Display";
+	static constexpr char MIPBIAS_OPTION_NAME[]			= "fMipBias:Display";
+	static constexpr char MAXANISTROPY_OPTION_NAME[]	= "iMaxAnisotropy:Display";
+	static constexpr char OBJECT_PAPYRUS_NAME[]			= "Addictol";
 
 	RE::Setting g_MipBiasSetting{ MIPBIAS_OPTION_NAME, 0.0f };
 	RE::Setting g_MaxAnisotropySetting{ MAXANISTROPY_OPTION_NAME, 0 };
@@ -135,6 +139,59 @@ namespace Addictol
 
 	///////////////////////////////////////////////////////////////////////////////
 
+	namespace VirtualMachine
+	{
+		static float GetMipLODBias(RE::BSScript::Object& a_base) noexcept
+		{
+			return g_MipBiasSetting.GetFloat();
+		}
+
+		static void SetMipLODBias(RE::BSScript::Object& a_base, float a_value) noexcept
+		{
+			a_value = std::min(5.0f, std::max(-5.0f, a_value));
+
+			REX::INFO("MIP LOD Bias changed from {} to {}, recreating samplers", 
+				static_cast<float>(g_MipBiasSetting.GetFloat()), a_value);
+
+			g_PassThroughSamplers.clear();
+			g_MappedSamplers.clear();
+			g_MipBiasSetting.SetFloat(a_value);
+
+			// TODO: maybe need write to ini
+		}
+
+		static void SetDefaultMipLODBias(RE::BSScript::Object& a_base) noexcept
+		{
+			SetMipLODBias(a_base, 0.0f);
+		}
+
+		static long GetMaxAnisotropy(RE::BSScript::Object& a_base) noexcept
+		{
+			return (long)g_MaxAnisotropySetting.GetInt();
+		}
+
+		static void SetMaxAnisotropy(RE::BSScript::Object& a_base, long a_value) noexcept
+		{
+			a_value = std::min(16l, std::max(0l, a_value));
+
+			REX::INFO("MAX Anisotropy changed from {} to {}, recreating samplers", 
+				static_cast<int>(g_MaxAnisotropySetting.GetInt()), a_value);
+
+			g_PassThroughSamplers.clear();
+			g_MappedSamplers.clear();
+			g_MaxAnisotropySetting.SetInt((int32_t)a_value);
+
+			// TODO: maybe need write to ini
+		}
+
+		static void SetDefaultMaxAnisotropy(RE::BSScript::Object& a_base) noexcept
+		{
+			SetMaxAnisotropy(a_base, 0);
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+
 	ModuleControlSamplers::ModuleControlSamplers() :
 		Module("Module Control Samplers", nullptr, {}, true)
 	{}
@@ -181,9 +238,14 @@ namespace Addictol
 
 	bool ModuleControlSamplers::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
 	{
-		REX::INFO("[DBG] DoPapyrusListener");
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMipLODBias",			VirtualMachine::GetMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMipLODBias",			VirtualMachine::SetMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMipLODBias",		VirtualMachine::SetDefaultMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMaxAnisotropy",			VirtualMachine::GetMaxAnisotropy);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMaxAnisotropy",			VirtualMachine::SetMaxAnisotropy);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMaxAnisotropy",	VirtualMachine::SetDefaultMaxAnisotropy);
 
-		// TODO: Need register functions for papyrus
+		REX::INFO("Register papyrus functions succeed");
 
 		return true;
 	}
