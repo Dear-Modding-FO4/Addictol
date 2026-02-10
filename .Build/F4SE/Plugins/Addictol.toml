@@ -40,3 +40,4 @@ uScaleformPageSize=256				    # The page size (in KB), vanilla size is 64. More,
 uScaleformHeapSize=512				    # The heap size (in MB), vanilla size is 128. This is all the available memory, out of memory = CTD. Limit 2Gb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
 nSleepTimer=125						    # Waiting (in ms) with an interval for EscapeFreeze (Need bEscapeFreeze fixes).
 nMaxLockCount=8						    # Maximum allowable number of condition lock (Need bEscapeFreeze fixes).
+bInteriorNavCutMultiThreading=true      # Enable InteriorNavCut MultiThreading, Linux / Proton Users might need to disable this (needs bInteriorNavCut).
