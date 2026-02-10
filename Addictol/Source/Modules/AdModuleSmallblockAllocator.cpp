@@ -116,30 +116,8 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		using tuple_t = std::tuple<uint64_t, void*>;
-
-		if (RELEX::IsRuntimeOG())
-		{
-			const std::array MMPatch
-			{
-				tuple_t{ 674967,	&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<> },
-				tuple_t{ 1552278,	&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<> },
-			};
-
-			for (const auto& [id, func] : MMPatch)
-				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-		}
-		else
-		{
-			const std::array MMPatch
-			{
-				tuple_t{ 2268154,	&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<> },
-				tuple_t{ 2268155,	&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<> },
-			};
-
-			for (const auto& [id, func] : MMPatch)
-				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-		}
+		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<>);
+		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<>);
 
 		return true;
 	}
