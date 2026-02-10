@@ -61,7 +61,7 @@ jobs:
       
     - name: Copy scripts stuff
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: Copy-Item -Path ".\.Build\Scripts\*" -Destination addictol-${{env.SHORT_SHA}}\scripts" -recurse -Force
+      run: Copy-Item -Path ".\.Build\Scripts\*" -Destination "addictol-${{env.SHORT_SHA}}\scripts" -recurse -Force
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4

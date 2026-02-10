@@ -3,6 +3,7 @@
 
 #include <comdef.h>
 #include <wrl/client.h>
+#include <ShlObj_core.h>
 
 #undef ERROR
 #undef MAX_PATH
@@ -15,12 +16,15 @@
 namespace Addictol
 {
 	// Does not exist in Pref list
-	static constexpr char MIPBIAS_OPTION_NAME[]			= "fMipBias:Display";
-	static constexpr char MAXANISTROPY_OPTION_NAME[]	= "iMaxAnisotropy:Display";
-	static constexpr char OBJECT_PAPYRUS_NAME[]			= "Addictol";
+	static constexpr char MIPBIAS_OPTION_NAME[]				= "fMipBias:Display";
+	static constexpr char MAXANISTROPY_OPTION_NAME[]		= "iMaxAnisotropy:Display";
+	static constexpr wchar_t MIPBIAS_OPTION_NAMEW[]			= L"fMipBias:Display";
+	static constexpr wchar_t MAXANISTROPY_OPTION_NAMEW[]	= L"iMaxAnisotropy:Display";
+	static constexpr char OBJECT_PAPYRUS_NAME[]				= "Addictol";
 
 	RE::Setting g_MipBiasSetting{ MIPBIAS_OPTION_NAME, 0.0f };
 	RE::Setting g_MaxAnisotropySetting{ MAXANISTROPY_OPTION_NAME, 0 };
+	std::wstring g_PrefIniFileName;
 
 	using namespace Microsoft::WRL;
 
@@ -141,12 +145,12 @@ namespace Addictol
 
 	namespace VirtualMachine
 	{
-		static float GetMipLODBias(RE::BSScript::Object& a_base) noexcept
+		static float GetMipLODBias(std::monostate a_base) noexcept
 		{
 			return g_MipBiasSetting.GetFloat();
 		}
 
-		static void SetMipLODBias(RE::BSScript::Object& a_base, float a_value) noexcept
+		static void SetMipLODBias(std::monostate a_base, float a_value) noexcept
 		{
 			a_value = std::min(5.0f, std::max(-5.0f, a_value));
 
@@ -157,20 +161,20 @@ namespace Addictol
 			g_MappedSamplers.clear();
 			g_MipBiasSetting.SetFloat(a_value);
 
-			// TODO: maybe need write to ini
+			WriteINISettingFloat(g_PrefIniFileName.c_str(), MIPBIAS_OPTION_NAMEW, a_value);
 		}
 
-		static void SetDefaultMipLODBias(RE::BSScript::Object& a_base) noexcept
+		static void SetDefaultMipLODBias(std::monostate a_base) noexcept
 		{
 			SetMipLODBias(a_base, 0.0f);
 		}
 
-		static long GetMaxAnisotropy(RE::BSScript::Object& a_base) noexcept
+		static long GetMaxAnisotropy(std::monostate a_base) noexcept
 		{
 			return (long)g_MaxAnisotropySetting.GetInt();
 		}
 
-		static void SetMaxAnisotropy(RE::BSScript::Object& a_base, long a_value) noexcept
+		static void SetMaxAnisotropy(std::monostate a_base, long a_value) noexcept
 		{
 			a_value = std::min(16l, std::max(0l, a_value));
 
@@ -181,10 +185,10 @@ namespace Addictol
 			g_MappedSamplers.clear();
 			g_MaxAnisotropySetting.SetInt((int32_t)a_value);
 
-			// TODO: maybe need write to ini
+			WriteINISettingInt(g_PrefIniFileName.c_str(), MAXANISTROPY_OPTION_NAMEW, a_value);
 		}
 
-		static void SetDefaultMaxAnisotropy(RE::BSScript::Object& a_base) noexcept
+		static void SetDefaultMaxAnisotropy(std::monostate a_base) noexcept
 		{
 			SetMaxAnisotropy(a_base, 0);
 		}
@@ -208,6 +212,18 @@ namespace Addictol
 			auto Pref = RE::INIPrefSettingCollection::GetSingleton();
 			Pref->settings.push_front(&g_MipBiasSetting);
 			Pref->settings.push_front(&g_MaxAnisotropySetting);
+
+			wchar_t* knownBuffer{ nullptr };
+			const auto knownResult = SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, std::addressof(knownBuffer));
+			std::unique_ptr<wchar_t[], decltype(&CoTaskMemFree)> knownPath(knownBuffer, CoTaskMemFree);
+			if (!knownPath || knownResult != 0) {
+				REX::ERROR("failed to get known folder path");
+				return false;
+			}
+
+			std::filesystem::path path = knownPath.get();
+			path /= std::format("My Games/{}/Fallout4Prefs.ini", GetSaveFolderName());
+			g_PrefIniFileName = path;
 		}
 		else if (a_msg->type == F4SE::MessagingInterface::kGameDataReady)
 		{

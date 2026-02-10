@@ -47,7 +47,7 @@ namespace Addictol
 	// Added F4SE 0.7.1+
 	[[nodiscard]] inline static const char* F4SEAPI F4SEGetSaveFolderName() noexcept
 	{
-		return "Fallout4";
+		return Addictol::GetSaveFolderName();
 	}
 #endif // SUPPORT_OG
 

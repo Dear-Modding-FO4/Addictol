@@ -203,4 +203,10 @@ namespace Addictol
 	bool IsBigEndian() noexcept;
 	bool IsLittleEndian() noexcept;
 	std::string& Trim(std::string& String) noexcept;
+
+	bool WriteINISettingInt(const wchar_t* a_INIFile, const wchar_t* a_optionName, long a_value) noexcept;
+	bool WriteINISettingFloat(const wchar_t* a_INIFile, const wchar_t* a_optionName, float a_value) noexcept;
+	bool WriteINISettingString(const wchar_t* a_INIFile, const wchar_t* a_optionName, const wchar_t* a_value) noexcept;
+
+	[[nodiscard]] const char* GetSaveFolderName() noexcept;
 }

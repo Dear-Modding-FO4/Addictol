@@ -3,6 +3,12 @@
 #include <AdUtils.h>
 #include <AdAssert.h>
 #include <detours\Detours.h>
+#include <windows.h>
+
+#undef ERROR
+#undef MEM_RELEASE
+#undef MAX_PATH
+#undef PAGE_EXECUTE_READWRITE
 
 std::string AdGetRuntimePath() noexcept
 {
@@ -216,5 +222,44 @@ namespace Addictol
 		}
 
 		return String;
+	}
+
+	bool WriteINISettingInt(const wchar_t* a_INIFile, const wchar_t* a_optionName, long a_value) noexcept
+	{
+		if (!a_INIFile || !a_optionName)
+			return false;
+
+		return WriteINISettingString(a_INIFile, a_optionName, std::to_wstring(a_value).c_str());
+	}
+
+	bool WriteINISettingFloat(const wchar_t* a_INIFile, const wchar_t* a_optionName, float a_value) noexcept
+	{
+		if (!a_INIFile || !a_optionName)
+			return false;
+
+		return WriteINISettingString(a_INIFile, a_optionName, std::to_wstring(a_value).c_str());
+	}
+
+	bool WriteINISettingString(const wchar_t* a_INIFile, const wchar_t* a_optionName, const wchar_t* a_value) noexcept
+	{
+		if (!a_INIFile || !a_optionName || !a_value)
+			return false;
+
+		std::wstring op = a_optionName;
+		auto it = op.find_first_of(L':');
+		if (it == std::wstring::npos)
+			return false;
+
+		std::wstring sec = op.substr(it + 1);
+		op = op.substr(0, it);
+
+		// It's not optimized, but it's not necessary.
+		return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
+	}
+
+	// Added F4SE 0.7.1+
+	[[nodiscard]] const char* GetSaveFolderName() noexcept
+	{
+		return "Fallout4";
 	}
 }
