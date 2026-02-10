@@ -75,27 +75,12 @@ namespace Addictol
 		vtable[3] = (std::uintptr_t)BSScaleformSysMemMapper::Alloc;
 		vtable[4] = (std::uintptr_t)BSScaleformSysMemMapper::Dealloc;
 
-		if (RELEX::IsRuntimeOG())
-		{
-			auto offset = REL::ID(466425).address();
+		auto id = REL::ID{ 466425, 2287420 };
 
-			REL::WriteSafe(offset + 0x8B, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
-			REL::WriteSafe(offset + 0x91, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
-		}
-		else if (RELEX::IsRuntimeNG())
-		{
-			auto offset = REL::ID(2287420).address();
-
-			REL::WriteSafe(offset + 0xF9,  reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
-			REL::WriteSafe(offset + 0x104, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
-		}
-		else
-		{
-			auto offset = REL::ID(2287420).address();
-
-			REL::WriteSafe(offset + 0xF7, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
-			REL::WriteSafe(offset + 0x102, reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
-		}
+		REL::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x8B, 0xF9, 0xF7 } }.get(), 
+			reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
+		REL::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x91, 0x104, 0x102 } }.get(),
+			reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
 
 		return true;
 	}
