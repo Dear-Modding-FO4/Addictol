@@ -28,6 +28,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
@@ -65,6 +66,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
@@ -73,7 +75,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightEnv.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h" />
