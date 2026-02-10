@@ -16,22 +16,11 @@ namespace Addictol
 
 	bool ModuleIOCacher::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (!RELEX::IsRuntimeOG())
-		{
-			auto off = REL::ID(2268775).address();
+		auto id = REL::ID{ 165043, 2268775 };
 
-			RELEX::WriteSafe(off + 0x88, { 0x10 });
-			RELEX::WriteSafe(off + 0x91, { 0x50 });
-			RELEX::WriteSafe(off + 0x9C, { 0x10 });
-		}
-		else
-		{
-			auto off = REL::ID(165043).address();
-
-			RELEX::WriteSafe(off + 0x84, { 0x10 });
-			RELEX::WriteSafe(off + 0x8D, { 0x50 });
-			RELEX::WriteSafe(off + 0x98, { 0x10 });
-		}
+		RELEX::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x84, 0x88 } }.get(), { 0x10 });
+		RELEX::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x8D, 0x91 } }.get(), { 0x50 });
+		RELEX::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x98, 0x9C } }.get(), { 0x10 });
 
 		return true;
 	}
