@@ -99,21 +99,8 @@ namespace Addictol
 
 	bool ModuleProfile::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (!RELEX::IsRuntimeOG())
-		{
-			// NG/AE
-
-			auto Target = REL::ID(2228907).address();
-			//REX::INFO("[DBG]\tTarget 0x{:X}", Target - REL::Module::GetSingleton()->base());
-			RELEX::DetourCall(Target + (RELEX::IsRuntimeNG() ? 0x4A7 : 0x538), (uintptr_t)&hk_nullsub_C30008);
-		}
-		else
-		{
-			// OG
-
-			auto Target = REL::ID(665510).address();
-			RELEX::DetourCall(Target + 0x3BE, (uintptr_t)&hk_nullsub_C30008);
-		}
+		RELEX::DetourCall(REL::Relocation{ REL::ID{ 665510, 2228907 }, REL::Offset{ 0x3BE, 0x4A7, 0x538 } }.get(), 
+			(uintptr_t)&hk_nullsub_C30008);
 
 		return true;
 	}
