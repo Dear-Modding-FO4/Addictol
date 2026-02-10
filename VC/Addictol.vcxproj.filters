@@ -112,7 +112,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightEnv.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
   </ItemGroup>
