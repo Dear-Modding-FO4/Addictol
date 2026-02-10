@@ -36,6 +36,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightEnv.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp" />
@@ -72,6 +73,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightEnv.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h" />

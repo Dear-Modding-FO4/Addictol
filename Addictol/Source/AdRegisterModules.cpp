@@ -27,6 +27,7 @@
 #include <Modules\AdModuleBSPreCulledObjects.h>
 #include <Modules\AdModuleTESObjectREFRGetEncounterZone.h>
 #include <Modules\AdModuleINISettingCollection.h>
+#include <Modules\AdModulePipBoyLightInv.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -56,6 +57,7 @@ static auto sModuleIOCacher							= std::make_shared<Addictol::ModuleIOCacher>()
 static auto sModuleBSPreCulledObjects				= std::make_shared<Addictol::ModuleBSPreCulledObjects>();
 static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::ModuleTESObjectREFRGetEncounterZone>();
 static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
+static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
 
 void AdRegisterPreloadModules()
 {
@@ -105,6 +107,7 @@ void AdRegisterModules()
 	modules.Register(sModuleBSPreCulledObjects);
 	modules.Register(sModuleTESObjectREFRGetEncounterZone);
 	modules.Register(sModuleINISettingCollection);
+	modules.Register(sModulePipBoyLightInv);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,		Addictol::ModuleManager::Type::kGameDataReady);
