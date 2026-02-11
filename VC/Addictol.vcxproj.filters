@@ -127,6 +127,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEncounterZoneReset.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveLimits.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -245,6 +248,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEncounterZoneReset.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveLimits.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
