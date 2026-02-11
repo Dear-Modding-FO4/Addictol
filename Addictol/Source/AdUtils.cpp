@@ -5,6 +5,8 @@
 #include <detours\Detours.h>
 #include <windows.h>
 
+#include <INI\SimpleIni.h>
+
 #undef ERROR
 #undef MEM_RELEASE
 #undef MAX_PATH
@@ -253,18 +255,22 @@ namespace Addictol
 		std::wstring sec = op.substr(it + 1);
 		op = op.substr(0, it);
 
-		// It's not optimized, but it's not necessary.
-		// Need compatibility with the replacement ini mod
-
-		auto proc = REL::GetIATAddr("kernel32.dll", "WritePrivateProfileStringA");
-		if (!proc)
-			return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
-		else
+		auto proc = *(uintptr_t*)REL::GetIATAddr("kernel32.dll", "WritePrivateProfileStringA");
+		if (*(uint8_t*)proc == 0xE9)
 		{
-			auto WritePPString = (decltype(&WritePrivateProfileStringA))(*(uintptr_t*)proc);
-			return WritePPString(WideToSysChar(sec).c_str(), WideToSysChar(op).c_str(),
-				WideToSysChar(a_value).c_str(), WideToSysChar(a_INIFile).c_str());
+			// Inject detected, maybe PrivateProfileRedirector F4 mod
+
+			CSimpleIniW ini;
+			ini.LoadFile(a_INIFile);
+			ini.SetValue(sec.c_str(), op.c_str(), a_value, nullptr, true);
+			ini.SaveFile(a_INIFile);
+
+			// PrivateProfileRedirector F4 mod this also hooked
+			// Write to cache mod
+			// return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
 		}
+		
+		return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
 	}
 
 	std::string WideToSysChar(const std::wstring& s) noexcept
