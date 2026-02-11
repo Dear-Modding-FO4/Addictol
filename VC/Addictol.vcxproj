@@ -29,6 +29,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp" />
@@ -71,6 +72,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h" />

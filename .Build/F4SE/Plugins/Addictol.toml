@@ -36,6 +36,9 @@ bInteriorNavCut=true                    # Fixes the engine bug that causes Works
 bMagicEffectApplyEvent=true             # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 bEncounterZoneReset=true                # Fixes encounter zones resetting immediately once you leave them on foot.
 
+[Warnings]
+bImageSpaceAdapter=true                 # Warns on bad IMAD definitions which will corrupt your memory and crash your game.
+
 [Additional]
 bDbgFacegenOutput=false 			    # Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
 bUseNewRedistributable=false		    # Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (Need bMemoryManager patch).

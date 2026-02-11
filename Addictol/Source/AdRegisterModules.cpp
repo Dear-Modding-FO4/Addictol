@@ -33,6 +33,7 @@
 #include <Modules\AdModuleMagicEffectApplyEvent.h>
 #include <Modules\AdModuleEncounterZoneReset.h>
 #include <Modules\AdModuleArchiveLimits.h>
+#include <Modules\AdModuleImageSpaceAdapterWarning.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -68,6 +69,7 @@ static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleContro
 static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
 static auto sModuleEncounterZoneReset				= std::make_shared<Addictol::ModuleEncounterZoneReset>();
 static auto sModuleArchiveLimits					= std::make_shared<Addictol::ModuleArchiveLimits>();
+static auto sModuleImageSpaceAdapterWarning			= std::make_shared<Addictol::ModuleImageSpaceAdapterWarning>();
 
 void AdRegisterPreloadModules()
 {
@@ -122,6 +124,7 @@ void AdRegisterModules()
 	modules.Register(sModuleControlSamplers);
 	modules.Register(sModuleMagicEffectApplyEvent);
 	modules.Register(sModuleArchiveLimits);
+	modules.Register(sModuleImageSpaceAdapterWarning);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,			Addictol::ModuleManager::Type::kGameDataReady);
