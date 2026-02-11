@@ -30,6 +30,7 @@
 #include <Modules\AdModulePipBoyLightInv.h>
 #include <Modules\AdModuleInteriorNavCut.h>
 #include <Modules\AdModuleControlSamplers.h>
+#include <Modules\AdModuleMagicEffectApplyEvent.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -62,6 +63,7 @@ static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleIN
 static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
 static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
+static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
 
 void AdRegisterPreloadModules()
 {
@@ -114,6 +116,7 @@ void AdRegisterModules()
 	modules.Register(sModulePipBoyLightInv);
 	modules.Register(sModuleInteriorNavCut);
 	modules.Register(sModuleControlSamplers);
+	modules.Register(sModuleMagicEffectApplyEvent);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,			Addictol::ModuleManager::Type::kGameDataReady);

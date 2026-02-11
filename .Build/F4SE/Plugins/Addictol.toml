@@ -32,6 +32,7 @@ bIOCacher=true						    # Use disk cache for IO for less disk activity.
 bTESObjectREFRGetEncounterZone=true     # Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized.
 bPipBoyLightInv=true                    # Fixes a crash when you have the PipBoy light on and are checking the inventory.
 bInteriorNavCut=true                    # Fixes the engine bug that causes Workshop Navmesh cuts to persist throughout all interior cells.
+bMagicEffectApplyEvent=true        # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 
 [Additional]
 bDbgFacegenOutput=false 			    # Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
