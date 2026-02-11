@@ -1,6 +1,7 @@
 #include <Modules\AdModuleArchiveLimits.h>
 #include <AdUtils.h>
 #include <xbyak\xbyak.h>
+#include <unordered_dense\unordered_dense.h>
 
 #undef MEM_RELEASE
 #undef ERROR
@@ -58,7 +59,7 @@ namespace Addictol
 		}
 	};
 
-	using Storage = std::unordered_map<RE::BSResource::ID, uint16_t, IDHash>;
+	using Storage = ankerl::unordered_dense::map<RE::BSResource::ID, uint16_t, IDHash>;
 
 	enum class StorageType : uint8_t
 	{
@@ -86,7 +87,7 @@ namespace Addictol
 		PushArchiveIndex(id, archIdx, StorageType::kTextures);
 	}
 
-	static uint16_t FindArchiveIndex(const RE::BSResource::ID& id, StorageType archType) noexcept(true)
+	[[nodiscard]] static uint16_t FindArchiveIndex(const RE::BSResource::ID& id, StorageType archType) noexcept(true)
 	{
 		RE::BSAutoWriteLock lock(StorageLocks[static_cast<uint8_t>(archType)]);
 
@@ -95,12 +96,12 @@ namespace Addictol
 			static_cast<uint16_t>(-1) : it->second;
 	}
 
-	inline static uint16_t FindGeneralArchiveIndex(const RE::BSResource::ID& id) noexcept(true)
+	[[nodiscard]] inline static uint16_t FindGeneralArchiveIndex(const RE::BSResource::ID& id) noexcept(true)
 	{
 		return FindArchiveIndex(id, StorageType::kGeneral);
 	}
 
-	inline static uint16_t FindTexturesArchiveIndex(const RE::BSResource::ID& id) noexcept(true)
+	[[nodiscard]] inline static uint16_t FindTexturesArchiveIndex(const RE::BSResource::ID& id) noexcept(true)
 	{
 		return FindArchiveIndex(id, StorageType::kTextures);
 	}
@@ -125,7 +126,6 @@ namespace Addictol
 
 	namespace Archive2
 	{
-
 		static void AddDataFile(RE::BSResource::Archive2::Index& self, RE::BSTSmartPointer<RE::BSResource::Stream>& stream,
 			RE::BSResource::ID& id, uint32_t index) noexcept
 		{
