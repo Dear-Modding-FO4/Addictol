@@ -3,6 +3,7 @@
 
 #include <RE\B\BSScriptUtil.h>
 
+//#define AD_DEBUGBREAK 1
 #if AD_DEBUGBREAK
 #	include <windows.h>
 #endif

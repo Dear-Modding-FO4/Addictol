@@ -9,6 +9,8 @@
 #include <RE\B\BSResource_Archive2_Index.h>
 #include <RE\N\NiTexture.h>
 
+// Thanks WirelessLan for idea: https://github.com/WirelessLan/BSALimitExpander
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesArchiveLimits{ "Patches", "bArchiveLimits", true };
@@ -209,6 +211,7 @@ namespace Addictol
 
 	namespace SDirectory2
 	{
+#if 0
 		static void InsertReplicatedGeneralID(const RE::BSResource::ID& id, uint32_t repDir) noexcept(true)
 		{
 			uint16_t index = FindGeneralArchiveIndex(id);
@@ -219,6 +222,7 @@ namespace Addictol
 			repId.dir = repDir;
 			PushGeneralArchiveIndex(repId, index);
 		}
+#endif
 
 		static void Hook_Init()
 		{
@@ -332,6 +336,9 @@ namespace Addictol
 				auto patch = new GetAsyncDataFilePatch_AE(target);
 				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
 			}
+
+			// Weird but this causes grass problems
+#if 0
 			////////////////////////////////////////////////
 			// Replicate Dir
 			////////////////////////////////////////////////
@@ -375,6 +382,7 @@ namespace Addictol
 				auto patch = new ReplicateDirToPatch_AE(target, (uintptr_t)InsertReplicatedGeneralID);
 				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
 			}
+#endif
 		}
 	}
 
