@@ -254,7 +254,51 @@ namespace Addictol
 		op = op.substr(0, it);
 
 		// It's not optimized, but it's not necessary.
-		return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
+		// Need compatibility with the replacement ini mod
+
+		auto proc = REL::GetIATAddr("kernel32.dll", "WritePrivateProfileStringA");
+		if (!proc)
+			return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
+		else
+		{
+			auto WritePPString = (decltype(&WritePrivateProfileStringA))(*(uintptr_t*)proc);
+			return WritePPString(WideToSysChar(sec).c_str(), WideToSysChar(op).c_str(),
+				WideToSysChar(a_value).c_str(), WideToSysChar(a_INIFile).c_str());
+		}
+	}
+
+	std::string WideToSysChar(const std::wstring& s) noexcept
+	{
+		if (s.empty() || !s.length())
+			return "";
+
+		int len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), (int)s.length(), nullptr, 0, nullptr, nullptr);
+		if (len > 0)
+		{
+			auto buf = std::make_unique<char[]>((size_t)len + 1);
+			std::fill_n(buf.get(), (size_t)len + 1, 0);
+			WideCharToMultiByte(CP_ACP, 0, s.c_str(), (int)s.length(), buf.get(), len, nullptr, nullptr);
+			return buf.get();
+		}
+
+		return "";
+	}
+
+	std::wstring SysCharToWide(const std::string& s) noexcept
+	{
+		if (s.empty() || !s.length())
+			return L"";
+
+		int len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), (int)s.length(), nullptr, 0);
+		if (len > 0)
+		{
+			auto buf = std::make_unique<wchar_t[]>((size_t)len + 1);
+			std::fill_n(buf.get(), (size_t)len + 1, 0);
+			MultiByteToWideChar(CP_ACP, 0, s.c_str(), (int)s.length(), buf.get(), len);
+			return buf.get();
+		}
+
+		return L"";
 	}
 
 	// Added F4SE 0.7.1+

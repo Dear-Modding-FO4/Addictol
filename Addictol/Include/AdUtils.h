@@ -193,20 +193,23 @@ namespace RELEX
 
 namespace Addictol
 {
-	uint32_t Extend16(uint32_t a_in) noexcept;
-	uint32_t Extend8(uint32_t a_in) noexcept;
-	uint16_t Swap16(uint16_t a_in) noexcept;
-	uint32_t Swap32(uint32_t a_in) noexcept;
-	uint64_t Swap64(uint64_t a_in) noexcept;
+	[[nodiscard]] uint32_t Extend16(uint32_t a_in) noexcept;
+	[[nodiscard]] uint32_t Extend8(uint32_t a_in) noexcept;
+	[[nodiscard]] uint16_t Swap16(uint16_t a_in) noexcept;
+	[[nodiscard]] uint32_t Swap32(uint32_t a_in) noexcept;
+	[[nodiscard]] uint64_t Swap64(uint64_t a_in) noexcept;
 	void SwapFloat(float* a_in) noexcept;
 	void SwapDouble(double* in) noexcept;
-	bool IsBigEndian() noexcept;
-	bool IsLittleEndian() noexcept;
+	[[nodiscard]] bool IsBigEndian() noexcept;
+	[[nodiscard]] bool IsLittleEndian() noexcept;
 	std::string& Trim(std::string& String) noexcept;
 
 	bool WriteINISettingInt(const wchar_t* a_INIFile, const wchar_t* a_optionName, long a_value) noexcept;
 	bool WriteINISettingFloat(const wchar_t* a_INIFile, const wchar_t* a_optionName, float a_value) noexcept;
 	bool WriteINISettingString(const wchar_t* a_INIFile, const wchar_t* a_optionName, const wchar_t* a_value) noexcept;
+
+	[[nodiscard]] std::string WideToSysChar(const std::wstring& s) noexcept;
+	[[nodiscard]] std::wstring SysCharToWide(const std::string& s) noexcept;
 
 	[[nodiscard]] const char* GetSaveFolderName() noexcept;
 }
