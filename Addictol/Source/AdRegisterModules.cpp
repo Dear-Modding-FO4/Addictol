@@ -34,6 +34,8 @@
 #include <Modules\AdModuleEncounterZoneReset.h>
 #include <Modules\AdModuleArchiveLimits.h>
 #include <Modules\AdModuleImageSpaceAdapterWarning.h>
+#include <Modules\AdModuleDuplicateAddonNodeIndex.h>
+#include <Modules\AdModuleLeveledListEntryCount.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -70,6 +72,8 @@ static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMa
 static auto sModuleEncounterZoneReset				= std::make_shared<Addictol::ModuleEncounterZoneReset>();
 static auto sModuleArchiveLimits					= std::make_shared<Addictol::ModuleArchiveLimits>();
 static auto sModuleImageSpaceAdapterWarning			= std::make_shared<Addictol::ModuleImageSpaceAdapterWarning>();
+static auto sModuleDuplicateAddonNodeIndex			= std::make_shared<Addictol::ModuleDuplicateAddonNodeIndex>();
+static auto sModuleLeveledListEntryCount			= std::make_shared<Addictol::ModuleLeveledListEntryCount>();
 
 void AdRegisterPreloadModules()
 {
@@ -127,10 +131,12 @@ void AdRegisterModules()
 	modules.Register(sModuleImageSpaceAdapterWarning);
 	
 	// Registers other patches
-	modules.Register(sModuleThreads,			Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleFacegen,			Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleSafeExit,			Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleInteriorNavCut,		Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleControlSamplers,	Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleEncounterZoneReset, Addictol::ModuleManager::Type::kGameLoaded);
+	modules.Register(sModuleThreads,					Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleFacegen,					Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleSafeExit,					Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleInteriorNavCut,				Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleControlSamplers,			Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleDuplicateAddonNodeIndex,	Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleLeveledListEntryCount,		Addictol::ModuleManager::Type::kGameDataReady);
+	modules.Register(sModuleEncounterZoneReset,			Addictol::ModuleManager::Type::kGameLoaded);
 }
