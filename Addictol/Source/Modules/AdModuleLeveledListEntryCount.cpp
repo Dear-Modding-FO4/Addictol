@@ -1,12 +1,9 @@
 #include <Modules\AdModuleLeveledListEntryCount.h>
 #include <AdUtils.h>
 
-#include <RE/B/BGSAddonNode.h>
 #include <RE/C/ConsoleLog.h>
 #include <RE/T/TESDataHandler.h>
-#include <RE/T/TESFile.h>
 #include <RE/T/TESFormUtil.h>
-#include <RE/T/TESLeveledList.h>
 
 namespace Addictol
 {

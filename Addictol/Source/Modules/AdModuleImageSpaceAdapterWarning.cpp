@@ -43,6 +43,8 @@ namespace Addictol
 					"This will result in memory corruption. "
 					"Please open the form in xEdit and correct it or remove the mod from your load order.",
 					a_imad->GetFormID(), a_file->GetFilename(), schunk);
+
+				return nullptr;
 			}
 			else
 			{
