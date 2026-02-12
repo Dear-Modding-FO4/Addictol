@@ -9,9 +9,9 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bWarningsLeveledListEntryCount{"Warnings", "bLeveledListEntryCount", true};
 
-	ModuleLeveledListEntryCount::ModuleLeveledListEntryCount() : Module("Leveled List Entry Count", &bWarningsLeveledListEntryCount)
-	{
-	}
+	ModuleLeveledListEntryCount::ModuleLeveledListEntryCount() :
+		Module("Leveled List Entry Count", &bWarningsLeveledListEntryCount)
+	{}
 
 	bool ModuleLeveledListEntryCount::DoQuery() const noexcept
 	{
@@ -51,15 +51,15 @@ namespace Addictol
 			auto* levItemFile = levItem->GetFile(0);
 
 			levItemErrors++;
-			REX::WARN("LeveledListEntryCount: Found LeveledList with too many entries: <FormID: {:08X} in Plugin: \"{}\">",
-				levItem->GetFormID(), levItemFile ? levItemFile->GetFilename() : "MODNAME_NOT_FOUND");
+			REX::WARN("LeveledListEntryCount: Found LeveledList with too many entries: <FormID: {:08X} in Plugin: \"{}\">"sv,
+				levItem->GetFormID(), levItemFile ? levItemFile->GetFilename() : "MODNAME_NOT_FOUND"sv);
 		}
 
-		REX::INFO("LeveledListEntryCount: LeveledLists checked: {}, errors found: {}", levItemsChecked, levItemErrors);
+		REX::INFO("LeveledListEntryCount: LeveledLists checked: {}, errors found: {}"sv, levItemsChecked, levItemErrors);
 
-		if (levItemErrors > 0) {
-			RE::ConsoleLog::GetSingleton()->AddString("Addictol::LeveledListEntryCount: Found at least one LeveledList with too many entries. This will cause crashes when the LeveledList is used ingame. Check Addictol.log for more details.");
-		}
+		if (levItemErrors > 0)
+			RE::ConsoleLog::GetSingleton()->AddString("Addictol::LeveledListEntryCount: Found at least one LeveledList with too many entries."
+				" This will cause crashes when the LeveledList is used ingame. Check Addictol.log for more details.");
 
 		return true;
 	}

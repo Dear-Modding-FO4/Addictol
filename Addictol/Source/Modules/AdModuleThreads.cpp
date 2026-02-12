@@ -43,45 +43,45 @@ namespace Addictol
 		if (!SetPriorityClass(ProcessHandle, HIGH_PRIORITY_CLASS))
 		{
 			auto ErrorLast = GetLastError();
-			REX::ERROR("SetPriorityClass returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			REX::ERROR("SetPriorityClass returned failed (0x{:x}): {}"sv, ErrorLast, _com_error(ErrorLast).ErrorMessage());
 			return false;
 		}
 		else
-			REX::INFO("Set high priority has been set for process");
+			REX::INFO("Set high priority has been set for process"sv);
 
 		if (!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST))
 		{
 			auto ErrorLast = GetLastError();
-			REX::ERROR("SetThreadPriority returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			REX::ERROR("SetThreadPriority returned failed (0x{:x}): {}"sv, ErrorLast, _com_error(ErrorLast).ErrorMessage());
 			return false;
 		}
 		else
-			REX::INFO("Set high priority has been set for main thread");
+			REX::INFO("Set high priority has been set for main thread"sv);
 
 		DWORD_PTR processAffinityMask, systemAffinityMask;
 		if (!GetProcessAffinityMask(ProcessHandle, &processAffinityMask, &systemAffinityMask))
 		{
 			auto ErrorLast = GetLastError();
-			REX::ERROR("GetProcessAffinityMask returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			REX::ERROR("GetProcessAffinityMask returned failed (0x{:x}): {}"sv, ErrorLast, _com_error(ErrorLast).ErrorMessage());
 			return false;
 		}
 		else
 		{
-			REX::INFO("processAffinityMask: 0x{:X}", processAffinityMask);
-			REX::INFO("systemAffinityMask: 0x{:X}", systemAffinityMask);
+			REX::INFO("processAffinityMask: 0x{:X}"sv, processAffinityMask);
+			REX::INFO("systemAffinityMask: 0x{:X}"sv, systemAffinityMask);
 
 			if (processAffinityMask != systemAffinityMask)
 			{
-				REX::INFO("A change in the usage of processor cores has been detected");
+				REX::INFO("A change in the usage of processor cores has been detected"sv);
 
 				if (!SetProcessAffinityMask(ProcessHandle, systemAffinityMask))
 				{
 					auto ErrorLast = GetLastError();
-					REX::ERROR("SetProcessAffinityMask returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+					REX::ERROR("SetProcessAffinityMask returned failed (0x{:x}): {}"sv, ErrorLast, _com_error(ErrorLast).ErrorMessage());
 					return false;
 				}
 				else
-					REX::INFO("Restore usage of processor cores");
+					REX::INFO("Restore usage of processor cores"sv);
 			}
 
 			// Complete removal of WinAPI functions SetPriorityClass and SetProcessAffinityMask.
@@ -109,7 +109,7 @@ namespace Addictol
 		if (!SetThreadErrorMode(SEM_FAILCRITICALERRORS, &OldErrMode))
 		{
 			auto ErrorLast = GetLastError();
-			REX::ERROR("SetThreadErrorMode returned failed (0x{:x}): {}", ErrorLast, _com_error(ErrorLast).ErrorMessage());
+			REX::ERROR("SetThreadErrorMode returned failed (0x{:x}): {}"sv, ErrorLast, _com_error(ErrorLast).ErrorMessage());
 			return false;
 		}
 

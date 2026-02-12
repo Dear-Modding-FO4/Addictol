@@ -154,7 +154,7 @@ namespace Addictol
 		{
 			a_value = std::min(5.0f, std::max(-5.0f, a_value));
 
-			REX::INFO("MIP LOD Bias changed from {} to {}, recreating samplers", 
+			REX::INFO("MIP LOD Bias changed from {} to {}, recreating samplers"sv, 
 				static_cast<float>(g_MipBiasSetting.GetFloat()), a_value);
 
 			g_PassThroughSamplers.clear();
@@ -178,7 +178,7 @@ namespace Addictol
 		{
 			a_value = std::min(16l, std::max(0l, a_value));
 
-			REX::INFO("MAX Anisotropy changed from {} to {}, recreating samplers", 
+			REX::INFO("MAX Anisotropy changed from {} to {}, recreating samplers"sv, 
 				static_cast<int>(g_MaxAnisotropySetting.GetInt()), a_value);
 
 			g_PassThroughSamplers.clear();
@@ -207,7 +207,7 @@ namespace Addictol
 
 	bool ModuleControlSamplers::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (!a_msg)
+		if (a_msg->type == F4SE::MessagingInterface::kGameDataReady)
 		{
 			auto Pref = RE::INIPrefSettingCollection::GetSingleton();
 			Pref->settings.push_front(&g_MipBiasSetting);
@@ -217,16 +217,14 @@ namespace Addictol
 			const auto knownResult = SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, std::addressof(knownBuffer));
 			std::unique_ptr<wchar_t[], decltype(&CoTaskMemFree)> knownPath(knownBuffer, CoTaskMemFree);
 			if (!knownPath || knownResult != 0) {
-				REX::ERROR("failed to get known folder path");
+				REX::ERROR("failed to get known folder path"sv);
 				return false;
 			}
 
 			std::filesystem::path path = knownPath.get();
 			path /= std::format("My Games/{}/Fallout4Prefs.ini", GetSaveFolderName());
 			g_PrefIniFileName = path;
-		}
-		else if (a_msg->type == F4SE::MessagingInterface::kGameDataReady)
-		{
+
 			g_RendererDataForCS = (RE::BSGraphics::RendererData*)REL::ID{ 235166, 2704527 }.address();
 
 			*(uintptr_t*)&g_origSetSamplers[0] = RELEX::DetourVTable(*((uintptr_t*)g_RendererDataForCS->context),
@@ -261,7 +259,7 @@ namespace Addictol
 		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMaxAnisotropy",			VirtualMachine::SetMaxAnisotropy);
 		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMaxAnisotropy",	VirtualMachine::SetDefaultMaxAnisotropy);
 
-		REX::INFO("Register papyrus functions succeed");
+		REX::INFO("Register papyrus functions succeed"sv);
 
 		return true;
 	}

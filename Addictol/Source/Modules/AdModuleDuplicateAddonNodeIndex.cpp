@@ -9,9 +9,9 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bWarningsDuplicateAddonNodeIndex{"Warnings", "bDuplicateAddonNodeIndex", true};
 
-	ModuleDuplicateAddonNodeIndex::ModuleDuplicateAddonNodeIndex() : Module("Duplicate Addon Node Index", &bWarningsDuplicateAddonNodeIndex)
-	{
-	}
+	ModuleDuplicateAddonNodeIndex::ModuleDuplicateAddonNodeIndex() : 
+		Module("Duplicate Addon Node Index", &bWarningsDuplicateAddonNodeIndex)
+	{}
 
 	bool ModuleDuplicateAddonNodeIndex::DoQuery() const noexcept
 	{
@@ -34,8 +34,8 @@ namespace Addictol
 			return false;
 		}
 
-		std::uint32_t addonNodesChecked = 0;
-		std::uint32_t addonNodeErrors = 0;
+		uint32_t addonNodesChecked = 0;
+		uint32_t addonNodeErrors = 0;
 
 		for (RE::BGSAddonNode *addonNode : addonNodeArray)
 		{
@@ -54,10 +54,10 @@ namespace Addictol
 				auto* addonNodeFile = addonNode->GetFile(0);
 				auto* currentAddonNodeFile = currentAddonNode->GetFile(0);
 
-				REX::WARN("DuplicateAddonNodeIndex: Found duplicate AddonNode index ({}) between the following AddonNodes: <FormID: {:08X} in Plugin: \"{}\"> and <FormID: {:08X} in Plugin: \"{}\">",
+				REX::WARN("DuplicateAddonNodeIndex: Found duplicate AddonNode index ({}) between the following AddonNodes: <FormID: {:08X} in Plugin: \"{}\"> and <FormID: {:08X} in Plugin: \"{}\">"sv,
 						  addonNode->index,
-						  currentAddonNode->GetFormID(), currentAddonNodeFile ? currentAddonNodeFile->GetFilename() : "MODNAME_NOT_FOUND",
-						  addonNode->GetFormID(), addonNodeFile ? addonNodeFile->GetFilename() : "MODNAME_NOT_FOUND");
+						  currentAddonNode->GetFormID(), currentAddonNodeFile ? currentAddonNodeFile->GetFilename() : "MODNAME_NOT_FOUND"sv,
+						  addonNode->GetFormID(), addonNodeFile ? addonNodeFile->GetFilename() : "MODNAME_NOT_FOUND"sv);
 
 				addonNodeErrors++;
 			}
@@ -65,12 +65,13 @@ namespace Addictol
 			addonNodesChecked++;
 		}
 
-		REX::INFO("DuplicateAddonNodeIndex: AddonNodes checked: {}, errors found: {}", addonNodesChecked, addonNodeErrors);
+		REX::INFO("DuplicateAddonNodeIndex: AddonNodes checked: {}, errors found: {}"sv, addonNodesChecked, addonNodeErrors);
 
 		if (addonNodeErrors > 0)
 		{
 			// we can remove this if it isn't necessary -bp42s
-			RE::ConsoleLog::GetSingleton()->AddString("Addictol::DuplicateAddonNodeIndex: Duplicate AddonNode indexes were detected. This will cause issues with visual effects. Check Addictol.log for more details.");
+			RE::ConsoleLog::GetSingleton()->AddString("Addictol::DuplicateAddonNodeIndex: Duplicate AddonNode indexes were detected."
+				" This will cause issues with visual effects. Check Addictol.log for more details.");
 		}
 
 		return true;

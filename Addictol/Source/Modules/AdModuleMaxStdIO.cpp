@@ -46,14 +46,14 @@ namespace Addictol
 
 			if (_setmaxio(nmaxiouser) == FATAL_MAXSTDIO)
 			{
-				REX::ERROR("couldn't increase the maximum number of io handles \"{}\"", nmaxiouser);
+				REX::ERROR("couldn't increase the maximum number of io handles \"{}\""sv, nmaxiouser);
 				return false;
 			}
 			else
-				REX::INFO("set max stdio to \"{}\" from \"{}\"", nmaxiouser, nmaxio);
+				REX::INFO("set max stdio to \"{}\" from \"{}\""sv, nmaxiouser, nmaxio);
 		}
 		else
-			REX::INFO("ignoring set max stdio, now allows \"{}\"", nmaxio);
+			REX::INFO("ignoring set max stdio, now allows \"{}\""sv, nmaxio);
 
 		return true;
 	}

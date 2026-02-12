@@ -125,7 +125,6 @@ void AdRegisterModules()
 	modules.Register(sModuleINISettingCollection);
 	modules.Register(sModulePipBoyLightInv);
 	modules.Register(sModuleInteriorNavCut);
-	modules.Register(sModuleControlSamplers);
 	modules.Register(sModuleMagicEffectApplyEvent);
 	modules.Register(sModuleArchiveLimits);
 	modules.Register(sModuleImageSpaceAdapterWarning);
