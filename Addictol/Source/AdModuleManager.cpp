@@ -1,8 +1,11 @@
 #include <AdAssert.h>
+#include <AdUtils.h>
 #include <AdModuleManager.h>
 
 namespace Addictol
 {
+	using namespace std::literals;
+
 	std::array<std::string_view, 11> g_msgName
 	{
 		"kPostLoad",
@@ -75,14 +78,14 @@ namespace Addictol
 	{
 		if (!a_mod)
 		{
-			REX::ERROR("" __FUNCTION__ ": a_mod is nullptr");
+			REX::ERROR("{}: a_mod is nullptr"sv, __FUNCTION__);
 			return false;
 		}
 
 		auto nameModule = a_mod->GetName();
 		if (nameModule.empty())
 		{
-			REX::ERROR("" __FUNCTION__ ": The module is empty name");
+			REX::ERROR("{}: The module is empty name"sv, __FUNCTION__);
 			return false;
 		}
 
@@ -90,7 +93,7 @@ namespace Addictol
 		{
 			if (modules.find(nameModule) != modules.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": The module must be unique name \"{}\"", nameModule);
+				REX::ERROR("{}: The module must be unique name \"{}\""sv, __FUNCTION__, nameModule);
 				return false;
 			}
 
@@ -111,7 +114,7 @@ namespace Addictol
 			auto& modules_by_type = it->second;
 			if (modules_by_type.find(nameModule) != modules_by_type.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": The module must be unique name \"{}\"", nameModule);
+				REX::ERROR("{}: The module must be unique name \"{}\""sv, __FUNCTION__, nameModule);
 				return false;
 			}
 
@@ -124,14 +127,14 @@ namespace Addictol
 	{
 		if (!a_mod)
 		{
-			REX::ERROR("" __FUNCTION__ ": mod is nullptr");
+			REX::ERROR("{}: mod is nullptr"sv, __FUNCTION__);
 			return false;
 		}
 
 		auto nameModule = a_mod->GetName();
 		if (nameModule.empty())
 		{
-			REX::ERROR("" __FUNCTION__ ": The module is empty name");
+			REX::ERROR("{}: The module is empty name"sv, __FUNCTION__);
 			return false;
 		}
 
@@ -140,7 +143,7 @@ namespace Addictol
 			auto it = modules.find(nameModule);
 			if (it == modules.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", nameModule);
+				REX::ERROR("{}: The module no found \"{}\""sv, __FUNCTION__, nameModule);
 				return false;
 			}
 
@@ -153,7 +156,8 @@ namespace Addictol
 			auto it = rl_modules.find(msg_id);
 			if (it == rl_modules.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": No list of modules of this type \"{}\" has been found.", g_msgName[msg_id]);
+				REX::ERROR("{}: No list of modules of this type \"{}\" has been found."sv, 
+					__FUNCTION__, g_msgName[msg_id]);
 				return false;
 			}
 
@@ -161,7 +165,7 @@ namespace Addictol
 			auto it2 = modules_by_type.find(nameModule);
 			if (it2 == modules_by_type.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", nameModule);
+				REX::ERROR("{}: The module no found \"{}\""sv, __FUNCTION__, nameModule);
 				return false;
 			}
 
@@ -177,7 +181,7 @@ namespace Addictol
 	{
 		if (!a_name || !a_name[0])
 		{
-			REX::ERROR("" __FUNCTION__ ": name is nullptr/empty");
+			REX::ERROR("{}: name is nullptr/empty"sv, __FUNCTION__);
 			return false;
 		}
 
@@ -189,7 +193,7 @@ namespace Addictol
 			auto it = modules.find(findName);
 			if (it == modules.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", findName);
+				REX::ERROR("{}: The module no found \"{}\""sv, __FUNCTION__, findName);
 				return false;
 			}
 
@@ -202,7 +206,7 @@ namespace Addictol
 			auto it = rl_modules.find(msg_id);
 			if (it == rl_modules.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": No list of modules of this type \"{}\" has been found.", msg_id);
+				REX::ERROR("{}: No list of modules of this type \"{}\" has been found."sv, __FUNCTION__, msg_id);
 				return false;
 			}
 
@@ -210,7 +214,7 @@ namespace Addictol
 			auto it2 = modules_by_type.find(findName);
 			if (it2 == modules_by_type.end())
 			{
-				REX::ERROR("" __FUNCTION__ ": The module no found \"{}\"", findName);
+				REX::ERROR("{}: The module no found \"{}\""sv, __FUNCTION__, findName);
 				return false;
 			}
 
@@ -237,7 +241,7 @@ namespace Addictol
 			auto& mod = it->second;
 			if (!mod)
 			{
-				REX::ERROR("" __FUNCTION__ ": mod is nullptr");
+				REX::ERROR("{}: mod is nullptr"sv, __FUNCTION__);
 				continue;
 			}
 
@@ -246,19 +250,19 @@ namespace Addictol
 			{
 				if (!optionName->GetValue())
 				{
-					REX::INFO("Module \"{}\": disabled", mod->GetName());
+					REX::INFO("Module \"{}\": disabled"sv, mod->GetName());
 					needRemovedList.emplace_back(mod);
 					continue;
 				}
 				else
-					REX::INFO("Module \"{}\": enabled", mod->GetName());
+					REX::INFO("Module \"{}\": enabled"sv, mod->GetName());
 			}
 			else
-				REX::INFO("Module \"{}\": mandatory", mod->GetName());
+				REX::INFO("Module \"{}\": mandatory"sv, mod->GetName());
 
 			if (!SafeQueryMod(mod))
 			{
-				REX::WARN("Module \"{}\": failed verification, the game version may not be supported", mod->GetName());
+				REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
 				needRemovedList.emplace_back(mod);
 			}
 		}
@@ -273,9 +277,9 @@ namespace Addictol
 		{
 			auto& mod = it.second;
 			if(!SafeInstallMod(mod))
-				REX::ERROR("Module \"{}\": fatal installation", mod->GetName());
+				REX::ERROR("Module \"{}\": fatal installation"sv, mod->GetName());
 			else
-				REX::INFO("Module \"{}\": installed", mod->GetName());
+				REX::INFO("Module \"{}\": installed"sv, mod->GetName());
 		}
 	}
 
@@ -289,7 +293,7 @@ namespace Addictol
 			auto& mod = it.second;
 			if (mod->HasListener(a_msg->type))
 				if (!SafeListenerMod(mod, a_msg))
-					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})", mod->GetName(), g_msgName[a_msg->type]);
+					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})"sv, mod->GetName(), g_msgName[a_msg->type]);
 		}
 	}
 
@@ -310,7 +314,7 @@ namespace Addictol
 			auto& mod = it->second;
 			if (!mod)
 			{
-				REX::ERROR("" __FUNCTION__ ": mod is nullptr");
+				REX::ERROR("{}: mod is nullptr"sv, __FUNCTION__);
 				continue;
 			}
 
@@ -319,15 +323,15 @@ namespace Addictol
 			{
 				if (!optionName->GetValue())
 				{
-					REX::INFO("Module \"{}\": disabled by message {}", mod->GetName(), g_msgName[a_msg->type]);
+					REX::INFO("Module \"{}\": disabled by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 					needRemovedList.emplace_back(mod);
 					continue;
 				}
 				else
-					REX::INFO("Module \"{}\": enabled by message {}", mod->GetName(), g_msgName[a_msg->type]);
+					REX::INFO("Module \"{}\": enabled by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 			}
 			else
-				REX::INFO("Module \"{}\": mandatory by message {}", mod->GetName(), g_msgName[a_msg->type]);
+				REX::INFO("Module \"{}\": mandatory by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 
 			if (!SafeQueryMod(mod))
 			{
@@ -355,9 +359,9 @@ namespace Addictol
 		{
 			auto& mod = it.second;
 			if (!SafeInstallMod(mod, a_msg))
-				REX::ERROR("Module \"{}\": fatal installation by message {}", mod->GetName(), g_msgName[a_msg->type]);
+				REX::ERROR("Module \"{}\": fatal installation by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 			else
-				REX::INFO("Module \"{}\": installed by message {}", mod->GetName(), g_msgName[a_msg->type]);
+				REX::INFO("Module \"{}\": installed by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 		}
 	}
 
@@ -373,9 +377,9 @@ namespace Addictol
 				continue;
 
 			if (!SafeListenerPapyrusMod(mod, a_vm))
-				REX::ERROR("Module \"{}\": fatal papyrus installation", mod->GetName());
+				REX::ERROR("Module \"{}\": fatal papyrus installation"sv, mod->GetName());
 			else
-				REX::INFO("Module \"{}\": papyrus installed", mod->GetName());
+				REX::INFO("Module \"{}\": papyrus installed"sv, mod->GetName());
 		}
 	}
 }

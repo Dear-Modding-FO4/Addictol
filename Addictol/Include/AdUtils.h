@@ -2,6 +2,7 @@
 
 #include <string>
 #include <initializer_list>
+#include <string_view>
 #include <stdint.h>
 #include <F4SE\Impl\PCH.h>
 
@@ -193,6 +194,8 @@ namespace RELEX
 
 namespace Addictol
 {
+	using namespace std::literals;
+
 	[[nodiscard]] uint32_t Extend16(uint32_t a_in) noexcept;
 	[[nodiscard]] uint32_t Extend8(uint32_t a_in) noexcept;
 	[[nodiscard]] uint16_t Swap16(uint16_t a_in) noexcept;

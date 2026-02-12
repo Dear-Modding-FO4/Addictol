@@ -30,7 +30,7 @@ namespace Addictol
 
 			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 			{
-				REX::INFO("" _PluginName " Initialized!");
+				REX::INFO("" _PluginName " Initialized!"sv);
 				plugin->SetAsInstall();
 			}
 		}
@@ -75,8 +75,8 @@ namespace Addictol
 			if (!isPreloadInit)
 			{
 				auto game_ver = a_f4se->RuntimeVersion();
-				REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
-				REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
+				REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
+				REX::INFO("Game version: {}.{}.{}.{}"sv, game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
 
 				// Get the Trampoline and Allocate
 				auto& trampoline = REL::GetTrampoline();
@@ -94,14 +94,14 @@ namespace Addictol
 			// Listen for Messages (to Install PostInit Patches)
 			auto MessagingInterface = F4SE::GetMessagingInterface();
 			if (MessagingInterface->RegisterListener(F4SEMessageListener))
-				REX::INFO("Started Listening for F4SE Message Callbacks.");
+				REX::INFO("Started Listening for F4SE Message Callbacks."sv);
 
 			// Listen for Papyrus
 			auto PapyrusInterface = F4SE::GetPapyrusInterface();
 			if (PapyrusInterface->Register([](RE::BSScript::IVirtualMachine* vm) -> bool {
 				F4SEPapyrusListener(vm);
 				return true; }))
-				REX::INFO("Started Listening for Papyrus Callbacks.");	
+				REX::INFO("Started Listening for Papyrus Callbacks."sv);	
 
 			// Install load patches
 			moduleManager.QueryLoadAll();
@@ -127,8 +127,8 @@ namespace Addictol
 			F4SE::Init(a_preloadf4se);
 
 			auto game_ver = a_preloadf4se->RuntimeVersion();
-			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing...");
-			REX::INFO("Game version: {}.{}.{}.{}", game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
+			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
+			REX::INFO("Game version: {}.{}.{}.{}"sv, game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
 
 			// Get the Trampoline and Allocate
 			auto& trampoline = REL::GetTrampoline();

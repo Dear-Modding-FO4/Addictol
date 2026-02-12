@@ -1,8 +1,8 @@
 #pragma once
 
 #include <AdModule.h>
-#include <map>
 #include <string_view>
+#include <map>
 
 namespace Addictol
 {
