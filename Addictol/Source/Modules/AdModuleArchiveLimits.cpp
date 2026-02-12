@@ -850,7 +850,7 @@ namespace Addictol
 
 	bool ModuleArchiveLimits::DoQuery() const noexcept
 	{
-		return !RELEX::IsRuntimeOG();
+		return RELEX::IsRuntimeAE();
 	}
 
 	bool ModuleArchiveLimits::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
