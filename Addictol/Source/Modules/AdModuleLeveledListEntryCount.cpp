@@ -47,7 +47,7 @@ namespace Addictol
 			levItemsChecked++;
 
 			// std::uint16_t numEntries = levItemList->baseListCount + levItemList->scriptListCount;
-			const std::uint16_t numEntries = levItemList->leveledLists->count + levItemList->*scriptAddedLists->count;
+			const std::uint16_t numEntries = levItemList->*leveledLists->count + levItemList->*scriptAddedLists->count;
 			if (numEntries <= 255)
 			{
 				continue;
