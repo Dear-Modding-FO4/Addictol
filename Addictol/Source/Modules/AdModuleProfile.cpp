@@ -8,82 +8,18 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesProfile{ "Patches", "bProfile", true };
 
-	class SettingCollection
-	{
-	public:
-		virtual ~SettingCollection();
-
-		virtual void Unk_01() = 0;
-		virtual void Unk_02() = 0;
-		virtual void Unk_03() = 0;
-		virtual void Unk_04() = 0;
-		virtual bool Unk_05();
-		virtual bool Unk_06();
-		virtual bool Unk_07();
-		virtual bool Unk_08();		// return unk110 != 0;
-		virtual bool Unk_09();		// return unk110 != 0;
-
-		//	void	** _vtbl;		// 000
-		char	unk004[260];		// 008
-		uint32_t pad10C;			// 10C
-		void* unk110;				// 110
-	};
-
-
-	class SettingCollectionList : public SettingCollection
-	{
-	public:
-		virtual ~SettingCollectionList();
-
-		// this is almost certainly a templated linked list type
-		struct Node
-		{
-			RE::Setting* data;
-			Node* next;
-		};
-
-		void* unk118;	// 118
-		Node* data;		// 120
-
-		RE::Setting* Get(const char* name) const noexcept
-		{
-			Node* node = data;
-			do
-			{
-				RE::Setting* setting = node->data;
-				if (setting)
-				{
-					std::string_view searchName(name);
-					std::string_view settingName(setting->GetKey());
-					if (strcasecmp(searchName.data(), settingName.data()))
-						return setting;
-				}
-
-				node = node->next;
-			} while (node);
-
-			return nullptr;
-		}
-	};
-
 	static bool hk_nullsub_C30008() noexcept
 	{
-		auto iniDef = (SettingCollectionList*)RE::INISettingCollection::GetSingleton();
-		auto iniPref = (SettingCollectionList*)RE::INIPrefSettingCollection::GetSingleton();
-		auto pSettingSrc = iniPref->data;
+		auto iniDef = RE::INISettingCollection::GetSingleton();
+		auto iniPref = RE::INIPrefSettingCollection::GetSingleton();
+		auto& pSettingSrc = iniPref->settings;
 
-		do
+		for (auto setting : pSettingSrc)
 		{
-			auto pSettingDst = iniDef->Get(pSettingSrc->data->GetKey().data());
-			if (!pSettingDst)
-			{
-				auto pNewNode = new SettingCollectionList::Node;
-				pNewNode->next = iniDef->data;
-				pNewNode->data = pSettingSrc->data;
-				iniDef->data = pNewNode;
-			}
-
-		} while (pSettingSrc = pSettingSrc->next);
+			auto findSetting = iniDef->GetSetting(setting->GetKey());
+			if (!findSetting)
+				iniDef->settings.push_front(setting);
+		}
 
 		return false;
 	}
