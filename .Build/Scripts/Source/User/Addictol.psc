@@ -1,4 +1,4 @@
-ScriptName Addictol Native Hidden
+ScriptName Addictol Native Hidden Const
 
 Float Function GetMipLODBias() native global
 
