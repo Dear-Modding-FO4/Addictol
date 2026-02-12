@@ -35,6 +35,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListEntryCount.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
@@ -80,6 +81,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListEntryCount.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
