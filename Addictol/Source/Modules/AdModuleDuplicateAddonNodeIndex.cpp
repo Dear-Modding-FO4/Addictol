@@ -1,6 +1,10 @@
 #include <Modules\AdModuleDuplicateAddonNodeIndex.h>
 #include <AdUtils.h>
 
+#include <RE/B/BGSAddonNode.h>
+#include <RE/C/ConsoleLog.h>
+#include <RE/T/TESDataHandler.h>
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bWarningsDuplicateAddonNodeIndex{"Warnings", "bDuplicateAddonNodeIndex", true};
@@ -25,7 +29,7 @@ namespace Addictol
 		std::unordered_map<uint32_t, RE::BGSAddonNode *> addonNodeMap;
 
 		auto &addonNodeArray = dataHandler->GetFormArray<RE::BGSAddonNode>();
-		if (!addonNodeArray)
+		if (addonNodeArray.empty())
 		{
 			return false;
 		}
@@ -46,10 +50,14 @@ namespace Addictol
 				// addonnode index already found in map
 				const auto currentAddonNode = (*result.first).second;
 
+				// Files
+				auto* addonNodeFile = addonNode->GetFile(0);
+				auto* currentAddonNodeFile = currentAddonNode->GetFile(0);
+
 				REX::WARN("DuplicateAddonNodeIndex: Found duplicate AddonNode index ({}) between the following AddonNodes: <FormID: {:08X} in Plugin: \"{}\"> and <FormID: {:08X} in Plugin: \"{}\">",
 						  addonNode->index,
-						  currentAddonNode->GetFormID(), currentAddonNode->GetFilename(),
-						  addonNode->GetFormID(), addonNode->GetFilename());
+						  currentAddonNode->GetFormID(), currentAddonNodeFile ? currentAddonNodeFile->GetFilename() : "MODNAME_NOT_FOUND",
+						  addonNode->GetFormID(), addonNodeFile ? addonNodeFile->GetFilename() : "MODNAME_NOT_FOUND");
 
 				addonNodeErrors++;
 			}

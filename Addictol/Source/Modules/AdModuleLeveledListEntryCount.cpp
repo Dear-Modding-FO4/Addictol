@@ -1,5 +1,12 @@
-#include <Modules\ModuleLeveledListEntryCount.h>
+#include <Modules\AdModuleLeveledListEntryCount.h>
 #include <AdUtils.h>
+
+#include <RE/B/BGSAddonNode.h>
+#include <RE/C/ConsoleLog.h>
+#include <RE/T/TESDataHandler.h>
+#include <RE/T/TESFile.h>
+#include <RE/T/TESFormUtil.h>
+#include <RE/T/TESLeveledList.h>
 
 namespace Addictol
 {
@@ -23,7 +30,7 @@ namespace Addictol
 
 		// we might be able to do GetFormArray<RE::TESLeveledList>() to make it a bit faster, but it needs to be tested
 		auto& levItemArray = dataHandler->GetFormArray<RE::TESLevItem>();
-		if (!levItemArray) {
+		if (levItemArray.empty()) {
 			return false;
 		}
 
@@ -43,9 +50,12 @@ namespace Addictol
 
 			// this leveledlist has too many entries and will cause errors
 
+			// File
+			auto* levItemFile = levItem->GetFile(0);
+
 			levItemErrors++;
 			REX::WARN("LeveledListEntryCount: Found LeveledList with too many entries: <FormID: {:08X} in Plugin: \"{}\">",
-				levItemList->GetFormID(), levItemList->GetFilename());
+				levItem->GetFormID(), levItemFile ? levItemFile->GetFilename() : "MODNAME_NOT_FOUND");
 		}
 
 		REX::INFO("LeveledListEntryCount: LeveledLists checked: {}, errors found: {}", levItemsChecked, levItemErrors);

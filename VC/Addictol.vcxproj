@@ -25,6 +25,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDropItems.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDuplicateAddonNodeIndex.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEncounterZoneReset.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
@@ -34,6 +35,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListEntryCount.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
@@ -68,6 +70,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDropItems.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDuplicateAddonNodeIndex.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEncounterZoneReset.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />
@@ -77,6 +80,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListEntryCount.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
