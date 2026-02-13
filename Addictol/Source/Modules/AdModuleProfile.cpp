@@ -6,7 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesProfile{ "Patches", "bProfile", true };
+	static REX::TOML::Bool<> bPatchesProfile{ "Patches"sv, "bProfile"sv, true };
 
 	static bool hk_nullsub_C30008() noexcept
 	{

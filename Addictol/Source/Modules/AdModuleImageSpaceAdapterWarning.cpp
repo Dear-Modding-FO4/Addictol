@@ -7,7 +7,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bWarningsImageSpaceAdapter{ "Warnings", "bImageSpaceAdapter", true };
+	static REX::TOML::Bool<> bWarningsImageSpaceAdapter{ "Warnings"sv, "bImageSpaceAdapter"sv, true };
 
 	namespace detail
 	{

@@ -9,7 +9,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesThreads{ "Patches", "bThreads", true };
+	static REX::TOML::Bool<> bPatchesThreads{ "Patches"sv, "bThreads"sv, true };
 
 	[[nodiscard]] static BOOL WINAPI HKSetThreadPriority(HANDLE Thread, int Priority) noexcept
 	{

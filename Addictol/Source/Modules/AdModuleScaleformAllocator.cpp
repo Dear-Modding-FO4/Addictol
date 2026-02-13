@@ -4,9 +4,9 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesScaleformAllocator{ "Patches", "bScaleformAllocator", true };
-	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional", "uScaleformPageSize", 256ul };
-	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional", "uScaleformHeapSize", 512ul };
+	static REX::TOML::Bool<> bPatchesScaleformAllocator{ "Patches"sv, "bScaleformAllocator"sv, true };
+	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 256ul };
+	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional"sv, "uScaleformHeapSize"sv, 512ul };
 
 	class BSScaleformSysMemMapper
 	{

@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesWorkbenchSwap{ "Fixes", "bWorkbenchSwap", true };
+	static REX::TOML::Bool<> bFixesWorkbenchSwap{ "Fixes"sv, "bWorkbenchSwap"sv, true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{

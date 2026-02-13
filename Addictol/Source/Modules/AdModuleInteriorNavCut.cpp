@@ -12,8 +12,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesInteriorNavCut{ "Fixes", "bInteriorNavCut", true };
-	static REX::TOML::Bool<> bAdditionalMultiThreading { "Additional", "bInteriorNavCutMultiThreading", true };
+	static REX::TOML::Bool<> bFixesInteriorNavCut{ "Fixes"sv, "bInteriorNavCut"sv, true };
+	static REX::TOML::Bool<> bAdditionalMultiThreading { "Additional"sv, "bInteriorNavCutMultiThreading"sv, true };
 
 	// ---- RE Functions ---- //
 
@@ -65,7 +65,7 @@ namespace Addictol
 			}
 			else
 			{
-				REX::WARN("InteriorNavCut: QueryPerformanceFrequency failed!");
+				REX::WARN("InteriorNavCut: QueryPerformanceFrequency failed!"sv);
 			}
 		}
 	}
@@ -145,7 +145,7 @@ namespace Addictol
 			RegisterForCellAttachDetach(CellAttachDetachListener::GetSingleton());
 		}
 
-		REX::INFO("InteriorNavCut: Registered Cell Attach / Detach Listener.");
+		REX::INFO("InteriorNavCut: Registered Cell Attach / Detach Listener."sv);
 		return true;
 	}
 
@@ -201,7 +201,7 @@ namespace Addictol
 
 		DynamicNavmesh::GetSingleton()->ForceUpdate();
 
-		REX::INFO("InteriorNavCut: Finished Load-Time Navmesh Updates in {:.0f}ms", GetPerfCounterMS(perfTimer));
+		REX::INFO("InteriorNavCut: Finished Load-Time Navmesh Updates in {:.0f}ms"sv, GetPerfCounterMS(perfTimer));
 		return true;
 	}
 
@@ -218,7 +218,7 @@ namespace Addictol
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
 		{
-			REX::INFO("InteriorNavCut: Registering NavMesh Update Listener.");
+			REX::INFO("InteriorNavCut: Registering NavMesh Update Listener."sv);
 			RegisterNavMeshUpdateListener();
 		}
 
@@ -230,7 +230,7 @@ namespace Addictol
 		switch (a_msg->type)
 		{
 		case F4SE::MessagingInterface::kPostLoadGame:
-			REX::INFO("InteriorNavCut: Forcing NavMesh Update.");
+			REX::INFO("InteriorNavCut: Forcing NavMesh Update."sv);
 			ForceNavMeshUpdate();
 
 			break;

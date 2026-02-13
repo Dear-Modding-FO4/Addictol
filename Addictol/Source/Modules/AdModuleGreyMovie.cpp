@@ -6,7 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesGreyMovie{ "Fixes", "bGreyMovie", true };
+	static REX::TOML::Bool<> bFixesGreyMovie{ "Fixes"sv, "bGreyMovie"sv, true };
 
 	static void HKGfxSetBGAlpha(Scaleform::GFx::Movie* self, float) noexcept
 	{

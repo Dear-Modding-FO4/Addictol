@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesSmallBlockAllocator{ "Patches", "bSmallBlockAllocator", true };
+	static REX::TOML::Bool<> bPatchesSmallBlockAllocator{ "Patches"sv, "bSmallBlockAllocator"sv, true };
 
 	// 0x1268
 	class BSSmallBlockAllocator

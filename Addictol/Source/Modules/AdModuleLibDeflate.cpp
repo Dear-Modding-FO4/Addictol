@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches", "bLibDeflate", true };
+	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches"sv, "bLibDeflate"sv, true };
 
 	struct z_stream_s
 	{

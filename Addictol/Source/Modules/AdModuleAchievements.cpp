@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesAchievements{ "Patches", "bAchievements", true };
+	static REX::TOML::Bool<> bPatchesAchievements{ "Patches"sv, "bAchievements"sv, true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{

@@ -7,7 +7,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bWarningsDuplicateAddonNodeIndex{"Warnings", "bDuplicateAddonNodeIndex", true};
+	static REX::TOML::Bool<> bWarningsDuplicateAddonNodeIndex{"Warnings"sv, "bDuplicateAddonNodeIndex"sv, true};
 
 	ModuleDuplicateAddonNodeIndex::ModuleDuplicateAddonNodeIndex() : 
 		Module("Duplicate Addon Node Index", &bWarningsDuplicateAddonNodeIndex)
@@ -69,7 +69,7 @@ namespace Addictol
 
 		if (addonNodeErrors > 0)
 		{
-			// we can remove this if it isn't necessary -bp42s
+			// we can remove this log if it isn't necessary -bp42s
 			RE::ConsoleLog::GetSingleton()->AddString("Addictol::DuplicateAddonNodeIndex: Duplicate AddonNode indexes were detected."
 				" This will cause issues with visual effects. Check Addictol.log for more details.");
 		}

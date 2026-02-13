@@ -222,7 +222,7 @@ namespace Addictol
 			}
 
 			std::filesystem::path path = knownPath.get();
-			path /= std::format("My Games/{}/Fallout4Prefs.ini", GetSaveFolderName());
+			path /= std::format("My Games/{}/Fallout4Prefs.ini"sv, GetSaveFolderName());
 			g_PrefIniFileName = path;
 
 			g_RendererDataForCS = (RE::BSGraphics::RendererData*)REL::ID{ 235166, 2704527 }.address();
@@ -252,12 +252,12 @@ namespace Addictol
 
 	bool ModuleControlSamplers::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
 	{
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMipLODBias",			VirtualMachine::GetMipLODBias);
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMipLODBias",			VirtualMachine::SetMipLODBias);
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMipLODBias",		VirtualMachine::SetDefaultMipLODBias);
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMaxAnisotropy",			VirtualMachine::GetMaxAnisotropy);
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMaxAnisotropy",			VirtualMachine::SetMaxAnisotropy);
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMaxAnisotropy",	VirtualMachine::SetDefaultMaxAnisotropy);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMipLODBias"sv,			VirtualMachine::GetMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMipLODBias"sv,			VirtualMachine::SetMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMipLODBias"sv,		VirtualMachine::SetDefaultMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMaxAnisotropy"sv,			VirtualMachine::GetMaxAnisotropy);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMaxAnisotropy"sv,			VirtualMachine::SetMaxAnisotropy);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMaxAnisotropy"sv,	VirtualMachine::SetDefaultMaxAnisotropy);
 
 		REX::INFO("Register papyrus functions succeed"sv);
 

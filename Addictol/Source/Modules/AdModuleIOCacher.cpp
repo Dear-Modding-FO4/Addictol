@@ -3,7 +3,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesIOChacher{ "Fixes", "bIOCacher", true };
+	static REX::TOML::Bool<> bFixesIOChacher{ "Fixes"sv, "bIOCacher"sv, true };
 
 	ModuleIOCacher::ModuleIOCacher() :
 		Module("Module IO Cacher", &bFixesIOChacher)

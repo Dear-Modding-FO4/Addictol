@@ -7,7 +7,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesSafeExit{ "Fixes", "bSafeExit", true };
+	static REX::TOML::Bool<> bFixesSafeExit{ "Fixes"sv, "bSafeExit"sv, true };
 
 	inline static void Shutdown() noexcept
 	{

@@ -11,7 +11,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesBSPreCulledObjects{ "Patches", "bBSPreCulledObjects", true };
+	static REX::TOML::Bool<> bPatchesBSPreCulledObjects{ "Patches"sv, "bBSPreCulledObjects"sv, true };
 
 	class BSCullingGroup;
 

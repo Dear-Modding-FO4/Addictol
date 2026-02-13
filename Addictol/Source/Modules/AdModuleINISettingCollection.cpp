@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesINISettingCollection{ "Patches", "bINISettingCollection", true };
+	static REX::TOML::Bool<> bPatchesINISettingCollection{ "Patches"sv, "bINISettingCollection"sv, true };
 
 	struct Open
 	{

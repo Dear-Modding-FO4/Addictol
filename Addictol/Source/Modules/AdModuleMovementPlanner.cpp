@@ -3,7 +3,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMovementPlanner{ "Fixes", "bMovementPlanner", true };
+	static REX::TOML::Bool<> bFixesMovementPlanner{ "Fixes"sv, "bMovementPlanner"sv, true };
 
 	struct CanWarpOnPathFailure
 	{

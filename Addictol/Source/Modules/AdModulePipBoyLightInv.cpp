@@ -5,7 +5,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesPipBoyLightInv{ "Fixes", "bPipBoyLightInv", true };
+	static REX::TOML::Bool<> bPatchesPipBoyLightInv{ "Fixes"sv, "bPipBoyLightInv"sv, true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{

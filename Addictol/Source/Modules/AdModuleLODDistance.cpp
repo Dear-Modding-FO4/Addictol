@@ -3,7 +3,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesLODDistance{ "Fixes", "bLODDistance", true };
+	static REX::TOML::Bool<> bFixesLODDistance{ "Fixes"sv, "bLODDistance"sv, true };
 
 	ModuleLODDistance::ModuleLODDistance() :
 		Module("Module LOD Distance", &bFixesLODDistance)

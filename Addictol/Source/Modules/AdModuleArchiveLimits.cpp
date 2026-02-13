@@ -14,7 +14,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesArchiveLimits{ "Patches", "bArchiveLimits", true };
+	static REX::TOML::Bool<> bPatchesArchiveLimits{ "Patches"sv, "bArchiveLimits"sv, true };
 
 	constexpr static auto MAX_SIZE = 64 * 1024;
 

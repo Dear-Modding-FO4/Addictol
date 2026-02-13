@@ -18,8 +18,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesMemoryManager{ "Patches", "bMemoryManager", true };
-	static REX::TOML::Bool<> bAdditionalUseNewRedistributable{ "Additional", "bUseNewRedistributable", true };
+	static REX::TOML::Bool<> bPatchesMemoryManager{ "Patches"sv, "bMemoryManager"sv, true };
+	static REX::TOML::Bool<> bAdditionalUseNewRedistributable{ "Additional"sv, "bUseNewRedistributable"sv, true };
 
 	class AutoScrapHeap
 	{

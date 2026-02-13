@@ -9,7 +9,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesEncounterZoneReset{ "Fixes", "bEncounterZoneReset", true };
+	static REX::TOML::Bool<> bFixesEncounterZoneReset{ "Fixes"sv, "bEncounterZoneReset"sv, true };
 
 	class Sink : public RE::BSTEventSink<RE::CellAttachDetachEvent>
 	{

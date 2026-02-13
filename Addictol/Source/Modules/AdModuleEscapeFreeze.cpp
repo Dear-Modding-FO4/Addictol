@@ -6,15 +6,15 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesEscapeFreeze{ "Fixes", "bEscapeFreeze", true };
-	static REX::TOML::I32<> nAdditionalSleepTimer{ "Additional", "nSleepTimer", 125 };
-	static REX::TOML::I32<> nAdditionalMaxLockCount{ "Additional", "nMaxLockCount", 8 };
+	static REX::TOML::Bool<> bFixesEscapeFreeze{ "Fixes"sv, "bEscapeFreeze"sv, true };
+	static REX::TOML::I32<> nAdditionalSleepTimer{ "Additional"sv, "nSleepTimer"sv, 125 };
+	static REX::TOML::I32<> nAdditionalMaxLockCount{ "Additional"sv, "nMaxLockCount"sv, 8 };
 
 	REL::Relocation<int*> ConditionLockCountPointer{ REL::ID{ 998070, 2692050, 4799342 } };
 
 	static void FreezeWatcherThread()
 	{
-		REX::INFO("Started FreezeWatcher Thread");
+		REX::INFO("Started FreezeWatcher Thread"sv);
 
 		int LoopCounter = 0;
 		bool Escaped = false;
@@ -27,7 +27,7 @@ namespace Addictol
 				if (Escaped)
 				{
 					// There was and we Escaped
-					REX::INFO("Successfully Escaped from Freezing!");
+					REX::INFO("Successfully Escaped from Freezing!"sv);
 				}
 
 				// Reset
@@ -40,12 +40,12 @@ namespace Addictol
 			}
 
 			// Lock Detected!
-			REX::INFO("Lock Detected! Lock Count: {}, Loop Count: {}", *ConditionLockCountPointer, LoopCounter++);
+			REX::INFO("Lock Detected! Lock Count: {}, Loop Count: {}"sv, *ConditionLockCountPointer, LoopCounter++);
 
 			// Exceeded the Threshold
 			if (LoopCounter > nAdditionalMaxLockCount.GetValue())
 			{
-				REX::INFO("Exceeded Threshold, Unlocking...");
+				REX::INFO("Exceeded Threshold, Unlocking..."sv);
 
 				*ConditionLockCountPointer = 0;
 				Escaped = true;
@@ -66,7 +66,7 @@ namespace Addictol
 
 	bool ModuleEscapeFreeze::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REX::INFO("Starting FreezeWatcher Thread");
+		REX::INFO("Starting FreezeWatcher Thread"sv);
 		std::thread(FreezeWatcherThread).detach();
 		// TODO: Graceful exit
 

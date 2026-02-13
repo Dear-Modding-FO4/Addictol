@@ -16,8 +16,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesFacegen{ "Patches", "bFacegen", true };
-	static REX::TOML::Bool<> bAdditionalDbgFacegenOutput{ "Additional", "bDbgFacegenOutput", false };
+	static REX::TOML::Bool<> bPatchesFacegen{ "Patches"sv, "bFacegen"sv, true };
+	static REX::TOML::Bool<> bAdditionalDbgFacegenOutput{ "Additional"sv, "bDbgFacegenOutput"sv, false };
 
 	static bool __stdcall CanUsePreprocessingHead(RE::TESNPC* NPC) noexcept;
 
@@ -85,7 +85,7 @@ namespace Addictol
 					// If there is no such thing, then it is a waste of a stupid user's time
 					if (!id)
 					{
-						REX::WARN("[FACEGEN] Failed NPC added (no found plugin) \"{}\" (0x{:08X})", a_pluginName, a_formID);
+						REX::WARN("[FACEGEN] Failed NPC added (no found plugin) \"{}\" (0x{:08X})"sv, a_pluginName, a_formID);
 						return false;
 					}
 
@@ -96,7 +96,7 @@ namespace Addictol
 			}
 			else
 			{
-				REX::WARN("[FACEGEN] Failed NPC added (empty name plugin) (0x{:08X})", a_formID);
+				REX::WARN("[FACEGEN] Failed NPC added (empty name plugin) (0x{:08X})"sv, a_formID);
 				return false;
 			}
 
@@ -104,7 +104,7 @@ namespace Addictol
 		}
 		__except (1)
 		{
-			REX::ERROR("[FACEGEN] Failed NPC added (fatal error) \"{}\" (0x{:08X})", a_pluginName, a_formID);
+			REX::ERROR("[FACEGEN] Failed NPC added (fatal error) \"{}\" (0x{:08X})"sv, a_pluginName, a_formID);
 			return false;
 		}
 	}
@@ -117,7 +117,7 @@ namespace Addictol
 		SI_Error rc = ini.LoadFile(FILE_NAME);
 		if (rc != SI_OK)
 		{
-			REX::WARN("[FACEGEN] Can't find the exception file \"{}\"", FILE_NAME);
+			REX::WARN("[FACEGEN] Can't find the exception file \"{}\""sv, FILE_NAME);
 			return;
 		}
 
@@ -145,7 +145,7 @@ namespace Addictol
 
 				if (PluginName.empty() || !PluginName.length())
 				{
-					REX::WARN("[FACEGEN] The plugin file was not specified \"{}\"", key.first.pItem);
+					REX::WARN("[FACEGEN] The plugin file was not specified \"{}\""sv, key.first.pItem);
 					continue;
 				}
 
@@ -159,7 +159,7 @@ namespace Addictol
 
 				if (GetLoadOrderByFormID(PluginName.c_str(), FormID))
 				{
-					REX::INFO("[FACEGEN] Skip NPC added \"{}\" (0x{:08X})", key.first.pItem, FormID);
+					REX::INFO("[FACEGEN] Skip NPC added \"{}\" (0x{:08X})"sv, key.first.pItem, FormID);
 					facegenExceptionFormIDs.emplace_back(FormID);
 				}
 			}
@@ -170,7 +170,7 @@ namespace Addictol
 				else
 					FormID = strtoul(KeyValue.c_str(), nullptr, 10);
 
-				REX::INFO("[FACEGEN] Skip NPC added \"{}\" (0x{:08X})", key.first.pItem, FormID);
+				REX::INFO("[FACEGEN] Skip NPC added \"{}\" (0x{:08X})"sv, key.first.pItem, FormID);
 				facegenExceptionFormIDs.emplace_back(FormID);
 			}
 		}
@@ -266,8 +266,8 @@ namespace Addictol
 			auto fullName = a_NPC->GetFullName();
 			if (!fullName) fullName = "<Unknown>";
 
-			RE::ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) don't have facegen", fullName, a_NPC->formID);
-			REX::WARN("NPC \"{}\" (0x{:08X}) don't have facegen", fullName, a_NPC->formID);
+			RE::ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) don't have facegen"sv, fullName, a_NPC->formID);
+			REX::WARN("NPC \"{}\" (0x{:08X}) don't have facegen"sv, fullName, a_NPC->formID);
 		}
 
 		// ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) have facegen", a_NPC->GetFullName(), a_NPC->formID);

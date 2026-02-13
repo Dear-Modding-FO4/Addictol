@@ -6,7 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMagicEffectApplyEvent{ "Fixes", "bMagicEffectApplyEvent", true };
+	static REX::TOML::Bool<> bFixesMagicEffectApplyEvent{ "Fixes"sv, "bMagicEffectApplyEvent"sv, true };
 
 	struct ProcessEvent
 	{

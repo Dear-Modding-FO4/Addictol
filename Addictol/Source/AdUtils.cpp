@@ -255,7 +255,7 @@ namespace Addictol
 		std::wstring sec = op.substr(it + 1);
 		op = op.substr(0, it);
 
-		auto proc = *(uintptr_t*)REL::GetIATAddr("kernel32.dll", "WritePrivateProfileStringA");
+		auto proc = *(uintptr_t*)REL::GetIATAddr("kernel32.dll"sv, "WritePrivateProfileStringA"sv);
 		if (*(uint8_t*)proc == 0xE9)
 		{
 			// Inject detected, maybe PrivateProfileRedirector F4 mod

@@ -4,7 +4,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesBGSAIWorldLocationRefRadius{ "Fixes", "bBGSAIWorldLocationRefRadius", true };
+	static REX::TOML::Bool<> bFixesBGSAIWorldLocationRefRadius{ "Fixes"sv, "bBGSAIWorldLocationRefRadius"sv, true };
 
 	struct Patch : Xbyak::CodeGenerator
 	{
