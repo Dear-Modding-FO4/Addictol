@@ -36,11 +36,11 @@ bPipBoyLightInv=true                    # Fixes a crash when you have the PipBoy
 bInteriorNavCut=true                    # Fixes the engine bug that causes Workshop Navmesh cuts to persist throughout all interior cells.
 bMagicEffectApplyEvent=true             # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 bEncounterZoneReset=true                # Fixes encounter zones resetting immediately once you leave them on foot.
+bLeveledListCrash=true               	# Prevents an issue where leveled lists can have over 255 entries, which will cause them to crash the game when they are resolved.
 
 [Warnings]
 bImageSpaceAdapter=true                 # Warns on bad IMAD definitions which will corrupt your memory and crash your game.
 bDuplicateAddonNodeIndex=true			# Warns if you have two AddonNode forms with the same index in your load order, which will cause errors with visual effects.
-bLeveledListEntryCount=true				# Warns if you have any leveled lists with more than 255 entries, which will cause crashes when the leveled list is used.
 
 [Additional]
 bDbgFacegenOutput=false 			    # Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
