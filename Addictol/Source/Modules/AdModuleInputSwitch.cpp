@@ -1,7 +1,24 @@
 #include <Modules\AdModuleInputSwitch.h>
 #include <AdUtils.h>
+#include <AdAssert.h>
 
-#include <RE/Fallout.h>
+#include <RE/B/BSInputDeviceManager.h>
+#include <RE/B/BSInputEventUser.h>
+#include <RE/B/BSUIMessageData.h>
+#include <RE/C/ControlMap.h>
+#include <RE/C/CursorMenu.h>
+#include <RE/F/FlatScreenModel.h>
+#include <RE/I/IDEvent.h>
+#include <RE/I/INPUT_DEVICE.h>
+#include <RE/I/InputEvent.h>
+#include <RE/M/MenuControls.h>
+#include <RE/M/MenuCursor.h>
+#include <RE/M/MouseMoveEvent.h>
+#include <RE/P/PIPBOY_PAGES.h>
+#include <RE/P/PipboyManager.h>
+#include <RE/P/PipboyMenu.h>
+#include <RE/U/UI.h>
+#include <RE/U/UIMessageQueue.h>
 
 #include <xbyak/xbyak.h>
 
@@ -342,7 +359,7 @@ namespace Addictol
 		{
 			const auto patch = []<class T>(std::in_place_type_t<T>, REL::ID a_func, std::size_t a_size)
 			{
-				assert(a_size >= 6);
+				AdAssert(a_size >= 6);
 
 				const auto target = a_func.address();
 				REL::WriteSafeFill(target, REL::NOP, a_size);
@@ -371,8 +388,6 @@ namespace Addictol
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 		{
-			REX::INFO("kGameLoaded");
-
 			if (const auto Controls = RE::MenuControls::GetSingleton(); Controls)
 			{
 				Controls->handlers.insert(Controls->handlers.begin(), detail::DeviceSwapHandler::GetSingleton());
@@ -381,7 +396,6 @@ namespace Addictol
 		}
 		else
 		{
-			REX::INFO("kPreLoad");
 			detail::DisableDisconnectHandler();
 			detail::DisableKBMIgnore();
 			detail::InstallRefreshCursorPatch();
