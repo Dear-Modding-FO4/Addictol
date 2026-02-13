@@ -33,6 +33,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInputSwitch.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp" />
@@ -79,6 +80,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInputSwitch.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h" />

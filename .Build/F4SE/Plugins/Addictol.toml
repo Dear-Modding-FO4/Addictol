@@ -14,6 +14,7 @@ bDropItems=true						    # Extends structure BSExtraCount from a 16-bit number t
 bBSPreCulledObjects=true                # General rendering performance improvement.
 bINISettingCollection=true              # Improves startup times for large load orders by optimizing INI setting loading.
 bArchiveLimits=false					# [Experimental] Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355. (Only AE)
+bInputSwitch=true                       # Automatically swaps inputs between Keyboard + Mouse / Controller.
 
 [Fixes]
 bGreyMovies=true					    # Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
