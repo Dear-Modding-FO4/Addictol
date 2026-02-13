@@ -339,7 +339,6 @@ namespace Addictol
 			// Replicate Dir
 			////////////////////////////////////////////////
 			{
-#if 1
 				struct ReplicateDirToPatch_AE : Xbyak::CodeGenerator
 				{
 					ReplicateDirToPatch_AE(uintptr_t targetAddr, uintptr_t funcAddr)
@@ -382,45 +381,6 @@ namespace Addictol
 				auto target = REL::ID(2269319).address() + REL::Offset{ 0x296 }.offset();
 				auto patch = new ReplicateDirToPatch_AE(target, (uintptr_t)InsertReplicatedGeneralID);
 				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
-#else
-				struct ReplicateDirToPatch_AE : Xbyak::CodeGenerator
-				{
-					ReplicateDirToPatch_AE(uintptr_t targetAddr, uintptr_t funcAddr)
-					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
-						push(rax);
-						push(rcx);
-						push(rdx);
-						push(r8);
-						sub(rsp, 0x20);
-
-						lea(rcx, ptr[rdi]);
-						mov(edx, ebx);
-						call(ptr[rip + funcLabel]);
-
-						add(rsp, 0x20);
-						pop(r8);
-						pop(rdx);
-						pop(rcx);
-						pop(rax);
-
-						mov(rbx, ptr[rsi + 0x170]);
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(targetAddr + 0x6);
-
-						L(funcLabel);
-						dq(funcAddr);
-					}
-				};
-
-				auto target = REL::ID(2269319).address() + REL::Offset{ 0x2A5 }.offset();
-				auto patch = new ReplicateDirToPatch_AE(target, (uintptr_t)InsertReplicatedGeneralID);
-				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
-#endif
 			}
 		}
 	}
