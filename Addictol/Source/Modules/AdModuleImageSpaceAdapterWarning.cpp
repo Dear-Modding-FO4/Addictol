@@ -41,7 +41,7 @@ namespace Addictol
 				const std::string_view schunk{ cchunk, 4 };
 				REX::FAIL("IMAD with ID: [0x{:08X}] from \"{}\" with subrecord \"{}\" has an invalid key size of zero. "
 					"This will result in memory corruption. "
-					"Please open the form in xEdit and correct it or remove the mod from your load order.",
+					"Please open the form in xEdit and correct it or remove the mod from your load order."sv,
 					a_imad->GetFormID(), a_file->GetFilename(), schunk);
 
 				return nullptr;

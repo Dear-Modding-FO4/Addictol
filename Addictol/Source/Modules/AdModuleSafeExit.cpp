@@ -14,7 +14,7 @@ namespace Addictol
 #if AD_TRACER
 		MemoryTracer::GetSingleton()->Dump();
 #endif
-		REX::INFO("Shutting Down Game...");
+		REX::INFO("Shutting Down Game..."sv);
 		REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), EXIT_SUCCESS);
 	}
 
