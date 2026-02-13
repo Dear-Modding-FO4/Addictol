@@ -35,7 +35,6 @@
 #include <Modules\AdModuleArchiveLimits.h>
 #include <Modules\AdModuleImageSpaceAdapterWarning.h>
 #include <Modules\AdModuleDuplicateAddonNodeIndex.h>
-#include <Modules\AdModuleLeveledListEntryCount.h>
 #include <Modules\AdModuleInputSwitch.h>
 
 // Create patches
@@ -74,7 +73,6 @@ static auto sModuleEncounterZoneReset				= std::make_shared<Addictol::ModuleEnco
 static auto sModuleArchiveLimits					= std::make_shared<Addictol::ModuleArchiveLimits>();
 static auto sModuleImageSpaceAdapterWarning			= std::make_shared<Addictol::ModuleImageSpaceAdapterWarning>();
 static auto sModuleDuplicateAddonNodeIndex			= std::make_shared<Addictol::ModuleDuplicateAddonNodeIndex>();
-static auto sModuleLeveledListEntryCount			= std::make_shared<Addictol::ModuleLeveledListEntryCount>();
 static auto sModuleInputSwitch						= std::make_shared<Addictol::ModuleInputSwitch>();
 
 void AdRegisterPreloadModules()
@@ -139,7 +137,6 @@ void AdRegisterModules()
 	modules.Register(sModuleInteriorNavCut,				Addictol::ModuleManager::Type::kGameDataReady);
 	modules.Register(sModuleControlSamplers,			Addictol::ModuleManager::Type::kGameDataReady);
 	modules.Register(sModuleDuplicateAddonNodeIndex,	Addictol::ModuleManager::Type::kGameDataReady);
-	modules.Register(sModuleLeveledListEntryCount,		Addictol::ModuleManager::Type::kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,			Addictol::ModuleManager::Type::kGameLoaded);
 	modules.Register(sModuleInputSwitch,				Addictol::ModuleManager::Type::kGameLoaded);
 }

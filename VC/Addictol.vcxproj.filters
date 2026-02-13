@@ -136,11 +136,10 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDuplicateAddonNodeIndex.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListEntryCount.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInputSwitch.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInputSwitch.cpp">
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
   </ItemGroup>
@@ -272,11 +271,10 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDuplicateAddonNodeIndex.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListEntryCount.h">
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInputSwitch.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInputSwitch.h">
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
