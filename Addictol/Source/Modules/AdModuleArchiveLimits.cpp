@@ -211,7 +211,6 @@ namespace Addictol
 
 	namespace SDirectory2
 	{
-#if 0
 		static void InsertReplicatedGeneralID(const RE::BSResource::ID& id, uint32_t repDir) noexcept(true)
 		{
 			uint16_t index = FindGeneralArchiveIndex(id);
@@ -222,7 +221,6 @@ namespace Addictol
 			repId.dir = repDir;
 			PushGeneralArchiveIndex(repId, index);
 		}
-#endif
 
 		static void Hook_Init()
 		{
@@ -337,12 +335,54 @@ namespace Addictol
 				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
 			}
 
-			// Weird but this causes grass problems
-#if 0
 			////////////////////////////////////////////////
 			// Replicate Dir
 			////////////////////////////////////////////////
 			{
+#if 1
+				struct ReplicateDirToPatch_AE : Xbyak::CodeGenerator
+				{
+					ReplicateDirToPatch_AE(uintptr_t targetAddr, uintptr_t funcAddr)
+					{
+						Xbyak::Label retnLabel;
+						Xbyak::Label funcLabel;
+
+						push(rsi);
+						push(rcx);
+						push(rbx);
+						push(r8);
+						push(rdx);
+						push(rdi);
+						sub(rsp, 0x20);
+
+						lea(rcx, ptr[rdi]);
+						mov(edx, ebx);
+						call(ptr[rip + funcLabel]);
+
+						add(rsp, 0x20);
+						pop(rdi);
+						pop(rdx);
+						pop(r8);
+						pop(rbx);
+						pop(rcx);
+						pop(rsi);
+
+						mov(ptr[rdi + 0x8], ebx);
+						mov(ptr[rdi], ecx);
+						jmp(ptr[rip + retnLabel]);
+
+						L(retnLabel);
+						dq(targetAddr + 0x5);
+
+						L(funcLabel);
+						dq(funcAddr);
+					}
+				};
+
+				auto target = REL::ID(2269319).address() + REL::Offset{ 0x296 }.offset();
+				auto patch = new ReplicateDirToPatch_AE(target, (uintptr_t)InsertReplicatedGeneralID);
+				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
+#else
 				struct ReplicateDirToPatch_AE : Xbyak::CodeGenerator
 				{
 					ReplicateDirToPatch_AE(uintptr_t targetAddr, uintptr_t funcAddr)
@@ -366,8 +406,7 @@ namespace Addictol
 						pop(rcx);
 						pop(rax);
 
-						mov(ptr[rdi + 0x8], ebx);
-						mov(ptr[rdi], ecx);
+						mov(rbx, ptr[rsi + 0x170]);
 						jmp(ptr[rip + retnLabel]);
 
 						L(retnLabel);
@@ -378,11 +417,11 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(2269319).address() + REL::Offset{ 0x296 }.offset();
+				auto target = REL::ID(2269319).address() + REL::Offset{ 0x2A5 }.offset();
 				auto patch = new ReplicateDirToPatch_AE(target, (uintptr_t)InsertReplicatedGeneralID);
 				RELEX::DetourJump(target, (uintptr_t)patch->getCode());
-			}
 #endif
+			}
 		}
 	}
 
