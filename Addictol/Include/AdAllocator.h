@@ -32,23 +32,23 @@ namespace Addictol
 		ProxyVoltekHeap() noexcept;
 		~ProxyVoltekHeap() noexcept = default;
 
-		[[nodiscard]] void* malloc(std::size_t nSize) const noexcept;
-		[[nodiscard]] void* aligned_malloc(std::size_t nSize, [[maybe_unused]] std::size_t nAlignment) const noexcept;
+		[[nodiscard]] void* malloc(size_t nSize) const noexcept;
+		[[nodiscard]] void* aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept;
 
-		[[nodiscard]] void* realloc(void* lpBlock, std::size_t nNewSize) const noexcept;
-		[[nodiscard]] void* aligned_realloc(void* lpBlock, std::size_t nNewSize, [[maybe_unused]] std::size_t nAlignment) const noexcept;
+		[[nodiscard]] void* realloc(void* lpBlock, size_t nNewSize) const noexcept;
+		[[nodiscard]] void* aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept;
 
 		void free(void* lpBlock) const noexcept;
 		void aligned_free(void* lpBlock) const noexcept;
 
-		[[nodiscard]] std::size_t msize(void* lpBlock) const noexcept;
-		[[nodiscard]] std::size_t aligned_msize(void* lpBlock, [[maybe_unused]] std::size_t nAlignment) const noexcept;
+		[[nodiscard]] size_t msize(void* lpBlock) const noexcept;
+		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept;
 	};
 
 	template<typename Heap = ProxyVoltekHeap>
 	struct StdStuff
 	{
-		[[nodiscard]] static void* calloc(std::size_t nCount, std::size_t nSize) noexcept(true)
+		[[nodiscard]] static void* calloc(size_t nCount, size_t nSize) noexcept(true)
 		{
 			auto totalSize = nCount * nSize;
 			auto ptr = Heap::GetSingleton()->malloc(totalSize);
@@ -56,17 +56,17 @@ namespace Addictol
 			return ptr;
 		}
 
-		[[nodiscard]] static void* malloc(std::size_t nSize) noexcept(true)
+		[[nodiscard]] static void* malloc(size_t nSize) noexcept(true)
 		{
 			return Heap::GetSingleton()->malloc(nSize);
 		}
 
-		[[nodiscard]] static void* aligned_malloc(std::size_t nSize, size_t alignment) noexcept(true)
+		[[nodiscard]] static void* aligned_malloc(size_t nSize, size_t alignment) noexcept(true)
 		{
 			return Heap::GetSingleton()->aligned_malloc(nSize, alignment);
 		}
 
-		[[nodiscard]] static void* realloc(void* lpBlock, std::size_t nNewSize) noexcept(true)
+		[[nodiscard]] static void* realloc(void* lpBlock, size_t nNewSize) noexcept(true)
 		{
 			return Heap::GetSingleton()->realloc(lpBlock, nNewSize);
 		}
