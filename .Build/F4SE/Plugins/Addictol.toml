@@ -37,6 +37,7 @@ bInteriorNavCut=true                    # Fixes the engine bug that causes Works
 bMagicEffectApplyEvent=true             # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 bEncounterZoneReset=true                # Fixes encounter zones resetting immediately once you leave them on foot.
 bLeveledListCrash=true               	# Prevents an issue where leveled lists can have over 255 entries, which will cause them to crash the game when they are resolved.
+bBakaMaxPapyrusOps=true                 # Fixes Script Page Allocation and the Toggle Scripts Command, adjusts the maximum papyrus operations per frame via nMaxPapyrusOpsPerFrame.
 
 [Warnings]
 bImageSpaceAdapter=true                 # Warns on bad IMAD definitions which will corrupt your memory and crash your game.
@@ -50,3 +51,4 @@ uScaleformHeapSize=512				    # The heap size (in MB), vanilla size is 128. This
 nSleepTimer=125						    # Waiting (in ms) with an interval for EscapeFreeze (Need bEscapeFreeze fixes).
 nMaxLockCount=8						    # Maximum allowable number of condition lock (Need bEscapeFreeze fixes).
 bInteriorNavCutMultiThreading=true      # Enable InteriorNavCut MultiThreading, Linux / Proton Users might need to disable this (needs bInteriorNavCut).
+nMaxPapyrusOpsPerFrame=500              # Maximum papyrus operations per frame. Higher number means better script performance on average.

@@ -41,6 +41,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectApplyEvent.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxPapyrusOps.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxStdIO.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp" />
@@ -87,6 +88,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectApplyEvent.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxPapyrusOps.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxStdIO.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
