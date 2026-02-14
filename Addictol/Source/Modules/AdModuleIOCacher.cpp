@@ -6,7 +6,7 @@ namespace Addictol
 	static REX::TOML::Bool<> bFixesIOChacher{ "Fixes"sv, "bIOCacher"sv, true };
 
 	ModuleIOCacher::ModuleIOCacher() :
-		Module("Module IO Cacher", &bFixesIOChacher)
+		Module("IO Cacher", &bFixesIOChacher)
 	{}
 
 	bool ModuleIOCacher::DoQuery() const noexcept

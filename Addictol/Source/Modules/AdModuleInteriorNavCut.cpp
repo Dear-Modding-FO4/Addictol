@@ -206,7 +206,7 @@ namespace Addictol
 	}
 
 	ModuleInteriorNavCut::ModuleInteriorNavCut() :
-		Module("Module Interior NavCut", &bFixesInteriorNavCut, { F4SE::MessagingInterface::kPostLoadGame })
+		Module("Interior NavCut", &bFixesInteriorNavCut, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
 	bool ModuleInteriorNavCut::DoQuery() const noexcept

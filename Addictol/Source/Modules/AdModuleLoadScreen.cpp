@@ -36,7 +36,7 @@ namespace Addictol
 	}
 
 	ModuleLoadScreen::ModuleLoadScreen() :
-		Module("Module Load Screen", &bPatchesLoadScreen)
+		Module("Load Screen", &bPatchesLoadScreen)
 	{}
 
 	bool ModuleLoadScreen::DoQuery() const noexcept

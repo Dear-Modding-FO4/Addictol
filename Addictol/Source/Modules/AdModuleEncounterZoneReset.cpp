@@ -52,7 +52,7 @@ namespace Addictol
 	};
 
 	ModuleEncounterZoneReset::ModuleEncounterZoneReset() :
-		Module("Module Encounter Zone Reset", &bFixesEncounterZoneReset)
+		Module("Encounter Zone Reset", &bFixesEncounterZoneReset)
 	{}
 
 	bool ModuleEncounterZoneReset::DoQuery() const noexcept

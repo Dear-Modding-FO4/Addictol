@@ -17,7 +17,7 @@ namespace Addictol
 	};
 
 	ModuleAchievements::ModuleAchievements() :
-		Module("Module Achievements", &bPatchesAchievements)
+		Module("Achievements", &bPatchesAchievements)
 	{}
 
 	bool ModuleAchievements::DoQuery() const noexcept

@@ -341,7 +341,7 @@ namespace Addictol
 	};
 
 	ModuleMemoryManager::ModuleMemoryManager() :
-		Module("Module Memory Manager", &bPatchesMemoryManager)
+		Module("Memory Manager", &bPatchesMemoryManager)
 	{}
 
 	bool ModuleMemoryManager::DoQuery() const noexcept

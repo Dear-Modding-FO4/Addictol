@@ -462,7 +462,7 @@ namespace Addictol
 	}
 
 	ModuleBSPreCulledObjects::ModuleBSPreCulledObjects() :
-		Module("Module BSPreCulledObjects", &bPatchesBSPreCulledObjects)
+		Module("BSPreCulledObjects", &bPatchesBSPreCulledObjects)
 	{}
 
 	bool ModuleBSPreCulledObjects::DoQuery() const noexcept

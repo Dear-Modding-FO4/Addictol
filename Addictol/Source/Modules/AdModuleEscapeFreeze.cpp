@@ -56,7 +56,7 @@ namespace Addictol
 	}
 
 	ModuleEscapeFreeze::ModuleEscapeFreeze() :
-		Module("Module Escape Freeze", &bFixesEscapeFreeze)
+		Module("Escape Freeze", &bFixesEscapeFreeze)
 	{}
 
 	bool ModuleEscapeFreeze::DoQuery() const noexcept

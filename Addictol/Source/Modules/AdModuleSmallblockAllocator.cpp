@@ -106,7 +106,7 @@ namespace Addictol
 	}
 
 	ModuleSmallblockAllocator::ModuleSmallblockAllocator() :
-		Module("Module Smallblock Allocator", &bPatchesSmallBlockAllocator)
+		Module("Smallblock Allocator", &bPatchesSmallBlockAllocator)
 	{}
 
 	bool ModuleSmallblockAllocator::DoQuery() const noexcept

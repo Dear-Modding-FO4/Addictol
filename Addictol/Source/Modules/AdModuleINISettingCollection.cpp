@@ -18,7 +18,7 @@ namespace Addictol
 	};
 
 	ModuleINISettingCollection::ModuleINISettingCollection() :
-		Module("Module INISettingCollection", &bPatchesINISettingCollection)
+		Module("INISettingCollection", &bPatchesINISettingCollection)
 	{}
 
 	bool ModuleINISettingCollection::DoQuery() const noexcept

@@ -197,7 +197,7 @@ namespace Addictol
 	///////////////////////////////////////////////////////////////////////////////
 
 	ModuleControlSamplers::ModuleControlSamplers() :
-		Module("Module Control Samplers", nullptr, {}, true)
+		Module("Control Samplers", nullptr, {}, true)
 	{}
 
 	bool ModuleControlSamplers::DoQuery() const noexcept

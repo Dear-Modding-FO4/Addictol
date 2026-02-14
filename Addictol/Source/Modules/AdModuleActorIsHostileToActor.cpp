@@ -22,7 +22,7 @@ namespace Addictol
 	}
 
 	ModuleActorIsHostileToActor::ModuleActorIsHostileToActor() :
-		Module("Module ActorIsHostileToActor", &bFixesActorIsHostileToActor)
+		Module("ActorIsHostileToActor", &bFixesActorIsHostileToActor)
 	{}
 
 	bool ModuleActorIsHostileToActor::DoQuery() const noexcept

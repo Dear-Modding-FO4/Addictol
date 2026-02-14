@@ -32,7 +32,7 @@ namespace Addictol
 	};
 
 	ModuleBGSAIWorldLocationRefRadius::ModuleBGSAIWorldLocationRefRadius() :
-		Module("Module BGSAIWorldLocationRefRadius", &bFixesBGSAIWorldLocationRefRadius)
+		Module("BGSAIWorldLocationRefRadius", &bFixesBGSAIWorldLocationRefRadius)
 	{}
 
 	bool ModuleBGSAIWorldLocationRefRadius::DoQuery() const noexcept

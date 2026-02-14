@@ -19,7 +19,7 @@ namespace Addictol
 	}
 
 	ModuleSafeExit::ModuleSafeExit() :
-		Module("Module Safe Exit", &bFixesSafeExit)
+		Module("Safe Exit", &bFixesSafeExit)
 	{}
 
 	bool ModuleSafeExit::DoQuery() const noexcept

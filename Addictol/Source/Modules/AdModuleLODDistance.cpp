@@ -6,7 +6,7 @@ namespace Addictol
 	static REX::TOML::Bool<> bFixesLODDistance{ "Fixes"sv, "bLODDistance"sv, true };
 
 	ModuleLODDistance::ModuleLODDistance() :
-		Module("Module LOD Distance", &bFixesLODDistance)
+		Module("LOD Distance", &bFixesLODDistance)
 	{}
 
 	bool ModuleLODDistance::DoQuery() const noexcept

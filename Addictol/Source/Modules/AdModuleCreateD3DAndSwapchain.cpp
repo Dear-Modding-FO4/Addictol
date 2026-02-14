@@ -24,7 +24,7 @@ namespace Addictol
 	}
 
 	ModuleCreateD3DAndSwapchain::ModuleCreateD3DAndSwapchain() :
-		Module("Module CreateD3D and Swapchain", &bFixesCreateD3DAndSwapchain)
+		Module("CreateD3D and Swapchain", &bFixesCreateD3DAndSwapchain)
 	{}
 
 	bool ModuleCreateD3DAndSwapchain::DoQuery() const noexcept

@@ -16,7 +16,7 @@ namespace Addictol
 	};
 
 	ModuleMovementPlanner::ModuleMovementPlanner() :
-		Module("Module Movement Planner", &bFixesMovementPlanner)
+		Module("Movement Planner", &bFixesMovementPlanner)
 	{}
 
 	bool ModuleMovementPlanner::DoQuery() const noexcept

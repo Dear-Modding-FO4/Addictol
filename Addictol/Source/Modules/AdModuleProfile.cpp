@@ -25,7 +25,7 @@ namespace Addictol
 	}
 
 	ModuleProfile::ModuleProfile() :
-		Module("Module Profile", &bPatchesProfile)
+		Module("Profile", &bPatchesProfile)
 	{}
 
 	bool ModuleProfile::DoQuery() const noexcept

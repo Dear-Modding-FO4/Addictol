@@ -39,7 +39,7 @@ namespace Addictol
 	};
 
 	ModuleTESObjectREFRGetEncounterZone::ModuleTESObjectREFRGetEncounterZone() :
-		Module("Module TESObjectREFRGetEncounterZone", &bFixesTESObjectREFRGetEncounterZone)
+		Module("TESObjectREFRGetEncounterZone", &bFixesTESObjectREFRGetEncounterZone)
 	{}
 
 	bool ModuleTESObjectREFRGetEncounterZone::DoQuery() const noexcept

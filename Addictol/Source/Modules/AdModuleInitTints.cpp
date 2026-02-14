@@ -8,7 +8,7 @@ namespace Addictol
 	static REX::TOML::Bool<> bFixesInitTints{ "Fixes"sv, "bInitTints"sv, true };
 
 	ModuleInitTints::ModuleInitTints() :
-		Module("Module Init Tints", &bFixesInitTints)
+		Module("Init Tints", &bFixesInitTints)
 	{}
 
 	bool ModuleInitTints::DoQuery() const noexcept

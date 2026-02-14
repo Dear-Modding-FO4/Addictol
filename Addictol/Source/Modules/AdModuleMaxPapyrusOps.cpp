@@ -221,7 +221,7 @@ namespace Addictol
 	};
 
 	ModuleMaxPapyrusOps::ModuleMaxPapyrusOps() :
-		Module("Module MaxPapyrusOps", &bFixesBakaMaxPapyrusOps)
+		Module("MaxPapyrusOps", &bFixesBakaMaxPapyrusOps)
 	{}
 
 	bool ModuleMaxPapyrusOps::DoQuery() const noexcept

@@ -40,7 +40,7 @@ namespace Addictol
 	};
 
 	ModuleCellInit::ModuleCellInit() :
-		Module("Module Cell Init", &bFixesCellInit)
+		Module("Cell Init", &bFixesCellInit)
 	{}
 
 	bool ModuleCellInit::DoQuery() const noexcept

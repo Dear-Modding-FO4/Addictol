@@ -54,7 +54,7 @@ namespace Addictol
 	}
 
 	ModuleImageSpaceAdapterWarning::ModuleImageSpaceAdapterWarning() :
-		Module("Module Image Space Adapter Warning", &bWarningsImageSpaceAdapter)
+		Module("Image Space Adapter Warning", &bWarningsImageSpaceAdapter)
 	{}
 
 	bool ModuleImageSpaceAdapterWarning::DoQuery() const noexcept

@@ -281,7 +281,7 @@ namespace Addictol
 	}
 
 	ModuleFacegen::ModuleFacegen() :
-		Module("Module Facegen", &bPatchesFacegen)
+		Module("Facegen", &bPatchesFacegen)
 	{}
 
 	bool ModuleFacegen::DoQuery() const noexcept

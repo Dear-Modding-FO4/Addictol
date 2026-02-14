@@ -19,7 +19,7 @@ namespace Addictol
 	};
 
 	ModuleMagicEffectApplyEvent::ModuleMagicEffectApplyEvent() :
-		Module("Module MagicEffectApplyEvent", &bFixesMagicEffectApplyEvent)
+		Module("MagicEffectApplyEvent", &bFixesMagicEffectApplyEvent)
 	{}
 
 	bool ModuleMagicEffectApplyEvent::DoQuery() const noexcept

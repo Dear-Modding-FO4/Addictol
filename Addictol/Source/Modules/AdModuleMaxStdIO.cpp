@@ -11,7 +11,7 @@ namespace Addictol
 	static REX::TOML::I32<> nFixesMaxStdIO{ "Fixes"sv, "nMaxStdIO"sv, RESET_MAXSTDIO };
 
 	ModuleMaxStdIO::ModuleMaxStdIO() :
-		Module("Module MaxStdIO")
+		Module("MaxStdIO")
 	{}
 
 	bool ModuleMaxStdIO::DoQuery() const noexcept

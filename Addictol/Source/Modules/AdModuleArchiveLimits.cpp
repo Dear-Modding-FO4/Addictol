@@ -842,7 +842,7 @@ namespace Addictol
 	}
 
 	ModuleArchiveLimits::ModuleArchiveLimits() :
-		Module("Module Archive Limits", &bPatchesArchiveLimits)
+		Module("Archive Limits", &bPatchesArchiveLimits)
 	{
 		g_managerArchiveManager = std::make_unique<Index>();
 	}

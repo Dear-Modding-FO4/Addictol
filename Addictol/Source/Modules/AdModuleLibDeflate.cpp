@@ -53,7 +53,7 @@ namespace Addictol
 	}
 
 	ModuleLibDeflate::ModuleLibDeflate() :
-		Module("Module LibDeflate", &bPatchesLibDeflate)
+		Module("LibDeflate", &bPatchesLibDeflate)
 	{}
 
 	bool ModuleLibDeflate::DoQuery() const noexcept

@@ -376,7 +376,7 @@ namespace Addictol
 	}
 
 	ModuleInputSwitch::ModuleInputSwitch() :
-		Module("Module Input Switch", &bPatchesInputSwitch)
+		Module("Input Switch", &bPatchesInputSwitch)
 	{}
 
 	bool ModuleInputSwitch::DoQuery() const noexcept

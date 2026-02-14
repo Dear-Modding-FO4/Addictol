@@ -35,7 +35,7 @@ namespace Addictol
 	};
 
 	ModulePipBoyLightInv::ModulePipBoyLightInv() :
-		Module("Module PipBoy Light Env", &bPatchesPipBoyLightInv)
+		Module("PipBoy Light Env", &bPatchesPipBoyLightInv)
 	{}
 
 	bool ModulePipBoyLightInv::DoQuery() const noexcept

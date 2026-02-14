@@ -22,7 +22,7 @@ namespace Addictol
 	};
 
 	ModuleWorkbenchSwap::ModuleWorkbenchSwap() :
-		Module("Module Workbench Swap", &bFixesWorkbenchSwap)
+		Module("Workbench Swap", &bFixesWorkbenchSwap)
 	{}
 
 	bool ModuleWorkbenchSwap::DoQuery() const noexcept

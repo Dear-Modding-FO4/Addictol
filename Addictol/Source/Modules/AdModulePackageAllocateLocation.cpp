@@ -18,7 +18,7 @@ namespace Addictol
 	};
 
 	ModulePackageAllocateLocation::ModulePackageAllocateLocation() :
-		Module("Module Package Allocate Location", &bFixesPackageAllocateLocation)
+		Module("Package Allocate Location", &bFixesPackageAllocateLocation)
 	{}
 
 	bool ModulePackageAllocateLocation::DoQuery() const noexcept

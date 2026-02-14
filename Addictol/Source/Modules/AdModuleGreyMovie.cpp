@@ -20,7 +20,7 @@ namespace Addictol
 	}
 
 	ModuleGreyMovie::ModuleGreyMovie() :
-		Module("Module Grey Movie", &bFixesGreyMovie)
+		Module("Grey Movie", &bFixesGreyMovie)
 	{}
 
 	bool ModuleGreyMovie::DoQuery() const noexcept

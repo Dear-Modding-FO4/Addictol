@@ -6,7 +6,7 @@ namespace Addictol
 	static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
 
 	ModuleUnalignedLoad::ModuleUnalignedLoad() :
-		Module("Module Unaligned Load", &bFixesUnalignedLoad)
+		Module("Unaligned Load", &bFixesUnalignedLoad)
 	{}
 
 	bool ModuleUnalignedLoad::DoQuery() const noexcept
