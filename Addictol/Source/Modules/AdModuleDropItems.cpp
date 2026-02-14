@@ -11,7 +11,7 @@ namespace Addictol
 
 	bool ModuleDropItems::DoQuery() const noexcept
 	{
-		return true;//!RELEX::IsRuntimeOG();	// og no supported
+		return !RELEX::IsRuntimeOG();	// OG has a crashing issue when traversing the world
 	}
 
 	bool ModuleDropItems::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
