@@ -189,10 +189,10 @@ namespace Addictol
 		MemoryManager() = default;
 		~MemoryManager() = default;
 	public:
-		inline static const std::uint64_t EMPTY_POINTER{ 0 };
+		inline static const uint64_t EMPTY_POINTER{ 0 };
 
-		[[nodiscard]] static void* Alloc([[maybe_unused]] MemoryManager* lpSelf, std::size_t nSize,
-			std::uint32_t nAlignment, bool bAligned) noexcept
+		[[nodiscard]] static void* Alloc([[maybe_unused]] MemoryManager* lpSelf, size_t nSize,
+			uint32_t nAlignment, bool bAligned) noexcept
 		{
 			if (!nSize)
 				return (void*)(&EMPTY_POINTER);
@@ -211,7 +211,7 @@ namespace Addictol
 		}
 
 		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* lpSelf, void* lpBlock, 
-			std::size_t nSize, std::uint32_t nAlignment, bool bAligned) noexcept
+			size_t nSize, uint32_t nAlignment, bool bAligned) noexcept
 		{
 #if AD_TRACER
 			void* ptr = nullptr;
@@ -283,27 +283,27 @@ namespace Addictol
 			DeleteCriticalSection(&m_CritSec);
 		}
 
-		[[nodiscard]] virtual void* blockAlloc(std::size_t numBytes) noexcept
+		[[nodiscard]] virtual void* blockAlloc(size_t numBytes) noexcept
 		{
 			return Heap::GetSingleton()->aligned_malloc(numBytes, 16);
 		}
 
-		virtual void blockFree(void* p, std::size_t numBytes) noexcept
+		virtual void blockFree(void* p, size_t numBytes) noexcept
 		{
 			Heap::GetSingleton()->aligned_free(p);
 		}
 
-		[[nodiscard]] virtual void* bufAlloc(std::size_t& reqNumBytesInOut) noexcept
+		[[nodiscard]] virtual void* bufAlloc(size_t& reqNumBytesInOut) noexcept
 		{
 			return blockAlloc(reqNumBytesInOut);
 		}
 
-		virtual void bufFree(void* p, std::size_t numBytes) noexcept
+		virtual void bufFree(void* p, size_t numBytes) noexcept
 		{
 			return blockFree(p, numBytes);
 		}
 
-		[[nodiscard]] virtual void* bufRealloc(void* pold, std::size_t oldNumBytes, std::size_t& reqNumBytesInOut) noexcept
+		[[nodiscard]] virtual void* bufRealloc(void* pold, size_t oldNumBytes, size_t& reqNumBytesInOut) noexcept
 		{
 			void* p = blockAlloc(reqNumBytesInOut);
 			memcpy(p, pold, oldNumBytes);
@@ -311,13 +311,13 @@ namespace Addictol
 			return p;
 		}
 
-		virtual void blockAllocBatch(void** ptrsOut, std::size_t numPtrs, std::size_t blockSize) noexcept
+		virtual void blockAllocBatch(void** ptrsOut, size_t numPtrs, size_t blockSize) noexcept
 		{
 			for (long i = 0; i < numPtrs; i++)
 				ptrsOut[i] = blockAlloc(blockSize);
 		}
 
-		virtual void blockFreeBatch(void** ptrsIn, std::size_t numPtrs, std::size_t blockSize) noexcept
+		virtual void blockFreeBatch(void** ptrsIn, size_t numPtrs, size_t blockSize) noexcept
 		{
 			for (long i = 0; i < numPtrs; i++)
 				blockFree(ptrsIn[i], blockSize);
@@ -326,7 +326,7 @@ namespace Addictol
 		virtual void getMemoryStatistics(class MemoryStatistics& u) noexcept
 		{}
 
-		virtual std::size_t getAllocatedSize(const void* obj, std::size_t nbytes) noexcept
+		virtual size_t getAllocatedSize(const void* obj, size_t nbytes) noexcept
 		{
 			return 0;
 		}
@@ -360,7 +360,7 @@ namespace Addictol
 		if (RELEX::IsRuntimeOG())
 		{
 			RELEX::WriteSafe(REL::ID(597736).address(), { 0xC3, 0x90 });
-			*(std::uint32_t*)REL::ID(1570354).address() = 2;
+			*(uint32_t*)REL::ID(1570354).address() = 2;
 
 			const std::array MMPatch
 			{
@@ -376,7 +376,7 @@ namespace Addictol
 		else
 		{
 			RELEX::WriteSafe(REL::ID(2267875).address(), { 0xC3, 0x90 });
-			*(std::uint32_t*)REL::ID(RELEX::IsRuntimeAE() ? 4807763 : 2688723).address() = 2;
+			*(uint32_t*)REL::ID(RELEX::IsRuntimeAE() ? 4807763 : 2688723).address() = 2;
 
 			const std::array MMPatch
 			{
