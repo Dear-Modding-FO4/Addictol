@@ -23,11 +23,11 @@ namespace Addictol
 		if (entryCount > 254)
 		{
 			// warn
-
-			auto* formFile = a_form->GetFile(0);
+			/*auto* formFile = a_form->GetFile(0);
 			REX::INFO("LeveledListCrash: Prevented problematic injection of <FormID: {:08X} in Plugin: \"{}\">"sv,
-				a_form->GetFormID(), formFile ? formFile->GetFilename() : "MODNAME_NOT_FOUND"sv);
+				a_form->GetFormID(), formFile ? formFile->GetFilename() : "MODNAME_NOT_FOUND"sv);*/
 
+			REX::INFO("LeveledListCrash: Prevented a problematic injection."sv);
 			return;
 		}
 		else
