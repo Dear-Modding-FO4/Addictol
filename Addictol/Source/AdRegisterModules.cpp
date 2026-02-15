@@ -136,6 +136,7 @@ void AdRegisterModules()
 	modules.Register(sModuleImageSpaceAdapterWarning);
 	modules.Register(sModuleInputSwitch);
 	modules.Register(sModuleCreateD3DAndSwapchain);
+	modules.Register(sModuleControlSamplers);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,					Addictol::ModuleManager::Type::kGameDataReady);

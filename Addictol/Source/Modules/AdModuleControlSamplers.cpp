@@ -20,11 +20,13 @@ namespace Addictol
 	static constexpr char MAXANISTROPY_OPTION_NAME[]		= "iMaxAnisotropy:Display";
 	static constexpr wchar_t MIPBIAS_OPTION_NAMEW[]			= L"fMipBias:Display";
 	static constexpr wchar_t MAXANISTROPY_OPTION_NAMEW[]	= L"iMaxAnisotropy:Display";
-	static constexpr char OBJECT_PAPYRUS_NAME[]				= "Addictol";
+	static constexpr auto OBJECT_PAPYRUS_NAME				= "Addictol"sv;
 
 	RE::Setting g_MipBiasSetting{ MIPBIAS_OPTION_NAME, 0.0f };
-	RE::Setting g_MaxAnisotropySetting{ MAXANISTROPY_OPTION_NAME, 0 };
+	RE::Setting g_MaxAnisotropySetting{ MAXANISTROPY_OPTION_NAME, 16 };
 	std::wstring g_PrefIniFileName;
+
+	static REX::TOML::Bool<> bAdditionalIgnorePreInstallBias{ "Additional"sv, "bIgnorePreInstallBias"sv, false };
 
 	using namespace Microsoft::WRL;
 
@@ -68,7 +70,7 @@ namespace Addictol
 				REX::W32::D3D11_SAMPLER_DESC sd;
 				orig->GetDesc(&sd);
 
-				if (sd.mipLODBias)
+				if (sd.mipLODBias && !bAdditionalIgnorePreInstallBias.GetValue())
 				{
 					// do not mess with samplers that already have a bias.
 					// should hopefully reduce the chance of causing rendering errors.
@@ -197,7 +199,7 @@ namespace Addictol
 	///////////////////////////////////////////////////////////////////////////////
 
 	ModuleControlSamplers::ModuleControlSamplers() :
-		Module("Control Samplers", nullptr, {}, true)
+		Module("Control Samplers", nullptr, { F4SE::MessagingInterface::kPostLoadGame }, true)
 	{}
 
 	bool ModuleControlSamplers::DoQuery() const noexcept
@@ -247,13 +249,19 @@ namespace Addictol
 
 	bool ModuleControlSamplers::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		if (a_msg && (a_msg->type == F4SE::MessagingInterface::kPostLoadGame))
+		{
+			g_PassThroughSamplers.clear();
+			g_MappedSamplers.clear();
+		}
+
 		return true;
 	}
 
 	bool ModuleControlSamplers::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
 	{
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMipLODBias"sv,			VirtualMachine::GetMipLODBias);
-		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMipLODBias"sv,			VirtualMachine::SetMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMipLODBias"sv,				VirtualMachine::GetMipLODBias);
+		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMipLODBias"sv,				VirtualMachine::SetMipLODBias);
 		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetDefaultMipLODBias"sv,		VirtualMachine::SetDefaultMipLODBias);
 		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "GetMaxAnisotropy"sv,			VirtualMachine::GetMaxAnisotropy);
 		a_vm->BindNativeMethod(OBJECT_PAPYRUS_NAME, "SetMaxAnisotropy"sv,			VirtualMachine::SetMaxAnisotropy);
