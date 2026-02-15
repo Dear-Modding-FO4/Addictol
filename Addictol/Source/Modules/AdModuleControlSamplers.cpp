@@ -209,7 +209,7 @@ namespace Addictol
 
 	bool ModuleControlSamplers::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (a_msg->type == F4SE::MessagingInterface::kGameDataReady)
+		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
 		{
 			auto Pref = RE::INIPrefSettingCollection::GetSingleton();
 			Pref->settings.push_front(&g_MipBiasSetting);

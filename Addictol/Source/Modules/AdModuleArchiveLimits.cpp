@@ -526,8 +526,7 @@ namespace Addictol
 					char processedPath[REX::W32::MAX_PATH];
 					ProcessPath(fileName, processedPath);
 
-					RE::BSResource::ID id;
-					id.GenerateFromPath(processedPath);
+					RE::BSResource::ID id(processedPath);
 					return FindTexturesArchiveIndex(id);
 				}
 
@@ -583,55 +582,6 @@ namespace Addictol
 
 					auto target = REL::Relocation{ REL::ID(2275558), REL::Offset{ 0x2BB } }.get();
 					auto patch = new ProcessEventPatch_AE(target, (uintptr_t)PushTexturesArchiveIndex);
-					RELEX::DetourJump(target, (uintptr_t)patch->getCode());
-				}
-				////////////////////////////////////////////////
-				// Load chunks
-				////////////////////////////////////////////////
-				{
-					struct LoadChunksPatch_AE : Xbyak::CodeGenerator
-					{
-						LoadChunksPatch_AE(uintptr_t target, uintptr_t func)
-						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
-							push(rax);
-							push(rcx);
-							push(rdx);
-							push(r10);
-							push(r11);
-							sub(rsp, 0x28);
-
-							lea(rcx, ptr[rdx]);
-							call(ptr[rip + funcLabel]);
-							mov(ebx, eax);
-
-							add(rsp, 0x28);
-							pop(r11);
-							pop(r10);
-							pop(rdx);
-							pop(rcx);
-							pop(rax);
-
-							cmp(ebx, 0xFFFF);
-							jne("RET");
-							movzx(ebx, byte[rdx + 0xC]);
-
-							L("RET");
-							movzx(edi, byte[rdx + 0xD]);
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 8);
-
-							L(funcLabel);
-							dq(func);
-						}
-					};
-
-					auto target = REL::Relocation{ REL::ID(2275550), REL::Offset{ 0x32 } }.get();
-					auto patch = new LoadChunksPatch_AE(target, (uintptr_t)FindTexturesArchiveIndex);
 					RELEX::DetourJump(target, (uintptr_t)patch->getCode());
 				}
 				////////////////////////////////////////////////
