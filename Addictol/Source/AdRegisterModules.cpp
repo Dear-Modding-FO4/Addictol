@@ -52,6 +52,10 @@
 #include <Modules/AdModuleActorCauseSaveBloat.h>
 #include <Modules/AdModuleAnimSignedCrash.h>
 #include <Modules/AdModuleBethesdaNetCrash.h>
+#include <Modules/AdModuleMuzzleFlashLight.h>
+#include <Modules/AdModuleHighResBloom.h>
+#include <Modules/AdModuleAltTabFullscreen.h>
+#include <Modules/AdModulePowerGridScrap.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -106,6 +110,10 @@ static auto sModuleWorkbenchSound					= std::make_shared<Addictol::ModuleWorkben
 static auto sModuleActorCauseSaveBloat				= std::make_shared<Addictol::ModuleActorCauseSaveBloat>();
 static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
 static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
+static auto sModuleMuzzleFlashLight					= std::make_shared<Addictol::ModuleMuzzleFlashLight>();
+static auto sModuleHighResBloom						= std::make_shared<Addictol::ModuleHighResBloom>();
+static auto sModuleAltTabFullscreen					= std::make_shared<Addictol::ModuleAltTabFullscreen>();
+static auto sModulePowerGridScrap					= std::make_shared<Addictol::ModulePowerGridScrap>();
 
 void AdRegisterPreloadModules()
 {
@@ -174,6 +182,10 @@ void AdRegisterModules()
 	modules.Register(sModuleActorCauseSaveBloat);
 	modules.Register(sModuleAnimSignedCrash);
 	modules.Register(sModuleBethesdaNetCrash);
+	modules.Register(sModuleMuzzleFlashLight);
+	modules.Register(sModuleHighResBloom);
+	modules.Register(sModuleAltTabFullscreen);
+	modules.Register(sModulePowerGridScrap);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,					kGameDataReady);

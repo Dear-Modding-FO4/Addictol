@@ -53,6 +53,9 @@ bSaveAddedSoundCategories = true
 # Blocks the use of incorrect COM interface initialization settings for mods.
 bCOMInit = true
 
+# Raises the bloom render-target resolution to reduce flicker on bright pixels (sun glints, neon, fire). Cost scales with nBloomScale.
+bHighResBloom = false
+
 
 [Fixes]
 
@@ -150,6 +153,15 @@ bAnimSignedCrash = true
 # Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters.
 bBethesdaNetCrash = true
 
+# Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends.
+bMuzzleFlashLight = true
+
+# Fixes the exclusive-fullscreen Alt-Tab hang by dropping fullscreen state on focus loss and blocking DXGI's auto Alt+Enter handler.
+bAltTabFullscreen = true
+
+# Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
+bPowerGridScrap = true
+
 
 [Warnings]
 
@@ -191,6 +203,9 @@ bIgnorePreInstallBias = false
 
 # Delay (ms) before the deferred quit-to-desktop flag is set. Lets the UI/menu unwind so cleanup can't deadlock (needs bSafeExit fix).
 nQuitGameDelayMs = 1000
+
+# Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
+nBloomScale = 2
 
 
 [Profiler]

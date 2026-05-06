@@ -26,6 +26,7 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerESP.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorCauseSaveBloat.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSignedCrash.cpp" />
@@ -47,6 +48,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
@@ -63,7 +65,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxStdIO.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMuzzleFlashLight.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfiler.cpp" />
@@ -95,6 +99,7 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorCauseSaveBloat.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorIsHostileToActor.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSignedCrash.h" />
@@ -116,6 +121,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
@@ -132,7 +138,9 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxStdIO.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMuzzleFlashLight.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfiler.h" />
