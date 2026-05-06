@@ -17,7 +17,7 @@ namespace Addictol
 			"bFacegen", "bMemoryManager", "bSmallBlockAllocator", "bScaleformAllocator",
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
-			"bSaveAddedSoundCategories", "bCOMInit"
+			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
@@ -28,7 +28,9 @@ namespace Addictol
 			"bMagicEffectApplyEvent", "bEncounterZoneReset", "bLeveledListCrash",
 			"bBakaMaxPapyrusOps", "bPapyrusGCBug", "bCreateD3DAndSwapchain",
 			"bCheckInternetAccess", "bStolenPowerArmorOwnership", "bManyItems",
-			"bCombatMusic", "bWorkbenchSound", "bActorCauseSaveBloat"
+			"bCombatMusic", "bWorkbenchSound", "bActorCauseSaveBloat",
+			"bAnimSignedCrash", "bBethesdaNetCrash",
+			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex"
@@ -38,7 +40,7 @@ namespace Addictol
 			"uScaleformPageSize", "uScaleformHeapSize",
 			"nSleepTimer", "nMaxLockCount",
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
-			"bIgnorePreInstallBias", "nQuitGameDelayMs"
+			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale"
 		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",
