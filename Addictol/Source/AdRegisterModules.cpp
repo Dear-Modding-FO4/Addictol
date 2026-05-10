@@ -52,6 +52,7 @@
 #include <Modules/AdModuleActorCauseSaveBloat.h>
 #include <Modules/AdModuleAnimSignedCrash.h>
 #include <Modules/AdModuleBethesdaNetCrash.h>
+#include <Modules/AdModuleUtilityShader.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -106,6 +107,7 @@ static auto sModuleWorkbenchSound					= std::make_shared<Addictol::ModuleWorkben
 static auto sModuleActorCauseSaveBloat				= std::make_shared<Addictol::ModuleActorCauseSaveBloat>();
 static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
 static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
+static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
 
 void AdRegisterPreloadModules()
 {
@@ -188,6 +190,7 @@ void AdRegisterModules()
 	modules.Register(sModuleInputSwitch,				kGameLoaded);
 	modules.Register(sModuleLoadScreen,					kGameLoaded);
 	modules.Register(sModuleSaveAddedSoundCategories,	kGameLoaded);
+	modules.Register(sModuleUtilityShader,				kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,				kPostLoad);
 	modules.Register(sModulePapyrusGC,					kPostLoad);
 

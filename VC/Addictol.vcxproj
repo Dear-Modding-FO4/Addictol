@@ -75,6 +75,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTESObjectREFRGetEncounterZone.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleUtilityShader.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSound.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp" />
   </ItemGroup>
@@ -144,6 +145,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTESObjectREFRGetEncounterZone.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleUtilityShader.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSound.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
