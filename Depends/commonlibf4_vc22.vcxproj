@@ -101,11 +101,13 @@
     <ClInclude Include="commonlibf4\include\RE\B\BGSBodyPartDefs.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCameraPath.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCameraShot.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSChangeFlags.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCharacterMorph.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCharacterTint.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCollisionLayer.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSColorForm.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSComponent.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSConstructFormsInAllFilesMap.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSConstructibleObject.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCraftItemEvent.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSCraftingUseSound.h" />
@@ -134,6 +136,7 @@
     <ClInclude Include="commonlibf4\include\RE\B\BGSFootstep.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSFootstepSet.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSForcedLocRefType.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSFormChanges.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSGodRays.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSHackTerminal.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSHazard.h" />
@@ -153,6 +156,8 @@
     <ClInclude Include="commonlibf4\include\RE\B\BGSInventoryListEvent.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSKeyword.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSKeywordForm.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSLoadFormData.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSLoadGameSubBuffer.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSLOSData.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSLargeRefData.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSLensFlare.h" />
@@ -205,8 +210,15 @@
     <ClInclude Include="commonlibf4\include\RE\B\BGSReverbParameters.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSSaveGameBuffer.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadBuffer.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadChangesMap.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadFileEntry.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadFormIDMap.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadFormInfo.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadGame.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadHistory.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadManager.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadQueuedSubBufferMap.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadReferencesMap.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadScrapBuffer.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSSaveLoadThread.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSScene.h" />
@@ -247,6 +259,7 @@
     <ClInclude Include="commonlibf4\include\RE\B\BGSTransform.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSTypedFormValuePair.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSTypedKeywordValue.h" />
+    <ClInclude Include="commonlibf4\include\RE\B\BGSUnloadedFromBuffer.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSVoiceType.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BGSZoomData.h" />
     <ClInclude Include="commonlibf4\include\RE\B\BIPED_MODEL.h" />
@@ -1509,7 +1522,6 @@
     <ClInclude Include="commonlibf4\include\Scaleform\T\ThreadId.h" />
     <ClInclude Include="commonlibf4\include\Scaleform\W\WaitCondition.h" />
     <ClInclude Include="commonlibf4\include\Scaleform\W\Waitable.h" />
-
     <Natvis Include="commonlibf4\res\commonlibf4.natvis">
       <FileType>Document</FileType>
     </Natvis>

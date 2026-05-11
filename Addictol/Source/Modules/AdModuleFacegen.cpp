@@ -13,6 +13,8 @@
 #include <RE/B/BSResource_ID.h>
 #include <RE/T/TESNPC.h>
 #include <RE/T/TESDataHandler.h>
+#include <RE/B/BGSSaveLoadGame.h>
+#include <RE/C/CHANGE_TYPES.h>
 
 namespace Addictol
 {
@@ -260,6 +262,13 @@ namespace Addictol
 		// player form can't have a facegen.
 		if (a_NPC->formID == 0x7)
 			return false;
+		// Check if NPC face data been modified and marked for serialization into the save file with AddChange() function.
+		auto* pSaveLoadGame = RE::BGSSaveLoadGame::GetSingleton();
+		if (pSaveLoadGame)
+		{
+			if (pSaveLoadGame->GetChange(const_cast<RE::TESNPC*>(a_NPC), RE::BGSChangeFlags{ static_cast<int>(RE::CHANGE_TYPES::kNPCFace) }))
+				return false;
+		}
 		// check exists diffuse texture.
 		static char buf[REX::W32::MAX_PATH]{};
 		bool result = BSTextureDB::FormatPath__And__ExistIn(a_NPC, buf, REX::W32::MAX_PATH, 0);
