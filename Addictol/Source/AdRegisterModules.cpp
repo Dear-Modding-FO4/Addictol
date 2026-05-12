@@ -60,6 +60,7 @@
 #include <Modules/AdModuleAnimatedStaticReload.h>
 #include <Modules/AdModuleViewmodelShading.h>
 #include <Modules/AdModuleDofFix.h>
+#include <Modules/AdModuleLODSpecular.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -122,6 +123,7 @@ static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling
 static auto sModuleAnimatedStaticReload				= std::make_shared<Addictol::ModuleAnimatedStaticReload>();
 static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
 static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
+static auto sModuleLODSpecular						= std::make_shared<Addictol::ModuleLODSpecular>();
 
 void AdRegisterPreloadModules()
 {
@@ -198,6 +200,7 @@ void AdRegisterModules()
 	modules.Register(sModuleAnimatedStaticReload);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);
+	modules.Register(sModuleLODSpecular);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,					kGameDataReady);
