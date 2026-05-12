@@ -17,7 +17,7 @@ namespace Addictol
 			"bFacegen", "bMemoryManager", "bSmallBlockAllocator", "bScaleformAllocator",
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
-			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom"
+			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
@@ -30,7 +30,8 @@ namespace Addictol
 			"bCheckInternetAccess", "bStolenPowerArmorOwnership", "bManyItems",
 			"bCombatMusic", "bWorkbenchSound", "bActorCauseSaveBloat",
 			"bAnimSignedCrash", "bBethesdaNetCrash",
-			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap"
+			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
+			"bAnimatedStaticReload", "bViewmodelShading", "bDofFix"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex"

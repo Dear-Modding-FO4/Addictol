@@ -56,6 +56,10 @@
 #include <Modules/AdModuleHighResBloom.h>
 #include <Modules/AdModuleAltTabFullscreen.h>
 #include <Modules/AdModulePowerGridScrap.h>
+#include <Modules/AdModuleDpiScaling.h>
+#include <Modules/AdModuleAnimatedStaticReload.h>
+#include <Modules/AdModuleViewmodelShading.h>
+#include <Modules/AdModuleDofFix.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -114,6 +118,10 @@ static auto sModuleMuzzleFlashLight					= std::make_shared<Addictol::ModuleMuzzl
 static auto sModuleHighResBloom						= std::make_shared<Addictol::ModuleHighResBloom>();
 static auto sModuleAltTabFullscreen					= std::make_shared<Addictol::ModuleAltTabFullscreen>();
 static auto sModulePowerGridScrap					= std::make_shared<Addictol::ModulePowerGridScrap>();
+static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling>();
+static auto sModuleAnimatedStaticReload				= std::make_shared<Addictol::ModuleAnimatedStaticReload>();
+static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
+static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
 
 void AdRegisterPreloadModules()
 {
@@ -126,6 +134,7 @@ void AdRegisterPreloadModules()
 	modules.Register(sModuleMaxStdIO);
 	modules.Register(sModuleCheckInternetAccess);
 	modules.Register(sModuleCOMInit);
+	modules.Register(sModuleDpiScaling);
 }
 
 void AdRegisterModules()
@@ -186,6 +195,9 @@ void AdRegisterModules()
 	modules.Register(sModuleHighResBloom);
 	modules.Register(sModuleAltTabFullscreen);
 	modules.Register(sModulePowerGridScrap);
+	modules.Register(sModuleAnimatedStaticReload);
+	modules.Register(sModuleViewmodelShading);
+	modules.Register(sModuleDofFix);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,					kGameDataReady);
