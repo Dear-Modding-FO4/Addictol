@@ -17,8 +17,7 @@ namespace Addictol
 			"bFacegen", "bMemoryManager", "bSmallBlockAllocator", "bScaleformAllocator",
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
-			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
-			"bLODSpecular"
+			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",

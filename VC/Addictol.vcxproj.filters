@@ -235,9 +235,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODSpecular.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -464,9 +461,6 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODSpecular.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>

@@ -59,9 +59,6 @@ bHighResBloom = false
 # Marks the process as DPI-aware so menus and cursor track correctly on high-DPI desktops. Off by default since many users already apply the OS compat-tab "Override High DPI scaling -> Application" shim manually. If enabling this, remove that compat-tab setting first to avoid conflict.
 bDpiScaling = false
 
-# Re-enables specular sampling on distant-object LOD shaders so distant geometry picks up correct highlights instead of looking flat. Off by default - conflicts with FOLIP-generated LOD packs that bake specular into the diffuse (would double-bright). Modest GPU cost increase on dense-LOD outdoor views.
-bLODSpecular = false
-
 
 [Fixes]
 
