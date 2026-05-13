@@ -120,7 +120,7 @@ bLeveledListCrash = true
 bBakaMaxPapyrusOps = true
 
 # Fixes a critical bug in garbage collection that causes premature loop termination, preventing incremental GC starvation and "Long Save Bug".
-bPapyrusGCBug = false
+bPapyrusGCBug = true
 
 # Fixes a crash on startup when enumerating certain monitor display modes.
 bCreateD3DAndSwapchain = true
