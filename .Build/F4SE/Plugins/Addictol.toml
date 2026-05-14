@@ -144,12 +144,6 @@ bWorkbenchSound = true
 # Removes unused ActorCause data from projectiles when a cell is unloaded to reduce save size.
 bActorCauseSaveBloat = true
 
-# Fixes a CTD when loading animations with high-bit-set 16-bit event IDs.
-bAnimSignedCrash = false
-
-# Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters.
-bBethesdaNetCrash = false
-
 # Fixes a crash when a shader can't be found for a given technique id.
 bUtilityShader = true
 
