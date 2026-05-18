@@ -112,6 +112,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyCursorConstraints.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -317,6 +320,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyCursorConstraints.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h">

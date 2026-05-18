@@ -64,6 +64,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyCursorConstraints.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfiler.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyCursorConstraints.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfiler.h" />

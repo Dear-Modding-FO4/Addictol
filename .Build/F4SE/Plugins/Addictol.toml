@@ -147,6 +147,10 @@ bActorCauseSaveBloat = true
 # Fixes a crash when a shader can't be found for a given technique id.
 bUtilityShader = true
 
+# Fixes hard-coded PipBoy Cursor Constraints for controllers.
+# Now you can increase the PipBoy Resolution and still have a working map.
+bPipBoyCursorConstraints = true
+
 
 [Warnings]
 
