@@ -87,8 +87,11 @@ namespace Addictol
 			using ReleaseFn = void(*)(T*);
 			if constexpr (std::is_same_v<T, RE::BSScript::Array>)
 			{
-				static REL::Relocation<ReleaseFn> func{ REL::ID(2314448) };
-				func(doomed);
+				static REL::Relocation<ReleaseFn> func1{ REL::ID(2314909) };
+				func1(doomed);
+
+				static REL::Relocation<void(*)(T*, uint32_t)> func2{ REL::ID{ 0, 2228364, 4471524 } };
+				func2(doomed, 0x30);
 			}
 			else if constexpr (std::is_same_v<T, RE::BSScript::Struct>)
 			{

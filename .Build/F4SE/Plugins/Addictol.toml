@@ -126,7 +126,7 @@ bLeveledListCrash = true
 bBakaMaxPapyrusOps = true
 
 # Fixes a critical bug in garbage collection that causes premature loop termination, preventing incremental GC starvation and "Long Save Bug".
-bPapyrusGCBug = false
+bPapyrusGCBug = true
 
 # Fixes a crash on startup when enumerating certain monitor display modes.
 bCreateD3DAndSwapchain = true
@@ -151,10 +151,19 @@ bWorkbenchSound = true
 bActorCauseSaveBloat = true
 
 # Fixes a CTD when loading animations with high-bit-set 16-bit event IDs.
-bAnimSignedCrash = true
+# Opt-in until cross-runtime smoke test for PR #24 verifies on OG/NG/AE.
+bAnimSignedCrash = false
 
 # Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters.
-bBethesdaNetCrash = true
+# Opt-in until cross-runtime smoke test for PR #24 verifies on OG/NG/AE (branch ships MSVCR110.dll fallback for OG).
+bBethesdaNetCrash = false
+
+# Fixes a crash when a shader can't be found for a given technique id.
+bUtilityShader = true
+
+# Fixes hard-coded PipBoy Cursor Constraints for controllers.
+# Now you can increase the PipBoy Resolution and still have a working map.
+bPipBoyCursorConstraints = true
 
 # Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends.
 bMuzzleFlashLight = true

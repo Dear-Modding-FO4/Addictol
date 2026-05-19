@@ -13,29 +13,35 @@ namespace Addictol
 {
 	bool ExecuteCommand(std::string_view a_command, RE::TESObjectREFR *a_targetRef, bool a_silent)
 	{
+		// Skip empty commands
 		if (a_command.empty())
 			return false;
 
+		// Get Console Log Buffer before executing commands
+		RE::ConsoleLog *log = RE::ConsoleLog::GetSingleton();
+		RE::BSString buffer = log->buffer;
+
+		// Create Compiler and Script Objects
 		RE::ScriptCompiler compiler = RE::ScriptCompiler();
 		RE::ConcreteFormFactory<RE::Script> *scriptFactory = RE::ConcreteFormFactory<RE::Script>::GetFormFactory();
 		RE::Script *script = scriptFactory->Create();
 
+		// Set Script and Compile
 		script->SetText(a_command);
 		script->CompileAndRun(&compiler, RE::COMPILER_NAME::kSystemWindow, a_targetRef);
 
+		// Warn on Failure
 		if (!script->header.isCompiled)
 		{
 			REX::INFO("ExecuteCommand: Failed to compile command: {}"sv, a_command);
 			return false;
 		}
 
-		if (a_silent == true)
-		{
-			RE::ConsoleLog *log = RE::ConsoleLog::GetSingleton();
-			RE::BSString buffer = log->buffer;
+		// Restore Console Buffer
+		if (a_silent)
 			log->buffer = std::move(buffer);
-		}
 
+		// Cleanup
 		delete script;
 		return true;
 	}

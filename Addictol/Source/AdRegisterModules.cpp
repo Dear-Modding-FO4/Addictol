@@ -60,6 +60,8 @@
 #include <Modules/AdModuleAnimatedStaticReload.h>
 #include <Modules/AdModuleViewmodelShading.h>
 #include <Modules/AdModuleDofFix.h>
+#include <Modules/AdModuleUtilityShader.h>
+#include <Modules/AdModulePipBoyCursorConstraints.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -122,6 +124,8 @@ static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling
 static auto sModuleAnimatedStaticReload				= std::make_shared<Addictol::ModuleAnimatedStaticReload>();
 static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
 static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
+static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
+static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
 
 void AdRegisterPreloadModules()
 {
@@ -208,10 +212,12 @@ void AdRegisterModules()
 	modules.Register(sModuleDuplicateAddonNodeIndex,	kGameDataReady);
 	modules.Register(sModuleLeveledListCrash,			kGameDataReady);
 	modules.Register(sModuleCombatMusic,				kGameDataReady);
+	modules.Register(sModulePipBoyCursorConstraints,	kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,			kGameLoaded);
 	modules.Register(sModuleInputSwitch,				kGameLoaded);
 	modules.Register(sModuleLoadScreen,					kGameLoaded);
 	modules.Register(sModuleSaveAddedSoundCategories,	kGameLoaded);
+	modules.Register(sModuleUtilityShader,				kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,				kPostLoad);
 	modules.Register(sModulePapyrusGC,					kPostLoad);
 
