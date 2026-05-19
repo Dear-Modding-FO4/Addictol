@@ -56,8 +56,8 @@ bCOMInit = true
 # Raises the bloom render-target resolution to reduce flicker on bright pixels (sun glints, neon, fire). Cost scales with nBloomScale.
 bHighResBloom = false
 
-# Marks the process as DPI-aware so menus and cursor track correctly on high-DPI desktops. Off by default since many users already apply the OS compat-tab "Override High DPI scaling -> Application" shim manually. If enabling this, remove that compat-tab setting first to avoid conflict.
-bDpiScaling = false
+# Marks the process as DPI-aware so menus and cursor track correctly on high-DPI desktops.
+bDpiScaling = true
 
 
 [Fixes]
@@ -151,12 +151,10 @@ bWorkbenchSound = true
 bActorCauseSaveBloat = true
 
 # Fixes a CTD when loading animations with high-bit-set 16-bit event IDs.
-# Opt-in until cross-runtime smoke test for PR #24 verifies on OG/NG/AE.
-bAnimSignedCrash = false
+bAnimSignedCrash = true
 
 # Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters.
-# Opt-in until cross-runtime smoke test for PR #24 verifies on OG/NG/AE (branch ships MSVCR110.dll fallback for OG).
-bBethesdaNetCrash = false
+bBethesdaNetCrash = true
 
 # Fixes a crash when a shader can't be found for a given technique id.
 bUtilityShader = true
