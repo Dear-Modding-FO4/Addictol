@@ -9,6 +9,7 @@ namespace RE
 	class TESObjectREFR;
 }
 
+
 namespace Addictol
 {
 	using namespace std::literals;

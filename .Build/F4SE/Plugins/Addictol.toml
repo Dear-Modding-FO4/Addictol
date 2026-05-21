@@ -159,6 +159,9 @@ bImageSpaceAdapter = true
 # Warns if you have two AddonNode forms with the same index in your load order, which will cause errors with visual effects.
 bDuplicateAddonNodeIndex = true
 
+# Warns if you are approaching the reference handle limoit or exceed the reference handle limit, which can cause CTDs.
+bReferenceHandleLimit = true
+
 
 [Additional]
 

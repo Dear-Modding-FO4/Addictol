@@ -9,6 +9,7 @@
 // Causes crashes if put above RE/S/Script.h
 #include <RE/C/ConsoleLog.h>
 
+
 namespace Addictol
 {
 	bool ExecuteCommand(std::string_view a_command, RE::TESObjectREFR *a_targetRef, bool a_silent)
@@ -49,9 +50,7 @@ namespace Addictol
 	std::string GetFormInfo(RE::TESForm *a_form)
 	{
 		if (!a_form)
-		{
 			return "{ERROR_NULL_FORM}";
-		}
 
 		RE::TESFile *file = a_form->GetFile(0);
 		std::string_view editorID = a_form->GetFormEditorID();

@@ -20,6 +20,9 @@ namespace Addictol
 
 	bool ModuleDuplicateAddonNodeIndex::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
+		if (!a_msg)
+			return true;
+		
 		RE::TESDataHandler *dataHandler = RE::TESDataHandler::GetSingleton();
 		if (!dataHandler)
 			return false;
