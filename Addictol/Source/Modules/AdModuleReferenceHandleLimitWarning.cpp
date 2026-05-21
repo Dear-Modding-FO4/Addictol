@@ -14,7 +14,7 @@ namespace Addictol
 	// https://www.nexusmods.com/fallout4/mods/91141?tab=files
 
 	// data
-	static inline constexpr uint32_t MAX_HANDLE_LIMIT = 0x100000;
+	static inline constexpr uint32_t MAX_HANDLE_LIMIT = 1 << 21;	// 21 bits for handle, 5 for age, 1 for active = 26 bit test
 	static const std::string WarningMessage_ReferenceHandleLimitExceeded = "Addictol::ReferenceHandleLimitWarning: "
 		"Reference Handle Limit Exceeded! This can cause CTDs. Consider trimming your load order for your next save.";
 	static const std::string WarningMessage_ReferenceHandleLimitAlmostExceeded = "Addictol::ReferenceHandleLimitWarning: "
