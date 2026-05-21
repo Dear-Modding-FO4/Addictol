@@ -3,12 +3,13 @@
 #include <string_view>
 #include <string>
 
+#include <F4SE/F4SE.h>
+
 namespace RE
 {
 	class TESForm;
 	class TESObjectREFR;
 }
-
 
 namespace Addictol
 {
@@ -19,4 +20,6 @@ namespace Addictol
 	// easy + formatted way to log form details like formid, editorid (if loaded), and plugin:
 	//	{FormID: 0x123456, EditorID: "ExampleForm", Plugin: "Example.esp"}
 	std::string GetFormInfo(RE::TESForm* a_form);
+
+	std::string GetMessagingInterfaceString(F4SE::MessagingInterface::Message* a_msg) noexcept;
 }

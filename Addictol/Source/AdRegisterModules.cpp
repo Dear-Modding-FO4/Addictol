@@ -180,7 +180,6 @@ void AdRegisterModules()
 	modules.Register(sModuleActorCauseSaveBloat);
 	//modules.Register(sModuleAnimSignedCrash);
 	//modules.Register(sModuleBethesdaNetCrash);
-	//modules.Register(sModuleReferenceHandleLimitWarning);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
@@ -204,5 +203,5 @@ void AdRegisterModules()
 
 	// Profiler - registered at load stage, listener at GameDataReady for report generation
 	modules.Register(sModuleProfiler);
-	modules.Register(sModuleProfiler,					kGameDataReady);
+	modules.Register(sModuleProfiler,						kGameDataReady);
 }

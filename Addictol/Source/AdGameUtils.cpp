@@ -9,7 +9,6 @@
 // Causes crashes if put above RE/S/Script.h
 #include <RE/C/ConsoleLog.h>
 
-
 namespace Addictol
 {
 	bool ExecuteCommand(std::string_view a_command, RE::TESObjectREFR *a_targetRef, bool a_silent)
@@ -58,5 +57,15 @@ namespace Addictol
 						   a_form->GetFormID(),
 						   (editorID != ""sv) ? editorID : "EDITORID_NOT_LOADED"sv,
 						   file ? file->GetFilename() : "PLUGIN_NOT_FOUND"sv);
+	}
+
+	extern std::array<std::string_view, 11> g_msgName;
+
+	std::string GetMessagingInterfaceString(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		if (!a_msg)
+			return "ERROR_NULL_MESSAGE";
+
+		return g_msgName.size() > a_msg->type ? g_msgName[a_msg->type].data() : "ERROR_NO_TYPE";
 	}
 }
