@@ -150,6 +150,9 @@ bUtilityShader = true
 # Automatically sets PipBoy Cursor Constraints based on PipBoy resolution for controllers.
 bPipBoyCursorConstraints = true
 
+# Fixes a CTD when loading animations with high-bit-set 16-bit event IDs.
+bAnimSignedCrash = true
+
 
 [Warnings]
 

@@ -18,16 +18,14 @@ namespace Addictol
 
 	bool ModuleAnimSignedCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		// hkbBehaviorGraph::processEventlessGlobalTransitions, movsx->movzx on the 16 - bit event - id read.
+
 		if (!RELEX::IsRuntimeOG())
-		{
-			// NG/AE: hkbBehaviorGraph::processEventlessGlobalTransitions, movsx -> movzx on the 16-bit event-id read.
+			// NG/AE
 			RELEX::WriteSafe(REL::ID(2260478).address() + 0x8E, { 0xB7 });
-		}
 		else
-		{
 			// OG
 			RELEX::WriteSafe(REL::ID(919820).address() + 0x8B, { 0xB7 });
-		}
 
 		return true;
 	}

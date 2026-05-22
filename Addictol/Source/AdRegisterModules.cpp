@@ -52,7 +52,7 @@
 #include <Modules/AdModuleActorCauseSaveBloat.h>
 #include <Modules/AdModuleUtilityShader.h>
 #include <Modules/AdModulePipBoyCursorConstraints.h>
-//#include <Modules/AdModuleAnimSignedCrash.h>
+#include <Modules/AdModuleAnimSignedCrash.h>
 //#include <Modules/AdModuleBethesdaNetCrash.h>
 #include <Modules/AdModuleReferenceHandleLimitWarning.h>
 
@@ -109,7 +109,7 @@ static auto sModuleWorkbenchSound					= std::make_shared<Addictol::ModuleWorkben
 static auto sModuleActorCauseSaveBloat				= std::make_shared<Addictol::ModuleActorCauseSaveBloat>();
 static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
 static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
-//static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
+static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
 //static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
 static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
 
@@ -178,7 +178,8 @@ void AdRegisterModules()
 	modules.Register(sModuleCombatMusic);
 	modules.Register(sModuleWorkbenchSound);
 	modules.Register(sModuleActorCauseSaveBloat);
-	//modules.Register(sModuleAnimSignedCrash);
+	modules.Register(sModuleReferenceHandleLimitWarning);
+	modules.Register(sModuleAnimSignedCrash);
 	//modules.Register(sModuleBethesdaNetCrash);
 
 	// Registers other patches
@@ -191,7 +192,6 @@ void AdRegisterModules()
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
-	modules.Register(sModuleReferenceHandleLimitWarning,	kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);

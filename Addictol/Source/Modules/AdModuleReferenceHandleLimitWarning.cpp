@@ -12,15 +12,9 @@ namespace Addictol
 	// this can be set to anything, i just set it to 90% for right now
 	constexpr auto WARNING_MIN_RATIO = 0.90f;
 
-	// 21 bits for handle, 5 for age, 1 for active = 26 bit test
-	static constexpr uint32_t MAX_HANDLE_LIMIT = 1 << 21;	
-	// cached values
-	static uint32_t lastCount = 0;
-	static double lastRatio = 0.0f;
-
 	static REX::TOML::Bool<> bWarningsReferenceHandleLimit{ "Warnings"sv, "bReferenceHandleLimit"sv, true };
 
-	struct HandleManager :
+	class HandleManager :
 		public RE::BSPointerHandleManagerInterface<RE::TESObjectREFR>
 	{
 		struct Entries
@@ -34,51 +28,78 @@ namespace Addictol
 		RE::BSReadWriteLock handleManagerLock;
 		Entries* handleEntries;
 		const RE::BSPointerHandle<RE::TESObjectREFR> nullHandle{};
+	public:
+		// 21 bits for handle, 5 for age, 1 for active = 26 bit test
+		inline static constexpr uint32_t MAX_HANDLE_LIMIT = 1 << 21;
+
+		static uint32_t GetCount() noexcept;
+		static RE::BSPointerHandle<RE::TESObjectREFR> HkCreateHandle(RE::TESObjectREFR* a_ptr) noexcept;
+		static void DebugInfo(const std::string_view& a_eventName) noexcept;
+
+		inline static std::atomic_bool exceededShow{ false };
+		inline static HandleManager* singleton{ nullptr };
+		inline static decltype(HkCreateHandle)* CreateHandle_orig{ nullptr };
 	};
 
-	ModuleReferenceHandleLimitWarning::ModuleReferenceHandleLimitWarning() :
-		Module("Reference Handle Limit Warning", &bWarningsReferenceHandleLimit)
-	{}
-
-	static uint32_t GetReferenceHandleCount() noexcept
+	uint32_t HandleManager::GetCount() noexcept
 	{
-		auto manager = reinterpret_cast<HandleManager*>(REL::VariantID(665313, 2688741, 4796005).address());
-		if (!manager || (manager->freeListHead == manager->freeListTail == MAX_HANDLE_LIMIT - 1)) return 0;
+		auto manager = HandleManager::singleton;
+		if (!manager || (manager->freeListHead == manager->freeListTail == (MAX_HANDLE_LIMIT - 1))) return 0;
 		return manager ? manager->freeListHead : 0;
 	}
 
-	static void CheckReferenceHandleLimit(std::string_view eventName, bool cacheResults = true) noexcept
+	RE::BSPointerHandle<RE::TESObjectREFR> HandleManager::HkCreateHandle(RE::TESObjectREFR* a_ptr) noexcept
 	{
-		uint32_t count = GetReferenceHandleCount();
+		uint32_t count = HandleManager::GetCount();
 		double ratio = static_cast<double>(count) / static_cast<float>(MAX_HANDLE_LIMIT);
-
-		if (cacheResults)
-		{
-			// we can cache it so we dont have to iterate again unless we need to measure it again
-			lastCount = count;
-			lastRatio = ratio;
-		}
-
-		REX::INFO("Reference Handle Count ({}): {}. Ratio: {:.1f}%"sv, eventName, count, ratio * 100.f);
-
-		// warn if needed
 		if (ratio >= WARNING_MIN_RATIO)
 		{
 			if (ratio >= 0.999f)
 			{
-				REX::CRITICAL("OUT OF HANDLE ARRAY ENTRIES!TERMINATE GAME FORCIBLY!"sv);
+				REX::CRITICAL("OUT OF HANDLE ARRAY ENTRIES! TERMINATE GAME FORCIBLY!"sv);
 				REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), ERANGE);
 			}
-			else
+			else if (!HandleManager::exceededShow)
 			{
-				REX::WARN("HANDLE ARRAY ENTRIES ALMOST EXCEEDED"sv);
+				HandleManager::exceededShow = true;
+				ratio *= 100.f;
+
+				REX::WARN("HANDLE ARRAY ENTRIES ALMOST EXCEEDED {:.1f}%"sv, ratio);
+
+				char szBuf[REX::W32::MAX_PATH]{};
+				sprintf_s(szBuf, "Addictol::ReferenceHandleLimitWarning: HANDLE ARRAY ENTRIES ALMOST EXCEEDED (%.1f%%)", ratio);
 
 				auto* consoleLog = RE::ConsoleLog::GetSingleton();
 				if (consoleLog)
-					consoleLog->AddString("Addictol::ReferenceHandleLimitWarning: HANDLE ARRAY ENTRIES ALMOST EXCEEDED");
+					consoleLog->AddString(szBuf);
+
+				std::thread th([]{
+					// 5 minutes in milliseconds
+					std::chrono::milliseconds delay(5 * 60 * 1000);
+					std::this_thread::sleep_for(delay);
+					// reset
+					HandleManager::exceededShow = false;
+					});
+				th.detach();
 			}
 		}
+
+		assert(CreateHandle_orig);
+		return CreateHandle_orig(a_ptr);
 	}
+
+	void HandleManager::DebugInfo(const std::string_view& a_eventName) noexcept
+	{
+		uint32_t count = HandleManager::GetCount();
+		double ratio = static_cast<double>(count) / static_cast<float>(MAX_HANDLE_LIMIT);
+
+		REX::INFO("Reference Handle Count ({}): {}. Ratio: {:.1f}%"sv, a_eventName, count, ratio * 100.f);
+	}
+
+	ModuleReferenceHandleLimitWarning::ModuleReferenceHandleLimitWarning() :
+		Module("Reference Handle Limit Warning", &bWarningsReferenceHandleLimit,
+			{ F4SE::MessagingInterface::kPostLoadGame })
+	{}
 
 	bool ModuleReferenceHandleLimitWarning::DoQuery() const noexcept
 	{
@@ -88,19 +109,35 @@ namespace Addictol
 	bool ModuleReferenceHandleLimitWarning::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!a_msg)
-			return true;
-		
-		std::string eventName = GetMessagingInterfaceString(a_msg);
-		CheckReferenceHandleLimit(eventName);
+		{
+			HandleManager::singleton = reinterpret_cast<HandleManager*>(REL::VariantID(665313, 2688741, 4796005).address());
 
-		// FIXME: Add check to CreateHandle function
+			*(uintptr_t*)&HandleManager::CreateHandle_orig = RELEX::DetourJump(
+				RE::ID::BSPointerHandle::BSPointerHandleManagerInterface::CreateHandle.address(),
+				(uintptr_t)&HandleManager::HkCreateHandle);
+
+			return true;
+		}
+		else if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
+		{
+			HandleManager::DebugInfo(GetMessagingInterfaceString(a_msg));
+
+			return true;
+		}
 		
-		return true;
+		return false;
 	}
 
 	bool ModuleReferenceHandleLimitWarning::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		return true;
+		if (a_msg && (a_msg->type == F4SE::MessagingInterface::kPostLoadGame))
+		{
+			HandleManager::DebugInfo(GetMessagingInterfaceString(a_msg));
+
+			return true;
+		}
+
+		return false;
 	}
 
 	bool ModuleReferenceHandleLimitWarning::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
