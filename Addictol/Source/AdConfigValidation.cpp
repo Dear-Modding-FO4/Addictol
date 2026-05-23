@@ -48,6 +48,9 @@ namespace Addictol
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",
 			"bModuleProfiler", "bStartupTimeline", "bMemoryTracking",
 			"bBA2Timing", "bCSVExport"
+		}},
+		{ "Console", {
+			"bConsoleSubsystem"
 		}}
 	};
 

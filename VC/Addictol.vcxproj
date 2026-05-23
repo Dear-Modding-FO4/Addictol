@@ -8,6 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Addictol\Source\AdConfigValidation.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdConsoleSubsystem.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
     <ClCompile Include="..\Addictol\Source\AdGameUtils.cpp" />
@@ -42,6 +43,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCheckInternetAccess.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleConsoleSubsystem.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCOMInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreateD3DAndSwapchain.cpp" />
@@ -91,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h" />
+    <ClInclude Include="..\Addictol\Include\AdConsoleSubsystem.h" />
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
     <ClInclude Include="..\Addictol\Include\AdGameUtils.h" />
@@ -122,6 +125,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleConsoleSubsystem.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h" />

@@ -63,6 +63,7 @@
 #include <Modules/AdModuleUtilityShader.h>
 #include <Modules/AdModulePipBoyCursorConstraints.h>
 #include <Modules/AdModuleReferenceHandleLimitWarning.h>
+#include <Modules/AdModuleConsoleSubsystem.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -128,6 +129,7 @@ static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
 static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
 static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
 static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
+static auto sModuleConsoleSubsystem					= std::make_shared<Addictol::ModuleConsoleSubsystem>();
 
 void AdRegisterPreloadModules()
 {
@@ -205,6 +207,7 @@ void AdRegisterModules()
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);
 	modules.Register(sModuleReferenceHandleLimitWarning);
+	modules.Register(sModuleConsoleSubsystem);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
@@ -222,6 +225,7 @@ void AdRegisterModules()
 	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
 	modules.Register(sModuleUtilityShader,					kGameLoaded);
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
+	modules.Register(sModuleConsoleSubsystem,				kGameDataReady);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
 
