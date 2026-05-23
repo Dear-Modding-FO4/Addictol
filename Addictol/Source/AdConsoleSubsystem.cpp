@@ -175,15 +175,19 @@ namespace Addictol
 			snapshot = self->charCallbacks;
 		}
 
+		// Run ALL callbacks so state-tracking handlers (history cursor reset,
+		// autocomplete invalidation) always see the event. Only the suppression
+		// of the original engine handler short-circuits.
+		bool anySwallowed = false;
 		for (auto& cb : snapshot) {
 			bool swallowed = false;
 			if (!SafeInvokeCharCallback(&cb, a_self, a_event, &swallowed)) {
 				continue;
 			}
-			if (swallowed) return;
+			anySwallowed = anySwallowed || swallowed;
 		}
 
-		if (sOrigOnChar) {
+		if (!anySwallowed && sOrigOnChar) {
 			sOrigOnChar(a_self, a_event);
 		}
 	}
@@ -198,15 +202,16 @@ namespace Addictol
 			snapshot = self->buttonCallbacks;
 		}
 
+		bool anySwallowed = false;
 		for (auto& cb : snapshot) {
 			bool swallowed = false;
 			if (!SafeInvokeButtonCallback(&cb, a_self, a_event, &swallowed)) {
 				continue;
 			}
-			if (swallowed) return;
+			anySwallowed = anySwallowed || swallowed;
 		}
 
-		if (sOrigOnButton) {
+		if (!anySwallowed && sOrigOnButton) {
 			sOrigOnButton(a_self, a_event);
 		}
 	}
@@ -294,6 +299,264 @@ namespace Addictol
 	{
 		std::lock_guard lk{ pathsMutex };
 		return discoveredFields;
+	}
+
+	namespace
+	{
+		// All GFx helpers run on the UI thread (vtable hook + MenuOpenCloseEvent dispatch).
+		// They're invoked from within SafeInvoke{Char,Button,OpenClose}Callback which already
+		// wraps the entire callback chain in __try, so structured exceptions raised inside
+		// Scaleform (null deref, bad cast, etc.) propagate up and are caught at that layer.
+		// Helpers therefore don't need their own __try; that would also block C2712 because
+		// Scaleform::GFx::Value has a non-trivial destructor.
+
+		bool SafeGetField(
+			Scaleform::GFx::Movie* a_movie,
+			const char* a_path,
+			Scaleform::GFx::Value* a_outField) noexcept
+		{
+			return a_movie->GetVariable(a_outField, a_path);
+		}
+
+		bool SafeGetText(const Scaleform::GFx::Value* a_field, std::string& a_out) noexcept
+		{
+			Scaleform::GFx::Value v;
+			if (!a_field->GetMember("text", &v) || !v.IsString()) return false;
+			const char* txt = v.GetString();
+			a_out = txt ? txt : "";
+			return true;
+		}
+
+		bool SafeSetText(Scaleform::GFx::Value* a_field, const char* a_text) noexcept
+		{
+			Scaleform::GFx::Value v{ a_text };
+			return a_field->SetMember("text", v);
+		}
+
+		bool SafeGetSelection(
+			const Scaleform::GFx::Value* a_field,
+			std::int32_t* a_anchor,
+			std::int32_t* a_active) noexcept
+		{
+			Scaleform::GFx::Value beg, end;
+			bool gotBeg = a_field->GetMember("selectionBeginIndex", &beg) && (beg.IsInt() || beg.IsUInt() || beg.IsNumber());
+			bool gotEnd = a_field->GetMember("selectionEndIndex", &end) && (end.IsInt() || end.IsUInt() || end.IsNumber());
+			if (!gotEnd) {
+				Scaleform::GFx::Value caret;
+				if (a_field->GetMember("caretIndex", &caret) && (caret.IsInt() || caret.IsUInt() || caret.IsNumber())) {
+					std::int32_t c = caret.IsInt() ? caret.GetInt() :
+					                  caret.IsUInt() ? static_cast<std::int32_t>(caret.GetUInt()) :
+					                  static_cast<std::int32_t>(caret.GetNumber());
+					*a_anchor = c;
+					*a_active = c;
+					return true;
+				}
+				return false;
+			}
+			auto toI = [](const Scaleform::GFx::Value& v) -> std::int32_t {
+				if (v.IsInt())    return v.GetInt();
+				if (v.IsUInt())   return static_cast<std::int32_t>(v.GetUInt());
+				if (v.IsNumber()) return static_cast<std::int32_t>(v.GetNumber());
+				return 0;
+			};
+			*a_anchor = gotBeg ? toI(beg) : toI(end);
+			*a_active = toI(end);
+			return true;
+		}
+
+		bool SafeSetSelection(Scaleform::GFx::Value* a_field, std::int32_t a_anchor, std::int32_t a_active) noexcept
+		{
+			Scaleform::GFx::Value args[2];
+			args[0] = a_anchor;
+			args[1] = a_active;
+			return a_field->Invoke("setSelection", nullptr, args, 2);
+		}
+
+		bool SafeApplyFont(
+			Scaleform::GFx::Movie* a_movie,
+			Scaleform::GFx::Value* a_field,
+			std::int32_t a_sizePx,
+			int* a_outBranch) noexcept
+		{
+			*a_outBranch = -1;
+			// Branch 1: construct flash.text.TextFormat AS3, call setTextFormat
+			Scaleform::GFx::Value fmt;
+			a_movie->CreateObject(&fmt, "flash.text.TextFormat", nullptr, 0);
+			if (fmt.IsObject()) {
+				Scaleform::GFx::Value sz{ a_sizePx };
+				if (fmt.SetMember("size", sz)) {
+					if (a_field->Invoke("setTextFormat", nullptr, &fmt, 1)) {
+						*a_outBranch = 1;
+						return true;
+					}
+				}
+			}
+			// Branch 2: directly mutate defaultTextFormat
+			Scaleform::GFx::Value dtf;
+			if (a_field->GetMember("defaultTextFormat", &dtf) && dtf.IsObject()) {
+				Scaleform::GFx::Value sz2{ a_sizePx };
+				if (dtf.SetMember("size", sz2)) {
+					if (a_field->SetMember("defaultTextFormat", dtf)) {
+						*a_outBranch = 2;
+						return true;
+					}
+				}
+			}
+			// Branch 3: _xscale/_yscale (AS2 fallback for legacy SWF)
+			double scale = static_cast<double>(a_sizePx) / 14.0 * 100.0;
+			Scaleform::GFx::Value xs{ scale };
+			Scaleform::GFx::Value ys{ scale };
+			bool ok = a_field->SetMember("_xscale", xs) && a_field->SetMember("_yscale", ys);
+			if (ok) {
+				*a_outBranch = 3;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool ConsoleSubsystem::GetInputText(std::string& a_out) noexcept
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return false;
+		auto consoleMenu = ui->GetMenu<RE::Console>();
+		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+
+		std::string path;
+		{
+			std::lock_guard lk{ pathsMutex };
+			path = inputFieldPath;
+		}
+		if (path.empty()) return false;
+
+		Scaleform::GFx::Value field;
+		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+			return false;
+		}
+
+		const char* txt = nullptr;
+		std::string s;
+		if (!SafeGetText(&field, s)) return false;
+		a_out = std::move(s);
+		return true;
+	}
+
+	bool ConsoleSubsystem::SetInputText(std::string_view a_utf8) noexcept
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return false;
+		auto consoleMenu = ui->GetMenu<RE::Console>();
+		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+
+		std::string path;
+		{
+			std::lock_guard lk{ pathsMutex };
+			path = inputFieldPath;
+		}
+		if (path.empty()) return false;
+
+		Scaleform::GFx::Value field;
+		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+			return false;
+		}
+
+		std::string copy{ a_utf8 };
+		return SafeSetText(&field, copy.c_str());
+	}
+
+	bool ConsoleSubsystem::GetInputSelection(std::int32_t& a_anchor, std::int32_t& a_active) noexcept
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return false;
+		auto consoleMenu = ui->GetMenu<RE::Console>();
+		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+
+		std::string path;
+		{
+			std::lock_guard lk{ pathsMutex };
+			path = inputFieldPath;
+		}
+		if (path.empty()) return false;
+
+		Scaleform::GFx::Value field;
+		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+			return false;
+		}
+
+		return SafeGetSelection(&field, &a_anchor, &a_active);
+	}
+
+	bool ConsoleSubsystem::SetInputSelection(std::int32_t a_anchor, std::int32_t a_active) noexcept
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return false;
+		auto consoleMenu = ui->GetMenu<RE::Console>();
+		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+
+		std::string path;
+		{
+			std::lock_guard lk{ pathsMutex };
+			path = inputFieldPath;
+		}
+		if (path.empty()) return false;
+
+		Scaleform::GFx::Value field;
+		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+			return false;
+		}
+
+		return SafeSetSelection(&field, a_anchor, a_active);
+	}
+
+	bool ConsoleSubsystem::ClearOutputText() noexcept
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return false;
+		auto consoleMenu = ui->GetMenu<RE::Console>();
+		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+
+		std::string path;
+		{
+			std::lock_guard lk{ pathsMutex };
+			path = outputFieldPath;
+		}
+		if (path.empty()) return false;
+
+		Scaleform::GFx::Value field;
+		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+			return false;
+		}
+
+		return SafeSetText(&field, "");
+	}
+
+	bool ConsoleSubsystem::ApplyOutputFontSize(std::int32_t a_sizePx) noexcept
+	{
+		if (a_sizePx <= 0) return false;
+
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return false;
+		auto consoleMenu = ui->GetMenu<RE::Console>();
+		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+
+		std::string path;
+		{
+			std::lock_guard lk{ pathsMutex };
+			path = outputFieldPath;
+		}
+		if (path.empty()) return false;
+
+		Scaleform::GFx::Value field;
+		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+			return false;
+		}
+
+		int branch = -1;
+		bool ok = SafeApplyFont(consoleMenu->uiMovie.get(), &field, a_sizePx, &branch);
+		if (ok) {
+			REX::INFO("ConsoleSubsystem: font size {} applied via branch {}"sv, a_sizePx, branch);
+		}
+		return ok;
 	}
 
 	void ConsoleSubsystem::DiscoverFields() noexcept

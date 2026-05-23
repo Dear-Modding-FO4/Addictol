@@ -46,6 +46,17 @@ namespace Addictol
 		[[nodiscard]] std::string GetOutputFieldPath() const noexcept;
 		[[nodiscard]] bool HasDiscoveredFields() const noexcept;
 
+		// GFx mutation helpers - all return false silently if Console is not
+		// on the stack or paths haven't been discovered yet. Must only be
+		// called from the UI thread (i.e. from inside a Char/Button/OpenClose
+		// callback or MenuOpenCloseEvent dispatch). Strings are UTF-8.
+		bool GetInputText(std::string& a_out) noexcept;
+		bool SetInputText(std::string_view a_utf8) noexcept;
+		bool GetInputSelection(std::int32_t& a_anchor, std::int32_t& a_active) noexcept;
+		bool SetInputSelection(std::int32_t a_anchor, std::int32_t a_active) noexcept;
+		bool ClearOutputText() noexcept;
+		bool ApplyOutputFontSize(std::int32_t a_sizePx) noexcept;
+
 	private:
 		// Hooks installed on Console vtable subobject [1].
 		using TOnChar   = void (*)(RE::BSInputEventUser*, const RE::CharacterEvent*);
