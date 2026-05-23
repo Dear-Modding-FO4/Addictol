@@ -48,15 +48,39 @@ namespace Addictol
 
 		static bool IsTextFieldLikeName(std::string_view a_name) noexcept
 		{
-			if (a_name.size() >= 4) {
-				auto suffix = a_name.substr(a_name.size() - 4);
-				if (suffix == "_txt" || suffix == "_tf")
-					return true;
-			}
+			if (a_name.size() >= 4 && a_name.substr(a_name.size() - 4) == "_txt") return true;
+			if (a_name.size() >= 3 && a_name.substr(a_name.size() - 3) == "_tf")  return true;
 			return a_name.find("Text")  != std::string_view::npos
 			    || a_name.find("Input") != std::string_view::npos
+			    || a_name.find("Entry") != std::string_view::npos
+			    || a_name.find("History") != std::string_view::npos
 			    || a_name.find("text")  != std::string_view::npos
 			    || a_name.find("input") != std::string_view::npos;
+		}
+
+		// GFx::Value local would trip C2712, so callers own the __try.
+		static bool ResolveFieldPath(
+			const Scaleform::GFx::Value& a_root,
+			std::string_view a_path,
+			Scaleform::GFx::Value* a_out) noexcept
+		{
+			if (!a_root.IsObject() || a_path.empty()) return false;
+			std::size_t dot = a_path.find('.');
+			std::string head{ a_path.substr(0, dot) };
+			Scaleform::GFx::Value child;
+			if (!a_root.GetMember(head.c_str(), &child) || !child.IsObject()) return false;
+			if (dot == std::string_view::npos) {
+				*a_out = std::move(child);
+				return true;
+			}
+			return ResolveFieldPath(child, a_path.substr(dot + 1), a_out);
+		}
+
+		static bool HasTextMember(const Scaleform::GFx::Value& a_value) noexcept
+		{
+			if (!a_value.IsObject()) return false;
+			Scaleform::GFx::Value tmp;
+			return a_value.GetMember("text", &tmp);
 		}
 
 		static void WalkMember(
@@ -74,13 +98,16 @@ namespace Addictol
 
 				std::string childPath;
 				childPath.reserve(a_path.size() + std::strlen(a_name) + 1);
-				childPath.append(a_path).append(".").append(a_name);
+				if (!a_path.empty()) {
+					childPath.append(a_path).append(".");
+				}
+				childPath.append(a_name);
 
 				const auto type = a_member.GetType();
 				const char* typeName = GFxTypeName(type);
-				REX::INFO("ConsoleSubsystem: GFx {} ({})"sv, childPath, typeName);
+				REX::INFO("ConsoleSubsystem: GFx menuObj.{} ({})"sv, childPath, typeName);
 
-				if (a_member.IsDisplayObject() && IsTextFieldLikeName(a_name)) {
+				if (a_member.IsDisplayObject() && (IsTextFieldLikeName(a_name) || HasTextMember(a_member))) {
 					++a_state.textFieldCount;
 					if (a_state.firstInputCandidate.empty()) {
 						a_state.firstInputCandidate = childPath;
@@ -150,12 +177,11 @@ namespace Addictol
 
 		bool SafeWalkConsoleMenu(
 			consoleSubsystemDetail::DiscoveryState* a_state,
-			const Scaleform::GFx::Value* a_menuObj,
-			const char* a_rootName) noexcept
+			const Scaleform::GFx::Value* a_menuObj) noexcept
 		{
 			__try {
 				if (!a_menuObj->IsObject()) return false;
-				consoleSubsystemDetail::WalkMember(*a_state, *a_menuObj, a_rootName, 0);
+				consoleSubsystemDetail::WalkMember(*a_state, *a_menuObj, {}, 0);
 				return true;
 			}
 			__except (1) {
@@ -299,19 +325,29 @@ namespace Addictol
 
 	namespace
 	{
-		// GFx helpers: no __try here (GFx::Value has a non-trivial dtor -> C2712); callers wrap in SafeInvoke*.
-		bool SafeGetField(
-			Scaleform::GFx::Movie* a_movie,
+		// menuObj IS the SWF _root, so chain GetMember off it instead of going through Movie::GetVariable.
+		bool SafeResolveFromMenu(
+			const Scaleform::GFx::Value* a_menuObj,
 			const char* a_path,
 			Scaleform::GFx::Value* a_outField) noexcept
 		{
-			return a_movie->GetVariable(a_outField, a_path);
+			__try {
+				return consoleSubsystemDetail::ResolveFieldPath(*a_menuObj, a_path, a_outField);
+			}
+			__except (1) {
+				return false;
+			}
 		}
 
 		bool SafeGetText(const Scaleform::GFx::Value* a_field, std::string& a_out) noexcept
 		{
 			Scaleform::GFx::Value v;
-			if (!a_field->GetMember("text", &v) || !v.IsString()) return false;
+			if (!a_field->GetMember("text", &v)) return false;
+			if (v.IsUndefined()) {
+				a_out.clear();
+				return true;
+			}
+			if (!v.IsString()) return false;
 			const char* txt = v.GetString();
 			a_out = txt ? txt : "";
 			return true;
@@ -410,7 +446,7 @@ namespace Addictol
 		auto* ui = RE::UI::GetSingleton();
 		if (!ui) return false;
 		auto consoleMenu = ui->GetMenu<RE::Console>();
-		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+		if (!consoleMenu) return false;
 
 		std::string path;
 		{
@@ -420,11 +456,10 @@ namespace Addictol
 		if (path.empty()) return false;
 
 		Scaleform::GFx::Value field;
-		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+		if (!SafeResolveFromMenu(&consoleMenu->menuObj, path.c_str(), &field)) {
 			return false;
 		}
 
-		const char* txt = nullptr;
 		std::string s;
 		if (!SafeGetText(&field, s)) return false;
 		a_out = std::move(s);
@@ -436,7 +471,7 @@ namespace Addictol
 		auto* ui = RE::UI::GetSingleton();
 		if (!ui) return false;
 		auto consoleMenu = ui->GetMenu<RE::Console>();
-		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+		if (!consoleMenu) return false;
 
 		std::string path;
 		{
@@ -446,7 +481,7 @@ namespace Addictol
 		if (path.empty()) return false;
 
 		Scaleform::GFx::Value field;
-		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+		if (!SafeResolveFromMenu(&consoleMenu->menuObj, path.c_str(), &field)) {
 			return false;
 		}
 
@@ -459,7 +494,7 @@ namespace Addictol
 		auto* ui = RE::UI::GetSingleton();
 		if (!ui) return false;
 		auto consoleMenu = ui->GetMenu<RE::Console>();
-		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+		if (!consoleMenu) return false;
 
 		std::string path;
 		{
@@ -469,7 +504,7 @@ namespace Addictol
 		if (path.empty()) return false;
 
 		Scaleform::GFx::Value field;
-		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+		if (!SafeResolveFromMenu(&consoleMenu->menuObj, path.c_str(), &field)) {
 			return false;
 		}
 
@@ -481,7 +516,7 @@ namespace Addictol
 		auto* ui = RE::UI::GetSingleton();
 		if (!ui) return false;
 		auto consoleMenu = ui->GetMenu<RE::Console>();
-		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+		if (!consoleMenu) return false;
 
 		std::string path;
 		{
@@ -491,7 +526,7 @@ namespace Addictol
 		if (path.empty()) return false;
 
 		Scaleform::GFx::Value field;
-		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+		if (!SafeResolveFromMenu(&consoleMenu->menuObj, path.c_str(), &field)) {
 			return false;
 		}
 
@@ -503,7 +538,7 @@ namespace Addictol
 		auto* ui = RE::UI::GetSingleton();
 		if (!ui) return false;
 		auto consoleMenu = ui->GetMenu<RE::Console>();
-		if (!consoleMenu || !consoleMenu->uiMovie) return false;
+		if (!consoleMenu) return false;
 
 		std::string path;
 		{
@@ -513,7 +548,7 @@ namespace Addictol
 		if (path.empty()) return false;
 
 		Scaleform::GFx::Value field;
-		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+		if (!SafeResolveFromMenu(&consoleMenu->menuObj, path.c_str(), &field)) {
 			return false;
 		}
 
@@ -537,7 +572,7 @@ namespace Addictol
 		if (path.empty()) return false;
 
 		Scaleform::GFx::Value field;
-		if (!SafeGetField(consoleMenu->uiMovie.get(), path.c_str(), &field) || !field.IsObject()) {
+		if (!SafeResolveFromMenu(&consoleMenu->menuObj, path.c_str(), &field)) {
 			return false;
 		}
 
@@ -549,6 +584,69 @@ namespace Addictol
 		return ok;
 	}
 
+	namespace
+	{
+		// Diagnostic probe rooted at menuObj. Logs every observable property at a candidate path.
+		struct ProbeResult
+		{
+			bool exists      = false;
+			bool isObject    = false;
+			const char* type = "?";
+			bool hasText     = false;
+			bool textIsStr   = false;
+			std::string textSnippet;
+			bool hasNumChildren  = false;
+			std::int32_t numChildren = -1;
+			bool hasHtmlText = false;
+		};
+
+		void DoDiagnosticProbe(const Scaleform::GFx::Value* a_menuObj, const char* a_path, ProbeResult* a_out) noexcept
+		{
+			Scaleform::GFx::Value field;
+			if (!consoleSubsystemDetail::ResolveFieldPath(*a_menuObj, a_path, &field)) {
+				return;
+			}
+			a_out->exists   = true;
+			a_out->type     = consoleSubsystemDetail::GFxTypeName(field.GetType());
+			a_out->isObject = field.IsObject();
+			if (!a_out->isObject) return;
+
+			Scaleform::GFx::Value txt;
+			if (field.GetMember("text", &txt)) {
+				a_out->hasText   = true;
+				a_out->textIsStr = txt.IsString();
+				if (a_out->textIsStr) {
+					const char* s = txt.GetString();
+					if (s) {
+						std::string_view sv{ s };
+						if (sv.size() > 40) sv = sv.substr(0, 40);
+						a_out->textSnippet.assign(sv);
+					}
+				}
+			}
+			Scaleform::GFx::Value nc;
+			if (field.GetMember("numChildren", &nc)) {
+				a_out->hasNumChildren = true;
+				if (nc.IsInt())         a_out->numChildren = nc.GetInt();
+				else if (nc.IsUInt())   a_out->numChildren = static_cast<std::int32_t>(nc.GetUInt());
+				else if (nc.IsNumber()) a_out->numChildren = static_cast<std::int32_t>(nc.GetNumber());
+			}
+			Scaleform::GFx::Value htm;
+			a_out->hasHtmlText = field.GetMember("htmlText", &htm);
+		}
+
+		bool SafeDiagnosticProbe(const Scaleform::GFx::Value* a_menuObj, const char* a_path, ProbeResult* a_out) noexcept
+		{
+			__try {
+				DoDiagnosticProbe(a_menuObj, a_path, a_out);
+				return true;
+			}
+			__except (1) {
+				return false;
+			}
+		}
+	}
+
 	void ConsoleSubsystem::DiscoverFields() noexcept
 	{
 		auto* ui = RE::UI::GetSingleton();
@@ -558,28 +656,68 @@ namespace Addictol
 
 		auto consoleMenu = ui->GetMenu<RE::Console>();
 		if (!consoleMenu) {
-			REX::WARN("ConsoleSubsystem: discovery skipped - Console menu not on stack"sv);
+			REX::WARN("ConsoleSubsystem: discovery skipped - Console menu null"sv);
 			return;
 		}
 
-		REX::INFO("ConsoleSubsystem: discovering Console TextFields (recursive walk, max depth {})"sv,
-			consoleSubsystemDetail::kMaxWalkDepth);
+		// Candidate paths are relative to menuObj (the SWF _root). Try direct children first, then nested.
+		static constexpr const char* kInputCandidates[] = {
+			"CommandEntry",
+			"CommandEntry.text_tf",
+			"CommandEntry.tf",
+			"CommandEntry.input",
+			"CommandEntry.Text",
+			"CommandPrompt_tf",
+		};
+		static constexpr const char* kOutputCandidates[] = {
+			"CommandHistory",
+			"CommandHistory.text_tf",
+			"CommandHistory.tf",
+			"CommandHistory.output",
+			"CommandHistory.Text",
+			"CurrentSelection",
+		};
 
-		consoleSubsystemDetail::DiscoveryState state;
-		if (!SafeWalkConsoleMenu(&state, &consoleMenu->menuObj, "menuObj")) {
-			REX::ERROR("ConsoleSubsystem: discovery walk threw SEH; aborted"sv);
-			return;
+		auto probeAndPick = [&](std::span<const char* const> a_paths, const char* a_label) -> std::string {
+			std::string winner;
+			for (const char* p : a_paths) {
+				ProbeResult r;
+				SafeDiagnosticProbe(&consoleMenu->menuObj, p, &r);
+				REX::INFO("ConsoleSubsystem: probe[{}] 'menuObj.{}' exists={} obj={} type={} text={}{} numChildren={} htmlText={}"sv,
+					a_label, p,
+					r.exists, r.isObject, r.type,
+					r.hasText ? (r.textIsStr ? "str" : "non-str") : "no",
+					r.hasText && r.textIsStr ? (" \"" + r.textSnippet + "\"") : std::string{},
+					r.hasNumChildren ? std::to_string(r.numChildren) : std::string{ "no" },
+					r.hasHtmlText ? "yes" : "no");
+				if (winner.empty() && r.exists && r.isObject && r.hasText) {
+					winner = p;
+				}
+			}
+			return winner;
+		};
+
+		std::string input  = probeAndPick(std::span{ kInputCandidates },  "input");
+		std::string output = probeAndPick(std::span{ kOutputCandidates }, "output");
+
+		if (input.empty() || output.empty()) {
+			REX::INFO("ConsoleSubsystem: candidate sweep missed (input='{}' output='{}'); walking GFx tree"sv,
+				input.empty() ? "(none)" : input, output.empty() ? "(none)" : output);
+			consoleSubsystemDetail::DiscoveryState state;
+			if (SafeWalkConsoleMenu(&state, &consoleMenu->menuObj)) {
+				if (input.empty())  input  = std::move(state.firstInputCandidate);
+				if (output.empty()) output = std::move(state.firstOutputCandidate);
+			}
 		}
 
 		{
 			std::lock_guard lk{ pathsMutex };
-			inputFieldPath   = std::move(state.firstInputCandidate);
-			outputFieldPath  = std::move(state.firstOutputCandidate);
+			inputFieldPath   = std::move(input);
+			outputFieldPath  = std::move(output);
 			discoveredFields = !inputFieldPath.empty();
 		}
 
-		REX::INFO("ConsoleSubsystem: discovery complete - {} TextField-like members. input='{}' output='{}'"sv,
-			state.textFieldCount,
+		REX::INFO("ConsoleSubsystem: discovery complete - input='menuObj.{}' output='menuObj.{}'"sv,
 			inputFieldPath.empty() ? "(none)" : inputFieldPath,
 			outputFieldPath.empty() ? "(none)" : outputFieldPath);
 	}
