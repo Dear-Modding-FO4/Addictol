@@ -50,10 +50,18 @@
 #include <Modules/AdModuleCombatMusic.h>
 #include <Modules/AdModuleWorkbenchSound.h>
 #include <Modules/AdModuleActorCauseSaveBloat.h>
+#include <Modules/AdModuleAnimSignedCrash.h>
+#include <Modules/AdModuleBethesdaNetCrash.h>
+#include <Modules/AdModuleMuzzleFlashLight.h>
+#include <Modules/AdModuleHighResBloom.h>
+#include <Modules/AdModuleAltTabFullscreen.h>
+#include <Modules/AdModulePowerGridScrap.h>
+#include <Modules/AdModuleDpiScaling.h>
+#include <Modules/AdModuleAnimatedStaticReload.h>
+#include <Modules/AdModuleViewmodelShading.h>
+#include <Modules/AdModuleDofFix.h>
 #include <Modules/AdModuleUtilityShader.h>
 #include <Modules/AdModulePipBoyCursorConstraints.h>
-#include <Modules/AdModuleAnimSignedCrash.h>
-//#include <Modules/AdModuleBethesdaNetCrash.h>
 #include <Modules/AdModuleReferenceHandleLimitWarning.h>
 
 // Create patches
@@ -107,10 +115,18 @@ static auto sModuleProfiler							= std::make_shared<Addictol::ModuleProfiler>()
 static auto sModuleCombatMusic						= std::make_shared<Addictol::ModuleCombatMusic>();
 static auto sModuleWorkbenchSound					= std::make_shared<Addictol::ModuleWorkbenchSound>();
 static auto sModuleActorCauseSaveBloat				= std::make_shared<Addictol::ModuleActorCauseSaveBloat>();
+static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
+static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
+static auto sModuleMuzzleFlashLight					= std::make_shared<Addictol::ModuleMuzzleFlashLight>();
+static auto sModuleHighResBloom						= std::make_shared<Addictol::ModuleHighResBloom>();
+static auto sModuleAltTabFullscreen					= std::make_shared<Addictol::ModuleAltTabFullscreen>();
+static auto sModulePowerGridScrap					= std::make_shared<Addictol::ModulePowerGridScrap>();
+static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling>();
+static auto sModuleAnimatedStaticReload				= std::make_shared<Addictol::ModuleAnimatedStaticReload>();
+static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
+static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
 static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
 static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
-static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
-//static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
 static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
 
 void AdRegisterPreloadModules()
@@ -124,6 +140,7 @@ void AdRegisterPreloadModules()
 	modules.Register(sModuleMaxStdIO);
 	modules.Register(sModuleCheckInternetAccess);
 	modules.Register(sModuleCOMInit);
+	modules.Register(sModuleDpiScaling);
 }
 
 void AdRegisterModules()
@@ -178,9 +195,16 @@ void AdRegisterModules()
 	modules.Register(sModuleCombatMusic);
 	modules.Register(sModuleWorkbenchSound);
 	modules.Register(sModuleActorCauseSaveBloat);
-	modules.Register(sModuleReferenceHandleLimitWarning);
 	modules.Register(sModuleAnimSignedCrash);
-	//modules.Register(sModuleBethesdaNetCrash);
+	modules.Register(sModuleBethesdaNetCrash);
+	modules.Register(sModuleMuzzleFlashLight);
+	modules.Register(sModuleHighResBloom);
+	modules.Register(sModuleAltTabFullscreen);
+	modules.Register(sModulePowerGridScrap);
+	modules.Register(sModuleAnimatedStaticReload);
+	modules.Register(sModuleViewmodelShading);
+	modules.Register(sModuleDofFix);
+	modules.Register(sModuleReferenceHandleLimitWarning);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);

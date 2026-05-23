@@ -214,6 +214,30 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBethesdaNetCrash.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMuzzleFlashLight.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimatedStaticReload.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUtilityShader.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -425,6 +449,30 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBethesdaNetCrash.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMuzzleFlashLight.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimatedStaticReload.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUtilityShader.h">

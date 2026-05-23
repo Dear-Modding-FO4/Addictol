@@ -1,6 +1,7 @@
 #include <Modules/AdModuleBethesdaNetCrash.h>
 #include <AdUtils.h>
 
+#include <array>
 #include <Windows.h>
 
 namespace Addictol
@@ -69,10 +70,19 @@ namespace Addictol
 
 	bool ModuleBethesdaNetCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		auto original = RELEX::DetourIAT(
+		// OG (1.10.163) imports wcsrtombs_s from MSVCR110.dll; NG/AE use the modern api-ms-* CRT shim.
+		static constexpr std::array<const char*, 2> kCandidateDlls{
 			"api-ms-win-crt-convert-l1-1-0.dll",
-			"wcsrtombs_s",
-			reinterpret_cast<std::uintptr_t>(&Hook_wcsrtombs_s));
+			"MSVCR110.dll",
+		};
+
+		std::uintptr_t original = 0;
+		for (const auto* dll : kCandidateDlls)
+		{
+			original = RELEX::DetourIAT(dll, "wcsrtombs_s", reinterpret_cast<std::uintptr_t>(&Hook_wcsrtombs_s));
+			if (original)
+				break;
+		}
 
 		if (!original)
 		{
