@@ -49,9 +49,7 @@ namespace Addictol
 	std::string GetFormInfo(RE::TESForm *a_form)
 	{
 		if (!a_form)
-		{
 			return "{ERROR_NULL_FORM}";
-		}
 
 		RE::TESFile *file = a_form->GetFile(0);
 		std::string_view editorID = a_form->GetFormEditorID();
@@ -59,5 +57,15 @@ namespace Addictol
 						   a_form->GetFormID(),
 						   (editorID != ""sv) ? editorID : "EDITORID_NOT_LOADED"sv,
 						   file ? file->GetFilename() : "PLUGIN_NOT_FOUND"sv);
+	}
+
+	extern std::array<std::string_view, 11> g_msgName;
+
+	std::string GetMessagingInterfaceString(F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		if (!a_msg)
+			return "ERROR_NULL_MESSAGE";
+
+		return g_msgName.size() > a_msg->type ? g_msgName[a_msg->type].data() : "ERROR_NO_TYPE";
 	}
 }

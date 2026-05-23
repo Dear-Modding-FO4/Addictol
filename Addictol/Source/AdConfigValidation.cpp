@@ -11,7 +11,7 @@ namespace Addictol
 
 	// Known config keys by section, derived from REX::TOML declarations across all modules.
 	// Update this when adding or removing a config key.
-	static const std::unordered_map<std::string, std::unordered_set<std::string>> s_knownKeys = {
+	static const std::unordered_map<std::string_view, std::unordered_set<std::string_view>> s_knownKeys = {
 		{ "Patches", {
 			"bThreads", "bLibDeflate", "bLoadScreen", "bProfile", "bAchievements",
 			"bFacegen", "bMemoryManager", "bSmallBlockAllocator", "bScaleformAllocator",
@@ -35,7 +35,7 @@ namespace Addictol
 			"bUtilityShader", "bPipBoyCursorConstraints"
 		}},
 		{ "Warnings", {
-			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex"
+			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"
 		}},
 		{ "Additional", {
 			"bDbgFacegenOutput", "bUseNewRedistributable",

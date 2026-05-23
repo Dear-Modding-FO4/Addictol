@@ -1,6 +1,7 @@
 ﻿#include <AdUtils.h>
 #include <AdPlugin.h>
 #include <Windows.h>
+#include <string_view>
 
 #define MAKE_EXE_VERSION_EX(major, minor, build, sub)	((((major) & 0xFF) << 24) | (((minor) & 0xFF) << 16) | (((build) & 0xFFF) << 4) | ((sub) & 0xF))
 #define MAKE_EXE_VERSION(major, minor, build)			MAKE_EXE_VERSION_EX(major, minor, build, 0)
@@ -76,7 +77,7 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4
     a_info->version = MAKE_EXE_VERSION(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
     a_info->name = _PluginName;
 
-    if (!std::filesystem::exists(AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\version-1-10-163-0.bin"))
+    if (!std::filesystem::exists(std::format("{}Data\\F4SE\\Plugins\\version-1-10-163-0.bin", AdGetRuntimeDirectory())))
     {
         MessageBoxA(0, "" _PluginName ": disabled, address library needs to be updated", "Warnings", MB_OK | MB_ICONWARNING);
 

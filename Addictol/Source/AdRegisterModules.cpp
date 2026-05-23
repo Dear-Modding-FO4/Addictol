@@ -62,6 +62,7 @@
 #include <Modules/AdModuleDofFix.h>
 #include <Modules/AdModuleUtilityShader.h>
 #include <Modules/AdModulePipBoyCursorConstraints.h>
+#include <Modules/AdModuleReferenceHandleLimitWarning.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -126,6 +127,7 @@ static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewm
 static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
 static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
 static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
+static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
 
 void AdRegisterPreloadModules()
 {
@@ -202,26 +204,28 @@ void AdRegisterModules()
 	modules.Register(sModuleAnimatedStaticReload);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);
+	modules.Register(sModuleReferenceHandleLimitWarning);
 
 	// Registers other patches
-	modules.Register(sModuleThreads,					kGameDataReady);
-	modules.Register(sModuleFacegen,					kGameDataReady);
-	modules.Register(sModuleSafeExit,					kGameDataReady);
-	modules.Register(sModuleInteriorNavCut,				kGameDataReady);
-	modules.Register(sModuleControlSamplers,			kGameDataReady);
-	modules.Register(sModuleDuplicateAddonNodeIndex,	kGameDataReady);
-	modules.Register(sModuleLeveledListCrash,			kGameDataReady);
-	modules.Register(sModuleCombatMusic,				kGameDataReady);
-	modules.Register(sModulePipBoyCursorConstraints,	kGameDataReady);
-	modules.Register(sModuleEncounterZoneReset,			kGameLoaded);
-	modules.Register(sModuleInputSwitch,				kGameLoaded);
-	modules.Register(sModuleLoadScreen,					kGameLoaded);
-	modules.Register(sModuleSaveAddedSoundCategories,	kGameLoaded);
-	modules.Register(sModuleUtilityShader,				kGameLoaded);
-	modules.Register(sModuleMaxPapyrusOps,				kPostLoad);
-	modules.Register(sModulePapyrusGC,					kPostLoad);
+	modules.Register(sModuleThreads,						kGameDataReady);
+	modules.Register(sModuleFacegen,						kGameDataReady);
+	modules.Register(sModuleSafeExit,						kGameDataReady);
+	modules.Register(sModuleInteriorNavCut,					kGameDataReady);
+	modules.Register(sModuleControlSamplers,				kGameDataReady);
+	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
+	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
+	modules.Register(sModuleCombatMusic,					kGameDataReady);
+	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
+	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
+	modules.Register(sModuleInputSwitch,					kGameLoaded);
+	modules.Register(sModuleLoadScreen,						kGameLoaded);
+	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
+	modules.Register(sModuleUtilityShader,					kGameLoaded);
+	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
+	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
+	modules.Register(sModulePapyrusGC,						kPostLoad);
 
 	// Profiler - registered at load stage, listener at GameDataReady for report generation
 	modules.Register(sModuleProfiler);
-	modules.Register(sModuleProfiler,					kGameDataReady);
+	modules.Register(sModuleProfiler,						kGameDataReady);
 }
