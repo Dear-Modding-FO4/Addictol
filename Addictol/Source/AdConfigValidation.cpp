@@ -50,7 +50,11 @@ namespace Addictol
 			"bBA2Timing", "bCSVExport"
 		}},
 		{ "Console", {
-			"bConsoleSubsystem"
+			"bConsoleSubsystem",
+			"bConsolePaste",
+			"bConsoleAutocomplete",
+			"bConsoleHistory", "nConsoleHistorySize",
+			"bConsoleFontOverride", "nConsoleFontSize"
 		}}
 	};
 
@@ -78,6 +82,11 @@ namespace Addictol
 
 			for (auto& [keyName, keyValue] : sectionValue.as_table())
 			{
+				// Nested subtables (e.g. [Console.Aliases]) have free-form keys.
+				// They're handled by the owning subsystem, not the allowlist.
+				if (keyValue.is_table())
+					continue;
+
 				if (!sectionIt->second.contains(keyName))
 					REX::WARN("Config: unknown key \"{}\" in [{}] in \"{}\""sv, keyName, sectionName, a_filePath);
 			}
