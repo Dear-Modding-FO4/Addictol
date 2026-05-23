@@ -19,10 +19,7 @@ namespace RE
 
 namespace Addictol
 {
-	// ConsoleSubsystem - shared substrate for the Console AIO feature modules
-	// (paste, autocomplete, history, font). One vtable patch on Console[1]
-	// slots 0x07 (OnCharacterEvent) / 0x08 (OnButtonEvent) feeds three
-	// independent feature modules via callback dispatcher.
+	// Shared Console substrate: single Console[1] vtable patch (OnChar/OnButton) dispatched to feature modules.
 	class ConsoleSubsystem :
 		public REX::TSingleton<ConsoleSubsystem>
 	{
@@ -35,8 +32,7 @@ namespace Addictol
 		bool InstallVTableHooks() noexcept;
 		bool RegisterMenuSink() noexcept;
 
-		// Feature-module callback registration. Returning true from a callback
-		// swallows the event (original vtable function is NOT called).
+		// Returning true from a callback swallows the event (engine handler skipped).
 		void AddCharCallback(CharCallback a_cb) noexcept;
 		void AddButtonCallback(ButtonCallback a_cb) noexcept;
 		void AddOpenCloseCallback(OpenCloseCallback a_cb) noexcept;
@@ -46,10 +42,7 @@ namespace Addictol
 		[[nodiscard]] std::string GetOutputFieldPath() const noexcept;
 		[[nodiscard]] bool HasDiscoveredFields() const noexcept;
 
-		// GFx mutation helpers - all return false silently if Console is not
-		// on the stack or paths haven't been discovered yet. Must only be
-		// called from the UI thread (i.e. from inside a Char/Button/OpenClose
-		// callback or MenuOpenCloseEvent dispatch). Strings are UTF-8.
+		// UI-thread only (call from a Char/Button/OpenClose callback). UTF-8 in/out; false if console gone or paths unresolved.
 		bool GetInputText(std::string& a_out) noexcept;
 		bool SetInputText(std::string_view a_utf8) noexcept;
 		bool GetInputSelection(std::int32_t& a_anchor, std::int32_t& a_active) noexcept;
@@ -79,8 +72,7 @@ namespace Addictol
 		};
 		MenuSink menuSink;
 
-		// First-open discovery: walks Console.menuObj recursively, logs every
-		// member with type, caches the first input TextField path.
+		// Walks Console.menuObj on each open, logs members, caches first input/output TextField paths.
 		void DiscoverFields() noexcept;
 
 		mutable std::mutex                callbackMutex;

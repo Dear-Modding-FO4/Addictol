@@ -20,9 +20,7 @@ namespace Addictol
 		constexpr std::uint32_t DIK_LSHIFT = 0x2A;
 		constexpr std::uint32_t DIK_RSHIFT = 0x36;
 
-		// State machine: when Tab is first pressed, snapshot current input as
-		// the "prefix" and build the candidate list. Each subsequent Tab cycles.
-		// Any other input invalidates the cycle.
+		// First Tab seeds prefix + candidate list; each subsequent Tab cycles; any other input invalidates.
 		static std::mutex             stateMutex;
 		static bool                   cycling{ false };
 		static std::string            prefix;
@@ -59,8 +57,7 @@ namespace Addictol
 			return !a_out.empty();
 		}
 
-		// Walk back from caret to find the "current token" - run of non-space chars
-		// ending at the caret. Returns the [start, end) range.
+		// Returns [start, end) of the non-space run ending at the caret.
 		static std::pair<std::int32_t, std::int32_t> CurrentToken(
 			const std::string& a_text,
 			std::int32_t a_caret) noexcept
@@ -114,8 +111,7 @@ namespace Addictol
 			const RE::CharacterEvent* a_event) noexcept
 		{
 			if (!a_event) return false;
-			// Any printable char invalidates the cycle. But swallow Tab itself
-			// in case the engine generates one - we never want \t in the buffer.
+			// Swallow Tab so \t never lands in the buffer; any other printable invalidates the cycle.
 			if (a_event->charCode == 0x09) return true;
 			if (a_event->charCode >= 0x20) {
 				Invalidate();

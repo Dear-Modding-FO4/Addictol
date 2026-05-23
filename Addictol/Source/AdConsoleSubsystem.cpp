@@ -98,8 +98,7 @@ namespace Addictol
 
 	namespace
 	{
-		// SEH-only shims. These must not contain locals with non-trivial dtors
-		// (MSVC C2712).
+		// SEH-only shims; no non-trivial-dtor locals (C2712).
 		bool SafeInvokeCharCallback(
 			const ConsoleSubsystem::CharCallback* a_cb,
 			RE::BSInputEventUser* a_self,
@@ -175,9 +174,7 @@ namespace Addictol
 			snapshot = self->charCallbacks;
 		}
 
-		// Run ALL callbacks so state-tracking handlers (history cursor reset,
-		// autocomplete invalidation) always see the event. Only the suppression
-		// of the original engine handler short-circuits.
+		// Run every callback so state-tracking handlers always see the event; only suppress the engine handler.
 		bool anySwallowed = false;
 		for (auto& cb : snapshot) {
 			bool swallowed = false;
@@ -222,8 +219,7 @@ namespace Addictol
 			return true;
 		}
 
-		// Console vtable subobject [1] is the BSInputEventUser branch (offset +0x10 in Console).
-		// Slots 0x07 = OnCharacterEvent, 0x08 = OnButtonEvent per BSInputEventUser.h:31-32.
+		// Console vtable[1] is the BSInputEventUser branch; slots 0x07/0x08 are OnCharacterEvent/OnButtonEvent.
 		const auto vtable = RE::VTABLE::Console[1].address();
 		if (vtable == 0) {
 			REX::ERROR("ConsoleSubsystem: RE::VTABLE::Console[1] resolved to 0"sv);
@@ -303,13 +299,7 @@ namespace Addictol
 
 	namespace
 	{
-		// All GFx helpers run on the UI thread (vtable hook + MenuOpenCloseEvent dispatch).
-		// They're invoked from within SafeInvoke{Char,Button,OpenClose}Callback which already
-		// wraps the entire callback chain in __try, so structured exceptions raised inside
-		// Scaleform (null deref, bad cast, etc.) propagate up and are caught at that layer.
-		// Helpers therefore don't need their own __try; that would also block C2712 because
-		// Scaleform::GFx::Value has a non-trivial destructor.
-
+		// GFx helpers: no __try here (GFx::Value has a non-trivial dtor -> C2712); callers wrap in SafeInvoke*.
 		bool SafeGetField(
 			Scaleform::GFx::Movie* a_movie,
 			const char* a_path,
@@ -606,8 +596,7 @@ namespace Addictol
 		REX::INFO("ConsoleSubsystem: Console menu {}"sv, a_event.opening ? "opening" : "closing");
 
 		if (a_event.opening) {
-			// Re-walk every open in case the user installed a Console.swf
-			// replacement between sessions.
+			// Re-walk every open so a mid-session SWF swap still resolves.
 			self->DiscoverFields();
 		}
 

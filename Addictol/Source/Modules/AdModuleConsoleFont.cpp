@@ -4,7 +4,6 @@
 
 namespace Addictol
 {
-	// Default OFF - users opt in. Locked per scope-gate.
 	static REX::TOML::Bool<> bConsoleFontOverride{ "Console"sv, "bConsoleFontOverride"sv, false };
 	static REX::TOML::I32<>  nConsoleFontSize{ "Console"sv, "nConsoleFontSize"sv, 14 };
 

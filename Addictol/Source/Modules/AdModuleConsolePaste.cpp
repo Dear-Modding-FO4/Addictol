@@ -26,14 +26,11 @@ namespace Addictol
 		constexpr std::uint32_t DIK_LEFT     = 0xCB;
 		constexpr std::uint32_t DIK_RIGHT    = 0xCD;
 
-		// Modifier shadows. Atomic because input events can fire from any
-		// thread that walks the IMenu vtable; in practice this is the main
-		// UI thread, but defensive.
+		// Atomic so any thread driving the IMenu vtable observes a coherent value.
 		static std::atomic<bool> ctrlDown{ false };
 		static std::atomic<bool> shiftDown{ false };
 
-		// Re-sync against the OS to defend against missed key-up while
-		// Alt-Tab'd away from the window. Cheap; called on combo trigger.
+		// Defends against a missed key-up while Alt-Tab'd.
 		static void ResyncModifiers() noexcept
 		{
 			ctrlDown.store((GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0, std::memory_order_relaxed);
@@ -96,9 +93,7 @@ namespace Addictol
 			return ok;
 		}
 
-		// Word-jump: walk caret to next boundary in given direction.
-		// Boundary = transition between whitespace and non-whitespace.
-		// Multi-character whitespace runs collapse to a single boundary.
+		// Walks the caret to the next whitespace/non-whitespace boundary, bash-style.
 		static std::int32_t WalkLeft(const std::string& a_text, std::int32_t a_caret) noexcept
 		{
 			std::int32_t i = std::clamp<std::int32_t>(a_caret, 0, static_cast<std::int32_t>(a_text.size()));

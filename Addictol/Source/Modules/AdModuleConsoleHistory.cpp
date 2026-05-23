@@ -20,7 +20,7 @@ namespace Addictol
 		constexpr std::uint32_t DIK_DOWN = 0xD0;
 
 		// Original ExecuteCommand pointer (post-detour, jumps to engine entrypoint).
-		using TExec = void (*)(const char*);
+		using TExec = void (__fastcall*)(const char*);
 		static TExec sOrigExecuteCommand{ nullptr };
 
 		// Recall cursor: -1 means no recall active, else index into history (0=newest).
@@ -29,7 +29,7 @@ namespace Addictol
 		// Re-entrancy guard: don't re-process commands that we re-issue ourselves.
 		static thread_local bool inDetour{ false };
 
-		static void __cdecl Detour_ExecuteCommand(const char* a_command) noexcept
+		static void __fastcall Detour_ExecuteCommand(const char* a_command) noexcept
 		{
 			if (!a_command) {
 				if (sOrigExecuteCommand) sOrigExecuteCommand(a_command);

@@ -13,13 +13,7 @@
 
 namespace Addictol
 {
-	// ConsoleHistory - persistent console history service.
-	// - In-memory ring buffer of UTF-8 command lines (oldest at front, newest at back).
-	// - Bounded by nConsoleHistorySize.
-	// - Persisted to <Documents>/My Games/<SaveFolder>/F4SE/Addictol/console_history.txt
-	//   on a background worker thread, debounced 500ms.
-	// - Alias expansion table loaded from [Console.Aliases] in Addictol.toml +
-	//   AddictolCustom.toml. Aliases expand recursively up to depth 8.
+	// Persistent console history: bounded deque, debounced disk flush, alias expansion from [Console.Aliases].
 	class ConsoleHistory :
 		public REX::TSingleton<ConsoleHistory>
 	{
@@ -28,16 +22,10 @@ namespace Addictol
 		void Init() noexcept;       // load file + spin worker; idempotent
 		void Shutdown() noexcept;   // flush + stop worker; idempotent
 
-		// Capture path: called from ExecuteCommand hook BEFORE invoking original.
-		// Returns true if the command should still run, false if intercepted
-		// (currently only "clear" is intercepted - returns false).
-		// On true return, a_command may have been alias-expanded; caller passes
-		// a_outExpanded to the original function instead of the raw input.
+		// Returns false to intercept (currently `clear` only); true to forward a_outExpanded to the engine.
 		[[nodiscard]] bool ProcessCommand(std::string_view a_command, std::string& a_outExpanded) noexcept;
 
-		// Recall API for Up/Down handler.
-		// a_index 0 = newest entry, increments toward older. Returns false when
-		// past the end. Pointers stable until next Append/Clear.
+		// a_index 0 = newest; false past the end.
 		[[nodiscard]] bool GetEntry(std::size_t a_index, std::string& a_out) const noexcept;
 		[[nodiscard]] std::size_t Size() const noexcept;
 

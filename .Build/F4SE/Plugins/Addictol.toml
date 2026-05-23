@@ -262,9 +262,7 @@ bCSVExport = true
 
 [Console]
 
-# Master toggle for the Console AIO substrate. Required for any of the Console feature modules
-# (paste, autocomplete, history, font override) to function. When false, the engine console
-# behaves exactly as vanilla.
+# Master toggle for the Console AIO substrate; required by the four Console feature modules below.
 bConsoleSubsystem = true
 
 # Enable clipboard paste/copy/cut and Ctrl+Left/Right word jump in the console input field.
@@ -276,29 +274,22 @@ bConsoleSubsystem = true
 #   Ctrl+Shift+Left / Ctrl+Shift+Right    extend selection one word
 bConsolePaste = true
 
-# Enable Tab to cycle console command completions matching the current token (case-insensitive
-# prefix match against both full and short names). Repeated Tab presses cycle forward.
-# Any other input invalidates the cycle.
+# Tab cycles case-insensitive prefix matches of the current token against the console command table.
 bConsoleAutocomplete = true
 
-# Enable persistent command history. Up/Down recalls previous commands. The `clear` command
-# wipes the visible output buffer. The [Console.Aliases] table below provides alias expansion.
-# History is persisted to <Documents>/My Games/Fallout4/F4SE/Addictol/console_history.txt.
+# Persistent command history (Up/Down recall) with `clear` intercept and alias expansion via [Console.Aliases].
 bConsoleHistory = true
 
-# Maximum number of commands kept in history. Older entries are evicted when the cap is hit.
+# Max commands kept in history; older entries evicted at the cap.
 nConsoleHistorySize = 128
 
-# Override the console output text size. Default OFF - opt-in. Some legacy SWF replacements
-# do not expose a TextFormat; the override silently no-ops in that case.
+# Override console output text size. Default OFF; no-op on SWF replacements that hide TextFormat.
 bConsoleFontOverride = false
 
-# Console output font size in pixels (only used when bConsoleFontOverride = true).
+# Console output font size in pixels (used when bConsoleFontOverride = true).
 nConsoleFontSize = 14
 
-# Alias table. Each entry is `alias = "expansion"`. Aliases expand recursively (max depth 8)
-# at command-submit time. The original alias text is what gets stored in history.
-# Example:
+# Alias table; each entry is `alias = "expansion"`, expanded recursively (max depth 8) at command submit. Example:
 #   [Console.Aliases]
 #   tgm  = "player.setav health 999999"
 #   here = "coc CommonwealthExt"
