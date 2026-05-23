@@ -165,7 +165,7 @@ bPipBoyCursorConstraints = true
 # Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends.
 bMuzzleFlashLight = true
 
-# Fixes the exclusive-fullscreen Alt-Tab hang by dropping fullscreen state on focus loss and blocking DXGI's auto Alt+Enter handler.
+# Fixes the exclusive-fullscreen Alt-Tab hang by forcing the swap chain to borderless-windowed at creation and blocking DXGI's auto Alt+Enter handler.
 bAltTabFullscreen = true
 
 # Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
