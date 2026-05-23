@@ -1,7 +1,6 @@
 #include <Modules/AdModulePipBoyCursorConstraints.h>
 #include <AdUtils.h>
 
-#include <RE/M/MenuCursor.h>
 #include <RE/S/Setting.h>
 
 #define AD_NOMESSAGE_PIPBOY_CURSOR_CONSTRAINTS 1

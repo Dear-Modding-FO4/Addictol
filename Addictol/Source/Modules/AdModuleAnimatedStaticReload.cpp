@@ -2,7 +2,6 @@
 #include <AdUtils.h>
 
 #include <RE/B/BGSMovableStatic.h>
-#include <RE/B/BSTArray.h>
 #include <RE/N/NiAVObject.h>
 #include <RE/N/NiControllerManager.h>
 #include <RE/N/NiControllerSequence.h>
@@ -29,30 +28,25 @@ namespace Addictol
 		using TShouldSave = bool(__fastcall*)(const RE::TESObjectREFR*);
 		static TShouldSave OriginalShouldSave = nullptr;
 
-		using ActiveSequences = RE::BSTArray<RE::NiPointer<RE::NiControllerSequence>>;
-
 		[[nodiscard]] static CycleType GetCycleType(const RE::NiControllerSequence* a_seq) noexcept
 		{
 			return *reinterpret_cast<const CycleType*>(a_seq->cycleType);
 		}
 
-		[[nodiscard]] static const ActiveSequences* GetActiveSequences(const RE::NiControllerManager* a_mgr) noexcept
-		{
-			if (!a_mgr)
-				return nullptr;
-			return reinterpret_cast<const ActiveSequences*>(a_mgr->activeSequences);
-		}
-
-		[[nodiscard]] static bool HasLoopingActiveSequence(const RE::NiAVObject* a_root) noexcept
+		// activeSequences gets stomped by the anim thread every frame. Walk sequenceArray instead.
+		[[nodiscard]] static bool HasLoopingSequence(const RE::NiAVObject* a_root) noexcept
 		{
 			if (!a_root)
 				return false;
 			auto* mgr = RE::NiControllerManager::GetNiControllerManager(a_root);
-			const auto* sequences = GetActiveSequences(mgr);
-			if (!sequences)
+			if (!mgr)
 				return false;
-			for (const auto& seq : *sequences) {
-				const auto* raw = seq.get();
+			const auto count    = mgr->sequenceArray.size();
+			const auto capacity = mgr->sequenceArray.capacity();
+			if (count == 0 || count > capacity || capacity > 1024 || !mgr->sequenceArray.data())
+				return false;
+			for (std::uint32_t i = 0; i < count; ++i) {
+				const auto* raw = mgr->sequenceArray[i].get();
 				if (!raw)
 					continue;
 				if (raw->state == RE::NiControllerSequence::AnimState::kAnimating &&
@@ -62,21 +56,32 @@ namespace Addictol
 			return false;
 		}
 
+		static bool DoCheck(const RE::TESObjectREFR* a_ref) noexcept
+		{
+			const auto* base = a_ref->GetObjectReference();
+			if (!base || !base->As<RE::BGSMovableStatic>())
+				return false;
+			return HasLoopingSequence(a_ref->Get3D());
+		}
+
+		// DoCheck has GFx/Ni locals, so the __try has to live up here (C2712).
+		static bool SafeCheck(const RE::TESObjectREFR* a_ref) noexcept
+		{
+			__try {
+				return DoCheck(a_ref);
+			}
+			__except (1) {
+				return false;
+			}
+		}
+
 		static bool __fastcall HookShouldSaveAnimationOnSaving(const RE::TESObjectREFR* a_ref) noexcept
 		{
 			const bool original = OriginalShouldSave ? OriginalShouldSave(a_ref) : false;
 			if (original || !a_ref)
 				return original;
 
-			__try {
-				const auto* base = a_ref->GetObjectReference();
-				if (!base || !base->As<RE::BGSMovableStatic>())
-					return false;
-				return HasLoopingActiveSequence(a_ref->Get3D());
-			}
-			__except (1) {
-				return original;
-			}
+			return SafeCheck(a_ref);
 		}
 	}
 
