@@ -64,6 +64,10 @@
 #include <Modules/AdModulePipBoyCursorConstraints.h>
 #include <Modules/AdModuleReferenceHandleLimitWarning.h>
 #include <Modules/AdModuleConsoleSubsystem.h>
+#include <Modules/AdModuleConsolePaste.h>
+#include <Modules/AdModuleConsoleAutocomplete.h>
+#include <Modules/AdModuleConsoleHistory.h>
+#include <Modules/AdModuleConsoleFont.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -130,6 +134,10 @@ static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityS
 static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
 static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
 static auto sModuleConsoleSubsystem					= std::make_shared<Addictol::ModuleConsoleSubsystem>();
+static auto sModuleConsolePaste						= std::make_shared<Addictol::ModuleConsolePaste>();
+static auto sModuleConsoleAutocomplete				= std::make_shared<Addictol::ModuleConsoleAutocomplete>();
+static auto sModuleConsoleHistory					= std::make_shared<Addictol::ModuleConsoleHistory>();
+static auto sModuleConsoleFont						= std::make_shared<Addictol::ModuleConsoleFont>();
 
 void AdRegisterPreloadModules()
 {
@@ -208,6 +216,10 @@ void AdRegisterModules()
 	modules.Register(sModuleDofFix);
 	modules.Register(sModuleReferenceHandleLimitWarning);
 	modules.Register(sModuleConsoleSubsystem);
+	modules.Register(sModuleConsolePaste);
+	modules.Register(sModuleConsoleAutocomplete);
+	modules.Register(sModuleConsoleHistory);
+	modules.Register(sModuleConsoleFont);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);

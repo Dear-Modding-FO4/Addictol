@@ -266,3 +266,41 @@ bCSVExport = true
 # (paste, autocomplete, history, font override) to function. When false, the engine console
 # behaves exactly as vanilla.
 bConsoleSubsystem = true
+
+# Enable clipboard paste/copy/cut and Ctrl+Left/Right word jump in the console input field.
+#   Ctrl+V  paste clipboard text at the caret
+#   Ctrl+C  copy selection (or entire input if no selection)
+#   Ctrl+X  cut selection (or entire input)
+#   Ctrl+L  clear input
+#   Ctrl+Left / Ctrl+Right         jump caret one word
+#   Ctrl+Shift+Left / Ctrl+Shift+Right    extend selection one word
+bConsolePaste = true
+
+# Enable Tab to cycle console command completions matching the current token (case-insensitive
+# prefix match against both full and short names). Repeated Tab presses cycle forward.
+# Any other input invalidates the cycle.
+bConsoleAutocomplete = true
+
+# Enable persistent command history. Up/Down recalls previous commands. The `clear` command
+# wipes the visible output buffer. The [Console.Aliases] table below provides alias expansion.
+# History is persisted to <Documents>/My Games/Fallout4/F4SE/Addictol/console_history.txt.
+bConsoleHistory = true
+
+# Maximum number of commands kept in history. Older entries are evicted when the cap is hit.
+nConsoleHistorySize = 128
+
+# Override the console output text size. Default OFF - opt-in. Some legacy SWF replacements
+# do not expose a TextFormat; the override silently no-ops in that case.
+bConsoleFontOverride = false
+
+# Console output font size in pixels (only used when bConsoleFontOverride = true).
+nConsoleFontSize = 14
+
+# Alias table. Each entry is `alias = "expansion"`. Aliases expand recursively (max depth 8)
+# at command-submit time. The original alias text is what gets stored in history.
+# Example:
+#   [Console.Aliases]
+#   tgm  = "player.setav health 999999"
+#   here = "coc CommonwealthExt"
+[Console.Aliases]
+

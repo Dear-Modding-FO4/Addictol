@@ -15,6 +15,7 @@ Consolidates patches from Buffout 4, X-Cell, Mentats, Escape Freeze Fix, Maka Ma
 - **Archive Limits** - Increases max BA2 archives the game can load
 - **Profiler** - Profiler for definitions performance your collection mods
 - **Papyrus GC Bug** - Fixes a critical bug in garbage collection that causes premature loop termination
+- **Console AIO** - Native paste/copy/cut + Ctrl+Left/Right word jump, Tab autocomplete, persistent history with aliases, optional font override (no SWF replacement required)
 - ~30 additional crash fixes and stability patches
 
 Each module can be individually toggled via `Addictol.toml`.

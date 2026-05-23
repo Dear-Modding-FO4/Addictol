@@ -8,6 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Addictol\Source\AdConfigValidation.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdConsoleHistory.cpp" />
     <ClCompile Include="..\Addictol\Source\AdConsoleSubsystem.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
@@ -43,6 +44,10 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCheckInternetAccess.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleConsoleAutocomplete.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleConsoleFont.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleConsoleHistory.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleConsolePaste.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleConsoleSubsystem.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCOMInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp" />
@@ -93,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h" />
+    <ClInclude Include="..\Addictol\Include\AdConsoleHistory.h" />
     <ClInclude Include="..\Addictol\Include\AdConsoleSubsystem.h" />
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
@@ -125,6 +131,10 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleConsoleAutocomplete.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleConsoleFont.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleConsoleHistory.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleConsolePaste.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleConsoleSubsystem.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />
