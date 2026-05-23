@@ -8,9 +8,8 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesDofFix{ "Fixes"sv, "bDofFix"sv, true };
 
-	// Worker takes 5 args; the 5th lives at [rsp+0x28] in the caller frame. The hook must declare and
-	// forward all five or the original reads garbage when it reaches its 5th-arg load.
-	// OG arg2 is the effect pointer directly; NG/AE arg2 is an index into effectList._data (+0x18).
+	// Worker takes 5 args (5th at [rsp+0x28]); forward all five or the original loads garbage.
+	// OG arg2 is the effect pointer; NG/AE arg2 is an index into effectList._data (+0x18).
 	using TRenderEffect = void(__fastcall*)(void*, std::uintptr_t, std::int32_t, std::int32_t, void*);
 	static TRenderEffect OriginalRenderEffect = nullptr;
 
@@ -79,9 +78,7 @@ namespace Addictol
 
 		g_workerArgIsEffectPtr = RELEX::IsRuntimeOG();
 
-		// Camera + accumulator the engine passes to BSShaderUtil::RenderScene
-		// in DrawWorld::Imagespace; reusing them keeps the viewmodel re-render
-		// identical to what the vanilla pipeline already issues elsewhere.
+		// Reuse the engine's camera + accumulator from BSShaderUtil::RenderScene for pipeline parity.
 		g_viewmodelCameraGlobal = reinterpret_cast<void**>(REL::ID{ 300623, 2712879 }.address());
 		g_viewmodelAccumGlobal = reinterpret_cast<void**>(REL::ID{ 726120, 2712936 }.address());
 

@@ -20,8 +20,7 @@ namespace Addictol
 	static RE::BSShaderManager::State** g_stateGlobal = nullptr;
 	static RE::BSShaderAccumulator** g_accumulatorGlobal = nullptr;
 
-	// Add forwardLightOffset.xyz onto eyePosition.xyz; the original write at
-	// +0x570/+0x574/+0x578 omitted this term, breaking 1st-person specular.
+	// Add forwardLightOffset.xyz onto eyePosition.xyz (vanilla omits this term, breaking 1st-person specular).
 	static void __fastcall HookMove1stPersonToOrigin() noexcept
 	{
 		if (OriginalMove1stPersonToOrigin)

@@ -31,9 +31,7 @@ namespace Addictol
 		D3D_FEATURE_LEVEL*       a_outFeatureLevel,
 		ID3D11DeviceContext**    a_outContext) noexcept
 	{
-		// Force borderless-windowed when the engine requested exclusive fullscreen.
-		// The vanilla alt-tab hang is rooted in exclusive-mode ResizeBuffers re-entry;
-		// never entering exclusive eliminates the bug class entirely.
+		// Force borderless-windowed; staying out of exclusive avoids the alt-tab ResizeBuffers re-entry hang.
 		DXGI_SWAP_CHAIN_DESC patchedDesc{};
 		const DXGI_SWAP_CHAIN_DESC* descToUse = a_desc;
 		if (a_desc && !a_desc->Windowed)
