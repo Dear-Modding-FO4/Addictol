@@ -15,7 +15,32 @@ namespace Addictol
 		const DXGI_SWAP_CHAIN_DESC*, IDXGISwapChain**,
 		ID3D11Device**, D3D_FEATURE_LEVEL*, ID3D11DeviceContext**);
 
+	using TSetFullscreenState = HRESULT(WINAPI*)(IDXGISwapChain*, BOOL, IDXGIOutput*);
+
 	static TD3D11CreateDeviceAndSwapChain OriginalCreate = nullptr;
+	static std::atomic<TSetFullscreenState> OriginalSetFullscreenState{ nullptr };
+	static std::atomic<HWND> g_gameHwnd{ nullptr };
+	static std::atomic<bool> g_vtablePatched{ false };
+
+	static HRESULT WINAPI Hook_SetFullscreenState(IDXGISwapChain* a_this, BOOL a_fullscreen, IDXGIOutput* a_output) noexcept
+	{
+		const auto orig = OriginalSetFullscreenState.load(std::memory_order_acquire);
+
+		// Only neuter our own swap chain; ReShade/ENB/overlay swap chains get forwarded.
+		if (a_fullscreen)
+		{
+			DXGI_SWAP_CHAIN_DESC desc{};
+			const auto descHr = a_this->GetDesc(&desc);
+			const auto gameHwnd = g_gameHwnd.load(std::memory_order_relaxed);
+			if (SUCCEEDED(descHr) && desc.OutputWindow == gameHwnd && gameHwnd)
+			{
+				REX::INFO("Alt-Tab Fullscreen: SetFullscreenState(TRUE) blocked on game window."sv);
+				return S_OK;
+			}
+		}
+
+		return orig ? orig(a_this, a_fullscreen, a_output) : S_OK;
+	}
 
 	static HRESULT WINAPI Hook_D3D11Create(
 		IDXGIAdapter*            a_adapter,
@@ -58,8 +83,38 @@ namespace Addictol
 		IDXGIFactory* factory = nullptr;
 		if (SUCCEEDED((*a_outSwapChain)->GetParent(__uuidof(IDXGIFactory), reinterpret_cast<void**>(&factory))) && factory)
 		{
-			factory->MakeWindowAssociation(descToUse->OutputWindow, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+			const auto mwaHr = factory->MakeWindowAssociation(descToUse->OutputWindow, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 			factory->Release();
+			if (FAILED(mwaHr))
+			{
+				REX::WARN("Alt-Tab Fullscreen: MakeWindowAssociation failed (hr=0x{:08X})."sv, static_cast<std::uint32_t>(mwaHr));
+			}
+		}
+
+		// MakeWindowAssociation isn't enough; explicit SetFullscreenState(TRUE) bypasses it.
+		g_gameHwnd.store(descToUse->OutputWindow, std::memory_order_relaxed);
+
+		bool expected = false;
+		if (g_vtablePatched.compare_exchange_strong(expected, true))
+		{
+			constexpr std::uint32_t kSetFullscreenStateSlot = 10;
+			auto** const vtablePtr = *reinterpret_cast<void***>(*a_outSwapChain);
+			// Publish original before the swap so the forward path never sees nullptr.
+			OriginalSetFullscreenState.store(
+				reinterpret_cast<TSetFullscreenState>(vtablePtr[kSetFullscreenStateSlot]),
+				std::memory_order_release);
+
+			const auto vtableAddr = reinterpret_cast<std::uintptr_t>(vtablePtr);
+			const auto returned = RELEX::DetourVTable(
+				vtableAddr,
+				reinterpret_cast<std::uintptr_t>(&Hook_SetFullscreenState),
+				kSetFullscreenStateSlot);
+			if (!returned)
+			{
+				REX::WARN("Alt-Tab Fullscreen: SetFullscreenState vtable patch failed."sv);
+				OriginalSetFullscreenState.store(nullptr, std::memory_order_release);
+				g_vtablePatched.store(false);
+			}
 		}
 
 		return hr;
