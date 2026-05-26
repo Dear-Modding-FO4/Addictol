@@ -27,7 +27,6 @@
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimatedStaticReload.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp" />
@@ -107,7 +106,6 @@
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimatedStaticReload.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h" />
