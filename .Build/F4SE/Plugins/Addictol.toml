@@ -171,9 +171,6 @@ bAltTabFullscreen = true
 # Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
 bPowerGridScrap = true
 
-# Fixes animated statics (fans, signs, generators) that stop animating after save/load until cell unload+reload.
-bAnimatedStaticReload = true
-
 # Fixes wrong specular lighting on the first-person viewmodel caused by the eye-position vector missing the engine's per-frame light offset.
 bViewmodelShading = true
 

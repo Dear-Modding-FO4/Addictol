@@ -57,7 +57,6 @@
 #include <Modules/AdModuleAltTabFullscreen.h>
 #include <Modules/AdModulePowerGridScrap.h>
 #include <Modules/AdModuleDpiScaling.h>
-#include <Modules/AdModuleAnimatedStaticReload.h>
 #include <Modules/AdModuleViewmodelShading.h>
 #include <Modules/AdModuleDofFix.h>
 #include <Modules/AdModuleUtilityShader.h>
@@ -122,7 +121,6 @@ static auto sModuleHighResBloom						= std::make_shared<Addictol::ModuleHighResB
 static auto sModuleAltTabFullscreen					= std::make_shared<Addictol::ModuleAltTabFullscreen>();
 static auto sModulePowerGridScrap					= std::make_shared<Addictol::ModulePowerGridScrap>();
 static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling>();
-static auto sModuleAnimatedStaticReload				= std::make_shared<Addictol::ModuleAnimatedStaticReload>();
 static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
 static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
 static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
@@ -201,7 +199,6 @@ void AdRegisterModules()
 	modules.Register(sModuleHighResBloom);
 	modules.Register(sModuleAltTabFullscreen);
 	modules.Register(sModulePowerGridScrap);
-	modules.Register(sModuleAnimatedStaticReload);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);
 	modules.Register(sModuleReferenceHandleLimitWarning);

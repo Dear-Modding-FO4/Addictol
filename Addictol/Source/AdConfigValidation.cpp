@@ -31,7 +31,7 @@ namespace Addictol
 			"bCombatMusic", "bWorkbenchSound", "bActorCauseSaveBloat",
 			"bAnimSignedCrash", "bBethesdaNetCrash",
 			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
-			"bAnimatedStaticReload", "bViewmodelShading", "bDofFix",
+			"bViewmodelShading", "bDofFix",
 			"bUtilityShader", "bPipBoyCursorConstraints"
 		}},
 		{ "Warnings", {

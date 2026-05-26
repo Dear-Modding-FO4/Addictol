@@ -229,9 +229,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimatedStaticReload.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -464,9 +461,6 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimatedStaticReload.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h">
