@@ -4,7 +4,7 @@
 
 #include <RE/T/TESObjectREFR.h>
 #include <RE/E/ExtraDataList.h>
-#include <RE/N/NiPoint.h>
+#include <RE/N/NiPoint3.h>
 #include <RE/M/MemoryManager.h>
 
 namespace Addictol
