@@ -29,6 +29,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorCauseSaveBloat.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp" />
@@ -108,6 +109,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorCauseSaveBloat.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorIsHostileToActor.h" />

@@ -177,6 +177,9 @@ bViewmodelShading = true
 # Fixes the first-person viewmodel getting blurred by depth-of-field (iron-sight ADS, dialogue camera) by re-rasterizing it after the DoF pass.
 bDofFix = true
 
+# Fixes the "ToggleGrass" / "tg" command being a reference function in the AE versions of the game.
+bToggleGrassCommand = true
+
 
 [Warnings]
 
