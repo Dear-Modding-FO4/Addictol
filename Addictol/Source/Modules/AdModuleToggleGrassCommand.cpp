@@ -19,7 +19,7 @@ namespace Addictol
 
 	bool ModuleToggleGrassCommand::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		RE::SCRIPT_FUNCTION* consoleCommand = RE::SCRIPT_FUNCTION::LocateConsoleCommand("ToggleGrass");
+		RE::SCRIPT_FUNCTION* consoleCommand = RE::SCRIPT_FUNCTION::LocateConsoleCommand("ToggleGrass"sv);
 		if (consoleCommand)
 		{
 			bool isReferenceFunction = false;

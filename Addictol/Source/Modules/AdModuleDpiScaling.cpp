@@ -69,15 +69,15 @@ namespace Addictol
 
 	bool ModuleDpiScaling::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const char* level = nullptr;
+		std::string level = "";
 		if (detail::TrySetPerMonitorV2())
-			level = "PER_MONITOR_AWARE_V2";
+			level = "PER_MONITOR_AWARE_V2"sv;
 		else if (detail::TrySetPerMonitor())
-			level = "PROCESS_PER_MONITOR_DPI_AWARE";
+			level = "PROCESS_PER_MONITOR_DPI_AWARE"sv;
 		else if (detail::TrySetDpiAware())
-			level = "DPI_AWARE";
+			level = "DPI_AWARE"sv;
 
-		if (level)
+		if (!level.empty())
 			REX::INFO("DPI Scaling: applied {}"sv, level);
 		else
 			REX::WARN("DPI Scaling: no SetProcessDpi* entry point accepted; process remains DPI-unaware"sv);

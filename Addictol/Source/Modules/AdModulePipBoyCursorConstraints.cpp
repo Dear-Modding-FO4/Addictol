@@ -43,14 +43,14 @@ namespace Addictol
 		static REL::Relocation<std::uint32_t*> PipboyConstraintWidth_PowerArmor{ RE::ID::MenuCursor::PipboyConstraintWidth_PowerArmor };
 		static REL::Relocation<std::uint32_t*> PipboyConstraintHeight_PowerArmor{ RE::ID::MenuCursor::PipboyConstraintHeight_PowerArmor };
 
-		inline void LogPipBoyConstraints(std::string a_title, std::uint32_t a_tlx, std::uint32_t a_tly, std::uint32_t a_width, std::uint32_t a_height) noexcept
+		inline void LogPipBoyConstraints(std::string_view a_title, std::uint32_t a_tlx, std::uint32_t a_tly, std::uint32_t a_width, std::uint32_t a_height) noexcept
 		{
 #if !AD_NOMESSAGE_PIPBOY_CURSOR_CONSTRAINTS
-			REX::INFO("{}", a_title);
-			REX::INFO("TLX: {}", a_tlx);
-			REX::INFO("TLY: {}", a_tly);
-			REX::INFO("Width: {}", a_width);
-			REX::INFO("Height: {}", a_height);
+			REX::INFO("{}"sv, a_title);
+			REX::INFO("TLX: {}"sv, a_tlx);
+			REX::INFO("TLY: {}"sv, a_tly);
+			REX::INFO("Width: {}"sv, a_width);
+			REX::INFO("Height: {}"sv, a_height);
 #endif
 		}
 
@@ -67,13 +67,13 @@ namespace Addictol
 			// Fail if we couldn't get the Settings
 			if (!uPipboyTargetWidth || !uPipboyTargetHeight)
 			{
-				REX::WARN("Could not get one of the uPipboyTargetWidth/Height settings!");
+				REX::WARN("Could not get one of the uPipboyTargetWidth/Height settings!"sv);
 				return false;
 			}
 
 #if !AD_NOMESSAGE_PIPBOY_CURSOR_CONSTRAINTS
 			// Log PipBoy Resolution
-			REX::INFO("PipBoy Resolution: {}x{}", uPipboyTargetWidth->GetUInt(), uPipboyTargetHeight->GetUInt());
+			REX::INFO("PipBoy Resolution: {}x{}"sv, uPipboyTargetWidth->GetUInt(), uPipboyTargetHeight->GetUInt());
 #endif
 
 			return true;
@@ -90,8 +90,8 @@ namespace Addictol
 			const float heightFactor = (float)uPipboyTargetHeight->GetUInt() / defaultPipboyTargetHeight;
 
 			// Log before updating PipBoy Constraints
-			LogPipBoyConstraints("PipBoy Constraints Pre-Update:", *PipboyConstraintTLX, *PipboyConstraintTLY, *PipboyConstraintWidth, *PipboyConstraintHeight);
-			LogPipBoyConstraints("PA PipBoy Constraints Pre-Update:", *PipboyConstraintTLX_PowerArmor, *PipboyConstraintTLY_PowerArmor, *PipboyConstraintWidth_PowerArmor, *PipboyConstraintHeight_PowerArmor);
+			LogPipBoyConstraints("PipBoy Constraints Pre-Update:"sv, *PipboyConstraintTLX, *PipboyConstraintTLY, *PipboyConstraintWidth, *PipboyConstraintHeight);
+			LogPipBoyConstraints("PA PipBoy Constraints Pre-Update:"sv, *PipboyConstraintTLX_PowerArmor, *PipboyConstraintTLY_PowerArmor, *PipboyConstraintWidth_PowerArmor, *PipboyConstraintHeight_PowerArmor);
 
 			// Update PipBoy Constraints
 			*PipboyConstraintTLX 	= static_cast<std::uint32_t>(std::ceil(defaultPipboyConstraintTLX * widthFactor));
@@ -106,8 +106,8 @@ namespace Addictol
 			*PipboyConstraintHeight_PowerArmor 	= static_cast<std::uint32_t>(std::ceil(defaultPipboyConstraintHeight_PowerArmor * heightFactor));
 
 			// Log after updating PipBoy Constraints
-			LogPipBoyConstraints("PipBoy Constraints Post-Update:", *PipboyConstraintTLX, *PipboyConstraintTLY, *PipboyConstraintWidth, *PipboyConstraintHeight);
-			LogPipBoyConstraints("PA PipBoy Constraints Post-Update:", *PipboyConstraintTLX_PowerArmor, *PipboyConstraintTLY_PowerArmor, *PipboyConstraintWidth_PowerArmor, *PipboyConstraintHeight_PowerArmor);
+			LogPipBoyConstraints("PipBoy Constraints Post-Update:"sv, *PipboyConstraintTLX, *PipboyConstraintTLY, *PipboyConstraintWidth, *PipboyConstraintHeight);
+			LogPipBoyConstraints("PA PipBoy Constraints Post-Update:"sv, *PipboyConstraintTLX_PowerArmor, *PipboyConstraintTLY_PowerArmor, *PipboyConstraintWidth_PowerArmor, *PipboyConstraintHeight_PowerArmor);
 
 			return true;
 		}
