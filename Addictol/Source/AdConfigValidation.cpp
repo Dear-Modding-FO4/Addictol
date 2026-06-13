@@ -32,7 +32,7 @@ namespace Addictol
 			"bAnimSignedCrash", "bBethesdaNetCrash",
 			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
 			"bViewmodelShading", "bDofFix", "bUtilityShader",
-			"bPipBoyCursorConstraints", "bToggleGrassCommand"
+			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"

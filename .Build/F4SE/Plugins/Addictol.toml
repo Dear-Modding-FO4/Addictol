@@ -180,6 +180,9 @@ bDofFix = true
 # Fixes the "ToggleGrass" / "tg" command being a reference function in the AE versions of the game.
 bToggleGrassCommand = true
 
+# Fixes a crash if NiTexture is nullptr when create, fixes degrade level and also logs texture load errors.
+bTextureLoadCrash = true                        
+
 
 [Warnings]
 
