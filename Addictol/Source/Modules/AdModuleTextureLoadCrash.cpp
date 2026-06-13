@@ -18,7 +18,7 @@ namespace Addictol
 		bool a_isDDS, bool a_isSRGB, bool a_canDegradeLevel)> BSGraphicsRenderer_CreateTextureFromStream{ REL::ID{ 39969, 2276913 } };
 	static REL::Relocation<bool(RE::BSGraphics::Renderer* a_self, RE::BSGraphics::Texture* a_texture)>
 		BSGraphicsRenderer_CanTextureDegrade{ REL::ID{ 674041, 2277274 } };
-	static REL::Relocation<RE::BSGraphics::Renderer*> BSGraphicsRenderer{ REL::ID(2704525) };
+	static REL::Relocation<RE::BSGraphics::Renderer*> BSGraphicsRenderer{ REL::ID{ 1378294, 2704525 } };
 
 	static void BSShaderResourceManager_LoadTexture([[maybe_unused]] void* a_sender, RE::NiTexture* a_texture) noexcept
 	{
