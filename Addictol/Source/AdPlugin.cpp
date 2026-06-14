@@ -17,11 +17,6 @@ extern void AdRegisterPreloadModules();
 
 namespace Addictol
 {
-#if SUPPORT_OG
-	// For support OG
-	static F4SE::Impl::F4SEInterface RestoreLoadInterface;
-#endif // SUPPORT_OG
-
 	[[nodiscard]] static const char* GetF4SEMessageName(std::uint32_t a_type) noexcept
 	{
 		switch (a_type)
@@ -74,14 +69,6 @@ namespace Addictol
 		Plugin::GetSingleton()->GetModules().ListenerAllPapyrus(a_vm);
 	}
 
-#if SUPPORT_OG
-	// Added F4SE 0.7.1+
-	[[nodiscard]] inline static const char* F4SEAPI F4SEGetSaveFolderName() noexcept
-	{
-		return Addictol::GetSaveFolderName();
-	}
-#endif // SUPPORT_OG
-
 	bool Plugin::Init(const F4SE::LoadInterface* a_f4se)
 	{
 		if (isInit)
@@ -92,15 +79,9 @@ namespace Addictol
 #if AD_DEBUGBREAK
 			MessageBoxA(nullptr, "Debugbreak load stage", "DEBUG", 0);
 #endif
-#if SUPPORT_OG
-			memcpy(&RestoreLoadInterface, a_f4se, 48 /* OG struct size */);
-			(((F4SE::Impl::F4SEInterface*)(&RestoreLoadInterface))->GetSaveFolderName) = F4SEGetSaveFolderName;
-			// Init
-			F4SE::Init((const F4SE::LoadInterface*)(&RestoreLoadInterface));
-#else
+
 			// Init
 			F4SE::Init(a_f4se);
-#endif // SUPPORT_OG
 
 			if (!isPreloadInit)
 			{
