@@ -10,15 +10,15 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesTextureLoadCrash{ "Fixes"sv, "bTextureLoadCrash"sv, true };
 
-	static REL::Relocation<void(RE::BSResourceNiBinaryStream* a_self, RE::BSTSmartPointer<RE::BSResource::Stream>& a_stream,
+	static inline REL::Relocation<void(RE::BSResourceNiBinaryStream* a_self, RE::BSTSmartPointer<RE::BSResource::Stream>& a_stream,
 		bool a_fullReadHint, bool a_useOwnBuffer)> BSResourceNiBinaryStream_ctorFromResourceStream{ REL::ID{ 306612, 2269831 } };
-	static REL::Relocation<void(RE::BSGraphics::Renderer* a_self, int8_t a_loadlevel)> 
+	static inline REL::Relocation<void(RE::BSGraphics::Renderer* a_self, int8_t a_loadlevel)>
 		BSGraphicsRenderer_SetTextureLoadLevel{ REL::ID{ 79052, 2277268 } };
-	static REL::Relocation<RE::BSGraphics::Texture*(RE::BSGraphics::Renderer* a_self, RE::BSResourceNiBinaryStream*,
+	static inline REL::Relocation<RE::BSGraphics::Texture*(RE::BSGraphics::Renderer* a_self, RE::BSResourceNiBinaryStream*,
 		bool a_isDDS, bool a_isSRGB, bool a_canDegradeLevel)> BSGraphicsRenderer_CreateTextureFromStream{ REL::ID{ 39969, 2276913 } };
-	static REL::Relocation<bool(RE::BSGraphics::Renderer* a_self, RE::BSGraphics::Texture* a_texture)>
+	static inline REL::Relocation<bool(RE::BSGraphics::Renderer* a_self, RE::BSGraphics::Texture* a_texture)>
 		BSGraphicsRenderer_CanTextureDegrade{ REL::ID{ 674041, 2277274 } };
-	static REL::Relocation<RE::BSGraphics::Renderer*> BSGraphicsRenderer{ REL::ID{ 1378294, 2704525 } };
+	static inline REL::Relocation<RE::BSGraphics::Renderer*> BSGraphicsRenderer{ REL::ID{ 1378294, 2704525 } };
 
 	static void BSShaderResourceManager_LoadTexture([[maybe_unused]] void* a_sender, RE::NiTexture* a_texture) noexcept
 	{

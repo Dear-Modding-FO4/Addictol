@@ -247,6 +247,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -485,6 +488,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>

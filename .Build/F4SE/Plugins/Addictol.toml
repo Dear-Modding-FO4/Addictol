@@ -181,7 +181,10 @@ bDofFix = true
 bToggleGrassCommand = true
 
 # Fixes a crash if NiTexture is nullptr when create, fixes degrade level and also logs texture load errors.
-bTextureLoadCrash = true                        
+bTextureLoadCrash = true
+
+# Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge
+bDownwardAiming = true
 
 
 [Warnings]
