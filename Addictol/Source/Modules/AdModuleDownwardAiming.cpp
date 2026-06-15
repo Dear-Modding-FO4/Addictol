@@ -2,9 +2,7 @@
 
 #include <Modules/AdModuleDownwardAiming.h>
 #include <AdUtils.h>
-#include <functional>
 
-#include <RE/T/TESForm.h>
 #include <RE/N/NiPoint3.h>
 #include <RE/P/Projectile.h>
 #include <RE/A/Actor.h>

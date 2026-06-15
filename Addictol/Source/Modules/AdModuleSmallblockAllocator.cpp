@@ -67,13 +67,13 @@ namespace Addictol
 			[[nodiscard]] inline uint32_t GetCountBlock() const noexcept { return count; }
 			[[nodiscard]] inline uint32_t GetSizeBlock() const noexcept { return sizeBlock; }
 
-			template<typename Heap = ProxyVoltekHeap>
+			template<typename Heap = ProxyCurrentHeap>
 			[[nodiscard]] static void* Alloc([[maybe_unused]] UserPoolBase* a_this) noexcept
 			{
 				return Heap::GetSingleton()->aligned_malloc(a_this->sizeBlock, 0x10);
 			}
 
-			template<typename Heap = ProxyVoltekHeap>
+			template<typename Heap = ProxyCurrentHeap>
 			static void Dealloc([[maybe_unused]] UserPoolBase* a_this, void* a_ptr) noexcept
 			{
 				if (!a_ptr) return;
@@ -116,8 +116,8 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<>);
-		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<>);
+		//RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<>);
+		//RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<>);
 
 		return true;
 	}

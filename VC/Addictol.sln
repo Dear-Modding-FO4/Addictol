@@ -31,6 +31,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spdlog_vc22", "..\Depends\s
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MemoryManager", "..\Depends\vmm\vmm.vcxproj", "{1A04D2B1-EBB3-4569-BD03-915631B4BFB1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimalloc-lib", "..\Depends\mimalloc.vcxproj", "{ABB5EAE7-B3E6-432E-B636-333449892EA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x64 = Release|x64
@@ -50,6 +52,8 @@ Global
 		{3317C484-5B56-43BC-A2DE-37A001905E7A}.Release|x64.Build.0 = Release|x64
 		{1A04D2B1-EBB3-4569-BD03-915631B4BFB1}.Release|x64.ActiveCfg = Release|x64
 		{1A04D2B1-EBB3-4569-BD03-915631B4BFB1}.Release|x64.Build.0 = Release|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Release|x64.ActiveCfg = Release|x64
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,6 +65,7 @@ Global
 		{4B0C9A46-C909-40AB-929A-A3207E7F7908} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
 		{3317C484-5B56-43BC-A2DE-37A001905E7A} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
 		{1A04D2B1-EBB3-4569-BD03-915631B4BFB1} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
+		{ABB5EAE7-B3E6-432E-B636-333449892EA6} = {7A31A594-72DB-4F56-BA17-DB9485E3AA99}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {589F9252-C63F-40EB-8EAE-9110734FF052}

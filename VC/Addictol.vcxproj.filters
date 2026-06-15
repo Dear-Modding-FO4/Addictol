@@ -250,6 +250,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProxyMiHeap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />

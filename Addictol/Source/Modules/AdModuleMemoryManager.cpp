@@ -11,10 +11,13 @@
 #	include <AdMemoryTracer.h>
 #endif
 
+#define AD_NO_EMPTYPOINTERS 1
+
 #undef MEM_RELEASE
 
 #include <RE/M/MemoryManager.h>
 #include <RE/B/BSThreadEvent.h>
+
 
 namespace Addictol
 {
@@ -33,7 +36,7 @@ namespace Addictol
 
 		inline static void CtorLong()
 		{
-			RELEX::WriteSafeNop(REL::ID(RELEX::IsRuntimeOG() ? 1305199 : 2267866).address() + 0x1D, 0x15);
+			RELEX::WriteSafeNop(REL::ID{ 1305199, 2267866 }.address() + 0x1D, 0x15);
 		}
 
 		static void CtorShort()
@@ -89,7 +92,7 @@ namespace Addictol
 		}
 	};
 
-	template<typename Heap = ProxyVoltekHeap>
+	template<typename Heap>
 	class ScrapHeap
 	{
 		ScrapHeap(const ScrapHeap&) = delete;
@@ -100,57 +103,48 @@ namespace Addictol
 		ScrapHeap() = default;
 		~ScrapHeap() = default;
 
-		static void WriteStubs()
+		static void WriteStubs() noexcept
 		{
 			// Remove stuff
 			constexpr static std::initializer_list<uint8_t> RET_NOP = { 0xC3, 0x90, 0x90, 0x90 };
 
-			if (RELEX::IsRuntimeOG())
+			std::array<uint64_t, 6> stub
 			{
-				std::array<uint64_t, 7> p
-				{
-					550677,		// Clean
-					111657,		// ClearKeepPages
-					975239,		// InsertFreeBlock
-					84225,		// RemoveFreeBlock
-					1255203,	// SetKeepPages
-					912706,		// dtor
-					48809,		// ctor
-				};
+				REL::ID{ 550677,	2267990 }.address(),		// Clean
+				REL::ID{ 111657,	2267989 }.address(),		// ClearKeepPages
+				REL::ID{ 975239,	2267993 }.address(),		// InsertFreeBlock
+				REL::ID{ 84225,		2267994 }.address(),		// RemoveFreeBlock
+				REL::ID{ 1255203,	2267988 }.address(),		// SetKeepPages
+				REL::ID{ 912706,	2267982 }.address(),		// dtor
+			};
 
-				for (const auto& i : p)
-					RELEX::WriteSafe(REL::ID(i).address(), RET_NOP);
-			}
-			else
-			{
-				std::array<uint64_t, 7> p
-				{
-					2267990,	// Clean
-					2267989,	// ClearKeepPages
-					2267993,	// InsertFreeBlock
-					2267994,	// RemoveFreeBlock
-					2267988,	// SetKeepPages
-					2267982,	// dtor
-					2267981,	// ctor
-				};
-
-				for (const auto& i : p)
-					RELEX::WriteSafe(REL::ID(i).address(), RET_NOP);
-			}
+			for (const auto& address : stub)
+				RELEX::WriteSafe(address, RET_NOP);
 		}
 
-		static void WriteHooks()
+		static void WriteHooks() noexcept
 		{
-			RELEX::DetourJump(RE::ID::ScrapHeap::Allocate.address(), (uint64_t)&Allocate);
-			RELEX::DetourJump(RE::ID::ScrapHeap::Deallocate.address(), (uint64_t)&Deallocate);
+			RELEX::DetourJump(RE::ID::ScrapHeap::Allocate.address(), reinterpret_cast<uintptr_t>(&Allocate));
+			RELEX::DetourJump(RE::ID::ScrapHeap::Deallocate.address(), reinterpret_cast<uintptr_t>(&Deallocate));
+			RELEX::DetourJump(REL::ID{ 48809, 2267981 }.address(), reinterpret_cast<uintptr_t>(&Ctor));
 		}
 	public:
+#if !AD_NO_EMPTYPOINTERS
 		inline static const std::uint64_t EMPTY_POINTER{ 0 };
+#endif
+		[[nodiscard]] inline static RE::ScrapHeap* Ctor(RE::ScrapHeap* a_this)
+		{
+			std::memset(a_this, 0, sizeof(RE::ScrapHeap));
+			emplace_vtable(a_this);
+			return a_this;
+		}
 
 		[[nodiscard]] inline static void* Allocate([[maybe_unused]] ScrapHeap* lpSelf, std::size_t nSize, std::size_t nAlignment) noexcept(true)
 		{
+#if !AD_NO_EMPTYPOINTERS
 			if (!nSize)
 				return (void*)(&EMPTY_POINTER);
+#endif
 #if AD_TRACER
 			auto ret_addr = _ReturnAddress();
 			auto ptr = Heap::GetSingleton()->aligned_malloc(nSize, nAlignment);
@@ -163,8 +157,10 @@ namespace Addictol
 
 		inline static void Deallocate([[maybe_unused]] ScrapHeap* lpSelf, void* lpBlock) noexcept(true)
 		{
+#if !AD_NO_EMPTYPOINTERS
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return;
+#endif
 #if AD_TRACER
 			MemoryTracer::GetSingleton()->Remove(lpBlock);
 #endif
@@ -175,10 +171,16 @@ namespace Addictol
 		{
 			WriteStubs();
 			WriteHooks();
+
+			/////////////////////////////////////////////////////////////////////
+			// Default/Static/File heaps
+			/////////////////////////////////////////////////////////////////////
+
+			RELEX::WriteSafe(REL::ID{ 433356, 2228360 }.address(), { 0xC3, 0x90 });
 		}
 	};
 
-	template<typename Heap = ProxyVoltekHeap>
+	template<typename Heap>
 	class MemoryManager
 	{
 		MemoryManager(const MemoryManager&) = delete;
@@ -189,13 +191,19 @@ namespace Addictol
 		MemoryManager() = default;
 		~MemoryManager() = default;
 	public:
+#if !AD_NO_EMPTYPOINTERS
 		inline static const uint64_t EMPTY_POINTER{ 0 };
-
-		[[nodiscard]] static void* Alloc([[maybe_unused]] MemoryManager* lpSelf, size_t nSize,
+#endif
+		[[nodiscard]] static void* Alloc([[maybe_unused]] MemoryManager* a_self, size_t nSize,
 			uint32_t nAlignment, bool bAligned) noexcept
 		{
+#if !AD_NO_EMPTYPOINTERS
 			if (!nSize)
 				return (void*)(&EMPTY_POINTER);
+#else
+			if (!nSize)
+				return nullptr;
+#endif
 #if AD_TRACER
 			auto ret_addr = _ReturnAddress();
 			auto ptr = bAligned ?
@@ -210,18 +218,20 @@ namespace Addictol
 #endif
 		}
 
-		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* lpSelf, void* lpBlock, 
-			size_t nSize, uint32_t nAlignment, bool bAligned) noexcept
+		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* a_self, void* lpBlock, size_t nSize,
+			uint32_t nAlignment, bool bAligned) noexcept
 		{
 #if AD_TRACER
 			void* ptr = nullptr;
 			auto ret_addr = _ReturnAddress();
 
+#if !AD_NO_EMPTYPOINTERS
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				ptr = bAligned ?
 					Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
 					Heap::GetSingleton()->malloc(nSize);
 			else
+#endif
 			{
 				MemoryTracer::GetSingleton()->Remove(lpBlock);
 
@@ -233,19 +243,25 @@ namespace Addictol
 			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
 			return ptr;
 #else
+#if !AD_NO_EMPTYPOINTERS
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return Alloc(lpSelf, nSize, nAlignment, bAligned);
-
+#else
+			if (!nSize)
+				return nullptr;
+#endif
 			return bAligned ?
 				Heap::GetSingleton()->aligned_realloc(lpBlock, nSize, nAlignment) :
 				Heap::GetSingleton()->realloc(lpBlock, nSize);
 #endif
 		}
 
-		static void Dealloc([[maybe_unused]] MemoryManager* lpSelf, void* lpBlock, bool bAligned) noexcept
+		static void Dealloc([[maybe_unused]] MemoryManager* a_self, void* lpBlock, bool bAligned) noexcept
 		{
+#if !AD_NO_EMPTYPOINTERS
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return;
+#endif
 #if AD_TRACER
 			MemoryTracer::GetSingleton()->Remove(lpBlock);
 #endif
@@ -255,16 +271,45 @@ namespace Addictol
 				Heap::GetSingleton()->free(lpBlock);
 		}
 
-		[[nodiscard]] static std::size_t Size([[maybe_unused]] MemoryManager* lpSelf, void* lpBlock) noexcept
+		[[nodiscard]] static std::size_t Size([[maybe_unused]] MemoryManager* a_self, void* lpBlock) noexcept
 		{
+#if !AD_NO_EMPTYPOINTERS
 			if (lpBlock == (const void*)(&EMPTY_POINTER))
 				return 0;
-
+#endif
 			return Heap::GetSingleton()->msize(lpBlock);
+		}
+
+		static void Install() noexcept
+		{
+			using tuple_t = std::tuple<uint64_t, void*>;
+
+			/////////////////////////////////////////////////////////////////////
+			// Init stub
+			/////////////////////////////////////////////////////////////////////
+
+			RELEX::WriteSafe(REL::ID{ 597736, 2267875 }.address(), { 0xC3, 0x90 });
+			*(uint32_t*)REL::ID{ 1570354, 2688723, 4807763 }.address() = 2;
+
+			/////////////////////////////////////////////////////////////////////
+			// Functions stub
+			/////////////////////////////////////////////////////////////////////
+
+			RELEX::DetourJump(RE::ID::MemoryManager::Allocate.address(), (uintptr_t)&MemoryManager::Alloc);
+			RELEX::DetourJump(RE::ID::MemoryManager::Deallocate.address(), (uintptr_t)&MemoryManager::Dealloc);
+			RELEX::DetourJump(RE::ID::MemoryManager::Reallocate.address(), (uintptr_t)&MemoryManager::Realloc);
+			RELEX::DetourJump(REL::ID{ 1453698, 2267858 }.address(), (uintptr_t)&MemoryManager::Size);
+
+			/////////////////////////////////////////////////////////////////////
+			// Fake register
+			/////////////////////////////////////////////////////////////////////
+
+			RE::MemoryManager::GetSingleton().RegisterMemoryManager();
+			RE::BSThreadEvent::InitSDM();
 		}
 	};
 
-	template<typename Heap = ProxyVoltekHeap>
+	template<typename Heap>
 	class bhkThreadMemorySource
 	{
 	private:
@@ -340,6 +385,11 @@ namespace Addictol
 		{
 			return nullptr;
 		}
+
+		static void Install() noexcept
+		{
+			RELEX::DetourJump(REL::ID{ 760285, 2281069 }.address(), reinterpret_cast<uintptr_t>(&__ctor__));
+		}
 	};
 
 	ModuleMemoryManager::ModuleMemoryManager() :
@@ -353,44 +403,11 @@ namespace Addictol
 
 	bool ModuleMemoryManager::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		/////////////////////////////////////////////////////////////////////
-		// MemoryManager
-		/////////////////////////////////////////////////////////////////////
-
-		using tuple_t = std::tuple<uint64_t, void*>;
-
-		if (RELEX::IsRuntimeOG())
-		{
-			RELEX::WriteSafe(REL::ID(597736).address(), { 0xC3, 0x90 });
-			*(uint32_t*)REL::ID(1570354).address() = 2;
-
-			const std::array MMPatch
-			{
-				tuple_t{ 652767,	&MemoryManager<>::Alloc },		// RE::ID::MemoryManager::Allocate
-				tuple_t{ 1582181,	&MemoryManager<>::Dealloc },	// RE::ID::MemoryManager::Deallocate
-				tuple_t{ 1502917,	&MemoryManager<>::Realloc },	// RE::ID::MemoryManager::Reallocate
-				tuple_t{ 1453698,	&MemoryManager<>::Size },
-			};
-
-			for (const auto& [id, func] : MMPatch)
-				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-		}
-		else
-		{
-			RELEX::WriteSafe(REL::ID(2267875).address(), { 0xC3, 0x90 });
-			*(uint32_t*)REL::ID(RELEX::IsRuntimeAE() ? 4807763 : 2688723).address() = 2;
-
-			const std::array MMPatch
-			{
-				tuple_t{ 2267872,	&MemoryManager<>::Alloc },		// RE::ID::MemoryManager::Allocate
-				tuple_t{ 2267874,	&MemoryManager<>::Dealloc },	// RE::ID::MemoryManager::Deallocate
-				tuple_t{ 2267873,	&MemoryManager<>::Realloc },	// RE::ID::MemoryManager::Reallocate
-				tuple_t{ 2267858,	&MemoryManager<>::Size },
-			};
-
-			for (const auto& [id, func] : MMPatch)
-				RELEX::DetourJump(REL::ID(id).address(), (uintptr_t)func);
-		}
+		AutoScrapHeap::Install();
+		MemoryManager<ProxyMiHeap>::Install(); // ProxyVoltekHeap // ProxyMiHeap
+		ScrapHeap<ProxyMiHeap>::Install();
+		bhkThreadMemorySource<ProxyMiHeap>::Install();
+		
 
 		/////////////////////////////////////////////////////////////////////
 		// Replacement of all functions of the standard allocator
@@ -398,13 +415,13 @@ namespace Addictol
 
 		auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
 
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<>::realloc);
+		/*RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<>::realloc);
 		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<>::calloc);
 		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<>::aligned_malloc);
 		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<>::malloc);
 		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<>::aligned_free);
 		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<>::free);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<>::msize);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<>::msize);*/
 
 		/////////////////////////////////////////////////////////////////////
 		// Replacing memory manipulation functions with newer and more productive ones
@@ -422,28 +439,7 @@ namespace Addictol
 				RELEX::DetourIAT(base, "msvcr110.dll", "memmove_s", (uintptr_t)&memmove_s);
 				RELEX::DetourIAT(base, "msvcr110.dll", "memcpy_s", (uintptr_t)&memcpy_s);
 			}
-		}
-
-		/////////////////////////////////////////////////////////////////////
-		// AutoScrapHeap & ScrapHeap
-		/////////////////////////////////////////////////////////////////////
-
-		AutoScrapHeap::Install();
-		ScrapHeap<>::Install();
-
-		RELEX::DetourJump(REL::ID(RELEX::IsRuntimeOG() ? 760285 : 2281069).address(),
-			(uintptr_t)&bhkThreadMemorySource<>::__ctor__);
-
-		/////////////////////////////////////////////////////////////////////
-		// Default/Static/File heaps
-		/////////////////////////////////////////////////////////////////////
-
-		RELEX::WriteSafe(REL::ID(RELEX::IsRuntimeOG() ? 433356 : 2228360).address(), { 0xC3, 0x90 });
-
-		/////////////////////////////////////////////////////////////////////
-
-		RE::MemoryManager::GetSingleton().RegisterMemoryManager();
-		RE::BSThreadEvent::InitSDM();
+		}		
 
 		return true;
 	}
