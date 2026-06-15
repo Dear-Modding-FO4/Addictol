@@ -116,8 +116,8 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		//RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<>);
-		//RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<>);
+		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyMiHeap>);
+		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyMiHeap>);
 
 		return true;
 	}

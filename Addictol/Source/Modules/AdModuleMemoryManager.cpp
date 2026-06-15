@@ -299,7 +299,7 @@ namespace Addictol
 			RELEX::DetourJump(RE::ID::MemoryManager::Deallocate.address(), (uintptr_t)&MemoryManager::Dealloc);
 			RELEX::DetourJump(RE::ID::MemoryManager::Reallocate.address(), (uintptr_t)&MemoryManager::Realloc);
 			RELEX::DetourJump(REL::ID{ 1453698, 2267858 }.address(), (uintptr_t)&MemoryManager::Size);
-
+			
 			/////////////////////////////////////////////////////////////////////
 			// Fake register
 			/////////////////////////////////////////////////////////////////////
@@ -404,10 +404,9 @@ namespace Addictol
 	bool ModuleMemoryManager::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		AutoScrapHeap::Install();
-		MemoryManager<ProxyMiHeap>::Install(); // ProxyVoltekHeap // ProxyMiHeap
+		MemoryManager<ProxyMiHeap>::Install();
 		ScrapHeap<ProxyMiHeap>::Install();
 		bhkThreadMemorySource<ProxyMiHeap>::Install();
-		
 
 		/////////////////////////////////////////////////////////////////////
 		// Replacement of all functions of the standard allocator
@@ -415,13 +414,13 @@ namespace Addictol
 
 		auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
 
-		/*RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<>::realloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<>::calloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<>::aligned_malloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<>::malloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<>::aligned_free);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<>::free);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<>::msize);*/
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<ProxyMiHeap>::realloc);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<ProxyMiHeap>::calloc);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<ProxyMiHeap>::aligned_malloc);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<ProxyMiHeap>::malloc);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<ProxyMiHeap>::aligned_free);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<ProxyMiHeap>::free);
+		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<ProxyMiHeap>::msize);
 
 		/////////////////////////////////////////////////////////////////////
 		// Replacing memory manipulation functions with newer and more productive ones
