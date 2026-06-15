@@ -20,13 +20,13 @@ bAchievements = true
 # Enables facegen support and removes freezes.
 bFacegen = true
 
-# Replaces the global memory manager with vmm allocator.
+# Replaces the global memory manager with mimalloc allocator.
 bMemoryManager = true
 
-# Replaces the small block memory allocators with vmm allocator.
+# Replaces the small block memory allocators with mimalloc allocator.
 bSmallBlockAllocator = true
 
-# Replaces the scaleform memory allocator with os allocator.
+# Replaces the scaleform memory allocator with mimalloc allocator.
 bScaleformAllocator = true
 
 # General rendering performance improvement.
