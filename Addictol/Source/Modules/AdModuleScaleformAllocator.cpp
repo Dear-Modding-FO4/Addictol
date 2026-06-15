@@ -2,42 +2,95 @@
 #include <AdAllocator.h>
 #include <AdUtils.h>
 
+#include <Scaleform/S/SysAlloc.h>
+#include <Scaleform/M/MemoryHeap.h>
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesScaleformAllocator{ "Patches"sv, "bScaleformAllocator"sv, true };
-	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 256ul };
-	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional"sv, "uScaleformHeapSize"sv, 512ul };
+	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 64ul };
+	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional"sv, "uScaleformHeapSize"sv, 2048ul };
 
-	class BSScaleformSysMemMapper
+	template<typename Heap>
+	class BSScaleformAllocator final : public Scaleform::SysAlloc
 	{
 	public:
-		inline static uint32_t PAGE_SIZE;
-		inline static uint32_t HEAP_SIZE;
+		inline static uint32_t PAGE_SIZE{ 0 };
+		inline static uint32_t HEAP_SIZE{ 0 };
 
-		static uint32_t GetPageSize(BSScaleformSysMemMapper* _this) noexcept
+		[[nodiscard]] static BSScaleformAllocator* GetSingleton()
 		{
-			return PAGE_SIZE;
+			static BSScaleformAllocator singleton;
+			return std::addressof(singleton);
 		}
 
-		static void* Init(BSScaleformSysMemMapper* _this, size_t size) noexcept
+		struct Init
 		{
-			return REX::W32::VirtualAlloc(nullptr, size, REX::W32::MEM_RESERVE, REX::W32::PAGE_READWRITE);
+			static void thunk(const Scaleform::MemoryHeap::HeapDesc& a_rootHeapDesc, Scaleform::SysAllocBase*)
+			{
+				func(a_rootHeapDesc, BSScaleformAllocator::GetSingleton());
+			}
+
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		static void WriteHooks() noexcept
+		{
+			Init::func = RELEX::DetourJump(REL::ID{ 303712, 2284709 }.address(), (uintptr_t)&Init::thunk);
 		}
 
-		static bool Release(BSScaleformSysMemMapper* _this, void* address) noexcept
+		static void WriteSizes() noexcept
 		{
-			return REX::W32::VirtualFree(address, 0, REX::W32::MEM_RELEASE);
+			PAGE_SIZE = uAdditionalScaleformPageSize.GetValue();
+			HEAP_SIZE = uAdditionalScaleformHeapSize.GetValue();
+			PAGE_SIZE = std::min(PAGE_SIZE, (uint32_t)(2 * 1024));
+			PAGE_SIZE = (PAGE_SIZE + 7) & ~7;
+			HEAP_SIZE = std::min(HEAP_SIZE, (uint32_t)(8 * 1024));
+			HEAP_SIZE = (HEAP_SIZE + 7) & ~7;
+
+			REX::INFO("BSScaleformSysMemMapper (Page: {} Kb, Heap: {} Mb)"sv, PAGE_SIZE, HEAP_SIZE);
+
+			PAGE_SIZE *= 1024;
+			HEAP_SIZE *= 1024 * 1024;
+
+			// GetPageSize
+			REL::WriteSafe(REL::Relocation(REL::ID{ 1310500, 2287456 }, REL::Offset{ 0x1 }).address(), &PAGE_SIZE, 4);
+			// Default PageSize
+			REL::WriteSafe(REL::Relocation(REL::ID{ 466425, 2287420 }, REL::Offset{ 0x8B, 0xF9, 0xF7 }).address(), &PAGE_SIZE, 4);
+			// Default HeapSize
+			REL::WriteSafe(REL::Relocation(REL::ID{ 466425, 2287420 }, REL::Offset{ 0x91, 0x104, 0x102 }).address(), &HEAP_SIZE, 4);
 		}
 
-		static void* Alloc(BSScaleformSysMemMapper* _this, void* address, size_t size) noexcept
+		static void Install() noexcept
 		{
-			return REX::W32::VirtualAlloc(address, size, REX::W32::MEM_COMMIT, REX::W32::PAGE_READWRITE);
+			WriteHooks();
+			WriteSizes();
+		}
+	protected:
+		void* Alloc(std::size_t a_size, std::size_t a_align) override
+		{
+			return a_size > 0 ?
+				Heap::GetSingleton()->aligned_malloc(a_size, a_align) :
+				nullptr;
 		}
 
-		static bool Dealloc(BSScaleformSysMemMapper* _this, void* address, size_t size) noexcept
+		void Free(void* a_block, [[maybe_unused]] std::size_t, [[maybe_unused]] std::size_t) override
 		{
-			return REX::W32::VirtualFree(address, size, REX::W32::MEM_DECOMMIT);
+			Heap::GetSingleton()->aligned_free(a_block);
 		}
+
+		void* Realloc(void* a_block, [[maybe_unused]] std::size_t, std::size_t a_size, std::size_t a_align) override
+		{
+			return Heap::GetSingleton()->aligned_realloc(a_block, a_size, a_align);
+		}
+	private:
+		BSScaleformAllocator() = default;
+		~BSScaleformAllocator() = default;
+
+		BSScaleformAllocator(const BSScaleformAllocator&) = delete;
+		BSScaleformAllocator(BSScaleformAllocator&&) = delete;	
+		BSScaleformAllocator& operator=(const BSScaleformAllocator&) = delete;
+		BSScaleformAllocator& operator=(BSScaleformAllocator&&) = delete;
 	};
 
 	ModuleScaleformAllocator::ModuleScaleformAllocator() :
@@ -51,36 +104,7 @@ namespace Addictol
 
 	bool ModuleScaleformAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		BSScaleformSysMemMapper::PAGE_SIZE = uAdditionalScaleformPageSize.GetValue();
-		BSScaleformSysMemMapper::HEAP_SIZE = uAdditionalScaleformHeapSize.GetValue();
-		BSScaleformSysMemMapper::PAGE_SIZE = std::min(BSScaleformSysMemMapper::PAGE_SIZE, (uint32_t)(2 * 1024));
-		BSScaleformSysMemMapper::PAGE_SIZE = (BSScaleformSysMemMapper::PAGE_SIZE + 7) & ~7;
-		BSScaleformSysMemMapper::HEAP_SIZE = std::min(BSScaleformSysMemMapper::HEAP_SIZE, (uint32_t)(2 * 1024));
-		BSScaleformSysMemMapper::HEAP_SIZE = (BSScaleformSysMemMapper::HEAP_SIZE + 7) & ~7;
-
-		REX::INFO("BSScaleformSysMemMapper (Page: {} Kb, Heap: {} Mb)"sv,
-			BSScaleformSysMemMapper::PAGE_SIZE, BSScaleformSysMemMapper::HEAP_SIZE);
-
-		BSScaleformSysMemMapper::PAGE_SIZE *= 1024;
-		BSScaleformSysMemMapper::HEAP_SIZE *= 1024 * 1024;
-
-		auto vtable = reinterpret_cast<uintptr_t*>(REL::ID(40537).address());
-		if (!vtable)
-			return false;
-
-		RELEX::ScopeLock lock(vtable, 0x40);
-		vtable[0] = (std::uintptr_t)BSScaleformSysMemMapper::GetPageSize;
-		vtable[1] = (std::uintptr_t)BSScaleformSysMemMapper::Init;
-		vtable[2] = (std::uintptr_t)BSScaleformSysMemMapper::Release;
-		vtable[3] = (std::uintptr_t)BSScaleformSysMemMapper::Alloc;
-		vtable[4] = (std::uintptr_t)BSScaleformSysMemMapper::Dealloc;
-
-		auto id = REL::ID{ 466425, 2287420 };
-
-		REL::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x8B, 0xF9, 0xF7 } }.get(), 
-			reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::PAGE_SIZE), 4);
-		REL::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x91, 0x104, 0x102 } }.get(),
-			reinterpret_cast<uint8_t*>(&BSScaleformSysMemMapper::HEAP_SIZE), 4);
+		BSScaleformAllocator<ProxyMiHeap>::Install();
 
 		return true;
 	}

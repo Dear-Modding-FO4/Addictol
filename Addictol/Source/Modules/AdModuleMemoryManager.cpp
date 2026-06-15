@@ -18,7 +18,6 @@
 #include <RE/M/MemoryManager.h>
 #include <RE/B/BSThreadEvent.h>
 
-
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesMemoryManager{ "Patches"sv, "bMemoryManager"sv, true };
@@ -84,7 +83,7 @@ namespace Addictol
 	public:
 		static void Install()
 		{
-			RELEX::WriteSafe(REL::ID(RELEX::IsRuntimeOG() ? 1557709 : 2267868).address(), {0xC3, 0x90, 0x90, 0x90});
+			RELEX::WriteSafe(REL::ID{ 1557709, 2267868 }.address(), { 0xC3, 0x90, 0x90, 0x90 });
 
 			CtorLong();
 			CtorShort();
@@ -139,32 +138,33 @@ namespace Addictol
 			return a_this;
 		}
 
-		[[nodiscard]] inline static void* Allocate([[maybe_unused]] ScrapHeap* lpSelf, std::size_t nSize, std::size_t nAlignment) noexcept(true)
+		[[nodiscard]] inline static void* Allocate([[maybe_unused]] ScrapHeap* a_this, 
+			std::size_t a_size, std::size_t a_align) noexcept(true)
 		{
 #if !AD_NO_EMPTYPOINTERS
-			if (!nSize)
+			if (!a_size)
 				return (void*)(&EMPTY_POINTER);
 #endif
 #if AD_TRACER
 			auto ret_addr = _ReturnAddress();
-			auto ptr = Heap::GetSingleton()->aligned_malloc(nSize, nAlignment);
-			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
+			auto ptr = Heap::GetSingleton()->aligned_malloc(a_size, a_align);
+			MemoryTracer::GetSingleton()->Add(ptr, a_size, ret_addr);
 			return ptr;
 #else
-			return Heap::GetSingleton()->aligned_malloc(nSize, nAlignment);
+			return Heap::GetSingleton()->aligned_malloc(a_size, a_align);
 #endif
 		}
 
-		inline static void Deallocate([[maybe_unused]] ScrapHeap* lpSelf, void* lpBlock) noexcept(true)
+		inline static void Deallocate([[maybe_unused]] ScrapHeap* a_this, void* a_block) noexcept(true)
 		{
 #if !AD_NO_EMPTYPOINTERS
-			if (lpBlock == (const void*)(&EMPTY_POINTER))
+			if (a_block == (const void*)(&EMPTY_POINTER))
 				return;
 #endif
 #if AD_TRACER
-			MemoryTracer::GetSingleton()->Remove(lpBlock);
+			MemoryTracer::GetSingleton()->Remove(a_block);
 #endif
-			Heap::GetSingleton()->aligned_free(lpBlock);
+			Heap::GetSingleton()->aligned_free(a_block);
 		}
 
 		static void Install()
@@ -194,96 +194,94 @@ namespace Addictol
 #if !AD_NO_EMPTYPOINTERS
 		inline static const uint64_t EMPTY_POINTER{ 0 };
 #endif
-		[[nodiscard]] static void* Alloc([[maybe_unused]] MemoryManager* a_self, size_t nSize,
-			uint32_t nAlignment, bool bAligned) noexcept
+		[[nodiscard]] static void* Alloc([[maybe_unused]] MemoryManager* a_self, size_t a_size,
+			uint32_t a_align, bool a_alignment) noexcept
 		{
 #if !AD_NO_EMPTYPOINTERS
-			if (!nSize)
+			if (!a_size)
 				return (void*)(&EMPTY_POINTER);
 #else
-			if (!nSize)
+			if (!a_size)
 				return nullptr;
 #endif
 #if AD_TRACER
 			auto ret_addr = _ReturnAddress();
-			auto ptr = bAligned ?
-				Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
-				Heap::GetSingleton()->malloc(nSize);
-			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
+			auto ptr = a_alignment ?
+				Heap::GetSingleton()->aligned_malloc(a_size, a_align) :
+				Heap::GetSingleton()->malloc(a_size);
+			MemoryTracer::GetSingleton()->Add(ptr, a_size, ret_addr);
 			return ptr;
 #else
-			return bAligned ?
-				Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
-				Heap::GetSingleton()->malloc(nSize);
+			return a_alignment ?
+				Heap::GetSingleton()->aligned_malloc(a_size, a_align) :
+				Heap::GetSingleton()->malloc(a_size);
 #endif
 		}
 
-		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* a_self, void* lpBlock, size_t nSize,
-			uint32_t nAlignment, bool bAligned) noexcept
+		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* a_self, void* a_block, size_t a_size,
+			uint32_t a_align, bool a_alignment) noexcept
 		{
 #if AD_TRACER
 			void* ptr = nullptr;
 			auto ret_addr = _ReturnAddress();
 
 #if !AD_NO_EMPTYPOINTERS
-			if (lpBlock == (const void*)(&EMPTY_POINTER))
-				ptr = bAligned ?
-					Heap::GetSingleton()->aligned_malloc(nSize, nAlignment) :
-					Heap::GetSingleton()->malloc(nSize);
+			if (a_block == (const void*)(&EMPTY_POINTER))
+				ptr = a_alignment ?
+					Heap::GetSingleton()->aligned_malloc(a_size, nAlignment) :
+					Heap::GetSingleton()->malloc(a_size);
 			else
 #endif
 			{
-				MemoryTracer::GetSingleton()->Remove(lpBlock);
+				MemoryTracer::GetSingleton()->Remove(a_block);
 
-				ptr = bAligned ?
-					Heap::GetSingleton()->aligned_realloc(lpBlock, nSize, nAlignment) :
-					Heap::GetSingleton()->realloc(lpBlock, nSize);
+				ptr = a_alignment ?
+					Heap::GetSingleton()->aligned_realloc(a_block, a_size, nAlignment) :
+					Heap::GetSingleton()->realloc(a_block, a_size);
 			}
 
-			MemoryTracer::GetSingleton()->Add(ptr, nSize, ret_addr);
+			MemoryTracer::GetSingleton()->Add(ptr, a_size, ret_addr);
 			return ptr;
 #else
 #if !AD_NO_EMPTYPOINTERS
-			if (lpBlock == (const void*)(&EMPTY_POINTER))
-				return Alloc(lpSelf, nSize, nAlignment, bAligned);
+			if (a_block == (const void*)(&EMPTY_POINTER))
+				return Alloc(lpSelf, a_size, nAlignment, a_alignment);
 #else
-			if (!nSize)
+			if (!a_size)
 				return nullptr;
 #endif
-			return bAligned ?
-				Heap::GetSingleton()->aligned_realloc(lpBlock, nSize, nAlignment) :
-				Heap::GetSingleton()->realloc(lpBlock, nSize);
+			return a_alignment ?
+				Heap::GetSingleton()->aligned_realloc(a_block, a_size, a_align) :
+				Heap::GetSingleton()->realloc(a_block, a_size);
 #endif
 		}
 
-		static void Dealloc([[maybe_unused]] MemoryManager* a_self, void* lpBlock, bool bAligned) noexcept
+		static void Dealloc([[maybe_unused]] MemoryManager* a_self, void* a_block, bool a_alignment) noexcept
 		{
 #if !AD_NO_EMPTYPOINTERS
-			if (lpBlock == (const void*)(&EMPTY_POINTER))
+			if (a_block == (const void*)(&EMPTY_POINTER))
 				return;
 #endif
 #if AD_TRACER
-			MemoryTracer::GetSingleton()->Remove(lpBlock);
+			MemoryTracer::GetSingleton()->Remove(a_block);
 #endif
-			if (bAligned)
-				Heap::GetSingleton()->aligned_free(lpBlock);
+			if (a_alignment)
+				Heap::GetSingleton()->aligned_free(a_block);
 			else
-				Heap::GetSingleton()->free(lpBlock);
+				Heap::GetSingleton()->free(a_block);
 		}
 
-		[[nodiscard]] static std::size_t Size([[maybe_unused]] MemoryManager* a_self, void* lpBlock) noexcept
+		[[nodiscard]] static std::size_t Size([[maybe_unused]] MemoryManager* a_self, void* a_block) noexcept
 		{
 #if !AD_NO_EMPTYPOINTERS
-			if (lpBlock == (const void*)(&EMPTY_POINTER))
+			if (a_block == (const void*)(&EMPTY_POINTER))
 				return 0;
 #endif
-			return Heap::GetSingleton()->msize(lpBlock);
+			return Heap::GetSingleton()->msize(a_block);
 		}
 
 		static void Install() noexcept
 		{
-			using tuple_t = std::tuple<uint64_t, void*>;
-
 			/////////////////////////////////////////////////////////////////////
 			// Init stub
 			/////////////////////////////////////////////////////////////////////
@@ -298,7 +296,7 @@ namespace Addictol
 			RELEX::DetourJump(RE::ID::MemoryManager::Allocate.address(), (uintptr_t)&MemoryManager::Alloc);
 			RELEX::DetourJump(RE::ID::MemoryManager::Deallocate.address(), (uintptr_t)&MemoryManager::Dealloc);
 			RELEX::DetourJump(RE::ID::MemoryManager::Reallocate.address(), (uintptr_t)&MemoryManager::Realloc);
-			RELEX::DetourJump(REL::ID{ 1453698, 2267858 }.address(), (uintptr_t)&MemoryManager::Size);
+			RELEX::DetourJump(RE::ID::MemoryManager::Size.address(), (uintptr_t)&MemoryManager::Size);
 			
 			/////////////////////////////////////////////////////////////////////
 			// Fake register
