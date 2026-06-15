@@ -48,7 +48,7 @@ namespace Addictol
 			HEAP_SIZE = std::min(HEAP_SIZE, (uint32_t)(8 * 1024));
 			HEAP_SIZE = (HEAP_SIZE + 7) & ~7;
 
-			REX::INFO("BSScaleformSysMemMapper (Page: {} Kb, Heap: {} Mb)"sv, PAGE_SIZE, HEAP_SIZE);
+			REX::INFO("BSScaleformAllocator (Page: {} Kb, Heap: {} Mb)"sv, PAGE_SIZE, HEAP_SIZE);
 
 			PAGE_SIZE *= 1024;
 			HEAP_SIZE *= 1024 * 1024;

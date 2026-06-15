@@ -20,31 +20,6 @@ namespace Addictol
 		void* CheckPtr(void* lpBlock, size_t nSize) const noexcept;
 	};
 
-	class ProxyVoltekHeap :
-		public ICheckerPointer,
-		public REX::Singleton<ProxyVoltekHeap>
-	{
-		ProxyVoltekHeap(const ProxyVoltekHeap&) = delete;
-		ProxyVoltekHeap(ProxyVoltekHeap&&) = delete;
-		ProxyVoltekHeap& operator=(const ProxyVoltekHeap&) = delete;
-		ProxyVoltekHeap& operator=(ProxyVoltekHeap&&) = delete;
-	public:
-		ProxyVoltekHeap() noexcept;
-		~ProxyVoltekHeap() noexcept = default;
-
-		[[nodiscard]] void* malloc(size_t nSize) const noexcept;
-		[[nodiscard]] void* aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept;
-
-		[[nodiscard]] void* realloc(void* lpBlock, size_t nNewSize) const noexcept;
-		[[nodiscard]] void* aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept;
-
-		void free(void* lpBlock) const noexcept;
-		void aligned_free(void* lpBlock) const noexcept;
-
-		[[nodiscard]] size_t msize(void* lpBlock) const noexcept;
-		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept;
-	};
-
 	class ProxyMiHeap :
 		public ICheckerPointer,
 		public REX::Singleton<ProxyMiHeap>
@@ -75,7 +50,7 @@ namespace Addictol
 	template<typename Heap = ProxyCurrentHeap>
 	struct StdStuff
 	{
-		[[nodiscard]] static void* calloc(size_t nCount, size_t nSize) noexcept(true)
+		[[nodiscard]] static void* calloc(size_t nCount, size_t nSize) noexcept
 		{
 			if (nCount && nSize > SIZE_MAX / nCount)
 				return nullptr;
@@ -85,32 +60,32 @@ namespace Addictol
 			return ptr;
 		}
 
-		[[nodiscard]] static void* malloc(size_t nSize) noexcept(true)
+		[[nodiscard]] static void* malloc(size_t nSize) noexcept
 		{
 			return Heap::GetSingleton()->malloc(nSize);
 		}
 
-		[[nodiscard]] static void* aligned_malloc(size_t nSize, size_t alignment) noexcept(true)
+		[[nodiscard]] static void* aligned_malloc(size_t nSize, size_t alignment) noexcept
 		{
 			return Heap::GetSingleton()->aligned_malloc(nSize, alignment);
 		}
 
-		[[nodiscard]] static void* realloc(void* lpBlock, size_t nNewSize) noexcept(true)
+		[[nodiscard]] static void* realloc(void* lpBlock, size_t nNewSize) noexcept
 		{
 			return Heap::GetSingleton()->realloc(lpBlock, nNewSize);
 		}
 
-		static void free(void* block) noexcept(true)
+		static void free(void* block) noexcept
 		{
 			Heap::GetSingleton()->free(block);
 		}
 
-		static void aligned_free(void* block) noexcept(true)
+		static void aligned_free(void* block) noexcept
 		{
 			Heap::GetSingleton()->aligned_free(block);
 		}
 
-		[[nodiscard]] static size_t msize(void* block) noexcept(true)
+		[[nodiscard]] static size_t msize(void* block) noexcept
 		{
 			return Heap::GetSingleton()->msize(block);
 		}

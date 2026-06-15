@@ -21,7 +21,6 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerBA2.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProxyMiHeap.cpp" />
-    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerDLL.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerESP.cpp" />
@@ -231,7 +230,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;$(SolutionDir)..\Depends\tbb\include;$(SolutionDir)..\Depends\mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
       <DisableSpecificWarnings>4200;4996;26444;26495;4806</DisableSpecificWarnings>
       <ForcedIncludeFiles>
@@ -243,7 +242,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;VoltekLib.MemoryManager.lib;winhttp.lib;mimalloc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;mimalloc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
