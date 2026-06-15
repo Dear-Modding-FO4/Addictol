@@ -16,3 +16,6 @@
 [submodule "Depends/commonlibf4"]
 	path = Depends/commonlibf4
 	url = https://github.com/Dear-Modding-FO4/commonlibf4.git
+[submodule "Depends/mimalloc"]
+	path = Depends/mimalloc
+	url = https://github.com/microsoft/mimalloc.git
