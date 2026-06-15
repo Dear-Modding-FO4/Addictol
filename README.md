@@ -6,7 +6,7 @@ Consolidates patches from Buffout 4, X-Cell, Mentats, Escape Freeze Fix, Maka Ma
 
 ## Features
 
-- **Memory Manager** - Replaces the game's allocator with Voltek for better performance
+- **Memory Manager** - Replaces the game's allocator with ~~Voltek~~ (with `e3cfbee` commit uses [mimalloc](https://github.com/microsoft/mimalloc)) for better performance
 - **Faster Workshop** - O(1) keyword lookups instead of scanning all constructible objects
 - **LibDeflate** - Faster BA2 decompression via libdeflate
 - **Facegen** - Validates NPC face textures before using preprocessed data
