@@ -247,7 +247,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdProxyMiHeap.cpp">
+    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

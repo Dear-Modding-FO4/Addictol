@@ -63,7 +63,9 @@ namespace Addictol
 
 		static void Install() noexcept
 		{
+#if 0
 			WriteHooks();
+#endif
 			WriteSizes();
 		}
 	protected:
@@ -104,7 +106,7 @@ namespace Addictol
 
 	bool ModuleScaleformAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		BSScaleformAllocator<ProxyMiHeap>::Install();
+		BSScaleformAllocator<ProxyCurrentHeap>::Install();
 
 		return true;
 	}

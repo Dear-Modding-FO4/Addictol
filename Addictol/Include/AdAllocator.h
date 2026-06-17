@@ -20,17 +20,17 @@ namespace Addictol
 		void* CheckPtr(void* lpBlock, size_t nSize) const noexcept;
 	};
 
-	class ProxyMiHeap :
+	class ProxyVoltekHeap :
 		public ICheckerPointer,
-		public REX::Singleton<ProxyMiHeap>
+		public REX::TSingleton<ProxyVoltekHeap>
 	{
-		ProxyMiHeap(const ProxyMiHeap&) = delete;
-		ProxyMiHeap(ProxyMiHeap&&) = delete;
-		ProxyMiHeap& operator=(const ProxyMiHeap&) = delete;
-		ProxyMiHeap& operator=(ProxyMiHeap&&) = delete;
+		ProxyVoltekHeap(const ProxyVoltekHeap&) = delete;
+		ProxyVoltekHeap(ProxyVoltekHeap&&) = delete;
+		ProxyVoltekHeap& operator=(const ProxyVoltekHeap&) = delete;
+		ProxyVoltekHeap& operator=(ProxyVoltekHeap&&) = delete;
 	public:
-		ProxyMiHeap() noexcept = default;
-		~ProxyMiHeap() noexcept = default;
+		ProxyVoltekHeap() noexcept;
+		~ProxyVoltekHeap() noexcept = default;
 
 		[[nodiscard]] void* malloc(size_t nSize) const noexcept;
 		[[nodiscard]] void* aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept;
@@ -45,7 +45,7 @@ namespace Addictol
 		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept;
 	};
 
-	using ProxyCurrentHeap = ProxyMiHeap;
+	using ProxyCurrentHeap = ProxyVoltekHeap;
 
 	template<typename Heap = ProxyCurrentHeap>
 	struct StdStuff
