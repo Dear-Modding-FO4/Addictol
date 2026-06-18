@@ -31,30 +31,16 @@ namespace Addictol
 
 	bool ModuleAchievements::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Target;
-		std::size_t Size;
+		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 1432894, 2192323 } }.address();
+		const auto size = REL::Offset{ 0x73, 0x6E }.offset();
 
-		if (!RELEX::IsRuntimeOG())
-		{
-			// NG/AE
-			Target = REL::ID(2192323);
-			Size = 0x6E;
-		}
-		else
-		{
-			// OG
-			Target = REL::ID(1432894);
-			Size = 0x73;
-		}
-
-		const auto Address = Target.address();
-		REL::WriteSafeFill(Address, REL::INT3, Size);
-
+		REL::WriteSafeFill(target, REL::INT3, size);
+		
 		achievementsDetail::Patch p;
 		p.ready();
 
-		AdAssert(p.getSize() < Size);
-		REL::WriteSafe(Address, std::span{ p.getCode<const std::byte*>(), p.getSize() });
+		AdAssert(p.getSize() < size);
+		REL::WriteSafe(target, std::span{ p.getCode<const std::byte*>(), p.getSize() });
 
 		return true;
 	}
