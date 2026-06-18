@@ -2,6 +2,7 @@
 #include <AdUtils.h>
 
 #include <dxgi.h>
+#include <xbyak/xbyak.h>
 
 namespace Addictol
 {
@@ -24,6 +25,20 @@ namespace Addictol
 
 			return result;
 		}
+
+		struct Patch : Xbyak::CodeGenerator
+		{
+			Patch(std::uintptr_t resumeAddr, std::uintptr_t funcAddr)
+			{
+				mov(r10, funcAddr);
+				call(r10);
+
+				xor_(r14b, r14b);
+
+				jmp(ptr[rip]);
+				dq(resumeAddr);
+			}
+		};
 	}
 
 	ModuleCreateD3DAndSwapchain::ModuleCreateD3DAndSwapchain() :
@@ -32,22 +47,16 @@ namespace Addictol
 
 	bool ModuleCreateD3DAndSwapchain::DoQuery() const noexcept
 	{
-		// User Reports that this crashes on Linux / Proton.
-		bool UsesWine = UserUseWine();
-
-		if (UsesWine)
-		{
-			REX::INFO("CreateD3DAndSwapchain: Wine detected, disabling fix..."sv);
-		}
-
-		return !UsesWine;
+		return true;
 	}
 
 	bool ModuleCreateD3DAndSwapchain::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation<std::uintptr_t>(REL::ID{ 224250, 2277018, 4492363 }, REL::Offset{ 0x114, 0x114, 0x10B }).address();
-		auto& trampoline = REL::GetTrampoline();
-		trampoline.write_call<5>(target, createD3DAndSwapchainDetail::GetDisplayModeList);
+		const std::size_t size = 0x7;
+
+		REL::WriteSafeFill(target, REL::INT3, size);
+		RELEX::XbyakJump<createD3DAndSwapchainDetail::Patch>(target, target + size, (std::uintptr_t)&createD3DAndSwapchainDetail::GetDisplayModeList);
 
 		return true;
 	}
