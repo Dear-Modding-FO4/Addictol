@@ -166,7 +166,7 @@ bPipBoyCursorConstraints = true
 bMuzzleFlashLight = true
 
 # Fixes the exclusive-fullscreen Alt-Tab hang by forcing the swap chain to borderless-windowed at creation and blocking DXGI's auto Alt+Enter handler.
-bAltTabFullscreen = true
+bAltTabFullscreen = false
 
 # Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
 bPowerGridScrap = true
