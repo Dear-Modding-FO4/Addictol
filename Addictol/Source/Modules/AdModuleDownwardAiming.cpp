@@ -43,8 +43,9 @@ namespace Addictol
 
 	bool ModuleDownwardAiming::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		detail::Projectile::_Move = (decltype(detail::Projectile::Move)*)
-			RELEX::DetourJump(REL::Relocation{ REL::ID{ 627398, 2237050 } }.address(),
+		// called .221: rva+E3B5D0 - begin, rva+E4BD60 - after (moving bullet)
+		detail::Projectile::_Move = (decltype(detail::Projectile::Move)*)REL::Relocation{ REL::ID{ 627398, 2237050 } }.get();
+		RELEX::DetourCall(REL::Relocation{ REL::ID{ 1470408, 2236880 }, REL::Offset{ 0x975, 0xCD9 } }.address(),
 			reinterpret_cast<uintptr_t>(&detail::Projectile::Move));
 
 		return true;
