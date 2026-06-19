@@ -20,13 +20,13 @@ bAchievements = true
 # Enables facegen support and removes freezes.
 bFacegen = true
 
-# Replaces the global memory manager with mimalloc allocator.
+# Replaces the global memory manager with vmm allocator.
 bMemoryManager = true
 
-# Replaces the small block memory allocators with mimalloc allocator.
+# Replaces the small block memory allocators with vmm allocator.
 bSmallBlockAllocator = true
 
-# Replaces the scaleform memory allocator with mimalloc allocator.
+# Replaces the scaleform memory allocator with os allocator.
 bScaleformAllocator = true
 
 # General rendering performance improvement.
@@ -166,7 +166,7 @@ bPipBoyCursorConstraints = true
 bMuzzleFlashLight = true
 
 # Fixes the exclusive-fullscreen Alt-Tab hang by forcing the swap chain to borderless-windowed at creation and blocking DXGI's auto Alt+Enter handler.
-bAltTabFullscreen = true
+bAltTabFullscreen = false
 
 # Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
 bPowerGridScrap = true
@@ -180,10 +180,10 @@ bDofFix = true
 # Fixes the "ToggleGrass" / "tg" command being a reference function in the AE versions of the game.
 bToggleGrassCommand = true
 
-# Fixes a crash if NiTexture is nullptr when create, fixes degrade level and also logs texture load errors.
+# Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors.
 bTextureLoadCrash = true
 
-# Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge
+# Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.
 bDownwardAiming = true
 
 
@@ -202,22 +202,22 @@ bReferenceHandleLimit = true
 
 [Additional]
 
-# Debugging messages about the presence of facegen in the NPC in console and log (Need bFacegen patch).
+# Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen).
 bDbgFacegenOutput = false
 
-# Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (Need bMemoryManager patch).
+# Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (needs bMemoryManager).
 bUseNewRedistributable = false
 
-# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (Need bScaleformAllocator patch).
+# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
 uScaleformPageSize = 64
 
-# The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (Need bScaleformAllocator patch).
+# The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (needs bScaleformAllocator).
 uScaleformHeapSize = 2048
 
-# Waiting (in ms) with an interval for EscapeFreeze (Need bEscapeFreeze fixes).
+# Waiting (in ms) with an interval for EscapeFreeze (needs bEscapeFreeze).
 nSleepTimer = 125
 
-# Maximum allowable number of condition lock (Need bEscapeFreeze fixes).
+# Maximum allowable number of condition lock (needs bEscapeFreeze).
 nMaxLockCount = 8
 
 # Enable InteriorNavCut MultiThreading, automatically disabled on Linux / Proton (needs bInteriorNavCut).
@@ -229,7 +229,7 @@ nMaxPapyrusOpsPerFrame = 500
 # Ignore the previously preset value for texture quality distance, if this sets as false, should hopefully reduce the chance of causing rendering errors.
 bIgnorePreInstallBias = false
 
-# Delay (ms) before the deferred quit-to-desktop flag is set. Lets the UI/menu unwind so cleanup can't deadlock (needs bSafeExit fix).
+# Delay (ms) before the deferred quit-to-desktop flag is set. Lets the UI/menu unwind so cleanup can't deadlock (needs bSafeExit).
 nQuitGameDelayMs = 1000
 
 # Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.

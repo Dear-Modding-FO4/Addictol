@@ -46,38 +46,13 @@ namespace Addictol
 
 	bool ModuleBGSAIWorldLocationRefRadius::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Base;
-		REL::Relocation<std::uintptr_t> Target;
-		REL::Relocation<std::uintptr_t> ReturnAddress;
+		const auto base = REL::Relocation<std::uintptr_t>{ REL::ID{ 964254, 2188379 } }.address();
+		const auto target = base + REL::Offset{ 0x52, 0x4E }.offset();
+		const auto returnAddr = base + REL::Offset{ 0x104, 0xF8 }.offset();
+		const std::size_t size = 0x5;
 
-		if (!RELEX::IsRuntimeOG())
-		{
-			// NG/AE
-			Base = REL::Relocation<std::uintptr_t>{ REL::ID(2188379) };
-			Target = REL::Relocation<std::uintptr_t>{ Base.address() + 0x4E };
-			ReturnAddress = REL::Relocation<std::uintptr_t>{ Base.address() + 0xF8 };
-		}
-		else
-		{
-			// OG
-			Base = REL::Relocation<std::uintptr_t>{ REL::ID(964254) };
-			Target = REL::Relocation<std::uintptr_t>{ Base.address() + 0x52 };
-			ReturnAddress = REL::Relocation<std::uintptr_t>{ Base.address() + 0x104 };
-		}
-
-		auto Resume = REL::Relocation<std::uintptr_t>{ Target.address() + 0x5 };
-
-		const auto InstructionBytes = Resume.address() - Target.address();
-		for (std::size_t i = 0; i < InstructionBytes; i++)
-		{
-			REL::WriteSafeData(Target.address() + i, REL::NOP);
-		}
-
-		bgsAIWorldLocationRefRadiusDetail::Patch p{ Resume.address(), ReturnAddress.address() };
-		p.ready();
-
-		auto& trampoline = REL::GetTrampoline();
-		trampoline.write_jmp<5>(Target.address(), trampoline.allocate(p));
+		REL::WriteSafeFill(target, REL::NOP, size);
+		RELEX::XbyakJump<bgsAIWorldLocationRefRadiusDetail::Patch>(target, target + size, returnAddr);
 
 		return true;
 	}

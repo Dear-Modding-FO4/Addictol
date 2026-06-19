@@ -16,23 +16,12 @@ namespace Addictol
 
 	bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Target;
-		std::size_t TargetOffset;
+		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
 
-		if (!RELEX::IsRuntimeOG())
+		if (RELEX::IsRuntimeOG())
 		{
-			// NG/AE
-			Target = REL::ID(2277131);
-			TargetOffset = 0x192;
-		}
-		else
-		{
-			// OG
-			Target = REL::ID(44611);
-			TargetOffset = 0x174;
-
 			// CreateCommandBuffer (not needed in NG/AE)
-			constexpr std::array Offsets
+			constexpr std::array offsets
 			{
 				0x320,
 				0x339,
@@ -40,17 +29,17 @@ namespace Addictol
 				0x353,
 			};
 
-			REL::Relocation<std::uintptr_t> Base{ REL::ID(768994) };
-			for (const auto Offset : Offsets)
+			const auto base = REL::Relocation<std::uintptr_t>{ REL::ID(768994) }.address();
+			for (const auto offset : offsets)
 			{
-				std::uint8_t Value = 0x11;
-				REL::WriteSafe(Base.address() + Offset + 0x1, &Value, sizeof(Value));  // movaps -> movups
+				const std::uint8_t value = 0x11;
+				REL::WriteSafe(base + offset + 0x1, &value, sizeof(value));  // movaps -> movups
 			}
 		}
 
 		// ApplySkinningToGeometry
-		std::uint8_t Value = 0x10;
-		REL::WriteSafe(Target.address() + TargetOffset, &Value, sizeof(Value));
+		const std::uint8_t value = 0x10;
+		REL::WriteSafe(target, &value, sizeof(value));
 
 		return true;
 	}
