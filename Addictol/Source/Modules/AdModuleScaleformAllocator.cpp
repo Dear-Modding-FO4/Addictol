@@ -16,7 +16,7 @@ namespace Addictol
 	{
 	public:
 		inline static uint32_t PAGE_SIZE{ 0 };
-		inline static uint32_t HEAP_SIZE{ 0 };
+		inline static uint64_t HEAP_SIZE{ 0 };
 
 		[[nodiscard]] static BSScaleformAllocator* GetSingleton()
 		{
@@ -34,38 +34,50 @@ namespace Addictol
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
+		struct SysAllocMapper
+		{
+			// this function accepts 64-bit numbers, however, Bethesda initializes with 32-bit numbers.
+			static void thunk(SysAllocMapper* a_this, const Scaleform::SysAllocBase* a_allocator,
+				[[maybe_unused]] uint64_t a_heapSize, [[maybe_unused]] uint64_t a_pageSize, bool a_unk) noexcept
+			{
+				func(a_this, a_allocator, HEAP_SIZE, PAGE_SIZE, a_unk);
+			}
+
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
 		static void WriteHooks() noexcept
 		{
+			// vmm can't handle it
+#if 0
 			Init::func = RELEX::DetourJump(REL::ID{ 303712, 2284709 }.address(), (uintptr_t)&Init::thunk);
+#endif
+			SysAllocMapper::func = RELEX::DetourJump(REL::ID{ 347541, 2295435 }.address(), (uintptr_t)&SysAllocMapper::thunk);
 		}
 
 		static void WriteSizes() noexcept
 		{
 			PAGE_SIZE = uAdditionalScaleformPageSize.GetValue();
 			HEAP_SIZE = uAdditionalScaleformHeapSize.GetValue();
-			PAGE_SIZE = std::min(PAGE_SIZE, (uint32_t)(2 * 1024));
+			PAGE_SIZE = std::min(PAGE_SIZE, static_cast<uint32_t>(2048));
 			PAGE_SIZE = (PAGE_SIZE + 7) & ~7;
-			HEAP_SIZE = std::min(HEAP_SIZE, (uint32_t)(8 * 1024));
+			HEAP_SIZE = std::min(static_cast<uint64_t>(HEAP_SIZE), static_cast<uint64_t>(8192));
 			HEAP_SIZE = (HEAP_SIZE + 7) & ~7;
+			PAGE_SIZE = std::max(PAGE_SIZE, static_cast<uint32_t>(64));		// min value 64kb
+			HEAP_SIZE = std::max(HEAP_SIZE, static_cast<uint64_t>(2048));	// min value 2gb
 
 			REX::INFO("BSScaleformAllocator (Page: {} Kb, Heap: {} Mb)"sv, PAGE_SIZE, HEAP_SIZE);
 
-			PAGE_SIZE *= 1024;
-			HEAP_SIZE *= 1024 * 1024;
+			PAGE_SIZE *= 1024ul;
+			HEAP_SIZE *= 1024ull * 1024ull;
 
 			// GetPageSize
 			REL::WriteSafe(REL::Relocation(REL::ID{ 1310500, 2287456 }, REL::Offset{ 0x1 }).address(), &PAGE_SIZE, 4);
-			// Default PageSize
-			REL::WriteSafe(REL::Relocation(REL::ID{ 466425, 2287420 }, REL::Offset{ 0x8B, 0xF9, 0xF7 }).address(), &PAGE_SIZE, 4);
-			// Default HeapSize
-			REL::WriteSafe(REL::Relocation(REL::ID{ 466425, 2287420 }, REL::Offset{ 0x91, 0x104, 0x102 }).address(), &HEAP_SIZE, 4);
 		}
-
+		
 		static void Install() noexcept
 		{
-#if 0
 			WriteHooks();
-#endif
 			WriteSizes();
 		}
 	protected:
