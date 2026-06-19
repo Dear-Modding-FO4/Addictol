@@ -66,7 +66,7 @@ namespace Addictol
 			PAGE_SIZE = std::max(PAGE_SIZE, static_cast<uint32_t>(64));		// min value 64kb
 			HEAP_SIZE = std::max(HEAP_SIZE, static_cast<uint64_t>(2048));	// min value 2gb
 
-			REX::INFO("BSScaleformAllocator (Page: {} Kb, Heap: {} Gb)"sv, PAGE_SIZE, HEAP_SIZE);
+			REX::INFO("BSScaleformAllocator (Page: {} Kb, Heap: {} Mb)"sv, PAGE_SIZE, HEAP_SIZE);
 
 			PAGE_SIZE *= 1024ul;
 			HEAP_SIZE *= 1024ull * 1024ull;
