@@ -24,20 +24,23 @@ namespace Addictol
 			"RemoveMusic MUSzDLC01CombatMechanistMinions"sv,
 		};
 
+		static std::atomic<bool> fixQueued { false };
+
 		void FixCombatMusic() noexcept
 		{
-			auto asyncFunc = []()
-			{
-				std::this_thread::sleep_for(std::chrono::seconds(5));
+			if (fixQueued.exchange(true))
+				return;
+			
+				std::jthread([]() {
+					std::this_thread::sleep_for(std::chrono::seconds(5));
 
-				for (const std::string_view& command : commands)
-				{
-					ExecuteCommand(command, nullptr, true);
-				}
-			};
+					F4SE::GetTaskInterface()->AddTask([]() {
+						for (const std::string_view& command : commands)
+							ExecuteCommand(command, nullptr, true);
 
-			std::jthread t(asyncFunc);
-			t.detach();
+						fixQueued = false;
+					});
+				}).detach();
 		}
 
 		bool NeedToFixCombatMusic() noexcept
