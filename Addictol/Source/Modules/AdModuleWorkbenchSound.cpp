@@ -59,11 +59,13 @@ namespace Addictol
 
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESFurnitureEvent& a_event, RE::BSTEventSource<RE::TESFurnitureEvent>*)
 			{
-				if (a_event.IsEnter())
+				if (!a_event.IsExit())
 					// We only run on IsExit(), otherwise all workbenches would be silent
 					return RE::BSEventNotifyControl::kContinue;
 
-				RE::TESFurniture* furniture = a_event.targetFurniture.get()->As<RE::TESFurniture>();
+				RE::TESObjectREFR* furniterRef = a_event.targetFurniture.get();
+				RE::TESBoundObject* base = furniterRef ? furniterRef->GetObjectReference() : nullptr;
+				RE::TESFurniture* furniture = base ? base->As<RE::TESFurniture>() : nullptr;
 				if (!furniture)
 					return RE::BSEventNotifyControl::kContinue;
 
