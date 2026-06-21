@@ -15,6 +15,7 @@ namespace Addictol
 			{
 				Xbyak::Label retLab;
 
+				lock();
 				and_(dword[rdi + 0x4], 0xFFFFFFF);
 				mov(rcx, 1);
 				jmp(ptr[rip + retLab]);

@@ -326,27 +326,27 @@ namespace Addictol
 			DeleteCriticalSection(&m_CritSec);
 		}
 
-		[[nodiscard]] virtual void* blockAlloc(size_t numBytes) noexcept
+		[[nodiscard]] virtual void* blockAlloc(std::int32_t numBytes) noexcept
 		{
 			return Heap::GetSingleton()->aligned_malloc(numBytes, 16);
 		}
 
-		virtual void blockFree(void* p, size_t numBytes) noexcept
+		virtual void blockFree(void* p, std::int32_t numBytes) noexcept
 		{
 			Heap::GetSingleton()->aligned_free(p);
 		}
 
-		[[nodiscard]] virtual void* bufAlloc(size_t& reqNumBytesInOut) noexcept
+		[[nodiscard]] virtual void* bufAlloc(std::int32_t& reqNumBytesInOut) noexcept
 		{
 			return blockAlloc(reqNumBytesInOut);
 		}
 
-		virtual void bufFree(void* p, size_t numBytes) noexcept
+		virtual void bufFree(void* p, std::int32_t numBytes) noexcept
 		{
 			return blockFree(p, numBytes);
 		}
 
-		[[nodiscard]] virtual void* bufRealloc(void* pold, size_t oldNumBytes, size_t& reqNumBytesInOut) noexcept
+		[[nodiscard]] virtual void* bufRealloc(void* pold, std::int32_t oldNumBytes, std::int32_t& reqNumBytesInOut) noexcept
 		{
 			void* p = blockAlloc(reqNumBytesInOut);
 			if (!p)
@@ -356,13 +356,13 @@ namespace Addictol
 			return p;
 		}
 
-		virtual void blockAllocBatch(void** ptrsOut, size_t numPtrs, size_t blockSize) noexcept
+		virtual void blockAllocBatch(void** ptrsOut, std::int32_t numPtrs, std::int32_t blockSize) noexcept
 		{
 			for (long i = 0; i < numPtrs; i++)
 				ptrsOut[i] = blockAlloc(blockSize);
 		}
 
-		virtual void blockFreeBatch(void** ptrsIn, size_t numPtrs, size_t blockSize) noexcept
+		virtual void blockFreeBatch(void** ptrsIn, std::int32_t numPtrs, std::int32_t blockSize) noexcept
 		{
 			for (long i = 0; i < numPtrs; i++)
 				blockFree(ptrsIn[i], blockSize);
@@ -371,7 +371,7 @@ namespace Addictol
 		virtual void getMemoryStatistics(class MemoryStatistics& u) noexcept
 		{}
 
-		virtual size_t getAllocatedSize(const void* obj, size_t nbytes) noexcept
+		virtual size_t getAllocatedSize(const void* obj, std::int32_t nbytes) noexcept
 		{
 			return 0;
 		}

@@ -63,7 +63,7 @@ namespace Addictol
 
 				nodesErrorMessage += GetFormInfo(node);
 			}
-			nodesErrorMessage = std::format("{{}}"sv, nodesErrorMessage);
+			nodesErrorMessage = std::format("{{{}}}"sv, nodesErrorMessage);
 
 			REX::WARN("DuplicateAddonNodeIndex: Index ({}) is shared by {} the following AddonNodes: {}"sv,
 					  index, nodesSize, nodesErrorMessage);

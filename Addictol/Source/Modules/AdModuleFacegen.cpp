@@ -237,7 +237,7 @@ namespace Addictol
 
 	bool FacegenSystem::InitContinue([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		*(uintptr_t*)&keywordIsChildPlayer = REL::ID{ 533357, 2692125, 4799417 }.address();
+		keywordIsChildPlayer = REL::Relocation<RE::BGSKeyword*>{ REL::ID{ 533357, 2692125, 4799417 } }.get();
 		dataHandler = RE::TESDataHandler::GetSingleton();
 
 		ReadExceptions();
