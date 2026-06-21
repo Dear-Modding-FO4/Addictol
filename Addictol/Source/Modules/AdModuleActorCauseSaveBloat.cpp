@@ -21,7 +21,7 @@ namespace Addictol
 			if (!a_cell)
 				return references_vector;
 
-			const RE::BSSpinLock lock{ a_cell->spinLock };
+			const RE::BSAutoLock lock{ a_cell->spinLock };
 
 			for (auto& reference_pointer : a_cell->references)
 			{
