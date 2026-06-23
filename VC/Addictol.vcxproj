@@ -30,6 +30,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h" />

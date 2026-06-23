@@ -66,6 +66,7 @@
 #include <Modules/AdModuleTextureLoadCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
 #include <Modules/AdModuleSprintStutter.h>
+#include <Modules/AdModuleMoonRotation.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -134,6 +135,7 @@ static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleTogg
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
+static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
 
 void AdRegisterPreloadModules()
 {
@@ -214,6 +216,7 @@ void AdRegisterModules()
 	modules.Register(sModuleTextureLoadCrash);
 	modules.Register(sModuleDownwardAiming);
 	modules.Register(sModuleSprintStutter);
+	modules.Register(sModuleMoonRotation);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
