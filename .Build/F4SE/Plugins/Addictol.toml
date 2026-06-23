@@ -250,6 +250,15 @@ nQuitGameDelayMs = 1000
 # Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
 nBloomScale = 2
 
+# Removes the black loading screens for faster loads; the FPS counter still works (needs bLoadScreen).
+bDisableBlackLoadingScreens = false
+
+# Skips the loading-screen animation for significantly faster loads; the FPS counter freezes (needs bLoadScreen).
+bDisableAnimationOnLoadingScreens = false
+
+# Speeds up the post-loading menu fade between locations (1.0 = vanilla, 2.0 = twice as fast) (needs bLoadScreen).
+fPostloadingMenuSpeed = 1.0
+
 
 [Profiler]
 

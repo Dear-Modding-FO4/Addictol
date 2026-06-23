@@ -45,7 +45,8 @@ namespace Addictol
 			"uScaleformPageSize", "uScaleformHeapSize",
 			"nSleepTimer", "nMaxLockCount",
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
-			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale"
+			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
+			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens", "fPostloadingMenuSpeed"
 		}},
 		{ "HighFPSPhysics", {
 			"bUntieSpeedFromFPS", "bFixStuttering", "bFixWhiteScreen", "bFixWindSpeed",
