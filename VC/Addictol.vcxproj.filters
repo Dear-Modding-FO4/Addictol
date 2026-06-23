@@ -262,6 +262,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusBudget.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -521,6 +524,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusBudget.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>

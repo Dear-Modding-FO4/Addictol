@@ -65,6 +65,9 @@ bSaveCompression = true
 # Decouples the physics simulation from framerate at high FPS (Untie + per-subsystem speed fixes). See [HighFPSPhysics] for per-fix toggles.
 bPhysicsFix = true
 
+# Dynamically scales the Papyrus update budget (fUpdateBudgetMS) by the smoothed real frame delta so scripts get more time per frame at high FPS. Tuned via fUpdateBudgetBase / fBudgetMaxFPS.
+bDynamicUpdateBudget = true
+
 
 [Fixes]
 
@@ -258,6 +261,12 @@ bDisableAnimationOnLoadingScreens = false
 
 # Speeds up the post-loading menu fade between locations (1.0 = vanilla, 2.0 = twice as fast) (needs bLoadScreen).
 fPostloadingMenuSpeed = 1.0
+
+# Base Papyrus update budget in ms before frame-delta scaling (needs bDynamicUpdateBudget). HFPF default 1.2; higher gives scripts more time per frame. Clamped 0.1-4.0.
+fUpdateBudgetBase = 1.2
+
+# Upper FPS bound used to clamp the dynamic budget smoothing window (needs bDynamicUpdateBudget). Clamped 60-300.
+fBudgetMaxFPS = 144.0
 
 
 [Profiler]
