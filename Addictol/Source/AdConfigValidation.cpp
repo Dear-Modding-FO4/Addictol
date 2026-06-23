@@ -17,7 +17,8 @@ namespace Addictol
 			"bFacegen", "bMemoryManager", "bSmallBlockAllocator", "bScaleformAllocator",
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
-			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling"
+			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
+			"bSaveCompression", "bPhysicsFix"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
@@ -33,7 +34,8 @@ namespace Addictol
 			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
 			"bViewmodelShading", "bDofFix", "bUtilityShader",
 			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
-			"bDownwardAiming"
+			"bDownwardAiming",
+			"bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"
@@ -44,6 +46,11 @@ namespace Addictol
 			"nSleepTimer", "nMaxLockCount",
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
 			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale"
+		}},
+		{ "HighFPSPhysics", {
+			"bUntieSpeedFromFPS", "bFixStuttering", "bFixWhiteScreen", "bFixWindSpeed",
+			"bFixRotationSpeed", "bFixSittingRotationSpeed", "bFixWorkshopRotationSpeed",
+			"bFixStuckAnimation", "bFixMotionResponsive"
 		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",

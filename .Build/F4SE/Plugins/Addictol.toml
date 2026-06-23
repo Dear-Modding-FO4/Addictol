@@ -59,6 +59,12 @@ bHighResBloom = false
 # Marks the process as DPI-aware so menus and cursor track correctly on high-DPI desktops.
 bDpiScaling = true
 
+# Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
+bSaveCompression = true
+
+# Decouples the physics simulation from framerate at high FPS (Untie + per-subsystem speed fixes). See [HighFPSPhysics] for per-fix toggles.
+bPhysicsFix = true
+
 
 [Fixes]
 
@@ -186,6 +192,15 @@ bTextureLoadCrash = true
 # Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.
 bDownwardAiming = true
 
+# Removes the first-person sprint camera micro-stutter by raising the position-delta snap threshold.
+bSprintStutter = true
+
+# Corrects the lunar disc orientation during moon initialization.
+bMoonRotation = true
+
+# Prevents the NVIDIA Weapon Debris CTD on Turing+ / deprecated-FleX drivers by skipping the crashing collision path.
+bWeaponDebrisCrash = true
+
 
 [Warnings]
 
@@ -264,3 +279,35 @@ bBA2Timing = true
 
 # Export profiler data to CSV alongside the log report.
 bCSVExport = true
+
+
+[HighFPSPhysics]
+
+# Per-fix toggles for bPhysicsFix (the master bPhysicsFix in [Patches] must be enabled for any of these to apply).
+
+# Advance the simulation by the real frame delta instead of a fixed floor, and force iFPSClamp to 0.
+bUntieSpeedFromFPS = true
+
+# Smooths physics stuttering at high FPS (also fixes jump height).
+bFixStuttering = true
+
+# Fixes the white screen after falling at high FPS (~125+).
+bFixWhiteScreen = true
+
+# Removes FPS influence on wind speed (cloth and hair).
+bFixWindSpeed = true
+
+# Removes FPS influence on object rotation speed.
+bFixRotationSpeed = true
+
+# Removes FPS influence on first-person camera rotation speed while sitting.
+bFixSittingRotationSpeed = true
+
+# Removes FPS influence on object rotation speed in workshop mode.
+bFixWorkshopRotationSpeed = true
+
+# Fixes NPCs and the player getting stuck on terminals / power armor at high FPS.
+bFixStuckAnimation = true
+
+# Fixes movement responsiveness when starting to move at very high FPS.
+bFixMotionResponsive = true
