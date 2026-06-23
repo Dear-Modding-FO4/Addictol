@@ -16,17 +16,15 @@ namespace Addictol
 
 	bool ModuleSprintStutter::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		// Raise the FirstPersonState::Update camera snap threshold 500.0f -> 1100.0f so sprint frames stay on the smooth path instead of hitching.
+		// FirstPersonState::Update camera snap threshold, 500.0f -> 1100.0f.
 		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 61995, 2664490, 2664490 } }.address();
-
-		// Bail unless the constant is still 500.0f (0x43FA0000) so a bad resolve can't corrupt an unrelated dword.
 		if (*reinterpret_cast<const std::uint32_t*>(target) != 0x43FA0000)
 		{
 			REX::WARN("Sprint Stutter: target constant is not 500.0f -- skipping to avoid corruption."sv);
 			return false;
 		}
 
-		RELEX::WriteSafe(target, { 0x00, 0x80, 0x89, 0x44 });	// 1100.0f (0x44898000)
+		RELEX::WriteSafe(target, { 0x00, 0x80, 0x89, 0x44 });	// 1100.0f
 		return true;
 	}
 

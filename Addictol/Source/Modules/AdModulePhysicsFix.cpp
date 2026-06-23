@@ -29,7 +29,7 @@ namespace Addictol
 			return std::memcmp(reinterpret_cast<const void*>(a_addr), std::data(a_sig), a_sig.size()) == 0;
 		}
 
-		// Overwrites the first 5 bytes of a_site with a near jmp to a_cave, then NOPs out to a_replaceLen.
+		// 5-byte jmp to the cave, then NOP the remainder.
 		static void Branch(std::uintptr_t a_site, void* a_cave, std::size_t a_replaceLen) noexcept
 		{
 			const std::int32_t rel = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(a_cave) - (a_site + 5));
@@ -207,8 +207,7 @@ namespace Addictol
 			}
 		};
 
-		// OG 1.10.163 cave variants: the engine uses different scratch registers, constants and instruction
-		// lengths than NG/AE at these four sites, so OG needs its own caves (offsets come from the triples).
+		// OG cave variants: different scratch registers and lengths than NG/AE.
 		struct StutterSubstepsOG : Xbyak::CodeGenerator
 		{
 			StutterSubstepsOG(std::uintptr_t a_retn)
@@ -286,8 +285,7 @@ namespace Addictol
 
 		const bool og = RELEX::IsRuntimeOG();
 
-		// Untie advances the simulation by the real frame delta instead of a floored fixed step, and force
-		// iFPSClamp to 0 so it can't re-tie speed to a fixed FPS.
+		// Untie the sim step from FPS and force iFPSClamp to 0.
 		if (bUntieSpeed.GetValue())
 		{
 			const auto untie = REL::Relocation<std::uintptr_t>{ REL::ID{ 462873, 2267969, 2267969 }, REL::Offset{ 0x6B, 0x5F, 0x61 } }.address();

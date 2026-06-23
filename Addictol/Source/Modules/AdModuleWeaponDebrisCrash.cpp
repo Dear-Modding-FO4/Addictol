@@ -16,12 +16,11 @@ namespace Addictol
 
 	bool ModuleWeaponDebrisCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		// Force the NVFlex collision-geometry `ja` unconditional to skip the FleX shape registration that CTDs on Turing+ / deprecated-FleX drivers.
+		// Force the FleX collision-geometry ja unconditional to skip the Turing+ CTD path.
 		const REL::Relocation<std::uintptr_t> func{ REL::ID{ 22388, 2195766, 2195766 } };
 		const auto src = func.address() + REL::Offset{ 0x52, 0x4F, 0x4F }.offset();
 		const auto dst = func.address() + REL::Offset{ 0x703, 0x6DD, 0x6DD }.offset();
 
-		// Bail unless the site is a `ja rel32` (0F 87) whose computed target equals our skip address (no hardcoded rel bytes).
 		const auto* const p = reinterpret_cast<const std::uint8_t*>(src);
 		if (p[0] != 0x0F || p[1] != 0x87)
 		{
@@ -35,7 +34,6 @@ namespace Addictol
 			return false;
 		}
 
-		// Overwrite the 6-byte `ja` with a 5-byte near jmp to the same target plus a NOP to preserve the next instruction boundary.
 		const std::int32_t rel = static_cast<std::int32_t>(dst - (src + 5));
 		const auto* const r = reinterpret_cast<const std::uint8_t*>(&rel);
 		RELEX::WriteSafe(src, { 0xE9, r[0], r[1], r[2], r[3], 0x90 });
