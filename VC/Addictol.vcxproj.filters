@@ -253,6 +253,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -503,6 +506,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
