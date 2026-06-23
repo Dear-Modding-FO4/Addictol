@@ -71,6 +71,7 @@
 #include <Modules/AdModuleWeaponDebrisCrash.h>
 #include <Modules/AdModuleSaveCompression.h>
 #include <Modules/AdModulePapyrusBudget.h>
+#include <Modules/AdModuleFrameLimiter.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -144,6 +145,7 @@ static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRota
 static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
 static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
 static auto sModulePapyrusBudget					= std::make_shared<Addictol::ModulePapyrusBudget>();
+static auto sModuleFrameLimiter						= std::make_shared<Addictol::ModuleFrameLimiter>();
 
 void AdRegisterPreloadModules()
 {
@@ -216,6 +218,7 @@ void AdRegisterModules()
 	modules.Register(sModuleMuzzleFlashLight);
 	modules.Register(sModuleHighResBloom);
 	modules.Register(sModuleAltTabFullscreen);
+	modules.Register(sModuleFrameLimiter);
 	modules.Register(sModulePowerGridScrap);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);

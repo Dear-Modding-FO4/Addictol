@@ -35,6 +35,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusBudget.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFrameLimiter.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp" />
@@ -123,6 +124,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusBudget.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFrameLimiter.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h" />

@@ -54,6 +54,11 @@ namespace Addictol
 			"bFixRotationSpeed", "bFixSittingRotationSpeed", "bFixWorkshopRotationSpeed",
 			"bFixStuckAnimation", "bFixMotionResponsive"
 		}},
+		{ "Limiter", {
+			"bFrameLimiter", "fFrameLimit", "nVSync", "nVSyncInterval",
+			"bAllowTearing", "bForceFlipModel", "fLoadingFrameLimit",
+			"bDisableVSyncWhileLoading"
+		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",
 			"bModuleProfiler", "bStartupTimeline", "bMemoryTracking",
