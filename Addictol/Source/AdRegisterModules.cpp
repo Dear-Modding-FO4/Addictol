@@ -65,6 +65,7 @@
 #include <Modules/AdModuleToggleGrassCommand.h>
 #include <Modules/AdModuleTextureLoadCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
+#include <Modules/AdModulePhysicsFix.h>
 #include <Modules/AdModuleSprintStutter.h>
 #include <Modules/AdModuleMoonRotation.h>
 #include <Modules/AdModuleWeaponDebrisCrash.h>
@@ -136,6 +137,7 @@ static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::Mod
 static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleToggleGrassCommand>();
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
+static auto sModulePhysicsFix						= std::make_shared<Addictol::ModulePhysicsFix>();
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
 static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
 static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
@@ -234,6 +236,7 @@ void AdRegisterModules()
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
+	modules.Register(sModulePhysicsFix,						kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);
