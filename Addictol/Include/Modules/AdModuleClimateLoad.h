@@ -4,12 +4,12 @@
 
 namespace Addictol
 {
-	class ClimateLoadFix :
+	class ModuleClimateLoadFix :
 		public Module
 	{
 	public:
-		ClimateLoadFix();
-		virtual ~ClimateLoadFix() = default;
+		ModuleClimateLoadFix();
+		virtual ~ModuleClimateLoadFix() = default;
 
 		[[nodiscard]] virtual bool DoQuery() const noexcept override;
 		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;

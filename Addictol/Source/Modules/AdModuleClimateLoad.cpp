@@ -25,16 +25,16 @@ namespace Addictol
 		inline static decltype(LoadGame)* LoadGame_orig{ nullptr };
 	};
 
-	ClimateLoadFix::ClimateLoadFix() :
+	ModuleClimateLoadFix::ModuleClimateLoadFix() :
 		Module("Climate Load", &bClimateLoad)
 	{}
 
-	bool ClimateLoadFix::DoQuery() const noexcept
+	bool ModuleClimateLoadFix::DoQuery() const noexcept
 	{
 		return true;
 	}
 
-	bool ClimateLoadFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleClimateLoadFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		*((uintptr_t*)&Sky::LoadGame_orig) = RELEX::DetourJump(REL::ID{ 531797, 2208883 }.address(),
 			reinterpret_cast<uintptr_t>(&Sky::LoadGame));
@@ -42,12 +42,12 @@ namespace Addictol
 		return true;
 	}
 
-	bool ClimateLoadFix::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleClimateLoadFix::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}
 
-	bool ClimateLoadFix::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	bool ModuleClimateLoadFix::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
 	{
 		return true;
 	}

@@ -135,7 +135,7 @@ static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleTogg
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
-static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ClimateLoadFix>();
+static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 
 void AdRegisterPreloadModules()
 {
