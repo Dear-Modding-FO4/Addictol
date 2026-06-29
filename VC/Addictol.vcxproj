@@ -27,6 +27,7 @@
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
@@ -110,6 +111,7 @@
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />

@@ -189,6 +189,9 @@ bDownwardAiming = true
 # Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR.
 bCrashRemoveRefFix = true
 
+# Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior.
+bClimateLoad = true
+
 
 [Warnings]
 
