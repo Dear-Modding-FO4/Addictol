@@ -186,6 +186,9 @@ bTextureLoadCrash = true
 # Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.
 bDownwardAiming = true
 
+# Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR.
+bCrashRemoveRefFix = true
+
 
 [Warnings]
 

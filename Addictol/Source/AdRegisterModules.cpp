@@ -65,6 +65,7 @@
 #include <Modules/AdModuleToggleGrassCommand.h>
 #include <Modules/AdModuleTextureLoadCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
+#include <Modules/AdModuleCrashRemoveRef.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -132,6 +133,7 @@ static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::Mod
 static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleToggleGrassCommand>();
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
+static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
 
 void AdRegisterPreloadModules()
 {
@@ -211,6 +213,7 @@ void AdRegisterModules()
 	modules.Register(sModuleToggleGrassCommand);
 	modules.Register(sModuleTextureLoadCrash);
 	modules.Register(sModuleDownwardAiming);
+	modules.Register(sModuleCrashRemoveRef);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
