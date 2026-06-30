@@ -29,10 +29,10 @@ namespace Addictol
 
 	bool ModuleMusicOverlap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		auto vtable = RE::VTABLE::BSIMusicType[0].address();
+		auto vtable = RE::VTABLE::BGSMusicType[1].address();
 		if (!vtable)
 		{
-			REX::WARN("[MusicOverlap] Could not resolve BSIMusicType vtable; skipping."sv);
+			REX::WARN("[MusicOverlap] Could not resolve BGSMusicType vtable; skipping."sv);
 			return false;
 		}
 
