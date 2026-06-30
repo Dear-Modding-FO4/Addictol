@@ -259,6 +259,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -509,6 +512,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
   </ItemGroup>
