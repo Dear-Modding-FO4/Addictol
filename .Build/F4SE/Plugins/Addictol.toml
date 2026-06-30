@@ -195,6 +195,9 @@ bCrashRemoveRefFix = true
 # Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior.
 bClimateLoad = true
 
+# Fixes a bug where multiple music tracks are playing at the same time.
+bMusicOverlap = true
+
 
 [Warnings]
 
