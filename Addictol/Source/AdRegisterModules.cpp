@@ -4,6 +4,7 @@
 #include <Modules/AdModuleGreyMovie.h>
 #include <Modules/AdModulePackageAllocateLocation.h>
 #include <Modules/AdModuleLibDeflate.h>
+#include <Modules/AdModuleSaveCompression.h>
 #include <Modules/AdModuleProfile.h>
 #include <Modules/AdModuleLoadScreen.h>
 #include <Modules/AdModuleAchievements.h>
@@ -73,6 +74,7 @@ static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
 static auto sModuleGreyMovie						= std::make_shared<Addictol::ModuleGreyMovie>();
 static auto sModulePackageAllocateLocation			= std::make_shared<Addictol::ModulePackageAllocateLocation>();
 static auto sModuleLibDeflate						= std::make_shared<Addictol::ModuleLibDeflate>();
+static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
 static auto sModuleProfile							= std::make_shared<Addictol::ModuleProfile>();
 static auto sModuleLoadScreen						= std::make_shared<Addictol::ModuleLoadScreen>();
 static auto sModuleAchievements						= std::make_shared<Addictol::ModuleAchievements>();
@@ -168,6 +170,7 @@ void AdRegisterModules()
 	modules.Register(sModuleGreyMovie);
 	modules.Register(sModulePackageAllocateLocation);
 	modules.Register(sModuleLibDeflate);
+	modules.Register(sModuleSaveCompression);
 	modules.Register(sModuleProfile);
 	modules.Register(sModuleAchievements);
 	modules.Register(sModuleLODDistance);
