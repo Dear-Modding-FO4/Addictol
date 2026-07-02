@@ -62,6 +62,9 @@ bDpiScaling = true
 # Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
 bSaveCompression = true
 
+# Caches RobCo Patcher's "Plugin|FormID" lookups during its boot patching pass, greatly reducing startup time with large RobCo configs. Idle when RobCo Patcher is not installed.
+bRobCoPatcherCache = true
+
 
 [Fixes]
 
@@ -246,6 +249,9 @@ nQuitGameDelayMs = 1000
 
 # Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
 nBloomScale = 2
+
+# Diagnostic: re-resolves every cached RobCo lookup and disarms the cache on any mismatch (needs bRobCoPatcherCache).
+bRobCoPatcherCacheValidate = false
 
 
 [Profiler]
