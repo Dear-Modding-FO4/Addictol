@@ -18,7 +18,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesRobCoPatcherCache{ "Patches"sv, "bRobCoPatcherCache"sv, true };
+	static REX::TOML::Bool<> bPatchesRobCoPatcherCache{ "Others"sv, "bRobCoPatcherCache"sv, true };
 	static REX::TOML::Bool<> bRobCoPatcherCacheValidate{ "Additional"sv, "bRobCoPatcherCacheValidate"sv, false };
 
 	namespace robcoDetail

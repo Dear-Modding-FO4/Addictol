@@ -62,9 +62,6 @@ bDpiScaling = true
 # Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
 bSaveCompression = true
 
-# Caches RobCo Patcher's "Plugin|FormID" lookups during its boot patching pass, greatly reducing startup time with large RobCo configs. Idle when RobCo Patcher is not installed.
-bRobCoPatcherCache = true
-
 
 [Fixes]
 
@@ -213,6 +210,14 @@ bDuplicateAddonNodeIndex = true
 # Warns if you are approaching the reference handle limit or exceed the reference handle limit.
 # Terminate process if out of entries!
 bReferenceHandleLimit = true
+
+# Patches / Fixes for mods that are used by the DMFO4 team, but are tired of waiting for fixes from the authors of these mods.
+# We do not accept requests, we also fix only those versions that we use. Always turned off by default.
+# If it doesn't work for you, don't need to write about it, we're not interested.
+[Others]
+
+# Caches RobCo Patcher's "Plugin|FormID" lookups during its boot patching pass, greatly reducing startup time with large RobCo configs. Idle when RobCo Patcher is not installed.
+bRobCoPatcherCache = false
 
 
 [Additional]
