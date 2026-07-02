@@ -130,19 +130,39 @@ namespace RELEX
 		return Detours::IATHook(REX::FModule::GetExecutingModule().GetBaseAddress(), a_importModule, a_functionName, a_function);
 	}
 
-	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
+	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule,
+		const char* a_functionName, uintptr_t a_function) noexcept
 	{
 		return Detours::IATHook(a_targetModule, a_importModule, a_functionName, a_function);
 	}
 
-	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
+	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName,
+		uintptr_t a_function) noexcept
 	{
 		return Detours::IATDelayedHook(REX::FModule::GetExecutingModule().GetBaseAddress(), a_importModule, a_functionName, a_function);
 	}
 
-	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
+	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule,
+		const char* a_functionName, uintptr_t a_function) noexcept
 	{
 		return Detours::IATDelayedHook(a_targetModule, a_importModule, a_functionName, a_function);
+	}
+
+	bool Validate(uintptr_t a_target, const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return !std::memcmp(reinterpret_cast<const void*>(a_target), a_expected.begin(), a_expected.size());
+	}
+
+	uintptr_t TryDetourJump(uintptr_t a_target, uintptr_t a_function,
+		const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return Validate(a_target, a_expected) ? DetourJump(a_target, a_function) : 0;
+	}
+
+	uintptr_t TryDetourCall(uintptr_t a_target, uintptr_t a_function,
+		const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return Validate(a_target, a_expected) ? DetourCall(a_target, a_function) : 0;
 	}
 }
 

@@ -31,8 +31,8 @@ namespace Addictol
 		static std::atomic<bool> g_caching{ false };
 		static bool g_validate = false;
 		static bool g_done = false;
-		static std::uint64_t g_hits = 0;
-		static std::uint64_t g_misses = 0;
+		static uint64_t g_hits = 0;
+		static uint64_t g_misses = 0;
 		static double g_missMs = 0.0;
 
 		// Memoizes RobCo Patcher's "Plugin|FormID" resolver; the load order is immutable at runtime.
@@ -63,7 +63,7 @@ namespace Addictol
 			auto* form = GetFormOrig(a_id);
 			g_missMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
 			++g_misses;
-			g_cache.emplace(a_id, form);
+			g_cache.emplace(a_id, form); // maybe try_emplace ???
 			return form;
 		}
 
@@ -83,8 +83,8 @@ namespace Addictol
 
 		static std::string FileVersion(const char* a_path) noexcept
 		{
-			std::uint32_t dummy = 0;
-			const std::uint32_t verSize = REX::W32::GetFileVersionInfoSizeA(a_path, &dummy);
+			uint32_t dummy = 0;
+			const uint32_t verSize = REX::W32::GetFileVersionInfoSizeA(a_path, &dummy);
 			if (!verSize)
 				return "unknown";
 
@@ -93,11 +93,11 @@ namespace Addictol
 				return "unknown";
 
 			void* infoPtr = nullptr;
-			std::uint32_t infoLen = 0;
+			uint32_t infoLen = 0;
 			if (!REX::W32::VerQueryValueA(verBuf.get(), "\\", &infoPtr, &infoLen) || !infoPtr || infoLen < 52)
 				return "unknown";
 
-			const auto info = static_cast<const std::uint32_t*>(infoPtr);
+			const auto info = static_cast<const uint32_t*>(infoPtr);
 			if (info[0] != 0xFEEF04BD)
 				return "unknown";
 
@@ -115,7 +115,7 @@ namespace Addictol
 		using TSymCleanup = BOOL(WINAPI*)(HANDLE);
 
 		// Resolves the target from RobCo's own shipped pdb; dbghelp rejects a pdb whose GUID mismatches the dll.
-		static std::uintptr_t ResolveFromPdb(std::uintptr_t a_base, const char* a_path, const char* a_name) noexcept
+		static uintptr_t ResolveFromPdb(uintptr_t a_base, const char* a_path, const char* a_name) noexcept
 		{
 			const auto dbghelp = ::LoadLibraryA("dbghelp.dll");
 			if (!dbghelp)
@@ -144,23 +144,23 @@ namespace Addictol
 				*slash = '\0';
 
 			// Private session handle; avoids colliding with crash loggers that SymInitialize the real process.
-			const auto session = reinterpret_cast<HANDLE>(std::uintptr_t{ 0xAD0C0DE });
+			const auto session = reinterpret_cast<HANDLE>(uintptr_t{ 0xAD0C0DE });
 			const auto oldOptions = symGetOptions();
 			symSetOptions(oldOptions | SYMOPT_FAIL_CRITICAL_ERRORS);
 
-			std::uintptr_t address = 0;
+			uintptr_t address = 0;
 			if (symInitialize(session, dir, FALSE))
 			{
 				if (const auto mod = symLoadModule(session, nullptr, a_path, nullptr, static_cast<DWORD64>(a_base), 0))
 				{
-					alignas(SYMBOL_INFO) std::uint8_t buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME]{};
+					alignas(SYMBOL_INFO) uint8_t buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME]{};
 					const auto symbol = reinterpret_cast<SYMBOL_INFO*>(buffer);
 					symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 					symbol->MaxNameLen = MAX_SYM_NAME;
 
 					static constexpr auto kMangled = "?GetFormFromIdentifier@@YAPEAVTESForm@RE@@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z";
 					if (symFromName(session, kMangled, symbol) || symFromName(session, "GetFormFromIdentifier", symbol))
-						address = static_cast<std::uintptr_t>(symbol->Address);
+						address = static_cast<uintptr_t>(symbol->Address);
 					else
 						REX::WARN("RobCo Patcher Cache: GetFormFromIdentifier not in {} symbols (pdb missing or mismatched) -- skipping."sv, a_name);
 
@@ -179,31 +179,31 @@ namespace Addictol
 			return address;
 		}
 
-		static bool InExecutableSection(std::uintptr_t a_base, std::uintptr_t a_address) noexcept
+		static bool InExecutableSection(uintptr_t a_base, uintptr_t a_address) noexcept
 		{
 			const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(a_base);
 			if (dos->e_magic != IMAGE_DOS_SIGNATURE)
 				return false;
 
-			const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(a_base + static_cast<std::uint32_t>(dos->e_lfanew));
+			const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(a_base + static_cast<uint32_t>(dos->e_lfanew));
 			if (nt->Signature != IMAGE_NT_SIGNATURE)
 				return false;
 
 			const auto rva = a_address - a_base;
 			const auto* section = IMAGE_FIRST_SECTION(nt);
-			for (std::uint16_t i = 0; i < nt->FileHeader.NumberOfSections; ++i)
+			for (uint16_t i = 0; i < nt->FileHeader.NumberOfSections; ++i)
 			{
 				if ((section[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) &&
-					rva >= section[i].VirtualAddress && rva < section[i].VirtualAddress + section[i].Misc.VirtualSize)
+					rva >= section[i].VirtualAddress && rva < static_cast<DWORD64>(section[i].VirtualAddress) + section[i].Misc.VirtualSize)
 					return true;
 			}
 			return false;
 		}
 
 		// REX prefix, push, or mov starts; 0xE9 means another mod already detoured it (Detours chains fine).
-		static bool PlausiblePrologue(std::uintptr_t a_address) noexcept
+		static bool PlausiblePrologue(uintptr_t a_address) noexcept
 		{
-			const auto byte = *reinterpret_cast<const std::uint8_t*>(a_address);
+			const auto byte = *reinterpret_cast<const uint8_t*>(a_address);
 			return (byte >= 0x40 && byte <= 0x57) || (byte >= 0x88 && byte <= 0x8B) || byte == 0xE9;
 		}
 
@@ -235,7 +235,7 @@ namespace Addictol
 				return false;
 			}
 
-			const auto base = reinterpret_cast<std::uintptr_t>(handle);
+			const auto base = reinterpret_cast<uintptr_t>(handle);
 			const auto address = ResolveFromPdb(base, path, name);
 			if (!address)
 				return false;
@@ -248,7 +248,7 @@ namespace Addictol
 
 			REX::INFO("RobCo Patcher Cache: {} v{} -- GetFormFromIdentifier at +0x{:X}."sv, name, FileVersion(path), address - base);
 
-			GetFormOrig = reinterpret_cast<TGetForm>(RELEX::DetourJump(address, reinterpret_cast<std::uintptr_t>(&GetFormFromIdentifier)));
+			GetFormOrig = reinterpret_cast<TGetForm>(RELEX::DetourJump(address, reinterpret_cast<uintptr_t>(&GetFormFromIdentifier)));
 			if (!GetFormOrig)
 			{
 				REX::WARN("RobCo Patcher Cache: detour failed -- skipping."sv);
