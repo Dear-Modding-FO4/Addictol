@@ -63,7 +63,7 @@ namespace Addictol
 			auto* form = GetFormOrig(a_id);
 			g_missMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
 			++g_misses;
-			g_cache.emplace(a_id, form); // maybe try_emplace ???
+			g_cache.try_emplace(a_id, form);
 			return form;
 		}
 
