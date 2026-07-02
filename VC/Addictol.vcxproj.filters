@@ -64,6 +64,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRobCoPatcherCache.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -290,6 +293,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRobCoPatcherCache.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h">
