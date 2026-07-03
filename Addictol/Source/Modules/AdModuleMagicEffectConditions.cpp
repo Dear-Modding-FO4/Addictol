@@ -106,13 +106,25 @@ namespace Addictol
 		// OG 1228998 -> RVA 0xC4EE40, NG 2226003 -> 0xB00AD0, AE 2226003 -> 0xB744F0.
 		REL::Relocation<std::uintptr_t> target{REL::ID{1228998, 2226003, 2226003}};
 
-		const auto original = RELEX::DetourJump(
-			target.address(),
-			reinterpret_cast<std::uintptr_t>(&magicEffectConditionsDetail::EvaluateConditions_Hook));
+		// Prologue byte-signature guard
+		const auto hook = reinterpret_cast<std::uintptr_t>(&magicEffectConditionsDetail::EvaluateConditions_Hook);
+
+		std::uintptr_t original = 0;
+		if (RELEX::IsRuntimeOG())
+		{
+			original = RELEX::TryDetourJump(target.address(), hook,
+											{0x48, 0x89, 0x5C, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x83, 0xB9, 0x88, 0x00, 0x00, 0x00});
+		}
+		else
+		{
+			original = RELEX::TryDetourJump(target.address(), hook,
+											{0x40, 0x53, 0x56, 0x48, 0x83, 0xEC, 0x48, 0x83, 0xB9, 0x88, 0x00, 0x00, 0x00});
+		}
+
 		if (!original)
 		{
-			REX::WARN("MagicEffectConditions: failed to detour ActiveEffect::EvaluateConditions. Patch was not applied."sv);
-			return true;
+			REX::WARN("MagicEffectConditions: EvaluateConditions prologue mismatch or detour failed; patch not applied."sv);
+			return false;
 		}
 
 		magicEffectConditionsDetail::_EvaluateConditions =
