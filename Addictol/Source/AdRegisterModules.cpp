@@ -34,6 +34,7 @@
 #include <Modules/AdModuleInteriorNavCut.h>
 #include <Modules/AdModuleControlSamplers.h>
 #include <Modules/AdModuleMagicEffectApplyEvent.h>
+#include <Modules/AdModuleMagicEffectConditions.h>
 #include <Modules/AdModuleEncounterZoneReset.h>
 #include <Modules/AdModuleArchiveLimits.h>
 #include <Modules/AdModuleImageSpaceAdapterWarning.h>
@@ -107,6 +108,7 @@ static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyL
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
 static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
 static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
+static auto sModuleMagicEffectConditions			= std::make_shared<Addictol::ModuleMagicEffectConditions>();
 static auto sModuleEncounterZoneReset				= std::make_shared<Addictol::ModuleEncounterZoneReset>();
 static auto sModuleArchiveLimits					= std::make_shared<Addictol::ModuleArchiveLimits>();
 static auto sModuleImageSpaceAdapterWarning			= std::make_shared<Addictol::ModuleImageSpaceAdapterWarning>();
@@ -202,6 +204,7 @@ void AdRegisterModules()
 	modules.Register(sModulePipBoyLightInv);
 	modules.Register(sModuleInteriorNavCut);
 	modules.Register(sModuleMagicEffectApplyEvent);
+	modules.Register(sModuleMagicEffectConditions);
 	modules.Register(sModuleArchiveLimits);
 	modules.Register(sModuleImageSpaceAdapterWarning);
 	modules.Register(sModuleInputSwitch);

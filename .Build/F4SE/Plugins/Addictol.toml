@@ -119,6 +119,9 @@ bInteriorNavCut = true
 # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 bMagicEffectApplyEvent = true
 
+# Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions
+bMagicEffectConditions = true
+
 # Fixes encounter zones resetting immediately once you leave them on foot.
 bEncounterZoneReset = true
 
