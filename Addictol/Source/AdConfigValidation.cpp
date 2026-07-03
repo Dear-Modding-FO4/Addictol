@@ -36,7 +36,7 @@ namespace Addictol
 			"bViewmodelShading", "bDofFix", "bUtilityShader",
 			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
 			"bDownwardAiming", "bCrashRemoveRefFix", "bClimateLoad", "bMusicOverlap",
-			"bPuddleCubemaps"
+			"bPuddleCubemaps", "bCompanionStrayBullet"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"

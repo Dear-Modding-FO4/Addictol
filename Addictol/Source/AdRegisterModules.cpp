@@ -72,6 +72,7 @@
 #include <Modules/AdModuleClimateLoad.h>
 #include <Modules/AdModuleMusicOverlap.h>
 #include <Modules/AdModulePuddleCubemaps.h>
+#include <Modules/AdModuleCompanionStrayBullet.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -146,6 +147,7 @@ static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRe
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
 static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
+static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCompanionStrayBullet>();
 
 void AdRegisterPreloadModules()
 {
@@ -195,6 +197,7 @@ void AdRegisterModules()
 	modules.Register(sModuleWorkbenchSwap);
 	modules.Register(sModuleManyItemsFix);
 	modules.Register(sModuleMovementPlanner);
+	modules.Register(sModuleCompanionStrayBullet);
 	modules.Register(sModuleEscapeFreeze);
 	modules.Register(sModuleIOCacher);
 	modules.Register(sModuleBSMTAManager);
@@ -242,6 +245,7 @@ void AdRegisterModules()
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
+	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);

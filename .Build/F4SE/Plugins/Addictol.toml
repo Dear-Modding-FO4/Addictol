@@ -101,6 +101,9 @@ nMaxStdIO = -1
 # Fixes a bug where the the Movement Planner crashes with non-actors.
 bMovementPlanner = true
 
+# Stops companions/teammates from shooting the player during and shortly after combat (re-equips their weapons on combat exit).
+bCompanionStrayBullet = true
+
 # "Unfreezes" your game from certain freezes caused by a deadlock during condition checks.
 bEscapeFreeze = true
 
