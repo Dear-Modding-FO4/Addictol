@@ -198,6 +198,9 @@ bClimateLoad = true
 # Fixes a bug where multiple music tracks are playing at the same time.
 bMusicOverlap = true
 
+# Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections).
+bPuddleCubemaps = false
+
 
 [Warnings]
 

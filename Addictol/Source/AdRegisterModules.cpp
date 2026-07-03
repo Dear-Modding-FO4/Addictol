@@ -70,6 +70,7 @@
 #include <Modules/AdModuleCrashRemoveRef.h>
 #include <Modules/AdModuleClimateLoad.h>
 #include <Modules/AdModuleMusicOverlap.h>
+#include <Modules/AdModulePuddleCubemaps.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -142,6 +143,7 @@ static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwar
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
+static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
 
 void AdRegisterPreloadModules()
 {
@@ -231,6 +233,7 @@ void AdRegisterModules()
 	modules.Register(sModuleFacegen,						kGameDataReady);
 	modules.Register(sModuleSafeExit,						kGameDataReady);
 	modules.Register(sModuleInteriorNavCut,					kGameDataReady);
+	modules.Register(sModulePuddleCubemaps,					kGameDataReady);
 	modules.Register(sModuleControlSamplers,				kGameDataReady);
 	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
