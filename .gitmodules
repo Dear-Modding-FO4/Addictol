@@ -16,3 +16,6 @@
 [submodule "Depends/commonlibf4"]
 	path = Depends/commonlibf4
 	url = https://github.com/Dear-Modding-FO4/commonlibf4.git
+[submodule "Depends/faudio"]
+	path = Depends/faudio
+	url = https://github.com/FNA-XNA/FAudio.git

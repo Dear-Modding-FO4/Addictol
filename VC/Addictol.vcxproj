@@ -27,6 +27,7 @@
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioProxy.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioProxy.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
@@ -235,7 +237,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;AD_TRACER=0;AD_TRAMPOLINE_SIZE=1024;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;AD_TRACER=0;AD_TRAMPOLINE_SIZE=1024;FAUDIO_WIN32_PLATFORM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
@@ -246,7 +248,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;$(SolutionDir)..\Depends\faudio\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
       <DisableSpecificWarnings>4200;4996;26444;26495;4806</DisableSpecificWarnings>
       <ForcedIncludeFiles>
@@ -258,7 +260,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;faudio_vc22.lib;Evr.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>

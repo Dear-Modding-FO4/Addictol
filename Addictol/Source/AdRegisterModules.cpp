@@ -73,6 +73,7 @@
 #include <Modules/AdModuleMusicOverlap.h>
 #include <Modules/AdModulePuddleCubemaps.h>
 #include <Modules/AdModuleCompanionStrayBullet.h>
+#include <Modules/AdModuleAudioProxy.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -148,6 +149,7 @@ static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimate
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
 static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
 static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCompanionStrayBullet>();
+static auto sModuleModuleAudioProxy					= std::make_shared<Addictol::ModuleAudioProxy>();
 
 void AdRegisterPreloadModules()
 {
@@ -233,6 +235,7 @@ void AdRegisterModules()
 	modules.Register(sModuleCrashRemoveRef);
 	modules.Register(sModuleClimateLoadFix);
 	modules.Register(sModuleMusicOverlap);
+	modules.Register(sModuleModuleAudioProxy);
 	
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
