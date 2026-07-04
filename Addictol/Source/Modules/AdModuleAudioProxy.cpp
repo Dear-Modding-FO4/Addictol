@@ -1966,7 +1966,8 @@ namespace Addictol
 
 	bool ModuleAudioProxy::DoQuery() const noexcept
 	{
-		return RELEX::IsRuntimeAE();
+		// disable patch
+		return false; //RELEX::IsRuntimeAE();
 	}
 
 	bool ModuleAudioProxy::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
