@@ -538,6 +538,15 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectConditions.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioProxy.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
