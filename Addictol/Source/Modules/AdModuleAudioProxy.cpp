@@ -8,7 +8,7 @@
 #include <comdef.h>
 #include <functional>
 
-#define AD_USE_FAUDIO 0
+#define AD_USE_FAUDIO 1
 #define AD_USE_CHECKUPDATE_AUDIODEVICE 0
 
 #if AD_USE_FAUDIO
@@ -16,6 +16,7 @@
 #else
 #	include <xaudio2.h>
 #	include <xaudio2fx.h>
+#	pragma comment(lib, "xaudio2.lib")
 #endif
 
 #undef ERROR
@@ -94,6 +95,41 @@ namespace Addictol
 			UINT32 EffectCount;								// Number of effects in this voice's effect chain.
 			XAUDIO2_EFFECT_DESCRIPTOR* pEffectDescriptors;	// Array of effect descriptors.
 		} XAUDIO2_EFFECT_CHAIN;
+
+		// XAUDIO2FX_REVERB_PARAMETERS: Native parameter set for the reverb effect
+
+		typedef struct XAUDIO2FX_REVERB_PARAMETERS
+		{
+			// ratio of wet (processed) signal to dry (original) signal
+			float WetDryMix;            // [0, 100] (percentage)
+
+			// Delay times
+			UINT32 ReflectionsDelay;    // [0, 300] in ms
+			BYTE ReverbDelay;           // [0, 85] in ms
+			BYTE RearDelay;             // [0, 5] in ms
+
+			// Indexed parameters
+			BYTE PositionLeft;          // [0, 30] no units
+			BYTE PositionRight;         // [0, 30] no units, ignored when configured to mono
+			BYTE PositionMatrixLeft;    // [0, 30] no units
+			BYTE PositionMatrixRight;   // [0, 30] no units, ignored when configured to mono
+			BYTE EarlyDiffusion;        // [0, 15] no units
+			BYTE LateDiffusion;         // [0, 15] no units
+			BYTE LowEQGain;             // [0, 12] no units
+			BYTE LowEQCutoff;           // [0, 9] no units
+			BYTE HighEQGain;            // [0, 8] no units
+			BYTE HighEQCutoff;          // [0, 14] no units
+
+			// Direct parameters
+			float RoomFilterFreq;       // [20, 20000] in Hz
+			float RoomFilterMain;       // [-100, 0] in dB
+			float RoomFilterHF;         // [-100, 0] in dB
+			float ReflectionsGain;      // [-100, 20] in dB
+			float ReverbGain;           // [-100, 20] in dB
+			float DecayTime;            // [0.1, inf] in seconds
+			float Density;              // [0, 100] (percentage)
+			float RoomSize;             // [1, 100] in feet
+		} XAUDIO2FX_REVERB_PARAMETERS;
 
 		#pragma pack(pop)
 
@@ -206,9 +242,7 @@ namespace Addictol
 				if (!data || !pEffectChain)
 					return E_FAIL;
 
-				//FAudioEffectChain
-
-				return S_OK;//!FAudioVoice_SetEffectChain(data, ) ? S_OK : E_FAIL;
+				return S_OK; //data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 			}
 
 			// NAME: IXAudio2Voice::EnableEffect
@@ -289,7 +323,40 @@ namespace Addictol
 				return !FAudioVoice_SetEffectParameters(data, EffectIndex, pParameters, ParametersByteSize,
 					OperationSet) ? S_OK : E_FAIL;
 #else
-				return data->SetEffectParameters(EffectIndex, pParameters, ParametersByteSize, OperationSet);
+				if (ParametersByteSize == sizeof(XAUDIO2FX_REVERB_PARAMETERS))
+				{
+					::XAUDIO2FX_REVERB_PARAMETERS reverb{};
+					auto srcReverb = reinterpret_cast<const XAUDIO2FX_REVERB_PARAMETERS*>(pParameters);
+
+					reverb.WetDryMix = srcReverb->WetDryMix;
+					reverb.ReflectionsDelay = srcReverb->ReflectionsDelay;
+					reverb.ReverbDelay = srcReverb->ReverbDelay;
+					reverb.RearDelay = srcReverb->RearDelay;
+					reverb.SideDelay = XAUDIO2FX_REVERB_DEFAULT_7POINT1_SIDE_DELAY;
+					reverb.PositionLeft = srcReverb->PositionLeft;
+					reverb.PositionRight = srcReverb->PositionRight;
+					reverb.PositionMatrixLeft = srcReverb->PositionMatrixLeft;
+					reverb.PositionMatrixRight = srcReverb->PositionMatrixRight;
+					reverb.EarlyDiffusion = srcReverb->EarlyDiffusion;
+					reverb.LateDiffusion = srcReverb->LateDiffusion;
+					reverb.LowEQGain = srcReverb->LowEQGain;
+					reverb.LowEQCutoff = srcReverb->LowEQCutoff;
+					reverb.HighEQGain = srcReverb->HighEQGain;
+					reverb.HighEQCutoff = srcReverb->HighEQCutoff;
+					reverb.RoomFilterFreq = srcReverb->RoomFilterFreq;
+					reverb.RoomFilterMain = srcReverb->RoomFilterMain;
+					reverb.RoomFilterHF = srcReverb->RoomFilterHF;
+					reverb.ReflectionsGain = srcReverb->ReflectionsGain;
+					reverb.ReverbGain = srcReverb->ReverbGain;
+					reverb.DecayTime = srcReverb->DecayTime;
+					reverb.Density = srcReverb->Density;
+					reverb.RoomSize = srcReverb->RoomSize;
+					reverb.DisableLateField = XAUDIO2FX_REVERB_DEFAULT_DISABLE_LATE_FIELD;
+					
+					return data->SetEffectParameters(EffectIndex, std::addressof(reverb), sizeof(reverb), OperationSet);
+				}
+
+				return E_FAIL;
 #endif
 			}
 
@@ -309,7 +376,43 @@ namespace Addictol
 #if AD_USE_FAUDIO
 				return !FAudioVoice_GetEffectParameters(data, EffectIndex, pParameters, ParametersByteSize) ? S_OK : E_FAIL;
 #else
-				return data->GetEffectParameters(EffectIndex, pParameters, ParametersByteSize);
+				if (ParametersByteSize == sizeof(XAUDIO2FX_REVERB_PARAMETERS))
+				{
+					::XAUDIO2FX_REVERB_PARAMETERS reverb{};
+					auto hr = data->GetEffectParameters(EffectIndex, pParameters, ParametersByteSize);
+					
+					if (SUCCEEDED(hr))
+					{
+						auto parms = reinterpret_cast<XAUDIO2FX_REVERB_PARAMETERS*>(pParameters);
+
+						parms->WetDryMix = reverb.WetDryMix;
+						parms->ReflectionsDelay = reverb.ReflectionsDelay;
+						parms->ReverbDelay = reverb.ReverbDelay;
+						parms->RearDelay = reverb.RearDelay;
+						parms->PositionLeft = reverb.PositionLeft;
+						parms->PositionRight = reverb.PositionRight;
+						parms->PositionMatrixLeft = reverb.PositionMatrixLeft;
+						parms->PositionMatrixRight = reverb.PositionMatrixRight;
+						parms->EarlyDiffusion = reverb.EarlyDiffusion;
+						parms->LateDiffusion = reverb.LateDiffusion;
+						parms->LowEQGain = reverb.LowEQGain;
+						parms->LowEQCutoff = reverb.LowEQCutoff;
+						parms->HighEQGain = reverb.HighEQGain;
+						parms->HighEQCutoff = reverb.HighEQCutoff;
+						parms->RoomFilterFreq = reverb.RoomFilterFreq;
+						parms->RoomFilterMain = reverb.RoomFilterMain;
+						parms->RoomFilterHF = reverb.RoomFilterHF;
+						parms->ReflectionsGain = reverb.ReflectionsGain;
+						parms->ReverbGain = reverb.ReverbGain;
+						parms->DecayTime = reverb.DecayTime;
+						parms->Density = reverb.Density;
+						parms->RoomSize = reverb.RoomSize;
+					}
+
+					return hr;
+				}
+
+				return E_FAIL;
 #endif
 			}
 
@@ -494,8 +597,9 @@ namespace Addictol
 				return !FAudioVoice_SetOutputMatrix(data, pDestinationVoice->data, SourceChannels,
 					DestinationChannels, pLevelMatrix, OperationSet) ? S_OK : E_FAIL;
 #else
-				return data->SetOutputMatrix(pDestinationVoice->data, SourceChannels,
-					DestinationChannels, pLevelMatrix, OperationSet);
+				auto hr = data->SetOutputMatrix(pDestinationVoice->data, SourceChannels,
+					DestinationChannels, pLevelMatrix, OperationSet);				
+				return hr;
 #endif
 			}
 
@@ -1221,7 +1325,8 @@ namespace Addictol
 					return E_FAIL;
 
 #if AD_USE_FAUDIO
-				return !FAudioSourceVoice_SetSourceSampleRate(data, NewSourceSampleRate) ? S_OK : E_FAIL;
+				return !FAudio_GetDeviceDetails(audio, Index,
+					reinterpret_cast<FAudioDeviceDetails*>(pDeviceDetails)) ? S_OK : E_FAIL;
 #else
 				wcscpy_s(pDeviceDetails->DeviceID, L"{default}");
 				wcscpy_s(pDeviceDetails->DisplayName, L"Default");
@@ -1406,14 +1511,14 @@ namespace Addictol
 
 					auto hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback), 
-						std::addressof(sends), nullptr);
+						std::addressof(sends), reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 					delete[] sends.pSends;
 					return hr;
 				}
 				else
 					return audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
-						nullptr, nullptr);
+						nullptr, reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 #endif
 			}
 
@@ -1496,13 +1601,15 @@ namespace Addictol
 					}
 
 					auto hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
-						InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends), nullptr);
+						InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends),
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 					delete[] sends.pSends;
 					return hr;
 				}
 				else
 					return audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
-						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr, nullptr);
+						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr,
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 #endif				
 			}
 
@@ -1526,7 +1633,7 @@ namespace Addictol
 				UINT32 InputSampleRate = XAUDIO2_DEFAULT_SAMPLERATE,
 #endif
 				UINT32 Flags = 0, UINT32 DeviceIndex = 0,
-				[[maybe_unused]] const XAUDIO2_EFFECT_CHAIN* pEffectChain = nullptr) noexcept
+				const XAUDIO2_EFFECT_CHAIN* pEffectChain = nullptr) noexcept
 			{
 				if (!audio || !ppMasteringVoice)
 					return E_FAIL;
@@ -1539,7 +1646,8 @@ namespace Addictol
 					InputChannels, InputSampleRate, Flags, DeviceIndex, nullptr) ? S_OK : E_FAIL;
 #else
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
-					InputChannels, InputSampleRate, Flags, nullptr, nullptr);
+					InputChannels, InputSampleRate, Flags, nullptr, 
+					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 #endif
 			}
 
@@ -1627,6 +1735,75 @@ namespace Addictol
 #endif
 			}
 		};
+
+#if !AD_USE_FAUDIO
+		static void ReverbConvertI3DL2ToNative(const XAUDIO2FX_REVERB_I3DL2_PARAMETERS* pI3DL2, 
+			XAUDIO2FX_REVERB_PARAMETERS* pNative)
+		{
+			float reflectionsDelay;
+			float reverbDelay;
+
+			// RoomRolloffFactor is ignored
+
+			// These parameters have no equivalent in I3DL2
+			pNative->RearDelay = XAUDIO2FX_REVERB_DEFAULT_REAR_DELAY; // 5
+			pNative->PositionLeft = XAUDIO2FX_REVERB_DEFAULT_POSITION; // 6
+			pNative->PositionRight = XAUDIO2FX_REVERB_DEFAULT_POSITION; // 6
+			pNative->PositionMatrixLeft = XAUDIO2FX_REVERB_DEFAULT_POSITION_MATRIX; // 27
+			pNative->PositionMatrixRight = XAUDIO2FX_REVERB_DEFAULT_POSITION_MATRIX; // 27
+			pNative->RoomSize = XAUDIO2FX_REVERB_DEFAULT_ROOM_SIZE; // 100
+			pNative->LowEQCutoff = 4;
+			pNative->HighEQCutoff = 6;
+
+			// The rest of the I3DL2 parameters map to the native property set
+			pNative->RoomFilterMain = (float)pI3DL2->Room / 100.0f;
+			pNative->RoomFilterHF = (float)pI3DL2->RoomHF / 100.0f;
+
+			if (pI3DL2->DecayHFRatio >= 1.0f)
+			{
+				INT32 index = (INT32)(-4.0 * log10(pI3DL2->DecayHFRatio));
+				if (index < -8) index = -8;
+				pNative->LowEQGain = (BYTE)((index < 0) ? index + 8 : 8);
+				pNative->HighEQGain = 8;
+				pNative->DecayTime = pI3DL2->DecayTime * pI3DL2->DecayHFRatio;
+			}
+			else
+			{
+				INT32 index = (INT32)(4.0 * log10(pI3DL2->DecayHFRatio));
+				if (index < -8) index = -8;
+				pNative->LowEQGain = 8;
+				pNative->HighEQGain = (BYTE)((index < 0) ? index + 8 : 8);
+				pNative->DecayTime = pI3DL2->DecayTime;
+			}
+
+			reflectionsDelay = pI3DL2->ReflectionsDelay * 1000.0f;
+			if (reflectionsDelay >= XAUDIO2FX_REVERB_MAX_REFLECTIONS_DELAY) // 300
+			{
+				reflectionsDelay = (float)(XAUDIO2FX_REVERB_MAX_REFLECTIONS_DELAY - 1);
+			}
+			else if (reflectionsDelay <= 1)
+			{
+				reflectionsDelay = 1;
+			}
+			pNative->ReflectionsDelay = (UINT32)reflectionsDelay;
+
+			reverbDelay = pI3DL2->ReverbDelay * 1000.0f;
+			if (reverbDelay >= XAUDIO2FX_REVERB_MAX_REVERB_DELAY) // 85
+			{
+				reverbDelay = (float)(XAUDIO2FX_REVERB_MAX_REVERB_DELAY - 1);
+			}
+			pNative->ReverbDelay = (BYTE)reverbDelay;
+
+			pNative->ReflectionsGain = pI3DL2->Reflections / 100.0f;
+			pNative->ReverbGain = pI3DL2->Reverb / 100.0f;
+			pNative->EarlyDiffusion = (BYTE)(15.0f * pI3DL2->Diffusion / 100.0f);
+			pNative->LateDiffusion = pNative->EarlyDiffusion;
+			pNative->Density = pI3DL2->Density;
+			pNative->RoomFilterFreq = pI3DL2->HFReference;
+
+			pNative->WetDryMix = pI3DL2->WetDryMix;
+		}
+#endif
 
 #if AD_USE_FAUDIO
 		IXAudio2SourceVoiceProxy::~IXAudio2SourceVoiceProxy() noexcept
@@ -1771,15 +1948,17 @@ namespace Addictol
 	static HRESULT XAudio2_CoCreateInstance([[maybe_unused]] REFCLSID rclsid, [[maybe_unused]] LPUNKNOWN pUnkOuter,
 		[[maybe_unused]] DWORD dwClsContext, [[maybe_unused]] REFIID riid, LPVOID* ppv) noexcept
 	{
-		if (!LoadLibraryA("xaudio2_8.dll"))
-			return E_FAIL;
-
 		auto proxy = (detail::IXAudio2Proxy**)ppv;
 		*proxy = new detail::IXAudio2Proxy();
 		if (!(*proxy)) return E_OUTOFMEMORY;
 		return S_OK;
 	}
 
+	//static HRESULT XAudio2Reverb_CoCreateInstance([[maybe_unused]] REFCLSID rclsid, [[maybe_unused]] LPUNKNOWN pUnkOuter,
+	//	[[maybe_unused]] DWORD dwClsContext, [[maybe_unused]] REFIID riid, LPVOID* ppv) noexcept
+	//{
+	//	return XAudio2CreateReverb(reinterpret_cast<IUnknown**>(ppv));
+	//}
 
 	ModuleAudioProxy::ModuleAudioProxy() :
 		Module("Audio Proxy", &bPatchesAudioProxy)
@@ -1801,6 +1980,9 @@ namespace Addictol
 
 		RELEX::DetourCall(REL::Relocation(REL::ID{ 2267547 }, REL::Offset{ 0x108 }).address(),
 			(uintptr_t)&XAudio2_CoCreateInstance);
+		//RELEX::DetourCall(REL::Relocation(REL::ID{ 2267579 }, REL::Offset{ 0xFD }).address(),
+		//	(uintptr_t)&XAudio2Reverb_CoCreateInstance);
+		//RELEX::DetourJump(REL::ID{ 2267576 }.address(), (uintptr_t)&detail::ReverbConvertI3DL2ToNative);
 
 		return true;
 	}
