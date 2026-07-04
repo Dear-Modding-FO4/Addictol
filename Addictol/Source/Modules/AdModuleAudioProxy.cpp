@@ -8,16 +8,11 @@
 #include <comdef.h>
 #include <functional>
 
-#define AD_USE_FAUDIO 1
 #define AD_USE_CHECKUPDATE_AUDIODEVICE 0
 
-#if AD_USE_FAUDIO
-#	include <FAudio.h>
-#else
-#	include <xaudio2.h>
-#	include <xaudio2fx.h>
-#	pragma comment(lib, "xaudio2.lib")
-#endif
+#include <xaudio2.h>
+#include <xaudio2fx.h>
+#pragma comment(lib, "xaudio2.lib")
 
 #undef ERROR
 #undef MAX_PATH
@@ -138,12 +133,7 @@ namespace Addictol
 		class IXAudio2VoiceProxy
 		{
 		protected:
-#if AD_USE_FAUDIO
-			FAudioVoice* data{ nullptr };
-#else
 			::IXAudio2Voice* data{ nullptr };
-#endif
-			
 		public:
 			friend class IXAudio2Proxy;
 
@@ -157,13 +147,9 @@ namespace Addictol
 			{
 				if (pVoiceDetails && data)
 				{
-#if AD_USE_FAUDIO
-					FAudioVoiceDetails details{};
-					FAudioVoice_GetVoiceDetails(data, std::addressof(details));
-#else
 					::XAUDIO2_VOICE_DETAILS details{};
 					data->GetVoiceDetails(std::addressof(details));
-#endif
+
 					pVoiceDetails->CreationFlags = details.CreationFlags;
 					pVoiceDetails->InputChannels = details.InputChannels;
 					pVoiceDetails->InputSampleRate = details.InputSampleRate;
@@ -181,30 +167,6 @@ namespace Addictol
 			{
 				if (data)
 				{
-#if AD_USE_FAUDIO
-					if (!pSendList || !pSendList->SendCount)
-						FAudioVoice_SetOutputVoices(data, nullptr);
-					else
-					{
-						FAudioVoiceSends sends{};
-
-						sends.SendCount = pSendList->SendCount;
-						sends.pSends = new FAudioSendDescriptor[pSendList->SendCount];
-						if (!sends.pSends) return E_OUTOFMEMORY;
-						for (UINT32 i = 0; i < pSendList->SendCount; i++)
-						{
-							sends.pSends[i].Flags = pSendList->pSends[i].Flags;
-							sends.pSends[i].pOutputVoice =
-								pSendList->pSends[i].pOutputVoice ? pSendList->pSends[i].pOutputVoice->data : nullptr;
-						}
-
-						FAudioVoice_SetOutputVoices(data, std::addressof(sends));
-
-						delete[] sends.pSends;
-					}
-
-					return S_OK;
-#else
 					if (!pSendList || !pSendList->SendCount)
 						return data->SetOutputVoices(nullptr);
 					else
@@ -225,7 +187,6 @@ namespace Addictol
 						delete[] sends.pSends;
 						return hr;
 					}
-#endif
 				}
 
 				return E_FAIL;
@@ -256,11 +217,7 @@ namespace Addictol
 			{
 				if (!data)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_EnableEffect(data, EffectIndex, OperationSet) ? S_OK : E_FAIL;
-#else
 				return data->EnableEffect(EffectIndex, OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::DisableEffect
@@ -274,11 +231,7 @@ namespace Addictol
 			{
 				if (!data)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_DisableEffect(data, EffectIndex, OperationSet) ? S_OK : E_FAIL;
-#else
 				return data->DisableEffect(EffectIndex, OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetEffectState
@@ -292,12 +245,7 @@ namespace Addictol
 			{
 				if (!data || !pEnabled)
 					return;
-#if AD_USE_FAUDIO
-				// BOOL is int
-				FAudioVoice_GetEffectState(data, EffectIndex, pEnabled);
-#else
 				data->GetEffectState(EffectIndex, pEnabled);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::SetEffectParameters
@@ -319,10 +267,7 @@ namespace Addictol
 			{
 				if (!data || !pParameters)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_SetEffectParameters(data, EffectIndex, pParameters, ParametersByteSize,
-					OperationSet) ? S_OK : E_FAIL;
-#else
+
 				if (ParametersByteSize == sizeof(XAUDIO2FX_REVERB_PARAMETERS))
 				{
 					::XAUDIO2FX_REVERB_PARAMETERS reverb{};
@@ -357,7 +302,6 @@ namespace Addictol
 				}
 
 				return E_FAIL;
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetEffectParameters
@@ -373,9 +317,7 @@ namespace Addictol
 			{
 				if (!data || !pParameters)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_GetEffectParameters(data, EffectIndex, pParameters, ParametersByteSize) ? S_OK : E_FAIL;
-#else
+
 				if (ParametersByteSize == sizeof(XAUDIO2FX_REVERB_PARAMETERS))
 				{
 					::XAUDIO2FX_REVERB_PARAMETERS reverb{};
@@ -413,7 +355,6 @@ namespace Addictol
 				}
 
 				return E_FAIL;
-#endif
 			}
 
 			// NAME: IXAudio2Voice::SetFilterParameters
@@ -428,13 +369,9 @@ namespace Addictol
 			{
 				if (!data || !pParameters)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_SetFilterParameters(data, reinterpret_cast<const FAudioFilterParameters*>(pParameters),
-					OperationSet) ? S_OK : E_FAIL;
-#else
+
 				return data->SetFilterParameters(reinterpret_cast<const ::XAUDIO2_FILTER_PARAMETERS*>(pParameters),
 					OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetFilterParameters
@@ -447,11 +384,8 @@ namespace Addictol
 			{
 				if (!data || !pParameters)
 					return;
-#if AD_USE_FAUDIO
-				FAudioVoice_GetFilterParameters(data, reinterpret_cast<FAudioFilterParameters*>(pParameters));
-#else
+
 				data->GetFilterParameters(reinterpret_cast<::XAUDIO2_FILTER_PARAMETERS*>(pParameters));
-#endif
 			}
 
 			// NAME: IXAudio2Voice::SetOutputFilterParameters
@@ -467,13 +401,9 @@ namespace Addictol
 			{
 				if (!data || !pDestinationVoice || !pDestinationVoice->data || !pParameters)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_SetOutputFilterParameters(data, pDestinationVoice->data,
-					reinterpret_cast<const FAudioFilterParameters*>(pParameters), OperationSet) ? S_OK : E_FAIL;
-#else
+
 				return data->SetOutputFilterParameters(pDestinationVoice->data,
 					reinterpret_cast<const ::XAUDIO2_FILTER_PARAMETERS*>(pParameters), OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetOutputFilterParameters
@@ -488,14 +418,9 @@ namespace Addictol
 			{
 				if (!data || !pDestinationVoice || !pDestinationVoice->data || !pParameters)
 					return;
-#if AD_USE_FAUDIO
-				// XAUDIO2_FILTER_PARAMETERS matches with FAudioFilterParameters
-				FAudioVoice_GetOutputFilterParameters(data, pDestinationVoice->data,
-					reinterpret_cast<FAudioFilterParameters*>(pParameters));
-#else
+
 				data->GetOutputFilterParameters(pDestinationVoice->data,
 					reinterpret_cast<::XAUDIO2_FILTER_PARAMETERS*>(pParameters));
-#endif
 			}
 
 			// NAME: IXAudio2Voice::SetVolume
@@ -509,11 +434,8 @@ namespace Addictol
 			{
 				if (!data)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_SetVolume(data, Volume, OperationSet) ? S_OK : E_FAIL;
-#else
+
 				return data->SetVolume(Volume, OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetVolume
@@ -526,11 +448,8 @@ namespace Addictol
 			{
 				if (!data || !pVolume)
 					return;
-#if AD_USE_FAUDIO
-				FAudioVoice_GetVolume(data, pVolume);
-#else
+
 				data->GetVolume(pVolume);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::SetChannelVolumes
@@ -546,12 +465,8 @@ namespace Addictol
 			{
 				if (!data || !pVolumes)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_SetChannelVolumes(data, Channels,
-					pVolumes, OperationSet) ? S_OK : E_FAIL;
-#else
+
 				return data->SetChannelVolumes(Channels, pVolumes, OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetChannelVolumes
@@ -565,11 +480,8 @@ namespace Addictol
 			{
 				if (!data || !pVolumes)
 					return;
-#if AD_USE_FAUDIO
-				FAudioVoice_GetChannelVolumes(data, Channels, pVolumes);
-#else
+
 				data->GetChannelVolumes(Channels, pVolumes);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::SetOutputMatrix
@@ -593,14 +505,9 @@ namespace Addictol
 			{
 				if (!data || !pDestinationVoice || !pDestinationVoice->data || !pLevelMatrix)
 					return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioVoice_SetOutputMatrix(data, pDestinationVoice->data, SourceChannels,
-					DestinationChannels, pLevelMatrix, OperationSet) ? S_OK : E_FAIL;
-#else
 				auto hr = data->SetOutputMatrix(pDestinationVoice->data, SourceChannels,
 					DestinationChannels, pLevelMatrix, OperationSet);				
 				return hr;
-#endif
 			}
 
 			// NAME: IXAudio2Voice::GetOutputMatrix
@@ -620,12 +527,7 @@ namespace Addictol
 			{
 				if (!data || !pDestinationVoice || !pDestinationVoice->data || !pLevelMatrix)
 					return;
-#if AD_USE_FAUDIO
-				FAudioVoice_GetOutputMatrix(data, pDestinationVoice->data, SourceChannels, DestinationChannels,
-					pLevelMatrix);
-#else
 				data->GetOutputMatrix(pDestinationVoice->data, SourceChannels, DestinationChannels, pLevelMatrix);
-#endif
 			}
 
 			// NAME: IXAudio2Voice::DestroyVoice
@@ -636,11 +538,7 @@ namespace Addictol
 			{
 				if (data)
 				{
-#if AD_USE_FAUDIO
-					FAudioVoice_DestroyVoice(data);
-#else
 					data->DestroyVoice();
-#endif
 					data = nullptr;
 				}
 			}
@@ -710,49 +608,6 @@ namespace Addictol
 			virtual void OnCriticalError(HRESULT Error) const noexcept = 0;
 		};
 
-#if AD_USE_FAUDIO
-		class IXAudio2EngineCallbackProxy :
-			public FAudioEngineCallback
-		{
-			IXAudio2EngineCallback* orig{ nullptr };
-
-			IXAudio2EngineCallbackProxy(IXAudio2EngineCallbackProxy&&) = delete;
-			IXAudio2EngineCallbackProxy(const IXAudio2EngineCallbackProxy&) = delete;
-			IXAudio2EngineCallbackProxy& operator=(IXAudio2EngineCallbackProxy&&) = delete;
-			IXAudio2EngineCallbackProxy& operator=(const IXAudio2EngineCallbackProxy&) = delete;
-		public:
-			IXAudio2EngineCallbackProxy(IXAudio2EngineCallback* a_orig) :
-				orig(a_orig)
-			{
-				OnProcessingPassStart = (OnProcessingPassStartFunc)DoProcessingPassStart;
-				OnProcessingPassEnd = (OnProcessingPassEndFunc)DoProcessingPassEnd;
-				OnCriticalError = (OnCriticalErrorFunc)DoCriticalError;
-			}
-
-			// Called by XAudio2 just before an audio processing pass begins.
-			static void DoProcessingPassStart(IXAudio2EngineCallbackProxy* a_this) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnProcessingPassStart();
-			}
-
-			// Called just after an audio processing pass ends.
-			static void DoProcessingPassEnd(IXAudio2EngineCallbackProxy* a_this) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnProcessingPassEnd();
-			}
-
-			// Called in the event of a critical system error which requires XAudio2
-			// to be closed down and restarted. The error code is given in Error.
-			static void DoCriticalError(IXAudio2EngineCallbackProxy* a_this, uint32_t a_error) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnCriticalError(static_cast<HRESULT>(a_error));
-			}
-		};
-#endif
-
 		struct IXAudio2VoiceCallback
 		{
 			// Called just before this voice's processing pass begins.
@@ -783,93 +638,9 @@ namespace Addictol
 			virtual void OnVoiceError(void* pBufferContext, HRESULT Error) = 0;
 		};
 
-#if AD_USE_FAUDIO
-		class IXAudio2VoiceCallbackProxy :
-			public FAudioVoiceCallback
-		{
-			IXAudio2VoiceCallback* orig{ nullptr };
-
-			IXAudio2VoiceCallbackProxy(IXAudio2VoiceCallbackProxy&&) = delete;
-			IXAudio2VoiceCallbackProxy(const IXAudio2VoiceCallbackProxy&) = delete;
-			IXAudio2VoiceCallbackProxy& operator=(IXAudio2VoiceCallbackProxy&&) = delete;
-			IXAudio2VoiceCallbackProxy& operator=(const IXAudio2VoiceCallbackProxy&) = delete;
-		public:
-			IXAudio2VoiceCallbackProxy(IXAudio2VoiceCallback* a_orig) :
-				orig(a_orig)
-			{
-				OnBufferEnd = (OnBufferEndFunc)DoBufferEnd;
-				OnBufferStart = (OnBufferStartFunc)DoBufferStart;
-				OnLoopEnd = (OnLoopEndFunc)DoLoopEnd;
-				OnStreamEnd = (OnStreamEndFunc)DoStreamEnd;
-				OnVoiceError = (OnVoiceErrorFunc)DoVoiceError;
-				OnVoiceProcessingPassEnd = (OnVoiceProcessingPassEndFunc)DoVoiceProcessingPassEnd;
-				OnVoiceProcessingPassStart = (OnVoiceProcessingPassStartFunc)DoVoiceProcessingPassStart;
-			}
-
-			// Called just before this voice's processing pass begins.
-			static void DoVoiceProcessingPassStart(IXAudio2VoiceCallbackProxy* a_this, uint32_t BytesRequired) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnVoiceProcessingPassStart(BytesRequired);
-			}
-
-			// Called just after this voice's processing pass ends.
-			static void DoVoiceProcessingPassEnd(IXAudio2VoiceCallbackProxy* a_this) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnVoiceProcessingPassEnd();
-			}
-
-			// Called when this voice has just finished playing a buffer stream
-			// (as marked with the XAUDIO2_END_OF_STREAM flag on the last buffer).
-			static void DoStreamEnd(IXAudio2VoiceCallbackProxy* a_this) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnStreamEnd();
-			}
-
-			// Called when this voice is about to start processing a new buffer.
-			static void DoBufferStart(IXAudio2VoiceCallbackProxy* a_this, void* a_bufferContext) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnBufferStart(a_bufferContext);
-			}
-
-			// Called when this voice has just finished processing a buffer.
-			// The buffer can now be reused or destroyed.
-			static void DoBufferEnd(IXAudio2VoiceCallbackProxy* a_this, void* a_bufferContext) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnBufferEnd(a_bufferContext);
-			}
-
-			// Called when this voice has just reached the end position of a loop.
-			static void DoLoopEnd(IXAudio2VoiceCallbackProxy* a_this, void* a_bufferContext) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnLoopEnd(a_bufferContext);
-			}
-
-			// Called in the event of a critical error during voice processing,
-			// such as a failing xAPO or an error from the hardware XMA decoder.
-			// The voice may have to be destroyed and re-created to recover from
-			// the error.  The callback arguments report which buffer was being
-			// processed when the error occurred, and its HRESULT code.
-			static void DoVoiceError(IXAudio2VoiceCallbackProxy* a_this, void* a_bufferContext, uint32_t a_error) noexcept
-			{
-				if (a_this->orig)
-					a_this->orig->OnVoiceError(a_bufferContext, static_cast<HRESULT>(a_error));
-			}
-		};
-#endif
-
 		class IXAudio2SourceVoiceProxy :
 			public IXAudio2VoiceProxy
 		{
-#if AD_USE_FAUDIO
-			IXAudio2Proxy* proxy{ nullptr };
-			IXAudio2VoiceCallback* callback{ nullptr };
-#endif
 			IXAudio2SourceVoiceProxy(IXAudio2SourceVoiceProxy&&) = delete;
 			IXAudio2SourceVoiceProxy(const IXAudio2SourceVoiceProxy&) = delete;
 			IXAudio2SourceVoiceProxy& operator=(IXAudio2SourceVoiceProxy&&) = delete;
@@ -878,10 +649,6 @@ namespace Addictol
 			friend class IXAudio2Proxy;
 
 			constexpr IXAudio2SourceVoiceProxy() noexcept = default;
-
-#if AD_USE_FAUDIO
-			~IXAudio2SourceVoiceProxy() noexcept;
-#endif
 
 			// NAME: IXAudio2SourceVoice::Start
 			// DESCRIPTION: Makes this voice start consuming and processing audio.
@@ -893,11 +660,7 @@ namespace Addictol
 			virtual HRESULT Start(UINT32 Flags = 0, UINT32 OperationSet = 0) noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_Start(data, Flags, OperationSet) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->Start();
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::Stop
@@ -910,11 +673,7 @@ namespace Addictol
 			virtual HRESULT Stop(UINT32 Flags = 0, UINT32 OperationSet = 0) noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_Stop(data, Flags, OperationSet) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->Stop();
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::SubmitSourceBuffer
@@ -929,15 +688,9 @@ namespace Addictol
 			{
 				if (!data || !pBuffer) return E_FAIL;
 
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_SubmitSourceBuffer(data,
-					reinterpret_cast<const FAudioBuffer*>(pBuffer),
-					reinterpret_cast<const FAudioBufferWMA*>(pBufferWMA)) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->SubmitSourceBuffer(
 					reinterpret_cast<const ::XAUDIO2_BUFFER*>(pBuffer),
 					reinterpret_cast<const ::XAUDIO2_BUFFER_WMA*>(pBufferWMA));
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::FlushSourceBuffers
@@ -946,11 +699,7 @@ namespace Addictol
 			virtual HRESULT FlushSourceBuffers() noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_FlushSourceBuffers(data) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->FlushSourceBuffers();
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::Discontinuity
@@ -961,11 +710,7 @@ namespace Addictol
 			virtual HRESULT Discontinuity() noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_Discontinuity(data) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->Discontinuity();
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::ExitLoop
@@ -977,11 +722,7 @@ namespace Addictol
 			virtual HRESULT ExitLoop(UINT32 OperationSet = 0) noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_ExitLoop(data, OperationSet) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->ExitLoop(OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::GetState
@@ -995,12 +736,8 @@ namespace Addictol
 			virtual void GetState(XAUDIO2_VOICE_STATE* pVoiceState) const noexcept
 			{
 				if (!data) return;
-#if AD_USE_FAUDIO
-				FAudioSourceVoice_GetState(data, reinterpret_cast<FAudioVoiceState*>(pVoiceState), 0);
-#else
 				(reinterpret_cast<IXAudio2SourceVoice*>(data))->GetState(
 					reinterpret_cast<::XAUDIO2_VOICE_STATE*>(pVoiceState));
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::SetFrequencyRatio
@@ -1013,11 +750,7 @@ namespace Addictol
 			virtual HRESULT SetFrequencyRatio(float Ratio, UINT32 OperationSet = 0) noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_SetFrequencyRatio(data, Ratio, OperationSet) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->SetFrequencyRatio(Ratio, OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::GetFrequencyRatio
@@ -1029,11 +762,7 @@ namespace Addictol
 			virtual void GetFrequencyRatio(float* pRatio) const noexcept
 			{
 				if (!data || !pRatio) return;
-#if AD_USE_FAUDIO
-				FAudioSourceVoice_GetFrequencyRatio(data, pRatio);
-#else
 				(reinterpret_cast<IXAudio2SourceVoice*>(data))->GetFrequencyRatio(pRatio);
-#endif
 			}
 
 			// NAME: IXAudio2SourceVoice::SetSourceSampleRate
@@ -1047,11 +776,7 @@ namespace Addictol
 			virtual HRESULT SetSourceSampleRate(UINT32 NewSourceSampleRate) noexcept
 			{
 				if (!data) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudioSourceVoice_SetSourceSampleRate(data, NewSourceSampleRate) ? S_OK : E_FAIL;
-#else
 				return (reinterpret_cast<IXAudio2SourceVoice*>(data))->SetSourceSampleRate(NewSourceSampleRate);
-#endif
 			}
 		};
 
@@ -1152,61 +877,14 @@ namespace Addictol
 			BOOL LogTiming;						// Whether to log message timestamps.
 		} XAUDIO2_DEBUG_CONFIGURATION;
 
-#if AD_USE_FAUDIO
-		typedef enum XAUDIO2_WINDOWS_PROCESSOR_SPECIFIER
-		{
-			Processor1 = 0x00000001,
-			Processor2 = 0x00000002,
-			Processor3 = 0x00000004,
-			Processor4 = 0x00000008,
-			Processor5 = 0x00000010,
-			Processor6 = 0x00000020,
-			Processor7 = 0x00000040,
-			Processor8 = 0x00000080,
-			Processor9 = 0x00000100,
-			Processor10 = 0x00000200,
-			Processor11 = 0x00000400,
-			Processor12 = 0x00000800,
-			Processor13 = 0x00001000,
-			Processor14 = 0x00002000,
-			Processor15 = 0x00004000,
-			Processor16 = 0x00008000,
-			Processor17 = 0x00010000,
-			Processor18 = 0x00020000,
-			Processor19 = 0x00040000,
-			Processor20 = 0x00080000,
-			Processor21 = 0x00100000,
-			Processor22 = 0x00200000,
-			Processor23 = 0x00400000,
-			Processor24 = 0x00800000,
-			Processor25 = 0x01000000,
-			Processor26 = 0x02000000,
-			Processor27 = 0x04000000,
-			Processor28 = 0x08000000,
-			Processor29 = 0x10000000,
-			Processor30 = 0x20000000,
-			Processor31 = 0x40000000,
-			Processor32 = 0x80000000,
-			XAUDIO2_ANY_PROCESSOR = 0xffffffff,
-			XAUDIO2_DEFAULT_PROCESSOR = XAUDIO2_ANY_PROCESSOR
-		} XAUDIO2_WINDOWS_PROCESSOR_SPECIFIER, XAUDIO2_PROCESSOR;
-#endif
-
 		#pragma pack(pop)
 
 		class IXAudio2Proxy :
 			public IUnknown
 		{
 			volatile long ref{ 1 };
-
-#if AD_USE_FAUDIO
-			FAudio* audio{ nullptr };
-			std::unordered_map<IXAudio2EngineCallback*, IXAudio2EngineCallbackProxy*> callbacks{};
-			std::unordered_map<IXAudio2VoiceCallback*, IXAudio2VoiceCallbackProxy*> callbacks_audio{};
-#else
 			IXAudio2* audio{ nullptr };
-#endif
-			
+
 			IXAudio2Proxy(IXAudio2Proxy&&) = delete;
 			IXAudio2Proxy(const IXAudio2Proxy&) = delete;
 			IXAudio2Proxy& operator=(IXAudio2Proxy&&) = delete;
@@ -1216,31 +894,10 @@ namespace Addictol
 
 			IXAudio2Proxy() noexcept
 			{
-#if AD_USE_FAUDIO
-				FAudioCOMConstructEXT(std::addressof(audio), FAUDIO_TARGET_VERSION);
-#else
 				auto hr = XAudio2Create(std::addressof(audio), 0, XAUDIO2_ANY_PROCESSOR);
 				if (FAILED(hr))
 					REX::ERROR("XAudio2Create return failed \"{}\"", _com_error(hr).ErrorMessage());
-#endif
 			}
-
-#if AD_USE_FAUDIO
-			~IXAudio2Proxy() noexcept
-			{
-				for (auto& call : callbacks)
-					if (call.second)
-						delete call.second;
-
-				callbacks.clear();
-
-				for (auto& call : callbacks_audio)
-					if (call.second)
-						delete call.second;
-
-				callbacks_audio.clear();
-			}
-#endif
 
 			// NAME: IXAudio2::QueryInterface
 			// DESCRIPTION: Queries for a given COM interface on the XAudio2 object.
@@ -1302,13 +959,9 @@ namespace Addictol
 				if (!audio || !pCount)
 					return E_FAIL;
 
-#if AD_USE_FAUDIO
-				return !FAudio_GetDeviceCount(audio, pCount) ? S_OK : E_FAIL;
-#else
 				// Fake
 				*pCount = 1;
 				return S_OK;
-#endif
 			}
 
 			// NAME: IXAudio2::GetDeviceDetails
@@ -1324,15 +977,10 @@ namespace Addictol
 				if (!audio || !pDeviceDetails)
 					return E_FAIL;
 
-#if AD_USE_FAUDIO
-				return !FAudio_GetDeviceDetails(audio, Index,
-					reinterpret_cast<FAudioDeviceDetails*>(pDeviceDetails)) ? S_OK : E_FAIL;
-#else
 				wcscpy_s(pDeviceDetails->DeviceID, L"{default}");
 				wcscpy_s(pDeviceDetails->DisplayName, L"Default");
 				
 				return S_OK;
-#endif
 			}
 
 			// NAME: IXAudio2::Initialize
@@ -1351,11 +999,7 @@ namespace Addictol
 				if (!audio)
 					return E_FAIL;
 
-#if AD_USE_FAUDIO
-				return !FAudio_Initialize(audio, Flags, XAudio2Processor) ? S_OK : E_FAIL;
-#else
 				return S_OK;
-#endif
 			}
 
 			// NAME: IXAudio2::RegisterForCallbacks
@@ -1366,28 +1010,8 @@ namespace Addictol
 			//
 			virtual HRESULT RegisterForCallbacks(IXAudio2EngineCallback* pCallback) noexcept
 			{
-				if (!audio || !pCallback
-#if AD_USE_FAUDIO
-					|| callbacks.contains(pCallback)
-#endif
-					)
-					return E_FAIL;
-
-#if AD_USE_FAUDIO
-				auto call = new IXAudio2EngineCallbackProxy(pCallback);
-				if (!call) return E_OUTOFMEMORY;
-
-				if (FAudio_RegisterForCallbacks(audio, call))
-				{
-					callbacks.try_emplace(pCallback, call);
-					return S_OK;
-				}
-
-				//delete call;
-				return E_FAIL;
-#else
+				if (!audio || !pCallback) return E_FAIL;
 				return audio->RegisterForCallbacks(reinterpret_cast<::IXAudio2EngineCallback*>(pCallback));
-#endif
 			}
 
 			// NAME: IXAudio2::UnregisterForCallbacks
@@ -1398,24 +1022,8 @@ namespace Addictol
 			//
 			virtual void UnregisterForCallbacks(IXAudio2EngineCallback* pCallback) noexcept
 			{
-				if (!audio || !pCallback)
-					return;
-
-#if AD_USE_FAUDIO
-				auto it_call = callbacks.find(pCallback);
-				if (it_call == callbacks.end())
-					return;
-
-				if (it_call->second)
-				{
-					FAudio_UnregisterForCallbacks(audio, it_call->second);
-					//delete it_call->second;
-				}
-
-				callbacks.erase(it_call);
-#else
+				if (!audio || !pCallback) return;
 				audio->UnregisterForCallbacks(reinterpret_cast<::IXAudio2EngineCallback*>(pCallback));
-#endif
 			}
 
 			// NAME: IXAudio2::CreateSourceVoice
@@ -1440,56 +1048,9 @@ namespace Addictol
 				if (!audio || !ppSourceVoice)
 					return E_FAIL;
 
-#if AD_USE_FAUDIO
-				uint32_t result{ 1 };
-				IXAudio2VoiceCallbackProxy* call{ nullptr };
-
-				if (pCallback)
-				{
-					call = new IXAudio2VoiceCallbackProxy(pCallback);
-					if (!call) return E_OUTOFMEMORY;
-
-					callbacks_audio.try_emplace(pCallback, call);
-				}
-#endif
-
 				*ppSourceVoice = new IXAudio2SourceVoiceProxy();
 				if (!(*ppSourceVoice)) return E_OUTOFMEMORY;
 
-#if AD_USE_FAUDIO
-				(*ppSourceVoice)->callback = pCallback;
-
-				if (pSendList && pSendList->SendCount)
-				{
-					FAudioVoiceSends sends{};
-
-					sends.SendCount = pSendList->SendCount;
-					sends.pSends = new FAudioSendDescriptor[pSendList->SendCount];
-					if (!sends.pSends)
-					{
-						delete (*ppSourceVoice);
-						return E_OUTOFMEMORY;
-					}
-
-					for (UINT32 i = 0; i < pSendList->SendCount; i++)
-					{
-						sends.pSends[i].Flags = pSendList->pSends[i].Flags;
-						sends.pSends[i].pOutputVoice =
-							pSendList->pSends[i].pOutputVoice ? pSendList->pSends[i].pOutputVoice->data : nullptr;
-					}
-
-					result = FAudio_CreateSourceVoice(audio, std::addressof((*ppSourceVoice)->data),
-						reinterpret_cast<const FAudioWaveFormatEx*>(pSourceFormat), Flags, MaxFrequencyRatio, nullptr,
-						std::addressof(sends), nullptr);
-					delete[] sends.pSends;
-				}
-				else
-					result = FAudio_CreateSourceVoice(audio, std::addressof((*ppSourceVoice)->data),
-						reinterpret_cast<const FAudioWaveFormatEx*>(pSourceFormat), Flags, MaxFrequencyRatio, nullptr,
-						nullptr, nullptr);
-
-				return !result ? S_OK : E_FAIL;
-#else
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
@@ -1519,7 +1080,6 @@ namespace Addictol
 					return audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
 						nullptr, reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-#endif
 			}
 
 			// NAME: IXAudio2::CreateSubmixVoice
@@ -1543,41 +1103,6 @@ namespace Addictol
 				if (!audio || !ppSubmixVoice)
 					return E_FAIL;
 
-#if AD_USE_FAUDIO
-				uint32_t result{ 1 };
-
-				*ppSubmixVoice = new IXAudio2SubmixVoiceProxy();
-				if (!(*ppSubmixVoice)) return E_OUTOFMEMORY;
-
-				if (pSendList && pSendList->SendCount)
-				{
-					FAudioVoiceSends sends{};
-
-					sends.SendCount = pSendList->SendCount;
-					sends.pSends = new FAudioSendDescriptor[pSendList->SendCount];
-					if (!sends.pSends)
-					{
-						delete (*ppSubmixVoice);
-						return E_OUTOFMEMORY;
-					}
-
-					for (UINT32 i = 0; i < pSendList->SendCount; i++)
-					{
-						sends.pSends[i].Flags = pSendList->pSends[i].Flags;
-						sends.pSends[i].pOutputVoice =
-							pSendList->pSends[i].pOutputVoice ? pSendList->pSends[i].pOutputVoice->data : nullptr;
-					}
-
-					result = FAudio_CreateSubmixVoice(audio, std::addressof((*ppSubmixVoice)->data),
-						InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends), nullptr);
-					delete[] sends.pSends;
-				}
-				else
-					result = FAudio_CreateSubmixVoice(audio, std::addressof((*ppSubmixVoice)->data),
-						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr, nullptr);
-
-				return !result ? S_OK : E_FAIL;
-#else
 				* ppSubmixVoice = new IXAudio2SubmixVoiceProxy();
 				if (!(*ppSubmixVoice)) return E_OUTOFMEMORY;
 
@@ -1609,8 +1134,7 @@ namespace Addictol
 				else
 					return audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr,
-						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-#endif				
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));			
 			}
 
 			// NAME: IXAudio2::CreateMasteringVoice
@@ -1625,13 +1149,8 @@ namespace Addictol
 			//  pEffectChain - Optional list of effects to apply to the audio data.
 			//
 			virtual HRESULT CreateMasteringVoice(IXAudio2MasteringVoiceProxy** ppMasteringVoice,
-#if AD_USE_FAUDIO
-				UINT32 InputChannels = FAUDIO_DEFAULT_CHANNELS,
-				UINT32 InputSampleRate = FAUDIO_DEFAULT_SAMPLERATE,
-#else
 				UINT32 InputChannels = XAUDIO2_DEFAULT_CHANNELS,
 				UINT32 InputSampleRate = XAUDIO2_DEFAULT_SAMPLERATE,
-#endif
 				UINT32 Flags = 0, UINT32 DeviceIndex = 0,
 				const XAUDIO2_EFFECT_CHAIN* pEffectChain = nullptr) noexcept
 			{
@@ -1641,14 +1160,9 @@ namespace Addictol
 				*ppMasteringVoice = new IXAudio2MasteringVoiceProxy();
 				if (!(*ppMasteringVoice)) return E_OUTOFMEMORY;
 
-#if AD_USE_FAUDIO
-				return !FAudio_CreateMasteringVoice(audio, std::addressof((*ppMasteringVoice)->data),
-					InputChannels, InputSampleRate, Flags, DeviceIndex, nullptr) ? S_OK : E_FAIL;
-#else
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
 					InputChannels, InputSampleRate, Flags, nullptr, 
 					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-#endif
 			}
 
 			// NAME: IXAudio2::StartEngine
@@ -1657,11 +1171,7 @@ namespace Addictol
 			virtual HRESULT StartEngine() noexcept
 			{
 				if (!audio) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudio_StartEngine(audio) ? S_OK : E_FAIL;
-#else
 				return audio->StartEngine();
-#endif
 			}
 
 			// NAME: IXAudio2::StopEngine
@@ -1670,11 +1180,7 @@ namespace Addictol
 			virtual void StopEngine() noexcept
 			{
 				if (!audio) return;
-#if AD_USE_FAUDIO
-				FAudio_StopEngine(audio);
-#else
 				return audio->StopEngine();
-#endif
 			}
 
 			// NAME: IXAudio2::CommitChanges
@@ -1687,11 +1193,7 @@ namespace Addictol
 			virtual HRESULT CommitChanges(UINT32 OperationSet) noexcept
 			{
 				if (!audio) return E_FAIL;
-#if AD_USE_FAUDIO
-				return !FAudio_CommitOperationSet(audio, OperationSet) ? S_OK : E_FAIL;
-#else
 				return audio->CommitChanges(OperationSet);
-#endif
 			}
 
 			// NAME: IXAudio2::GetPerformanceData
@@ -1702,14 +1204,8 @@ namespace Addictol
 			//
 			virtual void GetPerformanceData(XAUDIO2_PERFORMANCE_DATA* pPerfData) const noexcept
 			{
-				if (!audio || !pPerfData)
-					return;
-
-#if AD_USE_FAUDIO
-				FAudio_GetPerformanceData(audio, reinterpret_cast<FAudioPerformanceData*>(pPerfData));
-#else
+				if (!audio || !pPerfData) return;
 				audio->GetPerformanceData(reinterpret_cast<::XAUDIO2_PERFORMANCE_DATA*>(pPerfData));
-#endif
 			}
 
 			// NAME: IXAudio2::SetDebugConfiguration
@@ -1722,21 +1218,11 @@ namespace Addictol
 			virtual void SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION* pDebugConfiguration,
 				[[maybe_unused]] void* pReserved = nullptr) noexcept
 			{
-				if (!audio || !pDebugConfiguration)
-					return;
-
-#if AD_USE_FAUDIO
-				FAudio_SetDebugConfiguration(audio,
-					// ??? bruh
-					const_cast<FAudioDebugConfiguration*>(reinterpret_cast<const FAudioDebugConfiguration*>(pDebugConfiguration)),
-					nullptr);
-#else
+				if (!audio || !pDebugConfiguration) return;
 				audio->SetDebugConfiguration(reinterpret_cast<const ::XAUDIO2_DEBUG_CONFIGURATION*>(pDebugConfiguration), nullptr);
-#endif
 			}
 		};
 
-#if !AD_USE_FAUDIO
 		static void ReverbConvertI3DL2ToNative(const XAUDIO2FX_REVERB_I3DL2_PARAMETERS* pI3DL2, 
 			XAUDIO2FX_REVERB_PARAMETERS* pNative)
 		{
@@ -1803,30 +1289,7 @@ namespace Addictol
 
 			pNative->WetDryMix = pI3DL2->WetDryMix;
 		}
-#endif
-
-#if AD_USE_FAUDIO
-		IXAudio2SourceVoiceProxy::~IXAudio2SourceVoiceProxy() noexcept
-		{
-			if (callback && proxy)
-			{
-				auto it_call = proxy->callbacks_audio.find(callback);
-				if (it_call != proxy->callbacks_audio.end())
-					proxy->callbacks_audio.erase(it_call);
-			}
-		}
-#endif
 	}
-
-#if 0
-	struct BSXAudio2Audio
-	{
-		using NotifyFunc = void();
-
-		inline static std::function<NotifyFunc> InitSDM{};
-		inline static std::function<NotifyFunc> ShutdownSDM{};
-	};
-#endif
 
 #if AD_USE_CHECKUPDATE_AUDIODEVICE
 	class IAudioNotificationClient : public IMMNotificationClient
@@ -1954,11 +1417,11 @@ namespace Addictol
 		return S_OK;
 	}
 
-	//static HRESULT XAudio2Reverb_CoCreateInstance([[maybe_unused]] REFCLSID rclsid, [[maybe_unused]] LPUNKNOWN pUnkOuter,
-	//	[[maybe_unused]] DWORD dwClsContext, [[maybe_unused]] REFIID riid, LPVOID* ppv) noexcept
-	//{
-	//	return XAudio2CreateReverb(reinterpret_cast<IUnknown**>(ppv));
-	//}
+	static HRESULT XAudio2Reverb_CoCreateInstance([[maybe_unused]] REFCLSID rclsid, [[maybe_unused]] LPUNKNOWN pUnkOuter,
+		[[maybe_unused]] DWORD dwClsContext, [[maybe_unused]] REFIID riid, LPVOID* ppv) noexcept
+	{
+		return XAudio2CreateReverb(reinterpret_cast<IUnknown**>(ppv));
+	}
 
 	ModuleAudioProxy::ModuleAudioProxy() :
 		Module("Audio Proxy", &bPatchesAudioProxy)
@@ -1966,24 +1429,16 @@ namespace Addictol
 
 	bool ModuleAudioProxy::DoQuery() const noexcept
 	{
-		// disable patch
-		return false; //RELEX::IsRuntimeAE();
+		return false;// RELEX::IsRuntimeAE();
 	}
 
 	bool ModuleAudioProxy::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-#if 0
-		BSXAudio2Audio::InitSDM = reinterpret_cast<BSXAudio2Audio::NotifyFunc*>(REL::ID{ 2267536 }.address());
-		BSXAudio2Audio::ShutdownSDM = reinterpret_cast<BSXAudio2Audio::NotifyFunc*>(REL::ID{ 2267537 }.address());
-		
-		MessageBoxA(0, "tet", "", 0);
-#endif
-
 		RELEX::DetourCall(REL::Relocation(REL::ID{ 2267547 }, REL::Offset{ 0x108 }).address(),
 			(uintptr_t)&XAudio2_CoCreateInstance);
-		//RELEX::DetourCall(REL::Relocation(REL::ID{ 2267579 }, REL::Offset{ 0xFD }).address(),
-		//	(uintptr_t)&XAudio2Reverb_CoCreateInstance);
-		//RELEX::DetourJump(REL::ID{ 2267576 }.address(), (uintptr_t)&detail::ReverbConvertI3DL2ToNative);
+		RELEX::DetourCall(REL::Relocation(REL::ID{ 2267579 }, REL::Offset{ 0xFD }).address(),
+			(uintptr_t)&XAudio2Reverb_CoCreateInstance);
+		RELEX::DetourJump(REL::ID{ 2267576 }.address(), (uintptr_t)&detail::ReverbConvertI3DL2ToNative);
 
 		return true;
 	}
