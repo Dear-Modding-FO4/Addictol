@@ -31,25 +31,9 @@ namespace Addictol
 
 		static void EvaluateConditions_Hook(RE::ActiveEffect *a_this, float a_elapsedTimeDelta, bool a_forceUpdate)
 		{
-			if (a_this->conditionStatus == RE::ActiveEffect::ConditionStatus::kNotAvailable)
+			if (a_this->conditionStatus == RE::ActiveEffect::ConditionStatus::kNotAvailable && !a_forceUpdate)
 			{
-				// This effect has no conditions, so there is nothing to evaluate.
 				return;
-			}
-
-			// kFireAndForget == 1 in FO4; commonlibf4 only forward-declares CastingType, so compare numerically.
-			if (static_cast<std::int32_t>(a_this->spell->GetCastingType()) == 1 /*kFireAndForget*/)
-			{
-				if (a_this->spell->IsAlchemyItem())
-				{
-					auto *potion = static_cast<RE::AlchemyItem *>(a_this->spell);
-					if (potion->data.addictionChance > 0.0f || potion->data.addictionItem)
-					{
-						// Fire-and-forget addictive chem/alcohol: let vanilla handle the addiction path.
-						_EvaluateConditions(a_this, a_elapsedTimeDelta, a_forceUpdate);
-						return;
-					}
-				}
 			}
 
 			if ((a_this->flags.all(RE::ActiveEffect::Flags::kHasConditions) || a_this->displacementSpell) &&
@@ -74,6 +58,7 @@ namespace Addictol
 					}
 				}
 
+				aux = a_elapsedTimeDelta;
 				const bool isTrue =
 					a_this->effect->conditions.IsTrue(a_this->target->GetTargetStatsObject(), a_this->caster.get().get()) &&
 					!a_this->CheckDisplacementSpellOnTarget();
