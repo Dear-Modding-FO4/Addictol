@@ -83,7 +83,7 @@ bActorIsHostileToActor = true
 # Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
 bBGSAIWorldLocationRefRadius = true
 
-# Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze
+# Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze.
 bSafeExit = true
 
 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
@@ -122,7 +122,7 @@ bInteriorNavCut = true
 # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 bMagicEffectApplyEvent = true
 
-# Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions
+# Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions.
 bMagicEffectConditions = true
 
 # Fixes encounter zones resetting immediately once you leave them on foot.
@@ -219,6 +219,7 @@ bDuplicateAddonNodeIndex = true
 # Warns if you are approaching the reference handle limit or exceed the reference handle limit.
 # Terminate process if out of entries!
 bReferenceHandleLimit = true
+
 
 # Patches / Fixes for mods that are used by the DMFO4 team, but are tired of waiting for fixes from the authors of these mods.
 # We do not accept requests, we also fix only those versions that we use. Always turned off by default.
