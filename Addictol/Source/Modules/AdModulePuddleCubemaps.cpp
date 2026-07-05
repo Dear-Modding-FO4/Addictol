@@ -8,9 +8,9 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesPuddleCubemaps{"Fixes"sv, "bPuddleCubemaps"sv, false};
 
-	ModulePuddleCubemaps::ModulePuddleCubemaps() : Module("Puddle Cubemaps", &bFixesPuddleCubemaps)
-	{
-	}
+	ModulePuddleCubemaps::ModulePuddleCubemaps() :
+		Module("Puddle Cubemaps", &bFixesPuddleCubemaps)
+	{}
 
 	bool ModulePuddleCubemaps::DoQuery() const noexcept
 	{
@@ -40,9 +40,7 @@ namespace Addictol
 			for (RE::TESWorldSpace *ws : worldspaces)
 			{
 				if (!ws)
-				{
 					continue;
-				}
 
 				ws->waterEnvMap.textureName = blankTextureName;
 			}

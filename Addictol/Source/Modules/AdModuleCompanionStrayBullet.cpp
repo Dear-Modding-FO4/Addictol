@@ -52,9 +52,7 @@ namespace Addictol
 					auto *actor = handle.get().get();
 					// niFlags bit 26 (0x1a) marks an actor as a player teammate.
 					if (actor && (actor->niFlags.flags >> 0x1a & 1) != 0)
-					{
 						teammates.push_back(actor);
-					}
 				}
 			}
 
@@ -73,9 +71,7 @@ namespace Addictol
 			{
 				// Fast path: runs on every combat-state change, so no logging/allocation here.
 				if (a4 != 0x46)
-				{
 					return func(a1, a2, a3, a4, a5, a6);
-				}
 
 				const std::int64_t now = NowMs();
 				std::int64_t last = s_lastPatchMs.load(std::memory_order_relaxed);
@@ -88,10 +84,9 @@ namespace Addictol
 						for (auto *actor : teammates)
 						{
 							if (actor)
-							{
 								actor->HandleItemEquip(true);
-							}
 						}
+
 						REX::INFO("CompanionStrayBullet: re-equipped weapons on {} player teammate(s) on combat exit."sv, teammates.size());
 					}
 				}
@@ -128,9 +123,7 @@ namespace Addictol
 		{
 			const std::uint32_t raw = CrosshairPickSink::s_crosshairHandle.load(std::memory_order_relaxed);
 			if (raw == 0)
-			{
 				return nullptr;
-			}
 
 			// Rebuild the handle from its raw value (ObjectRefHandle is a single uint32).
 			RE::ObjectRefHandle handle{};
@@ -139,9 +132,8 @@ namespace Addictol
 			auto refPtr = handle.get();
 			RE::TESObjectREFR *ref = refPtr.get();
 			if (ref && ref->GetSavedFormType() == RE::ENUM_FORM_ID::kACHR)
-			{
 				return static_cast<RE::Actor *>(ref);
-			}
+			
 			return nullptr;
 		}
 
@@ -153,34 +145,25 @@ namespace Addictol
 
 				bool exit = false;
 				if (!akPlayer)
-				{
 					exit = true;
-				}
+
 				if (!crosshairActor)
-				{
 					exit = true;
-				}
+
 				if (crosshairActor && crosshairActor->weaponState == RE::WEAPON_STATE::kSheathed)
-				{
 					exit = true;
-				}
+
 				if (crosshairActor && crosshairActor->gunState == RE::GUN_STATE::kRelaxed)
-				{
 					exit = true;
-				}
+
 				if (crosshairActor && crosshairActor->DoGetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal)
-				{
 					exit = true;
-				}
+
 				if (akPlayer && !akPlayer->IsInCombat())
-				{
 					exit = true;
-				}
 
 				if (!exit)
-				{
 					crosshairActor->HandleItemEquip(true);
-				}
 
 				func(akPlayer, abCommandState, unk);
 			}
@@ -193,9 +176,7 @@ namespace Addictol
 		{
 			static std::atomic<bool> s_registered{false};
 			if (s_registered.load(std::memory_order_acquire))
-			{
 				return;
-			}
 
 			auto *player = RE::PlayerCharacter::GetSingleton();
 			if (!player)
@@ -206,18 +187,16 @@ namespace Addictol
 
 			bool expected = false;
 			if (!s_registered.compare_exchange_strong(expected, true, std::memory_order_acq_rel))
-			{
 				return;
-			}
 
 			static_cast<RE::BSTEventSource<RE::PickRefUpdateEvent> *>(player)->RegisterSink(CrosshairPickSink::GetSingleton());
 			REX::INFO("CompanionStrayBullet: registered crosshair pick-ref sink (Hook A)."sv);
 		}
 	}
 
-	ModuleCompanionStrayBullet::ModuleCompanionStrayBullet() : Module("Companion Stray Bullet", &bFixesCompanionStrayBullet)
-	{
-	}
+	ModuleCompanionStrayBullet::ModuleCompanionStrayBullet() :
+		Module("Companion Stray Bullet", &bFixesCompanionStrayBullet)
+	{}
 
 	bool ModuleCompanionStrayBullet::DoQuery() const noexcept
 	{
@@ -230,9 +209,8 @@ namespace Addictol
 		if (a_msg)
 		{
 			if (a_msg->type == F4SE::MessagingInterface::kGameDataReady)
-			{
 				companionStrayBulletDetail::RegisterCrosshairPickSink();
-			}
+			
 			return true;
 		}
 
@@ -242,23 +220,20 @@ namespace Addictol
 
 		// Combat-exit dialogue CALL site inside CombatController::SetTarget (NG == AE, OG differs).
 		{
-			REL::Relocation<std::uintptr_t> site{REL::ID{369646, 2216401}, REL::Offset{0x1B8, 0x257}};
+			REL::Relocation<std::uintptr_t> site{ REL::ID{ 369646, 2216401 }, REL::Offset{ 0x1B8, 0x257 } };
 
 			// 1. must be an E8 rel32 CALL
 			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
-			{
 				REX::WARN("CompanionStrayBullet: combat-exit call-site is not a CALL (E8); Hook B not applied."sv);
-			}
 			else
 			{
 				// 2. must still point at vanilla HandleOnCombatExit (else another mod redirected it, or wrong build)
 				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
 				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation<std::uintptr_t> expectedCallee{REL::ID{1512408, 2238049}};
+				REL::Relocation<std::uintptr_t> expectedCallee{ REL::ID{ 1512408, 2238049 } };
+
 				if (callTarget != expectedCallee.address())
-				{
 					REX::WARN("CompanionStrayBullet: combat-exit call target unexpected (already patched or unsupported build). Hook B not applied."sv);
-				}
 				else
 				{
 					// 3. safe to patch
@@ -271,23 +246,20 @@ namespace Addictol
 		}
 
 		{
-			REL::Relocation<std::uintptr_t> site{REL::ID{1512511, 2229916}, REL::Offset{0x118, 0x11E}};
+			REL::Relocation<std::uintptr_t> site{ REL::ID{ 1512511, 2229916 }, REL::Offset{ 0x118, 0x11E } };
 
 			// 1. must be an E8 rel32 CALL
 			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
-			{
 				REX::WARN("CompanionStrayBullet: command-enter call-site is not a CALL (E8); Hook A not applied."sv);
-			}
 			else
 			{
 				// 2. must still point at the vanilla command-enter handler
 				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
 				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation<std::uintptr_t> expectedCallee{REL::ID{354559, 2233152}};
+				REL::Relocation<std::uintptr_t> expectedCallee{ REL::ID{ 354559, 2233152 } };
+
 				if (callTarget != expectedCallee.address())
-				{
 					REX::WARN("CompanionStrayBullet: command-enter call target unexpected (already patched or unsupported build). Hook A not applied."sv);
-				}
 				else
 				{
 					// 3. safe to patch

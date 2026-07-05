@@ -32,9 +32,7 @@ namespace Addictol
 		static void EvaluateConditions_Hook(RE::ActiveEffect *a_this, float a_elapsedTimeDelta, bool a_forceUpdate)
 		{
 			if (a_this->conditionStatus == RE::ActiveEffect::ConditionStatus::kNotAvailable && !a_forceUpdate)
-			{
 				return;
-			}
 
 			if ((a_this->flags.all(RE::ActiveEffect::Flags::kHasConditions) || a_this->displacementSpell) &&
 				a_this->target && a_this->target->GetTargetStatsObject())
@@ -65,15 +63,13 @@ namespace Addictol
 				a_this->conditionStatus = isTrue ? RE::ActiveEffect::ConditionStatus::kTrue : RE::ActiveEffect::ConditionStatus::kFalse;
 			}
 			else
-			{
 				a_this->conditionStatus = RE::ActiveEffect::ConditionStatus::kNotAvailable;
-			}
 		}
 	}
 
-	ModuleMagicEffectConditions::ModuleMagicEffectConditions() : Module("MagicEffectConditions", &bFixesMagicEffectConditions)
-	{
-	}
+	ModuleMagicEffectConditions::ModuleMagicEffectConditions() :
+		Module("MagicEffectConditions", &bFixesMagicEffectConditions)
+	{}
 
 	bool ModuleMagicEffectConditions::DoQuery() const noexcept
 	{
@@ -89,7 +85,7 @@ namespace Addictol
 	bool ModuleMagicEffectConditions::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
 		// OG 1228998 -> RVA 0xC4EE40, NG 2226003 -> 0xB00AD0, AE 2226003 -> 0xB744F0.
-		REL::Relocation<std::uintptr_t> target{REL::ID{1228998, 2226003, 2226003}};
+		REL::Relocation<std::uintptr_t> target{ REL::ID{ 1228998, 2226003 } };
 
 		// Prologue byte-signature guard
 		const auto hook = reinterpret_cast<std::uintptr_t>(&magicEffectConditionsDetail::EvaluateConditions_Hook);
