@@ -470,28 +470,12 @@ namespace Addictol
 				if (!dest->pSends) return E_OUTOFMEMORY;
 				for (UINT32 i = 0; i < src->SendCount; i++)
 				{
-					dest->pSends[i].Flags = src->pSends[i].Flags;
-					if ((dest->pSends[i].Flags & XAUDIO2_SEND_USEFILTER) != XAUDIO2_SEND_USEFILTER)
-						dest->pSends[i].pOutputVoice = nullptr;
-					else
-					{
-						auto apo = src->pSends[i].pOutputVoice;
-						if (apo)
-						{
-							auto proxy = dynamic_cast<IXAudio2VoiceProxy*>(apo);
-							if (proxy)
-							{
-								if (!proxy->data)
-									dest->pSends[i].Flags = 0;
+					auto& apoSrcSend = src->pSends[i];
+					auto& apoDstSend = dest->pSends[i];
+					auto proxy = dynamic_cast<IXAudio2VoiceProxy*>(apoSrcSend.pOutputVoice);
 
-								dest->pSends[i].pOutputVoice = proxy->data;
-							}
-							else
-								dest->pSends[i].pOutputVoice = reinterpret_cast<IXAudio2Voice*>(apo);
-						}
-						else
-							dest->pSends[i].Flags = 0;
-					}
+					apoDstSend.Flags = XAUDIO2_SEND_USEFILTER;
+					apoDstSend.pOutputVoice = proxy ? proxy->data : reinterpret_cast<IXAudio2Voice*>(apoSrcSend.pOutputVoice);
 				}
 				return S_OK;
 			}
@@ -553,8 +537,8 @@ namespace Addictol
 			{
 				if (!data || !pEffectChain)
 					return E_FAIL;
-
-				return S_OK; //data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+				
+				return data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 			}
 
 			// NAME: IXAudio2Voice::EnableEffect
@@ -1581,7 +1565,8 @@ namespace Addictol
 				if (!(*ppMasteringVoice)) return E_OUTOFMEMORY;
 
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
-					InputChannels, InputSampleRate, Flags, nullptr, reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+					InputChannels, InputSampleRate, Flags, nullptr, 
+					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 			}
 			
 			// NAME: IXAudio2::StartEngine
