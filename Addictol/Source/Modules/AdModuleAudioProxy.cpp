@@ -11,6 +11,7 @@
 #include <VersionHelpers.h>
 
 #define AD_USE_CHECKUPDATE_AUDIODEVICE 0
+#define AD_USE_AUDIOFX_XAPO 0
 
 #include <xaudio2.h>
 #include <xaudio2fx.h>
@@ -474,7 +475,12 @@ namespace Addictol
 					auto& apoDstSend = dest->pSends[i];
 					auto proxy = dynamic_cast<IXAudio2VoiceProxy*>(apoSrcSend.pOutputVoice);
 
+#if AD_USE_AUDIOFX_XAPO
+					
+#else
 					apoDstSend.Flags = XAUDIO2_SEND_USEFILTER;
+#endif	
+					
 					apoDstSend.pOutputVoice = proxy ? proxy->data : reinterpret_cast<IXAudio2Voice*>(apoSrcSend.pOutputVoice);
 				}
 				return S_OK;
@@ -538,7 +544,11 @@ namespace Addictol
 				if (!data || !pEffectChain)
 					return E_FAIL;
 				
+#if AD_USE_AUDIOFX_XAPO
 				return data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+#else
+				return S_OK;
+#endif	
 			}
 
 			// NAME: IXAudio2Voice::EnableEffect
@@ -1484,7 +1494,13 @@ namespace Addictol
 					{
 						auto hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 							pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
-							std::addressof(sends), reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+							std::addressof(sends),
+#if AD_USE_AUDIOFX_XAPO
+							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
+#else
+							nullptr
+#endif						
+							);
 						delete[] sends.pSends;
 						return hr;
 					}					
@@ -1492,7 +1508,13 @@ namespace Addictol
 				else
 					return audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
-						nullptr, reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+						nullptr,
+#if AD_USE_AUDIOFX_XAPO
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
+#else
+						nullptr
+#endif					
+						);
 
 				return E_FAIL;
 			}
@@ -1528,7 +1550,12 @@ namespace Addictol
 					{
 						auto hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 							InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends),
-							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+#if AD_USE_AUDIOFX_XAPO
+							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
+#else
+							nullptr
+#endif	
+							);
 						delete[] sends.pSends;
 						return hr;
 					}
@@ -1536,7 +1563,12 @@ namespace Addictol
 				else
 					return audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr,
-						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+#if AD_USE_AUDIOFX_XAPO
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
+#else
+						nullptr
+#endif				
+						);
 
 				return E_FAIL;
 			}
@@ -1566,7 +1598,12 @@ namespace Addictol
 
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
 					InputChannels, InputSampleRate, Flags, nullptr, 
-					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+#if AD_USE_AUDIOFX_XAPO
+					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
+#else
+					nullptr
+#endif				
+					);
 			}
 			
 			// NAME: IXAudio2::StartEngine
