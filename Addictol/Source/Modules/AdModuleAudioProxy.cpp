@@ -1,22 +1,348 @@
-#include <Modules/AdModuleAudioProxy.h>
+﻿#include <Modules/AdModuleAudioProxy.h>
 #include <AdUtils.h>
 
 #include <windows.h>
 #include <mmreg.h>
 #include <mmdeviceapi.h>
+#include <functiondiscoverykeys_devpkey.h>
 #include <wrl/client.h>
 #include <comdef.h>
 #include <functional>
+#include <VersionHelpers.h>
 
 #define AD_USE_CHECKUPDATE_AUDIODEVICE 0
 
 #include <xaudio2.h>
 #include <xaudio2fx.h>
+#include <x3daudio.h>
 #pragma comment(lib, "xaudio2.lib")
 
 #undef ERROR
 #undef MAX_PATH
 #undef MEM_RELESE
+
+#include <RE/B/BSFixedString.h>
+#include <RE/B/BSResource_ID.h>
+#include <RE/N/NiPoint3.h>
+
+namespace RE
+{
+	// All structures defined in this file use tight field packing
+	#pragma pack(push, 1)
+	struct XAPO_REGISTRATION_PROPERTIES
+	{
+		constexpr static auto XAPO_REGISTRATION_STRING_LENGTH = 256;
+
+		REX::W32::IID clsid;
+		wchar_t friendlyName[XAPO_REGISTRATION_STRING_LENGTH];
+		wchar_t copyrightInfo[XAPO_REGISTRATION_STRING_LENGTH];
+		uint32_t majorVersion;
+		uint32_t minorVersion;
+		uint32_t flags;
+		uint32_t minInputBufferCount;
+		uint32_t maxInputBufferCount;
+		uint32_t minOutputBufferCount;
+		uint32_t maxOutputBufferCount;
+	};
+	static_assert(sizeof(XAPO_REGISTRATION_PROPERTIES) == 0x42C);
+
+	struct XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS
+	{
+		const WAVEFORMATEX* format;
+		uint32_t maxFrameCount;
+	};
+	static_assert(sizeof(XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS) == 0xC);
+
+	enum class XAPO_BUFFER_FLAGS
+	{
+		XAPO_BUFFER_SILENT,
+		XAPO_BUFFER_VALID,
+	};
+
+	struct XAPO_PROCESS_BUFFER_PARAMETERS
+	{
+		void* buffer;
+		XAPO_BUFFER_FLAGS bufferFlags;
+		uint32_t validFrameCount;
+	};
+	static_assert(sizeof(XAPO_PROCESS_BUFFER_PARAMETERS) == 0x10);
+
+	struct __declspec(novtable) IXAPO : public IUnknown
+	{
+	public:
+		inline static constexpr auto RTTI = RTTI::IXAPO;
+
+		// add
+		virtual int32_t GetRegistrationProperties(XAPO_REGISTRATION_PROPERTIES** a_registrationProperties) = 0;
+		virtual int32_t IsInputFormatSupported(const WAVEFORMATEX* a_outputFormat, const WAVEFORMATEX* a_requestedInputFormat,
+			WAVEFORMATEX** a_supportedInputFormat) = 0;
+		virtual int32_t IsOutputFormatSupported(const WAVEFORMATEX* a_inputFormat, const WAVEFORMATEX* a_requestedOutputFormat,
+			WAVEFORMATEX** a_supportedOutputFormat) = 0;
+		virtual int32_t Initialize(const void* a_data, uint32_t a_dataByteSize) = 0;
+		virtual void Reset() = 0;
+		virtual int32_t LockForProcess(uint32_t a_inputLockedParameterCount,
+			const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* a_inputLockedParameters,
+			uint32_t a_outputLockedParameterCount,
+			const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* a_outputLockedParameters) = 0;
+		virtual void UnlockForProcess() = 0;
+		virtual void Process(uint32_t a_inputProcessParameterCount, const XAPO_PROCESS_BUFFER_PARAMETERS* a_InputProcessParameters,
+			uint32_t a_outputProcessParameterCount, XAPO_PROCESS_BUFFER_PARAMETERS* a_outputProcessParameters,
+			BOOL a_isEnabled) = 0;
+		virtual uint32_t CalcInputFrames(uint32_t a_outputFrameCount) = 0;
+		virtual uint32_t CalcOutputFrames(uint32_t a_inputFrameCount) = 0;
+	};
+	static_assert(sizeof(IXAPO) == 0x8);
+	#pragma pack(pop)
+	// All structures defined in this file use tight field packing
+	#pragma pack(push, 8)
+	class __declspec(novtable) CXAPOBase : public IXAPO
+	{
+	public:
+		inline static constexpr auto RTTI = RTTI::CXAPOBase;
+
+		// override (IXAPO)
+		HRESULT QueryInterface(REFIID a_riid, void** a_interface) override;
+		ULONG AddRef() override;
+		ULONG Release() override;
+		int32_t GetRegistrationProperties(XAPO_REGISTRATION_PROPERTIES** a_registrationProperties) override;
+		int32_t IsInputFormatSupported(const WAVEFORMATEX* a_outputFormat, const WAVEFORMATEX* a_requestedInputFormat,
+			WAVEFORMATEX** a_supportedInputFormat) override;
+		int32_t IsOutputFormatSupported(const WAVEFORMATEX* a_inputFormat, const WAVEFORMATEX* a_requestedOutputFormat,
+			WAVEFORMATEX** a_supportedOutputFormat) override;
+		int32_t Initialize(const void* a_data, uint32_t a_dataByteSize) override;
+		void Reset() override;
+		int32_t LockForProcess(uint32_t a_inputLockedParameterCount, const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* a_inputLockedParameters,
+			uint32_t a_outputLockedParameterCount, const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* a_outputLockedParameters) override;
+		void UnlockForProcess() override;
+		void Process(uint32_t a_inputProcessParameterCount, const XAPO_PROCESS_BUFFER_PARAMETERS* a_InputProcessParameters,
+			uint32_t a_outputProcessParameterCount, XAPO_PROCESS_BUFFER_PARAMETERS* a_outputProcessParameters, BOOL a_isEnabled) override;
+		uint32_t CalcInputFrames(uint32_t a_outputFrameCount) override;
+		uint32_t CalcOutputFrames(uint32_t a_inputFrameCount) override;
+
+		// add
+		virtual int32_t ValidateFormatDefault(WAVEFORMATEX* a_format, BOOL a_overwrite);
+		virtual ~CXAPOBase();
+
+		[[nodiscard]] const XAPO_REGISTRATION_PROPERTIES* GetRegistrationPropertiesInternal() const noexcept { return registrationProperties; }
+		[[nodiscard]] BOOL IsLocked() const noexcept { return isLocked; }
+
+		// members
+		const XAPO_REGISTRATION_PROPERTIES* registrationProperties;
+		void* fnMatrixMixFunction;
+		float* matrixCoefficients;
+		uint32_t srcFormatType;
+		BOOL isScalarMatrix;
+		BOOL isLocked;
+		int32_t referenceCount;
+	};
+	static_assert(sizeof(CXAPOBase) == 0x30);
+	#pragma pack(pop)
+
+	class MonitorAPO : public CXAPOBase
+	{
+	public:
+		inline static constexpr auto RTTI = RTTI::__MonitorAPO;
+
+		~MonitorAPO() override;
+
+		// override (CXAPOBase)
+		int32_t LockForProcess(uint32_t a_inputLockedParameterCount,
+			const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* a_inputLockedParameters, uint32_t a_outputLockedParameterCount,
+			const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS* a_outputLockedParameters) override;
+		void Process(uint32_t a_inputProcessParameterCount, const XAPO_PROCESS_BUFFER_PARAMETERS* a_InputProcessParameters,
+			uint32_t a_outputProcessParameterCount, XAPO_PROCESS_BUFFER_PARAMETERS* a_outputProcessParameters,
+			BOOL a_isEnabled) override;
+
+		// members
+		uint32_t numChannels;
+		float amplitude;
+	};
+	static_assert(sizeof(MonitorAPO) == 0x38);
+
+	struct XAudio2Monitor
+	{
+		// members
+		MonitorAPO* monitorAPO{ nullptr };
+		IXAudio2SubmixVoice* submixVoice{ nullptr };
+	};
+	static_assert(sizeof(XAudio2Monitor) == 0x10);
+
+	namespace BSAudioMonitor
+	{
+		class Request
+		{
+		public:
+			Request(uint16_t a_monitor, uint16_t a_sendLevel) :
+				monitor(a_monitor),
+				sendLevel(a_sendLevel)
+			{}
+
+			[[nodiscard]] inline uint32_t QID() const noexcept { return monitor; }
+			[[nodiscard]] inline uint16_t QSendLevel() const noexcept { return sendLevel; }
+
+			// members
+			uint16_t monitor;
+			uint16_t sendLevel;
+		};
+		static_assert(sizeof(Request) == 0x4);
+
+		class Receiver
+		{
+		public:
+			Receiver(const float& a_amplitude) :
+				amplitude(std::addressof(a_amplitude))
+			{}
+
+			[[nodiscard]] inline float QAmplitude() const noexcept { return *amplitude; }
+
+			// members
+			const float* amplitude;
+		};
+		static_assert(sizeof(Receiver) == 0x8);
+		static_assert(!REL::detail::is_x64_pod_v<Receiver>);
+	}
+
+	class BSAudioListener
+	{
+	public:
+		inline static constexpr auto RTTI = RE::RTTI::BSAudioListener;
+
+		virtual ~BSAudioListener();
+
+		// add
+		virtual void SetPosition(const RE::NiPoint3& a_pos) = 0;
+		virtual void Unk_10() = 0;
+
+		// members
+		RE::NiPoint3 listenerPosition;
+		uint8_t unk[0x68];
+	};
+	static_assert(sizeof(BSAudioListener) == 0x80);
+
+	class BSIReverbType
+	{
+	public:
+		inline static constexpr auto RTTI = RE::RTTI::BSIReverbType;
+
+		// add
+		[[nodiscard]] virtual uint32_t DoGetRoomLevel() const = 0;
+		[[nodiscard]] virtual uint32_t DoGetRoomHFLevel() const = 0;
+		[[nodiscard]] virtual float DoGetDecayTime() const = 0;
+		[[nodiscard]] virtual float DoGetDecayHFRatio() const = 0;
+		[[nodiscard]] virtual uint32_t DoGetReflectionLevel() const = 0;
+		[[nodiscard]] virtual float DoGetReflectionDelay() const = 0;
+		[[nodiscard]] virtual uint32_t DoGetReverbLevel() const = 0;
+		[[nodiscard]] virtual float DoGetReverbDelay() const = 0;
+		[[nodiscard]] virtual float DoGetDiffusion() const = 0;
+		[[nodiscard]] virtual float DoGetDensity() const = 0;
+		[[nodiscard]] virtual float DoGetHFReference() const = 0;
+	};
+	static_assert(sizeof(BSIReverbType) == 0x8);
+
+	class BSISoundCategory;
+	class BSISoundOutputModel;
+
+	class BSGameSound;
+
+	class BSAudio
+	{
+	public:
+		inline static constexpr auto RTTI = RE::RTTI::BSAudio;
+
+		virtual ~BSAudio();
+
+		// add
+		virtual bool Init(REX::W32::HWND* a_wnd);
+		virtual void Shutdown();
+		virtual BSGameSound* GetGameSound(const ::RE::BSResource::ID& a_resourceID) = 0;
+		virtual void ReleaseGameSound(BSGameSound* a_gameSound) = 0;
+		virtual const RE::BSFixedString& GetSystemName() = 0;
+		virtual void ApplyReverbType(const BSIReverbType* a_reverbType, uint32_t a_tickLength);
+		virtual void Unk38();
+		virtual void Unk40();
+		virtual uint32_t CreateMonitor(float a_amplitude);
+		virtual void ReleaseMonitor(uint32_t a_monitor);
+		virtual BSAudioMonitor::Receiver GetReceiver(uint32_t a_monitor);
+		virtual void Unk60();
+
+		// members
+		BSAudioListener* audioListener;
+	};
+	static_assert(sizeof(BSAudio) == 0x10);
+
+	class BSXAudio2Graph : public IXAudio2EngineCallback
+	{
+	public:
+		inline static constexpr auto RTTI = RE::RTTI::__BSXAudio2Graph;
+
+		struct ReverbEffect
+		{
+			// idk.. Bethesda uses 2 presets like as DEFAULT
+			// but first use for init via IXAudio2Voice::SetEffectParameters
+			std::array<XAUDIO2FX_REVERB_I3DL2_PARAMETERS, 2> presets
+			{ {
+				XAUDIO2FX_I3DL2_PRESET_DEFAULT,
+				XAUDIO2FX_I3DL2_PRESET_DEFAULT
+			} };
+
+			XAudio2Monitor monitor{};
+			// idk.. no init area
+			std::array<void*, 2> unk{};
+		};
+
+		[[nodiscard]] static BSXAudio2Graph* GetSingleton()
+		{
+			static REL::Relocation<BSXAudio2Graph**> singleton{ REL::ID{ 1219921, 2703127 } };
+			return *singleton;
+		}
+
+		void OnProcessingPassStart() noexcept override { return; }
+		void OnProcessingPassEnd() noexcept override
+		{
+			using func_t = decltype(&BSXAudio2Graph::OnProcessingPassEnd);
+			static REL::Relocation<func_t> func{ REL::ID{ 351273, 2267567 } };
+			func(this);
+		}
+		void OnCriticalError(HRESULT Error) noexcept override { return; }
+
+		IXAudio2* xaudio;
+		IXAudio2MasteringVoice* masteringVoice;
+		std::array<ReverbEffect, 2> effects;
+		uint32_t totalDevice;
+		uint32_t currentDevice;
+		bool registerCallbacks;
+		bool initEffects;
+		bool initEngine;
+	};
+	static_assert(sizeof(BSXAudio2Graph::ReverbEffect) == 0x88);
+	static_assert(sizeof(BSXAudio2Graph) == 0x138);
+
+	class BSXAudio2Audio : public BSAudio
+	{
+	public:
+		inline static constexpr auto RTTI = RE::RTTI::BSXAudio2Audio;
+
+		~BSXAudio2Audio() override;  // 00
+
+		[[nodiscard]] static BSXAudio2Audio* GetSingleton()
+		{
+			static REL::Relocation<BSXAudio2Audio**> singleton{ REL::ID{ 1565436, 2703127 } };
+			return *singleton;
+		}
+
+		// override (BSAudio)
+		bool Init(REX::W32::HWND* a_wnd) override;
+		void Shutdown() override;
+		BSGameSound* GetGameSound(const BSResource::ID& a_resourceID) override;
+		void ReleaseGameSound(BSGameSound* a_gameSound) override;
+		const BSFixedString& GetSystemName() override;
+		void ApplyReverbType(const BSIReverbType* a_reverbType, std::uint32_t a_tickLength) override;
+		std::uint32_t CreateMonitor(float a_amplitude) override;
+		void ReleaseMonitor(std::uint32_t a_monitor) override;
+		BSAudioMonitor::Receiver GetReceiver(std::uint32_t a_monitor) override;
+	};
+	//static_assert(sizeof(BSXAudio2Audio) == 0x78);
+}
 
 namespace Addictol
 {
@@ -137,6 +463,39 @@ namespace Addictol
 		public:
 			friend class IXAudio2Proxy;
 
+			static HRESULT CopyVoiceSends(::XAUDIO2_VOICE_SENDS* dest, const XAUDIO2_VOICE_SENDS* src) noexcept
+			{
+				dest->SendCount = src->SendCount;
+				dest->pSends = new ::XAUDIO2_SEND_DESCRIPTOR[src->SendCount];
+				if (!dest->pSends) return E_OUTOFMEMORY;
+				for (UINT32 i = 0; i < src->SendCount; i++)
+				{
+					dest->pSends[i].Flags = src->pSends[i].Flags;
+					if ((dest->pSends[i].Flags & XAUDIO2_SEND_USEFILTER) != XAUDIO2_SEND_USEFILTER)
+						dest->pSends[i].pOutputVoice = nullptr;
+					else
+					{
+						auto apo = src->pSends[i].pOutputVoice;
+						if (apo)
+						{
+							auto proxy = dynamic_cast<IXAudio2VoiceProxy*>(apo);
+							if (proxy)
+							{
+								if (!proxy->data)
+									dest->pSends[i].Flags = 0;
+
+								dest->pSends[i].pOutputVoice = proxy->data;
+							}
+							else
+								dest->pSends[i].pOutputVoice = reinterpret_cast<IXAudio2Voice*>(apo);
+						}
+						else
+							dest->pSends[i].Flags = 0;
+					}
+				}
+				return S_OK;
+			}
+
 			// NAME: IXAudio2Voice::GetVoiceDetails
 			// DESCRIPTION: Returns the basic characteristics of this voice.
 			//
@@ -172,20 +531,12 @@ namespace Addictol
 					else
 					{
 						::XAUDIO2_VOICE_SENDS sends{};
-
-						sends.SendCount = pSendList->SendCount;
-						sends.pSends = new ::XAUDIO2_SEND_DESCRIPTOR[pSendList->SendCount];
-						if (!sends.pSends) return E_OUTOFMEMORY;
-						for (UINT32 i = 0; i < pSendList->SendCount; i++)
+						if (SUCCEEDED(CopyVoiceSends(&sends, pSendList)))
 						{
-							sends.pSends[i].Flags = pSendList->pSends[i].Flags;
-							sends.pSends[i].pOutputVoice =
-								pSendList->pSends[i].pOutputVoice ? pSendList->pSends[i].pOutputVoice->data : nullptr;
+							auto hr = data->SetOutputVoices(std::addressof(sends));
+							delete[] sends.pSends;
+							return hr;
 						}
-
-						auto hr = data->SetOutputVoices(std::addressof(sends));
-						delete[] sends.pSends;
-						return hr;
 					}
 				}
 
@@ -804,6 +1155,12 @@ namespace Addictol
 			friend class IXAudio2Proxy;
 
 			constexpr IXAudio2MasteringVoiceProxy() noexcept = default;
+
+			virtual void GetChannelMask(DWORD* pChannelmask) noexcept 
+			{
+				if (data && pChannelmask)
+					reinterpret_cast<IXAudio2MasteringVoice*>(data)->GetChannelMask(pChannelmask);
+			}
 		};
 
 		// All structures defined in this file use tight field packing
@@ -959,9 +1316,22 @@ namespace Addictol
 				if (!audio || !pCount)
 					return E_FAIL;
 
-				// Fake
-				*pCount = 1;
-				return S_OK;
+				Microsoft::WRL::ComPtr<IMMDeviceEnumerator> enumerator{};
+				auto hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
+					__uuidof(IMMDeviceEnumerator), (void**)enumerator.GetAddressOf());
+
+				if (SUCCEEDED(hr))
+				{
+					Microsoft::WRL::ComPtr<IMMDeviceCollection> collection{};
+					hr = enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, collection.GetAddressOf());
+					if (SUCCEEDED(hr))
+					{
+						collection->GetCount(pCount);
+						return S_OK;
+					}
+				}
+
+				return E_FAIL;
 			}
 
 			// NAME: IXAudio2::GetDeviceDetails
@@ -977,10 +1347,82 @@ namespace Addictol
 				if (!audio || !pDeviceDetails)
 					return E_FAIL;
 
-				wcscpy_s(pDeviceDetails->DeviceID, L"{default}");
-				wcscpy_s(pDeviceDetails->DisplayName, L"Default");
+				std::fill_n(reinterpret_cast<uint8_t*>(pDeviceDetails), sizeof(XAUDIO2_DEVICE_DETAILS), 0);
+
+				Microsoft::WRL::ComPtr<IMMDeviceEnumerator> enumerator{};
+				auto hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
+					__uuidof(IMMDeviceEnumerator), (void**)enumerator.GetAddressOf());
+				if (SUCCEEDED(hr))
+				{
+					Microsoft::WRL::ComPtr<IMMDeviceCollection> collection{};
+					hr = enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, collection.GetAddressOf());
+					if (SUCCEEDED(hr))
+					{
+						UINT count{};
+						collection->GetCount(std::addressof(count));
+						if (count <= Index)
+							return E_BOUNDS;
+
+						Microsoft::WRL::ComPtr<IMMDevice> device{};
+						hr = collection->Item(Index, device.GetAddressOf());
+						if (FAILED(hr))
+							return E_FAIL;
+
+						LPWSTR pIdStr{ nullptr };
+						hr = device->GetId(std::addressof(pIdStr));
+						if (FAILED(hr))
+							return E_FAIL;
+
+						wcscpy_s(pDeviceDetails->DeviceID, pIdStr);
+
+						Microsoft::WRL::ComPtr<IPropertyStore> props{};
+						if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, props.GetAddressOf())))
+						{
+							PROPVARIANT varName{};
+							PropVariantInit(std::addressof(varName));
+
+							// Retrieve the human-readable name
+							if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, std::addressof(varName))))
+								wcscpy_s(pDeviceDetails->DisplayName, varName.pwszVal);
+
+							PropVariantClear(std::addressof(varName));
+						}
+						
+						{
+							Microsoft::WRL::ComPtr<IMMDevice> defDevice{};
+							if (SUCCEEDED(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, defDevice.GetAddressOf())))
+							{
+								LPWSTR pIdCurStr{ nullptr };
+								if (SUCCEEDED(device->GetId(std::addressof(pIdCurStr))) && !wcscmp(pIdStr, pIdCurStr))
+									pDeviceDetails->Role = GlobalDefaultDevice;
+							}
+						}
+
+						IXAudio2MasteringVoice* pMasteringVoice{ nullptr };
+						if (SUCCEEDED(audio->CreateMasteringVoice(std::addressof(pMasteringVoice), 0, 0, 0, pIdStr)))
+						{
+							pMasteringVoice->GetChannelMask(std::addressof(pDeviceDetails->OutputFormat.dwChannelMask));
+
+							::XAUDIO2_VOICE_DETAILS voiceDetails{};
+							pMasteringVoice->GetVoiceDetails(std::addressof(voiceDetails));
+							pMasteringVoice->DestroyVoice();
+
+							pDeviceDetails->OutputFormat.Format.cbSize = sizeof(pDeviceDetails->OutputFormat.Format);
+							pDeviceDetails->OutputFormat.Format.nChannels = voiceDetails.InputChannels;
+							pDeviceDetails->OutputFormat.Format.wFormatTag = WAVE_FORMAT_PCM;
+							pDeviceDetails->OutputFormat.Format.nSamplesPerSec = voiceDetails.InputSampleRate;
+							pDeviceDetails->OutputFormat.Format.wBitsPerSample = voiceDetails.InputChannels << 3;
+							pDeviceDetails->OutputFormat.Format.nAvgBytesPerSec =
+								pDeviceDetails->OutputFormat.Format.nSamplesPerSec * voiceDetails.InputChannels *
+								voiceDetails.InputChannels;
+							pDeviceDetails->OutputFormat.Format.nBlockAlign = voiceDetails.InputChannels * voiceDetails.InputChannels;
+						}
+
+						CoTaskMemFree(pIdStr);
+					}
+				}
 				
-				return S_OK;
+				return E_FAIL;
 			}
 
 			// NAME: IXAudio2::Initialize
@@ -1054,32 +1496,21 @@ namespace Addictol
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
-
-					sends.SendCount = pSendList->SendCount;
-					sends.pSends = new ::XAUDIO2_SEND_DESCRIPTOR[pSendList->SendCount];
-					if (!sends.pSends)
+					if (SUCCEEDED(IXAudio2VoiceProxy::CopyVoiceSends(&sends, pSendList)))
 					{
-						delete (*ppSourceVoice);
-						return E_OUTOFMEMORY;
-					}
-
-					for (UINT32 i = 0; i < pSendList->SendCount; i++)
-					{
-						sends.pSends[i].Flags = pSendList->pSends[i].Flags;
-						sends.pSends[i].pOutputVoice =
-							pSendList->pSends[i].pOutputVoice ? pSendList->pSends[i].pOutputVoice->data : nullptr;
-					}
-
-					auto hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
-						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback), 
-						std::addressof(sends), reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-					delete[] sends.pSends;
-					return hr;
+						auto hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
+							pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
+							std::addressof(sends), reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+						delete[] sends.pSends;
+						return hr;
+					}					
 				}
 				else
 					return audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
 						nullptr, reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+
+				return E_FAIL;
 			}
 
 			// NAME: IXAudio2::CreateSubmixVoice
@@ -1109,32 +1540,21 @@ namespace Addictol
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
-
-					sends.SendCount = pSendList->SendCount;
-					sends.pSends = new ::XAUDIO2_SEND_DESCRIPTOR[pSendList->SendCount];
-					if (!sends.pSends)
+					if (SUCCEEDED(IXAudio2VoiceProxy::CopyVoiceSends(&sends, pSendList)))
 					{
-						delete (*ppSubmixVoice);
-						return E_OUTOFMEMORY;
+						auto hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
+							InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends),
+							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+						delete[] sends.pSends;
+						return hr;
 					}
-
-					for (UINT32 i = 0; i < pSendList->SendCount; i++)
-					{
-						sends.pSends[i].Flags = pSendList->pSends[i].Flags;
-						sends.pSends[i].pOutputVoice =
-							pSendList->pSends[i].pOutputVoice ? pSendList->pSends[i].pOutputVoice->data : nullptr;
-					}
-
-					auto hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
-						InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends),
-						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-					delete[] sends.pSends;
-					return hr;
 				}
 				else
 					return audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr,
-						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));			
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+
+				return E_FAIL;
 			}
 
 			// NAME: IXAudio2::CreateMasteringVoice
@@ -1161,10 +1581,9 @@ namespace Addictol
 				if (!(*ppMasteringVoice)) return E_OUTOFMEMORY;
 
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
-					InputChannels, InputSampleRate, Flags, nullptr, 
-					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+					InputChannels, InputSampleRate, Flags, nullptr, reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 			}
-
+			
 			// NAME: IXAudio2::StartEngine
 			// DESCRIPTION: Creates and starts the audio processing thread.
 			//
@@ -1288,6 +1707,20 @@ namespace Addictol
 			pNative->RoomFilterFreq = pI3DL2->HFReference;
 
 			pNative->WetDryMix = pI3DL2->WetDryMix;
+		}
+
+		static HRESULT Hook_X3DAudioInitialize([[maybe_unused]] UINT32 SpeakerChannelMask, [[maybe_unused]] float SpeedOfSound,
+			X3DAUDIO_HANDLE* Instance) noexcept
+		{
+			auto graph = RE::BSXAudio2Graph::GetSingleton();
+			if (!graph || !graph->masteringVoice)
+				return X3DAudioInitialize(0, X3DAUDIO_SPEED_OF_SOUND, reinterpret_cast<LPBYTE>(Instance));
+			else
+			{
+				DWORD dwChannelMask;
+				graph->masteringVoice->GetChannelMask(std::addressof(dwChannelMask));
+				return X3DAudioInitialize(dwChannelMask, X3DAUDIO_SPEED_OF_SOUND, reinterpret_cast<LPBYTE>(Instance));
+			}
 		}
 	}
 
@@ -1429,16 +1862,20 @@ namespace Addictol
 
 	bool ModuleAudioProxy::DoQuery() const noexcept
 	{
-		return false;// RELEX::IsRuntimeAE();
+		// need Windows 10, idk from linux
+		if (UserUseWine())
+			return true;	
+		return true;// IsWindows10OrGreater();
 	}
 
 	bool ModuleAudioProxy::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		RELEX::DetourCall(REL::Relocation(REL::ID{ 2267547 }, REL::Offset{ 0x108 }).address(),
+		RELEX::DetourCall(REL::Relocation(REL::ID{ 303985, 2267547 }, REL::Offset{ 0x43, 0x108 }).address(),
 			(uintptr_t)&XAudio2_CoCreateInstance);
-		RELEX::DetourCall(REL::Relocation(REL::ID{ 2267579 }, REL::Offset{ 0xFD }).address(),
+		RELEX::DetourCall(REL::Relocation(REL::ID{ 1288546, 2267579 }, REL::Offset{ 0x5D, 0xFD }).address(),
 			(uintptr_t)&XAudio2Reverb_CoCreateInstance);
-		RELEX::DetourJump(REL::ID{ 2267576 }.address(), (uintptr_t)&detail::ReverbConvertI3DL2ToNative);
+		RELEX::DetourCall(REL::Relocation(REL::ID{ 1537694, 2267536 }, REL::Offset{ 0xA2, 0x123 }).address(),
+			(uintptr_t)&detail::Hook_X3DAudioInitialize);
 
 		return true;
 	}
