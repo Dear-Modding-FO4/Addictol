@@ -1884,10 +1884,14 @@ namespace Addictol
 
 	bool ModuleAudioProxy::DoQuery() const noexcept
 	{
-		// need Windows 10, idk from linux
-		if (UserUseWine())
-			return true;	
-		return true;// IsWindows10OrGreater();
+		// Wine does not have a proper XAudio2_9 implementation
+		if (UserUseWine() && IsWineBuiltinDLL("XAudio2_9.dll"))
+		{
+			REX::WARN("Audio Proxy: Wine XAudio2_9.dll detected, disabling...");
+			return false;
+		}
+
+		return true; // IsWindows10OrGreater();
 	}
 
 	bool ModuleAudioProxy::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

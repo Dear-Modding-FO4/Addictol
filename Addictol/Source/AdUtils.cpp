@@ -364,4 +364,38 @@ namespace Addictol
 
 		return LINUX_DETECT.value();
 	}
+
+	bool IsWineBuiltinDLL(const char* moduleName) noexcept
+	{
+		if (!moduleName)
+			return false;
+
+		HMODULE module = GetModuleHandleA(moduleName);
+		if (!module)
+			return false;
+
+		const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
+		if (!dos || dos->e_magic != IMAGE_DOS_SIGNATURE)
+			return false;
+
+		static constexpr char wineBuiltinSignature[] = "Wine builtin DLL";
+		return !std::memcmp(dos + 1, wineBuiltinSignature, sizeof(wineBuiltinSignature));
+	}
+
+	bool IsWineFakeDLL(const char* moduleName) noexcept
+	{
+		if (!moduleName)
+			return false;
+
+		HMODULE module = GetModuleHandleA(moduleName);
+		if (!module)
+			return false;
+
+		const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
+		if (!dos || dos->e_magic != IMAGE_DOS_SIGNATURE)
+			return false;
+
+		static constexpr char wineFakeSignature[] = "Wine placeholder DLL";
+		return !std::memcmp(dos + 1, wineFakeSignature, sizeof(wineFakeSignature));
+	}
 }

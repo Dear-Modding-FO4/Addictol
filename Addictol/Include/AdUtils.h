@@ -224,6 +224,8 @@ namespace Addictol
 
 	[[nodiscard]] const char* GetSaveFolderName() noexcept;
 	[[nodiscard]] bool UserUseWine() noexcept;
+	[[nodiscard]] bool IsWineBuiltinDLL(const char* moduleName) noexcept;
+	[[nodiscard]] bool IsWineFakeDLL(const char* moduleName) noexcept;
 
 	template <class T>
 	void emplace_vtable(T* a_ptr)
