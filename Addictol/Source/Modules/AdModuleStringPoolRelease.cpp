@@ -9,8 +9,8 @@ namespace Addictol
 
 	namespace detail
 	{
-		using BSStringPool__Entry__ReleaseFn = decltype(RE::BSStringPool::Entry::release);
-		static std::function<BSStringPool__Entry__ReleaseFn> BSStringPool__Entry__Release_orig{};
+		using BSStringPool__Entry__ReleaseFn = decltype(RE::BSStringPool::Entry::release)*;
+		static BSStringPool__Entry__ReleaseFn BSStringPool__Entry__Release_orig{ nullptr };
 
 		// An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow.
 		// So this may cause other problems.
@@ -36,8 +36,9 @@ namespace Addictol
 
 	bool ModuleStringPoolRelease::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		detail::BSStringPool__Entry__Release_orig = REL::Relocation<detail::BSStringPool__Entry__ReleaseFn>
-			{ RE::ID::BSStringPool::Entry::Release }.get();
+		*(uintptr_t*)&detail::BSStringPool__Entry__Release_orig =
+			RELEX::DetourJump(REL::Relocation{ RE::ID::BSStringPool::Entry::Release }.address(), 
+				(uintptr_t)&detail::BSStringPool__Entry__Release);
 
 		return true;
 	}
