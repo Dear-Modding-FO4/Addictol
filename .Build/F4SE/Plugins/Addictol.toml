@@ -211,6 +211,9 @@ bMusicOverlap = true
 # Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections).
 bPuddleCubemaps = false
 
+# An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude).
+bStringPoolRelease = true
+
 
 [Warnings]
 
