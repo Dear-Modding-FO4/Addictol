@@ -214,6 +214,9 @@ bPuddleCubemaps = false
 # An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude).
 bStringPoolRelease = true
 
+# Fixes an AE issue where some Plugins get disabled on exit if the Creations Platform is enabled.
+bLoadOrder = true
+
 
 [Warnings]
 
