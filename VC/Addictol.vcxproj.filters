@@ -283,6 +283,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -558,6 +561,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h">
       <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

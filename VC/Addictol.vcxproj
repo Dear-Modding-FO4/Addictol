@@ -25,6 +25,7 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerDLL.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerESP.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioProxy.cpp" />
@@ -118,6 +119,7 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerDLL.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
+    <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioProxy.h" />
