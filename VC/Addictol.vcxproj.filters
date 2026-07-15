@@ -229,6 +229,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -509,6 +512,9 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h">
