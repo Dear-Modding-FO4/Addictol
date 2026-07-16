@@ -22,14 +22,54 @@ namespace Addictol
 			if (heap) heap->Unlock();
 		}
 
-		size_t TMemoryManager::Heap::GetRealConsumptionMemory() const noexcept
+		int32_t TMemoryManager::Heap::Page::IndexOf(void* a_ptr) const noexcept
+		{
+			auto ptr = reinterpret_cast<uintptr_t>(a_ptr);
+			auto beg = reinterpret_cast<uintptr_t>(mem);
+			auto end = beg + (static_cast<uintptr_t>(size) * sizeof(BlockHeader));
+			if ((beg >= ptr) || (end > ptr))
+				return static_cast<int32_t>((ptr - beg) / sizeof(BlockHeader));
+			return -1;
+		}
+
+		void* TMemoryManager::Heap::Page::GetNormalPtr(BlockHeader* a_block) const noexcept
+		{
+			return a_block ? reinterpret_cast<void*>
+				(reinterpret_cast<uintptr_t>(a_block) + sizeof(BlockHeader)) : nullptr;
+		}
+
+		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::Page::GetRelBlock(void* a_ptr) const noexcept
+		{
+			auto block = a_ptr ? reinterpret_cast<BlockHeader*>
+				(reinterpret_cast<uintptr_t>(a_ptr) - sizeof(BlockHeader)) : nullptr;
+			if (block) return block->hash != BlockHeader::HASH ? nullptr : block;
+			return nullptr;
+		}
+
+		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::Page::CreateBlock(BlockHeader* a_block,
+			size_t a_size, bool a_stdalloc) const noexcept
+		{
+			if (a_block)
+			{
+				a_block->hash = BlockHeader::HASH;
+				a_block->size = static_cast<int32_t>(a_size);
+				a_block->heapId.heap = GetHeapId();
+				a_block->heapId.page = GetId();
+				a_block->flags.stdalloc = a_stdalloc;
+			}
+
+			return a_block;
+		}
+
+		size_t TMemoryManager::Heap::Page::GetRealConsumptionMemory() const noexcept
 		{
 			auto total = static_cast<size_t>(size) * (static_cast<size_t>(blockSize) + sizeof(BlockHeader));
 			total += static_cast<size_t>(size) * sizeof(uintptr_t);
-			return total + sizeof(Heap);
+			return total + sizeof(Page);
 		}
 
-		bool TMemoryManager::Heap::Initialize(int8_t a_id, int32_t a_blockSize, int32_t a_totalNum)
+		bool TMemoryManager::Heap::Page::Initialize(int8_t a_id, int8_t a_heapId, int32_t a_blockSize,
+			int32_t a_totalNum)
 		{
 			if (IsInitialize() || !a_blockSize || !a_totalNum)
 				return false;
@@ -64,7 +104,8 @@ namespace Addictol
 				size = a_totalNum;
 				blockSize = a_blockSize;
 				top = size - 1;
-				id = a_id;
+				heapId = a_heapId;
+				pageId = a_id;
 
 				// create blocks
 				for (size_t i = 0; i < static_cast<size_t>(a_totalNum); i++)
@@ -84,12 +125,12 @@ namespace Addictol
 			return false;
 		}
 
-		bool TMemoryManager::Heap::IsInitialize() const noexcept
+		bool TMemoryManager::Heap::Page::IsInitialize() const noexcept
 		{
 			return mem != nullptr;
 		}
 
-		void TMemoryManager::Heap::Release() noexcept
+		void TMemoryManager::Heap::Page::Release() noexcept
 		{
 			if (IsInitialize())
 			{
@@ -100,14 +141,13 @@ namespace Addictol
 				size = 0;
 				blockSize = 0;
 				top = -1;
-				id = -1;
+				heapId = -1;
+				pageId = -1;
 			}
 		}
 
-		void* TMemoryManager::Heap::Alloc(int32_t a_size) noexcept
+		void* TMemoryManager::Heap::Page::Alloc(int32_t a_size) noexcept
 		{
-			ScopeLock lock(this);
-
 			if (!a_size || (a_size > blockSize))
 				return nullptr;
 
@@ -124,10 +164,8 @@ namespace Addictol
 			return std::memset(GetNormalPtr(block), 0, blockSize);
 		}
 
-		void* TMemoryManager::Heap::Realloc(void* a_oldPtr, int32_t a_size) noexcept
+		void* TMemoryManager::Heap::Page::Realloc(void* a_oldPtr, int32_t a_size) noexcept
 		{
-			ScopeLock lock(this);
-
 			// This function will repeat the code of others, but it is important not to call deadlock,
 			// since I have abandoned storing the owner stream and incrementing.
 			//
@@ -147,7 +185,7 @@ namespace Addictol
 					return nullptr;
 				}
 
-				if ((block->heapId != id) || (top == size - 1))
+				if ((block->heapId.heap != heapId) || (block->heapId.page != pageId) || (top == size - 1))
 					return nullptr;					// causes leak blocks, but idk... this for paranoic
 
 				// increment top index add block into stack
@@ -161,7 +199,7 @@ namespace Addictol
 			if (a_size < blockSize)					// within the block of this heap
 			{
 				if (block->size > a_size)
-					std::memset(reinterpret_cast<uint8_t*>(a_oldPtr) + a_size, 0, 
+					std::memset(reinterpret_cast<uint8_t*>(a_oldPtr) + a_size, 0,
 						static_cast<size_t>(block->size) - a_size);
 				else
 					std::memset(reinterpret_cast<uint8_t*>(a_oldPtr) + block->size, 0,
@@ -175,10 +213,8 @@ namespace Addictol
 			return nullptr;
 		}
 
-		void TMemoryManager::Heap::Free(void* a_ptr) noexcept
+		void TMemoryManager::Heap::Page::Free(void* a_ptr) noexcept
 		{
-			ScopeLock lock(this);
-
 			auto block = GetRelBlock(a_ptr);
 			if (!block) return;
 
@@ -190,10 +226,123 @@ namespace Addictol
 				return;
 			}
 
-			if ((block->heapId != id) || (top == size - 1))
+			if ((block->heapId.heap != heapId) || (block->heapId.page != pageId) || (top == size - 1))
 				return;
 
 			stack[++top] = block;
+		}
+
+		int32_t TMemoryManager::Heap::Page::GetSize(void* a_ptr) const noexcept
+		{
+			auto block = GetRelBlock(a_ptr);
+			return block ? block->size : 0;
+		}
+
+		size_t TMemoryManager::Heap::GetRealConsumptionMemory() const noexcept
+		{
+			auto total = static_cast<size_t>(size) * (static_cast<size_t>(blockSize) + sizeof(BlockHeader));
+			total += static_cast<size_t>(size) * sizeof(uintptr_t);
+			return total + sizeof(Heap);
+		}
+
+		bool TMemoryManager::Heap::Initialize(int8_t a_id, int32_t a_blockSize, int32_t a_totalNum)
+		{
+			if (IsInitialize() || !a_blockSize || !a_totalNum)
+				return false;
+
+			auto firstPage = std::make_shared<Page>();
+			if (!firstPage)
+				return false;
+
+			if (!firstPage->Initialize(0, a_id, a_blockSize, a_totalNum))
+			{
+				firstPage.reset();
+				return false;
+			}
+
+			try
+			{
+				// max pages num
+				pages.reserve(127);
+				pages.emplace_back(firstPage);
+
+				// init parms heap
+				size = a_totalNum;
+				blockSize = a_blockSize;
+				id = a_id;
+
+				return true;
+			}
+			catch (...)
+			{
+				firstPage.reset();
+			}
+
+			return false;
+		}
+
+		bool TMemoryManager::Heap::IsInitialize() const noexcept
+		{
+			return pages.size() != 0;
+		}
+
+		void TMemoryManager::Heap::Release() noexcept
+		{
+			if (IsInitialize())
+			{
+				pages.clear();
+				size = 0;
+				blockSize = 0;
+				id = -1;
+			}
+		}
+
+		void* TMemoryManager::Heap::Alloc(int32_t a_size) noexcept
+		{
+			ScopeLock lock(this);
+
+			for (auto& page : pages)
+				if (!page->IsEmpty())
+					return page->Alloc(a_size);
+
+			if (pages.size() >= 127)	// limit
+				return nullptr;
+
+			// create new page
+			auto newPage = std::make_shared<Page>();
+			if (!newPage)
+				return nullptr;
+
+			if (!newPage->Initialize(static_cast<uint8_t>(pages.size()), id, blockSize, size))
+			{
+				newPage.reset();
+				return nullptr;
+			}
+
+			pages.emplace_back(newPage);
+			return newPage->Alloc(a_size);
+		}
+
+		void* TMemoryManager::Heap::Realloc(void* a_oldPtr, int32_t a_size) noexcept
+		{
+			ScopeLock lock(this);
+
+			auto block = GetRelBlock(a_oldPtr);
+			if (!block || (block->heapId.heap != id))
+				return nullptr;
+
+			return pages[block->heapId.page]->Realloc(a_oldPtr, a_size);
+		}
+
+		void TMemoryManager::Heap::Free(void* a_ptr) noexcept
+		{
+			ScopeLock lock(this);
+
+			auto block = GetRelBlock(a_ptr);
+			if (!block || (block->heapId.heap != id) || (block->heapId.page >= pages.size()))
+				return;
+
+			pages[block->heapId.page]->Free(a_ptr);
 		}
 
 		int32_t TMemoryManager::Heap::GetSize(void* a_ptr) const noexcept
@@ -216,16 +365,6 @@ namespace Addictol
 			locker.clear(std::memory_order_release);
 		}
 
-		int32_t TMemoryManager::Heap::IndexOf(void* a_ptr) const noexcept
-		{
-			auto ptr = reinterpret_cast<uintptr_t>(a_ptr);
-			auto beg = reinterpret_cast<uintptr_t>(mem);
-			auto end = beg + (static_cast<uintptr_t>(size) * sizeof(BlockHeader));
-			if ((beg >= ptr) || (end > ptr))
-				return static_cast<int32_t>((ptr - beg) / sizeof(BlockHeader));
-			return -1;
-		}
-
 		void* TMemoryManager::Heap::GetNormalPtr(BlockHeader* a_block) const noexcept
 		{
 			return a_block ? reinterpret_cast<void*>
@@ -238,20 +377,6 @@ namespace Addictol
 				(reinterpret_cast<uintptr_t>(a_ptr) - sizeof(BlockHeader)) : nullptr;
 			if (block) return block->hash != BlockHeader::HASH ? nullptr : block;
 			return nullptr;
-		}
-
-		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::CreateBlock(BlockHeader* a_block, 
-			size_t a_size, bool a_stdalloc) const noexcept
-		{
-			if (a_block)
-			{
-				a_block->hash = BlockHeader::HASH;
-				a_block->size = static_cast<int32_t>(a_size);
-				a_block->heapId = GetId();
-				a_block->flags.stdalloc = a_stdalloc;
-			}
-
-			return a_block;
 		}
 
 		int8_t TMemoryManager::GetHeapIdByBlockSize(int32_t a_blockSize) const noexcept
@@ -298,33 +423,13 @@ namespace Addictol
 			return id;
 		}
 
-		bool TMemoryManager::DeleteHeap(int8_t a_id) noexcept
-		{
-			if ((a_id >= 0) && (a_id < heaps.size()))
-			{
-				// Release only if all blocks is free
-				if (heaps[a_id]->GetFirstFreeBlock() == heaps[a_id]->GetBlockCount() - 1)
-				{
-					heaps[a_id].reset();
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		bool TMemoryManager::DeleteHeapByBlockSize(int32_t a_blockSize) noexcept
-		{
-			return DeleteHeap(GetHeapIdByBlockSize(a_blockSize));
-		}
-
 		int8_t TMemoryManager::IndexOf(void* lpBlock) const noexcept
 		{
 			if (!lpBlock) return -1;
 			auto block = reinterpret_cast<Heap::BlockHeader*>
 				(reinterpret_cast<uintptr_t>(lpBlock) - sizeof(Heap::BlockHeader));
 			if (block->hash == Heap::BlockHeader::HASH)
-				return block->heapId;
+				return block->heapId.heap;
 			return -1;
 		}
 
@@ -344,8 +449,6 @@ namespace Addictol
 
 		void* TMemoryManager::Realloc(void* a_oldPtr, int32_t a_size) noexcept
 		{
-			// FIXME: Add feature change heap if a_size suitable for smaller heap
-
 			if (!a_oldPtr)
 				return Alloc(a_size);
 
@@ -354,7 +457,7 @@ namespace Addictol
 			if (block->hash != Heap::BlockHeader::HASH)
 				return nullptr;						// bullshit user cases
 
-			auto& heap = heaps[block->heapId];
+			auto& heap = heaps[block->heapId.heap];
 			if (!a_size)							// user send 0? so... free
 			{
 				heap->Free(a_oldPtr);
@@ -364,8 +467,10 @@ namespace Addictol
 			if (a_size == block->size)				// user idiot
 				return a_oldPtr;
 
-			if (a_size < heap->GetBlockSize())		// within the block of this heap
+			if ((a_size < heap->GetBlockSize()) && (GetHeapIdByBlockSize(a_size) == block->heapId.heap))
 			{
+				// within the block of this heap
+
 				if (block->size > a_size)
 					std::memset(reinterpret_cast<uint8_t*>(a_oldPtr) + a_size, 0,
 						static_cast<size_t>(block->size) - a_size);

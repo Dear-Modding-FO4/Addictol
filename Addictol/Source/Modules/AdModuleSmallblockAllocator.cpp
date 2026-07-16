@@ -168,21 +168,21 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (g_SmallblockMemoryManager.CreateNewHeap(32, 512 * 1024) == -1)
+		if (g_SmallblockMemoryManager.CreateNewHeap(32, 128 * 1024) == -1)
 		{
 			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 32);
 			return false;
 		}
 
-		if (g_SmallblockMemoryManager.CreateNewHeap(64, 512 * 1024) == -1)
+		if (g_SmallblockMemoryManager.CreateNewHeap(64, 128 * 1024) == -1)
 		{
 			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 64);
 			return false;
 		}
 
-		if (g_SmallblockMemoryManager.CreateNewHeap(96, 128 * 1024) == -1)
+		if (g_SmallblockMemoryManager.CreateNewHeap(128, 256 * 1024) == -1)
 		{
-			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 96);
+			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 128);
 			return false;
 		}
 
