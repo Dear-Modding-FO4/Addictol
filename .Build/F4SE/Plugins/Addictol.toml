@@ -217,6 +217,9 @@ bStringPoolRelease = true
 # Fixes an AE issue where some Plugins get disabled on exit if the Creations Platform is enabled.
 bLoadOrder = true
 
+# Fixes a crash related to queued HUD messages on NG & AE.
+bHUDMessageQueue = true
+
 
 [Warnings]
 

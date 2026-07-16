@@ -37,7 +37,7 @@ namespace Addictol
 			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
 			"bDownwardAiming", "bCrashRemoveRefFix", "bClimateLoad", "bMusicOverlap",
 			"bPuddleCubemaps", "bCompanionStrayBullet", "bStringPoolRelease",
-			"bLoadOrder"
+			"bLoadOrder", "bHUDMessageQueue"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"

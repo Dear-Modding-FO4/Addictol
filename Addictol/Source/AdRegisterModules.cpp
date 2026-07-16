@@ -76,6 +76,7 @@
 #include <Modules/AdModuleAudioProxy.h>
 #include <Modules/AdModuleStringPoolRelease.h>
 #include <Modules/AdModuleLoadOrder.h>
+#include <Modules/AdModuleHUDMessageQueue.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -154,6 +155,7 @@ static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCo
 static auto sModuleAudioProxy						= std::make_shared<Addictol::ModuleAudioProxy>();
 static auto sModuleStringPoolRelease				= std::make_shared<Addictol::ModuleStringPoolRelease>();
 static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>();
+static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
 
 void AdRegisterPreloadModules()
 {
@@ -242,6 +244,7 @@ void AdRegisterModules()
 	modules.Register(sModuleAudioProxy);
 	modules.Register(sModuleStringPoolRelease);
 	modules.Register(sModuleLoadOrder);
+	modules.Register(sModuleHUDMessageQueue);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
