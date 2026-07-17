@@ -190,9 +190,9 @@ namespace Addictol
 			g_SmallblockMemoryManager.GetRealConsumptionMemory() / (1024 * 1024));
 
 		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(),
-			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyCurrentHeap>);
+			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxySmallblockHeap>);
 		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(),
-			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyCurrentHeap>);
+			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxySmallblockHeap>);
 
 		return true;
 	}
