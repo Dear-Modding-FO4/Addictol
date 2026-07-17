@@ -242,7 +242,8 @@ namespace Addictol
 		{
 			auto total = static_cast<size_t>(size) * (static_cast<size_t>(blockSize) + sizeof(BlockHeader));
 			total += static_cast<size_t>(size) * sizeof(uintptr_t);
-			return total + sizeof(Heap);
+			total += sizeof(Page);
+			return (total * pages.size()) + sizeof(Heap);
 		}
 
 		bool TMemoryManager::Heap::Initialize(int8_t a_id, int32_t a_blockSize, int32_t a_totalNum)
