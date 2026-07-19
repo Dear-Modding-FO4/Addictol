@@ -1,0 +1,98 @@
+#include <AdAssert.h>
+#include <AdAllocator.h>
+#include <Voltek.MemoryManager.h>
+#include <AdVisperMemoryAllocator.h>
+
+#define AD_VISPER_TEST_MODE_DISABLE 0
+
+namespace Addictol
+{
+	static Visper::TMemoryManager g_VisperMemoryManager{};
+#if AD_VISPER_TEST_MODE_DISABLE
+	static uintptr_t test_null_mem = 0;
+#endif
+
+	ProxyVisperHeap::ProxyVisperHeap() noexcept
+	{
+		if (!g_VisperMemoryManager.InitializeDefaultSettings())
+			REX::WARN("VisperMemoryManager::InitializeDefaultSettings() return failed");
+
+		REX::INFO("VisperMemoryManager::ConsumptionMemory {}Mb",
+			g_VisperMemoryManager.GetRealConsumptionMemory() >> 20);
+	}
+
+	void* ProxyVisperHeap::malloc(size_t nSize) const noexcept
+	{
+#if !AD_VISPER_TEST_MODE_DISABLE
+		return CheckPtr(g_VisperMemoryManager.Alloc(nSize), nSize);
+#else
+		return nSize ? CheckPtr(_aligned_malloc(nSize, 16), nSize) : &test_null_mem;
+#endif
+	}
+
+	void* ProxyVisperHeap::aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept
+	{
+		return malloc(nSize);
+	}
+
+	void* ProxyVisperHeap::realloc(void* lpBlock, size_t nNewSize) const noexcept
+	{
+#if !AD_VISPER_TEST_MODE_DISABLE
+		if (!lpBlock)
+			return CheckPtr(g_VisperMemoryManager.Alloc(static_cast<int32_t>(nNewSize)), nNewSize);
+		return CheckPtr(g_VisperMemoryManager.Realloc(lpBlock, static_cast<int32_t>(nNewSize)), nNewSize);
+#else
+		return lpBlock == &test_null_mem ? malloc(nNewSize) :
+			CheckPtr(_aligned_realloc(lpBlock, nNewSize, 16), nNewSize);
+#endif
+	}
+
+	void* ProxyVisperHeap::aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept
+	{
+		return realloc(lpBlock, nNewSize);
+	}
+
+	void ProxyVisperHeap::free(void* lpBlock) const noexcept
+	{
+		__try
+		{
+#if !AD_VISPER_TEST_MODE_DISABLE
+			g_VisperMemoryManager.Free(lpBlock);
+#else
+			if (lpBlock && lpBlock != &test_null_mem)
+				_aligned_free(lpBlock);
+#endif
+		}
+		__except (1)
+		{
+			// CTD: free memory no vmm maybe
+			// malloc excluded - this hooked
+
+			// [2] 0x7FF6BD6600C1     Fallout4.exe+01E00C1	nop |  sub_1401E0080_1E00C1	nop
+			// [3] 0x7FF6BD796BD1     Fallout4.exe+0316BD1	mov rsi, [rsp + 0x38] | sub_140316B80_316BD1	mov rsi, [rsp + 0x38]
+
+			// this called MemoryManager::Deallocate (maybe bug game???)
+		}
+	}
+
+	void ProxyVisperHeap::aligned_free(void* lpBlock) const noexcept
+	{
+		free(lpBlock);
+	}
+
+	size_t ProxyVisperHeap::msize(void* lpBlock) const noexcept
+	{
+#if !AD_VISPER_TEST_MODE_DISABLE
+		return g_VisperMemoryManager.GetSize(lpBlock);
+#else
+		if (lpBlock && lpBlock != &test_null_mem)
+			return _aligned_msize(lpBlock, 16, 0);
+		return 0;
+#endif
+	}
+
+	size_t ProxyVisperHeap::aligned_msize(void* lpBlock, [[maybe_unused]] std::size_t nAlignment) const noexcept
+	{
+		return msize(lpBlock);
+	}
+}

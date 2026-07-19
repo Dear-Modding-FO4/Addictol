@@ -8,6 +8,9 @@
 #include <atomic>
 #include <array>
 
+// This is only suitable for smallallocator
+#define AD_VISPER_REMOVE_BIG_STUFF 1
+
 namespace Addictol
 {
 	//	The idea is to create a simple memory manager based on blocks pre-aligned to 16, while no block search is performed.
@@ -16,8 +19,12 @@ namespace Addictol
 	//
 	//	This will provide a great performance advantage, both in freeing and allocating memory blocks.
 	//
-	//	Update: Added pages, the ability to generate up to 127 of them for each heap, which makes the allocator scalable.
+	//	Update v2: Added pages, the ability to generate up to 127 of them for each heap, which makes the allocator scalable.
 	//	The pages are never released anymore, because I believe that once they were needed, they will be needed again.
+	//
+	//	Update v3: Added alloc/realloc/free/msize big size via stdallocator's. 0x7F is id virtual heap.
+	//	Update v4: Damn it, need to increase the block to 16 bytes just so that all addresses end with 0.
+	//	Update v5: Fallout 4 request 0 BYTES... bitch. 
 
 	namespace Visper
 	{
@@ -35,7 +42,9 @@ namespace Addictol
 					struct Flags
 					{
 						uint8_t stdalloc : 1;	// Will used standard allocator (malloc)
-						uint8_t reserved : 7;
+						uint8_t winalloc : 1;	// Will used os win allocator (VirtualAlloc)
+						uint8_t noaction : 1;	// Do not touch!!!
+						uint8_t reserved : 5;
 					};
 
 					struct ID
@@ -48,6 +57,10 @@ namespace Addictol
 					Flags flags{ 0 };			// Flags
 					ID heapId;					// Index of the heap to which the block belongs
 					int32_t size{ 0 };			// Size that was requested
+					union {
+						size_t reserved;		// Reserved! Need for align address
+						size_t winsize;			// Size block allocated via VirtualAlloc
+					};
 				};
 
 				class ScopeLock
@@ -84,8 +97,8 @@ namespace Addictol
 					~Page() = default;
 
 					[[nodiscard]] int32_t IndexOf(void* a_ptr) const noexcept;
-					[[nodiscard]] void* GetNormalPtr(BlockHeader* a_block) const noexcept;
-					[[nodiscard]] BlockHeader* GetRelBlock(void* a_ptr) const noexcept;
+					[[nodiscard]] static void* GetNormalPtr(BlockHeader* a_block) noexcept;
+					[[nodiscard]] static BlockHeader* GetRelBlock(void* a_ptr) noexcept;
 					[[nodiscard]] BlockHeader* CreateBlock(BlockHeader* a_block, size_t a_size,
 						bool a_stdalloc = false) const noexcept;
 					[[nodiscard]] inline int8_t GetId() const noexcept { return heapId; };
@@ -119,8 +132,8 @@ namespace Addictol
 				Heap& operator=(const Heap&) = delete;
 				Heap& operator=(Heap&&) = delete;
 
-				[[nodiscard]] void* GetNormalPtr(BlockHeader* a_block) const noexcept;
-				[[nodiscard]] BlockHeader* GetRelBlock(void* a_ptr) const noexcept;
+				[[nodiscard]] static void* GetNormalPtr(BlockHeader* a_block) noexcept;
+				[[nodiscard]] static BlockHeader* GetRelBlock(void* a_ptr) noexcept;
 			public:
 				Heap() = default;
 				~Heap() = default;
@@ -143,26 +156,30 @@ namespace Addictol
 				void Unlock() noexcept;
 			};
 		private:
-			std::array<std::unique_ptr<Heap>, 8> heaps;
+			std::array<std::unique_ptr<Heap>, 8> heaps;					// Heaps
+			size_t otherTotalSize{ 0 };									// Needs for GetRealConsumptionMemory()
 
 			TMemoryManager(const TMemoryManager&) = delete;
 			TMemoryManager(TMemoryManager&&) = delete;
 			TMemoryManager& operator=(const TMemoryManager&) = delete;
 			TMemoryManager& operator=(TMemoryManager&&) = delete;
 		public:
-			TMemoryManager() = default;
+			constexpr static int8_t HEAP_STDALLOC = 0x7F;
+
+			TMemoryManager();
 			~TMemoryManager() = default;
 
 			[[nodiscard]] int8_t GetHeapIdByBlockSize(int32_t a_blockSize) const noexcept;
 			[[nodiscard]] bool HasHeapByBlockSize(int32_t a_blockSize) const noexcept;
 
 			[[nodiscard]] int8_t CreateNewHeap(int32_t a_blockSize, int32_t a_totalNum) noexcept;
-			[[nodiscard]] int8_t IndexOf(void* lpBlock) const noexcept;
+			[[nodiscard]] bool InitializeDefaultSettings() noexcept;
 
-			[[nodiscard]] void* Alloc(int32_t a_size) noexcept;
-			[[nodiscard]] void* Realloc(void* a_oldPtr, int32_t a_size) noexcept;
+			[[nodiscard]] void* Alloc(size_t a_size) noexcept;
+			[[nodiscard]] void* Realloc(void* a_oldPtr, size_t a_size) noexcept;
 			void Free(void* a_ptr) noexcept;
-			[[nodiscard]] int32_t GetSize(void* a_ptr) const noexcept;
+			[[nodiscard]] size_t GetSize(void* a_ptr) const noexcept;
+			[[nodiscard]] size_t GetRealSize(void* a_ptr) const noexcept;
 
 			[[nodiscard]] size_t GetRealConsumptionMemory() const noexcept;
 		};

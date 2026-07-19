@@ -289,6 +289,9 @@
     <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProxyVisperHeap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />

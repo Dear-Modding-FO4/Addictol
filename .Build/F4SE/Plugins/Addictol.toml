@@ -23,7 +23,7 @@ bFacegen = true
 # Replaces the global memory manager with vmm allocator.
 bMemoryManager = true
 
-# Replaces the small block memory allocators with vmm allocator.
+# Replaces the small block memory allocators with visper allocator.
 bSmallBlockAllocator = true
 
 # Replaces the scaleform memory allocator with os allocator.

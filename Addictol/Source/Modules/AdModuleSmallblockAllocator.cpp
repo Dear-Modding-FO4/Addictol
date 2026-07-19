@@ -1,62 +1,10 @@
 #include <Modules/AdModuleSmallblockAllocator.h>
-#include <AdVisperMemoryAllocator.h>
 #include <AdAllocator.h>
 #include <AdUtils.h>
 
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesSmallBlockAllocator{ "Patches"sv, "bSmallBlockAllocator"sv, true };
-	static Visper::TMemoryManager g_SmallblockMemoryManager{};
-
-	class ProxySmallblockHeap :
-		public ICheckerPointer,
-		public REX::TSingleton<ProxySmallblockHeap>
-	{
-		ProxySmallblockHeap(const ProxySmallblockHeap&) = delete;
-		ProxySmallblockHeap(ProxySmallblockHeap&&) = delete;
-		ProxySmallblockHeap& operator=(const ProxySmallblockHeap&) = delete;
-		ProxySmallblockHeap& operator=(ProxySmallblockHeap&&) = delete;
-	public:
-		ProxySmallblockHeap() noexcept = default;
-		~ProxySmallblockHeap() noexcept = default;
-
-		[[nodiscard]] void* malloc(size_t nSize) const noexcept { return aligned_malloc(nSize, 16); }
-		[[nodiscard]] void* aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept
-		{
-			return g_SmallblockMemoryManager.Alloc(static_cast<int32_t>(nSize));
-		}
-
-		[[nodiscard]] void* realloc(void* lpBlock, size_t nNewSize) const noexcept
-		{ return aligned_realloc(lpBlock, nNewSize, 16); }
-		[[nodiscard]] void* aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept
-		{
-			return g_SmallblockMemoryManager.Realloc(lpBlock, static_cast<int32_t>(nNewSize));
-		}
-
-		void free(void* lpBlock) const noexcept { aligned_free(lpBlock); }
-		void aligned_free(void* lpBlock) const noexcept
-		{
-			__try
-			{
-				g_SmallblockMemoryManager.Free(lpBlock);
-			}
-			__except (1)
-			{}
-		}
-
-		[[nodiscard]] size_t msize(void* lpBlock) const noexcept { return aligned_msize(lpBlock, 16); }
-		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept
-		{
-			__try
-			{
-				return static_cast<size_t>(g_SmallblockMemoryManager.GetSize(lpBlock));
-			}
-			__except (1)
-			{
-				return 0;
-			}
-		}
-	};
 
 	// 0x1268
 	class BSSmallBlockAllocator
@@ -168,31 +116,12 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (g_SmallblockMemoryManager.CreateNewHeap(32, 128 * 1024) == -1)
-		{
-			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 32);
-			return false;
-		}
-
-		if (g_SmallblockMemoryManager.CreateNewHeap(64, 128 * 1024) == -1)
-		{
-			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 64);
-			return false;
-		}
-
-		if (g_SmallblockMemoryManager.CreateNewHeap(128, 256 * 1024) == -1)
-		{
-			REX::WARN("SmallblockMemoryManager::CreateNewHeap for blocks {} return failed", 128);
-			return false;
-		}
-
-		REX::INFO("SmallblockMemoryManager::ConsumptionMemory {}Mb", 
-			g_SmallblockMemoryManager.GetRealConsumptionMemory() / (1024 * 1024));
+		// Uses Visper it works perfectly 
 
 		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(),
-			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxySmallblockHeap>);
+			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyVisperHeap>);
 		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(),
-			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxySmallblockHeap>);
+			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyVisperHeap>);
 
 		return true;
 	}

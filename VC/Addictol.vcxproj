@@ -20,6 +20,7 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerMemory.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerBA2.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerModules.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProxyVisperHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerDLL.cpp" />

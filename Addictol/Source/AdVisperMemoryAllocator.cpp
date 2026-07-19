@@ -5,6 +5,14 @@ namespace Addictol
 {
 	namespace Visper
 	{
+		// For game Bethesda this needs
+		static TMemoryManager::Heap::BlockHeader g_null_stupid_block_for_bethesda{};
+
+		static std::array<int32_t, 8> g_mmVisperBlockSizes
+		{
+			32, 64, 128, 256, 512, 1024, 2048, 4096
+		};
+
 		TMemoryManager::Heap::ScopeLock::ScopeLock(const Heap* a_heap) noexcept :
 			heap(const_cast<Heap*>(a_heap))
 		{
@@ -32,13 +40,13 @@ namespace Addictol
 			return -1;
 		}
 
-		void* TMemoryManager::Heap::Page::GetNormalPtr(BlockHeader* a_block) const noexcept
+		void* TMemoryManager::Heap::Page::GetNormalPtr(BlockHeader* a_block) noexcept
 		{
 			return a_block ? reinterpret_cast<void*>
 				(reinterpret_cast<uintptr_t>(a_block) + sizeof(BlockHeader)) : nullptr;
 		}
 
-		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::Page::GetRelBlock(void* a_ptr) const noexcept
+		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::Page::GetRelBlock(void* a_ptr) noexcept
 		{
 			auto block = a_ptr ? reinterpret_cast<BlockHeader*>
 				(reinterpret_cast<uintptr_t>(a_ptr) - sizeof(BlockHeader)) : nullptr;
@@ -55,6 +63,7 @@ namespace Addictol
 				a_block->size = static_cast<int32_t>(a_size);
 				a_block->heapId.heap = GetHeapId();
 				a_block->heapId.page = GetId();
+				a_block->flags.winalloc = false;
 				a_block->flags.stdalloc = a_stdalloc;
 			}
 
@@ -89,7 +98,7 @@ namespace Addictol
 				nullptr,
 				CalculateSize(a_blockSize, a_totalNum),			// Allocation size (must be page aligned)
 				REX::W32::MEM_RESERVE | REX::W32::MEM_COMMIT,
-				REX::W32::PAGE_EXECUTE_READWRITE				// Permissions (e.g., Read/Write/Execute)
+				REX::W32::PAGE_READWRITE						// Permissions (e.g., Read/Write)
 			);
 
 			if (!mem)
@@ -366,13 +375,13 @@ namespace Addictol
 			locker.clear(std::memory_order_release);
 		}
 
-		void* TMemoryManager::Heap::GetNormalPtr(BlockHeader* a_block) const noexcept
+		void* TMemoryManager::Heap::GetNormalPtr(BlockHeader* a_block) noexcept
 		{
 			return a_block ? reinterpret_cast<void*>
 				(reinterpret_cast<uintptr_t>(a_block) + sizeof(BlockHeader)) : nullptr;
 		}
 
-		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::GetRelBlock(void* a_ptr) const noexcept
+		TMemoryManager::Heap::BlockHeader* TMemoryManager::Heap::GetRelBlock(void* a_ptr) noexcept
 		{
 			auto block = a_ptr ? reinterpret_cast<BlockHeader*>
 				(reinterpret_cast<uintptr_t>(a_ptr) - sizeof(BlockHeader)) : nullptr;
@@ -380,24 +389,18 @@ namespace Addictol
 			return nullptr;
 		}
 
+		TMemoryManager::TMemoryManager()
+		{
+			g_null_stupid_block_for_bethesda.hash = Heap::BlockHeader::HASH;
+			g_null_stupid_block_for_bethesda.heapId.heap = HEAP_STDALLOC;
+			g_null_stupid_block_for_bethesda.flags.noaction = true;
+		}
+
 		int8_t TMemoryManager::GetHeapIdByBlockSize(int32_t a_blockSize) const noexcept
 		{
-			if (a_blockSize <= 32)
-				return 0;
-			else if (a_blockSize <= 64)
-				return 1;
-			else if (a_blockSize <= 128)
-				return 2;
-			else if (a_blockSize <= 256)
-				return 3;
-			else if (a_blockSize <= 512)
-				return 4;
-			else if (a_blockSize <= 1024)
-				return 5;
-			else if (a_blockSize <= 2048)
-				return 6;
-			else if (a_blockSize <= 4096)
-				return 7;
+			for (size_t i = 0; i < g_mmVisperBlockSizes.size(); i++)
+				if (a_blockSize <= g_mmVisperBlockSizes[i])
+					return static_cast<int8_t>(i);
 			return -1;
 		}
 
@@ -424,39 +427,146 @@ namespace Addictol
 			return id;
 		}
 
-		int8_t TMemoryManager::IndexOf(void* lpBlock) const noexcept
+		bool TMemoryManager::InitializeDefaultSettings() noexcept
 		{
-			if (!lpBlock) return -1;
-			auto block = reinterpret_cast<Heap::BlockHeader*>
-				(reinterpret_cast<uintptr_t>(lpBlock) - sizeof(Heap::BlockHeader));
-			if (block->hash == Heap::BlockHeader::HASH)
-				return block->heapId.heap;
-			return -1;
+			auto CreateHeap = [](TMemoryManager* memmgr, int32_t a_sizeBlock, int32_t a_num) noexcept
+				{
+					auto num = a_num << 10;
+					return memmgr->CreateNewHeap(a_sizeBlock, num) != -1;
+				};
+
+#if !AD_VISPER_REMOVE_BIG_STUFF
+			for (int32_t i = 0; i < g_mmVisperBlockSizes.size(); i++)
+				if (!CreateHeap(this, g_mmVisperBlockSizes[i], 256))
+					return false;
+#else
+			for (int32_t i = 0; i < 3; i++)
+				if (!CreateHeap(this, g_mmVisperBlockSizes[i], 256))
+					return false;
+#endif
+
+			return true;
 		}
 
-		void* TMemoryManager::Alloc(int32_t a_size) noexcept
+		void* TMemoryManager::Alloc(size_t a_size) noexcept
 		{
 			if (!a_size)
-				return nullptr;
+				return &g_null_stupid_block_for_bethesda;
 
-			auto id = GetHeapIdByBlockSize(a_size);
+#if !AD_VISPER_REMOVE_BIG_STUFF
+			if (a_size >= (64ull * 1024 * 1024))
+			{
+				// Request allocation at an address nearby. 
+				// Specifying MEM_RESERVE | MEM_COMMIT reserves address space and maps physical memory in one step.
+				auto block = reinterpret_cast<Heap::BlockHeader*>(REX::W32::VirtualAlloc(nullptr,
+					a_size + sizeof(Heap::BlockHeader),				// Allocation size (must be page aligned)
+					REX::W32::MEM_RESERVE | REX::W32::MEM_COMMIT,
+					REX::W32::PAGE_READWRITE						// Permissions (e.g., Read/Write)
+				));
+				if (block)
+				{
+					block->hash = Heap::BlockHeader::HASH;
+					block->size = -1;
+					block->heapId.heap = HEAP_STDALLOC;
+					block->heapId.page = 0;
+					block->flags.stdalloc = false;
+					block->flags.winalloc = true;
+					block->winsize = a_size;
+
+					otherTotalSize += a_size + sizeof(Heap::BlockHeader);
+
+					// memory zeroed
+					return Heap::Page::GetNormalPtr(block);
+				}
+				return nullptr;
+			}
+
+			auto id = GetHeapIdByBlockSize(static_cast<int32_t>(a_size));
+			if (id == -1)
+			{
+				alloc_def:
+				// get free block from standard allocator
+				auto block = reinterpret_cast<Heap::BlockHeader*>(_aligned_malloc(a_size + sizeof(Heap::BlockHeader), 16));
+				if (block)
+				{
+					block->hash = Heap::BlockHeader::HASH;
+					block->size = static_cast<int32_t>(a_size);
+					block->heapId.heap = HEAP_STDALLOC;
+					block->heapId.page = 0;
+					block->flags.stdalloc = true;
+					block->flags.winalloc = false;
+
+					otherTotalSize += a_size + sizeof(Heap::BlockHeader);
+
+					return std::memset(Heap::Page::GetNormalPtr(block), 0, a_size);
+				}
+				return nullptr;
+			}
+#else
+			auto id = GetHeapIdByBlockSize(static_cast<int32_t>(a_size));
 			if (id == -1) return nullptr;
+#endif
 
 			if (heaps[id])
-				return heaps[id]->Alloc(a_size);
+				return heaps[id]->Alloc(static_cast<int32_t>(a_size));
 
+#if !AD_VISPER_REMOVE_BIG_STUFF
+			goto alloc_def;
+#else
 			return nullptr;
+#endif
 		}
 
-		void* TMemoryManager::Realloc(void* a_oldPtr, int32_t a_size) noexcept
+		void* TMemoryManager::Realloc(void* a_oldPtr, size_t a_size) noexcept
 		{
 			if (!a_oldPtr)
 				return Alloc(a_size);
 
-			auto block = reinterpret_cast<Heap::BlockHeader*>
-				(reinterpret_cast<uintptr_t>(a_oldPtr) - sizeof(Heap::BlockHeader));
-			if (block->hash != Heap::BlockHeader::HASH)
-				return nullptr;						// bullshit user cases
+			auto block = Heap::Page::GetRelBlock(a_oldPtr);
+			if (!block) return nullptr;				// bullshit user cases
+
+			if (block->heapId.heap == HEAP_STDALLOC)
+			{
+				if (block->flags.stdalloc)
+				{
+					auto old_size = block->size;
+					otherTotalSize -= old_size + sizeof(Heap::BlockHeader);
+					auto new_block = reinterpret_cast<Heap::BlockHeader*>(
+						_aligned_realloc(block, a_size + sizeof(Heap::BlockHeader), 16));
+					if (new_block)
+					{
+						block->hash = Heap::BlockHeader::HASH;
+						block->size = static_cast<int32_t>(a_size);
+						block->heapId.heap = HEAP_STDALLOC;
+						block->heapId.page = 0;
+						block->flags.stdalloc = true;
+						block->flags.winalloc = false;
+
+						otherTotalSize += block->size + sizeof(Heap::BlockHeader);
+
+						auto mem = Heap::Page::GetNormalPtr(new_block);
+						if (static_cast<int32_t>(old_size) < a_size)
+							return std::memset(mem, 0, a_size - old_size);
+						return mem;
+					}
+					return new_block;
+				}
+				else if(block->flags.winalloc)
+				{
+					auto old_size = block->winsize;
+					auto mem = Alloc(old_size);
+					if (mem)
+					{
+						if (old_size < a_size)
+							return std::memcpy(mem, a_oldPtr, old_size);
+						return std::memcpy(mem, a_oldPtr, a_size);
+					}
+					Free(a_oldPtr);
+					return nullptr;
+				}
+
+				return nullptr;
+			}
 
 			auto& heap = heaps[block->heapId.heap];
 			if (!a_size)							// user send 0? so... free
@@ -468,18 +578,19 @@ namespace Addictol
 			if (a_size == block->size)				// user idiot
 				return a_oldPtr;
 
-			if ((a_size < heap->GetBlockSize()) && (GetHeapIdByBlockSize(a_size) == block->heapId.heap))
+			if ((a_size < heap->GetBlockSize()) && 
+				(GetHeapIdByBlockSize(static_cast<int32_t>(a_size)) == block->heapId.heap))
 			{
 				// within the block of this heap
 
-				if (block->size > a_size)
+				if (block->size > static_cast<size_t>(a_size))
 					std::memset(reinterpret_cast<uint8_t*>(a_oldPtr) + a_size, 0,
 						static_cast<size_t>(block->size) - a_size);
 				else
 					std::memset(reinterpret_cast<uint8_t*>(a_oldPtr) + block->size, 0,
 						static_cast<size_t>(a_size) - block->size);
 
-				block->size = a_size;
+				block->size = static_cast<int32_t>(a_size);
 				return a_oldPtr;
 			}
 
@@ -497,23 +608,73 @@ namespace Addictol
 
 		void TMemoryManager::Free(void* a_ptr) noexcept
 		{
-			auto id = IndexOf(a_ptr);
+			auto block = Heap::Page::GetRelBlock(a_ptr);
+			if (!block || block->flags.noaction) return;
 
-			if ((id == -1) || (id >= static_cast<int32_t>(heaps.size())))
+#if !AD_VISPER_REMOVE_BIG_STUFF
+			if (block->heapId.heap == HEAP_STDALLOC)
+			{
+				if (block->flags.stdalloc)
+				{
+					otherTotalSize -= block->size + sizeof(Heap::BlockHeader);
+					_aligned_free(block);
+				}
+				else if (block->flags.winalloc)
+				{
+					otherTotalSize -= block->winsize + sizeof(Heap::BlockHeader);
+					REX::W32::VirtualFree(block, 0, REX::W32::MEM_RELEASE);
+				}
 				return;
+			}
 
-			if (heaps[id])
-				heaps[id]->Free(a_ptr);
+			if ((block->heapId.heap == -1) || (block->heapId.heap >= static_cast<int32_t>(heaps.size())))
+				return;
+#else
+			if ((block->heapId.heap == -1) || (block->heapId.heap >= 3))
+				return;
+#endif
+
+			if (heaps[block->heapId.heap])
+				heaps[block->heapId.heap]->Free(a_ptr);
 		}
 
-		int32_t TMemoryManager::GetSize(void* a_ptr) const noexcept
+		size_t TMemoryManager::GetSize(void* a_ptr) const noexcept
 		{
-			auto id = IndexOf(a_ptr);
-			if ((id == -1) || (id >= static_cast<int8_t>(heaps.size())))
-				return 0;
+			auto block = Heap::Page::GetRelBlock(a_ptr);
+			if (!block) return 0;
 
-			if (heaps[id])
-				return heaps[id]->GetSize(a_ptr);
+#if !AD_VISPER_REMOVE_BIG_STUFF
+			if (block->heapId.heap == HEAP_STDALLOC)
+			{
+				if (block->flags.stdalloc)
+					return block->size;
+				else if (block->flags.winalloc)
+					return block->winsize;
+				return 0;
+			}
+#endif
+
+			return block->size;
+		}
+
+		size_t TMemoryManager::GetRealSize(void* a_ptr) const noexcept
+		{
+			auto block = Heap::Page::GetRelBlock(a_ptr);
+			if (!block) return 0;
+
+#if !AD_VISPER_REMOVE_BIG_STUFF
+			if (block->heapId.heap == HEAP_STDALLOC)
+			{
+				if (block->flags.stdalloc)
+					return block->size + sizeof(Heap::BlockHeader);
+				else if (block->flags.winalloc)
+					return block->winsize + sizeof(Heap::BlockHeader);
+				return 0;
+			}
+#endif
+
+			if (heaps[block->heapId.heap])
+				return heaps[block->heapId.heap]->GetBlockSize() + sizeof(Heap::BlockHeader);
 			return 0;
 		}
 
@@ -525,7 +686,7 @@ namespace Addictol
 				if (heap)
 					total += heap->GetRealConsumptionMemory();
 
-			return total;
+			return total + otherTotalSize;
 		}
 	}
 }
