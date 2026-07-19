@@ -4,6 +4,7 @@ name: Cleanup Old Runs
 on:
   schedule:
     - cron: '0 0 * * 0' # Runs weekly on Sundays
+  workflow_dispatch:
 
 jobs:
   del_runs:
