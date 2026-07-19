@@ -61,7 +61,7 @@ namespace Addictol
 				static DeathEventHandler singleton;
 				return std::addressof(singleton);
 			}
-
+			
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESDeathEvent& a_event, RE::BSTEventSource<RE::TESDeathEvent>*)
 			{
 				if (a_event.dead == true)

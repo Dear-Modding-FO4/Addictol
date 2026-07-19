@@ -4,28 +4,56 @@
 #include <AdVisperMemoryAllocator.h>
 
 #define AD_VISPER_TEST_MODE_DISABLE 0
+#define AD_VISPER_TEST_MODE_FATHER0 0
 
 namespace Addictol
 {
 	static Visper::TMemoryManager g_VisperMemoryManager{};
 #if AD_VISPER_TEST_MODE_DISABLE
+#	if AD_VISPER_TEST_MODE_FATHER0
+	REX::W32::HMODULE g_hMallocDll{ nullptr };
+	using MFuncAlloc = void* (uint32_t);
+	using MFuncRealloc = void* (uint32_t, void*);
+	using MFuncDealloc = void(void*);
+	using MFuncSize = uint32_t (void*);
+	std::function<MFuncAlloc> Malloc{};
+	std::function<MFuncRealloc> MRealloc{};
+	std::function<MFuncDealloc> MFree{};
+	std::function<MFuncSize> MGetSize{};
+#	else
 	static uintptr_t test_null_mem = 0;
+#	endif
 #endif
 
 	ProxyVisperHeap::ProxyVisperHeap() noexcept
 	{
+#if !AD_VISPER_TEST_MODE_DISABLE
 		if (!g_VisperMemoryManager.InitializeDefaultSettings())
 			REX::WARN("VisperMemoryManager::InitializeDefaultSettings() return failed");
 
 		REX::INFO("VisperMemoryManager::ConsumptionMemory {}Mb",
 			g_VisperMemoryManager.GetRealConsumptionMemory() >> 20);
+#elif AD_VISPER_TEST_MODE_FATHER0
+		g_hMallocDll = REX::W32::LoadLibraryA("Data\\F4SE\\Plugins\\Malloc.dll");
+		if (g_hMallocDll)
+		{
+			Malloc = reinterpret_cast<MFuncAlloc*>(REX::W32::GetProcAddress(g_hMallocDll, "MAlloc"));
+			MRealloc = reinterpret_cast<MFuncRealloc*>(REX::W32::GetProcAddress(g_hMallocDll, "MReAllock"));
+			MFree = reinterpret_cast<MFuncDealloc*>(REX::W32::GetProcAddress(g_hMallocDll, "MFree"));
+			MGetSize = reinterpret_cast<MFuncSize*>(REX::W32::GetProcAddress(g_hMallocDll, "GetSize"));
+		}
+		else
+			REX::WARN("REX::W32::GetModuleHandleA(\"Malloc.dll\") return failed");
+#endif
 	}
 
 	void* ProxyVisperHeap::malloc(size_t nSize) const noexcept
 	{
 #if !AD_VISPER_TEST_MODE_DISABLE
 		return CheckPtr(g_VisperMemoryManager.Alloc(nSize), nSize);
-#else
+#	elif AD_VISPER_TEST_MODE_FATHER0
+		return nSize ? CheckPtr(Malloc(static_cast<uint32_t>(nSize)), nSize) : nullptr;
+#	else
 		return nSize ? CheckPtr(_aligned_malloc(nSize, 16), nSize) : &test_null_mem;
 #endif
 	}
@@ -35,13 +63,17 @@ namespace Addictol
 		return malloc(nSize);
 	}
 
-	void* ProxyVisperHeap::realloc(void* lpBlock, size_t nNewSize) const noexcept
+	void* ProxyVisperHeap::realloc([[maybe_unused]] void* lpBlock, [[maybe_unused]] size_t nNewSize) const noexcept
 	{
 #if !AD_VISPER_TEST_MODE_DISABLE
 		if (!lpBlock)
 			return CheckPtr(g_VisperMemoryManager.Alloc(static_cast<int32_t>(nNewSize)), nNewSize);
 		return CheckPtr(g_VisperMemoryManager.Realloc(lpBlock, static_cast<int32_t>(nNewSize)), nNewSize);
-#else
+#	elif AD_VISPER_TEST_MODE_FATHER0
+		return lpBlock ? 
+			CheckPtr(MRealloc(static_cast<uint32_t>(nNewSize), lpBlock), nNewSize) :
+			CheckPtr(Malloc(static_cast<uint32_t>(nNewSize)), nNewSize);
+#	else
 		return lpBlock == &test_null_mem ? malloc(nNewSize) :
 			CheckPtr(_aligned_realloc(lpBlock, nNewSize, 16), nNewSize);
 #endif
@@ -58,7 +90,9 @@ namespace Addictol
 		{
 #if !AD_VISPER_TEST_MODE_DISABLE
 			g_VisperMemoryManager.Free(lpBlock);
-#else
+#	elif AD_VISPER_TEST_MODE_FATHER0
+			return MFree(lpBlock);
+#	else
 			if (lpBlock && lpBlock != &test_null_mem)
 				_aligned_free(lpBlock);
 #endif
@@ -80,11 +114,13 @@ namespace Addictol
 		free(lpBlock);
 	}
 
-	size_t ProxyVisperHeap::msize(void* lpBlock) const noexcept
+	size_t ProxyVisperHeap::msize([[maybe_unused]] void* lpBlock) const noexcept
 	{
 #if !AD_VISPER_TEST_MODE_DISABLE
 		return g_VisperMemoryManager.GetSize(lpBlock);
-#else
+#	elif AD_VISPER_TEST_MODE_FATHER0
+		return lpBlock ? MGetSize(lpBlock) : 0;
+#	else
 		if (lpBlock && lpBlock != &test_null_mem)
 			return _aligned_msize(lpBlock, 16, 0);
 		return 0;
