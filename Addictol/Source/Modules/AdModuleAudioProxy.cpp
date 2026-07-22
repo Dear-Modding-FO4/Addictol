@@ -1,4 +1,4 @@
-﻿#include <Modules/AdModuleAudioProxy.h>
+#include <Modules/AdModuleAudioProxy.h>
 #include <AdUtils.h>
 
 #include <windows.h>
@@ -8,6 +8,8 @@
 #include <wrl/client.h>
 #include <comdef.h>
 #include <functional>
+#include <mutex>
+#include <unordered_map>
 #include <VersionHelpers.h>
 
 #define AD_USE_CHECKUPDATE_AUDIODEVICE 0
@@ -455,6 +457,79 @@ namespace Addictol
 
 		#pragma pack(pop)
 
+		// --- 2.7 XAPO -> 2.9 QI compatibility layer ---
+		// The game's built-in APO classes (BSStateVariableFilter, BSOverdrive,
+		// BSDelayEffect, BSCXAPOWrapper, MonitorAPO) are compiled against the
+		// DirectX SDK 2.7 headers and only recognise the 2.7 IID_IXAPO. The 2.9
+		// engine queries for IID_IXAPO_29 and rejects them with E_NOINTERFACE,
+		// which strips the radio EQ and power-armor effects (dry voice).
+		// This layer patches each APO vtable's QueryInterface slot on first use
+		// so it also accepts the 2.9 IID.
+		// (contribution: tryname @ Nexus — AudioDeviceFollowFix)
+
+		inline constexpr GUID IID_IXAPO_29{ 0xA410B984, 0x9839, 0x4819,
+			{ 0xA0, 0xBE, 0x28, 0x56, 0xAE, 0x6B, 0x3A, 0xDB } };
+
+		using IXAPO_QI_Fn = HRESULT(__stdcall*)(void*, REFIID, void**);
+
+		static std::unordered_map<void*, IXAPO_QI_Fn> g_qiShimMap{};
+		static std::mutex g_qiShimMutex{};
+
+		HRESULT __stdcall GenericXAPOQIShim(void* self, REFIID riid, void** out) noexcept
+		{
+			if (riid == IID_IXAPO_29)
+			{
+				if (out) *out = self;
+				reinterpret_cast<IUnknown*>(self)->AddRef();
+				return S_OK;
+			}
+			void** vtbl = *reinterpret_cast<void***>(self);
+			IXAPO_QI_Fn origQI{};
+			{
+				std::lock_guard lock(g_qiShimMutex);
+				auto it = g_qiShimMap.find(vtbl);
+				if (it != g_qiShimMap.end())
+					origQI = it->second;
+			}
+			if (origQI)
+				return origQI(self, riid, out);
+			if (out) *out = nullptr;
+			return E_NOINTERFACE;
+		}
+
+		static void EnsureEffectChainCompat(const XAUDIO2_EFFECT_CHAIN* a_chain) noexcept
+		{
+			if (!a_chain || !a_chain->EffectCount) return;
+			for (UINT32 i = 0; i < a_chain->EffectCount; ++i)
+			{
+				auto* effect = a_chain->pEffectDescriptors[i].pEffect;
+				if (!effect) continue;
+
+				// Already 2.9-compatible?
+				void* dummy{};
+				if (SUCCEEDED(effect->QueryInterface(IID_IXAPO_29, &dummy)))
+				{
+					reinterpret_cast<IUnknown*>(dummy)->Release();
+					continue;
+				}
+
+				auto** vtbl = *reinterpret_cast<void***>(effect);
+				auto currentQI = reinterpret_cast<IXAPO_QI_Fn>(vtbl[0]);
+				if (currentQI == &GenericXAPOQIShim) continue;
+
+				{
+					std::lock_guard lock(g_qiShimMutex);
+					g_qiShimMap[vtbl] = currentQI;
+				}
+				DWORD old{};
+				if (VirtualProtect(&vtbl[0], sizeof(void*), PAGE_READWRITE, &old))
+				{
+					vtbl[0] = reinterpret_cast<void*>(&GenericXAPOQIShim);
+					FlushInstructionCache(GetCurrentProcess(), &vtbl[0], sizeof(void*));
+				}
+			}
+		}
+
 		// These methods are declared in a macro so that the same declarations
 		// can be used in the derived voice types (IXAudio2SourceVoice, etc).
 		class IXAudio2VoiceProxy
@@ -543,12 +618,13 @@ namespace Addictol
 			{
 				if (!data || !pEffectChain)
 					return E_FAIL;
-				
+
+				EnsureEffectChainCompat(pEffectChain);
 #if AD_USE_AUDIOFX_XAPO
 				return data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 #else
-				return S_OK;
-#endif	
+				return data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+#endif
 			}
 
 			// NAME: IXAudio2Voice::EnableEffect
@@ -1081,8 +1157,16 @@ namespace Addictol
 			virtual void GetState(XAUDIO2_VOICE_STATE* pVoiceState) const noexcept
 			{
 				if (!data) return;
+				// 2.7 GetState is single-arg; 2.9 added a Flags argument. The game
+				// (built against 2.7) never initialises the Flags register, so the
+				// 2.9 engine reads a garbage value. When bit 1 is set
+				// (XAUDIO2_VOICE_NOSAMPLESPLAYED) SamplesPlayed is zeroed out,
+				// causing lip-sync twitches on OG and audio state-machine collapse
+				// (no voice / music reset / sirens) on AE. Force Flags=0 to match
+				// 2.7 semantics.
+				// (contribution: tryname @ Nexus — AudioDeviceFollowFix)
 				(reinterpret_cast<IXAudio2SourceVoice*>(data))->GetState(
-					reinterpret_cast<::XAUDIO2_VOICE_STATE*>(pVoiceState));
+					reinterpret_cast<::XAUDIO2_VOICE_STATE*>(pVoiceState), 0);
 			}
 
 			// NAME: IXAudio2SourceVoice::SetFrequencyRatio
@@ -1487,6 +1571,8 @@ namespace Addictol
 				*ppSourceVoice = new IXAudio2SourceVoiceProxy();
 				if (!(*ppSourceVoice)) return E_OUTOFMEMORY;
 
+				EnsureEffectChainCompat(pEffectChain);
+
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
@@ -1495,26 +1581,16 @@ namespace Addictol
 						auto hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 							pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
 							std::addressof(sends),
-#if AD_USE_AUDIOFX_XAPO
-							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
-#else
-							nullptr
-#endif						
-							);
+							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 						delete[] sends.pSends;
 						return hr;
-					}					
+					}
 				}
 				else
 					return audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
 						nullptr,
-#if AD_USE_AUDIOFX_XAPO
-						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
-#else
-						nullptr
-#endif					
-						);
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 
 				return E_FAIL;
 			}
@@ -1535,13 +1611,15 @@ namespace Addictol
 				UINT32 InputChannels, UINT32 InputSampleRate,
 				UINT32 Flags = 0, UINT32 ProcessingStage = 0,
 				const XAUDIO2_VOICE_SENDS* pSendList = nullptr,
-				[[maybe_unused]] const XAUDIO2_EFFECT_CHAIN* pEffectChain = nullptr) noexcept
+				const XAUDIO2_EFFECT_CHAIN* pEffectChain = nullptr) noexcept
 			{
 				if (!audio || !ppSubmixVoice)
 					return E_FAIL;
 
 				* ppSubmixVoice = new IXAudio2SubmixVoiceProxy();
 				if (!(*ppSubmixVoice)) return E_OUTOFMEMORY;
+
+				EnsureEffectChainCompat(pEffectChain);
 
 				if (pSendList && pSendList->SendCount)
 				{
@@ -1550,12 +1628,7 @@ namespace Addictol
 					{
 						auto hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 							InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends),
-#if AD_USE_AUDIOFX_XAPO
-							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
-#else
-							nullptr
-#endif	
-							);
+							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 						delete[] sends.pSends;
 						return hr;
 					}
@@ -1563,12 +1636,7 @@ namespace Addictol
 				else
 					return audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr,
-#if AD_USE_AUDIOFX_XAPO
-						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
-#else
-						nullptr
-#endif				
-						);
+						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 
 				return E_FAIL;
 			}
@@ -1596,14 +1664,11 @@ namespace Addictol
 				*ppMasteringVoice = new IXAudio2MasteringVoiceProxy();
 				if (!(*ppMasteringVoice)) return E_OUTOFMEMORY;
 
+				EnsureEffectChainCompat(pEffectChain);
+
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
-					InputChannels, InputSampleRate, Flags, nullptr, 
-#if AD_USE_AUDIOFX_XAPO
-					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain)
-#else
-					nullptr
-#endif				
-					);
+					InputChannels, InputSampleRate, Flags, nullptr,
+					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 			}
 			
 			// NAME: IXAudio2::StartEngine
