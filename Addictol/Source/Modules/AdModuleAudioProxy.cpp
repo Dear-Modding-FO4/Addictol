@@ -13,7 +13,6 @@
 #include <VersionHelpers.h>
 
 #define AD_USE_CHECKUPDATE_AUDIODEVICE 0
-#define AD_USE_AUDIOFX_XAPO 0
 
 #include <xaudio2.h>
 #include <xaudio2fx.h>
@@ -550,12 +549,9 @@ namespace Addictol
 					auto& apoDstSend = dest->pSends[i];
 					auto proxy = dynamic_cast<IXAudio2VoiceProxy*>(apoSrcSend.pOutputVoice);
 
-#if AD_USE_AUDIOFX_XAPO
-					
-#else
+					// FIXME: need to figure out why XAPO needs to be disabled here. The sound is getting too quiet, something is wrong.
 					apoDstSend.Flags = XAUDIO2_SEND_USEFILTER;
-#endif	
-					
+
 					apoDstSend.pOutputVoice = proxy ? proxy->data : reinterpret_cast<IXAudio2Voice*>(apoSrcSend.pOutputVoice);
 				}
 				return S_OK;
@@ -620,11 +616,7 @@ namespace Addictol
 					return E_FAIL;
 
 				EnsureEffectChainCompat(pEffectChain);
-#if AD_USE_AUDIOFX_XAPO
 				return data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-#else
-				return data->SetEffectChain(reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
-#endif
 			}
 
 			// NAME: IXAudio2Voice::EnableEffect
@@ -1157,16 +1149,8 @@ namespace Addictol
 			virtual void GetState(XAUDIO2_VOICE_STATE* pVoiceState) const noexcept
 			{
 				if (!data) return;
-				// 2.7 GetState is single-arg; 2.9 added a Flags argument. The game
-				// (built against 2.7) never initialises the Flags register, so the
-				// 2.9 engine reads a garbage value. When bit 1 is set
-				// (XAUDIO2_VOICE_NOSAMPLESPLAYED) SamplesPlayed is zeroed out,
-				// causing lip-sync twitches on OG and audio state-machine collapse
-				// (no voice / music reset / sirens) on AE. Force Flags=0 to match
-				// 2.7 semantics.
-				// (contribution: tryname @ Nexus — AudioDeviceFollowFix)
 				(reinterpret_cast<IXAudio2SourceVoice*>(data))->GetState(
-					reinterpret_cast<::XAUDIO2_VOICE_STATE*>(pVoiceState), 0);
+					reinterpret_cast<::XAUDIO2_VOICE_STATE*>(pVoiceState));
 			}
 
 			// NAME: IXAudio2SourceVoice::SetFrequencyRatio
@@ -1956,7 +1940,7 @@ namespace Addictol
 			return false;
 		}
 
-		return true; // IsWindows10OrGreater();
+		return true;
 	}
 
 	bool ModuleAudioProxy::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
