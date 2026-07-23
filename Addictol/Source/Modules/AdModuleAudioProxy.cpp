@@ -1320,12 +1320,13 @@ namespace Addictol
 			if (SUCCEEDED(hr)) 
 			{
 				// Retrieve the audio engine's mix format
+				// WAVEFORMATEXTENSIBLE actual https://learn.microsoft.com/en-us/previous-versions/ms678733(v=vs.85)
 				WAVEFORMATEX* pMixFormat{ nullptr };
 				hr = pAudioClient->GetMixFormat(std::addressof(pMixFormat));
 				if (SUCCEEDED(hr) && pMixFormat)
 				{
 					// Copy the format to dest
-					CopyMemory(pFormat, pMixFormat, sizeof(WAVEFORMATEX) + pMixFormat->cbSize);
+					CopyMemory(pFormat, pMixFormat, sizeof(WAVEFORMATEXTENSIBLE));
 					// Free the format memory when done
 					CoTaskMemFree(pMixFormat);
 				}
@@ -1498,20 +1499,15 @@ namespace Addictol
 						hr = GetDeviceFormatFromAudioClient(device.Get(),
 							std::addressof(pDeviceDetails->OutputFormat));
 						if (FAILED(hr))
+						{
 							REX::ERROR(L"Failed get audio format for audio device: {} {}",
 								pIdStr, SysCharToWide(_com_error(hr).ErrorMessage()).c_str());
-						/*else
-						{
-							REX::INFO("[AudioProxy] Audio format: {}Hz {}bit {} channels",
-								pDeviceDetails->OutputFormat.Format.nSamplesPerSec,
-								pDeviceDetails->OutputFormat.Format.wBitsPerSample,
-								pDeviceDetails->OutputFormat.Format.nChannels
-							);
-						}*/
-
+						}
+						else
 						{
 							Microsoft::WRL::ComPtr<IMMDevice> defDevice{};
-							if (SUCCEEDED(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, defDevice.GetAddressOf())))
+							hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, defDevice.GetAddressOf());
+							if (SUCCEEDED(hr))
 							{
 								LPWSTR pIdCurStr{ nullptr };
 								if (SUCCEEDED(defDevice->GetId(std::addressof(pIdCurStr))) && !wcscmp(pIdStr, pIdCurStr))
@@ -1521,6 +1517,7 @@ namespace Addictol
 							}
 						}
 
+#if 0
 						IXAudio2MasteringVoice* pMasteringVoice{ nullptr };
 						if (SUCCEEDED(audio->CreateMasteringVoice(std::addressof(pMasteringVoice), 0, 0, 0, pIdStr)))
 						{
@@ -1529,6 +1526,7 @@ namespace Addictol
 							// pDeviceDetails->OutputFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 							pMasteringVoice->DestroyVoice();
 						}
+#endif
 
 						CoTaskMemFree(pIdStr);
 						return hr;
