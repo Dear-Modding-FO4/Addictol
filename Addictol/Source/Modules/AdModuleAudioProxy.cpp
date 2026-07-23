@@ -552,16 +552,8 @@ namespace Addictol
 				{
 					auto& apoSrcSend = src->pSends[i];
 					auto& apoDstSend = dest->pSends[i];
-#if 0
-					auto proxy = dynamic_cast<IXAudio2VoiceProxy*>(apoSrcSend.pOutputVoice);
-
-					// FIXME: need to figure out why XAPO needs to be disabled here. The sound is getting too quiet, something is wrong.
-					apoDstSend.Flags = XAUDIO2_SEND_USEFILTER;
-					apoDstSend.pOutputVoice = proxy ? proxy->data : reinterpret_cast<IXAudio2Voice*>(apoSrcSend.pOutputVoice);
-#else
-					apoDstSend.Flags = XAUDIO2_SEND_USEFILTER;
+					apoDstSend.Flags = apoSrcSend.Flags;
 					apoDstSend.pOutputVoice = apoSrcSend.pOutputVoice->data;
-#endif
 				}
 				return S_OK;
 			}
