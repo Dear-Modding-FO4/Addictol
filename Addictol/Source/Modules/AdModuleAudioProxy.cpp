@@ -1503,17 +1503,6 @@ namespace Addictol
 							}
 						}
 
-#if 0
-						IXAudio2MasteringVoice* pMasteringVoice{ nullptr };
-						if (SUCCEEDED(audio->CreateMasteringVoice(std::addressof(pMasteringVoice), 0, 0, 0, pIdStr)))
-						{
-							// pMasteringVoice->GetChannelMask(std::addressof(pDeviceDetails->OutputFormat.dwChannelMask));
-							// pDeviceDetails->OutputFormat.Samples.wValidBitsPerSample = pDeviceDetails->OutputFormat.Format.wBitsPerSample;
-							// pDeviceDetails->OutputFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-							pMasteringVoice->DestroyVoice();
-						}
-#endif
-
 						CoTaskMemFree(pIdStr);
 						return hr;
 					}
@@ -1592,7 +1581,7 @@ namespace Addictol
 
 				EnsureEffectChainCompat(pEffectChain);
 
-				HRESULT hr = E_FAIL;
+				auto hr = E_FAIL;
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
@@ -1645,7 +1634,7 @@ namespace Addictol
 
 				EnsureEffectChainCompat(pEffectChain);
 
-				HRESULT hr = E_FAIL;
+				auto hr = E_FAIL;
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
@@ -1787,7 +1776,7 @@ namespace Addictol
 
 			if (pI3DL2->DecayHFRatio >= 1.0f)
 			{
-				INT32 index = (INT32)(-4.0 * log10(pI3DL2->DecayHFRatio));
+				auto index = (INT32)(-4.0 * log10(pI3DL2->DecayHFRatio));
 				if (index < -8) index = -8;
 				pNative->LowEQGain = (BYTE)((index < 0) ? index + 8 : 8);
 				pNative->HighEQGain = 8;
@@ -1795,7 +1784,7 @@ namespace Addictol
 			}
 			else
 			{
-				INT32 index = (INT32)(4.0 * log10(pI3DL2->DecayHFRatio));
+				auto index = (INT32)(4.0 * log10(pI3DL2->DecayHFRatio));
 				if (index < -8) index = -8;
 				pNative->LowEQGain = 8;
 				pNative->HighEQGain = (BYTE)((index < 0) ? index + 8 : 8);
