@@ -516,18 +516,20 @@ namespace Addictol
 				}
 
 				auto** vtbl = *reinterpret_cast<void***>(effect);
+
+				// Serialize the whole check-and-patch: a concurrent patch of the same
+				// vtable must not race its protection restore against our write.
+				std::lock_guard lock(g_qiShimMutex);
 				auto currentQI = reinterpret_cast<IXAPO_QI_Fn>(vtbl[0]);
 				if (currentQI == &GenericXAPOQIShim) continue;
 
-				{
-					std::lock_guard lock(g_qiShimMutex);
-					g_qiShimMap[vtbl] = currentQI;
-				}
+				g_qiShimMap[vtbl] = currentQI;
 				DWORD old{};
 				if (VirtualProtect(&vtbl[0], sizeof(void*), PAGE_READWRITE, &old))
 				{
 					vtbl[0] = reinterpret_cast<void*>(&GenericXAPOQIShim);
 					FlushInstructionCache(GetCurrentProcess(), &vtbl[0], sizeof(void*));
+					VirtualProtect(&vtbl[0], sizeof(void*), old, &old);
 				}
 			}
 		}
@@ -1352,6 +1354,15 @@ namespace Addictol
 					REX::ERROR("XAudio2Create return failed \"{}\"", _com_error(hr).ErrorMessage());
 			}
 
+			~IXAudio2Proxy() noexcept
+			{
+				if (audio)
+				{
+					audio->Release();
+					audio = nullptr;
+				}
+			}
+
 			// NAME: IXAudio2::QueryInterface
 			// DESCRIPTION: Queries for a given COM interface on the XAudio2 object.
 			//              Only IID_IUnknown and IID_IXAudio2 are supported.
@@ -1503,8 +1514,10 @@ namespace Addictol
 							if (SUCCEEDED(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, defDevice.GetAddressOf())))
 							{
 								LPWSTR pIdCurStr{ nullptr };
-								if (SUCCEEDED(device->GetId(std::addressof(pIdCurStr))) && !wcscmp(pIdStr, pIdCurStr))
+								if (SUCCEEDED(defDevice->GetId(std::addressof(pIdCurStr))) && !wcscmp(pIdStr, pIdCurStr))
 									pDeviceDetails->Role = GlobalDefaultDevice;
+								if (pIdCurStr)
+									CoTaskMemFree(pIdCurStr);
 							}
 						}
 
@@ -1596,26 +1609,31 @@ namespace Addictol
 
 				EnsureEffectChainCompat(pEffectChain);
 
+				HRESULT hr = E_FAIL;
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
 					if (SUCCEEDED(IXAudio2VoiceProxy::CopyVoiceSends(&sends, pSendList)))
 					{
-						auto hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
+						hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 							pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
 							std::addressof(sends),
 							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 						delete[] sends.pSends;
-						return hr;
 					}
 				}
 				else
-					return audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
+					hr = audio->CreateSourceVoice(reinterpret_cast<::IXAudio2SourceVoice**>(std::addressof((*ppSourceVoice)->data)),
 						pSourceFormat, Flags, MaxFrequencyRatio, reinterpret_cast<::IXAudio2VoiceCallback*>(pCallback),
 						nullptr,
 						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 
-				return E_FAIL;
+				if (FAILED(hr))
+				{
+					delete *ppSourceVoice;
+					*ppSourceVoice = nullptr;
+				}
+				return hr;
 			}
 
 			// NAME: IXAudio2::CreateSubmixVoice
@@ -1644,24 +1662,29 @@ namespace Addictol
 
 				EnsureEffectChainCompat(pEffectChain);
 
+				HRESULT hr = E_FAIL;
 				if (pSendList && pSendList->SendCount)
 				{
 					::XAUDIO2_VOICE_SENDS sends{};
 					if (SUCCEEDED(IXAudio2VoiceProxy::CopyVoiceSends(&sends, pSendList)))
 					{
-						auto hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
+						hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 							InputChannels, InputSampleRate, Flags, ProcessingStage, std::addressof(sends),
 							reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 						delete[] sends.pSends;
-						return hr;
 					}
 				}
 				else
-					return audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
+					hr = audio->CreateSubmixVoice(reinterpret_cast<::IXAudio2SubmixVoice**>(std::addressof((*ppSubmixVoice)->data)),
 						InputChannels, InputSampleRate, Flags, ProcessingStage, nullptr,
 						reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
 
-				return E_FAIL;
+				if (FAILED(hr))
+				{
+					delete *ppSubmixVoice;
+					*ppSubmixVoice = nullptr;
+				}
+				return hr;
 			}
 
 			// NAME: IXAudio2::CreateMasteringVoice
@@ -1688,9 +1711,15 @@ namespace Addictol
 				if (!(*ppMasteringVoice)) return E_OUTOFMEMORY;
 
 				EnsureEffectChainCompat(pEffectChain);
-				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
+				HRESULT hr = audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
 					InputChannels, InputSampleRate, Flags, nullptr,
 					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
+				if (FAILED(hr))
+				{
+					delete *ppMasteringVoice;
+					*ppMasteringVoice = nullptr;
+				}
+				return hr;
 			}
 			
 			// NAME: IXAudio2::StartEngine
