@@ -743,7 +743,7 @@ namespace Addictol
 				if (ParametersByteSize == sizeof(XAUDIO2FX_REVERB_PARAMETERS))
 				{
 					::XAUDIO2FX_REVERB_PARAMETERS reverb{};
-					auto hr = data->GetEffectParameters(EffectIndex, pParameters, ParametersByteSize);
+					auto hr = data->GetEffectParameters(EffectIndex, std::addressof(reverb), sizeof(reverb));
 					
 					if (SUCCEEDED(hr))
 					{
