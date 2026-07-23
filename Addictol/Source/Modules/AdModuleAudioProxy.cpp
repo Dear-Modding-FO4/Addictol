@@ -524,13 +524,7 @@ namespace Addictol
 				if (currentQI == &GenericXAPOQIShim) continue;
 
 				g_qiShimMap[vtbl] = currentQI;
-				DWORD old{};
-				if (VirtualProtect(&vtbl[0], sizeof(void*), PAGE_READWRITE, &old))
-				{
-					vtbl[0] = reinterpret_cast<void*>(&GenericXAPOQIShim);
-					FlushInstructionCache(GetCurrentProcess(), &vtbl[0], sizeof(void*));
-					VirtualProtect(&vtbl[0], sizeof(void*), old, &old);
-				}
+				RELEX::DetourVTable(reinterpret_cast<uintptr_t>(vtbl), reinterpret_cast<uintptr_t>(&GenericXAPOQIShim), 0);
 			}
 		}
 
