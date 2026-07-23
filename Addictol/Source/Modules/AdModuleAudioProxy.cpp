@@ -1,6 +1,8 @@
 #include <Modules/AdModuleAudioProxy.h>
 #include <AdUtils.h>
 
+#define NO_USE_PORTAUDIO 1
+
 #include <windows.h>
 #include <mmreg.h>
 #include <mmdeviceapi.h>
@@ -17,6 +19,7 @@
 #include <xaudio2.h>
 #include <xaudio2fx.h>
 #include <x3daudio.h>
+#include <audioclient.h>
 #pragma comment(lib, "xaudio2.lib")
 
 #undef ERROR
@@ -1298,6 +1301,33 @@ namespace Addictol
 
 		#pragma pack(pop)
 
+		// This approach retrieves the stream format that the Windows audio engine uses internally for digital processing.
+		// It is the most reliable way to negotiate a stream format for playback or capture.
+		static HRESULT GetDeviceFormatFromAudioClient(IMMDevice* pDevice, WAVEFORMATEX* pFormat) noexcept
+		{
+			if (!pDevice || !pFormat) return E_INVALIDARG;
+
+			Microsoft::WRL::ComPtr<IAudioClient> pAudioClient{};
+			// Activate the IAudioClient interface from the IMMDevice
+			HRESULT hr = pDevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, 
+				nullptr, (void**)pAudioClient.GetAddressOf());
+			if (SUCCEEDED(hr)) 
+			{
+				// Retrieve the audio engine's mix format
+				WAVEFORMATEX* pMixFormat{ nullptr };
+				hr = pAudioClient->GetMixFormat(std::addressof(pMixFormat));
+				if (SUCCEEDED(hr) && pMixFormat)
+				{
+					// Copy the format to dest
+					CopyMemory(pFormat, pMixFormat, sizeof(WAVEFORMATEX));
+					// Free the format memory when done
+					CoTaskMemFree(pMixFormat);
+				}
+			}
+
+			return hr;
+		}
+
 		class IXAudio2Proxy :
 			public IUnknown
 		{
@@ -1450,6 +1480,20 @@ namespace Addictol
 							PropVariantClear(std::addressof(varName));
 						}
 						
+						hr = GetDeviceFormatFromAudioClient(device.Get(),
+							std::addressof(pDeviceDetails->OutputFormat.Format));
+						if (FAILED(hr))
+							REX::ERROR(L"Failed get audio format for audio device: {} {}",
+								pIdStr, SysCharToWide(_com_error(hr).ErrorMessage()).c_str());
+						/*else
+						{
+							REX::INFO("[AudioProxy] Audio format: {}Hz {}bit {} channels",
+								pDeviceDetails->OutputFormat.Format.nSamplesPerSec,
+								pDeviceDetails->OutputFormat.Format.wBitsPerSample,
+								pDeviceDetails->OutputFormat.Format.nChannels
+							);
+						}*/
+
 						{
 							Microsoft::WRL::ComPtr<IMMDevice> defDevice{};
 							if (SUCCEEDED(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, defDevice.GetAddressOf())))
@@ -1464,23 +1508,14 @@ namespace Addictol
 						if (SUCCEEDED(audio->CreateMasteringVoice(std::addressof(pMasteringVoice), 0, 0, 0, pIdStr)))
 						{
 							pMasteringVoice->GetChannelMask(std::addressof(pDeviceDetails->OutputFormat.dwChannelMask));
-
-							::XAUDIO2_VOICE_DETAILS voiceDetails{};
-							pMasteringVoice->GetVoiceDetails(std::addressof(voiceDetails));
+							pDeviceDetails->OutputFormat.Samples.wValidBitsPerSample = 
+								pDeviceDetails->OutputFormat.Format.wBitsPerSample;
+							pDeviceDetails->OutputFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 							pMasteringVoice->DestroyVoice();
-
-							pDeviceDetails->OutputFormat.Format.cbSize = sizeof(pDeviceDetails->OutputFormat.Format);
-							pDeviceDetails->OutputFormat.Format.nChannels = voiceDetails.InputChannels;
-							pDeviceDetails->OutputFormat.Format.wFormatTag = WAVE_FORMAT_PCM;
-							pDeviceDetails->OutputFormat.Format.nSamplesPerSec = voiceDetails.InputSampleRate;
-							pDeviceDetails->OutputFormat.Format.wBitsPerSample = voiceDetails.InputChannels << 3;
-							pDeviceDetails->OutputFormat.Format.nAvgBytesPerSec =
-								pDeviceDetails->OutputFormat.Format.nSamplesPerSec * voiceDetails.InputChannels *
-								voiceDetails.InputChannels;
-							pDeviceDetails->OutputFormat.Format.nBlockAlign = voiceDetails.InputChannels * voiceDetails.InputChannels;
 						}
 
 						CoTaskMemFree(pIdStr);
+						return hr;
 					}
 				}
 				
