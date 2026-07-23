@@ -1309,7 +1309,7 @@ namespace Addictol
 
 		// This approach retrieves the stream format that the Windows audio engine uses internally for digital processing.
 		// It is the most reliable way to negotiate a stream format for playback or capture.
-		static HRESULT GetDeviceFormatFromAudioClient(IMMDevice* pDevice, WAVEFORMATEX* pFormat) noexcept
+		static HRESULT GetDeviceFormatFromAudioClient(IMMDevice* pDevice, WAVEFORMATEXTENSIBLE* pFormat) noexcept
 		{
 			if (!pDevice || !pFormat) return E_INVALIDARG;
 
@@ -1325,7 +1325,7 @@ namespace Addictol
 				if (SUCCEEDED(hr) && pMixFormat)
 				{
 					// Copy the format to dest
-					CopyMemory(pFormat, pMixFormat, sizeof(WAVEFORMATEX));
+					CopyMemory(pFormat, pMixFormat, sizeof(WAVEFORMATEX) + pMixFormat->cbSize);
 					// Free the format memory when done
 					CoTaskMemFree(pMixFormat);
 				}
@@ -1496,7 +1496,7 @@ namespace Addictol
 						}
 						
 						hr = GetDeviceFormatFromAudioClient(device.Get(),
-							std::addressof(pDeviceDetails->OutputFormat.Format));
+							std::addressof(pDeviceDetails->OutputFormat));
 						if (FAILED(hr))
 							REX::ERROR(L"Failed get audio format for audio device: {} {}",
 								pIdStr, SysCharToWide(_com_error(hr).ErrorMessage()).c_str());
@@ -1524,10 +1524,9 @@ namespace Addictol
 						IXAudio2MasteringVoice* pMasteringVoice{ nullptr };
 						if (SUCCEEDED(audio->CreateMasteringVoice(std::addressof(pMasteringVoice), 0, 0, 0, pIdStr)))
 						{
-							pMasteringVoice->GetChannelMask(std::addressof(pDeviceDetails->OutputFormat.dwChannelMask));
-							pDeviceDetails->OutputFormat.Samples.wValidBitsPerSample = 
-								pDeviceDetails->OutputFormat.Format.wBitsPerSample;
-							pDeviceDetails->OutputFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+							// pMasteringVoice->GetChannelMask(std::addressof(pDeviceDetails->OutputFormat.dwChannelMask));
+							// pDeviceDetails->OutputFormat.Samples.wValidBitsPerSample = pDeviceDetails->OutputFormat.Format.wBitsPerSample;
+							// pDeviceDetails->OutputFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 							pMasteringVoice->DestroyVoice();
 						}
 
