@@ -1347,7 +1347,7 @@ namespace Addictol
 
 			IXAudio2Proxy() noexcept
 			{
-				auto hr = XAudio2Create(std::addressof(audio), 0, XAUDIO2_ANY_PROCESSOR);
+				auto hr = XAudio2Create(std::addressof(audio), 0, XAUDIO2_USE_DEFAULT_PROCESSOR);
 				if (FAILED(hr))
 					REX::ERROR("XAudio2Create return failed \"{}\"", _com_error(hr).ErrorMessage());
 			}
@@ -1688,7 +1688,6 @@ namespace Addictol
 				if (!(*ppMasteringVoice)) return E_OUTOFMEMORY;
 
 				EnsureEffectChainCompat(pEffectChain);
-
 				return audio->CreateMasteringVoice(reinterpret_cast<::IXAudio2MasteringVoice**>(std::addressof((*ppMasteringVoice)->data)),
 					InputChannels, InputSampleRate, Flags, nullptr,
 					reinterpret_cast<const ::XAUDIO2_EFFECT_CHAIN*>(pEffectChain));
