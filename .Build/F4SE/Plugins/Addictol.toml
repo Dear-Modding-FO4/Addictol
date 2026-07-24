@@ -64,7 +64,7 @@ bSaveCompression = true
 
 # Proxies the engine's audio calls to XAudio 2.9, allowing seamless audio device switching.
 # Linux / Proton users will need to install 'xaudio29' via Protontricks / Winetricks, will be disabled otherwise.
-bAudioProxy = true
+bAudioProxy = false
 
 
 [Fixes]
