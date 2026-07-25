@@ -36,6 +36,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProcessIcon.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp" />
@@ -131,6 +132,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProcessIcon.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h" />
