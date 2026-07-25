@@ -214,7 +214,8 @@ bPuddleCubemaps = false
 # An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude).
 bStringPoolRelease = true
 
-# Fixes an AE issue where some Plugins get disabled on exit if the Creations Platform is enabled.
+# Fixes multiple AE Load Order issues when the Creations Platform is enabled.
+# Including Plugins getting disabled, moved around, and inability to toggle certain Plugins in-game.
 bLoadOrder = true
 
 # Fixes a crash related to queued HUD messages on NG & AE.
