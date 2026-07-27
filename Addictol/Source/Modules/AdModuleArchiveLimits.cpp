@@ -1183,6 +1183,8 @@ namespace Addictol
 
 							L("RET");
 							movzx(edi, byte[rdx + 0xD]);
+							if (RELEX::IsRuntimeOG()) 
+								cmp(dword[rdx + 0x104], 1);
 							jmp(ptr[rip + retnLabel]);
 
 							L(retnLabel);
