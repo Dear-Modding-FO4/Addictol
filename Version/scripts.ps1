@@ -1,10 +1,10 @@
 [int]$buildverint = Get-Content -Path "..\Version\build_version.txt"
-$buildverint+1 | out-file -FilePath "..\Version\build_version.txt" -Force
+$buildverint+1 | Out-File -FilePath "..\Version\build_version.txt" -Force
 
-$verfile = Get-Content -Path "..\Version\resource_version2.tmp"
+$verfile = Get-Content -Path "..\Version\resource_version2.tmp" -Encoding utf8
 $verfile = $verfile -Replace "<BUILD>", $buildverint
-$verfile | out-file -FilePath "..\Version\resource_version2.h" -Force
+$verfile | Out-File -FilePath "..\Version\resource_version2.h" -Force -Encoding utf8
 
 #$verfile = Get-Content -Path ".\Version\fomod_info.tmp"
 #$verfile = $verfile -Replace "<BUILD>", $buildverint
-#$verfile | out-file -FilePath "..\Build\fomod\info.xml" -Force
+#$verfile | Out-File -FilePath "..\Build\fomod\info.xml" -Force
