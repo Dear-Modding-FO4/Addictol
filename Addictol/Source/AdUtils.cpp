@@ -66,6 +66,20 @@ namespace RELEX
 		}
 	}
 
+	ScopeEvent::ScopeEvent(bool a_manualReset, bool a_initialState, const std::string_view& a_name) noexcept :
+		handle(CreateEventA(nullptr, a_manualReset, a_initialState, a_name.data()))
+	{}
+
+	ScopeEvent::~ScopeEvent() noexcept { CloseHandle(handle); }
+
+	ScopeEvent::Result ScopeEvent::WaitFor(uint32_t a_ms, bool a_alertable) const noexcept
+	{
+		return static_cast<ScopeEvent::Result>(REX::W32::WaitForSingleObjectEx(handle, a_ms, a_alertable));
+	}
+
+	void ScopeEvent::Set() const noexcept { if (handle) SetEvent(handle); }
+	void ScopeEvent::Reset() const noexcept { if (handle) ResetEvent(handle); }
+
 	void Write(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept
 	{
 		if (!a_target || !a_data.size()) return;

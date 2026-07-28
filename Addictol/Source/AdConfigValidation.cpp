@@ -18,7 +18,7 @@ namespace Addictol
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
 			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
-			"bSaveCompression", "bAudioProxy"
+			"bSaveCompression", "bAudioSwitch"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",

@@ -62,9 +62,8 @@ bDpiScaling = true
 # Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
 bSaveCompression = true
 
-# Proxies the engine's audio calls to XAudio 2.9, allowing seamless audio device switching.
-# Linux / Proton users will need to install 'xaudio29' via Protontricks / Winetricks, will be disabled otherwise.
-bAudioProxy = false
+# Allowing seamless audio device switching for XAudio 2.7.
+bAudioSwitch = false
 
 
 [Fixes]
