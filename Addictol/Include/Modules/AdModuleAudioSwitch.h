@@ -4,12 +4,12 @@
 
 namespace Addictol
 {
-	class ModuleAudioProxy :
+	class ModuleAudioSwitch :
 		public Module
 	{
 	public:
-		ModuleAudioProxy();
-		virtual ~ModuleAudioProxy() = default;
+		ModuleAudioSwitch();
+		virtual ~ModuleAudioSwitch() = default;
 
 		[[nodiscard]] virtual bool DoQuery() const noexcept override;
 		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;

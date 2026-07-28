@@ -1,6 +1,6 @@
 // credits original for sse : https://github.com/Exit-9B/AutoAudioSwitch/tree/main
 
-#include <Modules/AdModuleAudioProxy.h>
+#include <Modules/AdModuleAudioSwitch.h>
 #include <AdUtils.h>
 
 #include <windows.h>
@@ -28,7 +28,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesAudioProxy{ "Patches"sv, "bAudioSwitch"sv, true };
+	static REX::TOML::Bool<> bPatchesAudioSwitch{ "Patches"sv, "bAudioSwitch"sv, true };
 
 	// XAudio27
 	namespace AudioSystem
@@ -1880,16 +1880,16 @@ namespace Addictol
 		}
 	}
 
-	ModuleAudioProxy::ModuleAudioProxy() :
-		Module("Audio Proxy", &bPatchesAudioProxy)
+	ModuleAudioSwitch::ModuleAudioSwitch() :
+		Module("Audio Proxy", &bPatchesAudioSwitch)
 	{}
 
-	bool ModuleAudioProxy::DoQuery() const noexcept
+	bool ModuleAudioSwitch::DoQuery() const noexcept
 	{
 		return true;
 	}
 
-	bool ModuleAudioProxy::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleAudioSwitch::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (AudioEngine::UpdateEvent.Empty())
 			return false;
@@ -1919,12 +1919,12 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAudioProxy::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleAudioSwitch::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
 	}
 
-	bool ModuleAudioProxy::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	bool ModuleAudioSwitch::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
 	{
 		return true;
 	}

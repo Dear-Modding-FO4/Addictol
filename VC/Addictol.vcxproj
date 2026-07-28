@@ -32,7 +32,7 @@
     <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioProxy.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioSwitch.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
@@ -129,7 +129,7 @@
     <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioProxy.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />

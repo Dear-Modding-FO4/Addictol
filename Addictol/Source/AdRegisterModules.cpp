@@ -73,7 +73,7 @@
 #include <Modules/AdModuleMusicOverlap.h>
 #include <Modules/AdModulePuddleCubemaps.h>
 #include <Modules/AdModuleCompanionStrayBullet.h>
-#include <Modules/AdModuleAudioProxy.h>
+#include <Modules/AdModuleAudioSwitch.h>
 #include <Modules/AdModuleStringPoolRelease.h>
 #include <Modules/AdModuleLoadOrder.h>
 #include <Modules/AdModuleHUDMessageQueue.h>
@@ -153,7 +153,7 @@ static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimate
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
 static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
 static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCompanionStrayBullet>();
-static auto sModuleAudioProxy						= std::make_shared<Addictol::ModuleAudioProxy>();
+static auto sModuleAudioSwitch						= std::make_shared<Addictol::ModuleAudioSwitch>();
 static auto sModuleStringPoolRelease				= std::make_shared<Addictol::ModuleStringPoolRelease>();
 static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>();
 static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
@@ -244,7 +244,7 @@ void AdRegisterModules()
 	modules.Register(sModuleCrashRemoveRef);
 	modules.Register(sModuleClimateLoadFix);
 	modules.Register(sModuleMusicOverlap);
-	modules.Register(sModuleAudioProxy);
+	modules.Register(sModuleAudioSwitch);
 	modules.Register(sModuleStringPoolRelease);
 	modules.Register(sModuleLoadOrder);
 	modules.Register(sModuleHUDMessageQueue);
