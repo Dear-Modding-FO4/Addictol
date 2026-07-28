@@ -1744,6 +1744,28 @@ namespace Addictol
 
 			return true;
 		}
+
+		static void DeferPostUpdate() noexcept
+		{
+			// Blocks multiple calls for a certain time, after the timeout, processing begins.
+
+			static std::atomic_bool _bPendingCalled{};
+			if (!_bPendingCalled.load())
+			{
+				// Blocking
+				_bPendingCalled.store(true);
+
+				std::thread([] {
+					// Timeout
+					std::this_thread::sleep_for(100ms); 
+					// Update
+					if (AudioBethesdaSystem::BSAudioManager::QInitialized())
+						AudioEngine::UpdateEvent.Set();
+					// Reset
+					_bPendingCalled.store(false);
+				}).detach();
+			}
+		}
 	}
 
 	namespace Hooks
@@ -1836,8 +1858,7 @@ namespace Addictol
 		{
 			//REX::WARN("XAudio2 encountered critical error ({:08X})", static_cast<std::uint32_t>(a_herror));
 
-			if (AudioBethesdaSystem::BSAudioManager::QInitialized())
-				AudioEngine::UpdateEvent.Set();
+			AudioEngine::DeferPostUpdate();
 		}
 
 		bool Callbacks::Install() noexcept
@@ -1906,7 +1927,7 @@ namespace Addictol
 				// Create _pEnumerator
 				auto hr = CoCreateInstance(
 					__uuidof(MMDeviceEnumerator),
-					NULL, CLSCTX_INPROC_SERVER,
+					nullptr, CLSCTX_INPROC_SERVER,
 					__uuidof(IMMDeviceEnumerator),
 					(void**)_pEnumerator.ReleaseAndGetAddressOf());
 
@@ -1931,12 +1952,12 @@ namespace Addictol
 			}
 
 			// IUnknown Methods
-			ULONG STDMETHODCALLTYPE AddRef()
+			ULONG STDMETHODCALLTYPE AddRef() noexcept
 			{
 				return InterlockedIncrement(&_cRef);
 			}
 
-			ULONG STDMETHODCALLTYPE Release()
+			ULONG STDMETHODCALLTYPE Release() noexcept
 			{
 				ULONG ulRef = InterlockedDecrement(&_cRef);
 				if (0 == ulRef)
@@ -1945,7 +1966,7 @@ namespace Addictol
 				return ulRef;
 			}
 
-			HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface)
+			HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) noexcept
 			{
 				if (IID_IUnknown == riid)
 				{
@@ -1959,7 +1980,7 @@ namespace Addictol
 				}
 				else
 				{
-					*ppvInterface = NULL;
+					*ppvInterface = nullptr;
 					return E_NOINTERFACE;
 				}
 
@@ -1967,29 +1988,26 @@ namespace Addictol
 			}
 
 			// Callback Methods
-			HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId)
+			HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) noexcept
 			{
 				// We only care about Playback (eRender) for the Console Device Role (eConsole)
 				// https://learn.microsoft.com/en-us/windows/win32/coreaudio/device-roles
 				if (flow == eRender && role == eConsole && pwstrDeviceId)
-				{
-					if (AudioBethesdaSystem::BSAudioManager::QInitialized())
-						AudioEngine::UpdateEvent.Set();
-				}
+					AudioEngine::DeferPostUpdate();
 
 				return S_OK;
 			}
 
 			// Unused
-			HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) { return S_OK; }
-			HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) { return S_OK; }
-			HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) { return S_OK; }
-			HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) noexcept { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) noexcept { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) noexcept { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) noexcept { return S_OK; }
 		};
 
 		static ComPtr<NotificationClient> Client;
 
-		bool Install() noexcept
+		static bool Install() noexcept
 		{
 			// Create the Notification Client
 			Client.Attach(new (std::nothrow) NotificationClient());
