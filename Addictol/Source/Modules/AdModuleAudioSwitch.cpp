@@ -3,11 +3,14 @@
 #include <Modules/AdModuleAudioSwitch.h>
 #include <AdUtils.h>
 
-#include <windows.h>
-#include <mmreg.h>
-#include <objbase.h> 
 #include <comdef.h>
+#include <cstddef>
 #include <functional>
+#include <mmdeviceapi.h>
+#include <mmreg.h>
+#include <new>
+#include <objbase.h>
+#include <Windows.h>
 #include <x3daudio.h>
 
 #pragma comment(lib, "xaudio2.lib")
@@ -1387,7 +1390,7 @@ namespace Addictol
 				static REL::Relocation<BSXAudio2Monitors*> arr{ REL::ID{ 850059, 2666257 } };
 				return arr.get();
 			}			
-				
+
 			// add member
 			X3DAUDIO_HANDLE X3DAudioHandle;	// 18
 		};
@@ -1880,6 +1883,139 @@ namespace Addictol
 		}
 	}
 
+	// Audio Device Notification
+	// https://learn.microsoft.com/en-us/windows/win32/coreaudio/device-events
+	namespace AudioDeviceNotification
+	{
+		template<class T>
+		void SafeRelease(T*& object) noexcept
+		{
+			if (object)
+			{
+				object->Release();
+				object = NULL;
+			}
+		}
+
+		class NotificationClient : public IMMNotificationClient
+		{
+		private:
+			LONG _cRef;
+			IMMDeviceEnumerator* _pEnumerator;
+
+		public:
+			NotificationClient() : _cRef(1), _pEnumerator(NULL) {}
+			~NotificationClient() { Unregister(); }
+
+			// Register / Unregister
+			HRESULT Register() noexcept
+			{
+				// Create _pEnumerator
+				auto hr = CoCreateInstance(
+					__uuidof(MMDeviceEnumerator),
+					NULL, CLSCTX_INPROC_SERVER,
+					__uuidof(IMMDeviceEnumerator),
+					(void**)&_pEnumerator);
+
+				if (FAILED(hr))
+					return hr;
+
+				// Register Callback
+				hr = _pEnumerator->RegisterEndpointNotificationCallback(this);
+				if (FAILED(hr))
+					SafeRelease(_pEnumerator);
+
+				return hr;
+			}
+
+			void Unregister() noexcept
+			{
+				if (_pEnumerator)
+				{
+					_pEnumerator->UnregisterEndpointNotificationCallback(this);
+					SafeRelease(_pEnumerator);
+				}
+			}
+
+			// IUnknown Methods
+			ULONG STDMETHODCALLTYPE AddRef()
+			{
+				return InterlockedIncrement(&_cRef);
+			}
+
+			ULONG STDMETHODCALLTYPE Release()
+			{
+				ULONG ulRef = InterlockedDecrement(&_cRef);
+				if (0 == ulRef)
+					delete this;
+
+				return ulRef;
+			}
+
+			HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface)
+			{
+				if (IID_IUnknown == riid)
+				{
+					AddRef();
+					*ppvInterface = (IUnknown*)this;
+				}
+				else if (__uuidof(IMMNotificationClient) == riid)
+				{
+					AddRef();
+					*ppvInterface = (IMMNotificationClient*)this;
+				}
+				else
+				{
+					*ppvInterface = NULL;
+					return E_NOINTERFACE;
+				}
+
+				return S_OK;
+			}
+
+			// Callback Methods
+			HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId)
+			{
+				// We only care about Playback (eRender) for the Console Device Role (eConsole)
+				// https://learn.microsoft.com/en-us/windows/win32/coreaudio/device-roles
+				if (flow == eRender && role == eConsole && pwstrDeviceId)
+				{
+					if (AudioBethesdaSystem::BSAudioManager::QInitialized())
+						AudioEngine::UpdateEvent.Set();
+				}
+
+				return S_OK;
+			}
+
+			// Unused
+			HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) { return S_OK; }
+			HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
+		};
+
+		static NotificationClient* Client{ nullptr };
+
+		bool Install() noexcept
+		{
+			// Create the Notification Client
+			auto* client = new (std::nothrow) NotificationClient();
+			if (!client)
+				return false;
+
+			// Register the Notification Client
+			const auto hr = client->Register();
+			if (FAILED(hr))
+			{
+				SafeRelease(client);
+				return false;
+			}
+
+			Client = client;
+			return true;
+		}
+	}
+
 	ModuleAudioSwitch::ModuleAudioSwitch() :
 		Module("Audio Switch", &bPatchesAudioSwitch)
 	{}
@@ -1913,6 +2049,11 @@ namespace Addictol
 			REX::INFO("Hook for ProcessSound installed"sv);
 		else
 			return false;
+
+		if (AudioDeviceNotification::Install())
+			REX::INFO("Registered for Audio Device Notifications"sv);
+		else
+			REX::WARN("Failed to register for Audio Device Notifications"sv);
 
 		AudioEngine::AudioMutex = reinterpret_cast<RE::BSSpinLock*>(REL::ID{ 210823, 2703076 }.address());
 
