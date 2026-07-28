@@ -11,6 +11,7 @@
 #include <new>
 #include <objbase.h>
 #include <Windows.h>
+#include <wrl/client.h>
 #include <x3daudio.h>
 
 #pragma comment(lib, "xaudio2.lib")
@@ -1887,24 +1888,16 @@ namespace Addictol
 	// https://learn.microsoft.com/en-us/windows/win32/coreaudio/device-events
 	namespace AudioDeviceNotification
 	{
-		template<class T>
-		void SafeRelease(T*& object) noexcept
-		{
-			if (object)
-			{
-				object->Release();
-				object = NULL;
-			}
-		}
+		using namespace Microsoft::WRL;
 
 		class NotificationClient : public IMMNotificationClient
 		{
 		private:
 			LONG _cRef;
-			IMMDeviceEnumerator* _pEnumerator;
+			ComPtr<IMMDeviceEnumerator> _pEnumerator;
 
 		public:
-			NotificationClient() : _cRef(1), _pEnumerator(NULL) {}
+			NotificationClient() : _cRef(1) {}
 			~NotificationClient() { Unregister(); }
 
 			// Register / Unregister
@@ -1915,7 +1908,7 @@ namespace Addictol
 					__uuidof(MMDeviceEnumerator),
 					NULL, CLSCTX_INPROC_SERVER,
 					__uuidof(IMMDeviceEnumerator),
-					(void**)&_pEnumerator);
+					(void**)_pEnumerator.ReleaseAndGetAddressOf());
 
 				if (FAILED(hr))
 					return hr;
@@ -1923,7 +1916,7 @@ namespace Addictol
 				// Register Callback
 				hr = _pEnumerator->RegisterEndpointNotificationCallback(this);
 				if (FAILED(hr))
-					SafeRelease(_pEnumerator);
+					_pEnumerator.Reset();
 
 				return hr;
 			}
@@ -1933,7 +1926,7 @@ namespace Addictol
 				if (_pEnumerator)
 				{
 					_pEnumerator->UnregisterEndpointNotificationCallback(this);
-					SafeRelease(_pEnumerator);
+					_pEnumerator.Reset();
 				}
 			}
 
@@ -1994,24 +1987,23 @@ namespace Addictol
 			HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
 		};
 
-		static NotificationClient* Client{ nullptr };
+		static ComPtr<NotificationClient> Client;
 
 		bool Install() noexcept
 		{
 			// Create the Notification Client
-			auto* client = new (std::nothrow) NotificationClient();
-			if (!client)
+			Client.Attach(new (std::nothrow) NotificationClient());
+			if (!Client)
 				return false;
 
 			// Register the Notification Client
-			const auto hr = client->Register();
+			const auto hr = Client->Register();
 			if (FAILED(hr))
 			{
-				SafeRelease(client);
+				Client.Reset();
 				return false;
 			}
 
-			Client = client;
 			return true;
 		}
 	}
