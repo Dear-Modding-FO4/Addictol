@@ -6,6 +6,9 @@
 #include <AdProfilerMemory.h>
 #include <AdProfilerModules.h>
 #include <RE/B/BSScriptUtil.h>
+#include <RE/T/TESFile.h>
+#include <RE/T/TESDataHandler.h>
+#include <RE/B/BSCRC32.h>
 
 //#define AD_DEBUGBREAK 1
 #if AD_DEBUGBREAK
@@ -36,6 +39,53 @@ namespace Addictol
 		}
 	}
 
+	static uint32_t GetHashString(const char* a_str) noexcept
+	{
+		std::string str = a_str;
+		return RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(strlwr(str.data())), str.length() });
+	}
+
+	static bool AnalizeGameCollectionCriticalCompatibility() noexcept
+	{
+		auto dataHandler = RE::TESDataHandler::GetSingleton();
+		if (!dataHandler) return false;
+
+		auto GetHash = [&](RE::TESFile* a_file)
+		{
+			std::string strFN = strlwr(a_file->filename);
+			auto it = strFN.find_last_of('.');
+			if (it != std::string::npos) strFN.erase(it, -1);
+			return RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(strFN.data()), strFN.length() });
+		};
+
+		auto CheckHash = [&](uint32_t a_hash)
+		{
+			std::array<uint32_t, 2> trash{ 260600794, 1335048061 };
+			return std::find(trash.begin(), trash.end(), a_hash) == trash.end();
+		};
+		
+		bool Compatibility = true;
+		for (auto& file : dataHandler->compiledFileCollection.files)
+		{
+			if (!CheckHash(GetHash(file)))
+			{
+				REX::ERROR("Incompatible mod: {}"sv, file->filename);
+				Compatibility = false;
+			}
+		}
+
+		for (auto& file : dataHandler->compiledFileCollection.smallFiles)
+		{
+			if (!CheckHash(GetHash(file)))
+			{
+				REX::ERROR("Incompatible mod: {}"sv, file->filename);
+				Compatibility = false;
+			}
+		}
+
+		return Compatibility;
+	}
+
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		{
@@ -54,6 +104,16 @@ namespace Addictol
 
 			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 			{
+				if (!AnalizeGameCollectionCriticalCompatibility())
+				{
+					REX::CRITICAL("Incompatible mods are installed."
+						"Disable addictol or reinstall game and starts new game without trash mods."
+						"Terminate game!"sv);
+
+					*((int*)0) = 0;
+					__assume(0);
+				}
+
 				moduleManager.LogSummary();
 				REX::INFO(""sv _PluginName " Initialized!"sv);
 				plugin->SetAsInstall();
