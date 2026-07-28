@@ -1881,7 +1881,7 @@ namespace Addictol
 	}
 
 	ModuleAudioSwitch::ModuleAudioSwitch() :
-		Module("Audio Proxy", &bPatchesAudioSwitch)
+		Module("Audio Switch", &bPatchesAudioSwitch)
 	{}
 
 	bool ModuleAudioSwitch::DoQuery() const noexcept
