@@ -63,7 +63,7 @@ bDpiScaling = true
 bSaveCompression = true
 
 # Allowing seamless audio device switching for XAudio 2.7.
-bAudioSwitch = false
+bAudioSwitch = true
 
 
 [Fixes]
