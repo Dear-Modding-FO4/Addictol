@@ -10,6 +10,8 @@
 #include <functional>
 #include <x3daudio.h>
 
+#pragma comment(lib, "xaudio2.lib")
+
 #undef ERROR
 #undef MAX_PATH
 #undef MEM_RELEASE
@@ -1658,9 +1660,10 @@ namespace Addictol
 				graph->registerCallbacks = false;
 			}
 
-			auto audio = AudioBethesdaSystem::BSXAudio2Audio::GetSingleton();
-			if (audio->audioListener)
-				delete std::exchange(audio->audioListener, nullptr);
+			// idk how restore
+			//auto audio = AudioBethesdaSystem::BSXAudio2Audio::GetSingleton();
+			//if (audio && audio->audioListener)
+			//	delete std::exchange(audio->audioListener, nullptr);
 		}
 
 		static void SilentMode(AudioBethesdaSystem::BSAudioManager* a_audioManager)
@@ -1694,9 +1697,16 @@ namespace Addictol
 
 			REX::INFO("Reinitializing XAudio2..."sv);
 
+			auto audio = AudioBethesdaSystem::BSXAudio2Audio::GetSingleton();
 			auto graph = AudioBethesdaSystem::BSXAudio2Graph::GetSingleton();
-			if (graph && graph->Recreate() && graph->xaudio)
+			if (audio && graph && graph->Recreate() && graph->xaudio)
 			{
+				graph->registerCallbacks = SUCCEEDED(Engine->RegisterForCallbacks(graph));
+				
+				// Bethesda don't use X3DAUDIO_SPEED_OF_SOUND... they send magick value 24041.6
+				static REL::Relocation<float*> speed{ REL::ID{ 207777, 207777, 4563742 } };
+				X3DAudioInitialize(graph->channelMask, *speed, audio->X3DAudioHandle);
+
 				Hooks::Bink::ThunkSetSoundSystem();
 
 				a_audioManager->SetPlatformInitialized(true);
@@ -1820,7 +1830,7 @@ namespace Addictol
 
 		void Callbacks::ThunkDoCriticalError([[maybe_unused]] REX::W32::HRESULT a_herror)
 		{
-			REX::WARN("XAudio2 encountered critical error ({:08X})", static_cast<std::uint32_t>(a_herror));
+			//REX::WARN("XAudio2 encountered critical error ({:08X})", static_cast<std::uint32_t>(a_herror));
 
 			if (AudioBethesdaSystem::BSAudioManager::QInitialized())
 				AudioEngine::UpdateEvent.Set();
