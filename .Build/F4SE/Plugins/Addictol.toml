@@ -282,6 +282,9 @@ nBloomScale = 2
 # Diagnostic: re-resolves every cached RobCo lookup and disarms the cache on any mismatch (needs bRobCoPatcherCache).
 bRobCoPatcherCacheValidate = false
 
+# Ignore Mod Compatibility Checks.
+bIgnoreCompatibilityChecks = false
+
 
 [Profiler]
 

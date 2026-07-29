@@ -22,6 +22,8 @@ extern void AdRegisterPreloadModules();
 
 namespace Addictol
 {
+	static REX::TOML::Bool<> bAdditionalIgnoreCompatibilityChecks{ "Additional"sv, "bIgnoreCompatibilityChecks"sv, false };
+
 	[[nodiscard]] static const char* GetF4SEMessageName(std::uint32_t a_type) noexcept
 	{
 		switch (a_type)
@@ -129,42 +131,45 @@ namespace Addictol
 
 			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 			{
-				const auto incompatibleMods = AnalyzeGameCollectionCriticalCompatibility();
-				if (!incompatibleMods.empty())
+				if (!bAdditionalIgnoreCompatibilityChecks.GetValue())
 				{
-					std::string incompatibilityMessage = "Incompatible mods are installed, please disable Addictol or remove the following incompatible mods:\n\n";
-
-					// Add Incompatible Mods to the Message
-					for (const auto* file : incompatibleMods)
+					const auto incompatibleMods = AnalyzeGameCollectionCriticalCompatibility();
+					if (!incompatibleMods.empty())
 					{
-						if (file)
+						std::string incompatibilityMessage = "Incompatible mods are installed, please disable Addictol or remove the following incompatible mods:\n\n";
+
+						// Add Incompatible Mods to the Message
+						for (const auto* file : incompatibleMods)
 						{
-							incompatibilityMessage += "  - ";
-							incompatibilityMessage += file->filename;
-							incompatibilityMessage += '\n';
+							if (file)
+							{
+								incompatibilityMessage += "  - ";
+								incompatibilityMessage += file->filename;
+								incompatibilityMessage += '\n';
+							}
 						}
+
+						incompatibilityMessage += "\nCheck the mod page's description for more info, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
+
+						// Log
+						REX::CRITICAL("{}"sv, incompatibilityMessage);
+
+						// Message Box on a separate thread in order to not stall the rest of the mod
+						// This is in case the user decides to just Alt + Tab or something like that
+						std::thread([message = std::move(incompatibilityMessage)]
+						{
+							while (1)
+							{
+								const auto result = MessageBoxA(nullptr, message.c_str(), "Addictol - Incompatible Mods", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
+								if (result == IDRETRY)
+									continue;
+								else if (result == IDABORT)
+									REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), EXIT_FAILURE);
+
+								break;
+							}
+						}).detach();
 					}
-
-					incompatibilityMessage += "\nCheck the mod page's description for more info, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
-
-					// Log
-					REX::CRITICAL("{}"sv, incompatibilityMessage);
-
-					// Message Box on a separate thread in order to not stall the rest of the mod
-					// This is in case the user decides to just Alt + Tab or something like that
-					std::thread([message = std::move(incompatibilityMessage)]
-					{
-						while (1)
-						{
-							const auto result = MessageBoxA(nullptr, message.c_str(), "Addictol - Incompatible Mods", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
-							if (result == IDRETRY)
-								continue;
-							else if (result == IDABORT)
-								REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), EXIT_FAILURE);
-
-							break;
-						}
-					}).detach();
 				}
 
 				moduleManager.LogSummary();

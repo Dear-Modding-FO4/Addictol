@@ -51,7 +51,7 @@ namespace Addictol
 			"nSleepTimer", "nMaxLockCount",
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
 			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
-			"bRobCoPatcherCacheValidate"
+			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
 		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",
