@@ -10,6 +10,7 @@
 #include <RE/T/TESDataHandler.h>
 #include <RE/B/BSCRC32.h>
 
+#define AD_LOGPLUGINHASHES 0
 //#define AD_DEBUGBREAK 1
 #if AD_DEBUGBREAK
 #	include <windows.h>
@@ -45,14 +46,14 @@ namespace Addictol
 		return RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(strlwr(str.data())), str.length() });
 	}
 
-	static bool AnalizeGameCollectionCriticalCompatibility() noexcept
+	static bool AnalyzeGameCollectionCriticalCompatibility() noexcept
 	{
 		auto dataHandler = RE::TESDataHandler::GetSingleton();
 		if (!dataHandler) return false;
 
 		auto GetHash = [&](RE::TESFile* a_file)
 		{
-			std::string strFN = strlwr(a_file->filename);
+			std::string strFN = _strlwr(a_file->filename);
 			auto it = strFN.find_last_of('.');
 			if (it != std::string::npos) strFN.erase(it, -1);
 			return RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(strFN.data()), strFN.length() });
@@ -63,11 +64,21 @@ namespace Addictol
 			std::array<uint32_t, 2> trash{ 260600794, 1335048061 };
 			return std::find(trash.begin(), trash.end(), a_hash) == trash.end();
 		};
-		
+
+#if AD_LOGPLUGINHASHES
+		REX::INFO("======== LOGGING PLUGIN HASHES ========");
+#endif
+
 		bool Compatibility = true;
 		for (auto& file : dataHandler->compiledFileCollection.files)
 		{
-			if (!CheckHash(GetHash(file)))
+			auto hash = GetHash(file);
+
+#if AD_LOGPLUGINHASHES
+			REX::INFO("Plugin: {}, Hash: {} / 0x{:08X}", file->filename, hash, hash);
+#endif
+
+			if (!CheckHash(hash))
 			{
 				REX::ERROR("Incompatible mod: {}"sv, file->filename);
 				Compatibility = false;
@@ -76,12 +87,22 @@ namespace Addictol
 
 		for (auto& file : dataHandler->compiledFileCollection.smallFiles)
 		{
-			if (!CheckHash(GetHash(file)))
+			auto hash = GetHash(file);
+
+#if AD_LOGPLUGINHASHES
+			REX::INFO("Plugin: {}, Hash: {} / 0x{:08X}", file->filename, hash, hash);
+#endif
+
+			if (!CheckHash(hash))
 			{
 				REX::ERROR("Incompatible mod: {}"sv, file->filename);
 				Compatibility = false;
 			}
 		}
+
+#if AD_LOGPLUGINHASHES
+		REX::INFO("======== END OF PLUGIN HASHES ========");
+#endif
 
 		return Compatibility;
 	}
@@ -104,7 +125,7 @@ namespace Addictol
 
 			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 			{
-				if (!AnalizeGameCollectionCriticalCompatibility())
+				if (!AnalyzeGameCollectionCriticalCompatibility())
 				{
 					REX::CRITICAL("Incompatible mods are installed."
 						"Disable addictol or reinstall game and starts new game without trash mods."
