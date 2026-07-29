@@ -61,7 +61,10 @@ namespace Addictol
 
 		auto CheckHash = [&](uint32_t a_hash)
 		{
-			std::array<uint32_t, 2> trash{ 260600794, 1335048061 };
+			std::array<uint32_t, 6> trash{ 
+				260600794, 1335048061,
+				2498600491, 2948692632, 631466042,
+				2684648774 };
 			return std::find(trash.begin(), trash.end(), a_hash) == trash.end();
 		};
 
