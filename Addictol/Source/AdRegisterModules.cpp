@@ -78,6 +78,9 @@
 #include <Modules/AdModuleLoadOrder.h>
 #include <Modules/AdModuleHUDMessageQueue.h>
 #include <Modules/AdModuleProcessIcon.h>
+#include <Modules/AdModuleWaterJetpackFix.h>
+#include <Modules/AdModuleNoEssentialDecapitation.h>
+#include <Modules/AdModuleNegativeHealthFix.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -158,6 +161,9 @@ static auto sModuleStringPoolRelease				= std::make_shared<Addictol::ModuleStrin
 static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>();
 static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
 static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIcon>();
+static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJetpackFix>();
+static auto sModuleNoEssentialDecapitation			= std::make_shared<Addictol::ModuleNoEssentialDecapitation>();
+static auto sModuleNegativeHealthFix				= std::make_shared<Addictol::ModuleNegativeHealthFix>();
 
 void AdRegisterPreloadModules()
 {
@@ -261,6 +267,9 @@ void AdRegisterModules()
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
+	modules.Register(sModuleWaterJetpackFix,				kGameDataReady);
+	modules.Register(sModuleNoEssentialDecapitation,		kGameDataReady);
+	modules.Register(sModuleNegativeHealthFix,				kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);

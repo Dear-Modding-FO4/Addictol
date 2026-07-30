@@ -68,6 +68,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWaterJetpackFix.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleNoEssentialDecapitation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleNegativeHealthFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
@@ -165,6 +168,9 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWaterJetpackFix.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleNoEssentialDecapitation.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleNegativeHealthFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />

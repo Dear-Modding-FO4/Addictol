@@ -221,6 +221,15 @@ bLoadOrder = true
 # Fixes a crash related to queued HUD messages on NG & AE.
 bHUDMessageQueue = true
 
+# Fixes a bug where exiting water while using a jetpack leaves the player in a broken jump state (cannot jump or fly normally until reload).
+bWaterJetpackFix = true
+
+# Prevents Essential and alive Protected NPCs from being decapitated by scripted or weapon-driven dismemberment.
+bNoEssentialDecapitation = true
+
+# Blocks writes that would set an NPC's base health to a negative value, which causes immortal/unkillable actors and other health-bar corruption.
+bNegativeHealthFix = true
+
 
 [Warnings]
 
