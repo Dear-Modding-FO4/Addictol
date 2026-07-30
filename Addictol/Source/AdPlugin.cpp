@@ -164,7 +164,16 @@ namespace Addictol
 								if (result == IDRETRY)
 									continue;
 								else if (result == IDABORT)
-									REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), EXIT_FAILURE);
+								{
+									// For debugger
+									__debugbreak();
+									// For Wine
+									abort();
+									// AGAIN!!!
+									TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
+									// CTD
+									*((int*)0) = 0;
+								}
 
 								break;
 							}
