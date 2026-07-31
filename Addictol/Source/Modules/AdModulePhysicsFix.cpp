@@ -24,24 +24,9 @@ namespace Addictol
 		static constexpr std::int32_t Magic1 = 0x426b4b44;   // 58.8235
 		static constexpr std::int32_t Magic2 = 0xc26b4b44;   // -58.8235
 
-		[[nodiscard]] static bool VerifyBytes(std::uintptr_t a_addr, std::initializer_list<std::uint8_t> a_sig) noexcept
-		{
-			return std::memcmp(reinterpret_cast<const void*>(a_addr), std::data(a_sig), a_sig.size()) == 0;
-		}
-
-		// 5-byte jmp to the cave, then NOP the remainder.
-		static void Branch(std::uintptr_t a_site, void* a_cave, std::size_t a_replaceLen) noexcept
-		{
-			const std::int32_t rel = static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(a_cave) - (a_site + 5));
-			const auto* const r = reinterpret_cast<const std::uint8_t*>(&rel);
-			RELEX::WriteSafe(a_site, { 0xE9, r[0], r[1], r[2], r[3] });
-			if (a_replaceLen > 5)
-				RELEX::WriteSafeNop(a_site + 5, a_replaceLen - 5);
-		}
-
 		struct StutterSubsteps : Xbyak::CodeGenerator
 		{
-			StutterSubsteps(std::uintptr_t a_retn)
+			explicit StutterSubsteps(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn, magic;
 				movss(xmm5, dword[rip + magic]);
@@ -54,7 +39,7 @@ namespace Addictol
 
 		struct StutterClamp : Xbyak::CodeGenerator
 		{
-			StutterClamp(std::uintptr_t a_retn)
+			explicit StutterClamp(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn;
 				movss(xmm4, xmm6);
@@ -65,7 +50,7 @@ namespace Addictol
 
 		struct StutterObjects : Xbyak::CodeGenerator
 		{
-			StutterObjects(std::uintptr_t a_retn)
+			explicit StutterObjects(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn, magic;
 				movss(xmm1, dword[rip + magic]);
@@ -77,7 +62,7 @@ namespace Addictol
 
 		struct WindConst : Xbyak::CodeGenerator
 		{
-			WindConst(std::uintptr_t a_retn)
+			explicit WindConst(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn, magic;
 				movaps(ptr[rsp + 0x30], xmm6);
@@ -90,7 +75,7 @@ namespace Addictol
 
 		struct WindTimer9 : Xbyak::CodeGenerator
 		{
-			WindTimer9(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit WindTimer9(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, timer;
 				mov(rcx, ptr[rip + timer]);
@@ -103,7 +88,7 @@ namespace Addictol
 
 		struct WindTimer0 : Xbyak::CodeGenerator
 		{
-			WindTimer0(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit WindTimer0(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, timer;
 				mov(r8, ptr[rip + timer]);
@@ -116,7 +101,7 @@ namespace Addictol
 
 		struct GrabRotation : Xbyak::CodeGenerator
 		{
-			GrabRotation(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit GrabRotation(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, timer, jneL, jmpL, fwd, rev;
 				jne(jneL);
@@ -140,7 +125,7 @@ namespace Addictol
 
 		struct Lockpick : Xbyak::CodeGenerator
 		{
-			Lockpick(std::uintptr_t a_retn)
+			explicit Lockpick(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn, magic;
 				mulss(xmm1, dword[rip + magic]);
@@ -152,7 +137,7 @@ namespace Addictol
 
 		struct SittingX : Xbyak::CodeGenerator
 		{
-			SittingX(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit SittingX(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, magic, timer;
 				mulss(xmm0, dword[rip + magic]);
@@ -161,14 +146,14 @@ namespace Addictol
 				mulss(xmm0, ptr[rax + 0x4C]);
 				jmp(ptr[rip + retn]);
 				L(retn); dq(a_retn + 0x5);
-				L(magic); dq(std::uintptr_t(Magic1));
+				L(magic); dq(uintptr_t(Magic1));
 				L(timer); dq(a_timer);
 			}
 		};
 
 		struct SittingY : Xbyak::CodeGenerator
 		{
-			SittingY(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit SittingY(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, magic, timer;
 				mulss(xmm1, dword[rip + magic]);
@@ -177,14 +162,14 @@ namespace Addictol
 				movss(xmm0, ptr[rbx + 0x64]);
 				jmp(ptr[rip + retn]);
 				L(retn); dq(a_retn + 0x5);
-				L(magic); dq(std::uintptr_t(Magic1));
+				L(magic); dq(uintptr_t(Magic1));
 				L(timer); dq(a_timer);
 			}
 		};
 
 		struct WorkshopRotation : Xbyak::CodeGenerator
 		{
-			WorkshopRotation(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit WorkshopRotation(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, timer;
 				mov(rax, ptr[rip + timer]);
@@ -197,7 +182,7 @@ namespace Addictol
 
 		struct StuckAnim : Xbyak::CodeGenerator
 		{
-			StuckAnim(std::uintptr_t a_retn)
+			explicit StuckAnim(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn, magic;
 				movss(xmm3, dword[rip + magic]);
@@ -210,7 +195,7 @@ namespace Addictol
 		// OG cave variants: different scratch registers and lengths than NG/AE.
 		struct StutterSubstepsOG : Xbyak::CodeGenerator
 		{
-			StutterSubstepsOG(std::uintptr_t a_retn)
+			explicit StutterSubstepsOG(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn, magic;
 				movss(xmm3, dword[rip + magic]);
@@ -223,7 +208,7 @@ namespace Addictol
 
 		struct StutterClampOG : Xbyak::CodeGenerator
 		{
-			StutterClampOG(std::uintptr_t a_retn)
+			explicit StutterClampOG(uintptr_t a_retn) noexcept
 			{
 				Xbyak::Label retn;
 				movss(xmm2, xmm6);
@@ -234,7 +219,7 @@ namespace Addictol
 
 		struct GrabRotationOG : Xbyak::CodeGenerator
 		{
-			GrabRotationOG(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit GrabRotationOG(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, timer, jneL, jmpL, fwd, rev;
 				jne(jneL);
@@ -251,14 +236,14 @@ namespace Addictol
 				jmp(ptr[rip + retn]);
 				L(retn); dq(a_retn + 0x19);
 				L(timer); dq(a_timer);
-				L(fwd); dq(std::uintptr_t(Magic1));   // 58.8235
-				L(rev); dq(std::uintptr_t(Magic2));   // -58.8235
+				L(fwd); dq(uintptr_t(Magic1));   // 58.8235
+				L(rev); dq(uintptr_t(Magic2));   // -58.8235
 			}
 		};
 
 		struct WorkshopRotationOG : Xbyak::CodeGenerator
 		{
-			WorkshopRotationOG(std::uintptr_t a_retn, std::uintptr_t a_timer)
+			explicit WorkshopRotationOG(uintptr_t a_retn, uintptr_t a_timer) noexcept
 			{
 				Xbyak::Label retn, timer;
 				mov(rax, ptr[rip + timer]);
@@ -288,8 +273,8 @@ namespace Addictol
 		// Untie the sim step from FPS and force iFPSClamp to 0.
 		if (bUntieSpeed.GetValue())
 		{
-			const auto untie = REL::Relocation<std::uintptr_t>{ REL::ID{ 462873, 2267969, 2267969 }, REL::Offset{ 0x6B, 0x5F, 0x61 } }.address();
-			if (VerifyBytes(untie, { 0x08, 0x00, 0x00, 0x00 }))
+			const auto untie = REL::Relocation{ REL::ID{ 462873, 2267969 }, REL::Offset{ 0x6B, 0x5F, 0x61 } }.address();
+			if (RELEX::Validate(untie, { 0x08, 0x00, 0x00, 0x00 }))
 				RELEX::WriteSafe(untie, { 0x00 });
 
 			if (auto* coll = RE::INISettingCollection::GetSingleton())
@@ -299,167 +284,145 @@ namespace Addictol
 
 		if (bFixWhiteScreen.GetValue())
 		{
-			const auto site = REL::Relocation<std::uintptr_t>{ REL::ID{ 703643, 2258401, 2258401 }, REL::Offset{ 0x13, 0x10, 0x10 } }.address();
-			if (og ? VerifyBytes(site, { 0x74, 0x23, 0x83, 0xE9, 0x02 }) : VerifyBytes(site, { 0x74, 0x20, 0x83, 0xE9, 0x02 }))
+			const auto site = REL::Relocation{ REL::ID{ 703643, 2258401 }, REL::Offset{ 0x13, 0x10 } }.address();
+			if (og ? RELEX::Validate(site, { 0x74, 0x23, 0x83, 0xE9, 0x02 }) : RELEX::Validate(site, { 0x74, 0x20, 0x83, 0xE9, 0x02 }))
 				RELEX::WriteSafeNop(site, og ? 0x3C : 0x35);
 		}
 
 		if (bFixMotionResponsive.GetValue())
 		{
-			const auto site = REL::Relocation<std::uintptr_t>{ REL::ID{ 1201084, 2196089, 2196089 }, REL::Offset{ 0x9F7, 0x9FE, 0x9FE } }.address();
-			if (VerifyBytes(site, { 0x73 }))
+			const auto site = REL::Relocation{ REL::ID{ 1201084, 2196089 }, REL::Offset{ 0x9F7, 0x9FE } }.address();
+			if (RELEX::Validate(site, { 0x73 }))
 				RELEX::WriteSafe(site, { 0xEB });
 		}
 
-		const auto frameTimer = REL::Relocation<float*>{ REL::ID{ 922988, 2696498, 4803789 }, 0x21C }.address();
-		const auto frameTimerSlow = REL::Relocation<float*>{ REL::ID{ 922988, 2696498, 4803789 }, 0x218 }.address();
-		auto& tramp = REL::GetTrampoline();
+		auto frameTimer = REL::Relocation<float*>{ REL::ID{ 922988, 2696498, 4803789 }, 0x21C }.address();
+		auto frameTimerSlow = REL::Relocation<float*>{ REL::ID{ 922988, 2696498, 4803789 }, 0x218 }.address();
 
 		if (bFixStuttering.GetValue())
 		{
-			const auto substeps = REL::Relocation<std::uintptr_t>{ REL::ID{ 12890, 2277709, 2277709 }, REL::Offset{ 0x196, 0x169, 0x169 } }.address();
+			const auto substeps = REL::Relocation{ REL::ID{ 12890, 2277709 }, REL::Offset{ 0x196, 0x169 } }.address();
 			if (og)
 			{
-				if (VerifyBytes(substeps, { 0xF3, 0x48, 0x0F, 0x2C, 0xCB }))
-				{
-					StutterSubstepsOG code(substeps); code.ready();
-					Branch(substeps, tramp.allocate(code), 0x5);
-				}
+				if (RELEX::Validate(substeps, { 0xF3, 0x48, 0x0F, 0x2C, 0xCB }))
+					RELEX::XbyakJump<StutterSubstepsOG>(substeps, substeps + 0x5);
 			}
-			else if (VerifyBytes(substeps, { 0xF3, 0x48, 0x0F, 0x2C, 0xCD }))
-			{
-				StutterSubsteps code(substeps); code.ready();
-				Branch(substeps, tramp.allocate(code), 0x5);
-			}
+			else if (RELEX::Validate(substeps, { 0xF3, 0x48, 0x0F, 0x2C, 0xCD }))
+				RELEX::XbyakJump<StutterSubsteps>(substeps, substeps + 0x5);
 
-			const auto write = REL::Relocation<std::uintptr_t>{ REL::ID{ 1395106, 2277710, 2277710 }, REL::Offset{ 0x1A1, 0x19B, 0x19B } }.address();
-			if (VerifyBytes(write, { 0xF3, 0x0F, 0x11, 0x0D }))
+			auto write = REL::Relocation{ REL::ID{ 1395106, 2277710 }, REL::Offset{ 0x1A1, 0x19B } }.address();
+			if (RELEX::Validate(write, { 0xF3, 0x0F, 0x11, 0x0D }))
 				RELEX::WriteSafeNop(write, 0x8);
 
-			const auto clamp = REL::Relocation<std::uintptr_t>{ REL::ID{ 12890, 2277709, 2277709 }, REL::Offset{ 0x145, 0x122, 0x122 } }.address();
+			const auto clamp = REL::Relocation{ REL::ID{ 12890, 2277709 }, REL::Offset{ 0x145, 0x122 } }.address();
 			if (og)
 			{
-				if (VerifyBytes(clamp, { 0xF3, 0x0F, 0x5D, 0x54, 0x24, 0x20 }))
+				if (RELEX::Validate(clamp, { 0xF3, 0x0F, 0x5D, 0x54, 0x24, 0x20 }))
 				{
-					StutterClampOG code(clamp); code.ready();
-					Branch(clamp, tramp.allocate(code), 0x6);
-					RELEX::WriteSafeNop(clamp + 0xE, 0x4);
+					RELEX::WriteSafeNop(clamp, 0x12);
+					RELEX::XbyakJump<StutterClampOG>(clamp, clamp + 0x12);
 				}
 			}
-			else if (VerifyBytes(clamp, { 0xF3, 0x0F, 0x5D, 0x25 }))
+			else if (RELEX::Validate(clamp, { 0xF3, 0x0F, 0x5D, 0x25 }))
 			{
-				StutterClamp code(clamp); code.ready();
-				Branch(clamp, tramp.allocate(code), 0x8);
-				RELEX::WriteSafeNop(clamp + 0x10, 0x8);
+				RELEX::WriteSafeNop(clamp, 0x18);
+				RELEX::XbyakJump<StutterClamp>(clamp, clamp + 0x18);
 			}
 
-			const auto objects = REL::Relocation<std::uintptr_t>{ REL::ID{ 754666, 2255886, 2255886 } }.address();
-			if (VerifyBytes(objects, { 0xF3, 0x41, 0x0F, 0x10, 0x08 }))
-			{
-				StutterObjects code(objects); code.ready();
-				Branch(objects, tramp.allocate(code), 0x5);
-			}
+			const auto objects = REL::Relocation{ REL::ID{ 754666, 2255886 } }.address();
+			if (RELEX::Validate(objects, { 0xF3, 0x41, 0x0F, 0x10, 0x08 }))
+				RELEX::XbyakJump<StutterObjects>(objects, objects + 0x5);
 		}
 
 		if (bFixWindSpeed.GetValue())
 		{
-			const auto a = REL::Relocation<std::uintptr_t>{ REL::ID{ 1469635, 2278751, 2278751 }, REL::Offset{ 0x21, 0x24, 0x24 } }.address();
-			if (VerifyBytes(a, { 0x0F, 0x29, 0x74, 0x24, 0x30 }))
+			const auto a = REL::Relocation{ REL::ID{ 1469635, 2278751 }, REL::Offset{ 0x21, 0x24 } }.address();
+			if (RELEX::Validate(a, { 0x0F, 0x29, 0x74, 0x24, 0x30 }))
 			{
-				WindConst code(a); code.ready();
-				Branch(a, tramp.allocate(code), 0x8);
+				RELEX::WriteSafeNop(a, 0x8);
+				RELEX::XbyakJump<WindConst>(a, a + 0x8);
 			}
 
-			const auto b = REL::Relocation<std::uintptr_t>{ REL::ID{ 1164603, 2277711, 2277711 }, REL::Offset{ 0x9E, 0x115, 0x115 } }.address();
-			if (VerifyBytes(b, { 0xF3, 0x44, 0x0F, 0x10, 0x0D }))
+			const REL::ID idTarget{ 1164603, 2277711 };
+
+			const auto b = REL::Relocation{ idTarget, REL::Offset{ 0x9E, 0x115 } }.address();
+			if (RELEX::Validate(b, { 0xF3, 0x44, 0x0F, 0x10, 0x0D }))
 			{
-				WindTimer9 code(b, frameTimerSlow); code.ready();
-				Branch(b, tramp.allocate(code), 0x9);
+				RELEX::WriteSafeNop(b, 0x9);
+				RELEX::XbyakJump<WindTimer9>(b, b + 0x9, frameTimerSlow);
 			}
 
-			const auto c = REL::Relocation<std::uintptr_t>{ REL::ID{ 1164603, 2277711, 2277711 }, REL::Offset{ 0x147, 0x1B7, 0x1B7 } }.address();
-			if (VerifyBytes(c, { 0xF3, 0x44, 0x0F, 0x10, 0x0D }))
+			const auto c = REL::Relocation{ idTarget, REL::Offset{ 0x147, 0x1B7 } }.address();
+			if (RELEX::Validate(c, { 0xF3, 0x44, 0x0F, 0x10, 0x0D }))
 			{
-				WindTimer9 code(c, frameTimerSlow); code.ready();
-				Branch(c, tramp.allocate(code), 0x9);
+				RELEX::WriteSafeNop(c, 0x9);
+				RELEX::XbyakJump<WindTimer9>(c, c + 0x9, frameTimerSlow);
 			}
 
-			const auto d = REL::Relocation<std::uintptr_t>{ REL::ID{ 1164603, 2277711, 2277711 }, REL::Offset{ 0x32B, 0x3BD, 0x3BD } }.address();
-			if (VerifyBytes(d, { 0xF3, 0x0F, 0x10, 0x05 }))
+			const auto d = REL::Relocation{ idTarget, REL::Offset{ 0x32B, 0x3BD } }.address();
+			if (RELEX::Validate(d, { 0xF3, 0x0F, 0x10, 0x05 }))
 			{
-				WindTimer0 code(d, frameTimerSlow); code.ready();
-				Branch(d, tramp.allocate(code), 0x8);
+				RELEX::WriteSafeNop(d, 0x8);
+				RELEX::XbyakJump<WindTimer0>(d, d + 0x8, frameTimerSlow);
 			}
 		}
 
 		if (bFixRotationSpeed.GetValue())
 		{
-			const auto rot = REL::Relocation<std::uintptr_t>{ REL::ID{ 457276, 2234879, 2234879 }, REL::Offset{ 0xE1, 0x6E, 0x6E } }.address();
-			if (VerifyBytes(rot, { 0x75, 0x0A, 0xF3, 0x0F, 0x10, 0x15 }))
+			const auto rot = REL::Relocation{ REL::ID{ 457276, 2234879 }, REL::Offset{ 0xE1, 0x6E } }.address();		
+			if (RELEX::Validate(rot, { 0x75, 0x0A, 0xF3, 0x0F, 0x10, 0x15 }))
 			{
+				RELEX::WriteSafeNop(rot, 0x19);
 				if (og)
-				{
-					GrabRotationOG code(rot, frameTimer); code.ready();
-					Branch(rot, tramp.allocate(code), 0x19);
-				}
+					RELEX::XbyakJump<GrabRotationOG>(rot, rot + 0x19, frameTimer);
 				else
-				{
-					GrabRotation code(rot, frameTimer); code.ready();
-					Branch(rot, tramp.allocate(code), 0x19);
-				}
+					RELEX::XbyakJump<GrabRotation>(rot, rot + 0x19, frameTimer);
 			}
 
-			const auto lock = REL::Relocation<std::uintptr_t>{ REL::ID{ 676000, 2249260, 2249260 }, REL::Offset{ 0x42, 0x42, 0x42 } }.address();
-			if (VerifyBytes(lock, { 0xF3, 0x0F, 0x59, 0x0D }))
+			const auto lock = REL::Relocation{ REL::ID{ 676000, 2249260 }, REL::Offset{ 0x42 } }.address();
+			if (RELEX::Validate(lock, { 0xF3, 0x0F, 0x59, 0x0D }))
 			{
-				Lockpick code(lock); code.ready();
-				Branch(lock, tramp.allocate(code), 0x8);
+				RELEX::WriteSafeNop(lock, 0x8);
+				RELEX::XbyakJump<Lockpick>(lock, lock + 0x8);
 			}
 		}
 
 		if (bFixSittingRotation.GetValue())
 		{
-			const auto x = REL::Relocation<std::uintptr_t>{ REL::ID{ 533372, 2248271, 2248271 }, REL::Offset{ 0xC0, 0xC0, 0xC0 } }.address();
-			if (VerifyBytes(x, { 0xF3, 0x0F, 0x59, 0x40, 0x4C }))
-			{
-				SittingX code(x, frameTimer); code.ready();
-				Branch(x, tramp.allocate(code), 0x5);
-			}
+			const REL::ID idTarget{ 1164603, 2277711 };
+			const auto x = REL::Relocation{ idTarget, REL::Offset{ 0xC0 } }.address();
+			if (RELEX::Validate(x, { 0xF3, 0x0F, 0x59, 0x40, 0x4C }))
+				RELEX::XbyakJump<SittingX>(x, x + 0x5, frameTimer);
 
-			const auto y = REL::Relocation<std::uintptr_t>{ REL::ID{ 533372, 2248271, 2248271 }, REL::Offset{ 0xD7, 0xDE, 0xDE } }.address();
-			if (VerifyBytes(y, { 0xF3, 0x0F, 0x10, 0x43, 0x64 }))
-			{
-				SittingY code(y, frameTimer); code.ready();
-				Branch(y, tramp.allocate(code), 0x5);
-			}
+			const auto y = REL::Relocation{ idTarget, REL::Offset{ 0xD7, 0xDE } }.address();
+			if (RELEX::Validate(y, { 0xF3, 0x0F, 0x10, 0x43, 0x64 }))
+				RELEX::XbyakJump<SittingY>(y, y + 0x5, frameTimer);
 		}
 
 		if (bFixWorkshopRotation.GetValue())
 		{
-			const auto ws = REL::Relocation<std::uintptr_t>{ REL::ID{ 1144472, 2195211, 2195211 }, REL::Offset{ 0xA2, 0x94, 0x94 } }.address();
+			const auto ws = REL::Relocation{ REL::ID{ 1144472, 2195211 }, REL::Offset{ 0xA2, 0x94 } }.address();
+
 			if (og)
 			{
-				if (VerifyBytes(ws, { 0xF3, 0x0F, 0x59, 0x0D }))
+				if (RELEX::Validate(ws, { 0xF3, 0x0F, 0x59, 0x0D }))
 				{
-					WorkshopRotationOG code(ws, frameTimer); code.ready();
-					Branch(ws, tramp.allocate(code), 0x8);
+					RELEX::WriteSafeNop(ws, 0x8);
+					RELEX::XbyakJump<WorkshopRotationOG>(ws, ws + 0x8, frameTimer);
 				}
 			}
-			else if (VerifyBytes(ws, { 0xF3, 0x0F, 0x59, 0x05 }))
+			else if (RELEX::Validate(ws, { 0xF3, 0x0F, 0x59, 0x05 }))
 			{
-				WorkshopRotation code(ws, frameTimer); code.ready();
-				Branch(ws, tramp.allocate(code), 0x8);
+				RELEX::WriteSafeNop(ws, 0x8);
+				RELEX::XbyakJump<WorkshopRotation>(ws, ws + 0x8, frameTimer);
 			}
 		}
 
 		if (bFixStuckAnimation.GetValue())
 		{
-			const auto stuck = REL::Relocation<std::uintptr_t>{ REL::ID{ 463133, 2302542, 2302542 }, REL::Offset{ 0xA9, 0xA9, 0xA9 } }.address();
-			if (VerifyBytes(stuck, { 0xF3, 0x41, 0x0F, 0x10, 0x1E }))
-			{
-				StuckAnim code(stuck); code.ready();
-				Branch(stuck, tramp.allocate(code), 0x5);
-			}
+			const auto stuck = REL::Relocation{ REL::ID{ 463133, 2302542 }, REL::Offset{ 0xA9 } }.address();
+			if (RELEX::Validate(stuck, { 0xF3, 0x41, 0x0F, 0x10, 0x1E }))
+				RELEX::XbyakJump<StuckAnim>(stuck, stuck + 0x5);
 		}
 
 		return true;

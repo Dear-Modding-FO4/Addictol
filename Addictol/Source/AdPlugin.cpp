@@ -258,7 +258,7 @@ namespace Addictol
 
 			// Listen for Papyrus
 			auto PapyrusInterface = F4SE::GetPapyrusInterface();
-			if (PapyrusInterface->Register([](RE::BSScript::IVirtualMachine* vm) -> bool {
+			if (PapyrusInterface->Register([](RE::BSScript::IVirtualMachine* vm) {
 				F4SEPapyrusListener(vm);
 				return true; }))
 				REX::INFO("Started Listening for Papyrus Callbacks."sv);

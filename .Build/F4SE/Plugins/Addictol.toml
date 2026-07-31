@@ -63,7 +63,7 @@ bDpiScaling = true
 bSaveCompression = true
 
 # Decouples the physics simulation from framerate at high FPS (Untie + per-subsystem speed fixes). See [HighFPSPhysics] for per-fix toggles.
-bPhysicsFix = true
+bPhysicsFix = false
 
 # Dynamically scales the Papyrus update budget (fUpdateBudgetMS) by the smoothed real frame delta so scripts get more time per frame at high FPS. Tuned via fUpdateBudgetBase / fBudgetMaxFPS.
 bDynamicUpdateBudget = true

@@ -37,7 +37,7 @@ namespace Addictol
 			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
 			"bDownwardAiming", "bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash"
 			"bCrashRemoveRefFix", "bClimateLoad", "bMusicOverlap", "bPuddleCubemaps",
-      "bCompanionStrayBullet", "bStringPoolRelease", "bLoadOrder", "bHUDMessageQueue"
+			"bCompanionStrayBullet", "bStringPoolRelease", "bLoadOrder", "bHUDMessageQueue"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"
@@ -52,7 +52,7 @@ namespace Addictol
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
 			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
 			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens",
-      "fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS"
+			"fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS"
 		}},
 		{ "HighFPSPhysics", {
 			"bUntieSpeedFromFPS", "bFixStuttering", "bFixWhiteScreen", "bFixWindSpeed",
