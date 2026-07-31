@@ -2,11 +2,6 @@
 #include <AdUtils.h>
 #include <RE/B/BSGraphics.h>
 
-#include <xbyak/xbyak.h>
-
-#include <bit>
-#include <cstring>
-
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesLoadScreen{ "Patches"sv, "bLoadScreen"sv, true };
