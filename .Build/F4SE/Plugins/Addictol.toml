@@ -62,9 +62,6 @@ bDpiScaling = true
 # Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
 bSaveCompression = true
 
-# Decouples the physics simulation from framerate at high FPS (Untie + per-subsystem speed fixes). See [HighFPSPhysics] for per-fix toggles.
-bPhysicsFix = false
-
 # Dynamically scales the Papyrus update budget (fUpdateBudgetMS) by the smoothed real frame delta so scripts get more time per frame at high FPS. Tuned via fUpdateBudgetBase / fBudgetMaxFPS.
 bDynamicUpdateBudget = true
 
@@ -344,62 +341,3 @@ bBA2Timing = true
 
 # Export profiler data to CSV alongside the log report.
 bCSVExport = true
-
-
-[HighFPSPhysics]
-
-# Per-fix toggles for bPhysicsFix (the master bPhysicsFix in [Patches] must be enabled for any of these to apply).
-
-# Advance the simulation by the real frame delta instead of a fixed floor, and force iFPSClamp to 0.
-bUntieSpeedFromFPS = true
-
-# Smooths physics stuttering at high FPS (also fixes jump height).
-bFixStuttering = true
-
-# Fixes the white screen after falling at high FPS (~125+).
-bFixWhiteScreen = true
-
-# Removes FPS influence on wind speed (cloth and hair).
-bFixWindSpeed = true
-
-# Removes FPS influence on object rotation speed.
-bFixRotationSpeed = true
-
-# Removes FPS influence on first-person camera rotation speed while sitting.
-bFixSittingRotationSpeed = true
-
-# Removes FPS influence on object rotation speed in workshop mode.
-bFixWorkshopRotationSpeed = true
-
-# Fixes NPCs and the player getting stuck on terminals / power armor at high FPS.
-bFixStuckAnimation = true
-
-# Fixes movement responsiveness when starting to move at very high FPS.
-bFixMotionResponsive = true
-
-
-[Limiter]
-
-# Master toggle for the in-game frame limiter and VSync control. Mutually exclusive with external limiters (RTSS, driver, in-game); enable only one.
-bFrameLimiter = false
-
-# Target frame rate cap in FPS. 0 = unlimited. For VRR (G-Sync/FreeSync) set a few FPS below your refresh.
-fFrameLimit = 0.0
-
-# VSync control: 0 = engine default, 1 = force off, 2 = force on (needs bFrameLimiter).
-nVSync = 0
-
-# VSync present interval when forced on (1 = refresh, 2 = half, ...). Only used when nVSync = 2.
-nVSyncInterval = 1
-
-# Adds the present tearing flag when VSync is off, for VRR on a flip-model swap chain. Harmless if unsupported.
-bAllowTearing = true
-
-# Recreate the swap chain as flip-model (FLIP_DISCARD + tearing) for hardware VRR. Off by default; Windows 11 borderless already passes VRR through, and this may conflict with some ENB/ReShade setups.
-bForceFlipModel = false
-
-# Separate frame cap while a loading screen is shown. 0 = use fFrameLimit.
-fLoadingFrameLimit = 0.0
-
-# Force VSync off while a loading screen is shown, for faster loads (needs bFrameLimiter).
-bDisableVSyncWhileLoading = true

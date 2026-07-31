@@ -18,7 +18,7 @@ namespace Addictol
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
 			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
-			"bSaveCompression", "bPhysicsFix", "bDynamicUpdateBudget", "bAudioSwitch"
+			"bSaveCompression", "bDynamicUpdateBudget", "bAudioSwitch"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
@@ -54,16 +54,6 @@ namespace Addictol
 			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens",
 			"fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS", 
 			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
-		}},
-		{ "HighFPSPhysics", {
-			"bUntieSpeedFromFPS", "bFixStuttering", "bFixWhiteScreen", "bFixWindSpeed",
-			"bFixRotationSpeed", "bFixSittingRotationSpeed", "bFixWorkshopRotationSpeed",
-			"bFixStuckAnimation", "bFixMotionResponsive"
-		}},
-		{ "Limiter", {
-			"bFrameLimiter", "fFrameLimit", "nVSync", "nVSyncInterval",
-			"bAllowTearing", "bForceFlipModel", "fLoadingFrameLimit",
-			"bDisableVSyncWhileLoading"
 		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",

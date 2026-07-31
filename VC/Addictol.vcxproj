@@ -37,7 +37,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePhysicsFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp" />
@@ -140,7 +139,6 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePhysicsFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h" />
