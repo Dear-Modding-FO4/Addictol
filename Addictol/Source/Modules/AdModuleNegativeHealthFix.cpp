@@ -4,7 +4,7 @@
 #include <RE/A/Actor.h>
 #include <RE/A/ActorValue.h>
 #include <RE/A/ActorValueOwner.h>
-#include <RE/T/TESNPC.h>
+#include <RE/P/PlayerCharacter.h>
 
 namespace Addictol
 {
@@ -12,14 +12,19 @@ namespace Addictol
 
 	namespace negativeHealthFixDetail
 	{
-		// ActorValueOwner sub-object offset within Actor/TESObjectREFR
-		constexpr uintptr_t kAVOwnerOffset = 0x58;
-
-		// ActorValueOwner vtable layout:
+		// ActorValueOwner vtable layout (slot indices within a single vtable):
 		//   00 dtor, 01 GetActorValue, 02 GetPermanentActorValue,
 		//   03 GetBaseActorValue, 04 SetBaseActorValue, 05 ModBaseActorValue,
 		//   06 ModActorValue, 07 GetModifier, 08 RestoreActorValue,
 		//   09 SetActorValue, 0A GetIsPlayerOwner
+		//
+		// ActorValueOwner is a __declspec(novtable) sub-object: its base vtable
+		// (RE::VTABLE::ActorValueOwner[0]) is never assigned to any instance.
+		// Actual actors use the sub-object vtable inherited via TESObjectREFR,
+		// which sits at index 7 in the Actor / PlayerCharacter vtable groups:
+		//   0 TESForm, 1 BSHandleRefObject, 2-4 BSTEventSink x3,
+		//   5 IAnimationGraphManagerHolder, 6 IKeywordFormBase, 7 ActorValueOwner
+		// (BSTEventSource has no virtual functions → no vtable slot)
 		using SetBaseAV_t = void(RE::ActorValueOwner*, const RE::ActorValueInfo&, float);
 		using ModBaseAV_t = void(RE::ActorValueOwner*, const RE::ActorValueInfo&, float);
 
@@ -60,12 +65,21 @@ namespace Addictol
 			}
 			g_healthAV = av->health;
 
-			// Hook ActorValueOwner vtable (shared by all actors including PlayerCharacter)
-			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE::ActorValueOwner[0] };
-			g_origSetBaseAV = reinterpret_cast<SetBaseAV_t*>(vtbl.write_vfunc(4, &HookedSetBaseActorValue));
-			g_origModBaseAV = reinterpret_cast<ModBaseAV_t*>(vtbl.write_vfunc(5, &HookedModBaseActorValue));
+			// Hook the ActorValueOwner sub-object vtable from Actor's vtable group
+			// (index 7). Actor[7] covers all Actor instances (NPCs, creatures).
+			REL::Relocation<std::uintptr_t> vtblActor{ RE::VTABLE::Actor[7] };
+			g_origSetBaseAV = reinterpret_cast<SetBaseAV_t*>(vtblActor.write_vfunc(4, &HookedSetBaseActorValue));
+			g_origModBaseAV = reinterpret_cast<ModBaseAV_t*>(vtblActor.write_vfunc(5, &HookedModBaseActorValue));
 
-			REX::INFO("NegativeHealthFix: ActorValueOwner hooks installed (SetBaseAV + ModBaseAV)"sv);
+			// PlayerCharacter has its own vtable copy — hook it separately so the
+			// player is covered too. The original function pointer is the same as
+			// Actor's (PlayerCharacter does not override these slots), so g_orig*
+			// saved above is correct for both.
+			REL::Relocation<std::uintptr_t> vtblPlayer{ RE::VTABLE::PlayerCharacter[7] };
+			vtblPlayer.write_vfunc(4, &HookedSetBaseActorValue);
+			vtblPlayer.write_vfunc(5, &HookedModBaseActorValue);
+
+			REX::INFO("NegativeHealthFix: ActorValueOwner hooks installed (Actor + PlayerCharacter, SetBaseAV + ModBaseAV)"sv);
 		}
 	}
 
