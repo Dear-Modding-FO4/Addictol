@@ -72,7 +72,6 @@
 #include <Modules/AdModuleSprintStutter.h>
 #include <Modules/AdModuleMoonRotation.h>
 #include <Modules/AdModuleWeaponDebrisCrash.h>
-#include <Modules/AdModuleSaveCompression.h>
 #include <Modules/AdModulePapyrusBudget.h>
 #include <Modules/AdModuleFrameLimiter.h>
 #include <Modules/AdModuleCrashRemoveRef.h>
@@ -159,7 +158,6 @@ static auto sModulePhysicsFix						= std::make_shared<Addictol::ModulePhysicsFix
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
 static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
 static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
-static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
 static auto sModulePapyrusBudget					= std::make_shared<Addictol::ModulePapyrusBudget>();
 static auto sModuleFrameLimiter						= std::make_shared<Addictol::ModuleFrameLimiter>();
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
@@ -259,7 +257,6 @@ void AdRegisterModules()
 	modules.Register(sModuleSprintStutter);
 	modules.Register(sModuleMoonRotation);
 	modules.Register(sModuleWeaponDebrisCrash);
-	modules.Register(sModuleSaveCompression);
 	modules.Register(sModuleCrashRemoveRef);
 	modules.Register(sModuleClimateLoadFix);
 	modules.Register(sModuleMusicOverlap);
