@@ -305,10 +305,10 @@ namespace Addictol
 			if (og)
 			{
 				if (RELEX::Validate(substeps, { 0xF3, 0x48, 0x0F, 0x2C, 0xCB }))
-					RELEX::XbyakJump<StutterSubstepsOG>(substeps, substeps + 0x5);
+					RELEX::XbyakJump<StutterSubstepsOG>(substeps, substeps);
 			}
 			else if (RELEX::Validate(substeps, { 0xF3, 0x48, 0x0F, 0x2C, 0xCD }))
-				RELEX::XbyakJump<StutterSubsteps>(substeps, substeps + 0x5);
+				RELEX::XbyakJump<StutterSubsteps>(substeps, substeps);
 
 			auto write = REL::Relocation{ REL::ID{ 1395106, 2277710 }, REL::Offset{ 0x1A1, 0x19B } }.address();
 			if (RELEX::Validate(write, { 0xF3, 0x0F, 0x11, 0x0D }))
@@ -320,18 +320,18 @@ namespace Addictol
 				if (RELEX::Validate(clamp, { 0xF3, 0x0F, 0x5D, 0x54, 0x24, 0x20 }))
 				{
 					RELEX::WriteSafeNop(clamp, 0x12);
-					RELEX::XbyakJump<StutterClampOG>(clamp, clamp + 0x12);
+					RELEX::XbyakJump<StutterClampOG>(clamp, clamp);
 				}
 			}
 			else if (RELEX::Validate(clamp, { 0xF3, 0x0F, 0x5D, 0x25 }))
 			{
 				RELEX::WriteSafeNop(clamp, 0x18);
-				RELEX::XbyakJump<StutterClamp>(clamp, clamp + 0x18);
+				RELEX::XbyakJump<StutterClamp>(clamp, clamp);
 			}
 
 			const auto objects = REL::Relocation{ REL::ID{ 754666, 2255886 } }.address();
 			if (RELEX::Validate(objects, { 0xF3, 0x41, 0x0F, 0x10, 0x08 }))
-				RELEX::XbyakJump<StutterObjects>(objects, objects + 0x5);
+				RELEX::XbyakJump<StutterObjects>(objects, objects);
 		}
 
 		if (bFixWindSpeed.GetValue())
@@ -340,7 +340,7 @@ namespace Addictol
 			if (RELEX::Validate(a, { 0x0F, 0x29, 0x74, 0x24, 0x30 }))
 			{
 				RELEX::WriteSafeNop(a, 0x8);
-				RELEX::XbyakJump<WindConst>(a, a + 0x8);
+				RELEX::XbyakJump<WindConst>(a, a);
 			}
 
 			const REL::ID idTarget{ 1164603, 2277711 };
@@ -349,21 +349,21 @@ namespace Addictol
 			if (RELEX::Validate(b, { 0xF3, 0x44, 0x0F, 0x10, 0x0D }))
 			{
 				RELEX::WriteSafeNop(b, 0x9);
-				RELEX::XbyakJump<WindTimer9>(b, b + 0x9, frameTimerSlow);
+				RELEX::XbyakJump<WindTimer9>(b, b, frameTimerSlow);
 			}
 
 			const auto c = REL::Relocation{ idTarget, REL::Offset{ 0x147, 0x1B7 } }.address();
 			if (RELEX::Validate(c, { 0xF3, 0x44, 0x0F, 0x10, 0x0D }))
 			{
 				RELEX::WriteSafeNop(c, 0x9);
-				RELEX::XbyakJump<WindTimer9>(c, c + 0x9, frameTimerSlow);
+				RELEX::XbyakJump<WindTimer9>(c, c, frameTimerSlow);
 			}
 
 			const auto d = REL::Relocation{ idTarget, REL::Offset{ 0x32B, 0x3BD } }.address();
 			if (RELEX::Validate(d, { 0xF3, 0x0F, 0x10, 0x05 }))
 			{
 				RELEX::WriteSafeNop(d, 0x8);
-				RELEX::XbyakJump<WindTimer0>(d, d + 0x8, frameTimerSlow);
+				RELEX::XbyakJump<WindTimer0>(d, d, frameTimerSlow);
 			}
 		}
 
@@ -374,16 +374,16 @@ namespace Addictol
 			{
 				RELEX::WriteSafeNop(rot, 0x19);
 				if (og)
-					RELEX::XbyakJump<GrabRotationOG>(rot, rot + 0x19, frameTimer);
+					RELEX::XbyakJump<GrabRotationOG>(rot, rot, frameTimer);
 				else
-					RELEX::XbyakJump<GrabRotation>(rot, rot + 0x19, frameTimer);
+					RELEX::XbyakJump<GrabRotation>(rot, rot, frameTimer);
 			}
 
 			const auto lock = REL::Relocation{ REL::ID{ 676000, 2249260 }, REL::Offset{ 0x42 } }.address();
 			if (RELEX::Validate(lock, { 0xF3, 0x0F, 0x59, 0x0D }))
 			{
 				RELEX::WriteSafeNop(lock, 0x8);
-				RELEX::XbyakJump<Lockpick>(lock, lock + 0x8);
+				RELEX::XbyakJump<Lockpick>(lock, lock);
 			}
 		}
 
@@ -392,11 +392,11 @@ namespace Addictol
 			const REL::ID idTarget{ 1164603, 2277711 };
 			const auto x = REL::Relocation{ idTarget, REL::Offset{ 0xC0 } }.address();
 			if (RELEX::Validate(x, { 0xF3, 0x0F, 0x59, 0x40, 0x4C }))
-				RELEX::XbyakJump<SittingX>(x, x + 0x5, frameTimer);
+				RELEX::XbyakJump<SittingX>(x, x, frameTimer);
 
 			const auto y = REL::Relocation{ idTarget, REL::Offset{ 0xD7, 0xDE } }.address();
 			if (RELEX::Validate(y, { 0xF3, 0x0F, 0x10, 0x43, 0x64 }))
-				RELEX::XbyakJump<SittingY>(y, y + 0x5, frameTimer);
+				RELEX::XbyakJump<SittingY>(y, y, frameTimer);
 		}
 
 		if (bFixWorkshopRotation.GetValue())
@@ -408,13 +408,13 @@ namespace Addictol
 				if (RELEX::Validate(ws, { 0xF3, 0x0F, 0x59, 0x0D }))
 				{
 					RELEX::WriteSafeNop(ws, 0x8);
-					RELEX::XbyakJump<WorkshopRotationOG>(ws, ws + 0x8, frameTimer);
+					RELEX::XbyakJump<WorkshopRotationOG>(ws, ws, frameTimer);
 				}
 			}
 			else if (RELEX::Validate(ws, { 0xF3, 0x0F, 0x59, 0x05 }))
 			{
 				RELEX::WriteSafeNop(ws, 0x8);
-				RELEX::XbyakJump<WorkshopRotation>(ws, ws + 0x8, frameTimer);
+				RELEX::XbyakJump<WorkshopRotation>(ws, ws, frameTimer);
 			}
 		}
 
@@ -422,7 +422,7 @@ namespace Addictol
 		{
 			const auto stuck = REL::Relocation{ REL::ID{ 463133, 2302542 }, REL::Offset{ 0xA9 } }.address();
 			if (RELEX::Validate(stuck, { 0xF3, 0x41, 0x0F, 0x10, 0x1E }))
-				RELEX::XbyakJump<StuckAnim>(stuck, stuck + 0x5);
+				RELEX::XbyakJump<StuckAnim>(stuck, stuck);
 		}
 
 		return true;
