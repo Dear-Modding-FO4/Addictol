@@ -68,6 +68,12 @@
 #include <Modules/AdModuleToggleGrassCommand.h>
 #include <Modules/AdModuleTextureLoadCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
+#include <Modules/AdModulePhysicsFix.h>
+#include <Modules/AdModuleSprintStutter.h>
+#include <Modules/AdModuleMoonRotation.h>
+#include <Modules/AdModuleWeaponDebrisCrash.h>
+#include <Modules/AdModulePapyrusBudget.h>
+#include <Modules/AdModuleFrameLimiter.h>
 #include <Modules/AdModuleCrashRemoveRef.h>
 #include <Modules/AdModuleClimateLoad.h>
 #include <Modules/AdModuleMusicOverlap.h>
@@ -148,6 +154,12 @@ static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::Mod
 static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleToggleGrassCommand>();
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
+static auto sModulePhysicsFix						= std::make_shared<Addictol::ModulePhysicsFix>();
+static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
+static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
+static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
+static auto sModulePapyrusBudget					= std::make_shared<Addictol::ModulePapyrusBudget>();
+static auto sModuleFrameLimiter						= std::make_shared<Addictol::ModuleFrameLimiter>();
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
@@ -234,6 +246,7 @@ void AdRegisterModules()
 	modules.Register(sModuleMuzzleFlashLight);
 	modules.Register(sModuleHighResBloom);
 	modules.Register(sModuleAltTabFullscreen);
+	modules.Register(sModuleFrameLimiter);
 	modules.Register(sModulePowerGridScrap);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);
@@ -241,6 +254,9 @@ void AdRegisterModules()
 	modules.Register(sModuleToggleGrassCommand);
 	modules.Register(sModuleTextureLoadCrash);
 	modules.Register(sModuleDownwardAiming);
+	modules.Register(sModuleSprintStutter);
+	modules.Register(sModuleMoonRotation);
+	modules.Register(sModuleWeaponDebrisCrash);
 	modules.Register(sModuleCrashRemoveRef);
 	modules.Register(sModuleClimateLoadFix);
 	modules.Register(sModuleMusicOverlap);
@@ -260,6 +276,8 @@ void AdRegisterModules()
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
+	modules.Register(sModulePhysicsFix,						kGameDataReady);
+	modules.Register(sModulePapyrusBudget,					kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);

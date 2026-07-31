@@ -62,6 +62,12 @@ bDpiScaling = true
 # Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
 bSaveCompression = true
 
+# Decouples the physics simulation from framerate at high FPS (Untie + per-subsystem speed fixes). See [HighFPSPhysics] for per-fix toggles.
+bPhysicsFix = true
+
+# Dynamically scales the Papyrus update budget (fUpdateBudgetMS) by the smoothed real frame delta so scripts get more time per frame at high FPS. Tuned via fUpdateBudgetBase / fBudgetMaxFPS.
+bDynamicUpdateBudget = true
+
 # Allows seamless audio device switching for XAudio 2.7.
 # Automatically switches to a newly selected default audio device.
 bAudioSwitch = true
@@ -199,6 +205,15 @@ bTextureLoadCrash = true
 # Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.
 bDownwardAiming = true
 
+# Removes the first-person sprint camera micro-stutter by raising the position-delta snap threshold.
+bSprintStutter = true
+
+# Corrects the lunar disc orientation during moon initialization.
+bMoonRotation = true
+
+# Prevents the NVIDIA Weapon Debris CTD on Turing+ / deprecated-FleX drivers by skipping the crashing collision path.
+bWeaponDebrisCrash = true
+
 # Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR.
 bCrashRemoveRefFix = true
 
@@ -279,6 +294,21 @@ nQuitGameDelayMs = 1000
 # Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
 nBloomScale = 2
 
+# Removes the black loading screens for faster loads; the FPS counter still works (needs bLoadScreen).
+bDisableBlackLoadingScreens = false
+
+# Skips the loading-screen animation for significantly faster loads; the FPS counter freezes (needs bLoadScreen).
+bDisableAnimationOnLoadingScreens = false
+
+# Speeds up the post-loading menu fade between locations (1.0 = vanilla, 2.0 = twice as fast) (needs bLoadScreen).
+fPostloadingMenuSpeed = 1.0
+
+# Base Papyrus update budget in ms before frame-delta scaling (needs bDynamicUpdateBudget). HFPF default 1.2; higher gives scripts more time per frame. Clamped 0.1-4.0.
+fUpdateBudgetBase = 1.2
+
+# Upper FPS bound used to clamp the dynamic budget smoothing window (needs bDynamicUpdateBudget). Clamped 60-300.
+fBudgetMaxFPS = 144.0
+
 # Diagnostic: re-resolves every cached RobCo lookup and disarms the cache on any mismatch (needs bRobCoPatcherCache).
 bRobCoPatcherCacheValidate = false
 
@@ -314,3 +344,62 @@ bBA2Timing = true
 
 # Export profiler data to CSV alongside the log report.
 bCSVExport = true
+
+
+[HighFPSPhysics]
+
+# Per-fix toggles for bPhysicsFix (the master bPhysicsFix in [Patches] must be enabled for any of these to apply).
+
+# Advance the simulation by the real frame delta instead of a fixed floor, and force iFPSClamp to 0.
+bUntieSpeedFromFPS = true
+
+# Smooths physics stuttering at high FPS (also fixes jump height).
+bFixStuttering = true
+
+# Fixes the white screen after falling at high FPS (~125+).
+bFixWhiteScreen = true
+
+# Removes FPS influence on wind speed (cloth and hair).
+bFixWindSpeed = true
+
+# Removes FPS influence on object rotation speed.
+bFixRotationSpeed = true
+
+# Removes FPS influence on first-person camera rotation speed while sitting.
+bFixSittingRotationSpeed = true
+
+# Removes FPS influence on object rotation speed in workshop mode.
+bFixWorkshopRotationSpeed = true
+
+# Fixes NPCs and the player getting stuck on terminals / power armor at high FPS.
+bFixStuckAnimation = true
+
+# Fixes movement responsiveness when starting to move at very high FPS.
+bFixMotionResponsive = true
+
+
+[Limiter]
+
+# Master toggle for the in-game frame limiter and VSync control. Mutually exclusive with external limiters (RTSS, driver, in-game); enable only one.
+bFrameLimiter = false
+
+# Target frame rate cap in FPS. 0 = unlimited. For VRR (G-Sync/FreeSync) set a few FPS below your refresh.
+fFrameLimit = 0.0
+
+# VSync control: 0 = engine default, 1 = force off, 2 = force on (needs bFrameLimiter).
+nVSync = 0
+
+# VSync present interval when forced on (1 = refresh, 2 = half, ...). Only used when nVSync = 2.
+nVSyncInterval = 1
+
+# Adds the present tearing flag when VSync is off, for VRR on a flip-model swap chain. Harmless if unsupported.
+bAllowTearing = true
+
+# Recreate the swap chain as flip-model (FLIP_DISCARD + tearing) for hardware VRR. Off by default; Windows 11 borderless already passes VRR through, and this may conflict with some ENB/ReShade setups.
+bForceFlipModel = false
+
+# Separate frame cap while a loading screen is shown. 0 = use fFrameLimit.
+fLoadingFrameLimit = 0.0
+
+# Force VSync off while a loading screen is shown, for faster loads (needs bFrameLimiter).
+bDisableVSyncWhileLoading = true
