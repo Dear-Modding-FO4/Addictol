@@ -2,12 +2,15 @@
 #include <AdUtils.h>
 
 #include <RE/N/NiAVObject.h>
+#include <RE/N/NiNode.h>
+#include <RE/T/TESFormUtil.h>
 #include <RE/T/TESObjectREFR.h>
 #include <RE/A/Actor.h>
 #include <RE/T/TESNPC.h>
 #include <RE/A/ACTOR_LIFE_STATE.h>
 #include <RE/B/bhkWorld.h>
 
+#include <cstdint>
 #include <cstring>
 #include <atomic>
 
@@ -33,7 +36,7 @@ namespace Addictol
 			RE::TESObjectREFR* refr = nullptr;
 			{
 				int guard = 0;
-				for (RE::NiAVObject* node = a_object; node && guard < 16; node = node->parent, ++guard)
+				for (RE::NiAVObject* node = a_object; node && guard < 16; node = reinterpret_cast<RE::NiAVObject*>(node->parent), ++guard)
 				{
 					const auto ud = node->userData;
 					if (!ud) continue;
@@ -101,6 +104,7 @@ namespace Addictol
 		}
 
 		// 14-byte absolute JMP helper (FF 25 00 00 00 00 <addr64>)
+#pragma pack(push, 1)
 		struct JMP14
 		{
 			std::uint8_t  op1 = 0xFF;
@@ -108,6 +112,7 @@ namespace Addictol
 			std::uint32_t rel = 0;
 			std::uint64_t addr;
 		};
+#pragma pack(pop)
 		static_assert(sizeof(JMP14) == 14);
 
 		static void InstallHook() noexcept
@@ -138,7 +143,7 @@ namespace Addictol
 
 			std::memcpy(g_trampoline, saved, kJmp14Size);
 			JMP14 jmpBack{};
-			jmpBack.addr = reinterpret_cast<std::uint64_t>(addr + kJmp14Size);
+			jmpBack.addr = static_cast<std::uint64_t>(addr + kJmp14Size);
 			std::memcpy(static_cast<std::byte*>(g_trampoline) + kJmp14Size, &jmpBack, sizeof(jmpBack));
 
 			JMP14 jmp14{};
