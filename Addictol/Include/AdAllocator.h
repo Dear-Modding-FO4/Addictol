@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <REX/REX.h>
 
+// Not ready, not pulling, hanging for no reason!!!
+#define AD_USE_VISPER_AS_DEFAULT 0
+
 namespace Addictol
 {
 	constexpr inline static auto MEM_GB = 1073741824;
@@ -45,7 +48,36 @@ namespace Addictol
 		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept;
 	};
 
+	class ProxyVisperHeap :
+		public ICheckerPointer,
+		public REX::TSingleton<ProxyVisperHeap>
+	{
+		ProxyVisperHeap(const ProxyVisperHeap&) = delete;
+		ProxyVisperHeap(ProxyVisperHeap&&) = delete;
+		ProxyVisperHeap& operator=(const ProxyVisperHeap&) = delete;
+		ProxyVisperHeap& operator=(ProxyVisperHeap&&) = delete;
+	public:
+		ProxyVisperHeap() noexcept;
+		~ProxyVisperHeap() noexcept = default;
+
+		[[nodiscard]] void* malloc(size_t nSize) const noexcept;
+		[[nodiscard]] void* aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept;
+
+		[[nodiscard]] void* realloc(void* lpBlock, size_t nNewSize) const noexcept;
+		[[nodiscard]] void* aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept;
+
+		void free(void* lpBlock) const noexcept;
+		void aligned_free(void* lpBlock) const noexcept;
+
+		[[nodiscard]] size_t msize(void* lpBlock) const noexcept;
+		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept;
+	};
+
+#if AD_USE_VISPER_AS_DEFAULT
+	using ProxyCurrentHeap = ProxyVisperHeap;
+#else
 	using ProxyCurrentHeap = ProxyVoltekHeap;
+#endif
 
 	template<typename Heap = ProxyCurrentHeap>
 	struct StdStuff

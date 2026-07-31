@@ -42,6 +42,33 @@ namespace RELEX
 		[[nodiscard]] inline virtual bool HasUnlocked() const noexcept(true) { return _unlocked; }
 	};
 
+	class ScopeEvent
+	{
+		REX::W32::HANDLE handle;
+
+		ScopeEvent(ScopeEvent&&) = delete;
+		ScopeEvent(const ScopeEvent&) = delete;
+		ScopeEvent operator=(ScopeEvent&&) = delete;
+		ScopeEvent operator=(const ScopeEvent&) = delete;
+	public:
+		enum class Result : uint32_t
+		{
+			WaitObject0 = 0x0,
+			WaitAbandoned = 0x80,
+			WaitTimeout = 0x102,
+			WaitFailed = 0xFFFFFFFF,
+		};
+
+		ScopeEvent(bool a_manualReset, bool a_initialState, const std::string_view& a_name) noexcept;
+		~ScopeEvent() noexcept;
+
+		[[nodiscard]] inline bool Empty() const noexcept { return !handle; }
+		[[nodiscard]] Result WaitFor(uint32_t a_ms, bool a_alertable = false) const noexcept;
+		
+		void Set() const noexcept;
+		void Reset() const noexcept;
+	};
+
 	void Write(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;
 	void WriteNop(uintptr_t a_target, size_t a_size) noexcept;
 	void WriteSafe(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;
@@ -85,6 +112,13 @@ namespace RELEX
 	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
 	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
 	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
+
+	[[nodiscard]] bool Validate(uintptr_t a_target, const std::initializer_list<uint8_t>& a_expected) noexcept;
+
+	uintptr_t TryDetourJump(uintptr_t a_target, uintptr_t a_function,
+		const std::initializer_list<uint8_t>& a_expected) noexcept;
+	uintptr_t TryDetourCall(uintptr_t a_target, uintptr_t a_function,
+		const std::initializer_list<uint8_t>& a_expected) noexcept;
 
 	// Redirects a class member virtual function (__thiscall) to another
 	template<typename T>
@@ -217,6 +251,8 @@ namespace Addictol
 
 	[[nodiscard]] const char* GetSaveFolderName() noexcept;
 	[[nodiscard]] bool UserUseWine() noexcept;
+	[[nodiscard]] bool IsWineBuiltinDLL(const char* moduleName) noexcept;
+	[[nodiscard]] bool IsWineFakeDLL(const char* moduleName) noexcept;
 
 	template <class T>
 	void emplace_vtable(T* a_ptr)

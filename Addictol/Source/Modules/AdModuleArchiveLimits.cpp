@@ -1146,6 +1146,58 @@ namespace Addictol
 					auto target = REL::Relocation{ REL::ID(989173), REL::Offset{ 0x48F } }.get();
 					RELEX::XbyakJump<ThreadProcPatch_OG>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
 				}
+				////////////////////////////////////////////////
+				// LoadChunks
+				////////////////////////////////////////////////
+				{
+					struct LoadChunksPatch : Xbyak::CodeGenerator
+					{
+						LoadChunksPatch(uintptr_t target, uintptr_t func)
+						{
+							Xbyak::Label retnLabel;
+							Xbyak::Label funcLabel;
+
+							push(rax);
+							push(rcx);
+							push(rdx);
+							push(r8);
+							push(r9);
+							push(r10);
+							push(r11);
+							sub(rsp, 0x28);
+							lea(rcx, ptr[rdx]);
+							call(ptr[rip + funcLabel]);
+							mov(ebx, eax);
+							add(rsp, 0x28);
+							pop(r11);
+							pop(r10);
+							pop(r9);
+							pop(r8);
+							pop(rdx);
+							pop(rcx);
+							pop(rax);
+
+							cmp(ebx, 0xFFFF);
+							jne("RET");
+							movzx(ebx, byte[rdx + 0xC]);
+
+							L("RET");
+							movzx(edi, byte[rdx + 0xD]);
+							if (RELEX::IsRuntimeOG()) 
+								cmp(dword[rdx + 0x104], 1);
+							jmp(ptr[rip + retnLabel]);
+
+							L(retnLabel);
+							dq(target + 8);
+
+							L(funcLabel);
+							dq(func);
+						}
+					};
+
+					auto target = REL::Relocation{ REL::ID{ 979945, 2275550 }, REL::Offset{ 0x27, 0x32 } }.get();
+					RELEX::XbyakJump<LoadChunksPatch>(target, target, (uintptr_t)&FindArchiveIndexByTextureRequest);
+				}
 			}
 		}
 	}

@@ -7,6 +7,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\AdPCH.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdConfigValidation.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp" />
@@ -20,13 +23,18 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerMemory.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerBA2.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerModules.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProxyVisperHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerDLL.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerESP.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioSwitch.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePhysicsFix.cpp" />
@@ -37,6 +45,10 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusBudget.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFrameLimiter.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProcessIcon.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp" />
@@ -62,6 +74,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
@@ -70,14 +83,19 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRobCoPatcherCache.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadOrder.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectApplyEvent.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectConditions.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxPapyrusOps.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusGC.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxStdIO.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCompanionStrayBullet.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMuzzleFlashLight.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyCursorConstraints.cpp" />
@@ -99,6 +117,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Addictol\Include\AdPCH.h" />
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h" />
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
@@ -114,8 +133,12 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerDLL.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
+    <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePhysicsFix.h" />
@@ -126,6 +149,10 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusBudget.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFrameLimiter.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProcessIcon.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h" />
@@ -151,6 +178,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
@@ -159,14 +187,19 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRobCoPatcherCache.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadOrder.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectApplyEvent.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectConditions.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxPapyrusOps.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusGC.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxStdIO.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCompanionStrayBullet.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMuzzleFlashLight.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyCursorConstraints.h" />
@@ -230,14 +263,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;AD_TRACER=0;AD_TRAMPOLINE_SIZE=4096;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>AdPCH.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
@@ -247,8 +280,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
       <DisableSpecificWarnings>4200;4996;26444;26495;4806</DisableSpecificWarnings>
-      <ForcedIncludeFiles>
-      </ForcedIncludeFiles>
+      <ForcedIncludeFiles>AdPCH.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

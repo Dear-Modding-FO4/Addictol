@@ -116,8 +116,12 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyCurrentHeap>);
-		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(), (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyCurrentHeap>);
+		// Uses Visper it works perfectly 
+
+		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(),
+			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyVisperHeap>);
+		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(),
+			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyVisperHeap>);
 
 		return true;
 	}

@@ -66,6 +66,20 @@ namespace RELEX
 		}
 	}
 
+	ScopeEvent::ScopeEvent(bool a_manualReset, bool a_initialState, const std::string_view& a_name) noexcept :
+		handle(CreateEventA(nullptr, a_manualReset, a_initialState, a_name.data()))
+	{}
+
+	ScopeEvent::~ScopeEvent() noexcept { CloseHandle(handle); }
+
+	ScopeEvent::Result ScopeEvent::WaitFor(uint32_t a_ms, bool a_alertable) const noexcept
+	{
+		return static_cast<ScopeEvent::Result>(REX::W32::WaitForSingleObjectEx(handle, a_ms, a_alertable));
+	}
+
+	void ScopeEvent::Set() const noexcept { if (handle) SetEvent(handle); }
+	void ScopeEvent::Reset() const noexcept { if (handle) ResetEvent(handle); }
+
 	void Write(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept
 	{
 		if (!a_target || !a_data.size()) return;
@@ -130,19 +144,39 @@ namespace RELEX
 		return Detours::IATHook(REX::FModule::GetExecutingModule().GetBaseAddress(), a_importModule, a_functionName, a_function);
 	}
 
-	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
+	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule,
+		const char* a_functionName, uintptr_t a_function) noexcept
 	{
 		return Detours::IATHook(a_targetModule, a_importModule, a_functionName, a_function);
 	}
 
-	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
+	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName,
+		uintptr_t a_function) noexcept
 	{
 		return Detours::IATDelayedHook(REX::FModule::GetExecutingModule().GetBaseAddress(), a_importModule, a_functionName, a_function);
 	}
 
-	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
+	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule,
+		const char* a_functionName, uintptr_t a_function) noexcept
 	{
 		return Detours::IATDelayedHook(a_targetModule, a_importModule, a_functionName, a_function);
+	}
+
+	bool Validate(uintptr_t a_target, const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return !std::memcmp(reinterpret_cast<const void*>(a_target), a_expected.begin(), a_expected.size());
+	}
+
+	uintptr_t TryDetourJump(uintptr_t a_target, uintptr_t a_function,
+		const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return Validate(a_target, a_expected) ? DetourJump(a_target, a_function) : 0;
+	}
+
+	uintptr_t TryDetourCall(uintptr_t a_target, uintptr_t a_function,
+		const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return Validate(a_target, a_expected) ? DetourCall(a_target, a_function) : 0;
 	}
 }
 
@@ -343,5 +377,39 @@ namespace Addictol
 		}
 
 		return LINUX_DETECT.value();
+	}
+
+	bool IsWineBuiltinDLL(const char* moduleName) noexcept
+	{
+		if (!moduleName)
+			return false;
+
+		HMODULE module = GetModuleHandleA(moduleName);
+		if (!module)
+			return false;
+
+		const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
+		if (!dos || dos->e_magic != IMAGE_DOS_SIGNATURE)
+			return false;
+
+		static constexpr char wineBuiltinSignature[] = "Wine builtin DLL";
+		return !std::memcmp(dos + 1, wineBuiltinSignature, sizeof(wineBuiltinSignature));
+	}
+
+	bool IsWineFakeDLL(const char* moduleName) noexcept
+	{
+		if (!moduleName)
+			return false;
+
+		HMODULE module = GetModuleHandleA(moduleName);
+		if (!module)
+			return false;
+
+		const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
+		if (!dos || dos->e_magic != IMAGE_DOS_SIGNATURE)
+			return false;
+
+		static constexpr char wineFakeSignature[] = "Wine placeholder DLL";
+		return !std::memcmp(dos + 1, wineFakeSignature, sizeof(wineFakeSignature));
 	}
 }

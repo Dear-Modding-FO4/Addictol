@@ -40,7 +40,7 @@ void AdAssertMsg(const char* SourceFile, int SourceLine, const char* Function, c
             // For Wine
             abort();
             // AGAIN!!!
-            TerminateProcess(GetCurrentProcess(), 1);
+            TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
             // CTD
             *((int*)0) = 0;
         }

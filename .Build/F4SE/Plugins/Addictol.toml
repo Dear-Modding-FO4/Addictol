@@ -23,7 +23,7 @@ bFacegen = true
 # Replaces the global memory manager with vmm allocator.
 bMemoryManager = true
 
-# Replaces the small block memory allocators with vmm allocator.
+# Replaces the small block memory allocators with visper allocator.
 bSmallBlockAllocator = true
 
 # Replaces the scaleform memory allocator with os allocator.
@@ -68,6 +68,10 @@ bPhysicsFix = true
 # Dynamically scales the Papyrus update budget (fUpdateBudgetMS) by the smoothed real frame delta so scripts get more time per frame at high FPS. Tuned via fUpdateBudgetBase / fBudgetMaxFPS.
 bDynamicUpdateBudget = true
 
+# Allows seamless audio device switching for XAudio 2.7.
+# Automatically switches to a newly selected default audio device.
+bAudioSwitch = true
+
 
 [Fixes]
 
@@ -89,7 +93,7 @@ bActorIsHostileToActor = true
 # Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
 bBGSAIWorldLocationRefRadius = true
 
-# Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze
+# Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze.
 bSafeExit = true
 
 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
@@ -106,6 +110,9 @@ nMaxStdIO = -1
 
 # Fixes a bug where the the Movement Planner crashes with non-actors.
 bMovementPlanner = true
+
+# Stops companions/teammates from shooting the player during and shortly after combat (re-equips their weapons on combat exit).
+bCompanionStrayBullet = true
 
 # "Unfreezes" your game from certain freezes caused by a deadlock during condition checks.
 bEscapeFreeze = true
@@ -124,6 +131,9 @@ bInteriorNavCut = true
 
 # Fixes a crash when Magic Effect Apply events are dispatched on null references.
 bMagicEffectApplyEvent = true
+
+# Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions.
+bMagicEffectConditions = true
 
 # Fixes encounter zones resetting immediately once you leave them on foot.
 bEncounterZoneReset = true
@@ -204,6 +214,28 @@ bMoonRotation = true
 # Prevents the NVIDIA Weapon Debris CTD on Turing+ / deprecated-FleX drivers by skipping the crashing collision path.
 bWeaponDebrisCrash = true
 
+# Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR.
+bCrashRemoveRefFix = true
+
+# Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior.
+bClimateLoad = true
+
+# Fixes a bug where multiple music tracks are playing at the same time.
+bMusicOverlap = true
+
+# Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections).
+bPuddleCubemaps = false
+
+# An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude).
+bStringPoolRelease = true
+
+# Fixes multiple AE Load Order issues when the Creations Platform is enabled.
+# Including Plugins getting disabled, moved around, and inability to toggle certain Plugins in-game.
+bLoadOrder = true
+
+# Fixes a crash related to queued HUD messages on NG & AE.
+bHUDMessageQueue = true
+
 
 [Warnings]
 
@@ -216,6 +248,15 @@ bDuplicateAddonNodeIndex = true
 # Warns if you are approaching the reference handle limit or exceed the reference handle limit.
 # Terminate process if out of entries!
 bReferenceHandleLimit = true
+
+
+# Patches / Fixes for mods that are used by the DMFO4 team, but are tired of waiting for fixes from the authors of these mods.
+# We do not accept requests, we also fix only those versions that we use. Always turned off by default.
+# If it doesn't work for you, don't need to write about it, we're not interested.
+[Others]
+
+# Caches RobCo Patcher's "Plugin|FormID" lookups during its boot patching pass, greatly reducing startup time with large RobCo configs. Idle when RobCo Patcher is not installed.
+bRobCoPatcherCache = false
 
 
 [Additional]
@@ -267,6 +308,12 @@ fUpdateBudgetBase = 1.2
 
 # Upper FPS bound used to clamp the dynamic budget smoothing window (needs bDynamicUpdateBudget). Clamped 60-300.
 fBudgetMaxFPS = 144.0
+
+# Diagnostic: re-resolves every cached RobCo lookup and disarms the cache on any mismatch (needs bRobCoPatcherCache).
+bRobCoPatcherCacheValidate = false
+
+# Ignore Mod Compatibility Checks.
+bIgnoreCompatibilityChecks = false
 
 
 [Profiler]

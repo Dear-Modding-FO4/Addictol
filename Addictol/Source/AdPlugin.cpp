@@ -5,18 +5,25 @@
 #include <AdProfilerDLL.h>
 #include <AdProfilerMemory.h>
 #include <AdProfilerModules.h>
-#include <RE/B/BSScriptUtil.h>
 
+#include <RE/B/BSCRC32.h>
+#include <RE/B/BSScriptUtil.h>
+#include <RE/T/TESDataHandler.h>
+#include <RE/T/TESFile.h>
+
+#include <Windows.h>
+#undef ERROR
+
+#define AD_LOGPLUGINHASHES 0
 //#define AD_DEBUGBREAK 1
-#if AD_DEBUGBREAK
-#	include <windows.h>
-#endif
 
 extern void AdRegisterModules();
 extern void AdRegisterPreloadModules();
 
 namespace Addictol
 {
+	static REX::TOML::Bool<> bAdditionalIgnoreCompatibilityChecks{ "Additional"sv, "bIgnoreCompatibilityChecks"sv, false };
+
 	[[nodiscard]] static const char* GetF4SEMessageName(std::uint32_t a_type) noexcept
 	{
 		switch (a_type)
@@ -34,6 +41,76 @@ namespace Addictol
 		case F4SE::MessagingInterface::kGameDataReady: return "GameDataReady";
 		default:                                       return "Unknown";
 		}
+	}
+
+	static uint32_t GetHashString(const char* a_str) noexcept
+	{
+		std::string str = a_str;
+		return RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(strlwr(str.data())), str.length() });
+	}
+
+	static std::vector<const RE::TESFile*> AnalyzeGameCollectionCriticalCompatibility() noexcept
+	{
+		// Incompatible Mods
+		std::vector<const RE::TESFile*> incompatibleMods;
+		const std::array<uint32_t, 6> incompatibleModHashes
+		{
+			260600794, 1335048061,					// Fixer
+			2498600491, 2948692632, 631466042,		// Unbound Worldspace
+			2684648774								// Optimized Room Bounds
+		};
+
+		// Get DataHandler
+		auto dataHandler = RE::TESDataHandler::GetSingleton();
+		if (!dataHandler) return incompatibleMods;
+
+		// Is Compatible
+		auto IsCompatible = [&](const RE::TESFile* a_file)
+		{
+			// Get the Filename in Lowercase
+			std::string fileName = a_file->filename;
+			_strlwr(fileName.data());
+
+			// Remove the File Extension
+			auto it = fileName.find_last_of('.');
+			if (it != std::string::npos) fileName.erase(it, -1);
+
+			// Generate CRC32 Hash
+			const auto hash = RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(fileName.data()), fileName.length() });
+
+#if AD_LOGPLUGINHASHES
+			// Log
+			REX::INFO("Plugin: {}, Hash: {} / 0x{:08X}", a_file->filename, hash, hash);
+#endif
+
+			return std::find(incompatibleModHashes.begin(), incompatibleModHashes.end(), hash) == incompatibleModHashes.end();
+		};
+
+		// Analyze Files Array
+		auto AnalyzeFilesArray = [&](const RE::BSTArray<RE::TESFile*>& files)
+		{
+			for (const auto* file : files)
+			{
+				if (!IsCompatible(file))
+				{
+					REX::ERROR("Found an incompatible mod: {}"sv, file->filename);
+					incompatibleMods.push_back(file);
+				}
+			}
+		};
+
+#if AD_LOGPLUGINHASHES
+		REX::INFO("======== LOGGING PLUGIN HASHES ========");
+#endif
+
+		AnalyzeFilesArray(dataHandler->compiledFileCollection.files);
+		AnalyzeFilesArray(dataHandler->compiledFileCollection.smallFiles);
+
+#if AD_LOGPLUGINHASHES
+		REX::INFO("======== END OF PLUGIN HASHES ========");
+#endif
+
+		return incompatibleMods;
 	}
 
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
@@ -54,6 +131,56 @@ namespace Addictol
 
 			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 			{
+				if (!bAdditionalIgnoreCompatibilityChecks.GetValue())
+				{
+					const auto incompatibleMods = AnalyzeGameCollectionCriticalCompatibility();
+					if (!incompatibleMods.empty())
+					{
+						std::string incompatibilityMessage = "Incompatible mods are installed, please disable Addictol or remove the following incompatible mods:\n\n";
+
+						// Add Incompatible Mods to the Message
+						for (const auto* file : incompatibleMods)
+						{
+							if (file)
+							{
+								incompatibilityMessage += "  - ";
+								incompatibilityMessage += file->filename;
+								incompatibilityMessage += '\n';
+							}
+						}
+
+						incompatibilityMessage += "\nCheck the mod page's description for more info, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
+
+						// Log
+						REX::CRITICAL("{}"sv, incompatibilityMessage);
+
+						// Message Box on a separate thread in order to not stall the rest of the mod
+						// This is in case the user decides to just Alt + Tab or something like that
+						std::thread([message = std::move(incompatibilityMessage)]
+						{
+							while (1)
+							{
+								const auto result = MessageBoxA(nullptr, message.c_str(), "Addictol - Incompatible Mods", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
+								if (result == IDRETRY)
+									continue;
+								else if (result == IDABORT)
+								{
+									// For debugger
+									__debugbreak();
+									// For Wine
+									abort();
+									// AGAIN!!!
+									TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
+									// CTD
+									*((int*)0) = 0;
+								}
+
+								break;
+							}
+						}).detach();
+					}
+				}
+
 				moduleManager.LogSummary();
 				REX::INFO(""sv _PluginName " Initialized!"sv);
 				plugin->SetAsInstall();
@@ -134,7 +261,7 @@ namespace Addictol
 			if (PapyrusInterface->Register([](RE::BSScript::IVirtualMachine* vm) -> bool {
 				F4SEPapyrusListener(vm);
 				return true; }))
-				REX::INFO("Started Listening for Papyrus Callbacks."sv);	
+				REX::INFO("Started Listening for Papyrus Callbacks."sv);
 
 			// Query patches
 			moduleManager.QueryLoadAll();

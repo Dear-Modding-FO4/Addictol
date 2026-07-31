@@ -18,7 +18,7 @@ namespace Addictol
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
 			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
-			"bSaveCompression", "bPhysicsFix", "bDynamicUpdateBudget"
+			"bSaveCompression", "bPhysicsFix", "bDynamicUpdateBudget", "bAudioSwitch"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
@@ -26,7 +26,8 @@ namespace Addictol
 			"bUnalignedLoad", "bCellInit", "bWorkbenchSwap", "nMaxStdIO",
 			"bMovementPlanner", "bEscapeFreeze", "bIOCacher",
 			"bTESObjectREFRGetEncounterZone", "bPipBoyLightInv", "bInteriorNavCut",
-			"bMagicEffectApplyEvent", "bEncounterZoneReset", "bLeveledListCrash",
+			"bMagicEffectApplyEvent", "bMagicEffectConditions",
+			"bEncounterZoneReset", "bLeveledListCrash",
 			"bBakaMaxPapyrusOps", "bPapyrusGCBug", "bCreateD3DAndSwapchain",
 			"bCheckInternetAccess", "bStolenPowerArmorOwnership", "bManyItems",
 			"bCombatMusic", "bWorkbenchSound", "bActorCauseSaveBloat",
@@ -34,11 +35,15 @@ namespace Addictol
 			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
 			"bViewmodelShading", "bDofFix", "bUtilityShader",
 			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
-			"bDownwardAiming",
-			"bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash"
+			"bDownwardAiming", "bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash"
+			"bCrashRemoveRefFix", "bClimateLoad", "bMusicOverlap", "bPuddleCubemaps",
+      "bCompanionStrayBullet", "bStringPoolRelease", "bLoadOrder", "bHUDMessageQueue"
 		}},
 		{ "Warnings", {
 			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"
+		}},
+		{ "Others", {
+			"bRobCoPatcherCache"
 		}},
 		{ "Additional", {
 			"bDbgFacegenOutput", "bUseNewRedistributable",
@@ -46,8 +51,8 @@ namespace Addictol
 			"nSleepTimer", "nMaxLockCount",
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
 			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
-			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens", "fPostloadingMenuSpeed",
-			"fUpdateBudgetBase", "fBudgetMaxFPS"
+			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens",
+      "fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS"
 		}},
 		{ "HighFPSPhysics", {
 			"bUntieSpeedFromFPS", "bFixStuttering", "bFixWhiteScreen", "bFixWindSpeed",
@@ -58,6 +63,7 @@ namespace Addictol
 			"bFrameLimiter", "fFrameLimit", "nVSync", "nVSyncInterval",
 			"bAllowTearing", "bForceFlipModel", "fLoadingFrameLimit",
 			"bDisableVSyncWhileLoading"
+			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
 		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",

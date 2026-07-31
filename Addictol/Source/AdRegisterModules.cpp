@@ -4,6 +4,8 @@
 #include <Modules/AdModuleGreyMovie.h>
 #include <Modules/AdModulePackageAllocateLocation.h>
 #include <Modules/AdModuleLibDeflate.h>
+#include <Modules/AdModuleSaveCompression.h>
+#include <Modules/AdModuleRobCoPatcherCache.h>
 #include <Modules/AdModuleProfile.h>
 #include <Modules/AdModuleLoadScreen.h>
 #include <Modules/AdModuleAchievements.h>
@@ -32,6 +34,7 @@
 #include <Modules/AdModuleInteriorNavCut.h>
 #include <Modules/AdModuleControlSamplers.h>
 #include <Modules/AdModuleMagicEffectApplyEvent.h>
+#include <Modules/AdModuleMagicEffectConditions.h>
 #include <Modules/AdModuleEncounterZoneReset.h>
 #include <Modules/AdModuleArchiveLimits.h>
 #include <Modules/AdModuleImageSpaceAdapterWarning.h>
@@ -72,12 +75,24 @@
 #include <Modules/AdModuleSaveCompression.h>
 #include <Modules/AdModulePapyrusBudget.h>
 #include <Modules/AdModuleFrameLimiter.h>
+#include <Modules/AdModuleCrashRemoveRef.h>
+#include <Modules/AdModuleClimateLoad.h>
+#include <Modules/AdModuleMusicOverlap.h>
+#include <Modules/AdModulePuddleCubemaps.h>
+#include <Modules/AdModuleCompanionStrayBullet.h>
+#include <Modules/AdModuleAudioSwitch.h>
+#include <Modules/AdModuleStringPoolRelease.h>
+#include <Modules/AdModuleLoadOrder.h>
+#include <Modules/AdModuleHUDMessageQueue.h>
+#include <Modules/AdModuleProcessIcon.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
 static auto sModuleGreyMovie						= std::make_shared<Addictol::ModuleGreyMovie>();
 static auto sModulePackageAllocateLocation			= std::make_shared<Addictol::ModulePackageAllocateLocation>();
 static auto sModuleLibDeflate						= std::make_shared<Addictol::ModuleLibDeflate>();
+static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
+static auto sModuleRobCoPatcherCache				= std::make_shared<Addictol::ModuleRobCoPatcherCache>();
 static auto sModuleProfile							= std::make_shared<Addictol::ModuleProfile>();
 static auto sModuleLoadScreen						= std::make_shared<Addictol::ModuleLoadScreen>();
 static auto sModuleAchievements						= std::make_shared<Addictol::ModuleAchievements>();
@@ -106,6 +121,7 @@ static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyL
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
 static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
 static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
+static auto sModuleMagicEffectConditions			= std::make_shared<Addictol::ModuleMagicEffectConditions>();
 static auto sModuleEncounterZoneReset				= std::make_shared<Addictol::ModuleEncounterZoneReset>();
 static auto sModuleArchiveLimits					= std::make_shared<Addictol::ModuleArchiveLimits>();
 static auto sModuleImageSpaceAdapterWarning			= std::make_shared<Addictol::ModuleImageSpaceAdapterWarning>();
@@ -146,6 +162,16 @@ static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeapo
 static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
 static auto sModulePapyrusBudget					= std::make_shared<Addictol::ModulePapyrusBudget>();
 static auto sModuleFrameLimiter						= std::make_shared<Addictol::ModuleFrameLimiter>();
+static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
+static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
+static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
+static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
+static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCompanionStrayBullet>();
+static auto sModuleAudioSwitch						= std::make_shared<Addictol::ModuleAudioSwitch>();
+static auto sModuleStringPoolRelease				= std::make_shared<Addictol::ModuleStringPoolRelease>();
+static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>();
+static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
+static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIcon>();
 
 void AdRegisterPreloadModules()
 {
@@ -159,6 +185,7 @@ void AdRegisterPreloadModules()
 	modules.Register(sModuleCheckInternetAccess);
 	modules.Register(sModuleCOMInit);
 	modules.Register(sModuleDpiScaling);
+	modules.Register(sModuleProcessIcon);
 }
 
 void AdRegisterModules()
@@ -178,6 +205,7 @@ void AdRegisterModules()
 	modules.Register(sModuleGreyMovie);
 	modules.Register(sModulePackageAllocateLocation);
 	modules.Register(sModuleLibDeflate);
+	modules.Register(sModuleSaveCompression);
 	modules.Register(sModuleProfile);
 	modules.Register(sModuleAchievements);
 	modules.Register(sModuleLODDistance);
@@ -194,6 +222,7 @@ void AdRegisterModules()
 	modules.Register(sModuleWorkbenchSwap);
 	modules.Register(sModuleManyItemsFix);
 	modules.Register(sModuleMovementPlanner);
+	modules.Register(sModuleCompanionStrayBullet);
 	modules.Register(sModuleEscapeFreeze);
 	modules.Register(sModuleIOCacher);
 	modules.Register(sModuleBSMTAManager);
@@ -203,6 +232,7 @@ void AdRegisterModules()
 	modules.Register(sModulePipBoyLightInv);
 	modules.Register(sModuleInteriorNavCut);
 	modules.Register(sModuleMagicEffectApplyEvent);
+	modules.Register(sModuleMagicEffectConditions);
 	modules.Register(sModuleArchiveLimits);
 	modules.Register(sModuleImageSpaceAdapterWarning);
 	modules.Register(sModuleInputSwitch);
@@ -230,12 +260,20 @@ void AdRegisterModules()
 	modules.Register(sModuleMoonRotation);
 	modules.Register(sModuleWeaponDebrisCrash);
 	modules.Register(sModuleSaveCompression);
-	
+	modules.Register(sModuleCrashRemoveRef);
+	modules.Register(sModuleClimateLoadFix);
+	modules.Register(sModuleMusicOverlap);
+	modules.Register(sModuleAudioSwitch);
+	modules.Register(sModuleStringPoolRelease);
+	modules.Register(sModuleLoadOrder);
+	modules.Register(sModuleHUDMessageQueue);
+
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
 	modules.Register(sModuleFacegen,						kGameDataReady);
 	modules.Register(sModuleSafeExit,						kGameDataReady);
 	modules.Register(sModuleInteriorNavCut,					kGameDataReady);
+	modules.Register(sModulePuddleCubemaps,					kGameDataReady);
 	modules.Register(sModuleControlSamplers,				kGameDataReady);
 	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
@@ -243,6 +281,7 @@ void AdRegisterModules()
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
 	modules.Register(sModulePhysicsFix,						kGameDataReady);
 	modules.Register(sModulePapyrusBudget,					kGameDataReady);
+	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);
@@ -251,6 +290,9 @@ void AdRegisterModules()
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
+	modules.Register(sModuleRobCoPatcherCache,				kPostLoad);
+	modules.Register(sModuleRobCoPatcherCache,				kNewGame);
+	modules.Register(sModuleRobCoPatcherCache,				kGameLoaded);
 
 	// Profiler - registered at load stage, listener at GameDataReady for report generation
 	modules.Register(sModuleProfiler);
