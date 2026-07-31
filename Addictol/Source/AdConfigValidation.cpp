@@ -35,7 +35,7 @@ namespace Addictol
 			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
 			"bViewmodelShading", "bDofFix", "bUtilityShader",
 			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
-			"bDownwardAiming", "bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash"
+			"bDownwardAiming", "bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash",
 			"bCrashRemoveRefFix", "bClimateLoad", "bMusicOverlap", "bPuddleCubemaps",
 			"bCompanionStrayBullet", "bStringPoolRelease", "bLoadOrder", "bHUDMessageQueue"
 		}},
@@ -52,7 +52,8 @@ namespace Addictol
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
 			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
 			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens",
-			"fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS"
+			"fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS", 
+			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
 		}},
 		{ "HighFPSPhysics", {
 			"bUntieSpeedFromFPS", "bFixStuttering", "bFixWhiteScreen", "bFixWindSpeed",
@@ -63,7 +64,6 @@ namespace Addictol
 			"bFrameLimiter", "fFrameLimit", "nVSync", "nVSyncInterval",
 			"bAllowTearing", "bForceFlipModel", "fLoadingFrameLimit",
 			"bDisableVSyncWhileLoading"
-			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
 		}},
 		{ "Profiler", {
 			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",
