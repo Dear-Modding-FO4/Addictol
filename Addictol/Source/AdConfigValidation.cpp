@@ -18,7 +18,7 @@ namespace Addictol
 			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
 			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
 			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
-			"bSaveCompression", "bDynamicUpdateBudget", "bAudioSwitch"
+			"bSaveCompression", "bAudioSwitch"
 		}},
 		{ "Fixes", {
 			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
@@ -51,8 +51,6 @@ namespace Addictol
 			"nSleepTimer", "nMaxLockCount",
 			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
 			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
-			"bDisableBlackLoadingScreens", "bDisableAnimationOnLoadingScreens",
-			"fPostloadingMenuSpeed", "fUpdateBudgetBase", "fBudgetMaxFPS", 
 			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
 		}},
 		{ "Profiler", {

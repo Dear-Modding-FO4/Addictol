@@ -71,8 +71,6 @@
 #include <Modules/AdModuleSprintStutter.h>
 #include <Modules/AdModuleMoonRotation.h>
 #include <Modules/AdModuleWeaponDebrisCrash.h>
-#include <Modules/AdModulePapyrusBudget.h>
-#include <Modules/AdModuleFrameLimiter.h>
 #include <Modules/AdModuleCrashRemoveRef.h>
 #include <Modules/AdModuleClimateLoad.h>
 #include <Modules/AdModuleMusicOverlap.h>
@@ -156,8 +154,6 @@ static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwar
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
 static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
 static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
-static auto sModulePapyrusBudget					= std::make_shared<Addictol::ModulePapyrusBudget>();
-static auto sModuleFrameLimiter						= std::make_shared<Addictol::ModuleFrameLimiter>();
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
@@ -244,7 +240,6 @@ void AdRegisterModules()
 	modules.Register(sModuleMuzzleFlashLight);
 	modules.Register(sModuleHighResBloom);
 	modules.Register(sModuleAltTabFullscreen);
-	modules.Register(sModuleFrameLimiter);
 	modules.Register(sModulePowerGridScrap);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);
@@ -274,7 +269,6 @@ void AdRegisterModules()
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
-	modules.Register(sModulePapyrusBudget,					kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);

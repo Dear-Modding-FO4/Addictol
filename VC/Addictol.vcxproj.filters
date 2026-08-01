@@ -274,12 +274,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusBudget.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFrameLimiter.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -581,12 +575,6 @@
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusBudget.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFrameLimiter.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h">

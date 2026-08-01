@@ -62,9 +62,6 @@ bDpiScaling = true
 # Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
 bSaveCompression = true
 
-# Dynamically scales the Papyrus update budget (fUpdateBudgetMS) by the smoothed real frame delta so scripts get more time per frame at high FPS. Tuned via fUpdateBudgetBase / fBudgetMaxFPS.
-bDynamicUpdateBudget = true
-
 # Allows seamless audio device switching for XAudio 2.7.
 # Automatically switches to a newly selected default audio device.
 bAudioSwitch = true
@@ -290,21 +287,6 @@ nQuitGameDelayMs = 1000
 
 # Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
 nBloomScale = 2
-
-# Removes the black loading screens for faster loads; the FPS counter still works (needs bLoadScreen).
-bDisableBlackLoadingScreens = false
-
-# Skips the loading-screen animation for significantly faster loads; the FPS counter freezes (needs bLoadScreen).
-bDisableAnimationOnLoadingScreens = false
-
-# Speeds up the post-loading menu fade between locations (1.0 = vanilla, 2.0 = twice as fast) (needs bLoadScreen).
-fPostloadingMenuSpeed = 1.0
-
-# Base Papyrus update budget in ms before frame-delta scaling (needs bDynamicUpdateBudget). HFPF default 1.2; higher gives scripts more time per frame. Clamped 0.1-4.0.
-fUpdateBudgetBase = 1.2
-
-# Upper FPS bound used to clamp the dynamic budget smoothing window (needs bDynamicUpdateBudget). Clamped 60-300.
-fBudgetMaxFPS = 144.0
 
 # Diagnostic: re-resolves every cached RobCo lookup and disarms the cache on any mismatch (needs bRobCoPatcherCache).
 bRobCoPatcherCacheValidate = false
