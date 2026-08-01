@@ -3,6 +3,8 @@
 
 #include <RE/P/PlayerCharacter.h>
 #include <RE/A/Actor.h>
+#include <RE/M/MiddleHighProcessData.h>
+#include <RE/B/bhkCharacterController.h>
 
 namespace Addictol
 {
