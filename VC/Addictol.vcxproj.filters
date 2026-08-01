@@ -214,6 +214,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWaterJetpackFix.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSound.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
@@ -515,6 +518,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h">
+      <Filter>Include\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWaterJetpackFix.h">
       <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSound.h">

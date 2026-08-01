@@ -230,6 +230,9 @@ bLoadOrder = true
 # Fixes a crash related to queued HUD messages on NG & AE.
 bHUDMessageQueue = true
 
+# Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again.
+bWaterJetpackFix = true
+
 
 [Warnings]
 
