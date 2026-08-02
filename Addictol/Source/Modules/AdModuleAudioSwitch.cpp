@@ -2063,7 +2063,7 @@ namespace Addictol
 		if (Hooks::Bink::Install())
 			REX::INFO("Hook for Bink installed"sv);
 		else
-			REX::INFO("Hook for Bink skiped"sv);
+			REX::INFO("Hook for Bink skipped"sv);
 
 		if (Hooks::Callbacks::Install())
 			REX::INFO("Hook for Callbacks installed"sv);
