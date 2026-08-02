@@ -436,7 +436,7 @@ namespace Addictol
 				RELEX::DetourIAT(base, "msvcr110.dll", "memmove_s", (uintptr_t)&memmove_s);
 				RELEX::DetourIAT(base, "msvcr110.dll", "memcpy_s", (uintptr_t)&memcpy_s);
 			}
-		}		
+		}
 
 		return true;
 	}
@@ -447,6 +447,11 @@ namespace Addictol
 	}
 
 	bool ModuleMemoryManager::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		return true;
+	}
+
+	bool ModuleMemoryManager::HasProcessDefender() noexcept
 	{
 		return true;
 	}

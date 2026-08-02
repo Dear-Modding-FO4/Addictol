@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AdModule.h>
+#include <AdModuleDefender.h>
 #include <string_view>
 #include <map>
 
@@ -9,8 +10,9 @@ namespace Addictol
 	class ModuleManager
 	{
 		using ModulePtr = std::shared_ptr<Module>;
-		std::map<std::string_view, ModulePtr> modules;
-		std::map<uint8_t, std::map<std::string_view, ModulePtr>> rl_modules;
+		std::map<std::string_view, ModulePtr> modules{};
+		std::map<uint8_t, std::map<std::string_view, ModulePtr>> rl_modules{};
+		std::unique_ptr<ModuleDefender> m_defender{};
 
 		size_t m_disabled{ 0 };
 		size_t m_failedQuery{ 0 };
@@ -18,12 +20,14 @@ namespace Addictol
 		size_t m_failedInstall{ 0 };
 
 		ModuleManager(const ModuleManager&) = delete;
+		ModuleManager(ModuleManager&&) = delete;
+		ModuleManager operator=(ModuleManager&&) = delete;
 		ModuleManager operator=(const ModuleManager&) = delete;
 
-		[[nodiscard]] bool SafeQueryMod(const ModulePtr& a_mod);
-		[[nodiscard]] bool SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
-		[[nodiscard]] bool SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr);
-		[[nodiscard]] bool SafeListenerPapyrusMod(const ModulePtr& a_mod, RE::BSScript::IVirtualMachine* a_vm);
+		[[nodiscard]] bool SafeQueryMod(const ModulePtr& a_mod) const;
+		[[nodiscard]] bool SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr) const;
+		[[nodiscard]] bool SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg = nullptr) const;
+		[[nodiscard]] bool SafeListenerPapyrusMod(const ModulePtr& a_mod, RE::BSScript::IVirtualMachine* a_vm) const;
 		void UnregisterPreloadAll() noexcept;
 	public:
 		enum class Type : uint8_t
@@ -42,7 +46,7 @@ namespace Addictol
 			kGameDataReady
 		};
 
-		ModuleManager() = default;
+		ModuleManager();
 		virtual ~ModuleManager() = default;
 
 		virtual bool Register(const ModulePtr& a_mod, Type a_type = Type::kLoad) noexcept;

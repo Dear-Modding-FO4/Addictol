@@ -22,7 +22,7 @@ namespace Addictol
 		"kGameDataReady"
 	};
 
-	bool ModuleManager::SafeQueryMod(const ModulePtr& a_mod)
+	bool ModuleManager::SafeQueryMod(const ModulePtr& a_mod) const
 	{
 		ProfilerBeginModuleQuery(a_mod->GetName());
 		__try
@@ -39,7 +39,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg)
+	bool ModuleManager::SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg) const
 	{
 		ProfilerBeginModuleInstall(a_mod->GetName());
 		__try
@@ -56,7 +56,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg)
+	bool ModuleManager::SafeListenerMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg) const
 	{
 		__try
 		{
@@ -69,7 +69,7 @@ namespace Addictol
 		}
 	}
 
-	bool ModuleManager::SafeListenerPapyrusMod(const ModulePtr& a_mod, RE::BSScript::IVirtualMachine* a_vm)
+	bool ModuleManager::SafeListenerPapyrusMod(const ModulePtr& a_mod, RE::BSScript::IVirtualMachine* a_vm) const
 	{
 		__try
 		{
@@ -86,6 +86,10 @@ namespace Addictol
 	{
 		modules.clear();
 	}
+
+	ModuleManager::ModuleManager() :
+		m_defender(std::make_unique<ModuleDefender>())
+	{}
 
 	bool ModuleManager::Register(const ModulePtr& a_mod, Type a_type) noexcept
 	{
@@ -104,18 +108,18 @@ namespace Addictol
 
 		if (a_type == Type::kLoad)
 		{
-			if (modules.find(nameModule) != modules.end())
+			if (modules.contains(nameModule))
 			{
 				REX::ERROR("{}: The module must be unique name \"{}\""sv, __FUNCTION__, nameModule);
 				return false;
 			}
 
-			modules.insert({ a_mod->GetName(), a_mod });
+			modules.try_emplace(a_mod->GetName(), a_mod);
 			return true;
 		}
 		else
 		{
-			auto msg_id = static_cast<uint8_t>(a_type) - 1;
+			auto msg_id = std::to_underlying(a_type) - 1;
 			auto it = rl_modules.find(msg_id);
 			if (it == rl_modules.end())
 			{
@@ -125,13 +129,13 @@ namespace Addictol
 			}
 
 			auto& modules_by_type = it->second;
-			if (modules_by_type.find(nameModule) != modules_by_type.end())
+			if (modules_by_type.contains(nameModule))
 			{
 				REX::ERROR("{}: The module must be unique name \"{}\""sv, __FUNCTION__, nameModule);
 				return false;
 			}
 
-			modules_by_type.insert({ a_mod->GetName(), a_mod });
+			modules_by_type.try_emplace(a_mod->GetName(), a_mod);
 			return true;
 		}
 	}
@@ -165,7 +169,7 @@ namespace Addictol
 		}
 		else
 		{
-			auto msg_id = static_cast<uint8_t>(a_type) - 1;
+			auto msg_id = std::to_underlying(a_type) - 1;
 			auto it = rl_modules.find(msg_id);
 			if (it == rl_modules.end())
 			{
@@ -214,7 +218,7 @@ namespace Addictol
 		}
 		else
 		{
-			auto msg_id = static_cast<uint8_t>(a_type) - 1;
+			auto msg_id = std::to_underlying(a_type) - 1;
 			auto it = rl_modules.find(msg_id);
 			if (it == rl_modules.end())
 			{
@@ -287,13 +291,22 @@ namespace Addictol
 
 	void ModuleManager::InstallLoadAll() noexcept
 	{
+		(void)m_defender->Initialize();
+
 		for (auto& it : modules)
 		{
 			auto& mod = it.second;
+
+			if (m_defender && mod->HasProcessDefender())
+				(void)m_defender->TakeSnapshot();
+
 			if(!SafeInstallMod(mod))
 			{
 				m_failedInstall++;
 				REX::ERROR("Module \"{}\": fatal installation"sv, mod->GetName());
+
+				if (m_defender && mod->HasProcessDefender())
+					(void)m_defender->RestoreFromSnapshot();
 			}
 			else
 			{
@@ -301,6 +314,8 @@ namespace Addictol
 				REX::INFO("Module \"{}\": installed"sv, mod->GetName());
 			}
 		}
+
+		m_defender->Release();
 	}
 
 	void ModuleManager::ListenerLoadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
@@ -376,14 +391,23 @@ namespace Addictol
 		if (it == rl_modules.end())
 			return;
 
+		(void)m_defender->Initialize();
+
 		auto& modules_by_type = it->second;
 		for (auto& it : modules_by_type)
 		{
 			auto& mod = it.second;
+
+			if (m_defender && mod->HasProcessDefender())
+				(void)m_defender->TakeSnapshot();
+
 			if (!SafeInstallMod(mod, a_msg))
 			{
 				m_failedInstall++;
 				REX::ERROR("Module \"{}\": fatal installation by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
+
+				if (m_defender && mod->HasProcessDefender())
+					(void)m_defender->RestoreFromSnapshot();
 			}
 			else
 			{
@@ -391,6 +415,8 @@ namespace Addictol
 				REX::INFO("Module \"{}\": installed by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 			}
 		}
+
+		m_defender->Release();
 	}
 
 	void ModuleManager::ListenerAllPapyrus(RE::BSScript::IVirtualMachine* a_vm) noexcept

@@ -21,4 +21,10 @@ namespace Addictol
 	{
 		return papyrusListener;
 	}
+
+	bool Module::HasProcessDefender() noexcept
+	{
+		// default value
+		return false;
+	}
 }

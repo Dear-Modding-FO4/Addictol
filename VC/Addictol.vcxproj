@@ -7,6 +7,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\AdModuleDefender.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPCH.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -114,6 +115,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Addictol\Include\AdModuleDefender.h" />
     <ClInclude Include="..\Addictol\Include\AdPCH.h" />
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h" />
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />

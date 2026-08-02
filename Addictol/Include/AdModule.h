@@ -31,5 +31,6 @@ namespace Addictol
 		[[nodiscard]] virtual bool DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept = 0;
 		[[nodiscard]] virtual bool HasListener(std::uint32_t a_msgType) noexcept;
 		[[nodiscard]] virtual bool HasPapyrusListener() noexcept;
+		[[nodiscard]] virtual bool HasProcessDefender() noexcept;
 	};
 }
