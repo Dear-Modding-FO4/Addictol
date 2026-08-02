@@ -36,11 +36,14 @@ namespace Addictol
 
 	bool ModuleActorIsHostileToActor::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 1022223, 0, 4486975 }, REL::Offset{ 0x0, 0x1081B20, 0x0 } }.address(); // NG has no ID
-		const std::size_t size = 0x10;
+		const auto target = REL::Relocation{ REL::ID{ 1022223, 0, 4486975 }, REL::Offset{ 0x0, 0x1081B20, 0x0 } }.address(); // NG has no ID
+		const size_t size = 0x10;
+
+		if (!RELEX::Validate(target, { 0x49, 0x8B, 0xD1, 0x49, 0x8B, 0xC8, 0xE9 }))
+			return false;
 
 		REL::WriteSafeFill(target, REL::INT3, size);
-		RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(actorIsHostileToActorDetail::IsHostileToActor));
+		RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&actorIsHostileToActorDetail::IsHostileToActor));
 
 		return true;
 	}

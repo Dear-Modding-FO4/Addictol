@@ -20,12 +20,12 @@ namespace Addictol
 	{
 		// hkbBehaviorGraph::processEventlessGlobalTransitions, movsx->movzx on the 16 - bit event - id read.
 
-		if (!RELEX::IsRuntimeOG())
-			// NG/AE
-			RELEX::WriteSafe(REL::ID(2260478).address() + 0x8E, { 0xB7 });
-		else
-			// OG
-			RELEX::WriteSafe(REL::ID(919820).address() + 0x8B, { 0xB7 });
+		const auto target = REL::Relocation{ REL::ID{ 919820, 2260478 }, REL::Offset{ 0x8B, 0x8E } }.address();
+
+		if (!RELEX::Validate(target, { 0xBF }))
+			return false;
+
+		RELEX::WriteSafe(target, { 0xB7 });
 
 		return true;
 	}

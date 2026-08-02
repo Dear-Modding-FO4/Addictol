@@ -31,8 +31,11 @@ namespace Addictol
 
 	bool ModuleAchievements::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 1432894, 2192323 } }.address();
+		const auto target = REL::Relocation{ REL::ID{ 1432894, 2192323 } }.address();
 		const auto size = REL::Offset{ 0x73, 0x6E }.offset();
+
+		if (!RELEX::Validate(target, { 0x48, 0x83, 0xEC, 0x28, 0xC6, 0x44, 0x24, 0x38, 0x00 }))
+			return false;
 
 		REL::WriteSafeFill(target, REL::INT3, size);
 		
