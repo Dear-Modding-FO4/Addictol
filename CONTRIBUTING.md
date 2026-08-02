@@ -372,7 +372,7 @@ Roughly in order of how often they appear:
 The default for small surgical changes such as flipping an instruction or NOPing a branch. Comment
 the original disassembly next to the bytes; it is the only thing that makes such a patch reviewable.
 
-**Function detours** through the `RELEX` wrappers over Microsoft Detours in
+**Function detours** through the `RELEX` wrappers over Nukem Detours in
 `Addictol/Include/AdUtils.h`: `DetourJump`, `DetourCall`, `DetourVTable`, `DetourIAT`,
 `DetourIATDelayed`, `DetourClassVTable`, plus the validating `TryDetourJump` and `TryDetourCall`.
 Prefer these over hand rolled hooks.
