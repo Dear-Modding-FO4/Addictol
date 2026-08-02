@@ -1,0 +1,439 @@
+# Contributing to Addictol
+
+Addictol patches Fallout 4's engine in memory at runtime. A single DLL supports three different
+game builds, and a mistake does not produce a failed test; it produces a crash in somebody's
+200 hour save. Most rules here exist because of that.
+
+Three things shape everything else:
+
+**One DLL, three runtimes.** OG 1.10.163, NG 1.10.984 and AE 1.11.221 are all supported from the
+same binary. Every game address you add must resolve correctly on all three, or be explicitly gated
+to the runtimes where it is valid. An address that is right on NG and wrong on AE will silently
+patch unrelated code.
+
+**Fail closed.** A module that cannot apply itself safely must disable itself and log why. Trading
+a rare vanilla bug for a new crash is a regression, however correct the patch is in isolation.
+
+**There are no automated tests.** CI compiles and packages the plugin. It runs no tests and no
+static analysis, so correctness comes from reasoning about the engine and from running the game.
+
+## Setting up
+
+You need Visual Studio 2022, or the standalone VS 2022 Build Tools, with the C++ workload. The
+project pins `PlatformToolset v143`. Newer Visual Studio releases ship v145 and fail with **MSB8020**
+("The build tools for v143 cannot be found"); install the v143 build tools or override the toolset
+with `-p:PlatformToolset=...` on the command line. Do not edit the pin in the tracked project file.
+
+```powershell
+git clone --recurse-submodules https://github.com/Dear-Modding-FO4/Addictol.git
+cd Addictol
+MSBuild VC/Addictol.sln -p:Configuration=Release -p:Platform=x64
+```
+
+If you already cloned without submodules, run `git submodule update --init --recursive`. The
+`--recursive` matters: `commonlibf4` has its own nested submodule.
+
+The build produces `.Build/F4SE/Plugins/Addictol.dll`. To test it, put that DLL next to the tracked
+`Addictol.toml` and `.ini` files already in `.Build/F4SE/Plugins/`, then deploy that payload to your
+game or mod manager. Running the plugin also needs [F4SE](https://f4se.silverlock.org/) and the
+Address Library for your runtime.
+
+### Things that will confuse you the first time
+
+**There is no Debug configuration.** The solution lists `Debug|x64`, but every solution
+configuration maps to `Release|x64`, and the project defines only `Release|x64`. Picking "Debug" in
+the IDE builds Release.
+
+**New source files are not picked up automatically.** There is no globbing. Every new `.cpp` needs a
+`<ClCompile>` entry in `VC/Addictol.vcxproj` or it is never compiled, and since
+`AdRegisterModules.cpp` references your module's constructor you get an unresolved symbol at link
+time. By convention also add the header as `<ClInclude>`, and add both to
+`VC/Addictol.vcxproj.filters` so they land in the right IDE folder. The `.filters` file affects only
+Visual Studio's presentation, not the build.
+
+**You do not include the precompiled header.** `Addictol/Include/AdPCH.h` is force included into
+every translation unit via `/FI`. Never add anything to it that the build regenerates (notably
+`resource_version2.h`), which would invalidate the PCH on every build.
+
+`.Lib/` and `.LinkConf/` are gitignored build directories. Build the whole solution, not just the
+Addictol project, or the link step will not find the dependency libraries.
+
+## Repository layout
+
+```
+Addictol/Include/          AdModule.h (base class), AdUtils.h (RELEX helpers)
+Addictol/Include/Modules/  one header per feature module
+Addictol/Source/           AdPlugin.cpp (init, F4SE messages), AdModuleManager.cpp (lifecycle),
+                           AdRegisterModules.cpp (every module is registered here),
+                           AdConfigValidation.cpp (known config keys)
+Addictol/Source/Modules/   one .cpp per feature module (~80 of them)
+VC/                        MSBuild solution and project files
+Depends/                   submodules and vendored libraries
+Version/                   version resource and the build number script
+.Build/F4SE/Plugins/       build output, and the tracked shipped config
+```
+
+`Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`
+APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored libraries (`vmm`,
+`xbyak`, `unordered_dense`).
+
+Crash logging is not part of this plugin. It ships separately as
+[AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
+
+## The module model
+
+Every feature is a subclass of `Addictol::Module` (`Addictol/Include/AdModule.h`) that owns exactly
+one concern. Nearly all are toggled by exactly one TOML key; a few are mandatory and always run.
+
+```cpp
+Module(const char* a_name, const REX::TOML::Bool<>* a_option = nullptr,
+	std::initializer_list<std::uint32_t> a_listeners = {}, bool a_papyrusListener = false);
+```
+
+`a_name` is the registry key and appears in every log line, and it must be unique; a collision is
+only logged as an error and the module is silently dropped. `a_option` is the TOML toggle, and
+passing `nullptr` makes the module mandatory so the user can never turn it off. `a_listeners` lists
+F4SE message types to deliver to `DoListener` after startup, and `a_papyrusListener` opts into
+`DoPapyrusListener`.
+
+### Lifecycle
+
+`ModuleManager` drives four pure virtuals, so you must implement all four even when most just
+`return true`.
+
+| Method | When | Return value |
+| --- | --- | --- |
+| `DoQuery()` | first, before anything is patched | `false` means "I cannot run here". The registration is dropped and the reason is logged. |
+| `DoInstall(msg)` | only if `DoQuery()` returned true | `false` means install failed. It is counted and logged, and nothing is rolled back. |
+| `DoListener(msg)` | per subscribed message, after startup | conventionally `true` |
+| `DoPapyrusListener(vm)` | when the Papyrus VM binds, if opted in | conventionally `true` |
+
+Before `DoQuery()` runs, a module whose option is `false` is unregistered and logged as `disabled`,
+and a module with no option is logged as `mandatory`.
+
+Registrations are tracked per stage, so a failed query removes only that registration. A module
+registered under several stages can still install at the others.
+
+Every one of these calls is wrapped in Win32 structured exception handling, so an access violation
+in your module is caught, logged and treated as a `false` return instead of taking down the game.
+That is a safety net, not a licence to be careless: a caught fault still means your module did not
+install.
+
+### Registration timing
+
+```cpp
+modules.Register(sModuleUnalignedLoad);                    // kLoad: immediately, at plugin init
+modules.Register(sModuleThreads,        kGameDataReady);   // deferred until game data is loaded
+modules.Register(sModuleInputSwitch,    kGameLoaded);
+```
+
+`Register` with no stage means `kLoad`, queried and installed during plugin init before the game has
+loaded anything. Use it for pure code patches that depend only on the executable.
+
+Register with a stage when your patch needs something that does not exist yet at load time: form
+data, the Papyrus VM, a loaded save, or another mod's DLL being present so you can check for it. The
+stages are in `ModuleManager::Type`: `kPostLoad`, `kPostPostLoad`, `kPreLoadGame`, `kPostLoadGame`,
+`kPreSaveGame`, `kPostSaveGame`, `kDeleteGame`, `kInputLoaded`, `kNewGame`, `kGameLoaded`,
+`kGameDataReady`.
+
+A module may be registered under several stages, and is then queried and installed once per stage.
+Only do that deliberately, and only if installing twice is harmless.
+
+## Adding a module
+
+A new module touches seven places. The last two produce no compiler error, which is why they are the
+ones people forget.
+
+1. `Addictol/Include/Modules/AdModule<Name>.h`, the class declaration.
+2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the TOML option and the implementation.
+3. The constructor, inside that `.cpp`, wiring name, option, listener stages and Papyrus flag.
+4. `Addictol/Source/AdRegisterModules.cpp`: the `#include`, the `static auto sModule<Name> =
+   std::make_shared<...>()`, and the `modules.Register(...)` call.
+5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
+6. `.Build/F4SE/Plugins/Addictol.toml`, the key with a user facing comment under the right section.
+   Skip it and the option is undiscoverable and cannot be overridden without a warning.
+7. `Addictol/Source/AdConfigValidation.cpp`, adding the key to `s_knownKeys`, or the plugin logs a
+   spurious `Config: unknown key` warning at every launch.
+
+### Worked example
+
+The header is boilerplate: a constructor and the four `DoX` overrides, each `[[nodiscard]]`,
+`virtual`, `noexcept` and `override`. The `.cpp` is where the shape matters.
+`ModuleUnalignedLoad` is about as small as a real module gets and still shows the important parts:
+
+```cpp
+#include <Modules/AdModuleUnalignedLoad.h>
+#include <AdUtils.h>
+
+namespace Addictol
+{
+	static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
+
+	ModuleUnalignedLoad::ModuleUnalignedLoad() :
+		Module("Unaligned Load", &bFixesUnalignedLoad)
+	{}
+
+	bool ModuleUnalignedLoad::DoQuery() const noexcept
+	{
+		return true;
+	}
+
+	bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
+
+		if (RELEX::IsRuntimeOG())
+		{
+			// CreateCommandBuffer (not needed in NG/AE)
+			// ... OG only byte patches ...
+		}
+
+		// ApplySkinningToGeometry
+		const std::uint8_t value = 0x10;
+		REL::WriteSafe(target, &value, sizeof(value));
+
+		return true;
+	}
+
+	// DoListener and DoPapyrusListener are unused here, so both just return true.
+}
+```
+
+Registration and config:
+
+```cpp
+#include <Modules/AdModuleUnalignedLoad.h>
+static auto sModuleUnalignedLoad			= std::make_shared<Addictol::ModuleUnalignedLoad>();
+	modules.Register(sModuleUnalignedLoad);
+```
+
+```toml
+# Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
+bUnalignedLoad = true
+```
+
+Note how the module scopes its patch: one address resolved for all runtimes, plus an explicit
+`IsRuntimeOG()` branch for the extra sites only OG needs.
+
+## Configuration
+
+Options are declared next to the code that uses them, as file scope statics taking section, key and
+default:
+
+```cpp
+static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
+static REX::TOML::I32<>  nAdditionalSleepTimer{ "Additional"sv, "nSleepTimer"sv, 125 };
+static REX::TOML::U32<>  uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 64ul };
+```
+
+`Bool<>`, `I32<>`, `U32<>` and `F64<>` are the types this codebase uses; CommonLibF4 defines more.
+There is no type named `Float`, so floating point options use `F64<>`.
+
+| Section | For |
+| --- | --- |
+| `[Patches]` | Replacing an engine subsystem for performance or capability. |
+| `[Fixes]` | Fixing a specific engine bug or crash. Most modules live here. |
+| `[Warnings]` | Detectors for problems in the user's load order. They exist to report, not to change gameplay. |
+| `[Others]` | Patches aimed at specific third party mods. Off by default and unsupported. |
+| `[Additional]` | Tunables belonging to a feature in another section. Cross reference the owner with `(needs bX)`. |
+| `[Profiler]` | Diagnostics, all gated behind the master `bProfiler` switch. |
+
+Prefix keys by type: `b` boolean, `n` signed, `u` unsigned, `f` float. The C++ variable name
+conventionally embeds the section too, as in `bFixesUnalignedLoad`.
+
+Give every key a one line, user facing comment in `Addictol.toml` that explains what it does in plain
+language rather than implementation terms:
+
+```toml
+# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
+uScaleformPageSize = 64
+```
+
+Declare the default in the C++ option and ship the same value in the TOML, and keep the two in sync.
+The shipped TOML value wins at load time, so a stale C++ default is invisible to users but misleads
+the next person reading the source. Users override settings in their own `AddictolCustom.toml`;
+never expect them to edit the shipped file.
+
+Default a new fix to `true` only if you are confident it is safe and well tested. Heuristics,
+anything that changes behaviour rather than fixing an outright bug, and anything you have not
+validated in game should ship `false` and be promoted later once it has field data.
+
+## Game addresses across OG, NG and AE
+
+Addresses come from the Address Library and are expressed with CommonLibF4's `REL` API, resolved per
+runtime at load time.
+
+```cpp
+// One id valid on all three runtimes
+auto sub = REL::ID(2190427).address();
+
+// OG id plus a shared NG/AE id, with per runtime offsets into the function
+const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 44611, 2277131 },
+	REL::Offset{ 0x174, 0x192 } }.address();
+
+// All three ids differ
+const auto target = REL::Relocation<std::uintptr_t>(REL::ID{ 224250, 2277018, 4492363 },
+	REL::Offset{ 0x114, 0x114, 0x10B }).address();
+```
+
+`.address()` already returns a `uintptr_t`, so do not cast it again.
+
+### The NG/AE rule
+
+`REL::ID` fills any runtime slot you leave out with the last value you supplied, so the two argument
+form `REL::ID{ OG, NG }` silently reuses the NG id for AE.
+
+That is usually right, because NG and AE share the same Address Library id roughly 90% of the time,
+which is exactly what makes the other 10% dangerous. When they diverge the two argument form does not
+fail; it resolves an unrelated function on AE and patches it. The DXGI renderer init function above
+is a real example in this repository: NG `2277018` against AE `4492363`.
+
+So do not assume the ids are the same, and do not assume they differ. Verify AE independently by
+round tripping the id against AE's Address Library database before you ship. Be especially careful
+porting an id from another mod, since mods that ship a single NG/AE DLL frequently copy one id
+across without checking.
+
+If a runtime has no equivalent site, gate the code rather than inventing an id. `RELEX::IsRuntimeOG()`,
+`IsRuntimeNG()` and `IsRuntimeAE()` are declared in `Addictol/Include/AdUtils.h`:
+
+```cpp
+if (RELEX::IsRuntimeOG())
+{
+	// OG only patch site
+}
+```
+
+A module only meaningful on one runtime should say so from `DoQuery()`:
+
+```cpp
+bool ModuleToggleGrassCommand::DoQuery() const noexcept
+{
+	return RELEX::IsRuntimeAE();
+}
+```
+
+## Patching safely
+
+**Disable yourself, do not crash.** If a patch cannot apply safely, return `false` from `DoQuery()`
+and log why with `REX::WARN`. Never terminate the process or deliberately fault over a condition you
+merely dislike. Termination is legitimate only when quitting is the feature, as in `SafeExit`, or
+behind an explicit user choice in a message box.
+
+Real reasons modules bow out, all from current code:
+
+```cpp
+// A standalone mod already fixes this
+if (REX::W32::GetModuleHandleW(L"FollowerStrayBulletFix.dll"))
+{
+	REX::WARN("..."sv);
+	return false;
+}
+
+// Only conflicts on one runtime
+if (RELEX::IsRuntimeOG() && REX::W32::GetModuleHandleW(L"Drop7FFFPatch.dll"))
+	return false;
+```
+
+**Verify before you write.** `RELEX::Validate` compares the bytes at a resolved address against what
+you expect, and `TryDetourJump` / `TryDetourCall` only hook if they match:
+
+```cpp
+if (RELEX::Validate(thumb.address(), { 0xFF, 0x15 }))
+	// safe to patch
+```
+
+Only a minority of existing modules do this today. That is technical debt, not a precedent, so new
+byte patches should verify. It costs a few bytes of code and converts "a future game update silently
+corrupts memory" into "the module cleanly disables itself".
+
+**Check for conflicts.** If a standalone mod already fixes the same bug, detect it with
+`REX::W32::GetModuleHandleW` and stand down rather than double patching. Probe for several filenames
+when a mod ships under more than one name.
+
+**Respect Wine and Proton.** Use `Addictol::UserUseWine()` to gate threading and performance paths
+that misbehave off Windows. Degrade the feature rather than disabling the whole module.
+
+**Do not fight other modules.** Several modules touch the same subsystems, such as the D3D device and
+swapchain or the loading screen. The rule is disjoint hook points: pick a site nobody else owns, or
+probe the current state before patching. `ModuleLoadScreen` is the reference, checking that High FPS
+Physics Fix is loaded and then reading that mod's already applied byte patch before deciding what to
+do.
+
+**Know your thread.** Most engine work belongs on the main thread. If you touch state from a render,
+Papyrus or worker thread, say so in a comment and protect it: `std::atomic` for simple flags and
+counters, a lock for containers. Byte writes should go through the `RELEX` helpers, which handle
+`VirtualProtect` and instruction cache flushing.
+
+## Hooking techniques
+
+Roughly in order of how often they appear:
+
+**Direct byte patching** with `REL::WriteSafe` and friends at an address resolved through `REL::ID`.
+The default for small surgical changes such as flipping an instruction or NOPing a branch. Comment
+the original disassembly next to the bytes; it is the only thing that makes such a patch reviewable.
+
+**Function detours** through the `RELEX` wrappers over Microsoft Detours in
+`Addictol/Include/AdUtils.h`: `DetourJump`, `DetourCall`, `DetourVTable`, `DetourIAT`,
+`DetourIATDelayed`, `DetourClassVTable`, plus the validating `TryDetourJump` and `TryDetourCall`.
+Prefer these over hand rolled hooks.
+
+**IAT and COM vtable detours** for anything Direct3D or DXGI, for example
+`RELEX::DetourIAT("d3d11.dll", "D3D11CreateDeviceAndSwapChain", ...)`. These are runtime agnostic,
+since COM vtable slots are stable across OG, NG and AE, so you need no Address Library id at all and
+the whole NG/AE divergence risk disappears. Always prefer this to byte patching the renderer.
+
+**Xbyak code caves** when you need real replacement logic rather than a patched constant. Build a
+`Xbyak::CodeGenerator` and branch into it with `RELEX::XbyakJump` / `XbyakCall`, or write the five
+byte `E9` relative jump yourself:
+
+```cpp
+const auto rel = static_cast<std::int32_t>(dst - (src + 5));
+const auto* const r = reinterpret_cast<const std::uint8_t*>(&rel);
+RELEX::WriteSafe(src, { 0xE9, r[0], r[1], r[2], r[3], 0x90 });
+```
+
+## Code style
+
+There is no `.clang-format`, so match the file you are editing.
+
+Tabs for indentation, Allman braces, no enforced line length.
+
+Files are prefixed `Ad`, and modules are `AdModule<Name>.h` / `.cpp` declaring `class Module<Name>`
+in `namespace Addictol`. Functions and methods are PascalCase, and hook functions are conventionally
+`HK<OriginalName>`. Parameters take an `a_` prefix, except in a hook or thunk mirroring an external
+signature. File scope and static variables take `s_` and class members `m_`; TOML options use the
+type prefix instead. Private module helpers go in a nested `namespace <camelCaseModuleName>Detail`.
+
+Built as C++ latest. Use `[[nodiscard]]`, `noexcept` and `override` on the module API, and
+`[[maybe_unused]]` on unused `a_msg` and `a_vm` parameters. Errors are reported by returning `bool`
+and logging; the codebase does not use exceptions.
+
+String literals carry the `sv` suffix, including logging format strings. That comes from
+`using namespace std::literals;` in `AdUtils.h`, not from the PCH, so declare it yourself if you do
+not include that header.
+
+Headers use `#pragma once`. Includes use angle brackets even for first party headers, and a module
+`.cpp` includes its own header first. Do not include the PCH.
+
+Logging is `REX::INFO`, `REX::WARN` and `REX::ERROR` with `{}` placeholders:
+
+```cpp
+REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
+```
+
+## Submitting a pull request
+
+Target `master`. CI builds your branch and attaches an artifact you can download and test. A green
+check means it compiles and nothing more, so the burden of proof is on you.
+
+Before opening it, confirm the bug really happens without your patch and stops with it, test the
+module both on and off, and read `Addictol.log` (in `Documents\My Games\Fallout4\F4SE\`) to check
+your module appears and that nothing else started warning.
+
+In the description, say what engine bug this fixes and how you know that is the cause, which
+runtimes you actually ran, where any new Address Library ids came from and how you verified AE, and
+anything that could interact with the patch.
+
+Reviewers look for, roughly in order: whether the ids are correct on all three runtimes, whether the
+module fails closed, whether it can fight another module or mod, whether the TOML key is wired
+through all seven places, and only then style.
