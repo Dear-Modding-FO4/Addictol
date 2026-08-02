@@ -14,8 +14,6 @@
 #include <wrl/client.h>
 #include <x3daudio.h>
 
-#pragma comment(lib, "xaudio2.lib")
-
 #undef ERROR
 #undef MAX_PATH
 #undef MEM_RELEASE
@@ -33,6 +31,9 @@
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesAudioSwitch{ "Patches"sv, "bAudioSwitch"sv, true };
+
+	[[nodiscard]] bool BinkXAudio29Create(IUnknown*& a_engine, void*& a_masteringVoice) noexcept;
+	void BinkXAudio29Destroy() noexcept;
 
 	// XAudio27
 	namespace AudioSystem
@@ -1606,7 +1607,12 @@ namespace Addictol
 		static AudioSystem::IXAudio2* Engine{ nullptr };
 		static AudioSystem::IXAudio2MasteringVoice* MasteringVoice{ nullptr };
 		static RELEX::ScopeEvent UpdateEvent{ true, false, "FO4__AudioEngine__UpdateEvent"sv };
-		static RE::BSSpinLock* AudioMutex{ nullptr };
+		
+		namespace Bink
+		{
+			static IUnknown* Engine{ nullptr };
+			static void* MasteringVoice{ nullptr };
+		}
 
 		static void KillGameSounds(AudioBethesdaSystem::BSAudioManager* a_audioManager)
 		{
@@ -1825,8 +1831,11 @@ namespace Addictol
 
 		void Bink::ThunkSetSoundSystem()
 		{
-			if (AudioEngine::Engine && AudioEngine::MasteringVoice)
-				BinkSetSoundSystem2(BinkOpenXAudio2, AudioEngine::Engine, AudioEngine::MasteringVoice);
+			REX::INFO("Thunk");
+			if (AudioEngine::Bink::Engine && AudioEngine::Bink::MasteringVoice)
+				BinkSetSoundSystem2(BinkOpenXAudio2, AudioEngine::Bink::Engine, AudioEngine::Bink::MasteringVoice);
+			else
+				REX::CRITICAL("ThunkSetSoundSystem() return critical error"sv);
 		}
 
 		bool Bink::Install() noexcept
@@ -1838,14 +1847,20 @@ namespace Addictol
 			BinkOpenXAudio2 = reinterpret_cast<TBinkOpen2>(
 				REX::W32::GetProcAddress(bink2w64, "BinkOpenXAudio2"));
 			BinkSetSoundSystem2 = reinterpret_cast<TBinkSetSoundSystem2>(
-				REX::W32::GetProcAddress(bink2w64, "BinkSetSoundSystem2"));
+				REX::W32::GetProcAddress(bink2w64, "BinkSetSoundSystem28"));
 
 			if (!BinkOpenXAudio2 || !BinkSetSoundSystem2)
+			{
+				REX::WARN("Incompatible bink2w64.dll. Need .dll from Skyrim AE.");
 				return false;
+			}
 
 			REL::Relocation thumb(REL::ID{ 143766, 2300587 }, REL::Offset{ 0x4 });
 			if (RELEX::Validate(thumb.address(), { 0x48, 0x8B, 0x0D }))
 			{
+				if (!BinkXAudio29Create(AudioEngine::Bink::Engine, AudioEngine::Bink::MasteringVoice))
+					return false;
+
 				RELEX::WriteSafeNop(thumb.address(), 0x10);
 				return RELEX::DetourJump(thumb.address(),
 					reinterpret_cast<uintptr_t>(&ThunkSetSoundSystem)) != 0;
@@ -2048,7 +2063,7 @@ namespace Addictol
 		if (Hooks::Bink::Install())
 			REX::INFO("Hook for Bink installed"sv);
 		else
-			return false;
+			REX::INFO("Hook for Bink skiped"sv);
 
 		if (Hooks::Callbacks::Install())
 			REX::INFO("Hook for Callbacks installed"sv);
@@ -2064,8 +2079,6 @@ namespace Addictol
 			REX::INFO("Registered for Audio Device Notifications"sv);
 		else
 			REX::WARN("Failed to register for Audio Device Notifications"sv);
-
-		AudioEngine::AudioMutex = reinterpret_cast<RE::BSSpinLock*>(REL::ID{ 210823, 2703076 }.address());
 
 		return true;
 	}

@@ -7,6 +7,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\AdBinkXAudio29.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModuleDefender.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPCH.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
