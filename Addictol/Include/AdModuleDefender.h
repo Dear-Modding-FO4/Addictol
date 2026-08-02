@@ -10,7 +10,7 @@ namespace Addictol
 			REX::FModuleSection section{};
 		};
 
-		Snapshot m_code{}, m_rwData{};
+		Snapshot m_code{}, m_rwData{}, m_rData{};
 		bool m_take{ false };
 
 		ModuleDefender(const ModuleDefender&) = delete;

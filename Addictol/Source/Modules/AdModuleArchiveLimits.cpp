@@ -1233,4 +1233,9 @@ namespace Addictol
 	{
 		return true;
 	}
+
+	bool ModuleArchiveLimits::HasProcessDefender() noexcept
+	{
+		return true;
+	}
 }

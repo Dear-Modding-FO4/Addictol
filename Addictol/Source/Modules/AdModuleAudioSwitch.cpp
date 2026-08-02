@@ -2079,4 +2079,9 @@ namespace Addictol
 	{
 		return true;
 	}
+
+	bool ModuleAudioSwitch::HasProcessDefender() noexcept
+	{
+		return true;
+	}
 }
