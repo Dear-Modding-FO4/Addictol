@@ -32,8 +32,10 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesAudioSwitch{ "Patches"sv, "bAudioSwitch"sv, true };
 
+#if 0
 	[[nodiscard]] bool BinkXAudio29Create(IUnknown*& a_engine, void*& a_masteringVoice) noexcept;
 	void BinkXAudio29Destroy() noexcept;
+#endif
 
 	// XAudio27
 	namespace AudioSystem
@@ -1571,6 +1573,7 @@ namespace Addictol
 			inline static std::function<TThunkMasteringVoice> originalMasteringVoice{};
 		};
 
+#if 0
 		struct Bink
 		{
 			using TBinkOpen2 = int32_t(*(*)(void*, void*))(void*, int32_t, int32_t, void*, void*);
@@ -1582,6 +1585,7 @@ namespace Addictol
 			static void ThunkSetSoundSystem();
 			static bool Install() noexcept;
 		};
+#endif
 
 		struct Callbacks
 		{
@@ -1608,11 +1612,13 @@ namespace Addictol
 		static AudioSystem::IXAudio2MasteringVoice* MasteringVoice{ nullptr };
 		static RELEX::ScopeEvent UpdateEvent{ true, false, "FO4__AudioEngine__UpdateEvent"sv };
 		
+#if 0
 		namespace Bink
 		{
 			static IUnknown* Engine{ nullptr };
 			static void* MasteringVoice{ nullptr };
 		}
+#endif
 
 		static void KillGameSounds(AudioBethesdaSystem::BSAudioManager* a_audioManager)
 		{
@@ -1716,8 +1722,9 @@ namespace Addictol
 				// Bethesda don't use X3DAUDIO_SPEED_OF_SOUND... they send magick value 24041.6
 				static REL::Relocation<float*> speed{ REL::ID{ 207777, 207777, 4563742 } };
 				X3DAudioInitialize(graph->channelMask, *speed, audio->X3DAudioHandle);
-
+#if 0
 				Hooks::Bink::ThunkSetSoundSystem();
+#endif
 
 				a_audioManager->SetPlatformInitialized(true);
 				a_audioManager->SetManagerInitialized(true);
@@ -1829,6 +1836,7 @@ namespace Addictol
 			return false;
 		}
 
+#if 0
 		void Bink::ThunkSetSoundSystem()
 		{
 			REX::INFO("Thunk");
@@ -1868,6 +1876,7 @@ namespace Addictol
 
 			return false;
 		}
+#endif
 
 		void Callbacks::ThunkDoCriticalError([[maybe_unused]] REX::W32::HRESULT a_herror)
 		{
@@ -2060,10 +2069,12 @@ namespace Addictol
 		else
 			return false;
 
+#if 0
 		if (Hooks::Bink::Install())
 			REX::INFO("Hook for Bink installed"sv);
 		else
 			REX::INFO("Hook for Bink skipped"sv);
+#endif
 
 		if (Hooks::Callbacks::Install())
 			REX::INFO("Hook for Callbacks installed"sv);
