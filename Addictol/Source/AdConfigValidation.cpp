@@ -12,52 +12,52 @@ namespace Addictol
 	// Known config keys by section, derived from REX::TOML declarations across all modules.
 	// Update this when adding or removing a config key.
 	static const std::unordered_map<std::string_view, std::unordered_set<std::string_view>> s_knownKeys = {
-		{ "Patches", {
-			"bThreads", "bLibDeflate", "bLoadScreen", "bProfile", "bAchievements",
-			"bFacegen", "bMemoryManager", "bSmallBlockAllocator", "bScaleformAllocator",
-			"bBSMTAManager", "bBSPreCulledObjects", "bINISettingCollection",
-			"bArchiveLimits", "bInputSwitch", "bFasterWorkshop",
-			"bSaveAddedSoundCategories", "bCOMInit", "bHighResBloom", "bDpiScaling",
-			"bSaveCompression", "bAudioSwitch"
+		{ "Patches"sv, {
+			"bThreads"sv, "bLibDeflate"sv, "bLoadScreen"sv, "bProfile"sv, "bAchievements"sv,
+			"bFacegen"sv, "bMemoryManager"sv, "bSmallBlockAllocator"sv, "bScaleformAllocator"sv,
+			"bBSMTAManager"sv, "bBSPreCulledObjects"sv, "bINISettingCollection"sv,
+			"bArchiveLimits"sv, "bInputSwitch"sv, "bFasterWorkshop"sv,
+			"bSaveAddedSoundCategories"sv, "bCOMInit"sv, "bHighResBloom"sv, "bDpiScaling"sv,
+			"bSaveCompression"sv, "bAudioSwitch"sv
 		}},
-		{ "Fixes", {
-			"bGreyMovie", "bPackageAllocateLocation", "bInitTints", "bLODDistance",
-			"bActorIsHostileToActor", "bBGSAIWorldLocationRefRadius", "bSafeExit",
-			"bUnalignedLoad", "bCellInit", "bWorkbenchSwap", "nMaxStdIO",
-			"bMovementPlanner", "bEscapeFreeze", "bIOCacher",
-			"bTESObjectREFRGetEncounterZone", "bPipBoyLightInv", "bInteriorNavCut",
-			"bMagicEffectApplyEvent", "bMagicEffectConditions",
-			"bEncounterZoneReset", "bLeveledListCrash",
-			"bBakaMaxPapyrusOps", "bPapyrusGCBug", "bCreateD3DAndSwapchain",
-			"bCheckInternetAccess", "bStolenPowerArmorOwnership", "bManyItems",
-			"bCombatMusic", "bWorkbenchSound", "bActorCauseSaveBloat",
-			"bAnimSignedCrash", "bBethesdaNetCrash",
-			"bMuzzleFlashLight", "bAltTabFullscreen", "bPowerGridScrap",
-			"bViewmodelShading", "bDofFix", "bUtilityShader",
-			"bPipBoyCursorConstraints", "bToggleGrassCommand", "bTextureLoadCrash",
-			"bDownwardAiming", "bSprintStutter", "bMoonRotation", "bWeaponDebrisCrash",
-			"bCrashRemoveRefFix", "bClimateLoad", "bMusicOverlap", "bPuddleCubemaps",
-			"bCompanionStrayBullet", "bStringPoolRelease", "bLoadOrder", "bHUDMessageQueue",
-			"bWaterJetpackFix"
+		{ "Fixes"sv, {
+			"bGreyMovie"sv, "bPackageAllocateLocation"sv, "bInitTints"sv, "bLODDistance"sv,
+			"bActorIsHostileToActor"sv, "bBGSAIWorldLocationRefRadius"sv, "bSafeExit"sv,
+			"bUnalignedLoad"sv, "bCellInit"sv, "bWorkbenchSwap"sv, "nMaxStdIO"sv,
+			"bMovementPlanner"sv, "bEscapeFreeze"sv, "bIOCacher"sv,
+			"bTESObjectREFRGetEncounterZone"sv, "bPipBoyLightInv"sv, "bInteriorNavCut"sv,
+			"bMagicEffectApplyEvent"sv, "bMagicEffectConditions"sv,
+			"bEncounterZoneReset"sv, "bLeveledListCrash"sv,
+			"bBakaMaxPapyrusOps"sv, "bPapyrusGCBug"sv, "bCreateD3DAndSwapchain"sv,
+			"bCheckInternetAccess"sv, "bStolenPowerArmorOwnership"sv, "bManyItems"sv,
+			"bCombatMusic"sv, "bWorkbenchSound"sv, "bActorCauseSaveBloat"sv,
+			"bAnimSignedCrash"sv, "bBethesdaNetCrash"sv,
+			"bMuzzleFlashLight"sv, "bAltTabFullscreen"sv, "bPowerGridScrap"sv,
+			"bViewmodelShading"sv, "bDofFix"sv, "bUtilityShader"sv,
+			"bPipBoyCursorConstraints"sv, "bToggleGrassCommand"sv, "bTextureLoadCrash"sv,
+			"bDownwardAiming"sv, "bSprintStutter"sv, "bMoonRotation"sv, "bWeaponDebrisCrash"sv,
+			"bCrashRemoveRefFix"sv, "bClimateLoad"sv, "bMusicOverlap"sv, "bPuddleCubemaps"sv,
+			"bCompanionStrayBullet"sv, "bStringPoolRelease"sv, "bLoadOrder"sv, "bHUDMessageQueue"sv,
+			"bWaterJetpackFix"sv, "bAIProcess3DUpdateFlag"sv
 		}},
-		{ "Warnings", {
-			"bImageSpaceAdapter", "bDuplicateAddonNodeIndex", "bReferenceHandleLimit"
+		{ "Warnings"sv, {
+			"bImageSpaceAdapter"sv, "bDuplicateAddonNodeIndex"sv, "bReferenceHandleLimit"sv
 		}},
-		{ "Others", {
-			"bRobCoPatcherCache"
+		{ "Others"sv, {
+			"bRobCoPatcherCache"sv
 		}},
-		{ "Additional", {
-			"bDbgFacegenOutput", "bUseNewRedistributable",
-			"uScaleformPageSize", "uScaleformHeapSize",
-			"nSleepTimer", "nMaxLockCount",
-			"bInteriorNavCutMultiThreading", "nMaxPapyrusOpsPerFrame",
-			"bIgnorePreInstallBias", "nQuitGameDelayMs", "nBloomScale",
-			"bRobCoPatcherCacheValidate", "bIgnoreCompatibilityChecks"
+		{ "Additional"sv, {
+			"bDbgFacegenOutput"sv, "bUseNewRedistributable"sv,
+			"uScaleformPageSize"sv, "uScaleformHeapSize"sv,
+			"nSleepTimer"sv, "nMaxLockCount"sv,
+			"bInteriorNavCutMultiThreading"sv, "nMaxPapyrusOpsPerFrame"sv,
+			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
+			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"
 		}},
-		{ "Profiler", {
-			"bProfiler", "bESPProfiler", "bESPSubHooks", "bDLLProfiler",
-			"bModuleProfiler", "bStartupTimeline", "bMemoryTracking",
-			"bBA2Timing", "bCSVExport"
+		{ "Profiler"sv, {
+			"bProfiler"sv, "bESPProfiler"sv, "bESPSubHooks"sv, "bDLLProfiler"sv,
+			"bModuleProfiler"sv, "bStartupTimeline"sv, "bMemoryTracking"sv,
+			"bBA2Timing"sv, "bCSVExport"sv
 		}}
 	};
 

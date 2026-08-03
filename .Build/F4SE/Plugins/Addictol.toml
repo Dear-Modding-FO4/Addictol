@@ -233,6 +233,9 @@ bHUDMessageQueue = true
 # Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again.
 bWaterJetpackFix = true
 
+# Fixes a bug where there is no check for nullptr when AI for a character is disabled.
+bAIProcess3DUpdateFlag = true
+
 
 [Warnings]
 

@@ -82,6 +82,7 @@
 #include <Modules/AdModuleHUDMessageQueue.h>
 #include <Modules/AdModuleProcessIcon.h>
 #include <Modules/AdModuleWaterJetpackFix.h>
+#include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -166,6 +167,7 @@ static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>(
 static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
 static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIcon>();
 static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJetpackFix>();
+static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 
 void AdRegisterPreloadModules()
 {
@@ -260,6 +262,7 @@ void AdRegisterModules()
 	modules.Register(sModuleLoadOrder);
 	modules.Register(sModuleHUDMessageQueue);
 	modules.Register(sModuleWaterJetpackFix);
+	modules.Register(sModuleAIProcess3DUpdateFlag);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);

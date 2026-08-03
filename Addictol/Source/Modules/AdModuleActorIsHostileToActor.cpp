@@ -43,9 +43,7 @@ namespace Addictol
 			return false;
 
 		REL::WriteSafeFill(target, REL::INT3, size);
-		RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&actorIsHostileToActorDetail::IsHostileToActor));
-
-		return true;
+		return RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&actorIsHostileToActorDetail::IsHostileToActor)) != 0;
 	}
 
 	bool ModuleActorIsHostileToActor::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

@@ -40,7 +40,7 @@ namespace Addictol
 			Malloc = reinterpret_cast<MFuncAlloc*>(REX::W32::GetProcAddress(g_hMallocDll, "MAlloc"));
 			MRealloc = reinterpret_cast<MFuncRealloc*>(REX::W32::GetProcAddress(g_hMallocDll, "MReAllock"));
 			MFree = reinterpret_cast<MFuncDealloc*>(REX::W32::GetProcAddress(g_hMallocDll, "MFree"));
-			MGetSize = reinterpret_cast<MFuncSize*>(REX::W32::GetProcAddress(g_hMallocDll, "GetSize"));
+			MGetSize = reinterpret_cast<MFuncSize*>(REX::W32::GetProcAddress(g_hMallocDll, "MGetSize"));
 		}
 		else
 			REX::WARN("REX::W32::GetModuleHandleA(\"Malloc.dll\") return failed");
