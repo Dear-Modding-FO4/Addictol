@@ -36,10 +36,16 @@ namespace Addictol
 
 	bool ModuleClimateLoadFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		*((uintptr_t*)&Sky::LoadGame_orig) = RELEX::DetourJump(REL::ID{ 531797, 2208883 }.address(),
-			reinterpret_cast<uintptr_t>(&Sky::LoadGame));
+		if (a_msg)
+			return false;
 
-		return true;
+		const auto target = REL::ID{ 531797, 2208883 }.address();
+
+		if (!RELEX::Validate(target, { 0x4C, 0x8B, 0xDC, 0x53, 0x55 }))
+			return false;
+
+		*((uintptr_t*)&Sky::LoadGame_orig) = RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&Sky::LoadGame));
+		return Sky::LoadGame_orig != nullptr;
 	}
 
 	bool ModuleClimateLoadFix::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

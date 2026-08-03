@@ -54,7 +54,7 @@ namespace Addictol
 	}
 
 	ModuleAIProcess3DUpdateFlag::ModuleAIProcess3DUpdateFlag() :
-		Module("Switch Race", &bFixesAIProcess3DUpdateFlag)
+		Module("AIProcess 3DUpdateFlag", &bFixesAIProcess3DUpdateFlag)
 	{}
 
 	bool ModuleAIProcess3DUpdateFlag::DoQuery() const noexcept
@@ -64,26 +64,29 @@ namespace Addictol
 
 	bool ModuleAIProcess3DUpdateFlag::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto targetSet = REL::ID{ 236542, 2232389 }.address();
-		const auto targetClear = REL::ID{ 1113891, 2232390 }.address();
-		const auto targetClearAll = REL::ID{ 409001, 2232391 }.address();
-		const auto targetGet = REL::ID{ 1286688, 2232392 }.address();
-		const auto targetGetAll = REL::ID{ 582098, 2232393 }.address();
+		if (a_msg)
+			return false;
 
-		const auto checkCode = std::initializer_list<uint8_t>{ 0x48, 0x8B, 0x41, 0x08 };
-		if (!RELEX::Validate(targetSet, checkCode) ||
-			!RELEX::Validate(targetClear, checkCode) ||
-			!RELEX::Validate(targetClearAll, checkCode) ||
-			!RELEX::Validate(targetGet, checkCode) ||
-			!RELEX::Validate(targetGetAll, checkCode))
+		const auto targetSet		= REL::ID{ 236542,	2232389 }.address();
+		const auto targetClear		= REL::ID{ 1113891,	2232390 }.address();
+		const auto targetClearAll	= REL::ID{ 409001,	2232391 }.address();
+		const auto targetGet		= REL::ID{ 1286688,	2232392 }.address();
+		const auto targetGetAll		= REL::ID{ 582098,	2232393 }.address();
+		const auto checkCode		= std::initializer_list<uint8_t>{ 0x48, 0x8B, 0x41, 0x08 };
+
+		if (!RELEX::Validate(targetSet,			checkCode) ||
+			!RELEX::Validate(targetClear,		checkCode) ||
+			!RELEX::Validate(targetClearAll,	checkCode) ||
+			!RELEX::Validate(targetGet,			checkCode) ||
+			!RELEX::Validate(targetGetAll,		checkCode))
 			return false;
 
 		return 
-			(RELEX::DetourJump(targetSet, reinterpret_cast<uintptr_t>(&Detail::AIProcess__Set3DUpdateFlag)) != 0) &&
-			(RELEX::DetourJump(targetClear, reinterpret_cast<uintptr_t>(&Detail::AIProcess__Clear3DUpdateFlag)) != 0) &&
-			(RELEX::DetourJump(targetClearAll, reinterpret_cast<uintptr_t>(&Detail::AIProcess__ClearAll3DUpdateFlags)) != 0) &&
-			(RELEX::DetourJump(targetGet, reinterpret_cast<uintptr_t>(&Detail::AIProcess__Get3DUpdateFlag)) != 0) &&
-			(RELEX::DetourJump(targetGetAll, reinterpret_cast<uintptr_t>(&Detail::AIProcess__GetAll3DUpdateFlags)) != 0);
+			(RELEX::DetourJump(targetSet,		reinterpret_cast<uintptr_t>(&Detail::AIProcess__Set3DUpdateFlag)) != 0) &&
+			(RELEX::DetourJump(targetClear,		reinterpret_cast<uintptr_t>(&Detail::AIProcess__Clear3DUpdateFlag)) != 0) &&
+			(RELEX::DetourJump(targetClearAll,	reinterpret_cast<uintptr_t>(&Detail::AIProcess__ClearAll3DUpdateFlags)) != 0) &&
+			(RELEX::DetourJump(targetGet,		reinterpret_cast<uintptr_t>(&Detail::AIProcess__Get3DUpdateFlag)) != 0) &&
+			(RELEX::DetourJump(targetGetAll,	reinterpret_cast<uintptr_t>(&Detail::AIProcess__GetAll3DUpdateFlags)) != 0);
 	}
 
 	bool ModuleAIProcess3DUpdateFlag::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

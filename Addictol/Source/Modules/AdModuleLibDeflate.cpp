@@ -116,22 +116,13 @@ namespace Addictol
 
 	bool ModuleLibDeflate::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (!RELEX::IsRuntimeOG())
-		{
-			// NG/AE
-
-			*(uintptr_t*)(&zlibDetail::Inflate) =
-				RELEX::DetourJump(REL::Relocation(REL::ID(2168026)).address(), (uintptr_t)&zlibDetail::Decompression::LibDeflate::Inflate);
-		}
-		else
-		{
-			// OG
-
-			*(uintptr_t*)(&zlibDetail::Inflate) =
-				RELEX::DetourJump(REL::Relocation(REL::ID(224011)).address(), (uintptr_t)&zlibDetail::Decompression::LibDeflate::Inflate);
-		}
-
-		return true;
+		if (a_msg) return false;
+		using namespace zlibDetail;
+		auto target = REL::ID{ 224011, 2168026 }.address();
+		if (!RELEX::Validate(target, { 0x89, 0x54, 0x24, 0x10 }))
+			return false;
+		*(uintptr_t*)(&Inflate) = RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&Decompression::LibDeflate::Inflate));
+		return Inflate != nullptr;
 	}
 
 	bool ModuleLibDeflate::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

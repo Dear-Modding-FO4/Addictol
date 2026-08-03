@@ -205,8 +205,9 @@ namespace Addictol
 			RELEX::WriteSafe(Offset + 0x2D, { 0x4C, 0x89, 0xE9, 0x48, 0x8D, 0x55, 0xC0, 0x41, 0xB8, 0x04, 0x01, 0x00, 0x00,
 				0x41, 0x89, 0xF9, 0x41, 0x83, 0xF9, 0x02, 0xB8, 0x07, 0x00, 0x00, 0x00, 0x44, 0x0F, 0x44, 0xC8 });
 			// call
-			RELEX::DetourCall(Offset + 0x4A, BSTextureDB::FacegenPathPrintf);
-			RELEX::DetourJump(REL::ID(2209308).address(), (uintptr_t)&CanUsePreprocessingHead);
+			return 
+				(RELEX::DetourCall(Offset + 0x4A, BSTextureDB::FacegenPathPrintf) != 0) &&
+				(RELEX::DetourJump(REL::ID(2209308).address(), (uintptr_t)&CanUsePreprocessingHead) != 0);
 		}
 		else
 		{
@@ -228,11 +229,10 @@ namespace Addictol
 			RELEX::WriteSafe(Offset + 0x30, { 0x4C, 0x89, 0xE9, 0x48, 0x8D, 0x55, 0xF0, 0x41, 0xB8, 0x04, 0x01, 0x00, 0x00,
 				0x41, 0x89, 0xF1, 0x41, 0x83, 0xF9, 0x02, 0xB8, 0x07, 0x00, 0x00, 0x00, 0x44, 0x0F, 0x44, 0xC8 });
 			// call
-			RELEX::DetourCall(Offset + 0x4D, BSTextureDB::FacegenPathPrintf);
-			RELEX::DetourJump(REL::ID(969238).address(), (uintptr_t)&CanUsePreprocessingHead);
+			return
+				(RELEX::DetourCall(Offset + 0x4D, BSTextureDB::FacegenPathPrintf) != 0) &&
+				(RELEX::DetourJump(REL::ID(969238).address(), (uintptr_t)&CanUsePreprocessingHead) != 0);
 		}
-
-		return true;
 	}
 
 	bool FacegenSystem::InitContinue([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
@@ -319,6 +319,11 @@ namespace Addictol
 	}
 
 	bool ModuleFacegen::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		return true;
+	}
+
+	bool ModuleFacegen::HasProcessDefender() noexcept
 	{
 		return true;
 	}
