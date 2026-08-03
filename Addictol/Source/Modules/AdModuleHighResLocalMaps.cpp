@@ -1,0 +1,152 @@
+// Thanks doodlum for the idea & original mod: https://github.com/doodlum/skyrim-hd-local-map
+
+#include <Modules/AdModuleHighResLocalMaps.h>
+#include <AdUtils.h>
+
+#include <RE/B/BSGraphics.h>
+
+namespace Addictol
+{
+	static REX::TOML::Bool<> bPatchesHighResLocalMaps{ "Patches"sv, "bHighResLocalMaps"sv, false };
+	static REX::TOML::F32<> fAdditionalLocalMapScaleFactor{ "Additional"sv, "fLocalMapScaleFactor"sv, 1.5f };
+
+	namespace highResLocalMapsDetail
+	{
+		inline thread_local bool CurrentMapRendererIsCompanion = false;
+		inline uint32_t MainWidth = 1280;
+		inline uint32_t MainHeight = 720;
+
+		struct CreateRenderTarget // BSGraphics::RenderTargetManager::CreateRenderTarget
+		{
+			static void thunk_capture(void* a_a1, uint32_t a_target, RE::BSGraphics::RenderTargetProperties* a_properties, void* a_a4)
+			{
+				REX::INFO("HighResLocalMaps: Capturing Render Target {}'s Resolution: {}x{}.", a_target, a_properties->width, a_properties->height);
+				MainWidth = a_properties->width;
+				MainHeight = a_properties->height;
+
+				return thunk_scale(a_a1, a_target, a_properties, a_a4);
+			}
+
+			static void thunk_scale(void* a_a1, uint32_t a_target, RE::BSGraphics::RenderTargetProperties* a_properties, void* a_a4)
+			{
+				uint32_t scaledWidth = static_cast<uint32_t>(ceil((float)MainWidth * fAdditionalLocalMapScaleFactor.GetValue()));
+				uint32_t scaledHeight = static_cast<uint32_t>(ceil((float)MainHeight * fAdditionalLocalMapScaleFactor.GetValue()));
+
+				REX::INFO("HighResLocalMaps: Updating Render Target {} from {}x{} to {}x{}.", a_target, a_properties->width, a_properties->height, scaledWidth, scaledHeight);
+				a_properties->width = scaledWidth;
+				a_properties->height = scaledHeight;
+
+				return func(a_a1, a_target, a_properties, a_a4);
+			}
+
+			static inline REL::Relocation<decltype(thunk_scale)> func;
+		};
+
+		struct CreateDepthStencilTarget // BSGraphics::RenderTargetManager::CreateDepthStencilTarget()
+		{
+			static void thunk(void* a_a1, uint32_t a_target, RE::BSGraphics::DepthStencilTargetProperties* a_properties, void* a_a4)
+			{
+				uint32_t scaledWidth = static_cast<uint32_t>(ceil((float)MainWidth * fAdditionalLocalMapScaleFactor.GetValue()));
+				uint32_t scaledHeight = static_cast<uint32_t>(ceil((float)MainHeight * fAdditionalLocalMapScaleFactor.GetValue()));
+
+				REX::INFO("HighResLocalMaps: Updating Depth Stencil Target {} from {}x{} to {}x{}.", a_target, a_properties->width, a_properties->height, scaledWidth, scaledHeight);
+				a_properties->width = scaledWidth;
+				a_properties->height = scaledHeight;
+
+				return func(a_a1, a_target, a_properties, a_a4);
+			}
+
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		struct Render // LocalMapRenderer::Render
+		{
+			static bool thunk(void* a_a1, void* a_a2, void* a_a3)
+			{
+				auto& outputRenderTarget = *reinterpret_cast<int32_t*>(static_cast<std::byte*>(a_a1) + 0x2A0);
+				CurrentMapRendererIsCompanion = outputRenderTarget == 20;
+				outputRenderTarget = 20;
+
+				return func(a_a1, a_a2, a_a3);
+			}
+
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		struct RenderEffect // ImageSpaceManager::RenderEffect
+		{
+			static uintptr_t thunk(void* a_a1, uintptr_t a_effectEnum, void* a_a3, int32_t a_outputTarget, void* a_a5)
+			{
+				if (!CurrentMapRendererIsCompanion)
+					// Local Map Output
+					return func(a_a1, RELEX::IsRuntimeOG() ? 152 : 153, a_a3, 19, a_a5);
+				else
+				 	// Companion Map Output
+					return func(a_a1, RELEX::IsRuntimeOG() ? 153 : 154, a_a3, 20, a_a5);
+			}
+
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+	}
+
+	ModuleHighResLocalMaps::ModuleHighResLocalMaps() :
+		Module("High Res Local Maps", &bPatchesHighResLocalMaps)
+	{}
+
+	bool ModuleHighResLocalMaps::DoQuery() const noexcept
+	{
+		return true;
+	}
+
+	bool ModuleHighResLocalMaps::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		// Targets
+		const auto targetCreate 					= REL::ID{ 1118299, 2318909 }.address();
+		const auto targetLocalMapOutput 			= targetCreate + REL::Offset{ 0x62D, 0x650 }.offset();
+		const auto targetCompanionMapOutput 		= targetCreate + REL::Offset{ 0x66B, 0x690 }.offset();
+		const auto targetCompanionMapPrimary 		= targetCreate + REL::Offset{ 0x717, 0x708 }.offset();
+		const auto targetCompanionMapSecondary 		= targetCreate + REL::Offset{ 0x6A5, 0x6CC }.offset();
+		const auto targetCompanionMapDepthStencil 	= targetCreate + REL::Offset{ 0x749, 0x73E }.offset();
+		const auto targetRender 					= REL::ID{ 213532, 2194685 }.address();
+		const auto targetRenderEffect 				= targetRender + REL::Offset{ 0x97E, 0xA3B }.offset();
+
+		// Validate
+		const auto checkCode = std::initializer_list<uint8_t>{ 0xE8 };
+		if (!RELEX::Validate(targetLocalMapOutput, 						checkCode) ||
+			!RELEX::Validate(targetCompanionMapOutput, 					checkCode) ||
+			!RELEX::Validate(targetCompanionMapPrimary, 				checkCode) ||
+			!RELEX::Validate(targetCompanionMapSecondary, 				checkCode) ||
+			!RELEX::Validate(targetCompanionMapDepthStencil, 			checkCode) ||
+			!RELEX::Validate(targetRenderEffect, 						checkCode) ||
+			!RELEX::Validate(targetRender, { 0x48, 0x8B, 0xC4, 0x88, 0x50, 0x10 }))
+			return false;
+
+		// Set Func Addresses
+		highResLocalMapsDetail::CreateRenderTarget::func 		= REL::ID{ 43433, 2277176 }.address();
+		highResLocalMapsDetail::CreateDepthStencilTarget::func 	= REL::ID{ 1159619, 2277177 }.address();
+		highResLocalMapsDetail::RenderEffect::func 				= REL::ID{ 1309722, 2316595 }.address();
+
+		// Upsample the Render and Depth Stencil Targets
+		RELEX::DetourCall(targetLocalMapOutput, 			(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_capture);	// 19 Local Map Output
+		RELEX::DetourCall(targetCompanionMapOutput, 		(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_scale);	// 20 Companion Map Output
+		RELEX::DetourCall(targetCompanionMapPrimary, 		(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_scale);	// 23 Companion Map Primary
+		RELEX::DetourCall(targetCompanionMapSecondary, 		(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_scale);	// 21 Companion Map Secondary
+		RELEX::DetourCall(targetCompanionMapDepthStencil, 	(uintptr_t)highResLocalMapsDetail::CreateDepthStencilTarget::thunk);	// 11 Companion Map Depth Stencil
+
+		// Use the Companion app's Render Targets
+		highResLocalMapsDetail::Render::func = RELEX::DetourJump(targetRender, (uintptr_t)highResLocalMapsDetail::Render::thunk);
+		RELEX::DetourCall(targetRenderEffect, (uintptr_t)highResLocalMapsDetail::RenderEffect::thunk);
+
+		return true;
+	}
+
+	bool ModuleHighResLocalMaps::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		return true;
+	}
+
+	bool ModuleHighResLocalMaps::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	{
+		return true;
+	}
+}

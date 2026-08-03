@@ -18,7 +18,7 @@ namespace Addictol
 			"bBSMTAManager"sv, "bBSPreCulledObjects"sv, "bINISettingCollection"sv,
 			"bArchiveLimits"sv, "bInputSwitch"sv, "bFasterWorkshop"sv,
 			"bSaveAddedSoundCategories"sv, "bCOMInit"sv, "bHighResBloom"sv, "bDpiScaling"sv,
-			"bSaveCompression"sv, "bAudioSwitch"sv
+			"bSaveCompression"sv, "bAudioSwitch"sv, "bHighResLocalMaps"sv
 		}},
 		{ "Fixes"sv, {
 			"bGreyMovie"sv, "bPackageAllocateLocation"sv, "bInitTints"sv, "bLODDistance"sv,
@@ -52,7 +52,8 @@ namespace Addictol
 			"nSleepTimer"sv, "nMaxLockCount"sv,
 			"bInteriorNavCutMultiThreading"sv, "nMaxPapyrusOpsPerFrame"sv,
 			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
-			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"
+			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"sv,
+			"fLocalMapScaleFactor"sv
 		}},
 		{ "Profiler"sv, {
 			"bProfiler"sv, "bESPProfiler"sv, "bESPSubHooks"sv, "bDLLProfiler"sv,

@@ -74,6 +74,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResLocalMaps.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResLocalMaps.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />

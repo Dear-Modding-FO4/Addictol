@@ -66,6 +66,10 @@ bSaveCompression = true
 # Automatically switches to a newly selected default audio device.
 bAudioSwitch = true
 
+# Raises the Local Maps resolution, scales with fLocalMapScaleFactor.
+# Affects the Companion app as well, can increase performance & VRAM cost.
+bHighResLocalMaps = false
+
 
 [Fixes]
 
@@ -299,6 +303,9 @@ bRobCoPatcherCacheValidate = false
 
 # Ignore Mod Compatibility Checks.
 bIgnoreCompatibilityChecks = false
+
+# Local Map Scale Factor (needs bHighResLocalMaps).
+fLocalMapScaleFactor = 1.5
 
 
 [Profiler]

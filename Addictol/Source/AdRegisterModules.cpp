@@ -83,6 +83,7 @@
 #include <Modules/AdModuleProcessIcon.h>
 #include <Modules/AdModuleWaterJetpackFix.h>
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
+#include <Modules/AdModuleHighResLocalMaps.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -168,6 +169,7 @@ static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMes
 static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIcon>();
 static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJetpackFix>();
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
+static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 
 void AdRegisterPreloadModules()
 {
@@ -263,6 +265,7 @@ void AdRegisterModules()
 	modules.Register(sModuleHUDMessageQueue);
 	modules.Register(sModuleWaterJetpackFix);
 	modules.Register(sModuleAIProcess3DUpdateFlag);
+	modules.Register(sModuleHighResLocalMaps);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
