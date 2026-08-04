@@ -10,7 +10,8 @@ namespace Addictol
 
 	namespace createD3DAndSwapchainDetail
 	{
-		::HRESULT GetDisplayModeList(::IDXGIOutput& a_this, ::DXGI_FORMAT a_enumFormat, ::UINT a_flags, ::UINT* a_numModes, ::DXGI_MODE_DESC* a_desc)
+		static ::HRESULT GetDisplayModeList(::IDXGIOutput& a_this, ::DXGI_FORMAT a_enumFormat, 
+			::UINT a_flags, ::UINT* a_numModes, ::DXGI_MODE_DESC* a_desc)
 		{
 			const auto result = a_this.GetDisplayModeList(a_enumFormat, a_flags, a_numModes, a_desc);
 
@@ -55,10 +56,12 @@ namespace Addictol
 		const auto target = REL::Relocation(REL::ID{ 224250, 2277018, 4492363 }, REL::Offset{ 0x114, 0x114, 0x10B }).address();
 		const std::size_t size = 0x7;
 
-		REL::WriteSafeFill(target, REL::INT3, size);
-		RELEX::XbyakJump<createD3DAndSwapchainDetail::Patch>(target, target + size, (std::uintptr_t)&createD3DAndSwapchainDetail::GetDisplayModeList);
+		if (!RELEX::Validate(target, { 0x41, 0xFF, 0x52, 0x40, 0x45, 0x32, 0xF6 }))
+			return false;
 
-		return true;
+		REL::WriteSafeFill(target, REL::INT3, size);
+		return RELEX::XbyakJump<createD3DAndSwapchainDetail::Patch>(target, target + size,
+			reinterpret_cast<uintptr_t>(&createD3DAndSwapchainDetail::GetDisplayModeList)) != 0;
 	}
 
 	bool ModuleCreateD3DAndSwapchain::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

@@ -28,22 +28,10 @@ namespace Addictol
 
 	bool ModulePackageAllocateLocation::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (!RELEX::IsRuntimeOG())
-		{
-			// NG/AE
-			auto Sub = REL::ID(2190427).address();
-			RELEX::DetourCall(REL::ID(2211931).address() + 0x144, Sub);
-		}
-		else
-		{
-			// OG
-			REL::Relocation Target{ REL::ID(1248203), 0x141 };
-
-			auto& trampoline = REL::GetTrampoline();
-			GetPrimitive::func = trampoline.write_call<5>(Target.address(), GetPrimitive::ExtraDataList_GetPrimitive);
-		}
-
-		return true;
+		REL::Relocation Target{ REL::ID{ 1248203, 2211931 }, REL::Offset{ 0x141, 0x144 } };
+		if (!RELEX::Validate(Target, { 0xE8 })) return false;
+		GetPrimitive::func = RELEX::DetourClassCall(Target, &GetPrimitive::ExtraDataList_GetPrimitive);
+		return GetPrimitive::func != 0;
 	}
 
 	bool ModulePackageAllocateLocation::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

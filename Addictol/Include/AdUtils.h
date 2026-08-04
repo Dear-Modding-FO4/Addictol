@@ -141,6 +141,12 @@ namespace RELEX
 
 	[[nodiscard]] bool Validate(uintptr_t a_target, const std::initializer_list<uint8_t>& a_expected) noexcept;
 
+	[[nodiscard]] __forceinline bool Validate(const REL::Relocation<>& a_target,
+		const std::initializer_list<uint8_t>& a_expected) noexcept
+	{
+		return Validate(a_target.address(), a_expected);
+	}
+
 	uintptr_t TryDetourJump(uintptr_t a_target, uintptr_t a_function,
 		const std::initializer_list<uint8_t>& a_expected) noexcept;
 	uintptr_t TryDetourCall(uintptr_t a_target, uintptr_t a_function,

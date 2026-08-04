@@ -1,26 +1,19 @@
 #include <Modules/AdModuleCOMInit.h>
 #include <AdUtils.h>
 
-#include <windows.h>
-#include <combaseapi.h>
-
-#undef MAX_PATH
-#undef MEM_RELEASE
-
-#define AD_NOMESSAGE_CHECKINTERNETACCESS 1
-
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesCOMInit{ "Patches"sv, "bCOMInit"sv, true };
 
 	namespace detail
 	{
-		decltype(&CoInitializeEx) CoInitializeExOrig{ nullptr };
+		static REX::W32::HRESULT CoInitializeEx([[maybe_unused]] void* pvReserved, [[maybe_unused]] uint32_t dwCoInit);
+		static inline REL::Relocation<decltype(CoInitializeEx)> CoInitializeExOrig;
 
-		static REX::W32::HRESULT CoInitializeEx([[maybe_unused]] LPVOID pvReserved, [[maybe_unused]] DWORD dwCoInit)
+		static REX::W32::HRESULT CoInitializeEx([[maybe_unused]] void* pvReserved, [[maybe_unused]] uint32_t dwCoInit)
 		{
 			// analog CoInitialize(nullptr)
-			return (REX::W32::HRESULT)CoInitializeExOrig(nullptr, COINIT_APARTMENTTHREADED);
+			return CoInitializeExOrig(nullptr, 2);
 		}
 	}
 
@@ -35,22 +28,22 @@ namespace Addictol
 
 	bool ModuleCOMInit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		auto dll = GetModuleHandleA("Ole32.dll");
+		auto dll = REX::W32::GetModuleHandleA("Ole32.dll");
 		if (!dll)
 		{
 			REX::INFO("No found Ole32.dll"sv);
 			return false;
 		}
 
-		auto func = GetProcAddress(dll, "CoInitializeEx");
+		auto func = REX::W32::GetProcAddress(dll, "CoInitializeEx");
 		if (!func)
 		{
 			REX::INFO("No found CoInitializeEx() in Ole32.dll"sv);
 			return false;
 		}
 		
-		*(uintptr_t*)(&detail::CoInitializeExOrig) =
-			RELEX::DetourJump((uintptr_t)func, (uintptr_t)&detail::CoInitializeEx);
+		detail::CoInitializeExOrig = RELEX::DetourJump(reinterpret_cast<uintptr_t>(func), 
+			reinterpret_cast<uintptr_t>(&detail::CoInitializeEx));
 
 		if (!detail::CoInitializeExOrig)
 		{
