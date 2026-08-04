@@ -149,7 +149,7 @@ namespace Addictol
 
 	bool ModuleUtilityShader::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Base{ REL::ID{ 768994, 2319078 } };
+		REL::Relocation Base{ REL::ID{ 768994, 2319078 } };
 
 		if (RELEX::IsRuntimeOG())
 			utilityShaderDetail::CreateShadersOG();

@@ -19,7 +19,7 @@ namespace Addictol
 	public:
 		static void Install()
 		{
-			static REL::Relocation<std::uintptr_t> target{ RE::BSScript::SimpleAllocMemoryPagePolicy::VTABLE[0] };
+			static REL::Relocation target{ RE::BSScript::SimpleAllocMemoryPagePolicy::VTABLE[0] };
 			_GetLargestAvailablePage = target.write_vfunc(0x04, GetLargestAvailablePage);
 		}
 
@@ -114,7 +114,7 @@ namespace Addictol
 			if (!RELEX::IsRuntimeOG())
 			{
 				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2251339 }, REL::Offset{ 0x797 } }.address(), Lock);
-				static REL::Relocation<std::uintptr_t> target{ REL::ID{ 2251339 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x79C }.offset()) };
+				static REL::Relocation target{ REL::ID{ 2251339 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x79C }.offset()) };
 				target.write_fill(REL::NOP, 0x08);
 			}
 		}
@@ -196,9 +196,9 @@ namespace Addictol
 				}
 			};
 
-			static REL::Relocation<std::uintptr_t> target{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4F0, 0xA64 }.offset()) };
-			static REL::Relocation<std::uintptr_t> loopin{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x0A0 }.offset()) };
-			static REL::Relocation<std::uintptr_t> loopex{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4FD, 0xA77 }.offset()) };
+			static REL::Relocation target{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4F0, 0xA64 }.offset()) };
+			static REL::Relocation loopin{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x0A0 }.offset()) };
+			static REL::Relocation loopex{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4FD, 0xA77 }.offset()) };
 
 			auto code = PapyrusOpsPerFrame(loopin.address(), loopex.address());
 			target.write_fill(REL::NOP, loopex.address() - target.address());

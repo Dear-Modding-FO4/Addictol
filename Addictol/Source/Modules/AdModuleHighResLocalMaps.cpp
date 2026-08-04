@@ -20,7 +20,7 @@ namespace Addictol
 		{
 			static void thunk_capture(void* a_a1, uint32_t a_target, RE::BSGraphics::RenderTargetProperties* a_properties, void* a_a4)
 			{
-				REX::INFO("HighResLocalMaps: Capturing Render Target {}'s Resolution: {}x{}.", a_target, a_properties->width, a_properties->height);
+				REX::INFO("HighResLocalMaps: Capturing Render Target {}'s Resolution: {}x{}."sv, a_target, a_properties->width, a_properties->height);
 				MainWidth = a_properties->width;
 				MainHeight = a_properties->height;
 
@@ -29,10 +29,11 @@ namespace Addictol
 
 			static void thunk_scale(void* a_a1, uint32_t a_target, RE::BSGraphics::RenderTargetProperties* a_properties, void* a_a4)
 			{
-				uint32_t scaledWidth = static_cast<uint32_t>(ceil((float)MainWidth * fAdditionalLocalMapScaleFactor.GetValue()));
-				uint32_t scaledHeight = static_cast<uint32_t>(ceil((float)MainHeight * fAdditionalLocalMapScaleFactor.GetValue()));
+				auto scaledWidth = static_cast<uint32_t>(ceil((float)MainWidth * fAdditionalLocalMapScaleFactor.GetValue()));
+				auto scaledHeight = static_cast<uint32_t>(ceil((float)MainHeight * fAdditionalLocalMapScaleFactor.GetValue()));
 
-				REX::INFO("HighResLocalMaps: Updating Render Target {} from {}x{} to {}x{}.", a_target, a_properties->width, a_properties->height, scaledWidth, scaledHeight);
+				REX::INFO("HighResLocalMaps: Updating Render Target {} from {}x{} to {}x{}."sv, a_target, a_properties->width, a_properties->height,
+					scaledWidth, scaledHeight);
 				a_properties->width = scaledWidth;
 				a_properties->height = scaledHeight;
 
@@ -46,10 +47,11 @@ namespace Addictol
 		{
 			static void thunk(void* a_a1, uint32_t a_target, RE::BSGraphics::DepthStencilTargetProperties* a_properties, void* a_a4)
 			{
-				uint32_t scaledWidth = static_cast<uint32_t>(ceil((float)MainWidth * fAdditionalLocalMapScaleFactor.GetValue()));
-				uint32_t scaledHeight = static_cast<uint32_t>(ceil((float)MainHeight * fAdditionalLocalMapScaleFactor.GetValue()));
+				auto scaledWidth = static_cast<uint32_t>(ceil((float)MainWidth * fAdditionalLocalMapScaleFactor.GetValue()));
+				auto scaledHeight = static_cast<uint32_t>(ceil((float)MainHeight * fAdditionalLocalMapScaleFactor.GetValue()));
 
-				REX::INFO("HighResLocalMaps: Updating Depth Stencil Target {} from {}x{} to {}x{}.", a_target, a_properties->width, a_properties->height, scaledWidth, scaledHeight);
+				REX::INFO("HighResLocalMaps: Updating Depth Stencil Target {} from {}x{} to {}x{}."sv, a_target, a_properties->width,
+					a_properties->height, scaledWidth, scaledHeight);
 				a_properties->width = scaledWidth;
 				a_properties->height = scaledHeight;
 
@@ -75,7 +77,8 @@ namespace Addictol
 
 		struct RenderEffect // ImageSpaceManager::RenderEffect
 		{
-			static uintptr_t thunk(void* a_a1, uintptr_t a_effectEnum, void* a_a3, int32_t a_outputTarget, void* a_a5)
+			static uintptr_t thunk(void* a_a1, [[maybe_unused]] uintptr_t a_effectEnum, void* a_a3,
+				[[maybe_unused]] int32_t a_outputTarget, void* a_a5)
 			{
 				if (!CurrentMapRendererIsCompanion)
 					// Local Map Output

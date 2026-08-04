@@ -50,9 +50,9 @@ namespace Addictol
 	{
 		const auto base = REL::ID{ 566261, 2233255 }.address();
 
-		REL::Relocation<std::uintptr_t> target{ base + REL::Offset { 0xCB2, 0xC92 }.offset() };
-		REL::Relocation<std::uintptr_t> resume{ target.address() + 0x7 };
-		REL::Relocation<std::uintptr_t> returnAddr{ base + REL::Offset { 0xDA7, 0xD87 }.offset() };
+		REL::Relocation target{ base + REL::Offset { 0xCB2, 0xC92 }.offset() };
+		REL::Relocation resume{ target.address() + 0x7 };
+		REL::Relocation returnAddr{ base + REL::Offset { 0xDA7, 0xD87 }.offset() };
 
 		const auto instructionBytes = resume.address() - target.address();
 		for (std::size_t i = 0; i < instructionBytes; i++)

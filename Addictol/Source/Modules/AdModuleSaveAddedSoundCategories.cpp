@@ -148,7 +148,7 @@ namespace Addictol
 
 		// Saving
 		auto& trampoline = REL::GetTrampoline();
-		trampoline.write_jmp<5>(REL::Relocation<std::uintptr_t>{ REL::ID{ 950650, 2274822 } }.address(), saveAddedSoundCategoriesDetail::SaveAddedSoundCategories::INIPrefSettingCollection_Unlock);
+		trampoline.write_jmp<5>(REL::Relocation{ REL::ID{ 950650, 2274822 } }.address(), saveAddedSoundCategoriesDetail::SaveAddedSoundCategories::INIPrefSettingCollection_Unlock);
 
 		return true;
 	}

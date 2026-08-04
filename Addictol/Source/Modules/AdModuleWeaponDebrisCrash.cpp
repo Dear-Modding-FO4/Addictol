@@ -16,7 +16,7 @@ namespace Addictol
 
 	bool ModuleWeaponDebrisCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const REL::Relocation<std::uintptr_t> func{ REL::ID{ 22388, 2195766 } };
+		const REL::Relocation func{ REL::ID{ 22388, 2195766 } };
 		const auto src = func.address() + REL::Offset{ 0x52, 0x4F }.offset();
 		const auto dst = func.address() + REL::Offset{ 0x703, 0x6DD }.offset();
 

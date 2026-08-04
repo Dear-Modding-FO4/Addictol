@@ -37,8 +37,8 @@ namespace Addictol
 
 	bool ModuleWorkbenchSwap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Target{ REL::ID{ 1573164, 2267897 }, 0x48 };
-		REL::Relocation<std::uintptr_t> Resume{ REL::ID{ 1573164, 2267897 }, 0x4D };
+		REL::Relocation Target{ REL::ID{ 1573164, 2267897 }, 0x48 };
+		REL::Relocation Resume{ REL::ID{ 1573164, 2267897 }, 0x4D };
 
 		workbenchSwapDetail::Patch p{ Resume.address() };
 		p.ready();

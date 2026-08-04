@@ -226,7 +226,7 @@ namespace Addictol
 
 		// Combat-exit dialogue CALL site inside CombatController::SetTarget (NG == AE, OG differs).
 		{
-			REL::Relocation<std::uintptr_t> site{ REL::ID{ 369646, 2216401 }, REL::Offset{ 0x1B8, 0x257 } };
+			REL::Relocation site{ REL::ID{ 369646, 2216401 }, REL::Offset{ 0x1B8, 0x257 } };
 
 			// 1. must be an E8 rel32 CALL
 			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
@@ -236,7 +236,7 @@ namespace Addictol
 				// 2. must still point at vanilla HandleOnCombatExit (else another mod redirected it, or wrong build)
 				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
 				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation<std::uintptr_t> expectedCallee{ REL::ID{ 1512408, 2238049 } };
+				REL::Relocation expectedCallee{ REL::ID{ 1512408, 2238049 } };
 
 				if (callTarget != expectedCallee.address())
 					REX::WARN("CompanionStrayBullet: combat-exit call target unexpected (already patched or unsupported build). Hook B not applied."sv);
@@ -252,7 +252,7 @@ namespace Addictol
 		}
 
 		{
-			REL::Relocation<std::uintptr_t> site{ REL::ID{ 1512511, 2229916 }, REL::Offset{ 0x118, 0x11E } };
+			REL::Relocation site{ REL::ID{ 1512511, 2229916 }, REL::Offset{ 0x118, 0x11E } };
 
 			// 1. must be an E8 rel32 CALL
 			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
@@ -262,7 +262,7 @@ namespace Addictol
 				// 2. must still point at the vanilla command-enter handler
 				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
 				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation<std::uintptr_t> expectedCallee{ REL::ID{ 354559, 2233152 } };
+				REL::Relocation expectedCallee{ REL::ID{ 354559, 2233152 } };
 
 				if (callTarget != expectedCallee.address())
 					REX::WARN("CompanionStrayBullet: command-enter call target unexpected (already patched or unsupported build). Hook A not applied."sv);

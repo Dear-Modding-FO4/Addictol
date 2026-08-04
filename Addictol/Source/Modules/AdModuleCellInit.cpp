@@ -53,7 +53,7 @@ namespace Addictol
 
 	bool ModuleCellInit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Target{ REL::ID{ 868663, 2200179 }, REL::Offset(0x3E) };
+		REL::Relocation Target{ REL::ID{ 868663, 2200179 }, REL::Offset(0x3E) };
 
 		cellInitDetail::Patch p{ reinterpret_cast<std::uintptr_t>(cellInitDetail::GetLocation) };
 		p.ready();

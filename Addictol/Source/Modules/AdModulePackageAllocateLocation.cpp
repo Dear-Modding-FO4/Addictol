@@ -37,7 +37,7 @@ namespace Addictol
 		else
 		{
 			// OG
-			REL::Relocation<std::uintptr_t> Target{ REL::ID(1248203), 0x141 };
+			REL::Relocation Target{ REL::ID(1248203), 0x141 };
 
 			auto& trampoline = REL::GetTrampoline();
 			GetPrimitive::func = trampoline.write_call<5>(Target.address(), GetPrimitive::ExtraDataList_GetPrimitive);

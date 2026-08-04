@@ -121,7 +121,7 @@ namespace Addictol
 
 	bool ModulePowerGridScrap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation<std::uintptr_t>(REL::VariantID{ 761346, 2201199 }).address();
+		const auto target = REL::Relocation(REL::VariantID{ 761346, 2201199 }).address();
 		OriginalSetWantsDelete = reinterpret_cast<TSetWantsDelete>(
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&Hook_SetWantsDelete)));
 

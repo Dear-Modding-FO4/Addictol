@@ -65,7 +65,7 @@ namespace Addictol
 	bool ModuleImageSpaceAdapterWarning::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& trampoline = REL::GetTrampoline();
-		REL::Relocation<std::uintptr_t> target{ REL::ID{ 231868, 2199987 }, REL::Offset{ 0x57F, 0x573 } };
+		REL::Relocation target{ REL::ID{ 231868, 2199987 }, REL::Offset{ 0x57F, 0x573 } };
 		imadDetail::Patch p{ reinterpret_cast<std::uintptr_t>(&imadDetail::LoadChunk) };
 		p.ready();
 		imadDetail::_original = trampoline.write_call<5>(target.address(), trampoline.allocate(p));

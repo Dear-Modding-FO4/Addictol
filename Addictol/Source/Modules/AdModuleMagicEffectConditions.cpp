@@ -85,7 +85,7 @@ namespace Addictol
 	bool ModuleMagicEffectConditions::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
 		// OG 1228998 -> RVA 0xC4EE40, NG 2226003 -> 0xB00AD0, AE 2226003 -> 0xB744F0.
-		REL::Relocation<std::uintptr_t> target{ REL::ID{ 1228998, 2226003 } };
+		REL::Relocation target{ REL::ID{ 1228998, 2226003 } };
 
 		// Prologue byte-signature guard
 		const auto hook = reinterpret_cast<std::uintptr_t>(&magicEffectConditionsDetail::EvaluateConditions_Hook);

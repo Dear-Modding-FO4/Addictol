@@ -32,7 +32,7 @@ namespace Addictol
 
 	bool ModuleMagicEffectApplyEvent::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Target{ REL::ID(RE::GameScript::CombatEventHandler::VTABLE[1]) };
+		REL::Relocation Target{ REL::ID(RE::GameScript::CombatEventHandler::VTABLE[1]) };
 		magicEffectApplyDetail::ProcessEvent::func = Target.write_vfunc(0x1, magicEffectApplyDetail::ProcessEvent::thunk);
 
 		return true;

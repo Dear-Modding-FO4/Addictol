@@ -20,7 +20,7 @@ namespace Addictol
 
 	namespace fasterWorkshopDetail
 	{
-		REL::Relocation<std::uintptr_t> HookLeafNodeTargetOG{ REL::ID{ 934716 }, REL::Offset{ 0x1EF } };
+		REL::Relocation HookLeafNodeTargetOG{ REL::ID{ 934716 }, REL::Offset{ 0x1EF } };
 
 		// Constructible Object Map
 		std::unordered_map<const RE::BGSKeyword*, std::vector<const RE::BGSConstructibleObject*>> g_cobjMap;
@@ -349,8 +349,8 @@ namespace Addictol
 
 	bool ModuleFasterWorkshop::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> HookCheckForValidChildrenTarget{ REL::ID{ 934716, 2195480 }, REL::Offset{ 0x51, 0x4F } };
-		REL::Relocation<std::uintptr_t> HookIconLoadLagTarget{ REL::ID{ 1280212, 2224975 }, REL::Offset{ 0x3A5, 0x3A0 } };
+		REL::Relocation HookCheckForValidChildrenTarget{ REL::ID{ 934716, 2195480 }, REL::Offset{ 0x51, 0x4F } };
+		REL::Relocation HookIconLoadLagTarget{ REL::ID{ 1280212, 2224975 }, REL::Offset{ 0x3A5, 0x3A0 } };
 
 		// Workshop Lag Fix
 		RELEX::DetourCall(HookCheckForValidChildrenTarget.address(), (uintptr_t)&fasterWorkshopDetail::CachedCheckForValidChildren);

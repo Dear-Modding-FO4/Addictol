@@ -31,7 +31,7 @@ namespace Addictol
 
 	bool ModuleINISettingCollection::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> vtable{ RE::INISettingCollection::VTABLE[0] };
+		REL::Relocation vtable{ RE::INISettingCollection::VTABLE[0] };
 		iniSettingCollectionDetail::Open::func = vtable.write_vfunc(0x5, iniSettingCollectionDetail::Open::thunk);
 
 		return true;

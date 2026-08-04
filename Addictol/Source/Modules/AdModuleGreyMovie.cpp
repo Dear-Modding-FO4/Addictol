@@ -54,7 +54,7 @@ namespace Addictol
 		else
 		{
 			// OG
-			const REL::Relocation<std::uintptr_t> target{ REL::ID(1526234), REL::Offset(0x216) };
+			const REL::Relocation target{ REL::ID(1526234), REL::Offset(0x216) };
 			auto& trampoline = REL::GetTrampoline();
 			trampoline.write_call<6>(target.address(), HKGfxSetBGAlpha);
 		}
