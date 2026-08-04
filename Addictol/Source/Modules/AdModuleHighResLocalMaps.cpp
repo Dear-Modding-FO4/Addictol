@@ -121,23 +121,22 @@ namespace Addictol
 			!RELEX::Validate(targetRender, { 0x48, 0x8B, 0xC4, 0x88, 0x50, 0x10 }))
 			return false;
 
-		// Set Func Addresses
-		highResLocalMapsDetail::CreateRenderTarget::func 		= REL::ID{ 43433, 2277176 }.address();
-		highResLocalMapsDetail::CreateDepthStencilTarget::func 	= REL::ID{ 1159619, 2277177 }.address();
-		highResLocalMapsDetail::RenderEffect::func 				= REL::ID{ 1309722, 2316595 }.address();
-
 		// Upsample the Render and Depth Stencil Targets
-		RELEX::DetourCall(targetLocalMapOutput, 			(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_capture);	// 19 Local Map Output
-		RELEX::DetourCall(targetCompanionMapOutput, 		(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_scale);	// 20 Companion Map Output
-		RELEX::DetourCall(targetCompanionMapPrimary, 		(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_scale);	// 23 Companion Map Primary
-		RELEX::DetourCall(targetCompanionMapSecondary, 		(uintptr_t)highResLocalMapsDetail::CreateRenderTarget::thunk_scale);	// 21 Companion Map Secondary
-		RELEX::DetourCall(targetCompanionMapDepthStencil, 	(uintptr_t)highResLocalMapsDetail::CreateDepthStencilTarget::thunk);	// 11 Companion Map Depth Stencil
+		highResLocalMapsDetail::CreateRenderTarget::func = RELEX::DetourClassCall(targetLocalMapOutput, &highResLocalMapsDetail::CreateRenderTarget::thunk_capture);				// 19 Local Map Output
+		RELEX::DetourClassCall(targetCompanionMapOutput, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale);																	// 20 Companion Map Output
+		RELEX::DetourClassCall(targetCompanionMapPrimary, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale);																// 23 Companion Map Primary
+		RELEX::DetourClassCall(targetCompanionMapSecondary, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale);																// 21 Companion Map Secondary
+		highResLocalMapsDetail::CreateDepthStencilTarget::func = RELEX::DetourClassCall(targetCompanionMapDepthStencil, &highResLocalMapsDetail::CreateDepthStencilTarget::thunk);	// 11 Companion Map Depth Stencil
 
 		// Use the Companion app's Render Targets
-		highResLocalMapsDetail::Render::func = RELEX::DetourJump(targetRender, (uintptr_t)highResLocalMapsDetail::Render::thunk);
-		RELEX::DetourCall(targetRenderEffect, (uintptr_t)highResLocalMapsDetail::RenderEffect::thunk);
+		highResLocalMapsDetail::Render::func = RELEX::DetourClassJump(targetRender, &highResLocalMapsDetail::Render::thunk);
+		highResLocalMapsDetail::RenderEffect::func = RELEX::DetourClassCall(targetRenderEffect, &highResLocalMapsDetail::RenderEffect::thunk);
 
-		return true;
+		// Validate the Funcs
+		return 	highResLocalMapsDetail::CreateRenderTarget::func != 0 &&
+				highResLocalMapsDetail::CreateDepthStencilTarget::func != 0 &&
+				highResLocalMapsDetail::Render::func != 0 &&
+				highResLocalMapsDetail::RenderEffect::func != 0;
 	}
 
 	bool ModuleHighResLocalMaps::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
