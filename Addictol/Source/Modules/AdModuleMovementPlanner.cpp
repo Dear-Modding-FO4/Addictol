@@ -1,6 +1,8 @@
 #include <Modules/AdModuleMovementPlanner.h>
 #include <AdUtils.h>
 
+#include <Windows.h>
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesMovementPlanner{ "Fixes"sv, "bMovementPlanner"sv, true };
@@ -29,12 +31,10 @@ namespace Addictol
 
 	bool ModuleMovementPlanner::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<std::uintptr_t> Target{ REL::ID{ 1403049, 2234683 }, 0x30 };
-
-		auto& trampoline = REL::GetTrampoline();
-		movementPlannerDetail::CanWarpOnPathFailure::func = trampoline.write_call<5>(Target.address(), movementPlannerDetail::CanWarpOnPathFailure::thunk);
-
-		return true;
+		using namespace movementPlannerDetail;
+		REL::Relocation Target{ REL::ID{ 1403049, 2234683 }, 0x30 };
+		CanWarpOnPathFailure::func = RELEX::DetourClassCall(Target, &CanWarpOnPathFailure::thunk);
+		return CanWarpOnPathFailure::func != 0;
 	}
 
 	bool ModuleMovementPlanner::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

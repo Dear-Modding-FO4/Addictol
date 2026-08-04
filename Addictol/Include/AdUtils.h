@@ -116,7 +116,7 @@ namespace RELEX
 	template<class T>
 	inline static uintptr_t DetourClassCall(const REL::Relocation<>& a_target, T a_function) noexcept
 	{
-		return DetourJump(a_target, *(uintptr_t*)&a_function);
+		return DetourCall(a_target, *(uintptr_t*)&a_function);
 	}
 
 	template<class T, class... _Types>
