@@ -3,7 +3,6 @@
 #include <AdUtils.h>
 #include <AdAssert.h>
 #include <detours/Detours.h>
-#include <Windows.h>
 
 #include <INI/SimpleIni.h>
 
@@ -11,6 +10,7 @@
 #undef MEM_RELEASE
 #undef MAX_PATH
 #undef PAGE_EXECUTE_READWRITE
+#undef IMAGE_DOS_SIGNATURE
 
 std::string AdGetRuntimePath() noexcept
 {
@@ -349,12 +349,17 @@ namespace Addictol
 		if (s.empty() || !s.length())
 			return "";
 
-		int len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), (int)s.length(), nullptr, 0, nullptr, nullptr);
+		auto w2mb = [](const wchar_t* a_src, int32_t a_srcLen, char* a_dst = nullptr, int32_t a_dstLen = 0)
+			{
+				return REX::W32::WideCharToMultiByte(CP_ACP, 0, a_src, a_srcLen, a_dst, a_dstLen, nullptr, nullptr);
+			};
+
+		auto len = w2mb(s.c_str(), static_cast<int32_t>(s.length()));
 		if (len > 0)
 		{
 			auto buf = std::make_unique<char[]>((size_t)len + 1);
 			std::fill_n(buf.get(), (size_t)len + 1, 0);
-			WideCharToMultiByte(CP_ACP, 0, s.c_str(), (int)s.length(), buf.get(), len, nullptr, nullptr);
+			w2mb(s.c_str(), static_cast<int32_t>(s.length()), buf.get(), len);
 			return buf.get();
 		}
 
@@ -366,12 +371,17 @@ namespace Addictol
 		if (s.empty() || !s.length())
 			return L"";
 
-		int len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), (int)s.length(), nullptr, 0);
+		auto mb2w = [](const char* a_src, std::int32_t a_srcLen, wchar_t* a_dst = nullptr, std::int32_t a_dstLen = 0)
+			{
+				return REX::W32::MultiByteToWideChar(CP_ACP, 0, a_src, a_srcLen, a_dst, a_dstLen);
+			};
+
+		int len = mb2w(s.c_str(), static_cast<int32_t>(s.length()));
 		if (len > 0)
 		{
 			auto buf = std::make_unique<wchar_t[]>((size_t)len + 1);
 			std::fill_n(buf.get(), (size_t)len + 1, 0);
-			MultiByteToWideChar(CP_ACP, 0, s.c_str(), (int)s.length(), buf.get(), len);
+			mb2w(s.c_str(), static_cast<int32_t>(s.length()), buf.get(), len);
 			return buf.get();
 		}
 
@@ -390,8 +400,8 @@ namespace Addictol
 	{
 		if (LINUX_DETECT == std::nullopt)
 		{
-			auto hmod = GetModuleHandleA("kernel32.dll");
-			if (hmod && GetProcAddress(hmod, "wine_get_unix_file_name"))
+			auto hmod = REX::W32::GetModuleHandleA("kernel32.dll");
+			if (hmod && REX::W32::GetProcAddress(hmod, "wine_get_unix_file_name"))
 			{
 				LINUX_DETECT = true;
 				return LINUX_DETECT.value();
@@ -414,12 +424,12 @@ namespace Addictol
 		if (!moduleName)
 			return false;
 
-		HMODULE module = GetModuleHandleA(moduleName);
-		if (!module)
+		auto hmod = REX::W32::GetModuleHandleA(moduleName);
+		if (!hmod)
 			return false;
 
-		const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
-		if (!dos || dos->e_magic != IMAGE_DOS_SIGNATURE)
+		const auto dos = reinterpret_cast<const REX::W32::IMAGE_DOS_HEADER*>(hmod);
+		if (!dos || dos->magic != REX::W32::IMAGE_DOS_SIGNATURE)
 			return false;
 
 		static constexpr char wineBuiltinSignature[] = "Wine builtin DLL";
@@ -431,12 +441,12 @@ namespace Addictol
 		if (!moduleName)
 			return false;
 
-		HMODULE module = GetModuleHandleA(moduleName);
-		if (!module)
+		auto hmod = REX::W32::GetModuleHandleA(moduleName);
+		if (!hmod)
 			return false;
 
-		const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
-		if (!dos || dos->e_magic != IMAGE_DOS_SIGNATURE)
+		const auto dos = reinterpret_cast<const REX::W32::IMAGE_DOS_HEADER*>(hmod);
+		if (!dos || dos->magic != REX::W32::IMAGE_DOS_SIGNATURE)
 			return false;
 
 		static constexpr char wineFakeSignature[] = "Wine placeholder DLL";
