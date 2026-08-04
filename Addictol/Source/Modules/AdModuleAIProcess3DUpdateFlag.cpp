@@ -12,45 +12,50 @@ namespace Addictol
 	{
 		// Fixes an error where there is no check for nullptr when AI for a character is disabled.
 
-		static void AIProcess__Set3DUpdateFlag(RE::AIProcess* a_this, uint16_t a_update3DModel) noexcept
+		class __declspec(novtable) AIProcess :
+			public RE::AIProcess
 		{
-			if (!a_this || !a_this->middleHigh)
-				return;
+		public:
+			void Set3DUpdateFlag(uint16_t a_update3DModel) noexcept
+			{
+				if (!this || !this->middleHigh)
+					return;
 
-			a_this->middleHigh->update3DModel |= a_update3DModel;
-		}
+				this->middleHigh->update3DModel |= a_update3DModel;
+			}
 
-		static void AIProcess__Clear3DUpdateFlag(RE::AIProcess* a_this, uint16_t a_update3DModel) noexcept
-		{
-			if (!a_this || !a_this->middleHigh)
-				return;
+			void Clear3DUpdateFlag(uint16_t a_update3DModel) noexcept
+			{
+				if (!this || !this->middleHigh)
+					return;
 
-			a_this->middleHigh->update3DModel &= ~a_update3DModel;
-		}
+				this->middleHigh->update3DModel &= ~a_update3DModel;
+			}
 
-		static void AIProcess__ClearAll3DUpdateFlags(RE::AIProcess* a_this) noexcept
-		{
-			if (!a_this || !a_this->middleHigh)
-				return;
+			void ClearAll3DUpdateFlags() noexcept
+			{
+				if (!this || !this->middleHigh)
+					return;
 
-			a_this->middleHigh->update3DModel = 0;
-		}
+				this->middleHigh->update3DModel = 0;
+			}
 
-		static bool AIProcess__Get3DUpdateFlag(RE::AIProcess* a_this, uint16_t a_update3DModel) noexcept
-		{
-			if (!a_this || !a_this->middleHigh)
-				return false;
+			[[nodiscard]] bool Get3DUpdateFlag(uint16_t a_update3DModel) const noexcept
+			{
+				if (!this || !this->middleHigh)
+					return false;
 
-			return (a_this->middleHigh->update3DModel & a_update3DModel) != 0;
-		}
+				return (this->middleHigh->update3DModel & a_update3DModel) != 0;
+			}
 
-		static uint16_t AIProcess__GetAll3DUpdateFlags(RE::AIProcess* a_this) noexcept
-		{
-			if (!a_this || !a_this->middleHigh)
-				return 0;
+			[[nodiscard]] uint16_t GetAll3DUpdateFlags() const noexcept
+			{
+				if (!this || !this->middleHigh)
+					return 0;
 
-			return a_this->middleHigh->update3DModel;
-		}
+				return this->middleHigh->update3DModel;
+			}
+		};
 	}
 
 	ModuleAIProcess3DUpdateFlag::ModuleAIProcess3DUpdateFlag() :
@@ -82,11 +87,11 @@ namespace Addictol
 			return false;
 
 		return 
-			(RELEX::DetourJump(targetSet,		reinterpret_cast<uintptr_t>(&Detail::AIProcess__Set3DUpdateFlag)) != 0) &&
-			(RELEX::DetourJump(targetClear,		reinterpret_cast<uintptr_t>(&Detail::AIProcess__Clear3DUpdateFlag)) != 0) &&
-			(RELEX::DetourJump(targetClearAll,	reinterpret_cast<uintptr_t>(&Detail::AIProcess__ClearAll3DUpdateFlags)) != 0) &&
-			(RELEX::DetourJump(targetGet,		reinterpret_cast<uintptr_t>(&Detail::AIProcess__Get3DUpdateFlag)) != 0) &&
-			(RELEX::DetourJump(targetGetAll,	reinterpret_cast<uintptr_t>(&Detail::AIProcess__GetAll3DUpdateFlags)) != 0);
+			(RELEX::DetourClassJump(targetSet,		&Detail::AIProcess::Set3DUpdateFlag			) != 0) &&
+			(RELEX::DetourClassJump(targetClear,	&Detail::AIProcess::Clear3DUpdateFlag		) != 0) &&
+			(RELEX::DetourClassJump(targetClearAll,	&Detail::AIProcess::ClearAll3DUpdateFlags	) != 0) &&
+			(RELEX::DetourClassJump(targetGet,		&Detail::AIProcess::Get3DUpdateFlag			) != 0) &&
+			(RELEX::DetourClassJump(targetGetAll,	&Detail::AIProcess::GetAll3DUpdateFlags		) != 0);
 	}
 
 	bool ModuleAIProcess3DUpdateFlag::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

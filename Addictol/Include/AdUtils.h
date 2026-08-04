@@ -92,6 +92,32 @@ namespace RELEX
 
 	uintptr_t DetourJump(uintptr_t a_target, uintptr_t a_function) noexcept;
 	uintptr_t DetourCall(uintptr_t a_target, uintptr_t a_function) noexcept;
+	uintptr_t DetourJump(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept;
+	uintptr_t DetourCall(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept;
+
+	template<class T>
+	inline static uintptr_t DetourClassJump(uintptr_t a_target, T a_function) noexcept
+	{
+		return DetourJump(a_target, *(uintptr_t*)&a_function);
+	}
+
+	template<class T>
+	inline static uintptr_t DetourClassCall(uintptr_t a_target, T a_function) noexcept
+	{
+		return DetourCall(a_target, *(uintptr_t*)&a_function);
+	}
+
+	template<class T>
+	inline static uintptr_t DetourClassJump(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept
+	{
+		return DetourJump(a_target, *(uintptr_t*)&a_function);
+	}
+
+	template<class T>
+	inline static uintptr_t DetourClassCall(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept
+	{
+		return DetourJump(a_target, *(uintptr_t*)&a_function);
+	}
 
 	template<class T, class... _Types>
 	inline static uintptr_t XbyakJump(uintptr_t a_target, _Types&&... _Args) noexcept

@@ -124,14 +124,44 @@ namespace RELEX
 		return REX::FModule::IsRuntimeAE();
 	}
 
+	static uintptr_t DetourCheckRel32AndReturnDestAddress(uintptr_t a_target) noexcept
+	{
+		auto target = reinterpret_cast<const uint8_t*>(a_target);
+		if ((target[0] == 0xE8) || (target[0] == 0xE9))
+		{
+			auto rel32 = reinterpret_cast<const int32_t*>(a_target + 1);
+			return a_target + *rel32 + 5;
+		}
+		else if ((target[0] == 0xFF) && ((target[1] == 0x15) || (target[1] == 0x25)))
+		{
+			auto rel32 = reinterpret_cast<const int32_t*>(a_target + 2);
+			return *reinterpret_cast<uintptr_t*>(a_target + *rel32 + 6);
+		}
+		return 0;
+	}
+
 	uintptr_t DetourJump(uintptr_t a_target, uintptr_t a_function) noexcept
 	{
-		return Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_JUMP);
+		auto destAddress = DetourCheckRel32AndReturnDestAddress(a_target);
+		auto detourAddress = Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_JUMP);
+		return destAddress ? destAddress : detourAddress;
 	}
 
 	uintptr_t DetourCall(uintptr_t a_target, uintptr_t a_function) noexcept
 	{
-		return Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_CALL);
+		auto destAddress = DetourCheckRel32AndReturnDestAddress(a_target);
+		auto detourAddress = Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_CALL);
+		return destAddress ? destAddress : detourAddress;
+	}
+
+	uintptr_t DetourJump(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept
+	{
+		return DetourJump(a_target.address(), a_function);
+	}
+
+	uintptr_t DetourCall(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept
+	{
+		return DetourCall(a_target.address(), a_function);
 	}
 
 	uintptr_t DetourVTable(uintptr_t a_target, uintptr_t a_function, uint32_t a_index) noexcept
