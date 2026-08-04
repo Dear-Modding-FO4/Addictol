@@ -47,7 +47,7 @@ namespace Addictol
 			{
 				if (!a_checked && a_self->IsActive())
 					a_checked = true;
-				
+
 				return func(a_self, a_checked);
 			}
 
@@ -108,21 +108,47 @@ namespace Addictol
 	{
 		auto& trampoline = REL::GetTrampoline();
 
-		// SetChecked Patches
-		loadOrderDetail::ModManagerSetChecked::func = trampoline.write_call<5>(REL::Relocation<std::uintptr_t>{ REL::ID{ 4487533 }, REL::Offset{ 0xA9 } }.address(), loadOrderDetail::ModManagerSetChecked::thunk);
-		loadOrderDetail::TESFileSetChecked::func = trampoline.write_call<5>(REL::Relocation<std::uintptr_t>{ REL::ID{ 4487533 }, REL::Offset{ 0xB8 } }.address(), loadOrderDetail::TESFileSetChecked::thunk);
+		// Targets
+		const auto targetSetFileAttributes1 	= REL::Relocation{ REL::ID{ 4476764 }, REL::Offset{ 0x074 } }.address();
+		const auto targetSetFileAttributes2 	= REL::Relocation{ REL::ID{ 2189106 }, REL::Offset{ 0x092 } }.address();
+		const auto targetSetChecked1 			= REL::Relocation{ REL::ID{ 4487533 }, REL::Offset{ 0x0A9 } }.address();
+		const auto targetSetChecked2 			= REL::Relocation{ REL::ID{ 4487533 }, REL::Offset{ 0x0B8 } }.address();
+		const auto targetValidateDependencies 	= REL::Relocation{ REL::ID{ 4487642 }, REL::Offset{ 0x221 } }.address();
+		const auto targetLoadOrder1				= REL::Relocation{ REL::ID{ 4487632 }, REL::Offset{ 0x28D } }.address();
+		const auto targetLoadOrder2				= REL::Relocation{ REL::ID{ 4487642 }, REL::Offset{ 0x0C6 } }.address();
+		const auto targetLoadOrder3				= REL::Relocation{ REL::ID{ 4487642 }, REL::Offset{ 0x151 } }.address();
+
+		// Validate
+		if (!RELEX::Validate(targetSetFileAttributes1,		{ 0xFF, 0x15 })				||
+			!RELEX::Validate(targetSetFileAttributes2, 		{ 0xFF, 0x15 })				||
+			!RELEX::Validate(targetSetChecked1,				{ 0xE8 })					||
+			!RELEX::Validate(targetSetChecked2,				{ 0xE8 })					||
+			!RELEX::Validate(targetValidateDependencies,	{ 0xE8 })					||
+			!RELEX::Validate(targetLoadOrder1,				{ 0x74, 0x2F })				||
+			!RELEX::Validate(targetLoadOrder2,				{ 0xE8 })					||
+			!RELEX::Validate(targetLoadOrder3,				{ 0x85, 0xF6, 0x74, 0x29 }))
+			return false;
 
 		// SetFileAttributes Patches
-		trampoline.write_call<6>(REL::Relocation<std::uintptr_t>{ REL::ID{ 4476764 }, REL::Offset{ 0x74 } }.address(), loadOrderDetail::SetFileAttributes);
-		trampoline.write_call<6>(REL::Relocation<std::uintptr_t>{ REL::ID{ 2189106 }, REL::Offset{ 0x92 } }.address(), loadOrderDetail::SetFileAttributes);
+		RELEX::DetourClassCall(targetSetFileAttributes1, &loadOrderDetail::SetFileAttributes);
+		RELEX::DetourClassCall(targetSetFileAttributes2, &loadOrderDetail::SetFileAttributes);
 
-		// Load Order Index Patch
-		RELEX::WriteSafe(REL::Relocation<std::uintptr_t>{ REL::ID{ 4487642 }, REL::Offset{ 0xC6 } }.address(), { 0xEB, 0x1A, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 });
+		// SetChecked Patches
+		loadOrderDetail::ModManagerSetChecked::func = RELEX::DetourClassCall(targetSetChecked1, &loadOrderDetail::ModManagerSetChecked::thunk);
+		loadOrderDetail::TESFileSetChecked::func 	= RELEX::DetourClassCall(targetSetChecked2, &loadOrderDetail::TESFileSetChecked::thunk);
 
 		// Validate Dependencies Patch
-		loadOrderDetail::ModManagerValidateDependencies::func = trampoline.write_call<5>(REL::Relocation<std::uintptr_t>{ REL::ID{ 4487642 }, REL::Offset{ 0x221 } }.address(), loadOrderDetail::ModManagerValidateDependencies::thunk);
+		loadOrderDetail::ModManagerValidateDependencies::func = RELEX::DetourClassCall(targetValidateDependencies, &loadOrderDetail::ModManagerValidateDependencies::thunk);
 
-		return true;
+		// Preserve Load Order Patches
+		RELEX::WriteSafe(targetLoadOrder1, { 0x90, 0x90 });
+		RELEX::WriteSafe(targetLoadOrder2, { 0xEB, 0x1A, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 });
+		RELEX::WriteSafe(targetLoadOrder3, { 0xEB, 0x2B, 0x90, 0x90 });
+
+		// Validate the Funcs
+		return 	loadOrderDetail::ModManagerSetChecked::func != 0 &&
+				loadOrderDetail::TESFileSetChecked::func != 0 &&
+				loadOrderDetail::ModManagerValidateDependencies::func != 0;
 	}
 
 	bool ModuleLoadOrder::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
