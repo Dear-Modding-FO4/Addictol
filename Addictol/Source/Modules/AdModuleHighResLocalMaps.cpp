@@ -151,4 +151,9 @@ namespace Addictol
 	{
 		return true;
 	}
+
+	bool ModuleHighResLocalMaps::HasProcessDefender() noexcept
+	{
+		return true;
+	}
 }

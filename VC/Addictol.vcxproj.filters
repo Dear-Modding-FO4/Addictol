@@ -25,164 +25,11 @@
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadOrder.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRobCoPatcherCache.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxStdIO.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCompanionStrayBullet.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSPreCulledObjects.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTESObjectREFRGetEncounterZone.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyCursorConstraints.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectApplyEvent.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEncounterZoneReset.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveLimits.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDuplicateAddonNodeIndex.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInputSwitch.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxPapyrusOps.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreateD3DAndSwapchain.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSMTAManager.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCheckInternetAccess.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleStolenPowerArmorOwnership.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdGameUtils.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveAddedSoundCategories.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCOMInit.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusGC.cpp">
-      <Filter>Source\Modules</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProfilerBA2.cpp">
       <Filter>Source</Filter>
@@ -202,107 +49,14 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerModules.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfiler.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdPCH.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdConfigValidation.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWaterJetpackFix.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSound.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorCauseSaveBloat.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSignedCrash.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBethesdaNetCrash.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMuzzleFlashLight.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResLocalMaps.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleUtilityShader.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectConditions.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioSwitch.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp">
-      <Filter>Source\Modules</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp">
       <Filter>Source</Filter>
@@ -310,87 +64,267 @@
     <ClCompile Include="..\Addictol\Source\AdProxyVisperHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProcessIcon.cpp">
-      <Filter>Source\Modules</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdModuleDefender.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdBinkXAudio29.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorCauseSaveBloat.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorIsHostileToActor.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAIProcess3DUpdateFlag.cpp">
-      <Filter>Source\Modules</Filter>
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSignedCrash.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveLimits.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioSwitch.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBethesdaNetCrash.cpp">
+      <Filter>Source\Modules\B</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp">
+      <Filter>Source\Modules\B</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSMTAManager.cpp">
+      <Filter>Source\Modules\B</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSPreCulledObjects.cpp">
+      <Filter>Source\Modules\B</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCellInit.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCheckInternetAccess.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCOMInit.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCompanionStrayBullet.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreateD3DAndSwapchain.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp">
+      <Filter>Source\Modules\D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp">
+      <Filter>Source\Modules\D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp">
+      <Filter>Source\Modules\D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleDuplicateAddonNodeIndex.cpp">
+      <Filter>Source\Modules\D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEncounterZoneReset.cpp">
+      <Filter>Source\Modules\E</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp">
+      <Filter>Source\Modules\E</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp">
+      <Filter>Source\Modules\F</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp">
+      <Filter>Source\Modules\F</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp">
+      <Filter>Source\Modules\G</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp">
+      <Filter>Source\Modules\H</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResLocalMaps.cpp">
+      <Filter>Source\Modules\H</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp">
+      <Filter>Source\Modules\H</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp">
+      <Filter>Source\Modules\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp">
+      <Filter>Source\Modules\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp">
+      <Filter>Source\Modules\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInputSwitch.cpp">
+      <Filter>Source\Modules\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp">
+      <Filter>Source\Modules\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp">
+      <Filter>Source\Modules\I</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadOrder.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectApplyEvent.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectConditions.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxPapyrusOps.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMaxStdIO.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMemoryManager.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMovementPlanner.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMuzzleFlashLight.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePapyrusGC.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyCursorConstraints.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProcessIcon.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfiler.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp">
+      <Filter>Source\Modules\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRobCoPatcherCache.cpp">
+      <Filter>Source\Modules\R</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveAddedSoundCategories.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleStolenPowerArmorOwnership.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTESObjectREFRGetEncounterZone.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp">
+      <Filter>Source\Modules\U</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleUtilityShader.cpp">
+      <Filter>Source\Modules\U</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleViewmodelShading.cpp">
+      <Filter>Source\Modules\V</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWaterJetpackFix.cpp">
+      <Filter>Source\Modules\W</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp">
+      <Filter>Source\Modules\W</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSound.cpp">
+      <Filter>Source\Modules\W</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
+      <Filter>Source\Modules\W</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorIsHostileToActor.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBGSAIWorldLocationRefRadius.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRobCoPatcherCache.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadOrder.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdUtils.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -409,98 +343,11 @@
     <ClInclude Include="..\Addictol\Include\AdAllocator.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxStdIO.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCompanionStrayBullet.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSPreCulledObjects.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTESObjectREFRGetEncounterZone.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyCursorConstraints.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectApplyEvent.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEncounterZoneReset.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveLimits.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDuplicateAddonNodeIndex.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInputSwitch.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxPapyrusOps.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSMTAManager.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleStolenPowerArmorOwnership.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdGameUtils.h">
       <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveAddedSoundCategories.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusGC.h">
-      <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerBA2.h">
       <Filter>Include</Filter>
@@ -520,116 +367,269 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerModules.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfiler.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdPCH.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWaterJetpackFix.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSound.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorCauseSaveBloat.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSignedCrash.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBethesdaNetCrash.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMuzzleFlashLight.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResLocalMaps.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleUtilityShader.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectConditions.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h">
-      <Filter>Include\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h">
       <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProcessIcon.h">
-      <Filter>Include\Modules</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdModuleDefender.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorCauseSaveBloat.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorIsHostileToActor.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAIProcess3DUpdateFlag.h">
-      <Filter>Include\Modules</Filter>
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSignedCrash.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveLimits.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBethesdaNetCrash.h">
+      <Filter>Include\Modules\B</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBGSAIWorldLocationRefRadius.h">
+      <Filter>Include\Modules\B</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSMTAManager.h">
+      <Filter>Include\Modules\B</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSPreCulledObjects.h">
+      <Filter>Include\Modules\B</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCompanionStrayBullet.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h">
+      <Filter>Include\Modules\D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h">
+      <Filter>Include\Modules\D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h">
+      <Filter>Include\Modules\D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleDuplicateAddonNodeIndex.h">
+      <Filter>Include\Modules\D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEncounterZoneReset.h">
+      <Filter>Include\Modules\E</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h">
+      <Filter>Include\Modules\E</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h">
+      <Filter>Include\Modules\F</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h">
+      <Filter>Include\Modules\F</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h">
+      <Filter>Include\Modules\G</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h">
+      <Filter>Include\Modules\H</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResLocalMaps.h">
+      <Filter>Include\Modules\H</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h">
+      <Filter>Include\Modules\H</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h">
+      <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h">
+      <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h">
+      <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInputSwitch.h">
+      <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h">
+      <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h">
+      <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h">
+      <Filter>Include\Modules\L</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h">
+      <Filter>Include\Modules\L</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadOrder.h">
+      <Filter>Include\Modules\L</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h">
+      <Filter>Include\Modules\L</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h">
+      <Filter>Include\Modules\L</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectApplyEvent.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectConditions.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxPapyrusOps.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMaxStdIO.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMemoryManager.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMovementPlanner.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMuzzleFlashLight.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePapyrusGC.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyCursorConstraints.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProcessIcon.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfiler.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h">
+      <Filter>Include\Modules\R</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRobCoPatcherCache.h">
+      <Filter>Include\Modules\R</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveAddedSoundCategories.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleStolenPowerArmorOwnership.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTESObjectREFRGetEncounterZone.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h">
+      <Filter>Include\Modules\U</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleUtilityShader.h">
+      <Filter>Include\Modules\U</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleViewmodelShading.h">
+      <Filter>Include\Modules\V</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWaterJetpackFix.h">
+      <Filter>Include\Modules\W</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h">
+      <Filter>Include\Modules\W</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSound.h">
+      <Filter>Include\Modules\W</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h">
+      <Filter>Include\Modules\W</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -655,6 +655,114 @@
     </Filter>
     <Filter Include="Source\Modules">
       <UniqueIdentifier>{5150941a-fce7-4adc-addc-9be98eb0c180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\A">
+      <UniqueIdentifier>{29fad173-084d-4150-8d6e-facca81de868}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\B">
+      <UniqueIdentifier>{2d4c9f59-ffe7-45fd-87cc-a1e1d0ffae6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\C">
+      <UniqueIdentifier>{a43ba332-77b1-4c64-a098-f3526aa4f357}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\D">
+      <UniqueIdentifier>{d2923ff2-43fb-4151-953e-c54bb4bc8560}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\E">
+      <UniqueIdentifier>{14c185a2-a931-40fc-b646-524ef0a1a562}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\F">
+      <UniqueIdentifier>{966b286e-61c1-4bfd-a89f-71a5d92b00b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\G">
+      <UniqueIdentifier>{b2d57887-cb99-4df8-be3e-494844e6f28c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\H">
+      <UniqueIdentifier>{a0ee0116-4f80-48f2-bf67-bb7d316f43da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\I">
+      <UniqueIdentifier>{e0a1abaf-1fa0-4ec5-9d3d-c862d37df4c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\L">
+      <UniqueIdentifier>{32cadaa1-617a-431a-9ff9-8502e2bfb585}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\M">
+      <UniqueIdentifier>{4bf4ef20-3f27-4726-8eed-29475563cbe1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\P">
+      <UniqueIdentifier>{ce084078-3a41-4d40-b54a-7b327199e685}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\R">
+      <UniqueIdentifier>{18837673-37ea-4dc9-b0d4-162b00db76ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\S">
+      <UniqueIdentifier>{41c52994-f817-40f3-a2bb-306a0831bbd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\T">
+      <UniqueIdentifier>{2bd8e76d-75c3-43d8-a6ce-c17075467ee6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\U">
+      <UniqueIdentifier>{54e51d6b-7214-4483-b998-5a1e09b46af8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\V">
+      <UniqueIdentifier>{823ba13b-29cf-4fce-a0c4-ae4136ddea37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\W">
+      <UniqueIdentifier>{51b4588c-d735-4cb9-abc0-f6a04f08d91b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\A">
+      <UniqueIdentifier>{2d87ffa5-9481-4267-b5d8-e9abd1d9449b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\B">
+      <UniqueIdentifier>{48e4d4a1-0561-41b6-b51c-8ccb8942fdb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\C">
+      <UniqueIdentifier>{50e99cbc-4c00-436d-ab7f-a0da4e4ba471}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\D">
+      <UniqueIdentifier>{05497bca-ef09-496e-a0fb-5f4ffb55d2eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\E">
+      <UniqueIdentifier>{4474d739-925d-486b-be19-3f2edbac6c15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\F">
+      <UniqueIdentifier>{fbc6bcfc-ff29-432b-82e0-4b36e806cdc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\G">
+      <UniqueIdentifier>{0732b8f8-1deb-4458-bb21-eed82e1fdada}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\H">
+      <UniqueIdentifier>{bdb93f12-1d52-40f1-b0e4-45746b5d0ab1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\I">
+      <UniqueIdentifier>{b1254681-19b3-4cc0-902a-8fd03bf36f5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\L">
+      <UniqueIdentifier>{4a13c5c4-dd7c-48c6-930e-36b6463c9937}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\M">
+      <UniqueIdentifier>{b99f2740-8b50-4811-953b-348fe15149f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\P">
+      <UniqueIdentifier>{020887d5-4a7a-44fc-9980-b9786a7f611a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\R">
+      <UniqueIdentifier>{78ca4348-9163-482e-ba8e-0f85ff3c6931}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\S">
+      <UniqueIdentifier>{ae2ad40d-87c3-4bb6-9d15-40c518605a5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\T">
+      <UniqueIdentifier>{8e43a699-3fc2-4b51-bec7-c97022a7452d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\U">
+      <UniqueIdentifier>{50e3c398-5d8e-4c46-947c-9f81f6135873}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\V">
+      <UniqueIdentifier>{fc3645dc-b9e7-4c44-b7bb-bca7502786da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\W">
+      <UniqueIdentifier>{6fea6bbc-3ed5-4007-8963-791e5b56ee2d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
