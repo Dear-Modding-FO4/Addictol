@@ -1,8 +1,6 @@
 #include <Modules/AdModuleMovementPlanner.h>
 #include <AdUtils.h>
 
-#include <Windows.h>
-
 namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesMovementPlanner{ "Fixes"sv, "bMovementPlanner"sv, true };
