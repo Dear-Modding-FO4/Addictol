@@ -1,6 +1,7 @@
 #include <Modules/AdModuleAttachLightCrash.h>
 #include <AdUtils.h>
 
+#include <RE/B/BSContainer.h>
 #include <RE/R/ReferenceEffect.h>
 #include <RE/RTTI.h>
 
@@ -26,12 +27,7 @@ namespace Addictol
 
 	namespace attachLightCrashDetail
 	{
-		// The engine's result polarity is opposite CommonLibF4's BSContainer::ForEachResult.
-		enum class ForEachResult : std::uint32_t
-		{
-			kStop = 0,
-			kContinue = 1
-		};
+		using ForEachResult = RE::BSContainer::ForEachResult;
 
 		struct Visit
 		{
