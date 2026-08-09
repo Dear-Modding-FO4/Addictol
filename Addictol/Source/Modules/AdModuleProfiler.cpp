@@ -3,6 +3,8 @@
 #include <AdProfilerESP.h>
 #include <AdProfilerDLL.h>
 #include <AdProfilerMemory.h>
+#include <AdProfilerAnimSubGraph.h>
+#include <AdProfilerFrameHitch.h>
 #include <AdUtils.h>
 
 namespace Addictol
@@ -10,7 +12,11 @@ namespace Addictol
 	static REX::TOML::Bool<> bProfilerEnabled{ "Profiler"sv, "bProfiler"sv, false };
 
 	ModuleProfiler::ModuleProfiler() :
-		Module("Profiler", &bProfilerEnabled, { F4SE::MessagingInterface::kGameDataReady })
+		Module("Profiler", &bProfilerEnabled, {
+			F4SE::MessagingInterface::kPreLoadGame,
+			F4SE::MessagingInterface::kPostLoadGame,
+			F4SE::MessagingInterface::kNewGame,
+			F4SE::MessagingInterface::kGameDataReady })
 	{}
 
 	bool ModuleProfiler::DoQuery() const noexcept
@@ -67,15 +73,26 @@ namespace Addictol
 			}
 		}
 
+		// Runtime profilers install last so a fault in their hot-path hooks spares the startup ones.
+		if (ProfilerCore::IsAnimSubGraphEnabled())
+			ProfilerAnimSubGraph::GetSingleton()->Install();
+
+		if (ProfilerCore::IsFrameHitchEnabled())
+			ProfilerFrameHitch::GetSingleton()->Install();
+
 		REX::INFO("[Profiler] Module installed, profiling active"sv);
 		return true;
 	}
 
 	bool ModuleProfiler::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		// Dead code: kGameDataReady fires before kGameLoaded, so DoListener
-		// is never invoked for it. Report generation lives in DoInstall.
-		// Override kept to satisfy the Module interface contract.
+		// Pre-load and post-load both advance so rows written during loading use an intermediate epoch.
+		if (a_msg &&
+			(a_msg->type == F4SE::MessagingInterface::kPreLoadGame ||
+			a_msg->type == F4SE::MessagingInterface::kPostLoadGame ||
+			a_msg->type == F4SE::MessagingInterface::kNewGame))
+			ProfilerCore::GetSingleton()->AdvanceSaveLoadEpoch();
+		ProfilerAnimSubGraph::GetSingleton()->HandleMessage(a_msg);
 		return true;
 	}
 

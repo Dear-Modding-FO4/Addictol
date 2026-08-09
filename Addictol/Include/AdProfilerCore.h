@@ -1,12 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <array>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <mutex>
-#include <atomic>
-#include <filesystem>
 
 #include <REX/REX.h>
 
@@ -86,12 +85,83 @@ namespace Addictol
 		double throughputMBps{ 0.0 };
 	};
 
+	struct ProfileMetricEntry
+	{
+		double totalMs{ 0.0 };
+		std::uint64_t calls{ 0 };
+	};
+
+	struct AnimSubGraphPassProfileEntry
+	{
+		double totalMs{ 0.0 };
+		double maxMs{ 0.0 };
+		std::uint64_t calls{ 0 };
+		std::uint64_t matchesAdded{ 0 };
+	};
+
+	struct AnimSubGraphProfileEntry
+	{
+		std::uint32_t role{ 0 };
+		ProfileMetricEntry request;
+		ProfileMetricEntry matched;
+		ProfileMetricEntry gather;
+		ProfileMetricEntry initialize;
+		ProfileMetricEntry load;
+		std::uint64_t eligibleCalls{ 0 };
+		std::uint64_t projectedHits{ 0 };
+		std::uint64_t projectedCalls{ 0 };
+		std::uint64_t actualHits{ 0 };
+		std::uint64_t actualCalls{ 0 };
+		std::uint64_t ineligibleCalls{ 0 };
+		std::uint64_t droppedSamples{ 0 };
+		AnimSubGraphPassProfileEntry movement;
+		AnimSubGraphPassProfileEntry activate1;
+		AnimSubGraphPassProfileEntry activate2;
+		std::uint64_t rawFilenames{ 0 };
+		std::uint64_t uniqueFilenames{ 0 };
+		std::uint64_t filenameGathers{ 0 };
+	};
+
+	inline constexpr std::size_t kFrameHitchProfilePhaseCount{ 12 };
+	inline constexpr std::size_t kAnimSubGraphProfileEntryCapacity{ 256 };
+	inline constexpr std::size_t kFrameHitchProfileEntryCapacity{ 32 };
+
+	struct FrameHitchFrameProfileEntry
+	{
+		std::uint64_t sequence{ 0 };
+		double frameMs{ 0.0 };
+		ProfileMetricEntry loadQueuedPriority;
+		ProfileMetricEntry clearLoadingTask;
+		std::array<ProfileMetricEntry, kFrameHitchProfilePhaseCount> phases;
+	};
+
+	struct FrameHitchWindowProfileEntry
+	{
+		FrameHitchFrameProfileEntry hitch;
+		std::vector<FrameHitchFrameProfileEntry> frames;
+	};
+
+	struct FrameHitchProfileEntry
+	{
+		std::uint64_t frameCount{ 0 };
+		double meanMs{ 0.0 };
+		double p95Ms{ 0.0 };
+		double p99Ms{ 0.0 };
+		double maxMs{ 0.0 };
+		std::size_t percentileSamples{ 0 };
+		std::uint64_t droppedSamples{ 0 };
+		ProfileMetricEntry loadQueuedPriority;
+		ProfileMetricEntry clearLoadingTask;
+		std::array<ProfileMetricEntry, kFrameHitchProfilePhaseCount> phases;
+		std::vector<FrameHitchWindowProfileEntry> hitches;
+		std::uint64_t droppedHitches{ 0 };
+	};
+
 	// Central profiler data collector
 	class ProfilerCore :
 		public REX::Singleton<ProfilerCore>
 	{
 		std::chrono::high_resolution_clock::time_point m_startTime;
-		bool m_active{ false };
 
 		// ESP/ESM data
 		std::vector<ESPProfileEntry> m_espEntries;
@@ -126,7 +196,7 @@ namespace Addictol
 		virtual ~ProfilerCore() = default;
 
 		void Start() noexcept;
-		[[nodiscard]] bool IsActive() const noexcept { return m_active; }
+		[[nodiscard]] bool IsActive() const noexcept;
 		[[nodiscard]] static bool IsEnabledInConfig() noexcept;
 		[[nodiscard]] static bool IsESPEnabled() noexcept;
 		[[nodiscard]] static bool IsDLLEnabled() noexcept;
@@ -134,6 +204,9 @@ namespace Addictol
 		[[nodiscard]] static bool IsStartupTimelineEnabled() noexcept;
 		[[nodiscard]] static bool IsMemoryTrackingEnabled() noexcept;
 		[[nodiscard]] static bool IsBA2TimingEnabled() noexcept;
+		[[nodiscard]] static bool IsAnimSubGraphEnabled() noexcept;
+		[[nodiscard]] static bool IsFrameHitchEnabled() noexcept;
+		[[nodiscard]] static bool IsCSVExportEnabled() noexcept;
 
 		// Startup timeline
 		void MarkPhase(std::string_view a_name) noexcept;
@@ -155,7 +228,12 @@ namespace Addictol
 		// BA2 timing
 		void AddBA2Entry(BA2ProfileEntry&& a_entry) noexcept;
 
-		// Report generation
+		// Startup entries report once at kGameDataReady; runtime intervals stream for the session.
+		static void RecordAnimSubGraphRuntimeInterval(AnimSubGraphProfileEntry&& a_entry) noexcept;
+		static void RecordFrameHitchRuntimeInterval(FrameHitchProfileEntry&& a_entry) noexcept;
+		void AdvanceSaveLoadEpoch() noexcept;
+
+		// Startup report generation
 		void GenerateReport() noexcept;
 		void ExportCSV() noexcept;
 
@@ -165,7 +243,6 @@ namespace Addictol
 		[[nodiscard]] const std::vector<ModuleProfileEntry>& GetModuleEntries() const noexcept { return m_moduleEntries; }
 		[[nodiscard]] const std::vector<StartupPhase>& GetStartupPhases() const noexcept { return m_startupPhases; }
 		[[nodiscard]] const std::vector<BA2ProfileEntry>& GetBA2Entries() const noexcept { return m_ba2Entries; }
-
 	private:
 		[[nodiscard]] std::string GetOutputDir() const noexcept;
 		void LogESPReport() noexcept;

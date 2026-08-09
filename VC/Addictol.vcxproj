@@ -29,6 +29,8 @@
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerDLL.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProfilerAnimSubGraph.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProfilerFrameHitch.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerESP.cpp" />
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\AdAnimSubGraphRuntime.cpp" />
@@ -80,7 +82,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResLocalMaps.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSubGraphProfiler.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHUDMessageQueue.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSpaceAdapterWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleINISettingCollection.cpp" />
@@ -134,11 +135,14 @@
     <ClInclude Include="..\Addictol\Include\AdModule.h" />
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerCore.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerRuntimeChannel.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerMemory.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerBA2.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerModules.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerDLL.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerAnimSubGraph.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerFrameHitch.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\AdAnimSubGraphRuntime.h" />
@@ -190,7 +194,6 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResLocalMaps.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSubGraphProfiler.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHUDMessageQueue.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSpaceAdapterWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleINISettingCollection.h" />

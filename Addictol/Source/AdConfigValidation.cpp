@@ -1,4 +1,5 @@
 #include <AdConfigValidation.h>
+#include <AdProfilerCore.h>
 #include <REX/REX.h>
 #include <toml11/single_include/toml.hpp>
 #include <unordered_map>
@@ -56,17 +57,47 @@ namespace Addictol
 			"bFullPrecisionDecalsEffectShaders"sv, "nMaxPapyrusOpsPerFrame"sv,
 			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
 			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"sv,
-			"fLocalMapScaleFactor"sv
+			"fLocalMapScaleFactor"sv, "nFrameHitchThresholdMs"sv
 		}},
 		{ "Profiler"sv, {
 			"bProfiler"sv, "bESPProfiler"sv, "bESPSubHooks"sv, "bDLLProfiler"sv,
 			"bModuleProfiler"sv, "bStartupTimeline"sv, "bMemoryTracking"sv,
-			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv
+			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv,
+			"bAnimSubGraphSkipPreload"sv, "bFrameHitchProfiler"sv
 		}}
 	};
 
+	static void WarnProfilerDependencies() noexcept
+	{
+		static bool checked = false;
+		if (checked)
+			return;
+		checked = true;
+
+		if (ProfilerCore::IsEnabledInConfig())
+			return;
+
+		std::string keys;
+		const auto addKey = [&](std::string_view a_key) {
+			if (!keys.empty())
+				keys += ", "sv;
+			keys += a_key;
+		};
+		if (ProfilerCore::IsAnimSubGraphEnabled())
+			addKey("bAnimSubGraphProfiler"sv);
+		if (ProfilerCore::IsFrameHitchEnabled())
+			addKey("bFrameHitchProfiler"sv);
+		if (ProfilerCore::IsCSVExportEnabled())
+			addKey("bCSVExport"sv);
+
+		if (!keys.empty())
+			REX::WARN("Config: enabled profiler keys [{}] require bProfiler = true; they will be ignored."sv, keys);
+	}
+
 	void ValidateConfigKeys(const char* a_filePath) noexcept
 	{
+		WarnProfilerDependencies();
+
 		auto result = toml::try_parse(a_filePath);
 		if (!result.is_ok())
 			return;

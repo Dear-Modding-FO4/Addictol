@@ -1,9 +1,11 @@
 #include <AdProfilerCore.h>
+#include <AdProfilerRuntimeChannel.h>
 #include <AdUtils.h>
+
+#include <Windows.h>
 
 #include <fstream>
 #include <iomanip>
-#include <sstream>
 #include <algorithm>
 #include <ctime>
 
@@ -17,14 +19,188 @@ namespace Addictol
 	static REX::TOML::Bool<> bStartupTimeline{ "Profiler"sv, "bStartupTimeline"sv, true };
 	static REX::TOML::Bool<> bMemoryTracking{ "Profiler"sv, "bMemoryTracking"sv, true };
 	static REX::TOML::Bool<> bBA2Timing{ "Profiler"sv, "bBA2Timing"sv, true };
+	static REX::TOML::Bool<> bAnimSubGraphProfiler{ "Profiler"sv, "bAnimSubGraphProfiler"sv, false };
+	static REX::TOML::Bool<> bFrameHitchProfiler{ "Profiler"sv, "bFrameHitchProfiler"sv, false };
 	static REX::TOML::Bool<> bCSVExport{ "Profiler"sv, "bCSVExport"sv, true };
+	static constexpr std::array<const char*, kFrameHitchProfilePhaseCount> s_frameHitchPhaseNames{
+		"UpdateIOManager", "GeneralUpdate", "TreeUpdate", "AI", "UpdateMessageBox", "UpdateTimer",
+		"PollControls", "UpdateAudio", "UpdateCurrentGridCell", "UpdateSky", "UpdateImageSpace",
+		"PostThreadsProcess"
+	};
+
+	[[nodiscard]] static std::string MakeProfilerSessionID() noexcept
+	{
+		const auto wallClock = static_cast<std::uint64_t>(
+			std::chrono::system_clock::now().time_since_epoch().count());
+		const auto monotonic = static_cast<std::uint64_t>(
+			std::chrono::steady_clock::now().time_since_epoch().count());
+		return std::format(
+			"{:016X}-{:08X}-{:016X}"sv, wallClock, GetCurrentProcessId(), monotonic);
+	}
+
+	[[nodiscard]] static std::string MakeProfilerOutputDirectory() noexcept
+	{
+		return std::format("{}Data\\F4SE\\Plugins\\Addictol\\Profiler\\"sv, AdGetRuntimeDirectory());
+	}
+
+	static void WriteAnimSubGraphCSVHeader(std::ostream& a_file)
+	{
+		WriteRuntimeCSVMetadataHeader(a_file);
+		a_file << "Role,RequestMs,RequestCalls,MatchedMs,MatchedCalls,GatherMs,GatherCalls,InitializeMs,InitializeCalls,LoadMs,LoadCalls,EligibleCalls,ProjectedHits,ProjectedCalls,ProjectedRate,ActualHits,ActualCalls,ActualRate,IneligibleCalls,DroppedSamples,MovementMs,MovementCalls,MovementMaxMs,MovementMatchesAdded,Activate1Ms,Activate1Calls,Activate1MaxMs,Activate1MatchesAdded,Activate2Ms,Activate2Calls,Activate2MaxMs,Activate2MatchesAdded,RawFilenames,UniqueFilenames,FilenameGathers\n"sv;
+	}
+
+	static void WriteAnimSubGraphCSVEntry(
+		std::ostream& a_file,
+		const AnimSubGraphProfileEntry& a_entry,
+		const RuntimeRowMetadata& a_metadata)
+	{
+		const auto projectedRate = a_entry.projectedCalls ?
+			100.0 * static_cast<double>(a_entry.projectedHits) / static_cast<double>(a_entry.projectedCalls) :
+			0.0;
+		const auto actualRate = a_entry.actualCalls ?
+			100.0 * static_cast<double>(a_entry.actualHits) / static_cast<double>(a_entry.actualCalls) :
+			0.0;
+		WriteRuntimeCSVMetadata(a_file, a_metadata);
+		a_file << a_entry.role << ","sv
+			<< std::fixed << std::setprecision(3)
+			<< a_entry.request.totalMs << ","sv << a_entry.request.calls << ","sv
+			<< a_entry.matched.totalMs << ","sv << a_entry.matched.calls << ","sv
+			<< a_entry.gather.totalMs << ","sv << a_entry.gather.calls << ","sv
+			<< a_entry.initialize.totalMs << ","sv << a_entry.initialize.calls << ","sv
+			<< a_entry.load.totalMs << ","sv << a_entry.load.calls << ","sv
+			<< a_entry.eligibleCalls << ","sv
+			<< a_entry.projectedHits << ","sv << a_entry.projectedCalls << ","sv
+			<< std::setprecision(1) << projectedRate << ","sv
+			<< a_entry.actualHits << ","sv << a_entry.actualCalls << ","sv << actualRate << ","sv
+			<< a_entry.ineligibleCalls << ","sv << a_entry.droppedSamples << ","sv
+			<< std::setprecision(3)
+			<< a_entry.movement.totalMs << ","sv << a_entry.movement.calls << ","sv
+			<< a_entry.movement.maxMs << ","sv << a_entry.movement.matchesAdded << ","sv
+			<< a_entry.activate1.totalMs << ","sv << a_entry.activate1.calls << ","sv
+			<< a_entry.activate1.maxMs << ","sv << a_entry.activate1.matchesAdded << ","sv
+			<< a_entry.activate2.totalMs << ","sv << a_entry.activate2.calls << ","sv
+			<< a_entry.activate2.maxMs << ","sv << a_entry.activate2.matchesAdded << ","sv
+			<< a_entry.rawFilenames << ","sv << a_entry.uniqueFilenames << ","sv
+			<< a_entry.filenameGathers << "\n"sv;
+	}
+
+	static void WriteFrameHitchCSVHeader(std::ostream& a_file)
+	{
+		WriteRuntimeCSVMetadataHeader(a_file);
+		a_file << "RecordType,Sequence,ParentHitchSequence,Name,DurationMs,StallMs,Calls,FrameCount,MeanMs,P95Ms,P99Ms,MaxMs,SampleCount,DroppedSamples,DroppedHitches\n"sv;
+	}
+
+	static void WriteFrameHitchCSVEntry(
+		std::ostream& a_file,
+		const FrameHitchProfileEntry& a_entry,
+		const RuntimeRowMetadata& a_metadata)
+	{
+		WriteRuntimeCSVMetadata(a_file, a_metadata);
+		a_file << "Summary,,,,,,,"sv
+			<< a_entry.frameCount << ","sv
+			<< std::fixed << std::setprecision(3)
+			<< a_entry.meanMs << ","sv << a_entry.p95Ms << ","sv << a_entry.p99Ms << ","sv
+			<< a_entry.maxMs << ","sv << a_entry.percentileSamples << ","sv
+			<< a_entry.droppedSamples << ","sv << a_entry.droppedHitches << "\n"sv;
+		WriteRuntimeCSVMetadata(a_file, a_metadata);
+		a_file << "SummaryStall,,,LoadQueuedPriority,"sv
+			<< a_entry.loadQueuedPriority.totalMs << ",,"sv
+			<< a_entry.loadQueuedPriority.calls << "\n"sv;
+		WriteRuntimeCSVMetadata(a_file, a_metadata);
+		a_file << "SummaryStall,,,ClearLoadingTask,"sv
+			<< a_entry.clearLoadingTask.totalMs << ",,"sv
+			<< a_entry.clearLoadingTask.calls << "\n"sv;
+		for (std::size_t phaseIndex = 0; phaseIndex < a_entry.phases.size(); ++phaseIndex)
+		{
+			const auto& metric = a_entry.phases[phaseIndex];
+			if (metric.calls)
+			{
+				WriteRuntimeCSVMetadata(a_file, a_metadata);
+				a_file << "SummaryPhase,,,"sv << s_frameHitchPhaseNames[phaseIndex] << ","sv
+					<< metric.totalMs << ",,"sv << metric.calls << "\n"sv;
+			}
+		}
+		for (const auto& window : a_entry.hitches)
+		{
+			const auto& hitch = window.hitch;
+			WriteRuntimeCSVMetadata(a_file, a_metadata);
+			a_file << "Hitch,"sv << hitch.sequence << ",,,"sv
+				<< hitch.frameMs << ",,\n"sv;
+			WriteRuntimeCSVMetadata(a_file, a_metadata);
+			a_file << "HitchStall,"sv << hitch.sequence << ",,LoadQueuedPriority,"sv
+				<< hitch.loadQueuedPriority.totalMs << ",,"sv
+				<< hitch.loadQueuedPriority.calls << "\n"sv;
+			WriteRuntimeCSVMetadata(a_file, a_metadata);
+			a_file << "HitchStall,"sv << hitch.sequence << ",,ClearLoadingTask,"sv
+				<< hitch.clearLoadingTask.totalMs << ",,"sv
+				<< hitch.clearLoadingTask.calls << "\n"sv;
+			for (std::size_t phaseIndex = 0; phaseIndex < hitch.phases.size(); ++phaseIndex)
+			{
+				const auto& metric = hitch.phases[phaseIndex];
+				if (metric.calls)
+				{
+					WriteRuntimeCSVMetadata(a_file, a_metadata);
+					a_file << "HitchPhase,"sv << hitch.sequence << ",,"sv
+						<< s_frameHitchPhaseNames[phaseIndex] << ","sv
+						<< metric.totalMs << ",,"sv << metric.calls << "\n"sv;
+				}
+			}
+			for (const auto& frame : window.frames)
+			{
+				WriteRuntimeCSVMetadata(a_file, a_metadata);
+				a_file << "WindowFrame,"sv << frame.sequence << ","sv
+					<< hitch.sequence << ",,"sv << frame.frameMs << ","sv
+					<< frame.loadQueuedPriority.totalMs + frame.clearLoadingTask.totalMs << ","sv
+					<< frame.loadQueuedPriority.calls + frame.clearLoadingTask.calls << "\n"sv;
+			}
+		}
+	}
+
+	struct RuntimeCollector
+	{
+		RuntimeSessionContext session;
+		RuntimeChannel<AnimSubGraphProfileEntry> animSubGraph{
+			session,
+			kAnimSubGraphProfileEntryCapacity,
+			"anim_subgraph_runtime"sv,
+			WriteAnimSubGraphCSVHeader,
+			WriteAnimSubGraphCSVEntry
+		};
+		RuntimeChannel<FrameHitchProfileEntry> frameHitch{
+			session,
+			kFrameHitchProfileEntryCapacity,
+			"frame_hitch_runtime"sv,
+			WriteFrameHitchCSVHeader,
+			WriteFrameHitchCSVEntry
+		};
+		bool active{ false };
+		bool csvExport{ false };
+	};
+
+	[[nodiscard]] static RuntimeCollector& GetRuntimeCollector() noexcept
+	{
+		// Permanent hooks can record during shutdown, so runtime state is never destroyed.
+		static auto* const collector = new RuntimeCollector;
+		return *collector;
+	}
 
 	void ProfilerCore::Start() noexcept
 	{
+		auto& runtime = GetRuntimeCollector();
+		if (runtime.active)
+			return;
+
 		m_startTime = std::chrono::high_resolution_clock::now();
-		m_active = true;
+		runtime.session.Start(MakeProfilerSessionID(), MakeProfilerOutputDirectory());
+		runtime.csvExport = bCSVExport.GetValue();
+		runtime.active = true;
 		MarkPhase("ProfilerStart"sv);
 		REX::INFO("[Profiler] Performance profiler started"sv);
+	}
+
+	bool ProfilerCore::IsActive() const noexcept
+	{
+		return GetRuntimeCollector().active;
 	}
 
 	bool ProfilerCore::IsEnabledInConfig() noexcept
@@ -62,9 +238,24 @@ namespace Addictol
 		return bBA2Timing.GetValue();
 	}
 
+	bool ProfilerCore::IsAnimSubGraphEnabled() noexcept
+	{
+		return bAnimSubGraphProfiler.GetValue();
+	}
+
+	bool ProfilerCore::IsFrameHitchEnabled() noexcept
+	{
+		return bFrameHitchProfiler.GetValue();
+	}
+
+	bool ProfilerCore::IsCSVExportEnabled() noexcept
+	{
+		return bCSVExport.GetValue();
+	}
+
 	void ProfilerCore::MarkPhase(std::string_view a_name) noexcept
 	{
-		if (!m_active || !bStartupTimeline.GetValue())
+		if (!IsActive() || !bStartupTimeline.GetValue())
 			return;
 
 		auto now = std::chrono::high_resolution_clock::now();
@@ -76,7 +267,7 @@ namespace Addictol
 
 	void ProfilerCore::AddESPEntry(ESPProfileEntry&& a_entry) noexcept
 	{
-		if (!m_active)
+		if (!IsActive())
 			return;
 
 		std::lock_guard lock(m_espMutex);
@@ -85,7 +276,7 @@ namespace Addictol
 
 	void ProfilerCore::AddDLLEntry(DLLProfileEntry&& a_entry) noexcept
 	{
-		if (!m_active)
+		if (!IsActive())
 			return;
 
 		std::lock_guard lock(m_dllMutex);
@@ -94,7 +285,7 @@ namespace Addictol
 
 	void ProfilerCore::AddModuleEntry(ModuleProfileEntry&& a_entry) noexcept
 	{
-		if (!m_active)
+		if (!IsActive())
 			return;
 
 		std::lock_guard lock(m_moduleMutex);
@@ -103,7 +294,7 @@ namespace Addictol
 
 	void ProfilerCore::AddMemorySnapshot(MemorySnapshot&& a_snapshot) noexcept
 	{
-		if (!m_active)
+		if (!IsActive())
 			return;
 
 		std::lock_guard lock(m_memoryMutex);
@@ -112,18 +303,45 @@ namespace Addictol
 
 	void ProfilerCore::AddBA2Entry(BA2ProfileEntry&& a_entry) noexcept
 	{
-		if (!m_active)
+		if (!IsActive())
 			return;
 
 		std::lock_guard lock(m_ba2Mutex);
 		m_ba2Entries.push_back(std::move(a_entry));
 	}
 
+	void ProfilerCore::RecordAnimSubGraphRuntimeInterval(AnimSubGraphProfileEntry&& a_entry) noexcept
+	{
+		auto& runtime = GetRuntimeCollector();
+		if (!runtime.active)
+			return;
+
+		runtime.animSubGraph.Record(std::move(a_entry), runtime.csvExport);
+	}
+
+	void ProfilerCore::RecordFrameHitchRuntimeInterval(FrameHitchProfileEntry&& a_entry) noexcept
+	{
+		auto& runtime = GetRuntimeCollector();
+		if (!runtime.active)
+			return;
+
+		runtime.frameHitch.Record(std::move(a_entry), runtime.csvExport);
+	}
+
+	void ProfilerCore::AdvanceSaveLoadEpoch() noexcept
+	{
+		auto& runtime = GetRuntimeCollector();
+		if (runtime.active)
+			runtime.session.AdvanceSaveLoadEpoch();
+	}
+
 	// -- Report Generation --
 
 	std::string ProfilerCore::GetOutputDir() const noexcept
 	{
-		std::string dir = std::format("{}Data\\F4SE\\Plugins\\Addictol\\Profiler\\"sv, AdGetRuntimeDirectory());
+		const auto& dir = GetRuntimeCollector().session.GetOutputDirectory();
+		if (dir.empty())
+			return {};
 
 		std::error_code ec;
 		std::filesystem::create_directories(dir, ec);
@@ -289,7 +507,7 @@ namespace Addictol
 
 	void ProfilerCore::GenerateReport() noexcept
 	{
-		if (!m_active)
+		if (!IsActive())
 			return;
 
 		MarkPhase("ReportGeneration"sv);
@@ -297,6 +515,7 @@ namespace Addictol
 		REX::INFO("[Profiler] ========================================"sv);
 		REX::INFO("[Profiler]   ADDICTOL PERFORMANCE PROFILER REPORT"sv);
 		REX::INFO("[Profiler] ========================================"sv);
+		REX::INFO("[Profiler] Session ID: {}"sv, GetRuntimeCollector().session.GetSessionID());
 
 		if (bStartupTimeline.GetValue())
 			LogStartupTimeline();
@@ -324,6 +543,7 @@ namespace Addictol
 		auto dir = GetOutputDir();
 		if (dir.empty())
 			return;
+		const auto& sessionID = GetRuntimeCollector().session.GetSessionID();
 
 		// Timestamp for unique filenames
 		auto now = std::time(nullptr);
@@ -340,10 +560,11 @@ namespace Addictol
 			std::ofstream file(path);
 			if (file.is_open())
 			{
-				file << "LoadOrder,Filename,OpenMs,ConstructMs,CloseMs,TotalMs\n"sv;
+				file << "SessionId,LoadOrder,Filename,OpenMs,ConstructMs,CloseMs,TotalMs\n"sv;
 				for (const auto& e : m_espEntries)
 				{
-					file << e.loadOrderIndex << ","sv
+					file << sessionID << ","sv
+						<< e.loadOrderIndex << ","sv
 						<< "\""sv << e.filename << "\","sv
 						<< std::fixed << std::setprecision(1)
 						<< e.openMs << ","sv
@@ -362,10 +583,11 @@ namespace Addictol
 			std::ofstream file(path);
 			if (file.is_open())
 			{
-				file << "DLLName,QueryMs,LoadMs,FileVersion,DLLPath\n"sv;
+				file << "SessionId,DLLName,QueryMs,LoadMs,FileVersion,DLLPath\n"sv;
 				for (const auto& e : m_dllEntries)
 				{
-					file << "\""sv << e.dllName << "\","sv
+					file << sessionID << ","sv
+						<< "\""sv << e.dllName << "\","sv
 						<< std::fixed << std::setprecision(1)
 						<< e.queryMs << ","sv
 						<< e.loadMs << ","sv
@@ -383,10 +605,11 @@ namespace Addictol
 			std::ofstream file(path);
 			if (file.is_open())
 			{
-				file << "ModuleName,QueryMs,QuerySuccess,InstallMs,InstallSuccess\n"sv;
+				file << "SessionId,ModuleName,QueryMs,QuerySuccess,InstallMs,InstallSuccess\n"sv;
 				for (const auto& e : m_moduleEntries)
 				{
-					file << "\""sv << e.moduleName << "\","sv
+					file << sessionID << ","sv
+						<< "\""sv << e.moduleName << "\","sv
 						<< std::fixed << std::setprecision(3)
 						<< e.queryMs << ","sv
 						<< (e.querySuccess ? "true"sv : "false"sv) << ","sv
@@ -405,10 +628,11 @@ namespace Addictol
 			std::ofstream file(path);
 			if (file.is_open())
 			{
-				file << "ArchiveName,DecompressMs,CompressedBytes,UncompressedBytes,ThroughputMBps\n"sv;
+				file << "SessionId,ArchiveName,DecompressMs,CompressedBytes,UncompressedBytes,ThroughputMBps\n"sv;
 				for (const auto& e : m_ba2Entries)
 				{
-					file << "\""sv << e.archiveName << "\","sv
+					file << sessionID << ","sv
+						<< "\""sv << e.archiveName << "\","sv
 						<< std::fixed << std::setprecision(1)
 						<< e.decompressMs << ","sv
 						<< e.compressedSize << ","sv
@@ -426,12 +650,13 @@ namespace Addictol
 			std::ofstream file(path);
 			if (file.is_open())
 			{
-				file << "Phase,ElapsedMs,DeltaMs\n"sv;
+				file << "SessionId,Phase,ElapsedMs,DeltaMs\n"sv;
 				for (std::size_t i = 0; i < m_startupPhases.size(); ++i)
 				{
 					const auto& phase = m_startupPhases[i];
 					double delta = (i > 0) ? phase.elapsedFromStartMs - m_startupPhases[i - 1].elapsedFromStartMs : 0.0;
-					file << "\""sv << phase.name << "\","sv
+					file << sessionID << ","sv
+						<< "\""sv << phase.name << "\","sv
 						<< std::fixed << std::setprecision(1)
 						<< phase.elapsedFromStartMs << ","sv
 						<< delta << "\n"sv;

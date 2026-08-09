@@ -43,6 +43,12 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerDLL.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProfilerAnimSubGraph.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProfilerFrameHitch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProfilerESP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -74,9 +80,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
-      <Filter>Source\Modules\A</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSubGraphProfiler.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorCauseSaveBloat.cpp">
@@ -376,7 +379,16 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerCore.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerRuntimeChannel.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerDLL.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerAnimSubGraph.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerFrameHitch.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h">
@@ -401,9 +413,6 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h">
-      <Filter>Include\Modules\A</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSubGraphProfiler.h">
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorCauseSaveBloat.h">

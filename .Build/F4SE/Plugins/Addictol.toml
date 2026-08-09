@@ -277,6 +277,9 @@ bRobCoPatcherCache = false
 
 [Additional]
 
+# Frame duration that the frame-hitch profiler treats as a hitch.
+nFrameHitchThresholdMs = 50
+
 # Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen).
 bDbgFacegenOutput = false
 
@@ -331,11 +334,17 @@ fLocalMapScaleFactor = 1.5
 
 [Profiler]
 
+# Profiles main-thread frame hitches, engine phases, and loading stalls. Requires bProfiler = true.
+bFrameHitchProfiler = false
+
 # Master toggle for the performance profiler. When false, all profiling is disabled.
 bProfiler = false
 
-# Profiles animation-subgraph matching and reports the projected cache hit rate by role.
+# Profiles animation-subgraph matching and reports the projected cache hit rate by role. Requires bProfiler = true.
 bAnimSubGraphProfiler = false
+
+# Experimental diagnostic that skips animation-subgraph preloading and changes engine behavior. Requires bProfiler = true.
+bAnimSubGraphSkipPreload = false
 
 # Profile ESP/ESM load times during CompileFiles.
 bESPProfiler = true
@@ -358,5 +367,5 @@ bMemoryTracking = true
 # Time BA2 decompression calls (libdeflate).
 bBA2Timing = true
 
-# Export profiler data to CSV alongside the log report.
+# Export profiler data to CSV alongside the log report. Requires bProfiler = true.
 bCSVExport = true
