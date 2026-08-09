@@ -67,6 +67,8 @@
 #include <Modules/AdModuleReferenceHandleLimitWarning.h>
 #include <Modules/AdModuleToggleGrassCommand.h>
 #include <Modules/AdModuleTextureLoadCrash.h>
+#include <Modules/AdModuleMagicKeywordCrash.h>
+#include <Modules/AdModuleAttachLightCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
 #include <Modules/AdModuleSprintStutter.h>
 #include <Modules/AdModuleMoonRotation.h>
@@ -153,6 +155,8 @@ static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::Module
 static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
 static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleToggleGrassCommand>();
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
+static auto sModuleMagicKeywordCrash				= std::make_shared<Addictol::ModuleMagicKeywordCrash>();
+static auto sModuleAttachLightCrash					= std::make_shared<Addictol::ModuleAttachLightCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
 static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
@@ -252,6 +256,8 @@ void AdRegisterModules()
 	modules.Register(sModuleReferenceHandleLimitWarning);
 	modules.Register(sModuleToggleGrassCommand);
 	modules.Register(sModuleTextureLoadCrash);
+	modules.Register(sModuleMagicKeywordCrash);
+	modules.Register(sModuleAttachLightCrash);
 	modules.Register(sModuleDownwardAiming);
 	modules.Register(sModuleSprintStutter);
 	modules.Register(sModuleMoonRotation);

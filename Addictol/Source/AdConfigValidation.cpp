@@ -35,7 +35,8 @@ namespace Addictol
 			"bMuzzleFlashLight"sv, "bAltTabFullscreen"sv, "bPowerGridScrap"sv,
 			"bViewmodelShading"sv, "bDofFix"sv, "bUtilityShader"sv,
 			"bPipBoyCursorConstraints"sv, "bToggleGrassCommand"sv, "bTextureLoadCrash"sv,
-			"bDownwardAiming"sv, "bSprintStutter"sv, "bMoonRotation"sv, "bWeaponDebrisCrash"sv,
+			"bMagicKeywordCrash"sv, "bAttachLightCrash"sv, "bDownwardAiming"sv,
+			"bSprintStutter"sv, "bMoonRotation"sv, "bWeaponDebrisCrash"sv,
 			"bCrashRemoveRefFix"sv, "bClimateLoad"sv, "bMusicOverlap"sv, "bPuddleCubemaps"sv,
 			"bCompanionStrayBullet"sv, "bStringPoolRelease"sv, "bLoadOrder"sv, "bHUDMessageQueue"sv,
 			"bWaterJetpackFix"sv, "bAIProcess3DUpdateFlag"sv

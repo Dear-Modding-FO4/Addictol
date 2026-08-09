@@ -91,6 +91,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveLimits.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAttachLightCrash.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioSwitch.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
@@ -206,6 +209,9 @@
       <Filter>Source\Modules\M</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectConditions.cpp">
+      <Filter>Source\Modules\M</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicKeywordCrash.cpp">
       <Filter>Source\Modules\M</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp">
@@ -400,6 +406,9 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveLimits.h">
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAttachLightCrash.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h">
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
@@ -515,6 +524,9 @@
       <Filter>Include\Modules\M</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectConditions.h">
+      <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicKeywordCrash.h">
       <Filter>Include\Modules\M</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h">

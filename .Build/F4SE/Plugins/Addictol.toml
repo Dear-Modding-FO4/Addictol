@@ -200,6 +200,12 @@ bToggleGrassCommand = true
 # Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors.
 bTextureLoadCrash = true
 
+# Fixes a crash when a magic effect item has no effect setting.
+bMagicKeywordCrash = true
+
+# Fixes a crash when a light hit effect has no attach root.
+bAttachLightCrash = true
+
 # Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.
 bDownwardAiming = true
 
