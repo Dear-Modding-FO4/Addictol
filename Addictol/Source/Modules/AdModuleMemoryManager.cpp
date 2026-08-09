@@ -23,6 +23,7 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesMemoryManager{ "Patches"sv, "bMemoryManager"sv, true };
 	static REX::TOML::Bool<> bAdditionalUseNewRedistributable{ "Additional"sv, "bUseNewRedistributable"sv, true };
+	static REX::TOML::Str<> sAdditionalAllocator{ "Additional"sv, "sAllocator"sv, "voltek" };
 
 	class AutoScrapHeap
 	{
@@ -406,15 +407,12 @@ namespace Addictol
 
 	bool ModuleMemoryManager::DoQuery() const noexcept
 	{
-		return true;
+		return ResolveHeapSelection(sAdditionalAllocator.GetValue());
 	}
 
 	bool ModuleMemoryManager::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		AutoScrapHeap::Install();
-		MemoryManager<ProxyCurrentHeap>::Install();
-		ScrapHeap<ProxyCurrentHeap>::Install();
-		bhkThreadMemorySource<ProxyCurrentHeap>::Install();
 
 		/////////////////////////////////////////////////////////////////////
 		// Replacement of all functions of the standard allocator
@@ -422,13 +420,27 @@ namespace Addictol
 
 		auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
 
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<ProxyCurrentHeap>::realloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<ProxyCurrentHeap>::calloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<ProxyCurrentHeap>::aligned_malloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<ProxyCurrentHeap>::malloc);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<ProxyCurrentHeap>::aligned_free);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<ProxyCurrentHeap>::free);
-		RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<ProxyCurrentHeap>::msize);
+		for (const auto& heap : HEAP_NAMES)
+		{
+			if (heap.kind == GetSelectedHeapKind())
+			{
+				REX::INFO("Memory allocator backend: {}"sv, heap.name);
+				break;
+			}
+		}
+
+		VisitSelectedHeap([base]<typename Heap>() {
+			MemoryManager<Heap>::Install();
+			ScrapHeap<Heap>::Install();
+			bhkThreadMemorySource<Heap>::Install();
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<Heap>::realloc);
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<Heap>::calloc);
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<Heap>::aligned_malloc);
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<Heap>::malloc);
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<Heap>::aligned_free);
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<Heap>::free);
+			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<Heap>::msize);
+		});
 
 		/////////////////////////////////////////////////////////////////////
 		// Replacing memory manipulation functions with newer and more productive ones

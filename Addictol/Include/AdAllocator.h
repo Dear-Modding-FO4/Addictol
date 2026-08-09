@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <stdint.h>
+#include <string_view>
 #include <REX/REX.h>
 
 // Not ready, not pulling, hanging for no reason!!!
@@ -9,6 +11,21 @@
 namespace Addictol
 {
 	constexpr inline static auto MEM_GB = 1073741824;
+
+	enum class HeapKind
+	{
+		Voltek
+	};
+
+	struct HeapName
+	{
+		std::string_view name;
+		HeapKind kind;
+	};
+
+	inline constexpr std::array HEAP_NAMES{
+		HeapName{ "voltek", HeapKind::Voltek }
+	};
 
 	class ICheckerPointer
 	{
@@ -78,6 +95,20 @@ namespace Addictol
 #else
 	using ProxyCurrentHeap = ProxyVoltekHeap;
 #endif
+
+	bool ResolveHeapSelection(std::string_view a_name) noexcept;
+	HeapKind GetSelectedHeapKind() noexcept;
+
+	template<class F>
+	decltype(auto) VisitSelectedHeap(F&& a_fn)
+	{
+		switch (GetSelectedHeapKind())
+		{
+		case HeapKind::Voltek:
+		default:
+			return a_fn.template operator()<ProxyVoltekHeap>();
+		}
+	}
 
 	template<typename Heap = ProxyCurrentHeap>
 	struct StdStuff

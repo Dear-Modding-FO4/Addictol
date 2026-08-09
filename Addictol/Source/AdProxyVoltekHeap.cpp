@@ -24,7 +24,7 @@ namespace Addictol
 		void* ptr = lpBlock ?
 			voltek::scalable_realloc(lpBlock, nNewSize) :
 			voltek::scalable_alloc(nNewSize);
-		return nNewSize ? CheckPtr(ptr, nNewSize) : ptr;
+		return CheckPtr(ptr, nNewSize);
 	}
 
 	void* ProxyVoltekHeap::aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept

@@ -25,7 +25,7 @@ One DLL covers all three; there is no separate download per version.
 
 ## Features
 
-- **Memory Manager** - Replaces the game's allocator with Voltek for better performance
+- **Memory Manager** - Replaces the game's allocator with a selectable backend
 - **Faster Workshop** - O(1) keyword lookups instead of scanning all constructible objects
 - **LibDeflate** - Faster BA2 decompression via libdeflate
 - **Facegen** - Validates NPC face textures before using preprocessed data

@@ -8,9 +8,34 @@ namespace Addictol
 	// Use to convert bytes to GB
 	constexpr static auto AD_DIV = 1024 * 1024 * 1024;
 
+	namespace
+	{
+		HeapKind s_selectedHeapKind = HeapKind::Voltek;
+	}
+
+	bool ResolveHeapSelection(std::string_view a_name) noexcept
+	{
+		for (const auto& heap : HEAP_NAMES)
+		{
+			if (heap.name == a_name)
+			{
+				s_selectedHeapKind = heap.kind;
+				return true;
+			}
+		}
+
+		REX::WARN("Unknown or unavailable allocator backend \"{}\"; valid values are: voltek", a_name);
+		return false;
+	}
+
+	HeapKind GetSelectedHeapKind() noexcept
+	{
+		return s_selectedHeapKind;
+	}
+
 	void* ICheckerPointer::CheckPtr(void* lpBlock, size_t nSize) const noexcept
 	{
-		if (!lpBlock)
+		if (!lpBlock && nSize)
 		{
 			static MEMORYSTATUSEX statex = { 0 };
 			statex.dwLength = sizeof(MEMORYSTATUSEX);

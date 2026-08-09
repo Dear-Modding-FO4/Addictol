@@ -283,6 +283,9 @@ bDbgFacegenOutput = false
 # Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (needs bMemoryManager).
 bUseNewRedistributable = false
 
+# Selects the allocator backend: voltek.
+sAllocator = "voltek"
+
 # The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
 uScaleformPageSize = 64
 
