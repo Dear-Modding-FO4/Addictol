@@ -136,6 +136,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreateD3DAndSwapchain.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFullPrecisionDecals.cpp">
+      <Filter>Source\Modules\F</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp">
       <Filter>Source\Modules\D</Filter>
     </ClCompile>
@@ -450,6 +453,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h">
       <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFullPrecisionDecals.h">
+      <Filter>Include\Modules\F</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h">
       <Filter>Include\Modules\D</Filter>

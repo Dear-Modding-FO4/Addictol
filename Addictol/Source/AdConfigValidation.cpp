@@ -35,7 +35,7 @@ namespace Addictol
 			"bMuzzleFlashLight"sv, "bAltTabFullscreen"sv, "bPowerGridScrap"sv,
 			"bViewmodelShading"sv, "bDofFix"sv, "bUtilityShader"sv,
 			"bPipBoyCursorConstraints"sv, "bToggleGrassCommand"sv, "bTextureLoadCrash"sv,
-			"bMagicKeywordCrash"sv, "bAttachLightCrash"sv, "bDownwardAiming"sv,
+			"bFullPrecisionDecals"sv, "bMagicKeywordCrash"sv, "bAttachLightCrash"sv, "bDownwardAiming"sv,
 			"bSprintStutter"sv, "bMoonRotation"sv, "bWeaponDebrisCrash"sv,
 			"bCrashRemoveRefFix"sv, "bClimateLoad"sv, "bMusicOverlap"sv, "bPuddleCubemaps"sv,
 			"bCompanionStrayBullet"sv, "bStringPoolRelease"sv, "bLoadOrder"sv, "bHUDMessageQueue"sv,
@@ -51,7 +51,8 @@ namespace Addictol
 			"bDbgFacegenOutput"sv, "bUseNewRedistributable"sv,
 			"uScaleformPageSize"sv, "uScaleformHeapSize"sv,
 			"nSleepTimer"sv, "nMaxLockCount"sv,
-			"bInteriorNavCutMultiThreading"sv, "nMaxPapyrusOpsPerFrame"sv,
+			"bInteriorNavCutMultiThreading"sv, "bFullPrecisionDecalsMembrane"sv,
+			"bFullPrecisionDecalsEffectShaders"sv, "nMaxPapyrusOpsPerFrame"sv,
 			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
 			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"sv,
 			"fLocalMapScaleFactor"sv

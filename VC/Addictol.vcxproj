@@ -37,6 +37,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAudioSwitch.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleClimateLoad.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFullPrecisionDecals.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp" />
@@ -143,6 +144,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleClimateLoad.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFullPrecisionDecals.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h" />

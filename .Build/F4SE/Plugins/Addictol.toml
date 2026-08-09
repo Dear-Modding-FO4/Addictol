@@ -200,6 +200,9 @@ bToggleGrassCommand = true
 # Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors.
 bTextureLoadCrash = true
 
+# Enables fixes for decal projection, effect-shader particles, and membrane shaders on full-precision meshes.
+bFullPrecisionDecals = true
+
 # Fixes a crash when a magic effect item has no effect setting.
 bMagicKeywordCrash = true
 
@@ -291,6 +294,12 @@ nMaxLockCount = 8
 
 # Enable InteriorNavCut MultiThreading, automatically disabled on Linux / Proton (needs bInteriorNavCut).
 bInteriorNavCutMultiThreading = true
+
+# Fixes membrane shaders on full-precision meshes with a cached compact vertex buffer (needs bFullPrecisionDecals).
+bFullPrecisionDecalsMembrane = true
+
+# Fixes effect-shader particles on full-precision meshes (needs bFullPrecisionDecals).
+bFullPrecisionDecalsEffectShaders = true
 
 # Maximum papyrus operations per frame. Higher number means better script performance on average.
 nMaxPapyrusOpsPerFrame = 500
