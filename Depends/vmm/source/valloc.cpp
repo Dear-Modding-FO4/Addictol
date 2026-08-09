@@ -217,6 +217,17 @@ namespace voltek
 #endif
 			}
 
+			void* page_alloc(size_t size)
+			{
+				return VirtualAlloc(nullptr, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+			}
+
+			void page_free(void* ptr)
+			{
+				if (ptr)
+					VirtualFree(ptr, 0, MEM_RELEASE);
+			}
+
 			void* aligned_malloc(size_t size, size_t alignment)
 			{
 				if (!size)

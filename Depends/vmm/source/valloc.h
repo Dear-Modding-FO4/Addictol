@@ -14,6 +14,9 @@ namespace voltek
 		{
 			//class St
 
+			void* page_alloc(size_t size);
+			void page_free(void* ptr);
+
 			void* aligned_malloc(size_t size, size_t alignment);
 			void* aligned_calloc(size_t count, size_t size, size_t alignment);
 			void* aligned_realloc(void* ptr, size_t size, size_t alignment);

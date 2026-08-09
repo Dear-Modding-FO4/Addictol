@@ -47,9 +47,9 @@ namespace voltek
 				{
 #ifdef MAPPER_USE
 					if (!_mapper->block_free(_blocks))
-						voltek::core::_internal::aligned_free(_blocks);
+						voltek::core::_internal::page_free(_blocks);
 #else
-					voltek::core::_internal::aligned_free(_blocks);
+					voltek::core::_internal::page_free(_blocks);
 #endif
 
 					_blocks = nullptr;
@@ -68,13 +68,20 @@ namespace voltek
 				new_size = (new_size >> 8) << 8;
 
 				map.clear();
+				if (new_size && new_size > SIZE_MAX / sizeof(_type))
+				{
+					_vassert(!_blocks);
+					return;
+				}
+
 				map.resize(new_size);
+				size_t alloc_size = new_size * sizeof(_type);
 
 #ifdef MAPPER_USE
 				_blocks = (_type*)_mapper->block_alloc();
-				if (!_blocks) _blocks = voltek::core::_internal::aligned_talloc<_type>(new_size, 0x10);
+				if (!_blocks) _blocks = (_type*)voltek::core::_internal::page_alloc(alloc_size);
 #else
-				_blocks = voltek::core::_internal::aligned_talloc<_type>(new_size, 0x10);
+				_blocks = (_type*)voltek::core::_internal::page_alloc(alloc_size);
 #endif
 
 				if (!_blocks)
@@ -133,7 +140,7 @@ namespace voltek
 			{ 
 #ifndef VMMDLL_EXPORTS
 				voltek::core::_internal::memory_to_file(filename, (void*)_blocks, 
-					voltek::core::_internal::aligned_msize(_blocks), _size >> 3);
+					_size * sizeof(_type), _size >> 3);
 #endif // !VMMDLL_EXPORTS
 			}
 		private:
