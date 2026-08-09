@@ -65,7 +65,7 @@ namespace voltek
 				// Это необходимо, учитывая, что bits_regions размер минимум от 65536.
 				// Использование SIMD инструкций является приоритетом, а "хвоста" должно 
 				// быть немного, а лучше небыло вовсе.
-				new_size = (new_size << 8) >> 8;
+				new_size = (new_size >> 8) << 8;
 
 				map.clear();
 				map.resize(new_size);
@@ -198,7 +198,7 @@ namespace voltek
 				// Это необходимо, учитывая, что bits_regions размер минимум от 65536.
 				// Использование SIMD инструкций является приоритетом, а "хвоста" должно 
 				// быть немного, а лучше небыло вовсе.
-				new_size = (new_size << 8) >> 8;
+				new_size = (new_size >> 8) << 8;
 
 				_stack.clear();
 				_stack.resize(new_size);

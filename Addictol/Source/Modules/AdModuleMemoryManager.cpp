@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <xbyak/xbyak.h>
+#include <algorithm>
 #include <tuple>
 
 #if AD_TRACER
@@ -221,6 +222,15 @@ namespace Addictol
 		[[nodiscard]] static void* Realloc([[maybe_unused]] MemoryManager* a_self, void* a_block, size_t a_size,
 			uint32_t a_align, bool a_alignment) noexcept
 		{
+			if (!a_size)
+			{
+				Dealloc(a_self, a_block, a_alignment);
+#if !AD_NO_EMPTYPOINTERS
+				return (void*)(&EMPTY_POINTER);
+#else
+				return nullptr;
+#endif
+			}
 #if AD_TRACER
 			void* ptr = nullptr;
 			auto ret_addr = _ReturnAddress();
@@ -228,7 +238,7 @@ namespace Addictol
 #if !AD_NO_EMPTYPOINTERS
 			if (a_block == (const void*)(&EMPTY_POINTER))
 				ptr = a_alignment ?
-					Heap::GetSingleton()->aligned_malloc(a_size, nAlignment) :
+					Heap::GetSingleton()->aligned_malloc(a_size, a_align) :
 					Heap::GetSingleton()->malloc(a_size);
 			else
 #endif
@@ -236,7 +246,7 @@ namespace Addictol
 				MemoryTracer::GetSingleton()->Remove(a_block);
 
 				ptr = a_alignment ?
-					Heap::GetSingleton()->aligned_realloc(a_block, a_size, nAlignment) :
+					Heap::GetSingleton()->aligned_realloc(a_block, a_size, a_align) :
 					Heap::GetSingleton()->realloc(a_block, a_size);
 			}
 
@@ -245,10 +255,7 @@ namespace Addictol
 #else
 #if !AD_NO_EMPTYPOINTERS
 			if (a_block == (const void*)(&EMPTY_POINTER))
-				return Alloc(lpSelf, a_size, nAlignment, a_alignment);
-#else
-			if (!a_size)
-				return nullptr;
+				return Alloc(a_self, a_size, a_align, a_alignment);
 #endif
 			return a_alignment ?
 				Heap::GetSingleton()->aligned_realloc(a_block, a_size, a_align) :
@@ -349,9 +356,12 @@ namespace Addictol
 		[[nodiscard]] virtual void* bufRealloc(void* pold, std::int32_t oldNumBytes, std::int32_t& reqNumBytesInOut) noexcept
 		{
 			void* p = blockAlloc(reqNumBytesInOut);
-			if (!p)
-				return pold;
-			memcpy(p, pold, oldNumBytes);
+			if (p)
+			{
+				const auto copyBytes = std::min(oldNumBytes, reqNumBytesInOut);
+				if (copyBytes > 0)
+					memcpy(p, pold, static_cast<size_t>(copyBytes));
+			}
 			blockFree(pold, oldNumBytes);
 			return p;
 		}

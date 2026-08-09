@@ -70,7 +70,8 @@ namespace voltek
 			}
 			else if (_mem)
 			{
-				VirtualFree(_mem, _size, MEM_RELEASE);
+				// MEM_RELEASE требует dwSize == 0.
+				VirtualFree(_mem, 0, MEM_RELEASE);
 				_mem = nullptr;
 				_size = 0;
 				_freesize = 0;

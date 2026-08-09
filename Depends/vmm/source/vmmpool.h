@@ -5,7 +5,9 @@
 #pragma once
 
 #include "vmmpage.h"
-#include <stack>
+#include <algorithm>
+#include <utility>
+#include <vector>
 
 #define __VMM_POOL_CONFIG_BIG_SIZE 256ull * 1024
 #define __VMM_POOL_CONFIG_LARGE_SIZE 128ull * 1024
@@ -23,17 +25,23 @@ namespace voltek
 		class pool_t : public voltek::core::base
 		{
 		public:
+			// Битовые карты не имеют хвостового прохода — кратность 256 обязана быть точной.
+			static_assert((_blocks_in_page & 255) == 0,
+				"_blocks_in_page must be a multiple of 256");
 			// Тип страницы.
 			using pageobj_t = _page;
 			// Тип указателя на страницу.
 			using pageptr_t = pageobj_t*;
 			// Конструктор по умолчанию.
 			pool_t() : _pages(nullptr), _current(nullptr), _count(0)
-			{}
+			{
+				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
+			}
 			// Конструктор.
 			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
 			pool_t(size_t count) : _pages(nullptr), _current(nullptr), _count(0)
 			{
+				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
 				set_size(count);
 			}
 			// Деструктор
@@ -60,7 +68,7 @@ namespace voltek
 				// Это необходимо, учитывая, что bits_regions размер минимум от 65536.
 				// Использование SIMD инструкций является приоритетом, а "хвоста" должно 
 				// быть немного, а лучше небыло вовсе.
-				count = (count << 8) >> 8;
+				count = (count >> 8) << 8;
 
 				map.clear();
 				map.resize(count);
@@ -140,7 +148,7 @@ namespace voltek
 				if (!free_stack_blocks.empty())
 				{
 					// Получить из стека
-					auto& item = free_stack_blocks.top();
+					auto& item = free_stack_blocks.back();
 					// Передаём индекс блока
 					index_block = item.second;
 					// Передаём страницу
@@ -148,7 +156,7 @@ namespace voltek
 					// Получаем блок по текущему индексу
 					block = &(page->at(index_block));
 					// Удалить из стека
-					free_stack_blocks.pop();
+					free_stack_blocks.pop_back();
 
 					return true;
 				}
@@ -211,7 +219,8 @@ namespace voltek
 			// Освобождает блок. Возвращает истину, если всё успешно освободилось.
 			bool release_block(pageptr_t page, size_t index_block)
 			{
-				if (!page || (index_block >= _blocks_in_page))
+				// Фактический размер страницы, а не константа шаблона: он округляется вниз.
+				if (!page || (index_block >= page->count()))
 					return false;
 
 				// Попытка освободить в этой странице блок.
@@ -227,8 +236,7 @@ namespace voltek
 						if (_current == page)
 							_current = nullptr;
 
-						// Очистить весь стэк
-						free_stack_blocks = {};
+						std::erase_if(free_stack_blocks, [page](const auto& e) { return e.first == page; });
 
 						delete page;
 
@@ -239,7 +247,7 @@ namespace voltek
 						// Занять индекс блока, более он не доступен.
 						page->set_block_busy(index_block);
 						// добавить в стэк
-						free_stack_blocks.push(std::make_pair(page, (uint32_t)index_block));
+						free_stack_blocks.push_back({ page, (uint32_t)index_block });
 					}
 
 					return true;
@@ -261,7 +269,7 @@ namespace voltek
 						// Занять индекс блока, более он не доступен.
 						page->set_block_busy(index_block);
 						// добавить в стэк
-						free_stack_blocks.push(std::make_pair(page, (uint32_t)index_block));
+						free_stack_blocks.push_back({ page, (uint32_t)index_block });
 						return true;
 					}
 				}
@@ -286,7 +294,7 @@ namespace voltek
 			// Кол-во доступных страниц.
 			size_t _count;
 			// Стек свободных блоков
-			std::stack<std::pair<pageptr_t, uint32_t>> free_stack_blocks;
+			std::vector<std::pair<pageptr_t, uint32_t>> free_stack_blocks;
 			// Дополнительная информация.
 			uintptr_t _user_data;
 			// Битовая карта.

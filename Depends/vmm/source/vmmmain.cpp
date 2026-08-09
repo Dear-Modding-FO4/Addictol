@@ -102,7 +102,6 @@ namespace voltek
 			event_close_w = CreateEventA(nullptr, true, false, nullptr);
 			if (!event_close || !event_close_w)
 			{
-				_vassert(!new_block);
 				return;
 			}
 			
@@ -157,8 +156,10 @@ namespace voltek
 				}
 			}, (HANDLE*)&event_close, (HANDLE*)&event_close_w, pools, &lock);
 			_vassert(!thread);
-			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_HIGHEST);
-			_vassert(!SetThreadAffinityMask(thread->native_handle(), 1llu << (thread->hardware_concurrency() - 1)));
+			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+			const auto cores = std::thread::hardware_concurrency();
+			if (cores > 0 && cores <= 64)
+				SetThreadAffinityMask(thread->native_handle(), 1ull << (cores - 1));
 			thread->detach();
 #endif
 		}
@@ -217,6 +218,9 @@ namespace voltek
 			{
 			alloc_default_ptr_label:
 				block_base* new_block;
+
+				if (size > SIZE_MAX - sizeof(block_base))
+					return nullptr;
 				
 				if (size >= MAX_BLOCK_SIZE)
 					new_block = (block_base*)VirtualAlloc(NULL, size + sizeof(block_base), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -492,8 +496,13 @@ namespace voltek
 
 		void* memory_manager::realloc(const void* ptr, size_t size)
 		{
-			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr) || !size /*|| (ULONG_MAX < size)*/)
+			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr) /*|| (ULONG_MAX < size)*/)
 				return nullptr;
+			if (!size)
+			{
+				free(ptr);
+				return nullptr;
+			}
 
 			void* new_ptr = nullptr;	
 
@@ -508,7 +517,9 @@ namespace voltek
 			realloc_def_label:
 				size_t old_size = msize(ptr);
 				new_ptr = alloc(size);
-				if (new_ptr && (old_size > 0)) memcpy(new_ptr, ptr, old_size > size ? size : old_size);
+				if (!new_ptr)
+					return nullptr;
+				if (old_size > 0) memcpy(new_ptr, ptr, old_size > size ? size : old_size);
 				free(ptr);
 			}
 			else
@@ -681,10 +692,11 @@ namespace voltek
 			if (is_used_default_ptr(ptr))
 			{
 				auto block = get_block_handle_from_ptr(ptr);
-				if (block->size > 0)
+				size_t block_size = get_size_from_block(block);
+				if (block_size > 0)
 				{
-					if (block->size >= MAX_BLOCK_SIZE)
-						VirtualFree((LPVOID)block, (SIZE_T)block->size, MEM_RELEASE);
+					if (block_size >= MAX_BLOCK_SIZE)
+						VirtualFree((LPVOID)block, 0, MEM_RELEASE);
 					else 
 						voltek::core::_internal::aligned_free(block);
 				}

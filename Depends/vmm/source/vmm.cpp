@@ -33,6 +33,7 @@ namespace voltek
 
 	VOLTEK_MM_API void* scalable_calloc(size_t count, size_t size)
 	{
+		if (count && size > SIZE_MAX / count) return nullptr;
 		size_t need_size = count * size;
 		void* ptr = scalable_alloc(need_size);
 		if (ptr) memset(ptr, 0, need_size);
@@ -48,6 +49,7 @@ namespace voltek
 	VOLTEK_MM_API void* scalable_recalloc(const void* ptr, size_t count, size_t size)
 	{
 		if (!ptr || !memory_manager::global_memory_manager) return nullptr;
+		if (count && size > SIZE_MAX / count) return nullptr;
 		// Получение размера памяти, что было ранее.
 		size_t old_size = memory_manager::global_memory_manager->msize(ptr);
 		// Новый требуемый размер памяти.
