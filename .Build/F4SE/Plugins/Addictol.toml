@@ -328,6 +328,9 @@ fLocalMapScaleFactor = 1.5
 # Master toggle for the performance profiler. When false, all profiling is disabled.
 bProfiler = false
 
+# Profiles animation-subgraph matching and reports the projected cache hit rate by role.
+bAnimSubGraphProfiler = false
+
 # Profile ESP/ESM load times during CompileFiles.
 bESPProfiler = true
 

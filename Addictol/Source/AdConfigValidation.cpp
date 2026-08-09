@@ -60,7 +60,7 @@ namespace Addictol
 		{ "Profiler"sv, {
 			"bProfiler"sv, "bESPProfiler"sv, "bESPSubHooks"sv, "bDLLProfiler"sv,
 			"bModuleProfiler"sv, "bStartupTimeline"sv, "bMemoryTracking"sv,
-			"bBA2Timing"sv, "bCSVExport"sv
+			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv
 		}}
 	};
 

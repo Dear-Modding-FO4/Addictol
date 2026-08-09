@@ -25,6 +25,9 @@
     <ClCompile Include="..\Addictol\Source\AdUtils.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdAnimSubGraphRuntime.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -71,6 +74,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSubGraphProfiler.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleActorCauseSaveBloat.cpp">
@@ -337,6 +343,9 @@
     <ClInclude Include="..\Addictol\Include\AdUtils.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdAnimSubGraphRuntime.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdAssert.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -389,6 +398,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSubGraphProfiler.h">
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleActorCauseSaveBloat.h">
