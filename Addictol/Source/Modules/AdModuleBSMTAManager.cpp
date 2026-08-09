@@ -116,7 +116,9 @@ namespace Addictol
 			Cache() noexcept = default;
 			~Cache() noexcept = default;
 
-			ExecuteTask_t* const _executeTask{ reinterpret_cast<ExecuteTask_t*>(REL::ID{ 92771 }.address()) };
+			// OG-only id, resolving it on NG/AE hard-fails even though the call site is gated
+			ExecuteTask_t* const _executeTask{ RELEX::IsRuntimeOG() ?
+				reinterpret_cast<ExecuteTask_t*>(REL::ID{ 92771 }.address()) : nullptr };
 			uintptr_t shaderAccumulatorAddress = REL::ID{ 1301235, 2712963 }.address();
 		};
 

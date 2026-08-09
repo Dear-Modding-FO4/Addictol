@@ -36,7 +36,8 @@ namespace Addictol
 
 	bool ModuleActorIsHostileToActor::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation{ REL::ID{ 1022223, 0, 4486975 }, REL::Offset{ 0x0, 0x1081B20, 0x0 } }.address(); // NG has no ID
+		// NG has no ID for this site, so it anchors 0x10 off the preceding one.
+		const auto target = REL::Relocation{ REL::ID{ 1022223, 2251858, 4486975 }, REL::Offset{ 0x0, 0x10, 0x0 } }.address();
 		const size_t size = 0x10;
 
 		if (!RELEX::Validate(target, { 0x49, 0x8B, 0xD1, 0x49, 0x8B, 0xC8, 0xE9 }))

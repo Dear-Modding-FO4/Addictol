@@ -20,7 +20,12 @@ namespace Addictol
 
 	namespace fasterWorkshopDetail
 	{
-		REL::Relocation HookLeafNodeTargetOG{ REL::ID{ 934716 }, REL::Offset{ 0x1EF } };
+		// resolved lazily, the id is OG-only and would hard-fail at static init on NG/AE
+		static std::uintptr_t LeafNodeTargetOG() noexcept
+		{
+			static REL::Relocation target{ REL::ID{ 934716 }, REL::Offset{ 0x1EF } };
+			return target.address();
+		}
 
 		// Constructible Object Map
 		std::unordered_map<const RE::BGSKeyword*, std::vector<const RE::BGSConstructibleObject*>> g_cobjMap;
@@ -241,7 +246,7 @@ namespace Addictol
 				jmp(ptr[rip + continueLabel]);
 
 				L(continueLabel);
-				dq(HookLeafNodeTargetOG.address() + 0x23);
+				dq(LeafNodeTargetOG() + 0x23);
 
 				L(handler);
 				dq((uintptr_t)&HandlerLeafNode);
@@ -356,7 +361,7 @@ namespace Addictol
 		RELEX::DetourCall(HookCheckForValidChildrenTarget.address(), (uintptr_t)&fasterWorkshopDetail::CachedCheckForValidChildren);
 
 		if (RELEX::IsRuntimeOG())
-			RELEX::XbyakJump<fasterWorkshopDetail::LeafNodePatch>(fasterWorkshopDetail::HookLeafNodeTargetOG.address());
+			RELEX::XbyakJump<fasterWorkshopDetail::LeafNodePatch>(fasterWorkshopDetail::LeafNodeTargetOG());
 		else
 		{
 			*(uintptr_t*)&fasterWorkshopDetail::Workshop__Workbench__AddRecipe = REL::ID(2195494).address();
