@@ -28,15 +28,16 @@ namespace Addictol
 		{
 			const RE::BSAutoLock lock{ a_this->dataLock };
 
-			auto maxPageSize = a_this->maxAllocatedMemory - a_this->currentMemorySize;
-			auto currentMemorySize = a_this->currentMemorySize;
-			if (maxPageSize < 0)
+			// uint32 subtraction wraps once usage passes the cap, handing out a page instead of OOM.
+			const bool overCommitted = a_this->currentMemorySize > a_this->maxAllocatedMemory;
+			const auto currentMemorySize = a_this->currentMemorySize;
+			if (overCommitted)
 			{
 				a_this->currentMemorySize = a_this->maxAllocatedMemory;
 			}
 
 			auto result = _GetLargestAvailablePage(a_this, a_newPage);
-			if (maxPageSize < 0)
+			if (overCommitted)
 			{
 				a_this->currentMemorySize = currentMemorySize;
 			}
