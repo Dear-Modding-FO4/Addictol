@@ -118,6 +118,9 @@ bEscapeFreeze = true
 # Use disk cache for IO for less disk activity.
 bIOCacher = true
 
+# Buffers F4SE co-save reads into memory so loading a save issues one read instead of thousands of syscalls.
+bCosaveIO = true
+
 # Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized.
 bTESObjectREFRGetEncounterZone = true
 

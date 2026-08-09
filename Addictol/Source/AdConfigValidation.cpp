@@ -24,7 +24,7 @@ namespace Addictol
 			"bGreyMovie"sv, "bPackageAllocateLocation"sv, "bInitTints"sv, "bLODDistance"sv,
 			"bActorIsHostileToActor"sv, "bBGSAIWorldLocationRefRadius"sv, "bSafeExit"sv,
 			"bUnalignedLoad"sv, "bCellInit"sv, "bWorkbenchSwap"sv, "nMaxStdIO"sv,
-			"bMovementPlanner"sv, "bEscapeFreeze"sv, "bIOCacher"sv,
+			"bMovementPlanner"sv, "bEscapeFreeze"sv, "bIOCacher"sv, "bCosaveIO"sv,
 			"bTESObjectREFRGetEncounterZone"sv, "bPipBoyLightInv"sv, "bInteriorNavCut"sv,
 			"bMagicEffectApplyEvent"sv, "bMagicEffectConditions"sv,
 			"bEncounterZoneReset"sv, "bLeveledListCrash"sv,

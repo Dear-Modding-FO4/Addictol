@@ -26,6 +26,7 @@
 #include <Modules/AdModuleMovementPlanner.h>
 #include <Modules/AdModuleEscapeFreeze.h>
 #include <Modules/AdModuleIOCacher.h>
+#include <Modules/AdModuleCosaveIO.h>
 #include <Modules/AdModuleBSMTAManager.h>
 #include <Modules/AdModuleBSPreCulledObjects.h>
 #include <Modules/AdModuleTESObjectREFRGetEncounterZone.h>
@@ -116,6 +117,7 @@ static auto sModuleMaxStdIO							= std::make_shared<Addictol::ModuleMaxStdIO>()
 static auto sModuleMovementPlanner					= std::make_shared<Addictol::ModuleMovementPlanner>();
 static auto sModuleEscapeFreeze						= std::make_shared<Addictol::ModuleEscapeFreeze>();
 static auto sModuleIOCacher							= std::make_shared<Addictol::ModuleIOCacher>();
+static auto sModuleCosaveIO							= std::make_shared<Addictol::ModuleCosaveIO>();
 static auto sModuleBSMTAManager						= std::make_shared<Addictol::ModuleBSMTAManager>();
 static auto sModuleBSPreCulledObjects				= std::make_shared<Addictol::ModuleBSPreCulledObjects>();
 static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::ModuleTESObjectREFRGetEncounterZone>();
@@ -231,6 +233,7 @@ void AdRegisterModules()
 	modules.Register(sModuleCompanionStrayBullet);
 	modules.Register(sModuleEscapeFreeze);
 	modules.Register(sModuleIOCacher);
+	modules.Register(sModuleCosaveIO);
 	modules.Register(sModuleBSMTAManager);
 	modules.Register(sModuleBSPreCulledObjects);
 	modules.Register(sModuleTESObjectREFRGetEncounterZone);

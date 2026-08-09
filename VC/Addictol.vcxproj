@@ -69,6 +69,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCOMInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCosaveIO.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreateD3DAndSwapchain.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDuplicateAddonNodeIndex.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCosaveIO.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDuplicateAddonNodeIndex.h" />
