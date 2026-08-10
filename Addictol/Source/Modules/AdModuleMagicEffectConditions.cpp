@@ -75,7 +75,7 @@ namespace Addictol
 	{
 		if (REX::W32::GetModuleHandleW(L"MGEFConditionFix.dll"))
 		{
-			REX::WARN("MagicEffectConditions: MGEFConditionFix.dll is present; standalone fix already active. Patch was not applied."sv);
+			Skip("MGEFConditionFix.dll is present; standalone fix already active"sv);
 			return false;
 		}
 

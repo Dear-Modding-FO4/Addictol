@@ -31,14 +31,14 @@ namespace Addictol
 		auto dll = REX::W32::GetModuleHandleA("Ole32.dll");
 		if (!dll)
 		{
-			REX::INFO("No found Ole32.dll"sv);
+			Skip("Ole32.dll is not loaded"sv);
 			return false;
 		}
 
 		auto func = REX::W32::GetProcAddress(dll, "CoInitializeEx");
 		if (!func)
 		{
-			REX::INFO("No found CoInitializeEx() in Ole32.dll"sv);
+			Skip("Ole32.dll exports no CoInitializeEx()"sv);
 			return false;
 		}
 		

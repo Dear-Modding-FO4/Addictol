@@ -58,6 +58,7 @@ namespace Addictol
 		double installMs{ 0.0 };
 		bool querySuccess{ false };
 		bool installSuccess{ false };
+		bool skipped{ false };
 	};
 
 	struct StartupPhase

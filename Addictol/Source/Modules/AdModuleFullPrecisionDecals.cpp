@@ -1183,7 +1183,7 @@ namespace Addictol
 	{
 		if (REX::W32::GetModuleHandleW(L"DecalFix.dll"))
 		{
-			REX::WARN("Full Precision Decals: DecalFix.dll is present; standalone fix already active. Patch was not applied."sv);
+			Skip("DecalFix.dll is present; standalone fix already active"sv);
 			return false;
 		}
 

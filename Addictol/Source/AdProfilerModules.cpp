@@ -29,7 +29,7 @@ namespace Addictol
 		s_startTimes[std::string(a_name)] = std::chrono::high_resolution_clock::now();
 	}
 
-	void ProfilerEndModuleQuery(std::string_view a_name, bool a_success) noexcept
+	void ProfilerEndModuleQuery(std::string_view a_name, bool a_success, bool a_skipped) noexcept
 	{
 		auto profiler = ProfilerCore::GetSingleton();
 		if (!profiler->IsActive() || !ProfilerCore::IsModuleProfilingEnabled())
@@ -48,6 +48,7 @@ namespace Addictol
 		entry.moduleName = name;
 		entry.queryMs = elapsed;
 		entry.querySuccess = a_success;
+		entry.skipped = a_skipped;
 
 		// If query failed, the module won't be installed - submit immediately
 		if (!a_success)
@@ -65,7 +66,7 @@ namespace Addictol
 		s_startTimes[std::string(a_name)] = std::chrono::high_resolution_clock::now();
 	}
 
-	void ProfilerEndModuleInstall(std::string_view a_name, bool a_success) noexcept
+	void ProfilerEndModuleInstall(std::string_view a_name, bool a_success, bool a_skipped) noexcept
 	{
 		auto profiler = ProfilerCore::GetSingleton();
 		if (!profiler->IsActive() || !ProfilerCore::IsModuleProfilingEnabled())
@@ -84,6 +85,7 @@ namespace Addictol
 		entry.moduleName = name;
 		entry.installMs = elapsed;
 		entry.installSuccess = a_success;
+		entry.skipped = a_skipped;
 
 		// Install is the final phase - submit the completed entry
 		profiler->AddModuleEntry(std::move(entry));

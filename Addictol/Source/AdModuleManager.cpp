@@ -28,11 +28,12 @@ namespace Addictol
 		__try
 		{
 			auto result = a_mod->DoQuery();
-			ProfilerEndModuleQuery(a_mod->GetName(), result);
+			ProfilerEndModuleQuery(a_mod->GetName(), result, a_mod->WasSkipped());
 			return result;
 		}
 		__except (1)
 		{
+			a_mod->ClearSkip();
 			ProfilerEndModuleQuery(a_mod->GetName(), false);
 			REX::ERROR("Module \"{}\": caught exception during query"sv, a_mod->GetName());
 			return false;
@@ -45,11 +46,12 @@ namespace Addictol
 		__try
 		{
 			auto result = a_mod->DoInstall(a_msg);
-			ProfilerEndModuleInstall(a_mod->GetName(), result);
+			ProfilerEndModuleInstall(a_mod->GetName(), result, a_mod->WasSkipped());
 			return result;
 		}
 		__except (1)
 		{
+			a_mod->ClearSkip();
 			ProfilerEndModuleInstall(a_mod->GetName(), false);
 			REX::ERROR("Module \"{}\": caught exception during install"sv, a_mod->GetName());
 			return false;
@@ -277,10 +279,20 @@ namespace Addictol
 			else
 				REX::INFO("Module \"{}\": mandatory"sv, mod->GetName());
 
+			mod->ClearSkip();
 			if (!SafeQueryMod(mod))
 			{
-				REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
-				m_failedQuery++;
+				if (mod->WasSkipped())
+				{
+					m_skipped++;
+					REX::INFO("Module \"{}\": skipped ({})"sv, mod->GetName(), mod->GetSkipReason());
+				}
+				else
+				{
+					m_failedQuery++;
+					REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
+				}
+
 				needRemovedList.emplace_back(mod);
 			}
 		}
@@ -300,10 +312,19 @@ namespace Addictol
 			if (m_defender && mod->HasProcessDefender())
 				(void)m_defender->TakeSnapshot();
 
+			mod->ClearSkip();
 			if(!SafeInstallMod(mod))
 			{
-				m_failedInstall++;
-				REX::ERROR("Module \"{}\": fatal installation"sv, mod->GetName());
+				if (mod->WasSkipped())
+				{
+					m_skipped++;
+					REX::INFO("Module \"{}\": skipped ({})"sv, mod->GetName(), mod->GetSkipReason());
+				}
+				else
+				{
+					m_failedInstall++;
+					REX::ERROR("Module \"{}\": fatal installation"sv, mod->GetName());
+				}
 
 				if (m_defender && mod->HasProcessDefender())
 					(void)m_defender->RestoreFromSnapshot();
@@ -369,11 +390,21 @@ namespace Addictol
 			else
 				REX::INFO("Module \"{}\": mandatory by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 
+			mod->ClearSkip();
 			if (!SafeQueryMod(mod))
 			{
-				REX::ERROR("Module \"{}\": failed verification by message {}, the game version may not be supported"sv,
-					mod->GetName(), g_msgName[a_msg->type]);
-				m_failedQuery++;
+				if (mod->WasSkipped())
+				{
+					m_skipped++;
+					REX::INFO("Module \"{}\": skipped by message {} ({})"sv, mod->GetName(), g_msgName[a_msg->type], mod->GetSkipReason());
+				}
+				else
+				{
+					m_failedQuery++;
+					REX::ERROR("Module \"{}\": failed verification by message {}, the game version may not be supported"sv,
+						mod->GetName(), g_msgName[a_msg->type]);
+				}
+
 				needRemovedList.emplace_back(mod);
 			}
 		}
@@ -401,10 +432,19 @@ namespace Addictol
 			if (m_defender && mod->HasProcessDefender())
 				(void)m_defender->TakeSnapshot();
 
+			mod->ClearSkip();
 			if (!SafeInstallMod(mod, a_msg))
 			{
-				m_failedInstall++;
-				REX::ERROR("Module \"{}\": fatal installation by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
+				if (mod->WasSkipped())
+				{
+					m_skipped++;
+					REX::INFO("Module \"{}\": skipped by message {} ({})"sv, mod->GetName(), g_msgName[a_msg->type], mod->GetSkipReason());
+				}
+				else
+				{
+					m_failedInstall++;
+					REX::ERROR("Module \"{}\": fatal installation by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
+				}
 
 				if (m_defender && mod->HasProcessDefender())
 					(void)m_defender->RestoreFromSnapshot();
@@ -439,8 +479,8 @@ namespace Addictol
 
 	void ModuleManager::LogSummary() const noexcept
 	{
-		auto total = m_installed + m_disabled + m_failedQuery + m_failedInstall;
-		REX::INFO("Module Summary: {} installed, {} disabled, {} failed query, {} failed install ({} total)"sv,
-			m_installed, m_disabled, m_failedQuery, m_failedInstall, total);
+		auto total = m_installed + m_disabled + m_skipped + m_failedQuery + m_failedInstall;
+		REX::INFO("Module Summary: {} installed, {} disabled, {} skipped, {} failed query, {} failed install ({} total)"sv,
+			m_installed, m_disabled, m_skipped, m_failedQuery, m_failedInstall, total);
 	}
 }

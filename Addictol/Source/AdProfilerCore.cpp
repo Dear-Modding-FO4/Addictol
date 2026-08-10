@@ -430,9 +430,10 @@ namespace Addictol
 
 		for (const auto& e : sorted)
 		{
+			const auto status = [&e](bool a_ok) { return a_ok ? "ok"sv : (e.skipped ? "skip"sv : "FAIL"sv); };
 			REX::INFO("[Profiler] {:30s} Query: {:8.3f} ms ({})  Install: {:8.3f} ms ({})"sv,
-				e.moduleName, e.queryMs, e.querySuccess ? "ok"sv : "FAIL"sv,
-				e.installMs, e.installSuccess ? "ok"sv : "FAIL"sv);
+				e.moduleName, e.queryMs, status(e.querySuccess),
+				e.installMs, status(e.installSuccess));
 		}
 	}
 
@@ -605,7 +606,7 @@ namespace Addictol
 			std::ofstream file(path);
 			if (file.is_open())
 			{
-				file << "SessionId,ModuleName,QueryMs,QuerySuccess,InstallMs,InstallSuccess\n"sv;
+				file << "SessionId,ModuleName,QueryMs,QuerySuccess,InstallMs,InstallSuccess,Skipped\n"sv;
 				for (const auto& e : m_moduleEntries)
 				{
 					file << sessionID << ","sv
@@ -614,7 +615,8 @@ namespace Addictol
 						<< e.queryMs << ","sv
 						<< (e.querySuccess ? "true"sv : "false"sv) << ","sv
 						<< e.installMs << ","sv
-						<< (e.installSuccess ? "true"sv : "false"sv) << "\n"sv;
+						<< (e.installSuccess ? "true"sv : "false"sv) << ","sv
+						<< (e.skipped ? "true"sv : "false"sv) << "\n"sv;
 				}
 				REX::INFO("[Profiler] Module CSV exported: {}"sv, path);
 			}

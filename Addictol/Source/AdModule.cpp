@@ -27,4 +27,16 @@ namespace Addictol
 		// default value
 		return false;
 	}
+
+	void Module::Skip(std::string_view a_reason) const noexcept
+	{
+		skipped = true;
+		skipReason.assign(a_reason);
+	}
+
+	void Module::ClearSkip() const noexcept
+	{
+		skipped = false;
+		skipReason.clear();
+	}
 }

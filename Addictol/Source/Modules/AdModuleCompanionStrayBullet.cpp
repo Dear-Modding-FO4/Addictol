@@ -202,7 +202,7 @@ namespace Addictol
 	{
 		if (REX::W32::GetModuleHandleW(L"FollowerStrayBulletFix.dll")) 
 		{
-			REX::WARN("CompanionStrayBullet: Fix disabled, Companion Shoots At Player Fix is installed."sv);
+			Skip("Companion Shoots At Player Fix is installed"sv);
 			return false;
 		}
 

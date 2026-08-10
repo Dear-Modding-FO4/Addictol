@@ -3,6 +3,7 @@
 #include <REX/REX.h>
 #include <F4SE/F4SE.h>
 #include <string_view>
+#include <string>
 #include <initializer_list>
 
 namespace Addictol
@@ -14,6 +15,8 @@ namespace Addictol
 		const REX::TOML::Bool<>* option{ nullptr };
 		std::bitset<F4SE::MessagingInterface::kGameDataReady + 1> listener_messages;
 		bool papyrusListener{ false };
+		mutable bool skipped{ false };
+		mutable std::string skipReason{};
 
 		Module(const Module&) = delete;
 		Module& operator=(const Module&) = delete;
@@ -32,5 +35,12 @@ namespace Addictol
 		[[nodiscard]] virtual bool HasListener(std::uint32_t a_msgType) noexcept;
 		[[nodiscard]] virtual bool HasPapyrusListener() noexcept;
 		[[nodiscard]] virtual bool HasProcessDefender() noexcept;
+
+		// Declare a deliberate no-op: return false from DoQuery/DoInstall right after, and the
+		// manager reports it as skipped rather than a failure.
+		void Skip(std::string_view a_reason) const noexcept;
+		void ClearSkip() const noexcept;
+		[[nodiscard]] bool WasSkipped() const noexcept { return skipped; }
+		[[nodiscard]] std::string_view GetSkipReason() const noexcept { return skipReason; }
 	};
 }

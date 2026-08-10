@@ -50,8 +50,10 @@ namespace Addictol
 	bool ModuleLeveledListCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (REX::W32::GetModuleHandleW(L"GLXRM_InjectionBlocker.dll"))
-			// compatibility with geluxrum's injection blocker
+		{
+			Skip("GLXRM_InjectionBlocker.dll is installed"sv);
 			return false;
+		}
 
 		REL::Relocation target{ REL::ID{ 860553, 2193269 }, REL::Offset{ 0x6C, 0x6D } };
 		AddScriptAddedLeveledObject_Original = target.write_call<5>(AddScriptAddedLeveledObject_Hook);

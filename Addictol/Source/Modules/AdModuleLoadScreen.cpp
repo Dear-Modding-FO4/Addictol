@@ -51,8 +51,7 @@ namespace Addictol
 		{
 			if (!REX::W32::GetModuleHandleA("HighFPSPhysicsFix.dll"))
 			{
-				REX::WARN("Without High FPS Physics Fix mod, this patch causes slowly loads game, you should install this mod. \t"
-					"Link: https://www.nexusmods.com/fallout4/mods/44798"sv);
+				Skip("High FPS Physics Fix not installed; see https://www.nexusmods.com/fallout4/mods/44798"sv);
 				return false;
 			}
 
@@ -73,8 +72,7 @@ namespace Addictol
 
 				if (!installAnimNoOp && !installDrawUIClear)
 				{
-					REX::WARN("HighFPSPhysicsFix has DisableAnimationOnLoadingScreens=false and DisableBlackLoadingScreens=true; "
-						"Load Screen patch has nothing safe to apply -- skipping to preserve your HFPF settings."sv);
+					Skip("HFPF already covers both jobs (DisableAnimationOnLoadingScreens=false, DisableBlackLoadingScreens=true)"sv);
 					return false;
 				}
 

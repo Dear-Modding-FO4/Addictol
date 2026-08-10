@@ -18,6 +18,7 @@ namespace Addictol
 		size_t m_failedQuery{ 0 };
 		size_t m_installed{ 0 };
 		size_t m_failedInstall{ 0 };
+		size_t m_skipped{ 0 };
 
 		ModuleManager(const ModuleManager&) = delete;
 		ModuleManager(ModuleManager&&) = delete;

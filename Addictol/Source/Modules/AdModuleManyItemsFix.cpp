@@ -57,7 +57,7 @@ namespace Addictol
 	{
 		if (RELEX::IsRuntimeOG() && REX::W32::GetModuleHandleW(L"Drop7FFFPatch.dll")) 
 		{
-			REX::WARN("Fix aborted. Reason: Mod was installed: Drop7FFFPatch.dll."sv);
+			Skip("Drop7FFFPatch.dll is installed"sv);
 			return false;
 		}
 
