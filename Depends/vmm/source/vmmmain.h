@@ -45,42 +45,40 @@ namespace voltek
 			// Память всегда выровнена.
 			// Вернёт nullptr, если память физически закончилась.
 			// Также если размер требуемый объявлен как 0.
-			void* alloc(size_t size);
+			[[nodiscard]] void* alloc(size_t size) noexcept;
 			// Выделяет память требуемого размера из предыдущего указателя на память.
 			// Память всегда выровнена.
 			// Вернёт nullptr, если память физически закончилась.
 			// Также если размер требуемый объявлен как 0.
 			// Адрес памяти может быть изменён.
-			void* realloc(const void* ptr, size_t size);
+			[[nodiscard]] void* realloc(const void* ptr, size_t size) noexcept;
 			// Освобождает память.
 			// Вернёт ложь, если указатель не пренадлежит менеджеру.
-			bool free(const void* ptr);
+			bool free(const void* ptr) noexcept;
 			// Возвращает размер выделенной памяти под указатель.
 			// Вернёт 0, что значит ошибка.
-			size_t msize(const void* ptr) const;
+			[[nodiscard]] size_t msize(const void* ptr) const noexcept;
 			// Вывод дампа битовой карты указанного пула
-			void dump_map(size_t pool_id, const char* filename) const;
+			void dump_map(size_t pool_id, const char* filename) const noexcept;
 			// Вывод дампа памяти указанного пула
-			void dump(size_t pool_id, const char* filename) const;
+			void dump(size_t pool_id, const char* filename) const noexcept;
 		private:
-			// Конструктор копий - НЕДОСТУПЕН.
-			// Менеджер один и уникален.
-			memory_manager(const memory_manager& ob);
-			// Оператор присвоения - НЕДОСТУПЕН.
-			// Менеджер один и уникален.
-			memory_manager& operator=(const memory_manager& ob);
+			memory_manager(const memory_manager&) = delete;
+			memory_manager(memory_manager&&) = delete;
+			memory_manager& operator=(memory_manager&&) = delete;
+			memory_manager& operator=(const memory_manager&) = delete;
 		private:
 			// Блок памяти, если запрашивают 0 размер.
-			block8_t zero_size_request_block;
+			block8_t zero_size_request_block{ 0 };
 			// Массив пулов.
-			void** pools;
+			void** pools{ nullptr };
 			// Блокировщик для работы с множеством потоков.
-			voltek::core::_internal::simple_lock lock;
+			//voltek::core::_internal::simple_lock lock;
 			// События для потока кеширования, чтобы можно выйти
-			void* event_close;
-			void* event_close_w;
+			void* event_close{ nullptr };
+			void* event_close_w{ nullptr };
 			// Поток для кеширования
-			std::thread* thread;
+			std::thread* thread{ nullptr };
 		};
 
 		// Глобальный менеджер памяти, который требует инициализации.

@@ -9,9 +9,19 @@
 #include "vmapper.h"
 #include "vmmmain.h"
 #include "vmmpool.h"
+
+#include <mutex>
+#include <chrono>
+#include <condition_variable>
+
 #include <limits.h>
 #include <string.h>
-#include <windows.h>
+
+#if (defined(_WIN32) || defined(_WIN64))
+#	include <windows.h>
+#endif
+
+using namespace std::literals;
 
 #define USE_MULTITHREADS 1
 
@@ -61,10 +71,9 @@ namespace voltek
 		typedef pool_t<block65536_t, page65536_t, __VMM_POOL_CONFIG_LOW_SIZE> pool65536_t;
 		typedef pool_t<block131072_t, page131072_t, __VMM_POOL_CONFIG_LOW_SIZE> pool131072_t;
 
-
 		// Проверка на допустимость памяти
 		// Только Windows: Если произошло исключение, то вернёт false, иначе true.
-		bool is_valid_pointer(const void* ptr)
+		static bool is_valid_pointer(const void* ptr)
 		{
 			if (!ptr) return false;
 
@@ -86,10 +95,41 @@ namespace voltek
 #endif
 		}
 
-//		static FILE* file_dbg_sniffer;
+		class std_event
+		{
+			std::mutex mtx;
+			std::condition_variable cv;
+			bool signaled = false;
+		public:
+			void set() noexcept
+			{
+				{
+					std::lock_guard<std::mutex> lock(mtx);
+					signaled = true;
+				}
 
-#define _fsniff(fmt, ...) \
-	{ fprintf(file_dbg_sniffer, fmt "\n", ##__VA_ARGS__); fflush(file_dbg_sniffer); }
+				// Wakes all waiting threads
+				cv.notify_all();
+			}
+
+			void reset() noexcept
+			{
+				std::lock_guard<std::mutex> lock(mtx);
+				signaled = false; 
+			}
+
+			void wait() noexcept
+			{
+				std::unique_lock<std::mutex> lock(mtx);
+				return cv.wait(lock, [this] { return signaled; });
+			}
+
+			[[nodiscard]] bool wait(uint32_t timeout) noexcept 
+			{
+				std::unique_lock<std::mutex> lock(mtx);
+				return cv.wait_for(lock, std::chrono::milliseconds(timeout), [this] { return signaled; });
+			}
+		};
 
 		static size_t POOL_SIZE = 64 * 1024;
 
@@ -98,13 +138,13 @@ namespace voltek
 			core::initialize();
 			create_default_block(&zero_size_request_block, 0);
 			
-			event_close = CreateEventA(nullptr, true, false, nullptr);
-			event_close_w = CreateEventA(nullptr, true, false, nullptr);
+			event_close = new std_event();
+			event_close_w = new std_event();
 			if (!event_close || !event_close_w)
 				return;
 			
-			ResetEvent((HANDLE)event_close);
-			ResetEvent((HANDLE)event_close_w);
+			reinterpret_cast<std_event*>(event_close)->reset();
+			reinterpret_cast<std_event*>(event_close_w)->reset();
 
 			// Вся технология ускорения зависит от новых инструкций, если их нет, незачем
 			// это создавать.
@@ -118,14 +158,10 @@ namespace voltek
 			}
 
 #if USE_MULTITHREADS
-			thread = new std::thread([](HANDLE* ev_close, HANDLE* ev_close_w, void** pools, 
-				voltek::core::_internal::simple_lock* lock) {
+			thread = new std::thread([](std_event* ev_close, std_event* ev_close_w, void** pools) {
 				while (true)
 				{
 					{
-						// Блокируем. Снятие блокировки будет заботить компилятор.
-						voltek::core::_internal::simple_scope_lock scope_lock(*lock);
-
 						if (pools[std::to_underlying(pool_type::pool_8)]) { reinterpret_cast<pool8_t*>((pool8_t*)pools[std::to_underlying(pool_type::pool_8)])->push_free_block_to_cache(); }
 						if (pools[std::to_underlying(pool_type::pool_16)]) { reinterpret_cast<pool16_t*>(pools[std::to_underlying(pool_type::pool_16)])->push_free_block_to_cache(); }
 						if (pools[std::to_underlying(pool_type::pool_32)]) { reinterpret_cast<pool32_t*>(pools[std::to_underlying(pool_type::pool_32)])->push_free_block_to_cache(); }
@@ -142,20 +178,24 @@ namespace voltek
 						if (pools[std::to_underlying(pool_type::pool_131072)]) { reinterpret_cast<pool131072_t*>(pools[std::to_underlying(pool_type::pool_131072)])->push_free_block_to_cache(); }
 					}
 
-					if (WaitForSingleObject(*ev_close, 10) == WAIT_OBJECT_0)
+					if (ev_close->wait(10))
 					{
-						SetEvent(*ev_close_w);
+						ev_close_w->set();
 						break;
 					}
 
-					Sleep(1);
+					std::this_thread::yield();
 				}
-			}, (HANDLE*)&event_close, (HANDLE*)&event_close_w, pools, &lock);
+			}, reinterpret_cast<std_event*>(event_close), reinterpret_cast<std_event*>(event_close_w), pools);
 			_vassert(!thread);
+
+#if (defined(_WIN32) || defined(_WIN64))
 			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
 			const auto cores = std::thread::hardware_concurrency();
 			if (cores > 0 && cores <= 64)
 				SetThreadAffinityMask(thread->native_handle(), 1ull << (cores - 1));
+#endif
+
 			thread->detach();
 #endif
 		}
@@ -165,8 +205,8 @@ namespace voltek
 #if USE_MULTITHREADS
 			if (thread)
 			{
-				SetEvent((HANDLE)event_close);
-				WaitForSingleObject((HANDLE)event_close_w, INFINITE);
+				reinterpret_cast<std_event*>(event_close)->set();
+				reinterpret_cast<std_event*>(event_close_w)->wait();
 
 				if (pools)
 				{
@@ -195,18 +235,13 @@ namespace voltek
 #endif
 		}
 
-		void* memory_manager::alloc(size_t size)
+		void* memory_manager::alloc(size_t size) noexcept
 		{
 			//if (ULONG_MAX < size)
 			//	return nullptr;
 
 			if (!size)
 				return get_ptr_from_block_handle(&zero_size_request_block);
-
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			//voltek::core::_internal::simple_scope_lock scope_lock(lock);
-
-			//_fsniff("The beginning of the allocation of a memory block of %llu sizes", size);
 
 			// Проблемы с пулами? или размер больше фиксируемых блоков?
 			// Тогда выделим память простым способом.
@@ -236,11 +271,6 @@ namespace voltek
 			}
 
 			void* new_ptr = nullptr;
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 	
 			if (size > 65536)
 			{
@@ -488,7 +518,7 @@ namespace voltek
 			return new_ptr;
 		}
 
-		void* memory_manager::realloc(const void* ptr, size_t size)
+		void* memory_manager::realloc(const void* ptr, size_t size) noexcept
 		{
 			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr) /*|| (ULONG_MAX < size)*/)
 				return nullptr;
@@ -499,11 +529,6 @@ namespace voltek
 			}
 
 			void* new_ptr = nullptr;	
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 
 			// Если память выделена ранее как обычный, то тут выделение новой памяти неизбежно.
 			if (is_used_default_ptr(ptr))
@@ -670,17 +695,12 @@ namespace voltek
 			return new_ptr;
 		}
 
-		bool memory_manager::free(const void* ptr)
+		bool memory_manager::free(const void* ptr) noexcept
 		{
 			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr))
 				return false;
 
 			bool ret = true;
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 
 			if (is_used_default_ptr(ptr))
 			{
@@ -793,25 +813,20 @@ namespace voltek
 			return ret;
 		}
 
-		size_t memory_manager::msize(const void* ptr) const
+		size_t memory_manager::msize(const void* ptr) const noexcept
 		{
 			if (!ptr || !is_valid_pointer(ptr)) return 0;
 			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
+			//voltek::core::_internal::simple_scope_lock scope_lock(lock);
 			// Получение размера.
 			return (size_t)get_size_from_ptr(ptr);
 		}
 
-		void memory_manager::dump_map(size_t pool_id, const char* filename) const
+		void memory_manager::dump_map(size_t pool_id, const char* filename) const noexcept
 		{
 #ifndef VMMDLL_EXPORTS
 			if ((std::to_underlying(pool_type::MAX) >= pool_id) || !filename)
 				return;
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 
 			switch (static_cast<pool_type>(pool_id))
 			{
@@ -903,16 +918,11 @@ namespace voltek
 #endif // !VMMDLL_EXPORTS
 		}
 
-		void memory_manager::dump(size_t pool_id, const char* filename) const
+		void memory_manager::dump(size_t pool_id, const char* filename) const noexcept
 		{
 #ifndef VMMDLL_EXPORTS
 			if ((std::to_underlying(pool_type::MAX) >= pool_id) || !filename)
 				return;
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 
 			switch (static_cast<pool_type>(pool_id))
 			{
@@ -1002,16 +1012,6 @@ namespace voltek
 			break;
 			}
 #endif // !VMMDLL_EXPORTS
-		}
-
-		memory_manager::memory_manager(const memory_manager& ob) : pools(nullptr)
-		{
-			memset(&zero_size_request_block, 0, sizeof(zero_size_request_block));
-		}
-
-		memory_manager& memory_manager::operator=(const memory_manager& ob)
-		{
-			return *this;
 		}
 	}
 }

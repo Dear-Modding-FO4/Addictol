@@ -5,6 +5,7 @@
 #pragma once
 
 #include "vmmpage.h"
+#include "vsimplelock.h"
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -33,19 +34,19 @@ namespace voltek
 			// Тип указателя на страницу.
 			using pageptr_t = pageobj_t*;
 			// Конструктор по умолчанию.
-			pool_t() : _pages(nullptr), _current(nullptr), _count(0)
+			pool_t() noexcept
 			{
 				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
 			}
 			// Конструктор.
 			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
-			pool_t(size_t count) : _pages(nullptr), _current(nullptr), _count(0)
+			pool_t(size_t count) noexcept
 			{
 				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
 				set_size(count);
 			}
 			// Деструктор
-			virtual ~pool_t()
+			virtual ~pool_t() noexcept
 			{
 				map.clear();
 				if (_pages)
@@ -64,6 +65,9 @@ namespace voltek
 			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
 			void set_size(size_t count)
 			{
+				// Блокируем. Снятие блокировки будет заботить компилятор.
+				voltek::core::_internal::simple_scope_lock scope_lock(lock);
+
 				// Число должно быть кратное 256, округляем в меньшую сторону.
 				// Это необходимо, учитывая, что bits_regions размер минимум от 65536.
 				// Использование SIMD инструкций является приоритетом, а "хвоста" должно 
@@ -93,47 +97,50 @@ namespace voltek
 				}
 			}
 			// Возвращает допольнительную информацию, что привязана к пулу.
-			inline uintptr_t get_user_data() const { return _user_data; }
+			[[nodiscard]] inline uintptr_t get_user_data() const noexcept { return _user_data; }
 			// Устанавливает дополнительную информацию к пулу.
-			inline void set_user_data(uintptr_t user_data) { _user_data = user_data; }
+			inline void set_user_data(uintptr_t user_data) noexcept { _user_data = user_data; }
 			// Возвращает истину, если пул не инициализирован.
-			inline bool empty() const { return !_count; }
+			[[nodiscard]] inline bool empty() const noexcept { return !_count; }
 			// Возвращает истину, если все страницы свободны.
-			inline bool is_all_pages_free() const { return map.is_all_sets(); }
+			[[nodiscard]] inline bool is_all_pages_free() const noexcept { return map.is_all_sets(); }
 			// Возвращает истину, если все страницы заняты.
-			inline bool is_all_pages_busy() const { return map.is_all_unsets(); }
+			[[nodiscard]] inline bool is_all_pages_busy() const noexcept { return map.is_all_unsets(); }
 			// Возвращает истину, если страница за указанным индексом - свободна.
-			inline bool is_page_free(size_t index) const { return map.is_set(index); }
+			[[nodiscard]] inline bool is_page_free(size_t index) const noexcept { return map.is_set(index); }
 			// Возвращает истину, если страница за указанным индексом - занята.
-			inline bool is_page_busy(size_t index) const { return map.is_unset(index); }
+			[[nodiscard]] inline bool is_page_busy(size_t index) const noexcept { return map.is_unset(index); }
 			// Помечает, что данная страница за указанным индексом - свободна.
-			inline bool set_page_free(size_t index) { return map.set(index); }
+			inline bool set_page_free(size_t index) noexcept { return map.set(index); }
 			// Помечает, что данная страница за указанным индексом - занята.
-			inline bool set_page_busy(size_t index) { return map.unset(index); }
+			inline bool set_page_busy(size_t index) noexcept { return map.unset(index); }
 			// Возвращает истину, в случае, нахождения первого попавшейся свободной страницы.
 			// Его индекс будет передан в "index".
-			inline bool get_first_free_page_index(size_t& index) { return map.find_first_set_bit(index); }
+			[[nodiscard]] inline bool get_first_free_page_index(size_t& index) const noexcept { return map.find_first_set_bit(index); }
 			// Возвращает кол-во допустимых страниц.
-			inline size_t count() const { return _count; }
+			[[nodiscard]] inline size_t count() const noexcept { return _count; }
 			// Возвращает кол-во свободных страниц.
-			inline size_t free_count() const { return map.get_sets_count(); }
+			[[nodiscard]] inline size_t free_count() const noexcept { return map.get_sets_count(); }
 			// Возвращает кол-во знятых страниц.
-			inline size_t busy_count() const { return map.get_unsets_count(); }
+			[[nodiscard]] inline size_t busy_count() const noexcept { return map.get_unsets_count(); }
 			// Возвращает страницу за указанным индексом. Константа.
-			inline const pageptr_t c_at(size_t index) const { return _pages[index]; }
+			[[nodiscard]] inline pageptr_t c_at(size_t index) const noexcept { return _pages[index]; }
 			// Возвращает страницу за указанным индексом.
-			inline pageptr_t& at(size_t index) { return _pages[index]; }
+			[[nodiscard]] inline pageptr_t& at(size_t index) noexcept { return _pages[index]; }
 			// Оператор обращения к объекту класса в качестве массива.
 			// Возвращает страницу за указанным индексом. Константа.
-			inline const pageptr_t operator[](size_t index) const { return c_at(index); }
+			[[nodiscard]] inline pageptr_t operator[](size_t index) const noexcept { return c_at(index); }
 			// Оператор обращения к объекту класса в качестве массива.
 			// Возвращает страницу за указанным индексом.
-			inline pageptr_t& operator[](size_t index) { return at(index); }
+			[[nodiscard]] inline pageptr_t& operator[](size_t index) noexcept { return at(index); }
 			// Вывод дампа битовой карты страницы в файл.
-			inline void dump_map(const char* filename) const { map.dump(filename); }
+			inline void dump_map(const char* filename) const noexcept { map.dump(filename); }
 			// Вывод дампа памяти массива страниц в файл.
-			void dump(const char* filename) const
+			void dump(const char* filename) const noexcept
 			{
+				// Блокируем. Снятие блокировки будет заботить компилятор.
+				voltek::core::_internal::simple_scope_lock scope_lock(lock);
+
 #ifndef VMMDLL_EXPORTS
 				voltek::core::_internal::memory_to_file(filename, (void*)_pages,
 					voltek::core::_internal::aligned_msize(_pages), _blocks_in_page >> 3);
@@ -143,8 +150,11 @@ namespace voltek
 			// Передаёт сам блок, страницу где был найден блок и его индекс.
 			// Эти данные понадобиться для освобождения блока у пула.
 			// Блок указывается как занятый в последствии.
-			bool get_free_block(_type*& block, pageptr_t& page, size_t& index_block)
+			[[nodiscard]] bool get_free_block(_type*& block, pageptr_t& page, size_t& index_block) noexcept
 			{
+				// Блокируем. Снятие блокировки будет заботить компилятор.
+				voltek::core::_internal::simple_scope_lock scope_lock(lock);
+
 				if (!free_stack_blocks.empty())
 				{
 					// Получить из стека
@@ -188,7 +198,7 @@ namespace voltek
 							return false;
 						}
 						// Привязываем индекс, как дополнитульную информацию.
-						_current->set_user_data((uintptr_t)index);
+						_current->set_user_data(static_cast<uintptr_t>(index));
 
 						_pages[index] = _current;
 					}
@@ -201,7 +211,7 @@ namespace voltek
 				if (!_current->get_first_free_block_index(index_block))
 				{
 					// Получаем индекс страницы и занимаем её.
-					set_page_busy((size_t)_current->get_user_data());
+					set_page_busy(static_cast<size_t>(_current->get_user_data()));
 					_current = nullptr;
 
 					goto find_free_page_label;
@@ -217,8 +227,11 @@ namespace voltek
 				return true;
 			}
 			// Освобождает блок. Возвращает истину, если всё успешно освободилось.
-			bool release_block(pageptr_t page, size_t index_block)
+			bool release_block(pageptr_t page, size_t index_block) noexcept
 			{
+				// Блокируем. Снятие блокировки будет заботить компилятор.
+				voltek::core::_internal::simple_scope_lock scope_lock(lock);
+
 				// Фактический размер страницы, а не константа шаблона: он округляется вниз.
 				if (!page || (index_block >= page->count()))
 					return false;
@@ -227,7 +240,7 @@ namespace voltek
 				if (page->set_block_free(index_block))
 				{
 					// Освободить страницу, так как один блок в ней свободен.
-					size_t index_page = (size_t)page->get_user_data();
+					auto index_page = static_cast<size_t>(page->get_user_data());
 					set_page_free(index_page);
 
 					// Если страница пуста и она не первая, освободить память.
@@ -247,7 +260,7 @@ namespace voltek
 						// Занять индекс блока, более он не доступен.
 						page->set_block_busy(index_block);
 						// добавить в стэк
-						free_stack_blocks.push_back({ page, (uint32_t)index_block });
+						free_stack_blocks.push_back({ page, static_cast<uint32_t>(index_block) });
 					}
 
 					return true;
@@ -256,10 +269,13 @@ namespace voltek
 				return false;
 			}
 
-			bool push_free_block_to_cache()
+			bool push_free_block_to_cache() noexcept
 			{
 				if (free_stack_blocks.size() < __VMM_POOL_CONFIG_CACHE_SIZE)
 				{
+					// Блокируем. Снятие блокировки будет заботить компилятор.
+					voltek::core::_internal::simple_scope_lock scope_lock(lock);
+
 					pageptr_t page = nullptr;
 					_type* block = nullptr;
 					size_t index_block = 0;
@@ -269,7 +285,7 @@ namespace voltek
 						// Занять индекс блока, более он не доступен.
 						page->set_block_busy(index_block);
 						// добавить в стэк
-						free_stack_blocks.push_back({ page, (uint32_t)index_block });
+						free_stack_blocks.push_back({ page, static_cast<uint32_t>(index_block) });
 						return true;
 					}
 				}
@@ -277,28 +293,26 @@ namespace voltek
 				return false;
 			}
 		private:
-			// Конструктор копий - НЕДОСТУПЕН.
-			// Пул один и уникален.
-			pool_t(const pool_t& ob) : _pages(nullptr), _current(nullptr), _count(0)
-			{}
-			// Оператор присвоения - НЕДОСТУПЕН.
-			// Пул один и уникален.
-			pool_t& operator=(const pool_t& ob)
-			{}
-		private:
+			pool_t(const pool_t&) = delete;
+			pool_t(pool_t&&) = delete;
+			pool_t& operator=(pool_t&&) = delete;
+			pool_t& operator=(const pool_t&) = delete;
+		
 			// Страницы, массив указателей, необязательно инициализированы.
 			// Но сам массив должен.
-			pageptr_t* _pages;
+			pageptr_t* _pages{ nullptr };
 			// Текущая страница.
-			pageptr_t _current;
+			pageptr_t _current{ nullptr };
 			// Кол-во доступных страниц.
-			size_t _count;
+			size_t _count{ 0 };
 			// Стек свободных блоков
-			std::vector<std::pair<pageptr_t, uint32_t>> free_stack_blocks;
+			std::vector<std::pair<pageptr_t, uint32_t>> free_stack_blocks{};
 			// Дополнительная информация.
-			uintptr_t _user_data;
+			uintptr_t _user_data{ 0 };
 			// Битовая карта.
-			voltek::core::bits_regions map;
+			voltek::core::bits_regions map{};
+			// Блокировщик для работы с множеством потоков.
+			voltek::core::_internal::simple_lock lock{};
 #ifdef MAPPER_USE
 			// Карта памяти.
 			voltek::core::mapper* _mapper;
