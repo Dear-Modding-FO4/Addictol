@@ -14,21 +14,24 @@ namespace voltek
 {
 	namespace memory_manager
 	{
-		constexpr static size_t POOL_8 = 0;
-		constexpr static size_t POOL_16 = 1;
-		constexpr static size_t POOL_32 = 2;
-		constexpr static size_t POOL_64 = 3;
-		constexpr static size_t POOL_128 = 4;
-		constexpr static size_t POOL_256 = 5;
-		constexpr static size_t POOL_512 = 6;
-		constexpr static size_t POOL_1024 = 7;
-		constexpr static size_t POOL_4096 = 8;
-		constexpr static size_t POOL_8192 = 9;
-		constexpr static size_t POOL_16384 = 10;
-		constexpr static size_t POOL_32768 = 11;
-		constexpr static size_t POOL_65536 = 12;
-		constexpr static size_t POOL_131072 = 13;
-		constexpr static size_t POOL_MAX = POOL_131072 + 1;
+		enum class pool_type : uint8_t
+		{
+			pool_8 = 0,
+			pool_16,
+			pool_32,
+			pool_64,
+			pool_128,
+			pool_256,
+			pool_512,
+			pool_1024,
+			pool_4096,
+			pool_8192,
+			pool_16384,
+			pool_32768,
+			pool_65536,
+			pool_131072,
+			MAX
+		};
 
 		// Менеджер памяти.
 		class memory_manager : public voltek::core::base
