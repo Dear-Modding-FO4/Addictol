@@ -813,6 +813,7 @@ namespace Addictol
 			return 0;
 		}
 
+		// Only valid before RegisterFrameTick succeeds; afterwards a frame-tick callback may hold the pointer and the state must be leaked instead.
 		void DestroyFailedRuntime(RuntimeState* a_runtime, HANDLE a_worker) noexcept
 		{
 			if (a_worker)
@@ -937,8 +938,15 @@ namespace Addictol
 		SamplingScope scope;
 		g_recordingEnabled.store(false, std::memory_order_release);
 		auto runtime = g_runtime.exchange(nullptr, std::memory_order_acq_rel);
-		if (runtime)
-			DestroyFailedRuntime(runtime, runtime->worker);
+		if (runtime && runtime->worker)
+		{
+			// Frame-tick registration is permanent and a callback may already be past its null check, so stop the worker and leak the state rather than free memory it can still reach.
+			runtime->stopping.store(true, std::memory_order_release);
+			SetEvent(runtime->wakeEvent);
+			WaitForSingleObject(runtime->worker, INFINITE);
+			CloseHandle(runtime->worker);
+			runtime->worker = nullptr;
+		}
 		m_installed = false;
 	}
 
