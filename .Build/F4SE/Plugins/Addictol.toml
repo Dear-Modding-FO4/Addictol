@@ -337,6 +337,12 @@ fLocalMapScaleFactor = 1.5
 # Profiles main-thread frame hitches, engine phases, and loading stalls. Requires bProfiler = true.
 bFrameHitchProfiler = false
 
+# Profiles allocation frequency, live occupancy, fragmentation, and thread sharing. Requires bProfiler = true.
+bAllocatorProfiler = false
+
+# Publishes allocator-profiler intervals every N completed frames. Requires bProfiler = true.
+uAllocatorProfilerDrainFrames = 30
+
 # Master toggle for the performance profiler. When false, all profiling is disabled.
 bProfiler = false
 

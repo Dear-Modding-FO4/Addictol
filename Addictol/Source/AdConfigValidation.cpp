@@ -1,4 +1,5 @@
 #include <AdConfigValidation.h>
+#include <AdProfilerAllocator.h>
 #include <AdProfilerCore.h>
 #include <REX/REX.h>
 #include <toml11/single_include/toml.hpp>
@@ -63,7 +64,8 @@ namespace Addictol
 			"bProfiler"sv, "bESPProfiler"sv, "bESPSubHooks"sv, "bDLLProfiler"sv,
 			"bModuleProfiler"sv, "bStartupTimeline"sv, "bMemoryTracking"sv,
 			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv,
-			"bAnimSubGraphSkipPreload"sv, "bFrameHitchProfiler"sv
+			"bAnimSubGraphSkipPreload"sv, "bFrameHitchProfiler"sv,
+			"bAllocatorProfiler"sv, "uAllocatorProfilerDrainFrames"sv
 		}}
 	};
 
@@ -87,6 +89,8 @@ namespace Addictol
 			addKey("bAnimSubGraphProfiler"sv);
 		if (ProfilerCore::IsFrameHitchEnabled())
 			addKey("bFrameHitchProfiler"sv);
+		if (ProfilerAllocator::IsEnabledInConfig())
+			addKey("bAllocatorProfiler"sv);
 		if (ProfilerCore::IsCSVExportEnabled())
 			addKey("bCSVExport"sv);
 

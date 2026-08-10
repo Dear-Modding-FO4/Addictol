@@ -46,6 +46,9 @@
     <ClCompile Include="..\Addictol\Source\AdProfilerAnimSubGraph.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProfilerAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProfilerFrameHitch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -386,6 +389,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerAnimSubGraph.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerAllocator.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerFrameHitch.h">

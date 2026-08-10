@@ -313,7 +313,8 @@ target(plugin_name, function()
         "Depends/commonlibf4/lib/commonlib-shared/include",
         "Version",
         "Addictol/Include",
-        "Depends/vmm/include"
+        "Depends/vmm/include",
+        "Depends/vmm/source"
     )
 
     -- add defines

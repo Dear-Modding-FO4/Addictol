@@ -4,6 +4,7 @@
 #include <AdProfilerDLL.h>
 #include <AdProfilerMemory.h>
 #include <AdProfilerAnimSubGraph.h>
+#include <AdProfilerAllocator.h>
 #include <AdProfilerFrameHitch.h>
 #include <AdUtils.h>
 
@@ -74,12 +75,25 @@ namespace Addictol
 		}
 
 		// Runtime profilers install last so a fault in their hot-path hooks spares the startup ones.
+		// Frame-tick subscribers must register before the frame-hitch install below; module order is not a contract.
+		// A sub-profiler that cannot install self-disables and warns; it must not fail the whole module.
+		if (profiler->IsActive() && ProfilerAllocator::IsEnabled())
+			(void)ProfilerAllocator::GetSingleton()->Install();
+
 		if (ProfilerCore::IsAnimSubGraphEnabled())
 			ProfilerAnimSubGraph::GetSingleton()->Install();
 
-		// Subscribers must register before this point because name-keyed module order is not an orchestration contract.
 		if (ProfilerCore::IsFrameHitchEnabled() || ProfilerFrameHitch::HasFrameTickSubscribers())
-			ProfilerFrameHitch::GetSingleton()->Install();
+		{
+			auto frameHitchProfiler = ProfilerFrameHitch::GetSingleton();
+			frameHitchProfiler->Install();
+			if (ProfilerAllocator::GetSingleton()->IsInstalled() &&
+				!frameHitchProfiler->IsInstalled())
+			{
+				ProfilerAllocator::GetSingleton()->Disable();
+				REX::WARN("Allocator profiler: frame-tick provider failed to install; profiling was disabled."sv);
+			}
+		}
 
 		REX::INFO("[Profiler] Module installed, profiling active"sv);
 		return true;
