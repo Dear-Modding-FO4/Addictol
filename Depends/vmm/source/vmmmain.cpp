@@ -11,6 +11,7 @@
 #include "vmmpool.h"
 
 #include <mutex>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 
@@ -132,6 +133,24 @@ namespace voltek
 		};
 
 		static size_t POOL_SIZE = 64 * 1024;
+
+		// Two threads can create a lazy pool at once: publish exactly one, or a block gets released through the wrong pool.
+		template<typename _type>
+		static _type* acquire_pool(void** pools, pool_type id) noexcept
+		{
+			std::atomic_ref<void*> slot(pools[std::to_underlying(id)]);
+			if (auto* existing = slot.load(std::memory_order_acquire))
+				return reinterpret_cast<_type*>(existing);
+
+			auto* created = new _type(POOL_SIZE);
+			void* expected = nullptr;
+			if (slot.compare_exchange_strong(expected, reinterpret_cast<void*>(created),
+				std::memory_order_acq_rel, std::memory_order_acquire))
+				return created;
+
+			delete created;
+			return reinterpret_cast<_type*>(expected);
+		}
 
 		memory_manager::memory_manager() : pools(nullptr), thread(nullptr)
 		{
@@ -274,15 +293,12 @@ namespace voltek
 	
 			if (size > 65536)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_131072)])
-					pools[std::to_underlying(pool_type::pool_131072)] = reinterpret_cast<void*>(new pool131072_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool131072_t*>(pools[std::to_underlying(pool_type::pool_131072)]);
+				auto pool = acquire_pool<pool131072_t>(pools, pool_type::pool_131072);
 				page131072_t* page = nullptr;
 				block131072_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_131072)));
@@ -291,15 +307,12 @@ namespace voltek
 			}
 			else if (size > 32768)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_65536)])
-					pools[std::to_underlying(pool_type::pool_65536)] = reinterpret_cast<void*>(new pool65536_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool65536_t*>(pools[std::to_underlying(pool_type::pool_65536)]);
+				auto pool = acquire_pool<pool65536_t>(pools, pool_type::pool_65536);
 				page65536_t* page = nullptr;
 				block65536_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_65536)));
@@ -308,15 +321,12 @@ namespace voltek
 			}
 			else if (size > 16384)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_32768)])
-					pools[std::to_underlying(pool_type::pool_32768)] = reinterpret_cast<void*>(new pool32768_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool32768_t*>(pools[std::to_underlying(pool_type::pool_32768)]);
+				auto pool = acquire_pool<pool32768_t>(pools, pool_type::pool_32768);
 				page32768_t* page = nullptr;
 				block32768_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_32768)));
@@ -325,15 +335,12 @@ namespace voltek
 			}
 			else if (size > 8192)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_16384)])
-					pools[std::to_underlying(pool_type::pool_16384)] = reinterpret_cast<void*>(new pool16384_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool16384_t*>(pools[std::to_underlying(pool_type::pool_16384)]);
+				auto pool = acquire_pool<pool16384_t>(pools, pool_type::pool_16384);
 				page16384_t* page = nullptr;
 				block16384_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_16384)));
@@ -342,15 +349,12 @@ namespace voltek
 			}
 			else if (size > 4096)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_8192)])
-					pools[std::to_underlying(pool_type::pool_8192)] = reinterpret_cast<void*>(new pool8192_t(POOL_SIZE));
-
-				auto pool = (pool8192_t*)pools[std::to_underlying(pool_type::pool_8192)];
+				auto pool = acquire_pool<pool8192_t>(pools, pool_type::pool_8192);
 				page8192_t* page = nullptr;
 				block8192_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_8192)));
@@ -359,15 +363,12 @@ namespace voltek
 			}
 			else if (size > 1024)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_4096)])
-					pools[std::to_underlying(pool_type::pool_4096)] = reinterpret_cast<void*>(new pool4096_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool4096_t*>(pools[std::to_underlying(pool_type::pool_4096)]);
+				auto pool = acquire_pool<pool4096_t>(pools, pool_type::pool_4096);
 				page4096_t* page = nullptr;
 				block4096_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_4096)));
@@ -376,15 +377,12 @@ namespace voltek
 			}
 			else if (size > 512)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_1024)])
-					pools[std::to_underlying(pool_type::pool_1024)] = reinterpret_cast<void*>(new pool1024_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool1024_t*>(pools[std::to_underlying(pool_type::pool_1024)]);
+				auto pool = acquire_pool<pool1024_t>(pools, pool_type::pool_1024);
 				page1024_t* page = nullptr;
 				block1024_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_1024)));
@@ -393,15 +391,12 @@ namespace voltek
 			}
 			else if (size > 256)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_512)])
-					pools[std::to_underlying(pool_type::pool_512)] = reinterpret_cast<void*>(new pool512_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool512_t*>(pools[std::to_underlying(pool_type::pool_512)]);
+				auto pool = acquire_pool<pool512_t>(pools, pool_type::pool_512);
 				page512_t* page = nullptr;
 				block512_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_512)));
@@ -410,15 +405,12 @@ namespace voltek
 			}
 			else if (size > 128)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_256)])
-					pools[std::to_underlying(pool_type::pool_256)] = reinterpret_cast<void*>(new pool256_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool256_t*>(pools[std::to_underlying(pool_type::pool_256)]);
+				auto pool = acquire_pool<pool256_t>(pools, pool_type::pool_256);
 				page256_t* page = nullptr;
 				block256_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_256)));
@@ -427,15 +419,12 @@ namespace voltek
 			}
 			else if (size > 64)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_128)])
-					pools[std::to_underlying(pool_type::pool_128)] = reinterpret_cast<void*>(new pool128_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool128_t*>(pools[std::to_underlying(pool_type::pool_128)]);
+				auto pool = acquire_pool<pool128_t>(pools, pool_type::pool_128);
 				page128_t* page = nullptr;
 				block128_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_128)));
@@ -444,15 +433,12 @@ namespace voltek
 			}
 			else if (size > 32)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_64)])
-					pools[std::to_underlying(pool_type::pool_64)] = reinterpret_cast<void*>(new pool64_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool64_t*>(pools[std::to_underlying(pool_type::pool_64)]);
+				auto pool = acquire_pool<pool64_t>(pools, pool_type::pool_64);
 				page64_t* page = nullptr;
 				block64_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_64)));
@@ -461,15 +447,12 @@ namespace voltek
 			}
 			else if (size > 16)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_32)])
-					pools[std::to_underlying(pool_type::pool_32)] = reinterpret_cast<void*>(new pool32_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool32_t*>(pools[std::to_underlying(pool_type::pool_32)]);
+				auto pool = acquire_pool<pool32_t>(pools, pool_type::pool_32);
 				page32_t* page = nullptr;
 				block32_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_32)));
@@ -478,15 +461,12 @@ namespace voltek
 			}
 			else if (size > 8)
 			{
-				if (!pools[std::to_underlying(pool_type::pool_16)])
-					pools[std::to_underlying(pool_type::pool_16)] = reinterpret_cast<void*>(new pool16_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool16_t*>(pools[std::to_underlying(pool_type::pool_16)]);
+				auto pool = acquire_pool<pool16_t>(pools, pool_type::pool_16);
 				page16_t* page = nullptr;
 				block16_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_16)));
@@ -495,15 +475,12 @@ namespace voltek
 			}
 			else
 			{
-				if (!pools[std::to_underlying(pool_type::pool_8)])
-					pools[std::to_underlying(pool_type::pool_8)] = reinterpret_cast<void*>(new pool8_t(POOL_SIZE));
-
-				auto pool = reinterpret_cast<pool8_t*>(pools[std::to_underlying(pool_type::pool_8)]);
+				auto pool = acquire_pool<pool8_t>(pools, pool_type::pool_8);
 				page8_t* page = nullptr;
 				block8_t* block = nullptr;
 				size_t index_block = 0;
 
-				if (pool->get_free_block(block, page, index_block))
+				if (pool && pool->get_free_block(block, page, index_block))
 				{
 					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
 						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_8)));
