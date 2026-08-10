@@ -24,6 +24,9 @@ set_toolchains("msvc")
 set_warnings("all")
 set_runtimes("MT")
 
+-- keep generated output out of the repo root, alongside the other intermediates
+set_config("builddir", ".LinkConf/xmake")
+
 -- set policies
 set_policy("build.fence", true)
 

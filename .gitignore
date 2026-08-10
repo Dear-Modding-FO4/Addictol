@@ -45,7 +45,6 @@
 /VC/.vs/Addictol
 /.vs
 /.xmake/
-/build/
 /VC/Addictol/x64
 *.vcxproj.user
 /.LinkConf
