@@ -1,0 +1,52 @@
+name: xmake
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Add MSVC to PATH
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Set up xmake
+      uses: xmake-io/github-action-setup-xmake@v1
+      with:
+        xmake-version: latest
+
+    - name: Configure
+      run: xmake config --yes
+
+    - name: Build
+      run: xmake build --yes -vD Addictol
+
+    - name: Check plugin exports
+      shell: pwsh
+      run: |
+        $dll = '.Build/F4SE/Plugins/Addictol.dll'
+        if (-not (Test-Path $dll)) { throw "$dll was not produced" }
+
+        $exports = (dumpbin /exports $dll) -join "`n"
+        $missing = @('F4SEPlugin_Load','F4SEPlugin_Preload','F4SEPlugin_Query','F4SEPlugin_Version') |
+          Where-Object { $exports -notmatch [regex]::Escape($_) }
+
+        if ($missing) { throw "missing F4SE exports: $($missing -join ', ')" }
+        Write-Host "all four F4SE exports present"
+
+    - name: Upload build output
+      uses: actions/upload-artifact@v6
+      with:
+        name: addictol-xmake-${{ github.sha }}
+        path: |
+          .Build/F4SE/Plugins/Addictol.dll
+          .Build/F4SE/Plugins/Addictol.pdb
