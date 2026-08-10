@@ -55,6 +55,11 @@ namespace Addictol
 
 	namespace allocatorProfilerDetail
 	{
+		[[nodiscard]] constexpr std::size_t PoolIndex(voltek::memory_manager::pool_type a_pool) noexcept
+		{
+			return static_cast<std::size_t>(a_pool);
+		}
+
 		inline constexpr std::size_t kSlotCount{ 512 };
 		inline constexpr std::size_t kRingCapacity{ 128 };
 		inline constexpr std::size_t kRuntimeEntryCapacity{ 64 };
@@ -110,8 +115,8 @@ namespace Addictol
 			"ClassOversize"sv
 		};
 		static_assert(
-			kPoolStrides[voltek::memory_manager::POOL_8] ==
-			kPoolStrides[voltek::memory_manager::POOL_16]);
+			kPoolStrides[PoolIndex(voltek::memory_manager::pool_type::pool_8)] ==
+			kPoolStrides[PoolIndex(voltek::memory_manager::pool_type::pool_16)]);
 
 		struct BucketCounters
 		{
@@ -302,7 +307,7 @@ namespace Addictol
 
 			auto& bucket = slot.buckets[a_bucketIndex];
 			const auto pool4096Le2048 =
-				a_bucketIndex == voltek::memory_manager::POOL_4096 &&
+				a_bucketIndex == PoolIndex(voltek::memory_manager::pool_type::pool_4096) &&
 				a_size <= 2048;
 			if (&slot == &g_spill) [[unlikely]]
 			{
@@ -371,21 +376,21 @@ namespace Addictol
 			// The lock-free read is valid only for the audited VMM block-header layout.
 			static_assert(VOLTEK_MM_BLOCK_VERSION == 1);
 			static_assert(
-				voltek::memory_manager::POOL_8 == 0 &&
-				voltek::memory_manager::POOL_16 == 1 &&
-				voltek::memory_manager::POOL_32 == 2 &&
-				voltek::memory_manager::POOL_64 == 3 &&
-				voltek::memory_manager::POOL_128 == 4 &&
-				voltek::memory_manager::POOL_256 == 5 &&
-				voltek::memory_manager::POOL_512 == 6 &&
-				voltek::memory_manager::POOL_1024 == 7 &&
-				voltek::memory_manager::POOL_4096 == 8 &&
-				voltek::memory_manager::POOL_8192 == 9 &&
-				voltek::memory_manager::POOL_16384 == 10 &&
-				voltek::memory_manager::POOL_32768 == 11 &&
-				voltek::memory_manager::POOL_65536 == 12 &&
-				voltek::memory_manager::POOL_131072 == 13 &&
-				voltek::memory_manager::POOL_MAX == kAllocatorOversizeClass);
+				PoolIndex(voltek::memory_manager::pool_type::pool_8) == 0 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_16) == 1 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_32) == 2 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_64) == 3 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_128) == 4 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_256) == 5 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_512) == 6 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_1024) == 7 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_4096) == 8 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_8192) == 9 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_16384) == 10 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_32768) == 11 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_65536) == 12 &&
+				PoolIndex(voltek::memory_manager::pool_type::pool_131072) == 13 &&
+				PoolIndex(voltek::memory_manager::pool_type::MAX) == kAllocatorOversizeClass);
 			__try
 			{
 				const auto block =
