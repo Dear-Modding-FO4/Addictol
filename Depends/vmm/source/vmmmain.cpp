@@ -23,7 +23,7 @@
 
 using namespace std::literals;
 
-#define USE_MULTITHREADS 1
+#define USE_MULTITHREADS 0
 
 //#pragma warning(disable : 4996)
 //#include <stdio.h>
