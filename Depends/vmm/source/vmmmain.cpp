@@ -9,11 +9,21 @@
 #include "vmapper.h"
 #include "vmmmain.h"
 #include "vmmpool.h"
+
+#include <mutex>
+#include <chrono>
+#include <condition_variable>
+
 #include <limits.h>
 #include <string.h>
-#include <windows.h>
 
-#define USE_MULTITHREADS 1
+#if (defined(_WIN32) || defined(_WIN64))
+#	include <windows.h>
+#endif
+
+using namespace std::literals;
+
+#define USE_MULTITHREADS 0
 
 //#pragma warning(disable : 4996)
 //#include <stdio.h>
@@ -61,10 +71,9 @@ namespace voltek
 		typedef pool_t<block65536_t, page65536_t, __VMM_POOL_CONFIG_LOW_SIZE> pool65536_t;
 		typedef pool_t<block131072_t, page131072_t, __VMM_POOL_CONFIG_LOW_SIZE> pool131072_t;
 
-
 		// Проверка на допустимость памяти
 		// Только Windows: Если произошло исключение, то вернёт false, иначе true.
-		bool is_valid_pointer(const void* ptr)
+		static bool is_valid_pointer(const void* ptr)
 		{
 			if (!ptr) return false;
 
@@ -86,10 +95,41 @@ namespace voltek
 #endif
 		}
 
-//		static FILE* file_dbg_sniffer;
+		class std_event
+		{
+			std::mutex mtx;
+			std::condition_variable cv;
+			bool signaled = false;
+		public:
+			void set() noexcept
+			{
+				{
+					std::lock_guard<std::mutex> lock(mtx);
+					signaled = true;
+				}
 
-#define _fsniff(fmt, ...) \
-	{ fprintf(file_dbg_sniffer, fmt "\n", ##__VA_ARGS__); fflush(file_dbg_sniffer); }
+				// Wakes all waiting threads
+				cv.notify_all();
+			}
+
+			void reset() noexcept
+			{
+				std::lock_guard<std::mutex> lock(mtx);
+				signaled = false; 
+			}
+
+			void wait() noexcept
+			{
+				std::unique_lock<std::mutex> lock(mtx);
+				return cv.wait(lock, [this] { return signaled; });
+			}
+
+			[[nodiscard]] bool wait(uint32_t timeout) noexcept 
+			{
+				std::unique_lock<std::mutex> lock(mtx);
+				return cv.wait_for(lock, std::chrono::milliseconds(timeout), [this] { return signaled; });
+			}
+		};
 
 		static size_t POOL_SIZE = 64 * 1024;
 
@@ -98,68 +138,64 @@ namespace voltek
 			core::initialize();
 			create_default_block(&zero_size_request_block, 0);
 			
-			event_close = CreateEventA(nullptr, true, false, nullptr);
-			event_close_w = CreateEventA(nullptr, true, false, nullptr);
+			event_close = new std_event();
+			event_close_w = new std_event();
 			if (!event_close || !event_close_w)
-			{
 				return;
-			}
 			
-			ResetEvent((HANDLE)event_close);
-			ResetEvent((HANDLE)event_close_w);
-
-			//file_dbg_sniffer = fopen("vmm.log", "w+");
+			reinterpret_cast<std_event*>(event_close)->reset();
+			reinterpret_cast<std_event*>(event_close_w)->reset();
 
 			// Вся технология ускорения зависит от новых инструкций, если их нет, незачем
 			// это создавать.
-			pools = voltek::core::_internal::aligned_talloc<void*>(POOL_MAX, 0x10);
+			pools = voltek::core::_internal::aligned_talloc<void*>(std::to_underlying(pool_type::MAX), 0x10);
 			if (pools)
 			{
-				pools[POOL_8] = new pool8_t(POOL_SIZE);
-				pools[POOL_16] = new pool16_t(POOL_SIZE);
-				pools[POOL_32] = new pool32_t(POOL_SIZE);
-				pools[POOL_64] = new pool64_t(POOL_SIZE);
+				pools[std::to_underlying(pool_type::pool_8)] = reinterpret_cast<void*>(new pool8_t(POOL_SIZE));
+				pools[std::to_underlying(pool_type::pool_16)] = reinterpret_cast<void*>(new pool16_t(POOL_SIZE));
+				pools[std::to_underlying(pool_type::pool_32)] = reinterpret_cast<void*>(new pool32_t(POOL_SIZE));
+				pools[std::to_underlying(pool_type::pool_64)] = reinterpret_cast<void*>(new pool64_t(POOL_SIZE));
 			}
 
 #if USE_MULTITHREADS
-			thread = new std::thread([](HANDLE* ev_close, HANDLE* ev_close_w, void** pools, 
-				voltek::core::_internal::simple_lock* lock) {
-				while (1)
+			thread = new std::thread([](std_event* ev_close, std_event* ev_close_w, void** pools) {
+				while (true)
 				{
 					{
-						// Блокируем. Снятие блокировки будет заботить компилятор.
-						voltek::core::_internal::simple_scope_lock scope_lock(*lock);
-
-						if (pools[POOL_8]) { ((pool8_t*)pools[POOL_8])->push_free_block_to_cache(); }
-						if (pools[POOL_16]) { ((pool16_t*)pools[POOL_16])->push_free_block_to_cache(); }
-						if (pools[POOL_32]) { ((pool32_t*)pools[POOL_32])->push_free_block_to_cache(); }
-						if (pools[POOL_64]) { ((pool64_t*)pools[POOL_64])->push_free_block_to_cache(); }
-						if (pools[POOL_128]) { ((pool128_t*)pools[POOL_128])->push_free_block_to_cache(); }
-						if (pools[POOL_256]) { ((pool256_t*)pools[POOL_256])->push_free_block_to_cache(); }
-						if (pools[POOL_512]) { ((pool512_t*)pools[POOL_512])->push_free_block_to_cache(); }
-						if (pools[POOL_1024]) { ((pool1024_t*)pools[POOL_1024])->push_free_block_to_cache(); }
-						if (pools[POOL_4096]) { ((pool4096_t*)pools[POOL_4096])->push_free_block_to_cache(); }
-						if (pools[POOL_8192]) { ((pool8192_t*)pools[POOL_8192])->push_free_block_to_cache(); }
-						if (pools[POOL_16384]) { ((pool16384_t*)pools[POOL_16384])->push_free_block_to_cache(); }
-						if (pools[POOL_32768]) { ((pool32768_t*)pools[POOL_32768])->push_free_block_to_cache(); }
-						if (pools[POOL_65536]) { ((pool65536_t*)pools[POOL_65536])->push_free_block_to_cache(); }
-						if (pools[POOL_131072]) { ((pool131072_t*)pools[POOL_131072])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_8)]) { reinterpret_cast<pool8_t*>((pool8_t*)pools[std::to_underlying(pool_type::pool_8)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_16)]) { reinterpret_cast<pool16_t*>(pools[std::to_underlying(pool_type::pool_16)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_32)]) { reinterpret_cast<pool32_t*>(pools[std::to_underlying(pool_type::pool_32)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_64)]) { reinterpret_cast<pool64_t*>(pools[std::to_underlying(pool_type::pool_64)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_128)]) { reinterpret_cast<pool128_t*>(pools[std::to_underlying(pool_type::pool_128)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_256)]) { reinterpret_cast<pool256_t*>(pools[std::to_underlying(pool_type::pool_256)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_512)]) { reinterpret_cast<pool512_t*>(pools[std::to_underlying(pool_type::pool_512)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_1024)]) { reinterpret_cast<pool1024_t*>(pools[std::to_underlying(pool_type::pool_1024)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_4096)]) { reinterpret_cast<pool4096_t*>(pools[std::to_underlying(pool_type::pool_4096)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_8192)]) { reinterpret_cast<pool8192_t*>(pools[std::to_underlying(pool_type::pool_8192)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_16384)]) { reinterpret_cast<pool16384_t*>(pools[std::to_underlying(pool_type::pool_16384)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_32768)]) { reinterpret_cast<pool32768_t*>(pools[std::to_underlying(pool_type::pool_32768)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_65536)]) { reinterpret_cast<pool65536_t*>(pools[std::to_underlying(pool_type::pool_65536)])->push_free_block_to_cache(); }
+						if (pools[std::to_underlying(pool_type::pool_131072)]) { reinterpret_cast<pool131072_t*>(pools[std::to_underlying(pool_type::pool_131072)])->push_free_block_to_cache(); }
 					}
 
-					if (WaitForSingleObject(*ev_close, 10) == WAIT_OBJECT_0)
+					if (ev_close->wait(10))
 					{
-						SetEvent(*ev_close_w);
+						ev_close_w->set();
 						break;
 					}
 
-					Sleep(1);
+					std::this_thread::yield();
 				}
-			}, (HANDLE*)&event_close, (HANDLE*)&event_close_w, pools, &lock);
+			}, reinterpret_cast<std_event*>(event_close), reinterpret_cast<std_event*>(event_close_w), pools);
 			_vassert(!thread);
+
+#if (defined(_WIN32) || defined(_WIN64))
 			SetThreadPriority(thread->native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
 			const auto cores = std::thread::hardware_concurrency();
 			if (cores > 0 && cores <= 64)
 				SetThreadAffinityMask(thread->native_handle(), 1ull << (cores - 1));
+#endif
+
 			thread->detach();
 #endif
 		}
@@ -169,25 +205,25 @@ namespace voltek
 #if USE_MULTITHREADS
 			if (thread)
 			{
-				SetEvent((HANDLE)event_close);
-				WaitForSingleObject((HANDLE)event_close_w, INFINITE);
+				reinterpret_cast<std_event*>(event_close)->set();
+				reinterpret_cast<std_event*>(event_close_w)->wait();
 
 				if (pools)
 				{
-					if (pools[POOL_8]) delete ((pool8_t*)pools[POOL_8]);
-					if (pools[POOL_16]) delete ((pool16_t*)pools[POOL_16]);
-					if (pools[POOL_32]) delete ((pool32_t*)pools[POOL_32]);
-					if (pools[POOL_64]) delete ((pool64_t*)pools[POOL_64]);
-					if (pools[POOL_128]) delete ((pool128_t*)pools[POOL_128]);
-					if (pools[POOL_256]) delete ((pool256_t*)pools[POOL_256]);
-					if (pools[POOL_512]) delete ((pool512_t*)pools[POOL_512]);
-					if (pools[POOL_1024]) delete ((pool1024_t*)pools[POOL_1024]);
-					if (pools[POOL_4096]) delete ((pool4096_t*)pools[POOL_4096]);
-					if (pools[POOL_8192]) delete ((pool8192_t*)pools[POOL_8192]);
-					if (pools[POOL_16384]) delete ((pool16384_t*)pools[POOL_16384]);
-					if (pools[POOL_32768]) delete ((pool32768_t*)pools[POOL_32768]);
-					if (pools[POOL_65536]) delete ((pool65536_t*)pools[POOL_65536]);
-					if (pools[POOL_131072]) delete ((pool131072_t*)pools[POOL_131072]);
+					if (pools[std::to_underlying(pool_type::pool_8)]) delete reinterpret_cast<pool8_t*>(pools[std::to_underlying(pool_type::pool_8)]);
+					if (pools[std::to_underlying(pool_type::pool_16)]) delete reinterpret_cast<pool16_t*>(pools[std::to_underlying(pool_type::pool_16)]);
+					if (pools[std::to_underlying(pool_type::pool_32)]) delete reinterpret_cast<pool32_t*>(pools[std::to_underlying(pool_type::pool_32)]);
+					if (pools[std::to_underlying(pool_type::pool_64)]) delete reinterpret_cast<pool64_t*>(pools[std::to_underlying(pool_type::pool_64)]);
+					if (pools[std::to_underlying(pool_type::pool_128)]) delete reinterpret_cast<pool128_t*>(pools[std::to_underlying(pool_type::pool_128)]);
+					if (pools[std::to_underlying(pool_type::pool_256)]) delete reinterpret_cast<pool256_t*>(pools[std::to_underlying(pool_type::pool_256)]);
+					if (pools[std::to_underlying(pool_type::pool_512)]) delete reinterpret_cast<pool512_t*>(pools[std::to_underlying(pool_type::pool_512)]);
+					if (pools[std::to_underlying(pool_type::pool_1024)]) delete reinterpret_cast<pool1024_t*>(pools[std::to_underlying(pool_type::pool_1024)]);
+					if (pools[std::to_underlying(pool_type::pool_4096)]) delete reinterpret_cast<pool4096_t*>(pools[std::to_underlying(pool_type::pool_4096)]);
+					if (pools[std::to_underlying(pool_type::pool_8192)]) delete reinterpret_cast<pool8192_t*>(pools[std::to_underlying(pool_type::pool_8192)]);
+					if (pools[std::to_underlying(pool_type::pool_16384)]) delete reinterpret_cast<pool16384_t*>(pools[std::to_underlying(pool_type::pool_16384)]);
+					if (pools[std::to_underlying(pool_type::pool_32768)]) delete reinterpret_cast<pool32768_t*>(pools[std::to_underlying(pool_type::pool_32768)]);
+					if (pools[std::to_underlying(pool_type::pool_65536)]) delete reinterpret_cast<pool65536_t*>(pools[std::to_underlying(pool_type::pool_65536)]);
+					if (pools[std::to_underlying(pool_type::pool_131072)]) delete reinterpret_cast<pool131072_t*>(pools[std::to_underlying(pool_type::pool_131072)]);
 
 					voltek::core::_internal::aligned_free(pools);
 					pools = nullptr;
@@ -199,18 +235,13 @@ namespace voltek
 #endif
 		}
 
-		void* memory_manager::alloc(size_t size)
+		void* memory_manager::alloc(size_t size) noexcept
 		{
 			//if (ULONG_MAX < size)
 			//	return nullptr;
 
 			if (!size)
 				return get_ptr_from_block_handle(&zero_size_request_block);
-
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			//voltek::core::_internal::simple_scope_lock scope_lock(lock);
-
-			//_fsniff("The beginning of the allocation of a memory block of %llu sizes", size);
 
 			// Проблемы с пулами? или размер больше фиксируемых блоков?
 			// Тогда выделим память простым способом.
@@ -240,250 +271,243 @@ namespace voltek
 			}
 
 			void* new_ptr = nullptr;
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 	
 			if (size > 65536)
 			{
-				if (!pools[POOL_131072])
-					pools[POOL_131072] = (void*)(new pool131072_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_131072)])
+					pools[std::to_underlying(pool_type::pool_131072)] = reinterpret_cast<void*>(new pool131072_t(POOL_SIZE));
 
-				pool131072_t* pool = (pool131072_t*)pools[POOL_131072];
+				auto pool = reinterpret_cast<pool131072_t*>(pools[std::to_underlying(pool_type::pool_131072)]);
 				page131072_t* page = nullptr;
 				block131072_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_131072);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_131072)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <131072>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 32768)
 			{
-				if (!pools[POOL_65536])
-					pools[POOL_65536] = (void*)(new pool65536_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_65536)])
+					pools[std::to_underlying(pool_type::pool_65536)] = reinterpret_cast<void*>(new pool65536_t(POOL_SIZE));
 
-				pool65536_t* pool = (pool65536_t*)pools[POOL_65536];
+				auto pool = reinterpret_cast<pool65536_t*>(pools[std::to_underlying(pool_type::pool_65536)]);
 				page65536_t* page = nullptr;
 				block65536_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_65536);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_65536)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <65536>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 16384)
 			{
-				if (!pools[POOL_32768])
-					pools[POOL_32768] = (void*)(new pool32768_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_32768)])
+					pools[std::to_underlying(pool_type::pool_32768)] = reinterpret_cast<void*>(new pool32768_t(POOL_SIZE));
 
-				pool32768_t* pool = (pool32768_t*)pools[POOL_32768];
+				auto pool = reinterpret_cast<pool32768_t*>(pools[std::to_underlying(pool_type::pool_32768)]);
 				page32768_t* page = nullptr;
 				block32768_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_32768);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_32768)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <32768>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 8192)
 			{
-				if (!pools[POOL_16384])
-					pools[POOL_16384] = (void*)(new pool16384_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_16384)])
+					pools[std::to_underlying(pool_type::pool_16384)] = reinterpret_cast<void*>(new pool16384_t(POOL_SIZE));
 
-				pool16384_t* pool = (pool16384_t*)pools[POOL_16384];
+				auto pool = reinterpret_cast<pool16384_t*>(pools[std::to_underlying(pool_type::pool_16384)]);
 				page16384_t* page = nullptr;
 				block16384_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_16384);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_16384)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <16384>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 4096)
 			{
-				if (!pools[POOL_8192])
-					pools[POOL_8192] = (void*)(new pool8192_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_8192)])
+					pools[std::to_underlying(pool_type::pool_8192)] = reinterpret_cast<void*>(new pool8192_t(POOL_SIZE));
 
-				pool8192_t* pool = (pool8192_t*)pools[POOL_8192];
+				auto pool = (pool8192_t*)pools[std::to_underlying(pool_type::pool_8192)];
 				page8192_t* page = nullptr;
 				block8192_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_8192);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_8192)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <8192>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 1024)
 			{
-				if (!pools[POOL_4096])
-					pools[POOL_4096] = (void*)(new pool4096_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_4096)])
+					pools[std::to_underlying(pool_type::pool_4096)] = reinterpret_cast<void*>(new pool4096_t(POOL_SIZE));
 
-				pool4096_t* pool = (pool4096_t*)pools[POOL_4096];
+				auto pool = reinterpret_cast<pool4096_t*>(pools[std::to_underlying(pool_type::pool_4096)]);
 				page4096_t* page = nullptr;
 				block4096_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_4096);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_4096)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <4096>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 512)
 			{
-				if (!pools[POOL_1024])
-					pools[POOL_1024] = (void*)(new pool1024_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_1024)])
+					pools[std::to_underlying(pool_type::pool_1024)] = reinterpret_cast<void*>(new pool1024_t(POOL_SIZE));
 
-				pool1024_t* pool = (pool1024_t*)pools[POOL_1024];
+				auto pool = reinterpret_cast<pool1024_t*>(pools[std::to_underlying(pool_type::pool_1024)]);
 				page1024_t* page = nullptr;
 				block1024_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_1024);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_1024)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <1024>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 256)
 			{
-				if (!pools[POOL_512])
-					pools[POOL_512] = (void*)(new pool512_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_512)])
+					pools[std::to_underlying(pool_type::pool_512)] = reinterpret_cast<void*>(new pool512_t(POOL_SIZE));
 
-				pool512_t* pool = (pool512_t*)pools[POOL_512];
+				auto pool = reinterpret_cast<pool512_t*>(pools[std::to_underlying(pool_type::pool_512)]);
 				page512_t* page = nullptr;
 				block512_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_512);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_512)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <512>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 128)
 			{
-				if (!pools[POOL_256])
-					pools[POOL_256] = (void*)(new pool256_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_256)])
+					pools[std::to_underlying(pool_type::pool_256)] = reinterpret_cast<void*>(new pool256_t(POOL_SIZE));
 
-				pool256_t* pool = (pool256_t*)pools[POOL_256];
+				auto pool = reinterpret_cast<pool256_t*>(pools[std::to_underlying(pool_type::pool_256)]);
 				page256_t* page = nullptr;
 				block256_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_256);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_256)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <256>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 64)
 			{
-				if (!pools[POOL_128])
-					pools[POOL_128] = (void*)(new pool128_t(POOL_SIZE));
+				if (!pools[std::to_underlying(pool_type::pool_128)])
+					pools[std::to_underlying(pool_type::pool_128)] = reinterpret_cast<void*>(new pool128_t(POOL_SIZE));
 
-				pool128_t* pool = (pool128_t*)pools[POOL_128];
+				auto pool = reinterpret_cast<pool128_t*>(pools[std::to_underlying(pool_type::pool_128)]);
 				page128_t* page = nullptr;
 				block128_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_128);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_128)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <128>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 32)
 			{
-				pool64_t* pool = (pool64_t*)pools[POOL_64];
+				if (!pools[std::to_underlying(pool_type::pool_64)])
+					pools[std::to_underlying(pool_type::pool_64)] = reinterpret_cast<void*>(new pool64_t(POOL_SIZE));
+
+				auto pool = reinterpret_cast<pool64_t*>(pools[std::to_underlying(pool_type::pool_64)]);
 				page64_t* page = nullptr;
 				block64_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_64);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_64)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <64>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 16)
 			{
-				pool32_t* pool = (pool32_t*)pools[POOL_32];
+				if (!pools[std::to_underlying(pool_type::pool_32)])
+					pools[std::to_underlying(pool_type::pool_32)] = reinterpret_cast<void*>(new pool32_t(POOL_SIZE));
+
+				auto pool = reinterpret_cast<pool32_t*>(pools[std::to_underlying(pool_type::pool_32)]);
 				page32_t* page = nullptr;
 				block32_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_32);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_32)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <32>: %p %llu", new_ptr, size);
 				}
 			}
 			else if (size > 8)
 			{
-				pool16_t* pool = (pool16_t*)pools[POOL_16];
+				if (!pools[std::to_underlying(pool_type::pool_16)])
+					pools[std::to_underlying(pool_type::pool_16)] = reinterpret_cast<void*>(new pool16_t(POOL_SIZE));
+
+				auto pool = reinterpret_cast<pool16_t*>(pools[std::to_underlying(pool_type::pool_16)]);
 				page16_t* page = nullptr;
 				block16_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_16);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_16)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <16>: %p %llu", new_ptr, size);
 				}
 			}
 			else
 			{
-				pool8_t* pool = (pool8_t*)pools[POOL_8];
+				if (!pools[std::to_underlying(pool_type::pool_8)])
+					pools[std::to_underlying(pool_type::pool_8)] = reinterpret_cast<void*>(new pool8_t(POOL_SIZE));
+
+				auto pool = reinterpret_cast<pool8_t*>(pools[std::to_underlying(pool_type::pool_8)]);
 				page8_t* page = nullptr;
 				block8_t* block = nullptr;
 				size_t index_block = 0;
 
 				if (pool->get_free_block(block, page, index_block))
 				{
-					create_pool_block(block, (uint32_t)size, (uint16_t)page->get_user_data(),
-						(uint32_t)index_block, (uint16_t)POOL_8);
+					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
+						static_cast<uint32_t>(index_block), static_cast<uint16_t>(std::to_underlying(pool_type::pool_8)));
 					new_ptr = get_ptr_from_block_handle(block);
-					//_fsniff("Pool block allocated <8>: %p %llu", new_ptr, size);
 				}
 			}
 
@@ -494,7 +518,7 @@ namespace voltek
 			return new_ptr;
 		}
 
-		void* memory_manager::realloc(const void* ptr, size_t size)
+		void* memory_manager::realloc(const void* ptr, size_t size) noexcept
 		{
 			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr) /*|| (ULONG_MAX < size)*/)
 				return nullptr;
@@ -505,11 +529,6 @@ namespace voltek
 			}
 
 			void* new_ptr = nullptr;	
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
 
 			// Если память выделена ранее как обычный, то тут выделение новой памяти неизбежно.
 			if (is_used_default_ptr(ptr))
@@ -528,136 +547,136 @@ namespace voltek
 				block_base* block = get_block_handle_from_ptr(new_ptr);
 				uint8_t pool_id = block->pool_id;
 
-				switch (pool_id)
+				switch (static_cast<pool_type>(pool_id))
 				{
-				case POOL_131072:
+				case pool_type::pool_131072:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 131072)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_65536:
+				case pool_type::pool_65536:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 65536)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_32768:
+				case pool_type::pool_32768:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 32768)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_16384:
+				case pool_type::pool_16384:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 16384)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_8192:
+				case pool_type::pool_8192:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 8192)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_4096:
+				case pool_type::pool_4096:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 4096)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_1024:
+				case pool_type::pool_1024:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 1024)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_512:
+				case pool_type::pool_512:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 512)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_256:
+				case pool_type::pool_256:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 256)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_128:
+				case pool_type::pool_128:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 128)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_64:
+				case pool_type::pool_64:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 64)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_32:
+				case pool_type::pool_32:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 32)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
-				case POOL_16:
+				case pool_type::pool_16:
 				{
 					// Если требуемая память больше, чем может позволить блок,
 					// то выделение новой памяти неизбежно.
 					if (size > 16)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
 				default:
@@ -667,7 +686,7 @@ namespace voltek
 					if (size > 8)
 						goto realloc_def_label;
 					// Новый размер для памяти.
-					block->size = (uint32_t)size;
+					block->size = static_cast<uint32_t>(size);
 				}
 				break;
 				}
@@ -676,18 +695,12 @@ namespace voltek
 			return new_ptr;
 		}
 
-		bool memory_manager::free(const void* ptr)
+		bool memory_manager::free(const void* ptr) noexcept
 		{
 			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr))
 				return false;
 
 			bool ret = true;
-
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
-			//_fsniff("The beginning of memory release: %p", ptr);
 
 			if (is_used_default_ptr(ptr))
 			{
@@ -700,7 +713,6 @@ namespace voltek
 					else 
 						voltek::core::_internal::aligned_free(block);
 				}
-				//_fsniff("Default memory block released");
 			}
 			else
 			{
@@ -709,104 +721,90 @@ namespace voltek
 				uint16_t page_id = block->page_id;
 				uint32_t block_id = block->block_id;
 
-				switch (pool_id)
+				switch (static_cast<pool_type>(pool_id))
 				{
-				case POOL_131072:
+				case pool_type::pool_131072:
 				{
-					pool131072_t* pool = (pool131072_t*)(pools[POOL_131072]);
+					auto pool = reinterpret_cast<pool131072_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <131072> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_65536:
+				case pool_type::pool_65536:
 				{
-					pool65536_t* pool = (pool65536_t*)(pools[POOL_65536]);
+					auto pool = reinterpret_cast<pool65536_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <65536> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_32768:
+				case pool_type::pool_32768:
 				{
-					pool32768_t* pool = (pool32768_t*)(pools[POOL_32768]);
+					auto pool = reinterpret_cast<pool32768_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <32768> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_16384:
+				case pool_type::pool_16384:
 				{
-					pool16384_t* pool = (pool16384_t*)(pools[POOL_16384]);
+					auto pool = reinterpret_cast<pool16384_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <16384> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_8192:
+				case pool_type::pool_8192:
 				{
-					pool8192_t* pool = (pool8192_t*)(pools[POOL_8192]);
+					auto pool = reinterpret_cast<pool8192_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <8192> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_4096:
+				case pool_type::pool_4096:
 				{
-					pool4096_t* pool = (pool4096_t*)(pools[POOL_4096]);
+					auto pool = reinterpret_cast<pool4096_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <4096> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_1024:
+				case pool_type::pool_1024:
 				{
-					pool1024_t* pool = (pool1024_t*)(pools[POOL_1024]);
+					auto pool = reinterpret_cast<pool1024_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <1024> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_512:
+				case pool_type::pool_512:
 				{
-					pool512_t* pool = (pool512_t*)(pools[POOL_512]);
+					auto pool = reinterpret_cast<pool512_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <512> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_256:
+				case pool_type::pool_256:
 				{
-					pool256_t* pool = (pool256_t*)(pools[POOL_256]);
+					auto pool = reinterpret_cast<pool256_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <256> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_128:
+				case pool_type::pool_128:
 				{
-					pool128_t* pool = (pool128_t*)(pools[POOL_128]);
+					auto pool = reinterpret_cast<pool128_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <128> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_64:
+				case pool_type::pool_64:
 				{
-					pool64_t* pool = (pool64_t*)(pools[POOL_64]);
+					auto pool = reinterpret_cast<pool64_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <64> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_32:
+				case pool_type::pool_32:
 				{
-					pool32_t* pool = (pool32_t*)(pools[POOL_32]);
+					auto pool = reinterpret_cast<pool32_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <32> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
-				case POOL_16:
+				case pool_type::pool_16:
 				{
-					pool16_t* pool = (pool16_t*)(pools[POOL_16]);
+					auto pool = reinterpret_cast<pool16_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <16> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
 				default:
 				{
-					pool8_t* pool = (pool8_t*)(pools[POOL_8]);
+					auto pool = reinterpret_cast<pool8_t*>(pools[pool_id]);
 					ret = pool->release_block((*pool)[page_id], block_id);
-					//_fsniff("Pool memory block <8> released [%s]", (ret ? "SUCCESS" : "FAILED"));
 				}
 				break;
 				}
@@ -815,109 +813,104 @@ namespace voltek
 			return ret;
 		}
 
-		size_t memory_manager::msize(const void* ptr) const
+		size_t memory_manager::msize(const void* ptr) const noexcept
 		{
 			if (!ptr || !is_valid_pointer(ptr)) return 0;
 			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
+			//voltek::core::_internal::simple_scope_lock scope_lock(lock);
 			// Получение размера.
 			return (size_t)get_size_from_ptr(ptr);
 		}
 
-		void memory_manager::dump_map(size_t pool_id, const char* filename) const
+		void memory_manager::dump_map(size_t pool_id, const char* filename) const noexcept
 		{
 #ifndef VMMDLL_EXPORTS
-			if ((POOL_MAX >= pool_id) || !filename)
+			if ((std::to_underlying(pool_type::MAX) >= pool_id) || !filename)
 				return;
 
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
-
-			switch (pool_id)
+			switch (static_cast<pool_type>(pool_id))
 			{
-			case POOL_131072:
+			case pool_type::pool_131072:
 			{
-				pool131072_t* pool = (pool131072_t*)(pools[POOL_131072]);
+				auto pool = reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_65536:
+			case pool_type::pool_65536:
 			{
-				pool65536_t* pool = (pool65536_t*)(pools[POOL_65536]);
+				auto pool = reinterpret_cast<pool65536_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_32768:
+			case pool_type::pool_32768:
 			{
-				pool32768_t* pool = (pool32768_t*)(pools[POOL_32768]);
+				auto pool = reinterpret_cast<pool32768_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_16384:
+			case pool_type::pool_16384:
 			{
-				pool16384_t* pool = (pool16384_t*)(pools[POOL_16384]);
+				auto pool = reinterpret_cast<pool16384_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_8192:
+			case pool_type::pool_8192:
 			{
-				pool8192_t* pool = (pool8192_t*)(pools[POOL_8192]);
+				auto pool = reinterpret_cast<pool8192_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_4096:
+			case pool_type::pool_4096:
 			{
-				pool4096_t* pool = (pool4096_t*)(pools[POOL_4096]);
+				auto pool = reinterpret_cast<pool4096_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_1024:
+			case pool_type::pool_1024:
 			{
-				pool1024_t* pool = (pool1024_t*)(pools[POOL_1024]);
+				auto pool = reinterpret_cast<pool1024_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_512:
+			case pool_type::pool_512:
 			{
-				pool512_t* pool = (pool512_t*)(pools[POOL_512]);
+				auto pool = reinterpret_cast<pool512_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_256:
+			case pool_type::pool_256:
 			{
-				pool256_t* pool = (pool256_t*)(pools[POOL_256]);
+				auto pool = reinterpret_cast<pool256_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_128:
+			case pool_type::pool_128:
 			{
-				pool128_t* pool = (pool128_t*)(pools[POOL_128]);
+				auto pool = reinterpret_cast<pool128_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_64:
+			case pool_type::pool_64:
 			{
-				pool64_t* pool = (pool64_t*)(pools[POOL_64]);
+				auto pool = reinterpret_cast<pool64_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_32:
+			case pool_type::pool_32:
 			{
-				pool32_t* pool = (pool32_t*)(pools[POOL_32]);
+				auto pool = reinterpret_cast<pool32_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
-			case POOL_16:
+			case pool_type::pool_16:
 			{
-				pool16_t* pool = (pool16_t*)(pools[POOL_16]);
+				auto pool = reinterpret_cast<pool16_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
 			default:
 			{
-				pool8_t* pool = (pool8_t*)(pools[POOL_8]);
+				auto pool = reinterpret_cast<pool8_t*>(pools[pool_id]);
 				pool->dump_map(filename);
 			}
 			break;
@@ -925,115 +918,100 @@ namespace voltek
 #endif // !VMMDLL_EXPORTS
 		}
 
-		void memory_manager::dump(size_t pool_id, const char* filename) const
+		void memory_manager::dump(size_t pool_id, const char* filename) const noexcept
 		{
 #ifndef VMMDLL_EXPORTS
-			if ((POOL_MAX >= pool_id) || !filename)
+			if ((std::to_underlying(pool_type::MAX) >= pool_id) || !filename)
 				return;
 
-#if USE_MULTITHREADS
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			voltek::core::_internal::simple_scope_lock scope_lock(lock);
-#endif
-
-			switch (pool_id)
+			switch (static_cast<pool_type>(pool_id))
 			{
-			case POOL_131072:
+			case pool_type::pool_131072:
 			{
-				pool131072_t* pool = (pool131072_t*)(pools[POOL_131072]);
+				auto pool = reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_65536:
+			case pool_type::pool_65536:
 			{
-				pool65536_t* pool = (pool65536_t*)(pools[POOL_65536]);
+				auto pool = (pool65536_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_32768:
+			case pool_type::pool_32768:
 			{
-				pool32768_t* pool = (pool32768_t*)(pools[POOL_32768]);
+				auto pool = (pool32768_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_16384:
+			case pool_type::pool_16384:
 			{
-				pool16384_t* pool = (pool16384_t*)(pools[POOL_16384]);
+				auto pool = (pool16384_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_8192:
+			case pool_type::pool_8192:
 			{
-				pool8192_t* pool = (pool8192_t*)(pools[POOL_8192]);
+				auto pool = (pool8192_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_4096:
+			case pool_type::pool_4096:
 			{
-				pool4096_t* pool = (pool4096_t*)(pools[POOL_4096]);
+				auto pool = (pool4096_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_1024:
+			case pool_type::pool_1024:
 			{
-				pool1024_t* pool = (pool1024_t*)(pools[POOL_1024]);
+				auto pool = (pool1024_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_512:
+			case pool_type::pool_512:
 			{
-				pool512_t* pool = (pool512_t*)(pools[POOL_512]);
+				auto pool = (pool512_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_256:
+			case pool_type::pool_256:
 			{
-				pool256_t* pool = (pool256_t*)(pools[POOL_256]);
+				auto pool = (pool256_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_128:
+			case pool_type::pool_128:
 			{
-				pool128_t* pool = (pool128_t*)(pools[POOL_128]);
+				auto pool = (pool128_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_64:
+			case pool_type::pool_64:
 			{
-				pool64_t* pool = (pool64_t*)(pools[POOL_64]);
+				auto pool = (pool64_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_32:
+			case pool_type::pool_32:
 			{
-				pool32_t* pool = (pool32_t*)(pools[POOL_32]);
+				auto pool = (pool32_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
-			case POOL_16:
+			case pool_type::pool_16:
 			{
-				pool16_t* pool = (pool16_t*)(pools[POOL_16]);
+				auto pool = (pool16_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
 			default:
 			{
-				pool8_t* pool = (pool8_t*)(pools[POOL_8]);
+				auto pool = (pool8_t*)reinterpret_cast<pool131072_t*>(pools[pool_id]);
 				pool->dump(filename);
 			}
 			break;
 			}
 #endif // !VMMDLL_EXPORTS
-		}
-
-		memory_manager::memory_manager(const memory_manager& ob) : pools(nullptr)
-		{
-			memset(&zero_size_request_block, 0, sizeof(zero_size_request_block));
-		}
-
-		memory_manager& memory_manager::operator=(const memory_manager& ob)
-		{
-			return *this;
 		}
 	}
 }
