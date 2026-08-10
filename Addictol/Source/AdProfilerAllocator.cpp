@@ -1,4 +1,5 @@
 #include <AdProfilerAllocator.h>
+#include <AdAllocator.h>
 #include <AdProfilerCore.h>
 #include <AdProfilerFrameHitch.h>
 #include <AdProfilerRuntimeChannel.h>
@@ -31,6 +32,8 @@ namespace Addictol
 		"Profiler"sv, "uAllocatorProfilerDrainFrames"sv, 30
 	};
 	static REX::TOML::Bool<> bMemoryManager{ "Patches"sv, "bMemoryManager"sv, true };
+	static REX::TOML::Bool<> bSmallBlockAllocator{ "Patches"sv, "bSmallBlockAllocator"sv, true };
+	static REX::TOML::Bool<> bSmallBlockAllocatorUseSelectedHeap{ "Patches"sv, "bSmallBlockAllocatorUseSelectedHeap"sv, false };
 
 	static_assert(AllocatorSizeClass(0) == 0);
 	static_assert(AllocatorSizeClass(1) == 0);
@@ -523,6 +526,11 @@ namespace Addictol
 
 		void WriteAllocatorCSVHeader(std::ostream& a_file)
 		{
+			// Capture context: without it three captures taken under different routing are indistinguishable.
+			a_file << "# heap="sv << HeapKindName(GetSelectedHeapKind())
+				   << " bSmallBlockAllocator="sv << (bSmallBlockAllocator.GetValue() ? "true"sv : "false"sv)
+				   << " bSmallBlockAllocatorUseSelectedHeap="sv << (bSmallBlockAllocatorUseSelectedHeap.GetValue() ? "true"sv : "false"sv)
+				   << "\n"sv;
 			WriteRuntimeCSVMetadataHeader(a_file);
 			// A row may only contain values already in hand; anything requiring a game query is out of bounds.
 			a_file << "FrameSequence,FrameEndQpc,FrameElapsedQpc,FrameMs,IntervalQpc,IntervalSeconds,MaxFrameElapsedQpc,MaxFrameMs,SpansGap,IntervalOversizeAllocations,CumulativeOversizeAllocations,IntervalFailedAllocations,CumulativeFailedAllocations,IntervalZeroSizeAllocations,CumulativeZeroSizeAllocations,IntervalZeroSizeFrees,CumulativeZeroSizeFrees,IntervalPool4096Le2048Allocations,CumulativePool4096Le2048Allocations,LeasedSlots,OverflowedThreads,DroppedSamples"sv;

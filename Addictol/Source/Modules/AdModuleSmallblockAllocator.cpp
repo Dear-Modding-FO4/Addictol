@@ -5,6 +5,7 @@
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesSmallBlockAllocator{ "Patches"sv, "bSmallBlockAllocator"sv, true };
+	static REX::TOML::Bool<> bPatchesSmallBlockAllocatorUseSelectedHeap{ "Patches"sv, "bSmallBlockAllocatorUseSelectedHeap"sv, false };
 
 	// 0x1268
 	class BSSmallBlockAllocator
@@ -116,12 +117,22 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		// Uses Visper it works perfectly 
+		const auto allocSite = REL::ID{ 674967, 2268154 }.address();
+		const auto deallocSite = REL::ID{ 1552278, 2268155 }.address();
 
-		RELEX::DetourJump(REL::ID{ 674967,  2268154 }.address(),
-			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyVisperHeap>);
-		RELEX::DetourJump(REL::ID{ 1552278, 2268155 }.address(),
-			(uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyVisperHeap>);
+		// Visper ships here because it works perfectly; the selected heap routes this traffic through VMM instead so the allocator profiler can see it.
+		if (bPatchesSmallBlockAllocatorUseSelectedHeap.GetValue())
+		{
+			VisitSelectedHeap([allocSite, deallocSite]<typename Heap>() {
+				RELEX::DetourJump(allocSite, (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<Heap>);
+				RELEX::DetourJump(deallocSite, (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<Heap>);
+			});
+			REX::INFO("Smallblock Allocator: routed to the selected heap instead of Visper."sv);
+			return true;
+		}
+
+		RELEX::DetourJump(allocSite, (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Alloc<ProxyVisperHeap>);
+		RELEX::DetourJump(deallocSite, (uintptr_t)&BSSmallBlockAllocatorUtil::UserPoolBase::Dealloc<ProxyVisperHeap>);
 
 		return true;
 	}

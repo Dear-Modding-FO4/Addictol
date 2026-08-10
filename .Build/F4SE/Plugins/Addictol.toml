@@ -26,6 +26,9 @@ bMemoryManager = true
 # Replaces the small block memory allocators with visper allocator.
 bSmallBlockAllocator = true
 
+# Routes small block allocations to the selected heap instead of visper, making them visible to the allocator profiler.
+bSmallBlockAllocatorUseSelectedHeap = false
+
 # Replaces the scaleform memory allocator with os allocator.
 bScaleformAllocator = true
 

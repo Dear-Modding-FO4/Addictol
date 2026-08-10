@@ -16,7 +16,7 @@ namespace Addictol
 	static const std::unordered_map<std::string_view, std::unordered_set<std::string_view>> s_knownKeys = {
 		{ "Patches"sv, {
 			"bThreads"sv, "bLibDeflate"sv, "bLoadScreen"sv, "bProfile"sv, "bAchievements"sv,
-			"bFacegen"sv, "bMemoryManager"sv, "bSmallBlockAllocator"sv, "bScaleformAllocator"sv,
+			"bFacegen"sv, "bMemoryManager"sv, "bSmallBlockAllocator"sv, "bSmallBlockAllocatorUseSelectedHeap"sv, "bScaleformAllocator"sv,
 			"bBSMTAManager"sv, "bBSPreCulledObjects"sv, "bINISettingCollection"sv,
 			"bArchiveLimits"sv, "bInputSwitch"sv, "bFasterWorkshop"sv,
 			"bSaveAddedSoundCategories"sv, "bCOMInit"sv, "bHighResBloom"sv, "bDpiScaling"sv,

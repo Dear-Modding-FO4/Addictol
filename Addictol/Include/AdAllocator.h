@@ -28,6 +28,16 @@ namespace Addictol
 		HeapName{ "voltek", HeapKind::Voltek }
 	};
 
+	[[nodiscard]] inline constexpr std::string_view HeapKindName(HeapKind a_kind) noexcept
+	{
+		for (const auto& entry : HEAP_NAMES)
+		{
+			if (entry.kind == a_kind)
+				return entry.name;
+		}
+		return "unknown";
+	}
+
 	class ICheckerPointer
 	{
 		ICheckerPointer(const ICheckerPointer&) = delete;
