@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v6
@@ -42,6 +43,13 @@ jobs:
 
         if ($missing) { throw "missing F4SE exports: $($missing -join ', ')" }
         Write-Host "all four F4SE exports present"
+
+    - name: Build VMM tests
+      run: xmake build --yes -vD vmm-tests
+
+    # Benchmarks stay local because shared-runner timing is noise.
+    - name: Run VMM checks
+      run: .Build/Tests/vmm-tests.exe
 
     - name: Upload build output
       uses: actions/upload-artifact@v6

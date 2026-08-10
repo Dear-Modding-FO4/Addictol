@@ -14,8 +14,9 @@ patch unrelated code.
 **Fail closed.** A module that cannot apply itself safely must disable itself and log why. Trading
 a rare vanilla bug for a new crash is a regression, however correct the patch is in isolation.
 
-**There are no automated tests.** CI compiles and packages the plugin. It runs no tests and no
-static analysis, so correctness comes from reasoning about the engine and from running the game.
+**Automated coverage starts at the allocator boundary.** CI builds and runs the deterministic
+`vmm-tests` checks through xmake. Plugin and runtime correctness still comes from reasoning about
+the engine and from running the game.
 
 ## Setting up
 

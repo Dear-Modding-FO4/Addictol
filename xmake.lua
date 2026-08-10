@@ -231,6 +231,32 @@ target("vmm", function()
     )
 end)
 
+target("vmm-tests", function()
+    set_kind("binary")
+    set_arch("x64")
+    set_languages("c++23")
+    set_optimize("fastest")
+    set_runtimes("MT")
+    set_targetdir(".Build/Tests")
+    set_objectdir(".LinkConf/xmake/vmm-tests")
+    set_dependir(".LinkConf/xmake/vmm-tests/deps")
+
+    -- add dependencies
+    add_deps("vmm")
+
+    -- add source files
+    add_files("Tests/**.cpp")
+
+    -- add include directories
+    add_includedirs("Tests", "Depends/vmm/source")
+
+    -- add defines
+    add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN")
+
+    -- add libraries
+    add_links("Psapi")
+end)
+
 target(plugin_name, function()
     set_kind("shared")
     set_arch("x64")

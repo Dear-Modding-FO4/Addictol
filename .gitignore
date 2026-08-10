@@ -49,6 +49,7 @@
 *.vcxproj.user
 /.LinkConf
 /.Lib
+/.Build/Tests
 /Depends/vmm/.vs/vmm
 /Depends/vmm/x64/MemoryManager/Debug/microsoft/STL
 .vscode
