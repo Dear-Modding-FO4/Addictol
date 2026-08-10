@@ -13,6 +13,8 @@ namespace Addictol
 {
 	using namespace std::literals;
 
+	class RuntimeSessionContext;
+
 	// High-resolution scoped timer that records elapsed milliseconds
 	class ScopedProfileTimer
 	{
@@ -233,6 +235,9 @@ namespace Addictol
 		static void RecordAnimSubGraphRuntimeInterval(AnimSubGraphProfileEntry&& a_entry) noexcept;
 		static void RecordFrameHitchRuntimeInterval(FrameHitchProfileEntry&& a_entry) noexcept;
 		void AdvanceSaveLoadEpoch() noexcept;
+
+		// Shared by every runtime channel so their rows correlate on one clock and epoch.
+		[[nodiscard]] static RuntimeSessionContext& GetRuntimeSession() noexcept;
 
 		// Startup report generation
 		void GenerateReport() noexcept;

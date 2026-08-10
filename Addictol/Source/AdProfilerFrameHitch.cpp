@@ -19,6 +19,19 @@ namespace Addictol
 
 	namespace frameHitchProfilerDetail
 	{
+		enum class InstallMode
+		{
+			kFull,
+			kTickOnly
+		};
+
+		enum class InstallResult
+		{
+			kInstalled,
+			kFailedClean,
+			kFailedUnverified
+		};
+
 		enum class Phase : std::size_t
 		{
 			kUpdateIOManager,
@@ -63,6 +76,7 @@ namespace Addictol
 		inline constexpr std::size_t kHistoryCapacity = 4096;
 		inline constexpr std::size_t kHitchCapacity = 128;
 		inline constexpr std::size_t kWindowRadius = 4;
+		inline constexpr std::size_t kFrameTickCapacity = 8;
 		inline constexpr std::uint64_t kReportIntervalMs = 5000;
 
 		using Signature = std::array<std::uint8_t, kSignatureSize>;
@@ -223,6 +237,8 @@ namespace Addictol
 		};
 
 		static std::array<std::uintptr_t, kHookCount> g_originals;
+		static std::array<FrameTickCallback, kFrameTickCapacity> g_frameTickCallbacks;
+		static std::atomic<std::size_t> g_frameTickCount;
 		static std::array<std::uint8_t, 5> g_messageCallOriginal;
 		static std::array<std::array<std::uint8_t, 5>, 2> g_pollCallOriginals;
 		static std::size_t g_pollCallsInstalled;
@@ -238,13 +254,59 @@ namespace Addictol
 		static std::uint64_t g_droppedHitches;
 		static ReportSnapshot g_report;
 		static std::atomic<bool> g_reportBusy;
+		static std::atomic<std::uint32_t> g_frameThreadId;
 		// Hooks intentionally live until process exit because module teardown is not reachable.
 		static bool g_installed;
+		static InstallMode g_installMode{ InstallMode::kFull };
 		static thread_local std::uint32_t g_frameDepth;
 		static thread_local bool g_phaseFrameActive;
 		static thread_local ActiveFrame g_activeFrame;
 		static thread_local std::array<std::uint32_t, kPhaseCount> g_phaseDepth;
 		static thread_local std::array<std::uint64_t, kPhaseCount> g_phaseStart;
+
+		[[nodiscard]] static bool RegisterFrameTick(FrameTickCallback a_callback) noexcept
+		{
+			if (!a_callback)
+			{
+				REX::WARN("Frame Hitch profiler: rejected null frame-tick callback."sv);
+				return false;
+			}
+			// Subscribers must register before installation so hook mode selection sees them.
+			if (g_installed)
+			{
+				REX::WARN("Frame Hitch profiler: rejected frame-tick callback registered after installation."sv);
+				return false;
+			}
+			const auto count = g_frameTickCount.load(std::memory_order_acquire);
+			if (count >= g_frameTickCallbacks.size())
+			{
+				REX::WARN("Frame Hitch profiler: frame-tick subscriber registry is full."sv);
+				return false;
+			}
+			g_frameTickCallbacks[count] = a_callback;
+			g_frameTickCount.store(count + 1, std::memory_order_release);
+			return true;
+		}
+
+		[[nodiscard]] static bool HasFrameTickSubscribers() noexcept
+		{
+			return g_frameTickCount.load(std::memory_order_acquire) != 0;
+		}
+
+		[[nodiscard]] static bool IsFrameThread() noexcept
+		{
+			const auto current = static_cast<std::uint32_t>(GetCurrentThreadId());
+			auto owner = g_frameThreadId.load(std::memory_order_acquire);
+			// A failed exchange stores the winner into owner, so a losing thread falls through to a correct compare.
+			if (!owner && g_frameThreadId.compare_exchange_strong(
+				owner, current, std::memory_order_acq_rel, std::memory_order_acquire))
+			{
+				// Logged once so a mis-claimed frame thread is diagnosable; it would otherwise record nothing silently.
+				REX::INFO("Frame Hitch profiler: frame thread claimed by {}."sv, current);
+				return true;
+			}
+			return owner == current;
+		}
 
 		[[nodiscard]] static bool IsRelocatedHook(std::size_t a_index) noexcept
 		{
@@ -359,11 +421,12 @@ namespace Addictol
 			return g_aePollCallSignatures;
 		}
 
-		[[nodiscard]] static bool ValidateTargets() noexcept
+		[[nodiscard]] static bool ValidateTargets(InstallMode a_mode) noexcept
 		{
 			const auto targets = ResolveTargets();
 			const auto& signatures = RuntimeSignatures();
-			for (std::size_t index = 0; index < targets.size(); ++index)
+			const auto targetCount = a_mode == InstallMode::kFull ? targets.size() : 1;
+			for (std::size_t index = 0; index < targetCount; ++index)
 			{
 				if (!AnimSubGraphRuntime::ValidateUniqueSignature(targets[index], signatures[index]))
 				{
@@ -372,6 +435,8 @@ namespace Addictol
 					return false;
 				}
 			}
+			if (a_mode == InstallMode::kTickOnly)
+				return true;
 
 			const auto messageCall = targets.back();
 			if (*reinterpret_cast<const std::uint8_t*>(messageCall) != 0xE8)
@@ -615,10 +680,10 @@ namespace Addictol
 			g_nextReportTicks = a_now + g_frequency * kReportIntervalMs / 1000;
 		}
 
-		static void FinishFrame(std::uint64_t a_ticks) noexcept
+		static void FinishFrame(std::uint64_t a_ticks, std::uint64_t a_sequence) noexcept
 		{
 			FrameSample sample{};
-			sample.sequence = ++g_sequence;
+			sample.sequence = a_sequence;
 			sample.frameTicks = a_ticks;
 			sample.phases = g_activeFrame.phases;
 			sample.loadQueuedPriority = g_activeFrame.loadQueuedPriority;
@@ -647,9 +712,18 @@ namespace Addictol
 			QueueReport(Counter());
 		}
 
+		static void DispatchFrameTicks(const FrameTick& a_tick) noexcept
+		{
+			const auto count = g_frameTickCount.load(std::memory_order_acquire);
+			for (std::size_t index = 0; index < count; ++index)
+				g_frameTickCallbacks[index](a_tick);
+		}
+
 		static std::uintptr_t HKOnIdle(void* a_this) noexcept
 		{
 			const auto original = reinterpret_cast<TGeneric>(g_originals[static_cast<std::size_t>(Hook::kOnIdle)]);
+			if (!IsFrameThread())
+				return original(a_this);
 			if (g_frameDepth++)
 			{
 				const auto result = original(a_this);
@@ -657,14 +731,24 @@ namespace Addictol
 				return result;
 			}
 
-			g_activeFrame = {};
-			g_phaseFrameActive = true;
+			const auto full = g_installMode == InstallMode::kFull;
+			if (full)
+			{
+				g_activeFrame = {};
+				g_phaseFrameActive = true;
+			}
 			const auto start = Counter();
 			const auto result = original(a_this);
-			const auto elapsed = Counter() - start;
-			g_phaseFrameActive = false;
+			const auto end = Counter();
+			const auto elapsed = end - start;
+			if (full)
+				g_phaseFrameActive = false;
 			--g_frameDepth;
-			FinishFrame(elapsed);
+			const auto sequence = ++g_sequence;
+			if (full)
+				FinishFrame(elapsed, sequence);
+			const FrameTick tick{ sequence, end, elapsed, Milliseconds(elapsed) };
+			DispatchFrameTicks(tick);
 			return result;
 		}
 
@@ -810,7 +894,7 @@ namespace Addictol
 			return true;
 		}
 
-		[[nodiscard]] static bool InstallPollCallSites() noexcept
+		[[nodiscard]] static InstallResult InstallPollCallSites() noexcept
 		{
 			const auto pollCalls = ResolvePollCallSites();
 			const auto expected = g_originals[static_cast<std::size_t>(Hook::kPollControls)];
@@ -831,11 +915,12 @@ namespace Addictol
 					const auto priorRestored = RollBackPollCallSites();
 					if (!currentRestored || !priorRestored)
 						REX::WARN("Frame Hitch profiler: PollControls call-site rollback verification failed."sv);
-					return false;
+					return currentRestored && priorRestored ?
+						InstallResult::kFailedClean : InstallResult::kFailedUnverified;
 				}
 				++g_pollCallsInstalled;
 			}
-			return true;
+			return InstallResult::kInstalled;
 		}
 
 		[[nodiscard]] static bool RollBackHooks(std::size_t a_count) noexcept
@@ -861,18 +946,18 @@ namespace Addictol
 			return restored;
 		}
 
-		[[nodiscard]] static bool Install() noexcept
+		[[nodiscard]] static InstallResult Install(InstallMode a_mode) noexcept
 		{
 			if (g_installed)
-				return true;
-			if (!ValidateTargets())
-				return false;
+				return InstallResult::kInstalled;
+			if (!ValidateTargets(a_mode))
+				return InstallResult::kFailedClean;
 
 			LARGE_INTEGER frequency{};
 			if (!QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0)
 			{
 				REX::WARN("Frame Hitch profiler: QueryPerformanceFrequency failed; installing nothing."sv);
-				return false;
+				return InstallResult::kFailedClean;
 			}
 			g_frequency = static_cast<std::uint64_t>(frequency.QuadPart);
 			const auto threshold = std::clamp(nAdditionalFrameHitchThresholdMs.GetValue(), 1, 5000);
@@ -881,12 +966,14 @@ namespace Addictol
 
 			const auto targets = ResolveTargets();
 			const auto hooks = HookFunctions();
-			if (REL::GetTrampoline().free_size() < 256)
+			if (a_mode == InstallMode::kFull && REL::GetTrampoline().free_size() < 256)
 			{
 				REX::WARN("Frame Hitch profiler: insufficient trampoline space; installing nothing."sv);
-				return false;
+				return InstallResult::kFailedClean;
 			}
-			for (std::size_t index = 0; index < kHookCount; ++index)
+			g_installMode = a_mode;
+			const auto hookCount = a_mode == InstallMode::kFull ? kHookCount : 1;
+			for (std::size_t index = 0; index < hookCount; ++index)
 			{
 				const auto installed =
 					index == static_cast<std::size_t>(Hook::kPollControls) ?
@@ -900,16 +987,24 @@ namespace Addictol
 					const auto restored = RollBackHooks(index + 1);
 					REX::WARN("Frame Hitch profiler: function hook {} failed; rollback {}."sv,
 						index, restored ? "completed"sv : "verification failed"sv);
-					return false;
+					return restored ? InstallResult::kFailedClean : InstallResult::kFailedUnverified;
 				}
 			}
-
-			if (!InstallPollCallSites())
+			if (a_mode == InstallMode::kTickOnly)
 			{
-				const auto restored = RollBackHooks(kHookCount);
+				g_installed = true;
+				REX::INFO("Frame Hitch profiler: frame-tick hook installed."sv);
+				return InstallResult::kInstalled;
+			}
+
+			const auto pollResult = InstallPollCallSites();
+			if (pollResult != InstallResult::kInstalled)
+			{
+				const auto hooksRestored = RollBackHooks(kHookCount);
+				const auto restored = pollResult == InstallResult::kFailedClean && hooksRestored;
 				REX::WARN("Frame Hitch profiler: PollControls call-site hook failed; rollback {}."sv,
 					restored ? "completed"sv : "verification failed"sv);
-				return false;
+				return restored ? InstallResult::kFailedClean : InstallResult::kFailedUnverified;
 			}
 
 			const auto messageCall = targets.back();
@@ -930,13 +1025,24 @@ namespace Addictol
 				const auto hooksRestored = RollBackHooks(kHookCount);
 				REX::WARN("Frame Hitch profiler: message-box call hook failed; rollback {}."sv,
 					messageRestored && pollsRestored && hooksRestored ? "completed"sv : "verification failed"sv);
-				return false;
+				return messageRestored && pollsRestored && hooksRestored ?
+					InstallResult::kFailedClean : InstallResult::kFailedUnverified;
 			}
 			g_installed = true;
 			REX::INFO("Frame Hitch profiler: installed at {} ms; cell-load correlation uses a rolling hitch window because no authoritative cell-load state is exposed."sv,
 				threshold);
-			return true;
+			return InstallResult::kInstalled;
 		}
+	}
+
+	bool ProfilerFrameHitch::RegisterFrameTick(FrameTickCallback a_callback) noexcept
+	{
+		return frameHitchProfilerDetail::RegisterFrameTick(a_callback);
+	}
+
+	bool ProfilerFrameHitch::HasFrameTickSubscribers() noexcept
+	{
+		return frameHitchProfilerDetail::HasFrameTickSubscribers();
 	}
 
 	void ProfilerFrameHitch::Install() noexcept
@@ -944,11 +1050,32 @@ namespace Addictol
 		if (m_installed)
 			return;
 		auto* profiler = ProfilerCore::GetSingleton();
-		if (!profiler->IsActive() || !ProfilerCore::IsFrameHitchEnabled())
+		if (!profiler->IsActive())
 		{
 			REX::WARN("Frame Hitch profiler: profiler switches are disabled; installing nothing."sv);
 			return;
 		}
-		m_installed = frameHitchProfilerDetail::Install();
+		if (ProfilerCore::IsFrameHitchEnabled())
+		{
+			const auto result = frameHitchProfilerDetail::Install(frameHitchProfilerDetail::InstallMode::kFull);
+			m_installed = result == frameHitchProfilerDetail::InstallResult::kInstalled;
+			if (!m_installed &&
+				result == frameHitchProfilerDetail::InstallResult::kFailedClean &&
+				HasFrameTickSubscribers())
+			{
+				const auto fallback = frameHitchProfilerDetail::Install(frameHitchProfilerDetail::InstallMode::kTickOnly);
+				m_installed = fallback == frameHitchProfilerDetail::InstallResult::kInstalled;
+				if (m_installed)
+					REX::WARN("Frame Hitch profiler: full install failed cleanly; frame-tick-only fallback is active."sv);
+				else
+					REX::WARN("Frame Hitch profiler: frame-tick-only fallback failed."sv);
+			}
+		}
+		else if (HasFrameTickSubscribers())
+			m_installed =
+				frameHitchProfilerDetail::Install(frameHitchProfilerDetail::InstallMode::kTickOnly) ==
+				frameHitchProfilerDetail::InstallResult::kInstalled;
+		else
+			REX::WARN("Frame Hitch profiler: profiler switches are disabled; installing nothing."sv);
 	}
 }

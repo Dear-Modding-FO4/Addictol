@@ -335,6 +335,11 @@ namespace Addictol
 			runtime.session.AdvanceSaveLoadEpoch();
 	}
 
+	RuntimeSessionContext& ProfilerCore::GetRuntimeSession() noexcept
+	{
+		return GetRuntimeCollector().session;
+	}
+
 	// -- Report Generation --
 
 	std::string ProfilerCore::GetOutputDir() const noexcept

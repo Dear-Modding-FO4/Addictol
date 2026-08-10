@@ -77,7 +77,8 @@ namespace Addictol
 		if (ProfilerCore::IsAnimSubGraphEnabled())
 			ProfilerAnimSubGraph::GetSingleton()->Install();
 
-		if (ProfilerCore::IsFrameHitchEnabled())
+		// Subscribers must register before this point because name-keyed module order is not an orchestration contract.
+		if (ProfilerCore::IsFrameHitchEnabled() || ProfilerFrameHitch::HasFrameTickSubscribers())
 			ProfilerFrameHitch::GetSingleton()->Install();
 
 		REX::INFO("[Profiler] Module installed, profiling active"sv);
