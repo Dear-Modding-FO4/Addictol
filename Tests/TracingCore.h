@@ -60,7 +60,8 @@ namespace vmm_tests
 			if (suppressed_)
 				return;
 
-			bump(lease_slot().total);
+			auto& slot = lease_slot();
+			bump(slot.total, &slot == &spill_);
 		}
 
 		static void record(std::size_t size) noexcept
@@ -69,8 +70,9 @@ namespace vmm_tests
 				return;
 
 			auto& slot = lease_slot();
-			bump(slot.total);
-			bump(slot.histogram[size_class(size)]);
+			const auto shared = &slot == &spill_;
+			bump(slot.total, shared);
+			bump(slot.histogram[size_class(size)], shared);
 		}
 
 		// Safe only because the benchmark samples after workers join; a live sampler needs monotonic counters and caller-side deltas.
@@ -98,10 +100,13 @@ namespace vmm_tests
 		static_assert(alignof(CounterSlot) == 64);
 		static_assert(sizeof(CounterSlot) % 64 == 0);
 
-		// Only the owning thread writes its slot, so a relaxed load/store pair avoids the lock prefix a RMW would emit.
-		static void bump(std::atomic<std::uint64_t>& counter) noexcept
+		// An owned slot has one writer so a relaxed load/store pair avoids the lock prefix; the shared spill slot needs a real RMW.
+		static void bump(std::atomic<std::uint64_t>& counter, bool shared) noexcept
 		{
-			counter.store(counter.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+			if (shared)
+				counter.fetch_add(1, std::memory_order_relaxed);
+			else
+				counter.store(counter.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
 		}
 
 		[[nodiscard]] static unsigned bit_width(std::size_t value) noexcept
@@ -124,7 +129,7 @@ namespace vmm_tests
 			const auto total = slot.total.exchange(0, std::memory_order_relaxed);
 			snapshot.total += total;
 			if (spill)
-				snapshot.spill_total = total;
+				snapshot.spill_total += total;
 			for (std::size_t bucket = 0; bucket < histogram_buckets; ++bucket)
 				snapshot.histogram[bucket] += slot.histogram[bucket].exchange(0, std::memory_order_relaxed);
 		}
