@@ -19,7 +19,13 @@ int main(int argc, char** argv)
 		if (argument == "--bench")
 		{
 			voltek::scalable_memory_manager_initialize();
-			return run_benchmarks();
+			const auto benchmark_result = run_benchmarks();
+			return benchmark_result == 0 ? run_tracing_benchmarks() : benchmark_result;
+		}
+		if (argument == "--bench-tracing")
+		{
+			voltek::scalable_memory_manager_initialize();
+			return run_tracing_benchmarks();
 		}
 		if (argument == "--oversized-case")
 			return run_oversized_case();
@@ -31,7 +37,7 @@ int main(int argc, char** argv)
 	}
 	if (argc != 1)
 	{
-		std::cerr << "usage: vmm-tests [--bench]\n";
+		std::cerr << "usage: vmm-tests [--bench|--bench-tracing]\n";
 		return 2;
 	}
 

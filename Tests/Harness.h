@@ -146,4 +146,5 @@ namespace vmm_tests
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
 	int run_benchmarks();
+	int run_tracing_benchmarks();
 }
