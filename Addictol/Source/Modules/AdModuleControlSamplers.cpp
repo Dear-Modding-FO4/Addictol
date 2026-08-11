@@ -158,7 +158,7 @@ namespace Addictol
 		{
 			a_value = std::min(5.f, std::max(-5.f, a_value));
 
-			REX::INFO("MIP LOD Bias changed from {} to {}, recreating samplers"sv, 
+			REX::INFO("MIP LOD Bias changed from {} to {}, recreating samplers"sv,
 				static_cast<float>(g_MipBiasSetting.GetFloat()), a_value);
 
 			g_PassThroughSamplers.clear();
@@ -182,7 +182,7 @@ namespace Addictol
 		{
 			a_value = std::min(16l, std::max(0l, a_value));
 
-			REX::INFO("MAX Anisotropy changed from {} to {}, recreating samplers"sv, 
+			REX::INFO("MAX Anisotropy changed from {} to {}, recreating samplers"sv,
 				static_cast<int>(g_MaxAnisotropySetting.GetInt()), a_value);
 
 			g_PassThroughSamplers.clear();
@@ -247,18 +247,20 @@ namespace Addictol
 				realContext->Release();
 			}
 
-			*(uintptr_t*)&g_origSetSamplers[0] = RELEX::DetourVTable(*((uintptr_t*)g_HookedContext),
-				(uintptr_t)&Hook_PSSetSamplers, 10);
-			*(uintptr_t*)&g_origSetSamplers[1] = RELEX::DetourVTable(*((uintptr_t*)g_HookedContext),
-				(uintptr_t)&Hook_VSSetSamplers, 26);
-			*(uintptr_t*)&g_origSetSamplers[2] = RELEX::DetourVTable(*((uintptr_t*)g_HookedContext),
-				(uintptr_t)&Hook_GSSetSamplers, 32);
-			*(uintptr_t*)&g_origSetSamplers[3] = RELEX::DetourVTable(*((uintptr_t*)g_HookedContext),
-				(uintptr_t)&Hook_HSSetSamplers, 61);
-			*(uintptr_t*)&g_origSetSamplers[4] = RELEX::DetourVTable(*((uintptr_t*)g_HookedContext),
-				(uintptr_t)&Hook_DSSetSamplers, 65);
-			*(uintptr_t*)&g_origSetSamplers[5] = RELEX::DetourVTable(*((uintptr_t*)g_HookedContext),
-				(uintptr_t)&Hook_CSSetSamplers, 70);
+			auto vtable = *reinterpret_cast<uintptr_t**>(g_HookedContext);
+			g_origSetSamplers[0] = reinterpret_cast<XXSetSamplers>(vtable[10]);
+			g_origSetSamplers[1] = reinterpret_cast<XXSetSamplers>(vtable[26]);
+			g_origSetSamplers[2] = reinterpret_cast<XXSetSamplers>(vtable[32]);
+			g_origSetSamplers[3] = reinterpret_cast<XXSetSamplers>(vtable[61]);
+			g_origSetSamplers[4] = reinterpret_cast<XXSetSamplers>(vtable[65]);
+			g_origSetSamplers[5] = reinterpret_cast<XXSetSamplers>(vtable[70]);
+
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_PSSetSamplers, 10);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_VSSetSamplers, 26);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_GSSetSamplers, 32);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_HSSetSamplers, 61);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_DSSetSamplers, 65);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_CSSetSamplers, 70);
 		}
 
 		return true;
