@@ -105,12 +105,16 @@ namespace Addictol
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kPostLoadGame)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			auto* controller = player ? player->currentProcess->middleHigh->charController.get() : nullptr;
-
-			if (!controller)
-				REX::WARN("WaterJetpackFix: Could not get the Player Character's Controller, this can happen when loading a Save with missing Plugins, Save & Reload if so."sv);
-			else
-				static_cast<RE::BSTEventSource<RE::bhkCharacterStateChangeEvent>*>(controller)->RegisterSink(waterJetpackFixDetail::CharacterStateChangeEventSink::GetSingleton());
+			if (player && player->currentProcess && player->currentProcess->middleHigh)
+			{
+				auto* controller = player->currentProcess->middleHigh->charController.get();
+				if (controller)
+				{
+					static_cast<RE::BSTEventSource<RE::bhkCharacterStateChangeEvent>*>(controller)->RegisterSink
+						(waterJetpackFixDetail::CharacterStateChangeEventSink::GetSingleton());
+					REX::INFO("WaterJetpackFix: RegisterSink succeeded");
+				}
+			}
 		}
 
 		return true;
