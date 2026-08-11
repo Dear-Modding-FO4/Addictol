@@ -64,12 +64,12 @@ namespace Addictol
 		for (uint32_t i = 0; i < NumSamplers; ++i)
 		{
 			auto orig = OutSamplers[i];
-			if ((orig == nullptr) || (g_PassThroughSamplers.find(orig) != g_PassThroughSamplers.end()) || !CS_CheckAddrState(orig))
+			if ((orig == nullptr) || g_PassThroughSamplers.contains(orig) || !CS_CheckAddrState(orig))
 				continue;
 
-			if (g_MappedSamplers.find(orig) == g_MappedSamplers.end())
+			if (!g_MappedSamplers.contains(orig))
 			{
-				REX::W32::D3D11_SAMPLER_DESC sd;
+				REX::W32::D3D11_SAMPLER_DESC sd{};
 				orig->GetDesc(&sd);
 
 				if (sd.mipLODBias && !bAdditionalIgnorePreInstallBias.GetValue())
@@ -219,7 +219,7 @@ namespace Addictol
 
 			wchar_t* knownBuffer{ nullptr };
 			const auto knownResult = SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, std::addressof(knownBuffer));
-			std::unique_ptr<wchar_t[], decltype(&CoTaskMemFree)> knownPath(knownBuffer, CoTaskMemFree);
+			std::unique_ptr<wchar_t[], decltype(&CoTaskMemFree)> knownPath(knownBuffer, &CoTaskMemFree);
 			if (!knownPath || knownResult != 0) {
 				REX::ERROR("failed to get known folder path"sv);
 				return false;
