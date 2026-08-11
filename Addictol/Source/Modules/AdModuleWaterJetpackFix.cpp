@@ -108,12 +108,9 @@ namespace Addictol
 			auto* controller = player ? player->currentProcess->middleHigh->charController.get() : nullptr;
 
 			if (!controller)
-			{
-				REX::WARN("WaterJetpackFix: Could not get the Player Character's Controller."sv);
-				return false;
-			}
-
-			static_cast<RE::BSTEventSource<RE::bhkCharacterStateChangeEvent>*>(controller)->RegisterSink(waterJetpackFixDetail::CharacterStateChangeEventSink::GetSingleton());
+				REX::WARN("WaterJetpackFix: Could not get the Player Character's Controller, this can happen when loading a Save with missing Plugins, Save & Reload if so."sv);
+			else
+				static_cast<RE::BSTEventSource<RE::bhkCharacterStateChangeEvent>*>(controller)->RegisterSink(waterJetpackFixDetail::CharacterStateChangeEventSink::GetSingleton());
 		}
 
 		return true;
