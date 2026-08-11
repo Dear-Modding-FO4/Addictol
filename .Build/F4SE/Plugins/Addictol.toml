@@ -377,4 +377,4 @@ bMemoryTracking = true
 bBA2Timing = true
 
 # Export profiler data to CSV alongside the log report. Requires bProfiler = true.
-bCSVExport = true
+bCSVExport = false
