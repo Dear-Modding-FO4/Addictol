@@ -92,6 +92,27 @@ namespace Addictol
 			std::uint64_t calls{};
 		};
 
+		struct HookActivityCounters
+		{
+			std::atomic<std::uint64_t> entries{};
+			std::atomic<std::uint64_t> rejected{};
+			std::atomic<std::uint32_t> firstRejectedThread{};
+		};
+
+		struct HookActivitySnapshot
+		{
+			std::uint64_t entries{};
+			std::uint64_t rejected{};
+			std::uint32_t firstRejectedThread{};
+			struct StallHookOwnership
+			{
+				std::uintptr_t target{};
+				std::array<std::uint8_t, 8> targetBytes{};
+				bool targetReadable{};
+				bool owned{};
+			} ownership;
+		};
+
 		struct FrameSample
 		{
 			std::uint64_t sequence{};
@@ -127,6 +148,8 @@ namespace Addictol
 			std::array<HitchWindow, kHitchCapacity> hitches{};
 			std::size_t hitchCount{};
 			std::uint64_t droppedHitches{};
+			HookActivitySnapshot loadQueuedActivity{};
+			HookActivitySnapshot clearLoadingActivity{};
 		};
 
 		struct ActiveFrame
@@ -255,6 +278,8 @@ namespace Addictol
 		static ReportSnapshot g_report;
 		static std::atomic<bool> g_reportBusy;
 		static std::atomic<std::uint32_t> g_frameThreadId;
+		static HookActivityCounters g_loadQueuedActivity;
+		static HookActivityCounters g_clearLoadingActivity;
 		// Hooks intentionally live until process exit because module teardown is not reachable.
 		static bool g_installed;
 		static InstallMode g_installMode{ InstallMode::kFull };
@@ -263,6 +288,8 @@ namespace Addictol
 		static thread_local ActiveFrame g_activeFrame;
 		static thread_local std::array<std::uint32_t, kPhaseCount> g_phaseDepth;
 		static thread_local std::array<std::uint64_t, kPhaseCount> g_phaseStart;
+
+		[[nodiscard]] static HookActivitySnapshot::StallHookOwnership InspectStallHook(Hook a_hook) noexcept;
 
 		[[nodiscard]] static bool RegisterFrameTick(FrameTickCallback a_callback) noexcept
 		{
@@ -499,10 +526,20 @@ namespace Addictol
 				g_activeFrame.phases[index].ticks += Counter() - g_phaseStart[index];
 		}
 
-		[[nodiscard]] static bool BeginStall(Metric& a_metric, std::uint32_t& a_depth, std::uint64_t& a_start) noexcept
+		[[nodiscard]] static bool BeginStall(
+			HookActivityCounters& a_activity, Metric& a_metric,
+			std::uint32_t& a_depth, std::uint64_t& a_start) noexcept
 		{
+			a_activity.entries.fetch_add(1, std::memory_order_relaxed);
 			if (g_frameDepth != 1)
+			{
+				auto expected = std::uint32_t{ 0 };
+				a_activity.firstRejectedThread.compare_exchange_strong(
+					expected, static_cast<std::uint32_t>(GetCurrentThreadId()),
+					std::memory_order_relaxed, std::memory_order_relaxed);
+				a_activity.rejected.fetch_add(1, std::memory_order_release);
 				return false;
+			}
 			++a_metric.calls;
 			if (a_depth++ == 0)
 				a_start = Counter();
@@ -551,6 +588,37 @@ namespace Addictol
 			return entry;
 		}
 
+		static void LogOwnershipWarning(
+			std::string_view a_name,
+			const HookActivitySnapshot::StallHookOwnership& a_ownership) noexcept
+		{
+			if (a_ownership.targetReadable)
+				REX::WARN("[Profiler/FrameHitch] hook {} ownership check failed at {:X}; target bytes {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}."sv,
+					a_name, a_ownership.target,
+					static_cast<unsigned>(a_ownership.targetBytes[0]),
+					static_cast<unsigned>(a_ownership.targetBytes[1]),
+					static_cast<unsigned>(a_ownership.targetBytes[2]),
+					static_cast<unsigned>(a_ownership.targetBytes[3]),
+					static_cast<unsigned>(a_ownership.targetBytes[4]),
+					static_cast<unsigned>(a_ownership.targetBytes[5]),
+					static_cast<unsigned>(a_ownership.targetBytes[6]),
+					static_cast<unsigned>(a_ownership.targetBytes[7]));
+			else
+				REX::WARN("[Profiler/FrameHitch] hook {} ownership check failed because target {:X} is unreadable."sv,
+					a_name, a_ownership.target);
+		}
+
+		static void LogHookActivity(
+			std::string_view a_name, const HookActivitySnapshot& a_activity) noexcept
+		{
+			const auto accepted = a_activity.entries - a_activity.rejected;
+			REX::INFO("[Profiler/FrameHitch] hook liveness cumulative {}: raw {}, accepted {}, rejected {}, first rejected thread {}, detour owned {}."sv,
+				a_name, a_activity.entries, accepted, a_activity.rejected,
+				a_activity.firstRejectedThread, a_activity.ownership.owned);
+			if (!a_activity.ownership.owned)
+				LogOwnershipWarning(a_name, a_activity.ownership);
+		}
+
 		static void CALLBACK ReportCallback(
 			[[maybe_unused]] PTP_CALLBACK_INSTANCE a_instance,
 			[[maybe_unused]] void* a_context) noexcept
@@ -568,6 +636,8 @@ namespace Addictol
 			REX::INFO("[Profiler/FrameHitch] summary stalls: LoadQueuedPriority {:.3f} ms/{} calls; ClearLoadingTask {:.3f} ms/{} calls."sv,
 				Milliseconds(stats.loadQueuedPriority.ticks), stats.loadQueuedPriority.calls,
 				Milliseconds(stats.clearLoadingTask.ticks), stats.clearLoadingTask.calls);
+			LogHookActivity("LoadQueuedPriority"sv, g_report.loadQueuedActivity);
+			LogHookActivity("ClearLoadingTask"sv, g_report.clearLoadingActivity);
 			for (std::size_t index = 0; index < kPhaseCount; ++index)
 			{
 				const auto& metric = stats.phases[index];
@@ -644,6 +714,22 @@ namespace Addictol
 			g_report = {};
 			g_report.interval = g_interval;
 			g_report.droppedHitches = g_droppedHitches;
+			const auto loadQueuedRejected = g_loadQueuedActivity.rejected.load(std::memory_order_acquire);
+			const auto loadQueuedEntries = g_loadQueuedActivity.entries.load(std::memory_order_acquire);
+			const auto clearLoadingRejected = g_clearLoadingActivity.rejected.load(std::memory_order_acquire);
+			const auto clearLoadingEntries = g_clearLoadingActivity.entries.load(std::memory_order_acquire);
+			g_report.loadQueuedActivity = {
+				loadQueuedEntries,
+				loadQueuedRejected,
+				g_loadQueuedActivity.firstRejectedThread.load(std::memory_order_relaxed),
+				InspectStallHook(Hook::kLoadQueuedPriority)
+			};
+			g_report.clearLoadingActivity = {
+				clearLoadingEntries,
+				clearLoadingRejected,
+				g_clearLoadingActivity.firstRejectedThread.load(std::memory_order_relaxed),
+				InspectStallHook(Hook::kClearLoadingTask)
+			};
 			std::size_t readyHitches = 0;
 			for (; readyHitches < g_hitchCount; ++readyHitches)
 			{
@@ -782,7 +868,8 @@ namespace Addictol
 		static std::uintptr_t HKLoadQueuedPriority(void* a_this, std::uint32_t a_priority) noexcept
 		{
 			const auto active = BeginStall(
-				g_activeFrame.loadQueuedPriority, g_activeFrame.loadQueuedDepth, g_activeFrame.loadQueuedStart);
+				g_loadQueuedActivity, g_activeFrame.loadQueuedPriority,
+				g_activeFrame.loadQueuedDepth, g_activeFrame.loadQueuedStart);
 			const auto result = reinterpret_cast<TPriority>(
 				g_originals[static_cast<std::size_t>(Hook::kLoadQueuedPriority)])(a_this, a_priority);
 			EndStall(
@@ -794,7 +881,8 @@ namespace Addictol
 		static std::uintptr_t HKClearLoadingTask(void* a_this) noexcept
 		{
 			const auto active = BeginStall(
-				g_activeFrame.clearLoadingTask, g_activeFrame.clearLoadingDepth, g_activeFrame.clearLoadingStart);
+				g_clearLoadingActivity, g_activeFrame.clearLoadingTask,
+				g_activeFrame.clearLoadingDepth, g_activeFrame.clearLoadingStart);
 			const auto result = reinterpret_cast<TGeneric>(
 				g_originals[static_cast<std::size_t>(Hook::kClearLoadingTask)])(a_this);
 			EndStall(
@@ -829,6 +917,45 @@ namespace Addictol
 				reinterpret_cast<std::uintptr_t>(&HKLoadQueuedPriority),
 				reinterpret_cast<std::uintptr_t>(&HKClearLoadingTask)
 			};
+		}
+
+		[[nodiscard]] static bool TryReadMemory(
+			std::uintptr_t a_address, void* a_output, std::size_t a_size) noexcept
+		{
+			__try
+			{
+				std::memcpy(a_output, reinterpret_cast<const void*>(a_address), a_size);
+				return true;
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER)
+			{
+				return false;
+			}
+		}
+
+		[[nodiscard]] static HookActivitySnapshot::StallHookOwnership InspectStallHook(Hook a_hook) noexcept
+		{
+			const auto index = static_cast<std::size_t>(a_hook);
+			HookActivitySnapshot::StallHookOwnership ownership;
+			ownership.target = ResolveTargets()[index];
+			ownership.targetReadable = TryReadMemory(
+				ownership.target, ownership.targetBytes.data(), ownership.targetBytes.size());
+			if (!ownership.targetReadable || ownership.targetBytes[0] != 0xE9)
+				return ownership;
+			std::int32_t displacement{};
+			std::memcpy(&displacement, ownership.targetBytes.data() + 1, sizeof(displacement));
+			const auto trampoline = ownership.target + 5 + static_cast<std::intptr_t>(displacement);
+			static constexpr std::array<std::uint8_t, 6> stub{ 0xFF, 0x25, 0, 0, 0, 0 };
+			std::array<std::uint8_t, stub.size()> actualStub{};
+			if (!TryReadMemory(trampoline, actualStub.data(), actualStub.size()) ||
+				actualStub != stub)
+				return ownership;
+			std::uintptr_t destination{};
+			if (!TryReadMemory(
+					trampoline + stub.size(), std::addressof(destination), sizeof(destination)))
+				return ownership;
+			ownership.owned = destination == HookFunctions()[index];
+			return ownership;
 		}
 
 		[[nodiscard]] static std::uintptr_t BuildRelocatedGateway(
@@ -996,6 +1123,12 @@ namespace Addictol
 				REX::INFO("Frame Hitch profiler: frame-tick hook installed."sv);
 				return InstallResult::kInstalled;
 			}
+			const auto loadQueuedOwnership = InspectStallHook(Hook::kLoadQueuedPriority);
+			if (!loadQueuedOwnership.owned)
+				LogOwnershipWarning("LoadQueuedPriority"sv, loadQueuedOwnership);
+			const auto clearLoadingOwnership = InspectStallHook(Hook::kClearLoadingTask);
+			if (!clearLoadingOwnership.owned)
+				LogOwnershipWarning("ClearLoadingTask"sv, clearLoadingOwnership);
 
 			const auto pollResult = InstallPollCallSites();
 			if (pollResult != InstallResult::kInstalled)
