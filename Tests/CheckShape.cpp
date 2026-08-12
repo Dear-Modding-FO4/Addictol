@@ -1,5 +1,8 @@
 #include "Harness.h"
 
+#include <vmmblock.h>
+#include <vmmgeometry.h>
+
 #include <Windows.h>
 #include <Psapi.h>
 
@@ -10,6 +13,8 @@
 
 namespace
 {
+	namespace mm = voltek::memory_manager;
+
 	constexpr std::uint64_t mebibyte = 1024ull * 1024;
 	constexpr std::array eager_pool_sizes{
 		std::size_t{ 8 },
@@ -17,6 +22,24 @@ namespace
 		std::size_t{ 32 },
 		std::size_t{ 64 }
 	};
+
+	// Registry array, bitmaps and the free-block cache reservation a single pool commits alongside its page.
+	constexpr std::uint64_t pool_overhead_allowance = 3 * mebibyte;
+	constexpr std::uint64_t working_set_bookkeeping_allowance = 1 * mebibyte;
+
+	constexpr std::uint64_t eager_page_bodies =
+		mm::page_geometry<mm::block8_t>::body_bytes +
+		mm::page_geometry<mm::block16_t>::body_bytes +
+		mm::page_geometry<mm::block32_t>::body_bytes +
+		mm::page_geometry<mm::block64_t>::body_bytes;
+
+	// The four eagerly created pools commit one page body each plus their own bookkeeping.
+	constexpr std::uint64_t eager_pool_ceiling =
+		eager_page_bodies + eager_pool_sizes.size() * pool_overhead_allowance;
+
+	// The sample starts after eager pools are primed, so it measures only lazy pools and bookkeeping.
+	constexpr std::uint64_t total_retained_ceiling =
+		mm::all_page_bodies_bytes - eager_page_bodies + 20 * mebibyte;
 
 	struct MemorySample
 	{
@@ -28,21 +51,37 @@ namespace
 	{
 		std::string_view name;
 		std::size_t size;
-		std::uint64_t ceiling_mib;
+		std::uint64_t ceiling;
 	};
 
+	template <class Block>
+	constexpr std::uint64_t first_touch_ceiling()
+	{
+		return mm::page_geometry<Block>::body_bytes + pool_overhead_allowance;
+	}
+
+	template <class Block>
+	constexpr std::uint64_t eager_zeroing_ceiling()
+	{
+		constexpr auto body = mm::page_geometry<Block>::body_bytes;
+		constexpr auto ceiling = body / 2 + working_set_bookkeeping_allowance;
+		static_assert(ceiling < body, "eager-zeroing ceiling must reject a fully touched page body");
+		return ceiling;
+	}
+
 	constexpr std::array first_touch_cases{
-		FirstTouchCase{ "first-touch-128", 128, 30 },
-		FirstTouchCase{ "first-touch-256", 256, 28 },
-		FirstTouchCase{ "first-touch-512", 512, 52 },
-		FirstTouchCase{ "first-touch-1024", 1024, 100 },
-		FirstTouchCase{ "first-touch-1025", 1025, 390 },
-		FirstTouchCase{ "first-touch-4097", 4097, 775 },
-		FirstTouchCase{ "first-touch-8193", 8193, 100 },
-		FirstTouchCase{ "first-touch-16385", 16385, 200 },
-		FirstTouchCase{ "first-touch-32769", 32769, 200 },
-		FirstTouchCase{ "first-touch-65537", 65537, 390 },
-		FirstTouchCase{ "first-touch-131073", 131073, 4 }
+		FirstTouchCase{ "first-touch-128", 128, first_touch_ceiling<mm::block128_t>() },
+		FirstTouchCase{ "first-touch-256", 256, first_touch_ceiling<mm::block256_t>() },
+		FirstTouchCase{ "first-touch-512", 512, first_touch_ceiling<mm::block512_t>() },
+		FirstTouchCase{ "first-touch-1024", 1024, first_touch_ceiling<mm::block1024_t>() },
+		FirstTouchCase{ "first-touch-1025", 1025, first_touch_ceiling<mm::block4096_t>() },
+		FirstTouchCase{ "first-touch-4097", 4097, first_touch_ceiling<mm::block8192_t>() },
+		FirstTouchCase{ "first-touch-8193", 8193, first_touch_ceiling<mm::block16384_t>() },
+		FirstTouchCase{ "first-touch-16385", 16385, first_touch_ceiling<mm::block32768_t>() },
+		FirstTouchCase{ "first-touch-32769", 32769, first_touch_ceiling<mm::block65536_t>() },
+		FirstTouchCase{ "first-touch-65537", 65537, first_touch_ceiling<mm::block131072_t>() },
+		// Beyond the largest size class, so this one never reaches a pool.
+		FirstTouchCase{ "first-touch-131073", 131073, 4 * mebibyte }
 	};
 
 	MemorySample sample_memory()
@@ -97,7 +136,7 @@ namespace
 		const auto commit = increase(after.private_bytes, before.private_bytes);
 		const auto working_set = increase(after.working_set, before.working_set);
 		std::cout << "[SHAPE] " << shape_measurement("eager-pools", commit, working_set) << '\n';
-		vmm_tests::require(commit <= 50 * mebibyte, "combined eager-pool commit exceeded 50 MiB");
+		vmm_tests::require(commit <= eager_pool_ceiling, "combined eager-pool commit exceeded one page body per eager pool");
 	}
 
 	void check_first_touch(const FirstTouchCase& test_case)
@@ -114,7 +153,7 @@ namespace
 		const auto working_set = increase(after.working_set, before.working_set);
 		std::cout << "[SHAPE] " << shape_measurement(test_case.name, commit, working_set) << '\n';
 		vmm_tests::require(
-			commit <= test_case.ceiling_mib * mebibyte,
+			commit <= test_case.ceiling,
 			"first-touch commit exceeded its ceiling");
 		vmm_tests::require(voltek::scalable_free(pointer), "first-touch allocation could not be freed");
 	}
@@ -137,12 +176,13 @@ namespace
 		const auto commit = increase(after.private_bytes, before.private_bytes);
 		const auto working_set = increase(after.working_set, before.working_set);
 		std::cout << "[SHAPE] " << shape_measurement("total-retained", commit, working_set) << '\n';
-		vmm_tests::require(commit <= 1700 * mebibyte, "total retained commit exceeded 1700 MiB");
+		vmm_tests::require(commit <= total_retained_ceiling, "total retained commit exceeded one page body per size class plus bookkeeping");
 
 		for (void* pointer : pointers)
 			vmm_tests::require(voltek::scalable_free(pointer), "total-retained allocation could not be freed");
 	}
 
+	template <class Block>
 	void check_working_set(std::size_t size)
 	{
 		prime_eager_pools();
@@ -158,15 +198,20 @@ namespace
 		std::ostringstream label;
 		label << "working-set-" << size;
 		std::cout << "[SHAPE] " << shape_measurement(label.str(), commit, working_set) << '\n';
-		vmm_tests::require(working_set <= 8 * mebibyte, "first allocation eagerly touched its entire backing page");
+		vmm_tests::require(
+			working_set <= eager_zeroing_ceiling<Block>(),
+			"first allocation eagerly touched its entire backing page");
 		vmm_tests::require(voltek::scalable_free(pointer), "working-set allocation could not be freed");
 	}
 
 	void check_page_release()
 	{
+		// 8193 lands in pool16384, whose configured page holds exactly this many blocks.
 		constexpr std::size_t size = 8193;
-		constexpr std::size_t blocks_per_page = 4096;
-		constexpr std::size_t block_count = blocks_per_page * 5 + 256;
+		constexpr std::size_t blocks_per_page = mm::blocks_per_page<mm::block16384_t>;
+		constexpr std::uint64_t page_body = mm::page_geometry<mm::block16384_t>::body_bytes;
+		constexpr std::size_t pages = 6;
+		constexpr std::size_t block_count = blocks_per_page * (pages - 1) + 1;
 		std::vector<void*> pointers;
 		pointers.reserve(block_count);
 
@@ -187,16 +232,20 @@ namespace
 
 		const auto rise = increase(allocated.private_bytes, before.private_bytes);
 		const auto drop = increase(allocated.private_bytes, released.private_bytes);
+		const auto retained = increase(released.private_bytes, before.private_bytes);
 		std::ostringstream summary;
 		summary.setf(std::ios::fixed);
 		summary.precision(2);
 		summary << "page-release: commit +" << as_mib(rise) << " MiB, released " << as_mib(drop)
-				<< " MiB, retained +" << as_mib(increase(released.private_bytes, before.private_bytes)) << " MiB";
+				<< " MiB, retained +" << as_mib(retained) << " MiB";
 		std::cout << "[SHAPE] " << summary.str() << '\n';
 		vmm_tests::require(all_freed, "page-release free failed");
-		vmm_tests::require(rise >= 250 * mebibyte, "allocations did not create several backing pages");
-		// Page 0 is retained by design, so only later pages must return their commit.
-		vmm_tests::require(drop >= 100 * mebibyte, "empty backing pages did not release substantial commit");
+		vmm_tests::require(rise >= pages * page_body, "allocations did not create every expected backing page");
+		vmm_tests::require(drop >= (pages - 1) * page_body, "empty backing pages did not release their commit");
+		// Page 0 is retained by design; every later page must be gone, not merely most of them.
+		vmm_tests::require(
+			retained <= page_body + pool_overhead_allowance,
+			"a backing page beyond page 0 stayed committed after every block was freed");
 	}
 
 	void run_shape_child(std::string_view name)
@@ -257,12 +306,12 @@ namespace vmm_tests
 			}
 			if (name == "working-set-1025")
 			{
-				check_working_set(1025);
+				check_working_set<mm::block4096_t>(1025);
 				return 0;
 			}
 			if (name == "working-set-4097")
 			{
-				check_working_set(4097);
+				check_working_set<mm::block8192_t>(4097);
 				return 0;
 			}
 			if (name == "page-release")

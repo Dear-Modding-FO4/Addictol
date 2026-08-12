@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "vmmgeometry.h"
 #include "vmmpage.h"
 #include "vsimplelock.h"
 #include <algorithm>
@@ -12,11 +13,6 @@
 
 #define USE_MULTITHREADS 0
 
-#define __VMM_POOL_CONFIG_BIG_SIZE 256ull * 1024
-#define __VMM_POOL_CONFIG_LARGE_SIZE 128ull * 1024
-#define __VMM_POOL_CONFIG_NORMAL_SIZE 64ull * 1024
-#define __VMM_POOL_CONFIG_SMALL_SIZE 4ull * 1024
-#define __VMM_POOL_CONFIG_LOW_SIZE 2ull * 1024
 #define __VMM_POOL_CONFIG_CACHE_SIZE 8ull * 1024
 
 namespace voltek
@@ -24,13 +20,16 @@ namespace voltek
 	namespace memory_manager
 	{
 		// Шаблонный класс пула страниц памяти.
-		template<typename _type, typename _page, size_t _blocks_in_page = __VMM_POOL_CONFIG_NORMAL_SIZE>
+		template<typename _type, typename _page, size_t _blocks_in_page = blocks_per_page<_type>>
 		class pool_t : public voltek::core::base
 		{
 		public:
 			// Битовые карты не имеют хвостового прохода — кратность 256 обязана быть точной.
 			static_assert((_blocks_in_page & 255) == 0,
 				"_blocks_in_page must be a multiple of 256");
+			// A partial 2048-bit chunk lets the AVX2 scan read past the bitmap and report an index outside the page.
+			static_assert(is_valid_block_count(_blocks_in_page),
+				"_blocks_in_page must be under 2048 or a multiple of 2048");
 			// Тип страницы.
 			using pageobj_t = _page;
 			// Тип указателя на страницу.
@@ -38,13 +37,17 @@ namespace voltek
 			// Конструктор по умолчанию.
 			pool_t() noexcept
 			{
+#if USE_MULTITHREADS
 				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
+#endif
 			}
 			// Конструктор.
 			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
 			pool_t(size_t count) noexcept
 			{
+#if USE_MULTITHREADS
 				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
+#endif
 				set_size(count);
 			}
 			// Деструктор
@@ -253,12 +256,16 @@ namespace voltek
 						if (_current == page)
 							_current = nullptr;
 
+#if USE_MULTITHREADS
 						std::erase_if(free_stack_blocks, [page](const auto& e) { return e.first == page; });
+#endif
 
 						delete page;
 
 						_pages[index_page] = nullptr;
 					}
+#if USE_MULTITHREADS
+					// Only worth reserving blocks while a consumer pops them; otherwise the cache pins pages forever.
 					else if (free_stack_blocks.size() < __VMM_POOL_CONFIG_CACHE_SIZE)
 					{
 						// Занять индекс блока, более он не доступен.
@@ -266,6 +273,7 @@ namespace voltek
 						// добавить в стэк
 						free_stack_blocks.push_back({ page, static_cast<uint32_t>(index_block) });
 					}
+#endif
 
 					return true;
 				}

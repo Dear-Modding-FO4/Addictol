@@ -6,13 +6,10 @@
 
 #include "valloc.h"
 #include "vassert.h"
+#include "vmmgeometry.h"
 #include "vmapper.h"
 #include "vio.h"
 #include "vstack.h"
-
-#define __VMM_PAGE_CONFIG_NORMAL_SIZE voltek::core::bits_regions
-#define __VMM_PAGE_CONFIG_SMALL_SIZE voltek::core::bits
-#define __VMM_PAGE_CONFIG_LOW_SIZE __VMM_PAGE_CONFIG_SMALL_SIZE
 
 namespace voltek
 {
@@ -22,7 +19,7 @@ namespace voltek
 		// Является хранилищем блоков, но при этом нет жёсткой зависимости от каких блоков.
 		// Служит только в качестве помечания свободный или занятый блок, а также быстрого
 		// нахождения свободного блока, при помощи битовой карты.
-		template<typename _type, typename _map = __VMM_PAGE_CONFIG_NORMAL_SIZE>
+		template<typename _type, typename _map = page_map<_type>>
 		class page_t : public voltek::core::base
 		{
 		public:
@@ -172,7 +169,7 @@ namespace voltek
 		// Является хранилищем блоков, но при этом нет жёсткой зависимости от каких блоков.
 		// Служит только в качестве помечания свободный или занятый блок, а также быстрого
 		// нахождения свободного блока, при помощи битовой карты.
-		template<typename _type, typename _map = __VMM_PAGE_CONFIG_NORMAL_SIZE>
+		template<typename _type, typename _map = page_map<_type>>
 		class page2_t : public voltek::core::base
 		{
 		public:

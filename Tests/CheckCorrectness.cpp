@@ -2,16 +2,103 @@
 
 #include <vbits.h>
 #include <vmmblock.h>
+#include <vmmgeometry.h>
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
+#include <type_traits>
 #include <vector>
 
 namespace
 {
 	constexpr std::uint32_t oversized_nonnull_exit = 10;
+	constexpr std::size_t mebibyte = 1024u * 1024;
+
+	namespace mm = voltek::memory_manager;
+
+	struct GeometryCase
+	{
+		std::string_view name;
+		std::size_t count;
+		std::size_t body_bytes;
+	};
+
+	template <class Block>
+	constexpr GeometryCase geometry_case(std::string_view name)
+	{
+		using geometry = mm::page_geometry<Block>;
+		return GeometryCase{ name, geometry::count, geometry::body_bytes };
+	}
+
+	constexpr std::array configured_geometry{
+		geometry_case<mm::block8_t>("pool8"),
+		geometry_case<mm::block16_t>("pool16"),
+		geometry_case<mm::block32_t>("pool32"),
+		geometry_case<mm::block64_t>("pool64"),
+		geometry_case<mm::block128_t>("pool128"),
+		geometry_case<mm::block256_t>("pool256"),
+		geometry_case<mm::block512_t>("pool512"),
+		geometry_case<mm::block1024_t>("pool1024"),
+		geometry_case<mm::block4096_t>("pool4096"),
+		geometry_case<mm::block8192_t>("pool8192"),
+		geometry_case<mm::block16384_t>("pool16384"),
+		geometry_case<mm::block32768_t>("pool32768"),
+		geometry_case<mm::block65536_t>("pool65536"),
+		geometry_case<mm::block131072_t>("pool131072")
+	};
+
+	static_assert(mm::blocks_per_page<mm::block8_t> == 131072, "pool8 block count moved");
+	static_assert(mm::blocks_per_page<mm::block16_t> == 131072, "pool16 block count moved");
+	static_assert(mm::blocks_per_page<mm::block32_t> == 88064, "pool32 block count moved");
+	static_assert(mm::blocks_per_page<mm::block64_t> == 53248, "pool64 block count moved");
+	static_assert(mm::blocks_per_page<mm::block128_t> == 28672, "pool128 block count moved");
+	static_assert(mm::blocks_per_page<mm::block256_t> == 16384, "pool256 block count moved");
+	static_assert(mm::blocks_per_page<mm::block512_t> == 8192, "pool512 block count moved");
+	static_assert(mm::blocks_per_page<mm::block1024_t> == 4096, "pool1024 block count moved");
+	static_assert(mm::blocks_per_page<mm::block4096_t> == 1024, "pool4096 block count moved");
+	static_assert(mm::blocks_per_page<mm::block8192_t> == 512, "pool8192 block count moved");
+	static_assert(mm::blocks_per_page<mm::block16384_t> == 256, "pool16384 block count moved");
+	static_assert(mm::blocks_per_page<mm::block32768_t> == 256, "pool32768 block count moved");
+	static_assert(mm::blocks_per_page<mm::block65536_t> == 256, "pool65536 block count moved");
+	static_assert(mm::blocks_per_page<mm::block131072_t> == 256, "pool131072 block count moved");
+	static_assert(mm::uses_region_page_map<mm::block8_t>, "pool8 lost its region map");
+	static_assert(mm::uses_region_page_map<mm::block16_t>, "pool16 lost its region map");
+	static_assert(!mm::uses_region_page_map<mm::block32_t>, "pool32 region map is not scan-safe");
+	static_assert(!mm::uses_region_page_map<mm::block64_t>, "pool64 is below the region-map minimum");
+	static_assert(std::is_same_v<mm::page_map<mm::block8_t>, voltek::core::bits_regions>);
+	static_assert(std::is_same_v<mm::page_map<mm::block16_t>, voltek::core::bits_regions>);
+	static_assert(std::is_same_v<mm::page_map<mm::block32_t>, voltek::core::bits>);
+
+	// Re-derived here rather than reused from the policy, so a loosened policy cannot hide a regression.
+	constexpr bool every_count_is_scan_safe()
+	{
+		for (const auto& item : configured_geometry)
+		{
+			if (item.count < 256 || (item.count % 256) != 0)
+				return false;
+			if (item.count >= 2048 && (item.count % 2048) != 0)
+				return false;
+		}
+		return true;
+	}
+
+	constexpr std::size_t summed_page_bodies()
+	{
+		std::size_t total = 0;
+		for (const auto& item : configured_geometry)
+			total += item.body_bytes;
+		return total;
+	}
+
+	static_assert(every_count_is_scan_safe(),
+		"a configured block count would let the bitmap scan read past the page");
+	static_assert(summed_page_bodies() == mm::all_page_bodies_bytes,
+		"the configured table and the geometry policy disagree");
+	// 100.5078125 MiB of one-page bodies across all fourteen size classes.
+	static_assert(mm::all_page_bodies_bytes == 100u * mebibyte + 532480u,
+		"aggregate one-page commit moved");
 
 	std::string size_message(std::string_view message, std::size_t size)
 	{
@@ -211,6 +298,42 @@ namespace vmm_tests
 
 	void run_bits_regions_check(Runner& runner)
 	{
+		runner.test("bits scan reports no index outside a configured page", [] {
+			for (const auto& item : configured_geometry)
+			{
+				voltek::core::bits map;
+				map.resize(item.count);
+				require(map.count() == item.count, std::string("bits refused the count configured for ") + std::string(item.name));
+
+				map.all_set();
+				for (std::size_t remaining = item.count; remaining > 0; --remaining)
+				{
+					std::size_t index = SIZE_MAX;
+					require(map.find_first_set_bit(index), std::string("bits lost a free block in ") + std::string(item.name));
+					require(index < item.count, std::string("bits reported an index past the page in ") + std::string(item.name));
+					require(map.unset(index), std::string("bits reported an already busy block in ") + std::string(item.name));
+				}
+
+				std::size_t index = 0;
+				require(!map.find_first_set_bit(index), std::string("an exhausted page still reported a free block in ") + std::string(item.name));
+			}
+		});
+
+		runner.test("selected region maps report no index outside a configured page", [] {
+			voltek::core::bits_regions regions;
+			constexpr auto count = mm::blocks_per_page<mm::block8_t>;
+			regions.resize(count);
+			require(regions.count() == count, "bits_regions refused the selected pool8 count");
+			regions.all_set();
+			for (std::size_t remaining = count; remaining > 0; --remaining)
+			{
+				std::size_t index = SIZE_MAX;
+				require(regions.find_first_set_bit(index), "bits_regions lost a free block");
+				require(index < count, "bits_regions reported an index past the page");
+				require(regions.unset(index), "bits_regions reported an already busy block");
+			}
+		});
+
 		runner.test("bits_regions rejects page sizes below 65536", [] {
 			constexpr std::size_t requested = 32768;
 			voltek::core::bits_regions regions;

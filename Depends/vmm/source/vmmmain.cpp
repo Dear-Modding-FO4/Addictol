@@ -52,24 +52,24 @@ namespace voltek
 		typedef page_t<block1024_t> page1024_t;
 		typedef page_t<block4096_t> page4096_t;
 		typedef page_t<block8192_t> page8192_t;
-		typedef page_t<block16384_t, __VMM_PAGE_CONFIG_SMALL_SIZE> page16384_t;
-		typedef page_t<block32768_t, __VMM_PAGE_CONFIG_SMALL_SIZE> page32768_t;
-		typedef page_t<block65536_t, __VMM_PAGE_CONFIG_LOW_SIZE> page65536_t;
-		typedef page_t<block131072_t, __VMM_PAGE_CONFIG_LOW_SIZE> page131072_t;
-		typedef pool_t<block8_t, page8_t, __VMM_POOL_CONFIG_BIG_SIZE> pool8_t;
-		typedef pool_t<block16_t, page16_t, __VMM_POOL_CONFIG_BIG_SIZE> pool16_t;
-		typedef pool_t<block32_t, page32_t, __VMM_POOL_CONFIG_BIG_SIZE> pool32_t;
-		typedef pool_t<block64_t, page64_t, __VMM_POOL_CONFIG_LARGE_SIZE> pool64_t;
-		typedef pool_t<block128_t, page128_t, __VMM_POOL_CONFIG_LARGE_SIZE> pool128_t;
+		typedef page_t<block16384_t> page16384_t;
+		typedef page_t<block32768_t> page32768_t;
+		typedef page_t<block65536_t> page65536_t;
+		typedef page_t<block131072_t> page131072_t;
+		typedef pool_t<block8_t, page8_t> pool8_t;
+		typedef pool_t<block16_t, page16_t> pool16_t;
+		typedef pool_t<block32_t, page32_t> pool32_t;
+		typedef pool_t<block64_t, page64_t> pool64_t;
+		typedef pool_t<block128_t, page128_t> pool128_t;
 		typedef pool_t<block256_t, page256_t> pool256_t;
 		typedef pool_t<block512_t, page512_t> pool512_t;
 		typedef pool_t<block1024_t, page1024_t> pool1024_t;
 		typedef pool_t<block4096_t, page4096_t> pool4096_t;
 		typedef pool_t<block8192_t, page8192_t> pool8192_t;
-		typedef pool_t<block16384_t, page16384_t, __VMM_POOL_CONFIG_SMALL_SIZE> pool16384_t;
-		typedef pool_t<block32768_t, page32768_t, __VMM_POOL_CONFIG_SMALL_SIZE> pool32768_t;
-		typedef pool_t<block65536_t, page65536_t, __VMM_POOL_CONFIG_LOW_SIZE> pool65536_t;
-		typedef pool_t<block131072_t, page131072_t, __VMM_POOL_CONFIG_LOW_SIZE> pool131072_t;
+		typedef pool_t<block16384_t, page16384_t> pool16384_t;
+		typedef pool_t<block32768_t, page32768_t> pool32768_t;
+		typedef pool_t<block65536_t, page65536_t> pool65536_t;
+		typedef pool_t<block131072_t, page131072_t> pool131072_t;
 
 		// Проверка на допустимость памяти
 		// Только Windows: Если произошло исключение, то вернёт false, иначе true.
