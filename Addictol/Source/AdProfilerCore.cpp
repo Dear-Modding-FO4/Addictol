@@ -462,11 +462,17 @@ namespace Addictol
 
 	void ProfilerCore::LogMemoryReport() noexcept
 	{
-		if (m_memorySnapshots.empty())
+		std::vector<MemorySnapshot> snapshots;
+		{
+			std::lock_guard lock(m_memoryMutex);
+			snapshots = m_memorySnapshots;
+		}
+
+		if (snapshots.empty())
 			return;
 
 		REX::INFO("[Profiler] ===== Memory Usage Report ====="sv);
-		for (const auto& snap : m_memorySnapshots)
+		for (const auto& snap : snapshots)
 		{
 			REX::INFO("[Profiler] {:30s} Alloc: {:>10} bytes  Freed: {:>10} bytes  Peak: {:>10} bytes  Count: {}"sv,
 				snap.phaseName, snap.totalAllocated, snap.totalFreed, snap.peakUsage, snap.allocationCount);
@@ -475,14 +481,20 @@ namespace Addictol
 
 	void ProfilerCore::LogBA2Report() noexcept
 	{
-		if (m_ba2Entries.empty())
+		std::vector<BA2ProfileEntry> entries;
+		{
+			std::lock_guard lock(m_ba2Mutex);
+			entries = m_ba2Entries;
+		}
+
+		if (entries.empty())
 			return;
 
 		REX::INFO("[Profiler] ===== BA2 Decompression Report ====="sv);
 
 		double totalMs = 0.0;
 		std::size_t totalCompressed = 0, totalUncompressed = 0;
-		for (const auto& e : m_ba2Entries)
+		for (const auto& e : entries)
 		{
 			totalMs += e.decompressMs;
 			totalCompressed += e.compressedSize;
@@ -491,14 +503,14 @@ namespace Addictol
 
 		double totalMBps = totalMs > 0.0 ? (static_cast<double>(totalUncompressed) / (1024.0 * 1024.0)) / (totalMs / 1000.0) : 0.0;
 
-		REX::INFO("[Profiler] Archives: {}"sv, m_ba2Entries.size());
+		REX::INFO("[Profiler] Archives: {}"sv, entries.size());
 		REX::INFO("[Profiler] Total decompress time: {:.1f} ms"sv, totalMs);
 		REX::INFO("[Profiler] Total compressed: {:.2f} MB"sv, static_cast<double>(totalCompressed) / (1024.0 * 1024.0));
 		REX::INFO("[Profiler] Total uncompressed: {:.2f} MB"sv, static_cast<double>(totalUncompressed) / (1024.0 * 1024.0));
 		REX::INFO("[Profiler] Average throughput: {:.1f} MB/s"sv, totalMBps);
 
 		// Sort by decompress time descending
-		auto sorted = m_ba2Entries;
+		auto sorted = entries;
 		std::sort(sorted.begin(), sorted.end(),
 			[](const auto& a, const auto& b) { return a.decompressMs > b.decompressMs; });
 
@@ -628,7 +640,12 @@ namespace Addictol
 		}
 
 		// BA2 CSV
-		if (!m_ba2Entries.empty())
+		std::vector<BA2ProfileEntry> ba2Entries;
+		{
+			std::lock_guard lock(m_ba2Mutex);
+			ba2Entries = m_ba2Entries;
+		}
+		if (!ba2Entries.empty())
 		{
 			// std::string path = dir + "ba2_decompress_times_" + timeBuf + ".csv";
 			std::string path = std::format("{}ba2_decompress_times_{}.csv"sv, dir, timeBuf);
@@ -636,7 +653,7 @@ namespace Addictol
 			if (file.is_open())
 			{
 				file << "SessionId,ArchiveName,DecompressMs,CompressedBytes,UncompressedBytes,ThroughputMBps\n"sv;
-				for (const auto& e : m_ba2Entries)
+				for (const auto& e : ba2Entries)
 				{
 					file << sessionID << ","sv
 						<< "\""sv << e.archiveName << "\","sv
