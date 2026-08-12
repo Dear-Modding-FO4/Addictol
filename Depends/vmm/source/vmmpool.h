@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#define USE_MULTITHREADS 0
+
 #define __VMM_POOL_CONFIG_BIG_SIZE 256ull * 1024
 #define __VMM_POOL_CONFIG_LARGE_SIZE 128ull * 1024
 #define __VMM_POOL_CONFIG_NORMAL_SIZE 64ull * 1024
@@ -155,6 +157,7 @@ namespace voltek
 				// Блокируем. Снятие блокировки будет заботить компилятор.
 				voltek::core::_internal::simple_scope_lock scope_lock(lock);
 
+#if USE_MULTITHREADS
 				if (!free_stack_blocks.empty())
 				{
 					// Получить из стека
@@ -170,6 +173,7 @@ namespace voltek
 
 					return true;
 				}
+#endif
 
 				if (!_current)
 				{
@@ -269,6 +273,7 @@ namespace voltek
 				return false;
 			}
 
+#if USE_MULTITHREADS
 			bool push_free_block_to_cache() noexcept
 			{
 				if (free_stack_blocks.size() < __VMM_POOL_CONFIG_CACHE_SIZE)
@@ -292,6 +297,7 @@ namespace voltek
 
 				return false;
 			}
+#endif
 		private:
 			pool_t(const pool_t&) = delete;
 			pool_t(pool_t&&) = delete;

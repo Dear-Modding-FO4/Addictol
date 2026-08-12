@@ -18,16 +18,15 @@
 #include <limits.h>
 #include <string.h>
 
-#if (defined(_WIN32) || defined(_WIN64))
-#	include <windows.h>
-#endif
-
 using namespace std::literals;
 
 #define USE_MULTITHREADS 0
 
-//#pragma warning(disable : 4996)
-//#include <stdio.h>
+#if USE_MULTITHREADS
+#	if (defined(_WIN32) || defined(_WIN64))
+#		include <windows.h>
+#	endif
+#endif
 
 namespace voltek
 {
@@ -96,6 +95,7 @@ namespace voltek
 #endif
 		}
 
+#if USE_MULTITHREADS
 		class std_event
 		{
 			std::mutex mtx;
@@ -131,6 +131,7 @@ namespace voltek
 				return cv.wait_for(lock, std::chrono::milliseconds(timeout), [this] { return signaled; });
 			}
 		};
+#endif
 
 		static size_t POOL_SIZE = 64 * 1024;
 
@@ -157,6 +158,7 @@ namespace voltek
 			core::initialize();
 			create_default_block(&zero_size_request_block, 0);
 			
+#if USE_MULTITHREADS
 			event_close = new std_event();
 			event_close_w = new std_event();
 			if (!event_close || !event_close_w)
@@ -164,6 +166,7 @@ namespace voltek
 			
 			reinterpret_cast<std_event*>(event_close)->reset();
 			reinterpret_cast<std_event*>(event_close_w)->reset();
+#endif
 
 			// Вся технология ускорения зависит от новых инструкций, если их нет, незачем
 			// это создавать.
@@ -273,14 +276,12 @@ namespace voltek
 					return nullptr;
 				
 				if (size >= MAX_BLOCK_SIZE)
-					new_block = (block_base*)VirtualAlloc(NULL, size + sizeof(block_base), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+					new_block = (block_base*)voltek::core::_internal::page_alloc(size + sizeof(block_base));
 				else
 					new_block = (block_base*)voltek::core::_internal::aligned_malloc(size + sizeof(block_base), 0x10);
 	
 				if (new_block)
 				{
-					//_fsniff("Default block allocated: %p", new_block);
-
 					create_default_block(new_block, size);
 					return get_ptr_from_block_handle(new_block);
 				}
@@ -686,7 +687,7 @@ namespace voltek
 				if (block_size > 0)
 				{
 					if (block_size >= MAX_BLOCK_SIZE)
-						VirtualFree((LPVOID)block, 0, MEM_RELEASE);
+						voltek::core::_internal::page_free(block);
 					else 
 						voltek::core::_internal::aligned_free(block);
 				}
@@ -793,8 +794,6 @@ namespace voltek
 		size_t memory_manager::msize(const void* ptr) const noexcept
 		{
 			if (!ptr || !is_valid_pointer(ptr)) return 0;
-			// Блокируем. Снятие блокировки будет заботить компилятор.
-			//voltek::core::_internal::simple_scope_lock scope_lock(lock);
 			// Получение размера.
 			return (size_t)get_size_from_ptr(ptr);
 		}
