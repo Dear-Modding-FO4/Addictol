@@ -403,6 +403,9 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerAllocator.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdEscapeFreezeState.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerFrameHitch.h">
       <Filter>Include</Filter>
     </ClInclude>

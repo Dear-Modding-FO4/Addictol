@@ -55,6 +55,7 @@ int main(int argc, char** argv)
 	run_zlib_inflate_checks(runner);
 	run_esp_profiler_checks(runner);
 	run_ba2_profiler_checks(runner);
+	run_escape_freeze_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
 	return runner.failures() == 0 ? 0 : 1;

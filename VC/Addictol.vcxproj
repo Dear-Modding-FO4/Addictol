@@ -137,6 +137,7 @@
     <ClInclude Include="..\Addictol\Include\AdMemoryTracer.h" />
     <ClInclude Include="..\Addictol\Include\AdModule.h" />
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h" />
+    <ClInclude Include="..\Addictol\Include\AdEscapeFreezeState.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerCore.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerRuntimeChannel.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerMemory.h" />

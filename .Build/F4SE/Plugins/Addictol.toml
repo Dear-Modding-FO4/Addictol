@@ -115,7 +115,7 @@ bMovementPlanner = true
 # Stops companions/teammates from shooting the player during and shortly after combat (re-equips their weapons on combat exit).
 bCompanionStrayBullet = true
 
-# "Unfreezes" your game from certain freezes caused by a deadlock during condition checks.
+# Samples condition-lock ownership and renderer frame progress, releasing only locks orphaned by a terminated owner thread.
 bEscapeFreeze = true
 
 # Use disk cache for IO for less disk activity.
@@ -301,10 +301,10 @@ uScaleformPageSize = 64
 # The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (needs bScaleformAllocator).
 uScaleformHeapSize = 2048
 
-# Waiting (in ms) with an interval for EscapeFreeze (needs bEscapeFreeze).
+# Sampling interval in milliseconds for Escape Freeze (needs bEscapeFreeze).
 nSleepTimer = 125
 
-# Maximum allowable number of condition lock (needs bEscapeFreeze).
+# Sampling threshold multiplier; total threshold is nSleepTimer x nMaxLockCount (needs bEscapeFreeze).
 nMaxLockCount = 8
 
 # Enable InteriorNavCut MultiThreading, automatically disabled on Linux / Proton (needs bInteriorNavCut).
