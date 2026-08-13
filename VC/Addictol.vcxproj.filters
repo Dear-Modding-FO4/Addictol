@@ -400,6 +400,9 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerESPCompileFiles.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerMemory.h">
       <Filter>Include</Filter>
     </ClInclude>

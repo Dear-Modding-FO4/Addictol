@@ -32,9 +32,9 @@ namespace Addictol
 
 		// TESDataHandler::CompileFiles
 		// Loads all ESP/ESM files in the load order. Wraps the entire compilation phase.
-		// OG: REL::ID(57137), NG: direct RVA (0x2E6C50)
-		// bool __fastcall CompileFiles(TESDataHandler* this)
-		static inline bool(__fastcall* OriginalCompileFiles)(void*) = nullptr;
+		// Address Library ids: OG 57137, NG/AE 2192321.
+		// bool __fastcall CompileFiles(TESDataHandler* this, bool load)
+		static inline bool(__fastcall* OriginalCompileFiles)(void*, bool) = nullptr;
 
 		// TESDataHandler::ConstructObjectList
 		// Per-file: reads all records from a single TESFile. The heaviest per-file phase.
@@ -52,7 +52,7 @@ namespace Addictol
 		ESPProfiler& operator=(const ESPProfiler&) = delete;
 
 		// --- Hook implementations ---
-		static bool __fastcall HookCompileFiles(void* a_this) noexcept;
+		static bool __fastcall HookCompileFiles(void* a_this, bool a_load) noexcept;
 		static void __fastcall HookConstructObjectList(void* a_this, void* a_file, bool a_isFirst, void* a_param4) noexcept;
 		static void __fastcall HookInitAllForms(void* a_this) noexcept;
 

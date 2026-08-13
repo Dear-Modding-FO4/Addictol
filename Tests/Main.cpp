@@ -52,6 +52,7 @@ int main(int argc, char** argv)
 	run_shape_checks(runner);
 	run_bits_regions_check(runner);
 	run_zlib_inflate_checks(runner);
+	run_esp_profiler_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
 	return runner.failures() == 0 ? 0 : 1;

@@ -146,6 +146,7 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerAllocator.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerFrameHitch.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerESP.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerESPCompileFiles.h" />
     <ClInclude Include="..\Addictol\Include\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\AdAnimSubGraphRuntime.h" />
     <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h" />

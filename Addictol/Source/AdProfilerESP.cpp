@@ -1,4 +1,5 @@
 #include <AdProfilerESP.h>
+#include <AdProfilerESPCompileFiles.h>
 #include <AdProfilerCore.h>
 #include <AdUtils.h>
 
@@ -20,29 +21,16 @@ namespace
 	// (MSVC C2712: Cannot use __try in functions that require object unwinding)
 	// -----------------------------------------------------------------
 
-	// Resolves a REL::ID to an absolute address, catching structured exceptions.
-	// Returns 0 on failure.
-	uintptr_t SafeResolveID(std::uint32_t a_id) noexcept
-	{
-		uintptr_t result = 0;
-		__try
-		{
-			result = REL::Relocation<uintptr_t>(REL::ID(a_id)).address();
-		}
-		__except (1)
-		{
-			result = 0;
-		}
-		return result;
-	}
-
 	// Calls the original CompileFiles trampoline under SEH protection.
 	// Returns: 0 = exception caught, 1 = original returned true, 2 = original returned false
-	int SafeCallCompileFiles(bool(__fastcall* a_original)(void*), void* a_this) noexcept
+	int SafeCallCompileFiles(
+		bool(__fastcall* a_original)(void*, bool),
+		void* a_this,
+		bool a_load) noexcept
 	{
 		__try
 		{
-			return a_original(a_this) ? 1 : 2;
+			return a_original(a_this, a_load) ? 1 : 2;
 		}
 		__except (1)
 		{
@@ -125,18 +113,16 @@ namespace Addictol
 	static REX::TOML::Bool<> bESPSubHooks{ "Profiler"sv, "bESPSubHooks"sv, false };
 
 	// -----------------------------------------------------------------
-	// Known function RVAs
+	// Legacy sub-hook RVAs
 	// -----------------------------------------------------------------
 	// These are offsets from the Fallout4.exe module base, confirmed by
 	// Ghidra decompilation, F4LoadTimeProfiler, and NG PDB analysis.
 	//
 	// OG (1.10.163):
-	//   CompileFiles:        REL::ID 57137 (0x116C20, 1153 bytes)
 	//   ConstructObjectList: 0x118750 (594 bytes, 4 params: this, TESFile*, bool, void*)
 	//   InitAllForms:        0x11B070 (2116 bytes, 1 param: this)
 	//
 	// NG (1.11.191) — extracted from Fallout41.11.191.0.pdb public symbols:
-	//   CompileFiles:        0x2E6C50 (NOT in PDB publics; confirmed by prologue 48 8B C4)
 	//   ConstructObjectList: 0x2DFA40 (NOT in PDB publics; confirmed by F4LoadTimeProfiler)
 	//   InitAllForms:        0x2EC830 (PDB: ?InitAllForms@TESDataHandler@@QEAAXXZ,
 	//                                  Sec=1, SecOff=0x2EB830, .text VA=0x1000)
@@ -158,7 +144,6 @@ namespace Addictol
 	//   form loading that previously happened inside CompileFiles on OG.
 	static constexpr uintptr_t kOG_ConstructObjectList_RVA = 0x118750;
 	static constexpr uintptr_t kOG_InitAllForms_RVA        = 0x11B070;
-	static constexpr uintptr_t kNG_CompileFiles_RVA         = 0x2E6C50;
 	static constexpr uintptr_t kNG_ConstructObjectList_RVA  = 0x2DFA40;
 	static constexpr uintptr_t kNG_InitAllForms_RVA         = 0x2EC830; // PDB-confirmed
 
@@ -166,9 +151,6 @@ namespace Addictol
 	// Signature: bool ConstructObject(TESFile*, bool, TESForm*, bool)
 	// PDB: ?ConstructObject@TESDataHandler@@QEAA_NPEAVTESFile@@_NPEAVTESForm@@1@Z
 	static constexpr uintptr_t kNG_ConstructObject_RVA      = 0x2EA240;
-
-	// REL::ID for TESDataHandler::CompileFiles (OG only; NG uses direct RVA)
-	static constexpr std::uint32_t kCompileFilesID_OG = 57137;
 
 	// TESFile::filename — inline char[260] at this offset from TESFile*
 	static constexpr uintptr_t kTESFileNameOffset = 0x70;
@@ -220,13 +202,13 @@ namespace Addictol
 	// Wraps the entire plugin compilation pass and records total time.
 	// -----------------------------------------------------------------
 
-	bool __fastcall ESPProfiler::HookCompileFiles(void* a_this) noexcept
+	bool __fastcall ESPProfiler::HookCompileFiles(void* a_this, bool a_load) noexcept
 	{
 		auto* core = ProfilerCore::GetSingleton();
 
 		// Passthrough if profiler became inactive or original was not captured
 		if (!core->IsActive() || !OriginalCompileFiles)
-			return OriginalCompileFiles ? OriginalCompileFiles(a_this) : false;
+			return OriginalCompileFiles ? OriginalCompileFiles(a_this, a_load) : false;
 
 		REX::INFO("[Profiler/ESP] CompileFiles entered (this={:016X})"sv,
 			reinterpret_cast<uintptr_t>(a_this));
@@ -237,7 +219,7 @@ namespace Addictol
 		core->MarkPhase("CompileFiles_Begin"sv);
 
 		auto start = std::chrono::high_resolution_clock::now();
-		int callResult = SafeCallCompileFiles(OriginalCompileFiles, a_this);
+		int callResult = SafeCallCompileFiles(OriginalCompileFiles, a_this, a_load);
 		auto end = std::chrono::high_resolution_clock::now();
 		double totalMs = std::chrono::duration<double, std::milli>(end - start).count();
 
@@ -373,66 +355,46 @@ namespace Addictol
 		// ---- Step 1: Locate CompileFiles ----
 
 		const bool isOG = RELEX::IsRuntimeOG();
-		uintptr_t compileFilesAddr = 0;
+		const auto runtime = isOG ? ESPCompileFiles::Runtime::OG :
+			(RELEX::IsRuntimeAE() ? ESPCompileFiles::Runtime::AE : ESPCompileFiles::Runtime::NG);
+		const auto detectedRuntime = isOG ? "OG"sv : (RELEX::IsRuntimeAE() ? "AE"sv : "NG"sv);
+		const auto& target = ESPCompileFiles::GetTarget(runtime);
+		const auto compileFilesAddr = REL::ID{
+			ESPCompileFiles::GetTarget(ESPCompileFiles::Runtime::OG).id,
+			ESPCompileFiles::GetTarget(ESPCompileFiles::Runtime::NG).id,
+			ESPCompileFiles::GetTarget(ESPCompileFiles::Runtime::AE).id
+		}.address();
 
-		if (isOG)
+		const auto code = std::span{
+			reinterpret_cast<const std::uint8_t*>(compileFilesAddr),
+			target.signature.size()
+		};
+		REX::INFO(
+			"[Profiler/ESP] CompileFiles target: runtime {}, slot {}, id {}, address {:016X}."sv,
+			detectedRuntime,
+			target.slot,
+			target.id,
+			compileFilesAddr);
+		if (!ESPCompileFiles::Matches(code, target))
 		{
-			// OG: Resolve via address library (REL::ID)
-			compileFilesAddr = SafeResolveID(kCompileFilesID_OG);
-			if (!compileFilesAddr)
-			{
-				REX::ERROR("[Profiler/ESP] Failed to resolve CompileFiles (REL::ID {})"sv,
-					kCompileFilesID_OG);
-				return;
-			}
-			REX::INFO("[Profiler/ESP] CompileFiles at {:016X} (REL::ID {}, OG)"sv,
-				compileFilesAddr, kCompileFilesID_OG);
-		}
-		else
-		{
-			// NG: Resolve via known RVA from module base
-			if (kNG_CompileFiles_RVA == 0)
-			{
-				REX::WARN("[Profiler/ESP] CompileFiles RVA not configured for NG, "
-					"ESP profiling disabled"sv);
-				return;
-			}
-
-			HMODULE hGame = GetModuleHandleA("Fallout4.exe");
-			if (!hGame)
-			{
-				REX::WARN("[Profiler/ESP] Cannot find Fallout4.exe module"sv);
-				return;
-			}
-
-			compileFilesAddr = reinterpret_cast<uintptr_t>(hGame) + kNG_CompileFiles_RVA;
-
-			// Verify NG prologue: MOV RAX,RSP (48 8B C4)
-			auto* p = reinterpret_cast<const uint8_t*>(compileFilesAddr);
-			REX::INFO("[Profiler/ESP] CompileFiles at {:016X} (RVA {:06X}, NG), "
-				"prologue: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}"sv,
-				compileFilesAddr, kNG_CompileFiles_RVA,
-				p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-
-			if (p[0] != 0x48 || p[1] != 0x8B || p[2] != 0xC4)
-			{
-				REX::WARN("[Profiler/ESP] CompileFiles prologue mismatch! "
-					"Expected 48 8B C4 (MOV RAX,RSP). NG RVA may be wrong for this version. "
-					"ESP profiling disabled."sv);
-				return;
-			}
+			REX::ERROR(
+				"[Profiler/ESP] CompileFiles exact signature mismatch: runtime {}, slot {}, id {}, address {:016X}; installing nothing."sv,
+				detectedRuntime,
+				target.slot,
+				target.id,
+				compileFilesAddr);
+			return;
 		}
 
 		// ---- Step 2: Hook CompileFiles ----
-		// OG: standard prologue (PUSH regs; SUB RSP) — DetourJump patches entry point.
-		// NG: MOV RAX,RSP prologue — Detours handles instruction relocation to trampoline.
 
 		*(uintptr_t*)(&OriginalCompileFiles) =
 			RELEX::DetourJump(compileFilesAddr, (uintptr_t)&HookCompileFiles);
 
 		if (!OriginalCompileFiles)
 		{
-			REX::ERROR("[Profiler/ESP] Failed to detour CompileFiles"sv);
+			REX::ERROR(
+				"[Profiler/ESP] CompileFiles detour failed after exact validation; target may be left in an indeterminate state."sv);
 			return;
 		}
 
@@ -465,6 +427,12 @@ namespace Addictol
 		{
 			REX::INFO("[Profiler/ESP] Sub-hooks disabled (bESPSubHooks=false). "
 				"Only CompileFiles timing active."sv);
+		}
+		else if (!isOG)
+		{
+			REX::WARN(
+				"[Profiler/ESP] Sub-hooks unavailable on {}: targets are not identified for this runtime. Only CompileFiles timing is active."sv,
+				detectedRuntime);
 		}
 		else
 		{
