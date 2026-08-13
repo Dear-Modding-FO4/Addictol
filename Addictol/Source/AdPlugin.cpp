@@ -43,12 +43,6 @@ namespace Addictol
 		}
 	}
 
-	static uint32_t GetHashString(const char* a_str) noexcept
-	{
-		std::string str = a_str;
-		return RE::detail::GenerateCRC32({ reinterpret_cast<uint8_t*>(strlwr(str.data())), str.length() });
-	}
-
 	static std::vector<const RE::TESFile*> AnalyzeGameCollectionCriticalCompatibility() noexcept
 	{
 		// Incompatible Mods
