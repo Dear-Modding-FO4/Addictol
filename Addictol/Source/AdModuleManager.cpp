@@ -349,8 +349,8 @@ namespace Addictol
 			auto& mod = it.second;
 			if (mod->HasListener(a_msg->type))
 			{
-				if (a_msg->type == F4SE::MessagingInterface::kPostLoadGame && 
-					!reinterpret_cast<bool>(a_msg->data))
+				if ((a_msg->type == F4SE::MessagingInterface::kPostLoadGame) && 
+					!reinterpret_cast<uintptr_t>(a_msg->data))
 				{
 					// Data is a bool that is false if the game isn't actually loaded due to
 					// missing mods or other messages
@@ -431,6 +431,14 @@ namespace Addictol
 		auto it = rl_modules.find((uint8_t)(a_msg->type));
 		if (it == rl_modules.end())
 			return;
+
+		if ((a_msg->type == F4SE::MessagingInterface::kGameDataReady) &&
+			!reinterpret_cast<uintptr_t>(a_msg->data))
+		{
+			// Data is a bool that is false if the game isn't actually loaded due to
+			// missing mods or other messages
+			return;
+		}		
 
 		(void)m_defender->Initialize();
 
