@@ -1,12 +1,18 @@
 #include <Modules/AdModuleLibDeflate.h>
 #include <AdProfilerBA2.h>
+#include <AdProfilerCore.h>
 #include <AdUtils.h>
+#include <AdZlibBackend.h>
 #include <AdZlibInflate.h>
-#include <libdeflate/libdeflate.h>
+#include <Windows.h>
+#ifdef ERROR
+#	undef ERROR
+#endif
 
 namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches"sv, "bLibDeflate"sv, true };
+	static REX::TOML::Str<> sAdditionalZlibBackend{ "Additional"sv, "sZlibBackend"sv, "libdeflate" };
 
 	namespace zlibDetail
 	{
@@ -14,6 +20,24 @@ namespace Addictol
 
 		using TInflate = int32_t(*)(ZlibInflate::Stream*, int32_t) noexcept;
 		TInflate OriginalInflate;
+
+		std::uint64_t ReadQpc() noexcept
+		{
+			LARGE_INTEGER value{};
+			QueryPerformanceCounter(&value);
+			return static_cast<std::uint64_t>(value.QuadPart);
+		}
+
+		std::uint64_t GetQpcFrequency() noexcept
+		{
+			static const auto frequency = []() noexcept {
+				LARGE_INTEGER value{};
+				return QueryPerformanceFrequency(&value) && value.QuadPart > 0 ?
+					static_cast<std::uint64_t>(value.QuadPart) :
+					std::uint64_t{ 0 };
+			}();
+			return frequency;
+		}
 
 		struct AtomicCounters
 		{
@@ -23,6 +47,9 @@ namespace Addictol
 			std::atomic<std::uint64_t> codecFailed{ 0 };
 			std::atomic<std::uint64_t> commitRejected{ 0 };
 			std::atomic<std::uint64_t> allocationFailed{ 0 };
+			std::atomic<std::uint64_t> servedStock{ 0 };
+			std::atomic<std::uint64_t> servedLibDeflate{ 0 };
+			std::atomic<std::uint64_t> servedUnknown{ 0 };
 		};
 
 		AtomicCounters& GetAtomicCounters() noexcept
@@ -41,6 +68,9 @@ namespace Addictol
 			std::uint64_t codecFailed{ 0 };
 			std::uint64_t commitRejected{ 0 };
 			std::uint64_t allocationFailed{ 0 };
+			std::uint64_t servedStock{ 0 };
+			std::uint64_t servedLibDeflate{ 0 };
+			std::uint64_t servedUnknown{ 0 };
 			std::uint32_t pending{ 0 };
 
 			~ThreadCounters() noexcept
@@ -73,6 +103,12 @@ namespace Addictol
 					totals.commitRejected.fetch_add(commitRejected, std::memory_order_relaxed);
 				if (allocationFailed)
 					totals.allocationFailed.fetch_add(allocationFailed, std::memory_order_relaxed);
+				if (servedStock)
+					totals.servedStock.fetch_add(servedStock, std::memory_order_relaxed);
+				if (servedLibDeflate)
+					totals.servedLibDeflate.fetch_add(servedLibDeflate, std::memory_order_relaxed);
+				if (servedUnknown)
+					totals.servedUnknown.fetch_add(servedUnknown, std::memory_order_relaxed);
 
 				attempted = 0;
 				succeeded = 0;
@@ -80,18 +116,68 @@ namespace Addictol
 				codecFailed = 0;
 				commitRejected = 0;
 				allocationFailed = 0;
+				servedStock = 0;
+				servedLibDeflate = 0;
+				servedUnknown = 0;
 				pending = 0;
 			}
 		};
 
 		thread_local ThreadCounters g_threadCounters;
 
+		void CountOutcome(const ZlibInflateOutcome& a_outcome) noexcept
+		{
+			switch (a_outcome.servedBackendId)
+			{
+			case ZlibBackendRegistryId(ZlibBackendKind::Stock):
+				g_threadCounters.Count(g_threadCounters.servedStock);
+				break;
+			case ZlibBackendRegistryId(ZlibBackendKind::LibDeflate):
+				g_threadCounters.Count(g_threadCounters.servedLibDeflate);
+				break;
+			default:
+				g_threadCounters.Count(g_threadCounters.servedUnknown);
+				break;
+			}
+
+			if (a_outcome.primaryBackendId != ZlibBackendRegistryId(ZlibBackendKind::LibDeflate))
+				return;
+
+			switch (static_cast<ZlibFallbackReason>(a_outcome.fallbackReasonId))
+			{
+			case ZlibFallbackReason::None:
+				g_threadCounters.Count(g_threadCounters.attempted);
+				g_threadCounters.Count(g_threadCounters.succeeded);
+				break;
+			case ZlibFallbackReason::State:
+				g_threadCounters.Count(g_threadCounters.rejectedByState);
+				break;
+			case ZlibFallbackReason::Allocation:
+				g_threadCounters.Count(g_threadCounters.allocationFailed);
+				break;
+			case ZlibFallbackReason::Decode:
+				g_threadCounters.Count(g_threadCounters.attempted);
+				g_threadCounters.Count(g_threadCounters.codecFailed);
+				break;
+			case ZlibFallbackReason::Commit:
+				g_threadCounters.Count(g_threadCounters.attempted);
+				g_threadCounters.Count(g_threadCounters.commitRejected);
+				break;
+			default:
+				break;
+			}
+		}
+
 		void LogCounters() noexcept
 		{
 			g_threadCounters.Flush();
 			const auto& counters = GetAtomicCounters();
 			REX::INFO(
-				"LibDeflate counters: attempted {}, succeeded {}, rejected-by-state {}, codec-failed {}, commit-rejected {}, allocation-failed {}"sv,
+				"Zlib backend counters (selected {}): served-stock {}, served-libdeflate {}, served-unknown {}, attempted {}, succeeded {}, rejected-by-state {}, codec-failed {}, commit-rejected {}, allocation-failed {}"sv,
+				ZlibBackendKindName(GetSelectedZlibBackendKind()),
+				counters.servedStock.load(std::memory_order_relaxed),
+				counters.servedLibDeflate.load(std::memory_order_relaxed),
+				counters.servedUnknown.load(std::memory_order_relaxed),
 				counters.attempted.load(std::memory_order_relaxed),
 				counters.succeeded.load(std::memory_order_relaxed),
 				counters.rejectedByState.load(std::memory_order_relaxed),
@@ -102,7 +188,8 @@ namespace Addictol
 
 		namespace Decompression
 		{
-			struct LibDeflate
+			template<class Backend>
+			struct Selected
 			{
 				static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
 				{
@@ -111,58 +198,44 @@ namespace Addictol
 					if (!OriginalInflate)
 						return Z_STREAM_ERROR;
 
-					if (!ZlibInflate::CanAttempt(a_stream, a_flush))
+					const auto timingRequested =
+						ProfilerCore::GetSingleton()->IsActive() &&
+						ProfilerCore::IsBA2TimingEnabled();
+					const auto qpcFrequency = timingRequested ? GetQpcFrequency() : 0;
+					const auto timingEnabled = timingRequested && qpcFrequency != 0;
+					const auto outcome = ServeZlib<Backend>(
+						a_stream,
+						a_flush,
+						[](ZlibInflate::Stream* a_stockStream, std::int32_t a_stockFlush) noexcept {
+							return OriginalInflate(a_stockStream, a_stockFlush);
+						},
+						timingEnabled,
+						qpcFrequency,
+						[]() noexcept { return ReadQpc(); });
+					CountOutcome(outcome);
+
+					if (timingEnabled &&
+						outcome.servedBackendId == ZlibBackendRegistryId(ZlibBackendKind::LibDeflate))
 					{
-						g_threadCounters.Count(g_threadCounters.rejectedByState);
-						return OriginalInflate(a_stream, a_flush);
+						// Transitional v1 sink; P2 profiler wiring removes this millisecond view.
+						const auto elapsedMs =
+							static_cast<double>(outcome.primaryQpc) * 1000.0 /
+							static_cast<double>(outcome.qpcFrequency);
+						ProfilerBA2::GetSingleton()->RecordDecompression(
+							outcome.consumed, outcome.produced, elapsedMs);
 					}
 
-					thread_local libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
-					if (!decompressor)
-					{
-						g_threadCounters.Count(g_threadCounters.allocationFailed);
-						return OriginalInflate(a_stream, a_flush);
-					}
-
-					const bool profiling = ProfilerCore::GetSingleton()->IsActive() && ProfilerCore::IsBA2TimingEnabled();
-					std::chrono::high_resolution_clock::time_point profStart;
-					if (profiling)
-						profStart = std::chrono::high_resolution_clock::now();
-
-					g_threadCounters.Count(g_threadCounters.attempted);
-					const auto* expectedState = a_stream->state;
-					size_t inBytes = 0, outBytes = 0;
-					libdeflate_result result = libdeflate_zlib_decompress_ex(decompressor, a_stream->next_in, a_stream->avail_in,
-						a_stream->next_out, a_stream->avail_out, &inBytes, &outBytes);
-
-					if (result == LIBDEFLATE_SUCCESS)
-					{
-						const auto committed = ZlibInflate::CommitCompletedStream(
-							a_stream, expectedState, inBytes, outBytes);
-						if (!committed)
-						{
-							g_threadCounters.Count(g_threadCounters.commitRejected);
-							// libdeflate may touch output on failure; stock rewrites the produced region.
-							return OriginalInflate(a_stream, a_flush);
-						}
-
-						g_threadCounters.Count(g_threadCounters.succeeded);
-						if (profiling)
-						{
-							auto profEnd = std::chrono::high_resolution_clock::now();
-							double elapsedMs = std::chrono::duration<double, std::milli>(profEnd - profStart).count();
-							ProfilerBA2::GetSingleton()->RecordDecompression(inBytes, outBytes, elapsedMs);
-						}
-
-						return ZlibInflate::Z_STREAM_END;
-					}
-
-					g_threadCounters.Count(g_threadCounters.codecFailed);
-					// Raw and gzip streams fail the zlib probe and fall back without reading private wrap.
-					return OriginalInflate(a_stream, a_flush);
+					return outcome.zlibResult;
 				}
 			};
 		}
+	}
+
+	void InitializeZlibBackendConfig() noexcept
+	{
+		ResolveZlibBackendSelection(sAdditionalZlibBackend.GetValue());
+		if (!bPatchesLibDeflate.GetValue())
+			REX::INFO("Zlib decompression backend: stock (bLibDeflate is disabled; hook not installed)."sv);
 	}
 
 	ModuleLibDeflate::ModuleLibDeflate() :
@@ -191,7 +264,7 @@ namespace Addictol
 		if (!validation)
 		{
 			REX::ERROR(
-				"LibDeflate: {} zlib contract rejected: prologue={}, mode-load={}, mode-bounds={}, done-store={}, reset-zero={}, reset-store={}; fast path disabled."sv,
+				"LibDeflate: {} zlib contract rejected: prologue={}, mode-load={}, mode-bounds={}, done-store={}, reset-zero={}, reset-store={}; effective backend stock (hook not installed)."sv,
 				runtime,
 				validation.prologue,
 				validation.modeLoad,
@@ -202,19 +275,23 @@ namespace Addictol
 			return false;
 		}
 
-		OriginalInflate = reinterpret_cast<TInflate>(
-			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&Decompression::LibDeflate::Inflate)));
+		const auto hook = VisitSelectedZlibBackend([]<class Backend>() {
+			return reinterpret_cast<std::uintptr_t>(&Decompression::Selected<Backend>::Inflate);
+		});
+		OriginalInflate = reinterpret_cast<TInflate>(RELEX::DetourJump(target, hook));
 		if (!OriginalInflate)
 		{
 			REX::ERROR(
-				"LibDeflate: {} detour failed after contract validation; inflate may be left in an indeterminate state."sv,
-				runtime);
+				"LibDeflate: {} detour failed for selected backend {}; inflate may be left in an indeterminate state."sv,
+				runtime,
+				ZlibBackendKindName(GetSelectedZlibBackendKind()));
 			return false;
 		}
 
 		REX::INFO(
-			"LibDeflate: {} zlib contract validated; fast path enabled (mode +0x0, HEAD 0, DONE 28)."sv,
-			runtime);
+			"LibDeflate: {} zlib contract validated; backend {} enabled (mode +0x0, HEAD 0, DONE 28)."sv,
+			runtime,
+			ZlibBackendKindName(GetSelectedZlibBackendKind()));
 		return true;
 	}
 

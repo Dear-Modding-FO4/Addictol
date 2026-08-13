@@ -143,6 +143,7 @@ namespace vmm_tests
 	void run_threading_checks(Runner& runner);
 	void run_bits_regions_check(Runner& runner);
 	void run_shape_checks(Runner& runner);
+	void run_zlib_backend_checks(Runner& runner);
 	void run_zlib_inflate_checks(Runner& runner);
 	void run_esp_profiler_checks(Runner& runner);
 	int run_oversized_case();

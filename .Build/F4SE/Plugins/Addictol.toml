@@ -5,7 +5,7 @@
 # All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores.
 bThreads = true
 
-# Replace old zlib decompression code with optimized libdeflate https://github.com/ebiggers/libdeflate.
+# Enables the validated zlib decompression hook. Backend selected by sZlibBackend.
 bLibDeflate = true
 
 # Black loading screen with fixes for 21:9 display. Need High FPS Physics Fix mod, otherwise slowly loads game.
@@ -291,6 +291,9 @@ bUseNewRedistributable = false
 
 # Selects the allocator backend: voltek.
 sAllocator = "voltek"
+
+# Selects the zlib decompression backend: libdeflate or stock (needs bLibDeflate).
+sZlibBackend = "libdeflate"
 
 # The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
 uScaleformPageSize = 64

@@ -4,6 +4,9 @@
     <ClCompile Include="..\Addictol\Source\AdAllocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdZlibBackend.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdAssert.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -365,6 +368,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdAllocator.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdZlibBackend.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdZlibInflate.h">

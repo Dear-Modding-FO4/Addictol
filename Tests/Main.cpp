@@ -51,6 +51,7 @@ int main(int argc, char** argv)
 	run_threading_checks(runner);
 	run_shape_checks(runner);
 	run_bits_regions_check(runner);
+	run_zlib_backend_checks(runner);
 	run_zlib_inflate_checks(runner);
 	run_esp_profiler_checks(runner);
 

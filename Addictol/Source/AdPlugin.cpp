@@ -4,6 +4,7 @@
 #include <AdProfilerCore.h>
 #include <AdProfilerDLL.h>
 #include <AdProfilerMemory.h>
+#include <AdZlibBackend.h>
 #include <AdProfilerModules.h>
 
 #include <RE/B/BSCRC32.h>
@@ -218,6 +219,7 @@ namespace Addictol
 				const auto config = REX::TOML::SettingStore::GetSingleton();
 				config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
 				config->Load();
+				InitializeZlibBackendConfig();
 
 				// Validate config keys
 				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName ".toml");
@@ -304,6 +306,7 @@ namespace Addictol
 			const auto config = REX::TOML::SettingStore::GetSingleton();
 			config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
 			config->Load();
+			InitializeZlibBackendConfig();
 
 			// Validate config keys
 			ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName ".toml");
