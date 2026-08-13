@@ -1,0 +1,80 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <span>
+#include <string_view>
+
+#include "AdProfilerESPCompileFiles.h"
+
+namespace Addictol::ESPSubHooks
+{
+	using ConstructObjectList = bool(__fastcall*)(void*, void*, bool);
+	using InitAllForms = void(__fastcall*)(void*);
+
+	struct Target
+	{
+		std::uint64_t id;
+		std::string_view slot;
+		const std::uint8_t* signature;
+		std::size_t signatureSize;
+	};
+
+	inline constexpr std::array<std::uint8_t, 36> kConstructOG{
+		0x48, 0x89, 0x5C, 0x24, 0x18, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56,
+		0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x48, 0x8B, 0xDA, 0x45, 0x0F, 0xB6,
+		0xE8, 0x4C, 0x8B, 0xF9, 0x45, 0x33, 0xC0, 0x33, 0xD2, 0x48, 0x8B, 0xCB
+	};
+	inline constexpr std::array<std::uint8_t, 41> kConstructNG{
+		0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C, 0x24, 0x18, 0x57, 0x41,
+		0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x48,
+		0x8B, 0xDA, 0x45, 0x0F, 0xB6, 0xE0, 0x4C, 0x8B, 0xE9, 0x45, 0x33, 0xC0,
+		0x48, 0x8B, 0xCB, 0x33, 0xD2
+	};
+	inline constexpr auto kConstructAE = kConstructNG;
+
+	// The OG rel32 call is build-fixed by intent so any target drift fails closed.
+	inline constexpr std::array<std::uint8_t, 26> kInitOG{
+		0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C, 0x24, 0x18, 0x56, 0x57,
+		0x41, 0x56, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xF1, 0xE8, 0x16, 0x07,
+		0xC2, 0x00
+	};
+	inline constexpr std::array<std::uint8_t, 30> kInitNG{
+		0x40, 0x53, 0x55, 0x56, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC,
+		0x58, 0x45, 0x33, 0xFF, 0x48, 0x8B, 0xF9, 0x41, 0x8B, 0xEF, 0x44, 0x89,
+		0xBC, 0x24, 0x90, 0x00, 0x00, 0x00
+	};
+	inline constexpr auto kInitAE = kInitNG;
+
+	inline constexpr std::array<Target, 3> kConstructTargets{ {
+		{ 1043280, "OG", kConstructOG.data(), kConstructOG.size() },
+		{ 2192326, "NG", kConstructNG.data(), kConstructNG.size() },
+		{ 2192326, "AE", kConstructAE.data(), kConstructAE.size() }
+	} };
+	inline constexpr std::array<Target, 3> kInitTargets{ {
+		{ 189223, "OG", kInitOG.data(), kInitOG.size() },
+		{ 2192344, "NG", kInitNG.data(), kInitNG.size() },
+		{ 2192344, "AE", kInitAE.data(), kInitAE.size() }
+	} };
+
+	[[nodiscard]] constexpr const Target& GetConstructTarget(
+		ESPCompileFiles::Runtime a_runtime) noexcept
+	{
+		return kConstructTargets[static_cast<std::size_t>(a_runtime)];
+	}
+
+	[[nodiscard]] constexpr const Target& GetInitTarget(
+		ESPCompileFiles::Runtime a_runtime) noexcept
+	{
+		return kInitTargets[static_cast<std::size_t>(a_runtime)];
+	}
+
+	[[nodiscard]] inline bool Matches(
+		std::span<const std::uint8_t> a_code,
+		const Target& a_target) noexcept
+	{
+		return a_code.size() >= a_target.signatureSize &&
+			std::memcmp(a_code.data(), a_target.signature, a_target.signatureSize) == 0;
+	}
+}

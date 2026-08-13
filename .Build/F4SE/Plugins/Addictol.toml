@@ -361,7 +361,8 @@ bAnimSubGraphSkipPreload = false
 # Profile ESP/ESM load times during CompileFiles.
 bESPProfiler = true
 
-# Hook ConstructObjectList/InitAllForms for per-file timing. Requires calibrated call-site indices. Leave false until verified.
+# Also hook ConstructObjectList and InitAllForms for per-file timing (needs bESPProfiler).
+# Exact runtime signatures are validated before writes; matching Address Library ids are required at startup.
 bESPSubHooks = false
 
 # Profile F4SE DLL plugin load times via GetProcAddress IAT hook.
