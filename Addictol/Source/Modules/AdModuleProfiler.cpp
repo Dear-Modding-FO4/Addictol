@@ -31,7 +31,7 @@ namespace Addictol
 		if (!profiler->IsActive())
 			profiler->Start();
 
-		// On kGameDataReady: generate the report (this is the second DoInstall call)
+		// kGameDataReady is the second install callback and triggers the final report.
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
 		{
 			if (profiler->IsActive())
@@ -45,9 +45,6 @@ namespace Addictol
 			return true;
 		}
 
-		// First call (load stage): install sub-profiler hooks
-
-		// Install ESP/ESM load profiler hooks (only if enabled in config)
 		if (profiler->IsESPEnabled())
 		{
 			auto espProfiler = ESPProfiler::GetSingleton();
@@ -63,7 +60,6 @@ namespace Addictol
 			REX::INFO("[Profiler] ESP profiler disabled in config"sv);
 		}
 
-		// Capture memory baseline (only if memory tracking enabled)
 		if (ProfilerCore::IsMemoryTrackingEnabled())
 		{
 			auto memProfiler = ProfilerMemory::GetSingleton();

@@ -15,14 +15,9 @@ namespace
 {
 	using namespace Addictol;
 
-	// -----------------------------------------------------------------
-	// SEH-isolated helpers
-	// These must NOT contain local C++ objects with non-trivial destructors
-	// (MSVC C2712: Cannot use __try in functions that require object unwinding)
-	// -----------------------------------------------------------------
+	// MSVC C2712 forbids non-trivial local objects in functions that use __try.
 
-	// Calls the original CompileFiles trampoline under SEH protection.
-	// Returns: 0 = exception caught, 1 = original returned true, 2 = original returned false
+	// Returns 0 on exception, 1 for true, and 2 for false.
 	int SafeCallCompileFiles(
 		bool(__fastcall* a_original)(void*, bool),
 		void* a_this,
@@ -38,8 +33,6 @@ namespace
 		}
 	}
 
-	// Calls the original ConstructObjectList trampoline under SEH protection.
-	// Returns false if an exception was caught.
 	bool SafeCallConstructObjectList(void(__fastcall* a_original)(void*, void*, bool, void*),
 		void* a_this, void* a_file, bool a_isFirst, void* a_param4) noexcept
 	{
@@ -54,7 +47,6 @@ namespace
 		}
 	}
 
-	// Calls the original InitAllForms trampoline under SEH protection.
 	bool SafeCallInitAllForms(void(__fastcall* a_original)(void*), void* a_this) noexcept
 	{
 		__try
@@ -68,9 +60,6 @@ namespace
 		}
 	}
 
-	// Scans memory starting at a_funcBase for E8 (near relative CALL) instructions.
-	// Writes resolved CallSiteInfo entries into a_outBuf (up to a_maxResults).
-	// Returns the number of valid call sites found.
 	std::size_t ScanCallSitesImpl(
 		uintptr_t a_funcBase, std::size_t a_maxBytes,
 		ESPProfiler::CallSiteInfo* a_outBuf, std::size_t a_maxResults) noexcept
@@ -84,14 +73,12 @@ namespace
 				if (*reinterpret_cast<const uint8_t*>(a_funcBase + i) != 0xE8)
 					continue;
 
-				// Resolve relative CALL: target = (call_addr + 5) + int32_displacement
+				// E8 target = opcode address + 5-byte instruction length + signed rel32.
 				auto disp = *reinterpret_cast<const std::int32_t*>(a_funcBase + i + 1);
 				uintptr_t site = a_funcBase + i;
 				uintptr_t target = site + 5 + static_cast<std::intptr_t>(disp);
 
-				// Validate: target should be within ±1 GB of call site and above low memory.
-				// This filters out false positives where 0xE8 appears as part of an immediate
-				// operand in another instruction rather than as a CALL opcode.
+				// Nearby executable targets reject most immediate operands that merely contain 0xE8.
 				auto diff = static_cast<std::intptr_t>(target - site);
 				if (target > 0x10000 && diff > -0x40000000LL && diff < 0x40000000LL)
 					a_outBuf[count++] = { site, target, i };
@@ -105,65 +92,37 @@ namespace
 
 namespace Addictol
 {
-	// -----------------------------------------------------------------
-	// TOML configuration
-	// -----------------------------------------------------------------
 	static REX::TOML::F64<> fWarnThresholdMs{ "Profiler"sv, "fWarnThresholdMs"sv, 500.0 };
 	static REX::TOML::F64<> fCritThresholdMs{ "Profiler"sv, "fCritThresholdMs"sv, 2000.0 };
 	static REX::TOML::Bool<> bESPSubHooks{ "Profiler"sv, "bESPSubHooks"sv, false };
 
-	// -----------------------------------------------------------------
-	// Legacy sub-hook RVAs
-	// -----------------------------------------------------------------
-	// These are offsets from the Fallout4.exe module base, confirmed by
-	// Ghidra decompilation, F4LoadTimeProfiler, and NG PDB analysis.
-	//
-	// OG (1.10.163):
-	//   ConstructObjectList: 0x118750 (594 bytes, 4 params: this, TESFile*, bool, void*)
-	//   InitAllForms:        0x11B070 (2116 bytes, 1 param: this)
-	//
-	// NG (1.11.191) — extracted from Fallout41.11.191.0.pdb public symbols:
-	//   ConstructObjectList: 0x2DFA40 (NOT in PDB publics; confirmed by F4LoadTimeProfiler)
-	//   InitAllForms:        0x2EC830 (PDB: ?InitAllForms@TESDataHandler@@QEAAXXZ,
-	//                                  Sec=1, SecOff=0x2EB830, .text VA=0x1000)
-	//   NOTE: Prior value 0x2EB570 was SetMasterFileLargeBuffer (wrong function!)
-	//
-	// NG pipeline changes (1.11.191):
-	//   CompileFiles completes in ~50ms (vs ~10,000ms on OG) — now a lightweight
-	//   setup/metadata phase. The actual per-file loading was moved outside
-	//   CompileFiles into a deferred/restructured path.
-	//
-	//   ConstructObjectList was massively refactored (~594 bytes -> ~13,600 bytes).
-	//   On NG it fires only ONCE during CompileFiles with a null/placeholder file,
-	//   not once-per-file as on OG. The per-file loop was eliminated or moved.
-	//
-	//   CheckModsLoaded also grew from ~115 to ~3,984 bytes, suggesting the
-	//   loading orchestration was redistributed across multiple functions.
-	//
-	//   The ~3.5s between CompileFiles_End and GameDataReady corresponds to
-	//   form loading that previously happened inside CompileFiles on OG.
+	// Sub-hook RVAs are Fallout4.exe-relative and verified by Ghidra, F4LoadTimeProfiler, and NG PDB analysis.
+	// OG 1.10.163: ConstructObjectList 0x118750 is 594 bytes with four parameters.
+	// OG 1.10.163: InitAllForms 0x11B070 is 2,116 bytes with one parameter.
+	// NG 1.11.191: ConstructObjectList 0x2DFA40 is absent from PDB publics and confirmed by F4LoadTimeProfiler.
+	// NG 1.11.191: InitAllForms 0x2EC830 is ?InitAllForms@TESDataHandler@@QEAAXXZ at section 1 offset 0x2EB830 with .text at 0x1000.
+	// Prior candidate 0x2EB570 is SetMasterFileLargeBuffer, not InitAllForms.
+	// NG CompileFiles takes about 50 ms instead of OG's 10 seconds because form loading moved to a deferred path.
+	// NG ConstructObjectList grew from about 594 to 13,600 bytes and runs once with a placeholder instead of per file.
+	// NG CheckModsLoaded grew from about 115 to 3,984 bytes, indicating redistributed loading orchestration.
+	// NG's 3.5-second CompileFiles_End-to-GameDataReady interval corresponds to OG's in-CompileFiles form loading.
 	static constexpr uintptr_t kOG_ConstructObjectList_RVA = 0x118750;
 	static constexpr uintptr_t kOG_InitAllForms_RVA        = 0x11B070;
 	static constexpr uintptr_t kNG_ConstructObjectList_RVA  = 0x2DFA40;
 	static constexpr uintptr_t kNG_InitAllForms_RVA         = 0x2EC830; // PDB-confirmed
 
-	// NG-only: ConstructObject (per-form, not per-file) — potential per-form hook target
+	// NG ConstructObject at 0x2EA240 is per-form rather than per-file.
 	// Signature: bool ConstructObject(TESFile*, bool, TESForm*, bool)
 	// PDB: ?ConstructObject@TESDataHandler@@QEAA_NPEAVTESFile@@_NPEAVTESForm@@1@Z
 	static constexpr uintptr_t kNG_ConstructObject_RVA      = 0x2EA240;
 
-	// TESFile::filename — inline char[260] at this offset from TESFile*
+	// TESFile::filename is an inline char[260] at +0x70.
 	static constexpr uintptr_t kTESFileNameOffset = 0x70;
-
-	// -----------------------------------------------------------------
-	// Call-site scanning
-	// -----------------------------------------------------------------
 
 	std::vector<ESPProfiler::CallSiteInfo> ESPProfiler::ScanCallSites(
 		uintptr_t a_funcBase, std::size_t a_maxBytes) noexcept
 	{
-		// Stack buffer sized for the maximum plausible number of CALLs in 4 KB of code.
-		// 256 * sizeof(CallSiteInfo) ≈ 6 KB — acceptable for a one-time init call.
+		// A 256-entry stack buffer covers 4 KB of code while using about 6 KB.
 		static constexpr std::size_t kMaxResults = 256;
 		CallSiteInfo buffer[kMaxResults]{};
 
@@ -171,22 +130,16 @@ namespace Addictol
 		return { buffer, buffer + count };
 	}
 
-	// -----------------------------------------------------------------
-	// TESFile filename extraction
-	// -----------------------------------------------------------------
-
 	const char* ESPProfiler::GetTESFileName(void* a_file) noexcept
 	{
 		if (!a_file)
 			return nullptr;
 
-		// No C++ objects here — __try is safe.
 		__try
 		{
 			auto addr = reinterpret_cast<uintptr_t>(a_file) + kTESFileNameOffset;
 			const char* name = reinterpret_cast<const char*>(addr);
 
-			// Sanity: first character must be printable ASCII
 			if (name[0] > 0x1F && name[0] < 0x7F)
 				return name;
 		}
@@ -197,23 +150,16 @@ namespace Addictol
 		return nullptr;
 	}
 
-	// -----------------------------------------------------------------
-	// Hook: TESDataHandler::CompileFiles
-	// Wraps the entire plugin compilation pass and records total time.
-	// -----------------------------------------------------------------
-
 	bool __fastcall ESPProfiler::HookCompileFiles(void* a_this, bool a_load) noexcept
 	{
 		auto* core = ProfilerCore::GetSingleton();
 
-		// Passthrough if profiler became inactive or original was not captured
 		if (!core->IsActive() || !OriginalCompileFiles)
 			return OriginalCompileFiles ? OriginalCompileFiles(a_this, a_load) : false;
 
 		REX::INFO("[Profiler/ESP] CompileFiles entered (this={:016X})"sv,
 			reinterpret_cast<uintptr_t>(a_this));
 
-		// Reset the per-file counter for this compilation pass
 		GetSingleton()->m_currentFileIndex = 0;
 
 		core->MarkPhase("CompileFiles_Begin"sv);
@@ -240,17 +186,11 @@ namespace Addictol
 		return result;
 	}
 
-	// -----------------------------------------------------------------
-	// Hook: TESDataHandler::ConstructObjectList
-	// Times per-file record loading and feeds ESPProfileEntry to core.
-	// -----------------------------------------------------------------
-
 	void __fastcall ESPProfiler::HookConstructObjectList(void* a_this, void* a_file, bool a_isFirst, void* a_param4) noexcept
 	{
 		auto* core = ProfilerCore::GetSingleton();
 		auto* self = GetSingleton();
 
-		// Passthrough if profiler is inactive
 		if (!core->IsActive() || !OriginalConstructObjectList)
 		{
 			if (OriginalConstructObjectList)
@@ -261,11 +201,9 @@ namespace Addictol
 		ESPProfileEntry entry;
 		entry.loadOrderIndex = self->m_currentFileIndex++;
 
-		// Extract filename from TESFile* at offset + 0x70 (SEH-protected)
 		const char* name = GetTESFileName(a_file);
 		entry.filename = name ? name : "(unknown)"sv;
 
-		// Time the record construction phase (the heaviest per-file operation)
 		auto start = std::chrono::high_resolution_clock::now();
 		bool ok = SafeCallConstructObjectList(OriginalConstructObjectList, a_this, a_file, a_isFirst, a_param4);
 		auto end = std::chrono::high_resolution_clock::now();
@@ -280,7 +218,6 @@ namespace Addictol
 
 		entry.totalMs = entry.constructMs;
 
-		// Threshold-based warnings for slow-loading files
 		const double critMs = fCritThresholdMs.GetValue();
 		const double warnMs = fWarnThresholdMs.GetValue();
 
@@ -298,16 +235,10 @@ namespace Addictol
 		core->AddESPEntry(std::move(entry));
 	}
 
-	// -----------------------------------------------------------------
-	// Hook: TESDataHandler::InitAllForms
-	// Times the post-load form initialization pass.
-	// -----------------------------------------------------------------
-
 	void __fastcall ESPProfiler::HookInitAllForms(void* a_this) noexcept
 	{
 		auto* core = ProfilerCore::GetSingleton();
 
-		// Passthrough if profiler is inactive
 		if (!core->IsActive() || !OriginalInitAllForms)
 		{
 			if (OriginalInitAllForms)
@@ -335,10 +266,6 @@ namespace Addictol
 			ms, ms / 1000.0);
 	}
 
-	// -----------------------------------------------------------------
-	// Installation
-	// -----------------------------------------------------------------
-
 	void ESPProfiler::Install() noexcept
 	{
 		if (m_installed)
@@ -351,8 +278,6 @@ namespace Addictol
 		}
 
 		REX::INFO("[Profiler/ESP] Installing ESP/ESM load profiler hooks..."sv);
-
-		// ---- Step 1: Locate CompileFiles ----
 
 		const bool isOG = RELEX::IsRuntimeOG();
 		const auto runtime = isOG ? ESPCompileFiles::Runtime::OG :
@@ -386,8 +311,6 @@ namespace Addictol
 			return;
 		}
 
-		// ---- Step 2: Hook CompileFiles ----
-
 		*(uintptr_t*)(&OriginalCompileFiles) =
 			RELEX::DetourJump(compileFilesAddr, (uintptr_t)&HookCompileFiles);
 
@@ -401,10 +324,7 @@ namespace Addictol
 		REX::INFO("[Profiler/ESP] CompileFiles hooked (trampoline: {:016X})"sv,
 			reinterpret_cast<uintptr_t>(OriginalCompileFiles));
 
-		// ---- Step 3: Diagnostic call-site scan ----
-		// Dumps all E8 CALL sites in CompileFiles for version identification.
-		// This is informational only — hooking uses direct RVA + DetourJump,
-		// NOT call-site patching. Useful for identifying functions in new builds.
+		// Diagnostic E8 sites help identify new builds; hook installation never patches these call sites.
 
 		static constexpr std::size_t kMaxScanBytes = 0x1000;
 		auto callSites = ScanCallSites(compileFilesAddr, kMaxScanBytes);
@@ -418,10 +338,7 @@ namespace Addictol
 				i, callSites[i].site, callSites[i].target, callSites[i].offset);
 		}
 
-		// ---- Step 4: Hook ConstructObjectList + InitAllForms via known RVAs ----
-		// These functions have no address library IDs. We resolve them using
-		// hardcoded RVAs confirmed by Ghidra analysis and F4LoadTimeProfiler.
-		// Uses DetourJump (inline hook at function entry), NOT call-site patching.
+		// Sub-hooks use function-entry DetourJump at verified RVAs because they lack Address Library IDs.
 
 		if (!bESPSubHooks.GetValue())
 		{
@@ -447,7 +364,6 @@ namespace Addictol
 				uintptr_t moduleBase = reinterpret_cast<uintptr_t>(hGame);
 				REX::INFO("[Profiler/ESP] Fallout4.exe base: {:016X}"sv, moduleBase);
 
-				// ---- ConstructObjectList (4 params: this, TESFile*, bool, void*) ----
 				const uintptr_t constructRVA = isOG
 					? kOG_ConstructObjectList_RVA : kNG_ConstructObjectList_RVA;
 
@@ -455,7 +371,6 @@ namespace Addictol
 				{
 					uintptr_t constructAddr = moduleBase + constructRVA;
 
-					// Log prologue bytes for verification
 					auto* p = reinterpret_cast<const uint8_t*>(constructAddr);
 					REX::INFO("[Profiler/ESP] ConstructObjectList at {:016X} (RVA {:06X}), "
 						"prologue: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}"sv,
@@ -482,7 +397,6 @@ namespace Addictol
 						"{} runtime"sv, isOG ? "OG"sv : "NG"sv);
 				}
 
-				// ---- InitAllForms (1 param: this) ----
 				const uintptr_t initRVA = isOG
 					? kOG_InitAllForms_RVA : kNG_InitAllForms_RVA;
 
@@ -517,8 +431,6 @@ namespace Addictol
 				}
 			}
 		}
-
-		// ---- Done ----
 
 		m_installed = (OriginalCompileFiles != nullptr);
 

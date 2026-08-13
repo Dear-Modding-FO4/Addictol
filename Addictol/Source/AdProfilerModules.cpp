@@ -11,13 +11,10 @@ namespace Addictol
 
 	namespace
 	{
-		// Tracks the start time of the current operation per module name.
-		// Module init is single-threaded (main thread), so no synchronization needed.
+		// Module initialization is main-thread-only, so timing state needs no synchronization.
 		std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> s_startTimes;
 
-		// Accumulates profiling data for modules between query and install phases.
-		// Entries are held here after query completes and submitted to ProfilerCore
-		// once install completes (or immediately if query fails).
+		// Successful query entries remain pending until installation completes.
 		std::unordered_map<std::string, ModuleProfileEntry> s_pendingEntries;
 	}
 
@@ -50,7 +47,7 @@ namespace Addictol
 		entry.querySuccess = a_success;
 		entry.skipped = a_skipped;
 
-		// If query failed, the module won't be installed - submit immediately
+		// Failed queries never reach installation, so submit them immediately.
 		if (!a_success)
 		{
 			profiler->AddModuleEntry(std::move(entry));
@@ -87,7 +84,6 @@ namespace Addictol
 		entry.installSuccess = a_success;
 		entry.skipped = a_skipped;
 
-		// Install is the final phase - submit the completed entry
 		profiler->AddModuleEntry(std::move(entry));
 		s_pendingEntries.erase(name);
 	}

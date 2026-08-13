@@ -31,7 +31,7 @@ namespace Addictol
 		REX::INFO("[Profiler] Memory baseline captured: WS={} bytes, PF={} bytes, Peak={} bytes"sv,
 			m_baselineWorkingSet, m_baselinePagefile, m_baselinePeak);
 
-		// Submit the baseline as the first snapshot (delta = 0)
+		// The baseline is also the zero-delta first snapshot.
 		CaptureSnapshot("Baseline"sv);
 	}
 
@@ -54,8 +54,7 @@ namespace Addictol
 		auto currentPF = static_cast<std::size_t>(pmc.PagefileUsage);
 		auto currentPeak = static_cast<std::size_t>(pmc.PeakWorkingSetSize);
 
-		// Delta from baseline: net working set growth since baseline.
-		// Clamped to 0 if memory shrank (unsigned type safety).
+		// Unsigned deltas clamp working-set shrinkage to zero.
 		std::size_t deltaWS = 0;
 		if (m_baselineCaptured && currentWS > m_baselineWorkingSet)
 			deltaWS = currentWS - m_baselineWorkingSet;

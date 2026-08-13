@@ -8,11 +8,6 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	// Per-phase process memory tracker using Windows Process Memory APIs.
-	// Captures WorkingSetSize, PagefileUsage, and PeakWorkingSetSize
-	// from GetProcessMemoryInfo() at each loading phase, computing
-	// deltas from a recorded baseline.
-	//
 	// MemorySnapshot field mapping (process-level, not per-allocation):
 	//   totalAllocated  = WorkingSetSize     (current physical memory)
 	//   totalFreed      = PagefileUsage      (committed virtual memory)
@@ -32,15 +27,12 @@ namespace Addictol
 		ProfilerMemory() = default;
 		virtual ~ProfilerMemory() = default;
 
-		// Record the current process memory state as the baseline.
-		// Also submits a "Baseline" snapshot to ProfilerCore.
+		// Also submits the baseline as the first ProfilerCore snapshot.
 		void CaptureBaseline() noexcept;
 
-		// Capture a snapshot at the named phase, computing deltas
-		// from baseline, and submit it to ProfilerCore.
+		// Submits the snapshot to ProfilerCore after computing baseline deltas.
 		void CaptureSnapshot(std::string_view a_phaseName) noexcept;
 
-		// Accessors
 		[[nodiscard]] bool HasBaseline() const noexcept { return m_baselineCaptured; }
 		[[nodiscard]] std::size_t GetBaselineWorkingSet() const noexcept { return m_baselineWorkingSet; }
 	};

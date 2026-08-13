@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-	// TOML config options for the profiler
 	static REX::TOML::Bool<> bProfiler{ "Profiler"sv, "bProfiler"sv, false };
 	static REX::TOML::Bool<> bESPProfiler{ "Profiler"sv, "bESPProfiler"sv, true };
 	static REX::TOML::Bool<> bDLLProfiler{ "Profiler"sv, "bDLLProfiler"sv, true };
@@ -340,8 +339,6 @@ namespace Addictol
 		return GetRuntimeCollector().session;
 	}
 
-	// -- Report Generation --
-
 	std::string ProfilerCore::GetOutputDir() const noexcept
 	{
 		const auto& dir = GetRuntimeCollector().session.GetOutputDirectory();
@@ -364,7 +361,6 @@ namespace Addictol
 		REX::INFO("[Profiler] InitAllForms: {:.1f} ms"sv, m_initAllFormsMs);
 		REX::INFO("[Profiler] Files loaded: {}"sv, m_espEntries.size());
 
-		// Sort by construct time descending for the report
 		auto sorted = m_espEntries;
 		std::sort(sorted.begin(), sorted.end(),
 			[](const auto& a, const auto& b) { return a.constructMs > b.constructMs; });
@@ -397,7 +393,6 @@ namespace Addictol
 		REX::INFO("[Profiler] Total Query time: {:.1f} ms"sv, totalQuery);
 		REX::INFO("[Profiler] Total Load time: {:.1f} ms"sv, totalLoad);
 
-		// Sort by load time descending
 		auto sorted = m_dllEntries;
 		std::sort(sorted.begin(), sorted.end(),
 			[](const auto& a, const auto& b) { return a.loadMs > b.loadMs; });
@@ -428,7 +423,6 @@ namespace Addictol
 		REX::INFO("[Profiler] Total Query time: {:.3f} ms"sv, totalQuery);
 		REX::INFO("[Profiler] Total Install time: {:.3f} ms"sv, totalInstall);
 
-		// Sort by install time descending
 		auto sorted = m_moduleEntries;
 		std::sort(sorted.begin(), sorted.end(),
 			[](const auto& a, const auto& b) { return a.installMs > b.installMs; });
@@ -509,7 +503,6 @@ namespace Addictol
 		REX::INFO("[Profiler] Total uncompressed: {:.2f} MB"sv, static_cast<double>(totalUncompressed) / (1024.0 * 1024.0));
 		REX::INFO("[Profiler] Average throughput: {:.1f} MB/s"sv, totalMBps);
 
-		// Sort by decompress time descending
 		auto sorted = entries;
 		std::sort(sorted.begin(), sorted.end(),
 			[](const auto& a, const auto& b) { return a.decompressMs > b.decompressMs; });
@@ -563,7 +556,6 @@ namespace Addictol
 			return;
 		const auto& sessionID = GetRuntimeCollector().session.GetSessionID();
 
-		// Timestamp for unique filenames
 		auto now = std::time(nullptr);
 		std::tm tm{};
 		localtime_s(&tm, &now);
@@ -571,7 +563,6 @@ namespace Addictol
 		char timeBuf[64];
 		std::strftime(timeBuf, sizeof(timeBuf), "%Y%m%d_%H%M%S", &tm);
 
-		// ESP/ESM CSV
 		if (!m_espEntries.empty())
 		{
 			std::string path = std::format("{}esp_load_times_{}.csv"sv, dir, timeBuf);
@@ -594,7 +585,6 @@ namespace Addictol
 			}
 		}
 
-		// DLL CSV
 		if (!m_dllEntries.empty())
 		{
 			std::string path = std::format("{}dll_load_times_{}.csv"sv, dir, timeBuf);
@@ -616,7 +606,6 @@ namespace Addictol
 			}
 		}
 
-		// Module CSV
 		if (!m_moduleEntries.empty())
 		{
 			std::string path = std::format("{}module_times_{}.csv"sv, dir, timeBuf);
@@ -639,7 +628,6 @@ namespace Addictol
 			}
 		}
 
-		// BA2 CSV
 		std::vector<BA2ProfileEntry> ba2Entries;
 		{
 			std::lock_guard lock(m_ba2Mutex);
@@ -647,7 +635,6 @@ namespace Addictol
 		}
 		if (!ba2Entries.empty())
 		{
-			// std::string path = dir + "ba2_decompress_times_" + timeBuf + ".csv";
 			std::string path = std::format("{}ba2_decompress_times_{}.csv"sv, dir, timeBuf);
 			std::ofstream file(path);
 			if (file.is_open())
@@ -667,7 +654,6 @@ namespace Addictol
 			}
 		}
 
-		// Startup Timeline CSV
 		if (!m_startupPhases.empty())
 		{
 			std::string path = std::format("{}startup_timeline_{}.csv"sv, dir, timeBuf);

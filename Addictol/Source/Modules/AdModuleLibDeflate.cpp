@@ -217,7 +217,7 @@ namespace Addictol
 					if (timingEnabled &&
 						outcome.servedBackendId == ZlibBackendRegistryId(ZlibBackendKind::LibDeflate))
 					{
-						// Transitional v1 sink; P2 profiler wiring removes this millisecond view.
+						// Legacy millisecond sink; the raw tick fields remain authoritative.
 						const auto elapsedMs =
 							static_cast<double>(outcome.primaryQpc) * 1000.0 /
 							static_cast<double>(outcome.qpcFrequency);

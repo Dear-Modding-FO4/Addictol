@@ -15,7 +15,6 @@ namespace Addictol
 
 	class RuntimeSessionContext;
 
-	// High-resolution scoped timer that records elapsed milliseconds
 	class ScopedProfileTimer
 	{
 		std::chrono::high_resolution_clock::time_point m_start;
@@ -33,7 +32,6 @@ namespace Addictol
 		}
 	};
 
-	// Data structures for profiling results
 	struct ESPProfileEntry
 	{
 		std::string filename;
@@ -160,35 +158,28 @@ namespace Addictol
 		std::uint64_t droppedHitches{ 0 };
 	};
 
-	// Central profiler data collector
 	class ProfilerCore :
 		public REX::Singleton<ProfilerCore>
 	{
 		std::chrono::high_resolution_clock::time_point m_startTime;
 
-		// ESP/ESM data
 		std::vector<ESPProfileEntry> m_espEntries;
 		double m_totalCompileMs{ 0.0 };
 		double m_initAllFormsMs{ 0.0 };
 		std::mutex m_espMutex;
 
-		// DLL data
 		std::vector<DLLProfileEntry> m_dllEntries;
 		std::mutex m_dllMutex;
 
-		// Module timing data
 		std::vector<ModuleProfileEntry> m_moduleEntries;
 		std::mutex m_moduleMutex;
 
-		// Startup timeline
 		std::vector<StartupPhase> m_startupPhases;
 		std::mutex m_startupMutex;
 
-		// Memory snapshots
 		std::vector<MemorySnapshot> m_memorySnapshots;
 		std::mutex m_memoryMutex;
 
-		// BA2 data
 		std::vector<BA2ProfileEntry> m_ba2Entries;
 		std::mutex m_ba2Mutex;
 
@@ -211,24 +202,18 @@ namespace Addictol
 		[[nodiscard]] static bool IsFrameHitchEnabled() noexcept;
 		[[nodiscard]] static bool IsCSVExportEnabled() noexcept;
 
-		// Startup timeline
 		void MarkPhase(std::string_view a_name) noexcept;
 
-		// ESP/ESM profiling
 		void AddESPEntry(ESPProfileEntry&& a_entry) noexcept;
 		void SetTotalCompileTime(double a_ms) noexcept { m_totalCompileMs = a_ms; }
 		void SetInitAllFormsTime(double a_ms) noexcept { m_initAllFormsMs = a_ms; }
 
-		// DLL profiling
 		void AddDLLEntry(DLLProfileEntry&& a_entry) noexcept;
 
-		// Module profiling
 		void AddModuleEntry(ModuleProfileEntry&& a_entry) noexcept;
 
-		// Memory tracking
 		void AddMemorySnapshot(MemorySnapshot&& a_snapshot) noexcept;
 
-		// BA2 timing
 		void AddBA2Entry(BA2ProfileEntry&& a_entry) noexcept;
 
 		// Startup entries report once at kGameDataReady; runtime intervals stream for the session.
@@ -239,11 +224,9 @@ namespace Addictol
 		// Shared by every runtime channel so their rows correlate on one clock and epoch.
 		[[nodiscard]] static RuntimeSessionContext& GetRuntimeSession() noexcept;
 
-		// Startup report generation
 		void GenerateReport() noexcept;
 		void ExportCSV() noexcept;
 
-		// Accessors
 		[[nodiscard]] const std::vector<ESPProfileEntry>& GetESPEntries() const noexcept { return m_espEntries; }
 		[[nodiscard]] const std::vector<DLLProfileEntry>& GetDLLEntries() const noexcept { return m_dllEntries; }
 		[[nodiscard]] const std::vector<ModuleProfileEntry>& GetModuleEntries() const noexcept { return m_moduleEntries; }

@@ -10,7 +10,6 @@ namespace Addictol
 		if (!profiler || !profiler->IsActive())
 			return;
 
-		// Throughput: (uncompressed MB) / (elapsed seconds)
 		double throughputMBps = 0.0;
 		if (a_elapsedMs > 0.0)
 		{
