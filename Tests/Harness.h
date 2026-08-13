@@ -143,6 +143,7 @@ namespace vmm_tests
 	void run_threading_checks(Runner& runner);
 	void run_bits_regions_check(Runner& runner);
 	void run_shape_checks(Runner& runner);
+	void run_zlib_inflate_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
 	int run_benchmarks();

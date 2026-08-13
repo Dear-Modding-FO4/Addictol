@@ -367,6 +367,9 @@
     <ClInclude Include="..\Addictol\Include\AdAllocator.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdZlibInflate.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
       <Filter>Include</Filter>
     </ClInclude>

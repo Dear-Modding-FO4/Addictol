@@ -130,6 +130,7 @@
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h" />
     <ClInclude Include="..\Addictol\Include\AdAllocator.h" />
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
+    <ClInclude Include="..\Addictol\Include\AdZlibInflate.h" />
     <ClInclude Include="..\Addictol\Include\AdGameUtils.h" />
     <ClInclude Include="..\Addictol\Include\AdMemoryTracer.h" />
     <ClInclude Include="..\Addictol\Include\AdModule.h" />
