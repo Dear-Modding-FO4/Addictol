@@ -79,9 +79,6 @@
     <ClCompile Include="..\Addictol\Source\AdModuleDefender.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdBinkXAudio29.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>

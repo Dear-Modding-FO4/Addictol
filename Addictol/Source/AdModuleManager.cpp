@@ -348,8 +348,18 @@ namespace Addictol
 		{
 			auto& mod = it.second;
 			if (mod->HasListener(a_msg->type))
+			{
+				if (a_msg->type == F4SE::MessagingInterface::kPostLoadGame && 
+					!reinterpret_cast<bool>(a_msg->data))
+				{
+					// Data is a bool that is false if the game isn't actually loaded due to
+					// missing mods or other messages
+					continue;
+				}
+
 				if (!SafeListenerMod(mod, a_msg))
 					REX::ERROR("Module \"{}\": fatal listener (msg_type: {})"sv, mod->GetName(), g_msgName[a_msg->type]);
+			}
 		}
 	}
 
