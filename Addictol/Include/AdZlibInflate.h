@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <initializer_list>
 #include <array>
 #include <atomic>
 #include <cstddef>
@@ -9,30 +10,30 @@
 
 namespace Addictol::ZlibInflate
 {
-	constexpr std::int32_t Z_STREAM_END = 1;
-	constexpr std::int32_t Z_BLOCK = 5;
-	constexpr std::int32_t Z_TREES = 6;
+	constexpr int32_t Z_STREAM_END		= 1;
+	constexpr int32_t Z_BLOCK			= 5;
+	constexpr int32_t Z_TREES			= 6;
 
-	constexpr std::uint32_t MODE_HEAD = 0;
-	constexpr std::uint32_t MODE_DONE = 0x1C;
-	constexpr std::int32_t DATA_TYPE_DONE = 64;
+	constexpr uint32_t MODE_HEAD		= 0;
+	constexpr uint32_t MODE_DONE		= 0x1C;
+	constexpr int32_t DATA_TYPE_DONE	= 64;
 
 	struct Stream
 	{
-		const std::uint8_t* next_in;
-		std::uint32_t avail_in;
-		std::uint32_t total_in;
-		std::uint8_t* next_out;
-		std::uint32_t avail_out;
-		std::uint32_t total_out;
+		const uint8_t* next_in;
+		uint32_t avail_in;
+		uint32_t total_in;
+		uint8_t* next_out;
+		uint32_t avail_out;
+		uint32_t total_out;
 		const char* msg;
 		void* state;
 		void* zalloc;
 		void* zfree;
 		void* opaque;
-		std::int32_t data_type;
-		std::uint32_t adler;
-		std::uint32_t reserved;
+		int32_t data_type;
+		uint32_t adler;
+		uint32_t reserved;
 	};
 
 	static_assert(offsetof(Stream, next_in) == 0x00);
@@ -49,41 +50,22 @@ namespace Addictol::ZlibInflate
 
 	namespace Contract
 	{
-		constexpr std::size_t MODE_LOAD_OFFSET = 0x78;
-		constexpr std::size_t MODE_BOUNDS_OFFSET = 0xA5;
-		constexpr std::size_t DONE_STORE_OFFSET = 0x1569;
-		constexpr std::size_t RESET_ZERO_OFFSET = 0x1CBE;
-		constexpr std::size_t RESET_STORE_OFFSET = 0x1CE5;
+		inline constexpr size_t MODE_LOAD_OFFSET	= 0x78;
+		inline constexpr size_t MODE_BOUNDS_OFFSET	= 0xA5;
+		inline constexpr size_t DONE_STORE_OFFSET	= 0x1569;
+		inline constexpr size_t RESET_ZERO_OFFSET	= 0x1CBE;
+		inline constexpr size_t RESET_STORE_OFFSET	= 0x1CE5;
 
-		inline constexpr std::array PROLOGUE{
-			std::uint8_t{ 0x89 }, std::uint8_t{ 0x54 }, std::uint8_t{ 0x24 }, std::uint8_t{ 0x10 },
-			std::uint8_t{ 0x48 }, std::uint8_t{ 0x89 }, std::uint8_t{ 0x4C }, std::uint8_t{ 0x24 },
-			std::uint8_t{ 0x08 }, std::uint8_t{ 0x55 }, std::uint8_t{ 0x41 }, std::uint8_t{ 0x54 },
-			std::uint8_t{ 0x41 }, std::uint8_t{ 0x55 }, std::uint8_t{ 0x48 }, std::uint8_t{ 0x8B },
-			std::uint8_t{ 0xEC }, std::uint8_t{ 0x48 }, std::uint8_t{ 0x81 }, std::uint8_t{ 0xEC },
-			std::uint8_t{ 0x80 }, std::uint8_t{ 0x00 }, std::uint8_t{ 0x00 }, std::uint8_t{ 0x00 },
-			std::uint8_t{ 0x4C }, std::uint8_t{ 0x8B }, std::uint8_t{ 0xE1 }, std::uint8_t{ 0x48 },
-			std::uint8_t{ 0x85 }, std::uint8_t{ 0xC9 }
-		};
-		inline constexpr std::array MODE_LOAD{
-			std::uint8_t{ 0x41 }, std::uint8_t{ 0x8B }, std::uint8_t{ 0x45 }, std::uint8_t{ 0x00 }
-		};
-		inline constexpr std::array MODE_BOUNDS{
-			std::uint8_t{ 0x83 }, std::uint8_t{ 0xF8 }, std::uint8_t{ 0x1E }
-		};
-		inline constexpr std::array DONE_STORE{
-			std::uint8_t{ 0x41 }, std::uint8_t{ 0xC7 }, std::uint8_t{ 0x45 }, std::uint8_t{ 0x00 },
-			std::uint8_t{ 0x1C }, std::uint8_t{ 0x00 }, std::uint8_t{ 0x00 }, std::uint8_t{ 0x00 }
-		};
-		inline constexpr std::array RESET_ZERO{
-			std::uint8_t{ 0x45 }, std::uint8_t{ 0x33 }, std::uint8_t{ 0xC0 }
-		};
-		inline constexpr std::array RESET_STORE{
-			std::uint8_t{ 0x4C }, std::uint8_t{ 0x89 }, std::uint8_t{ 0x02 },
-			std::uint8_t{ 0x44 }, std::uint8_t{ 0x89 }, std::uint8_t{ 0x42 }, std::uint8_t{ 0x0C }
-		};
+		inline constexpr std::initializer_list<uint8_t> PROLOGUE		{ 0x89, 0x54, 0x24, 0x10, 0x48, 0x89, 0x4C, 0x24,
+			0x08, 0x55, 0x41, 0x54, 0x41, 0x55, 0x48, 0x8B, 0xEC, 0x48, 0x81, 0xEC, 0x80, 0x00, 0x00, 0x00, 0x4C, 0x8B,
+			0xE1, 0x48, 0x85, 0xC9 };
+		inline constexpr std::initializer_list<uint8_t> MODE_LOAD		{ 0x41, 0x8B, 0x45, 0x00 };
+		inline constexpr std::initializer_list<uint8_t> MODE_BOUNDS		{ 0x83, 0xF8, 0x1E };
+		inline constexpr std::initializer_list<uint8_t> DONE_STORE		{ 0x41, 0xC7, 0x45, 0x00, 0x1C, 0x00, 0x00, 0x00 };
+		inline constexpr std::initializer_list<uint8_t> RESET_ZERO		{ 0x45, 0x33, 0xC0 };
+		inline constexpr std::initializer_list<uint8_t> RESET_STORE		{ 0x4C, 0x89, 0x02, 0x44, 0x89, 0x42, 0x0C };
 
-		constexpr std::size_t VALIDATION_SIZE = RESET_STORE_OFFSET + RESET_STORE.size();
+		inline constexpr size_t VALIDATION_SIZE = RESET_STORE_OFFSET + RESET_STORE.size();
 	}
 
 	struct ContractValidation
@@ -101,11 +83,7 @@ namespace Addictol::ZlibInflate
 		}
 	};
 
-	template<std::size_t N>
-	[[nodiscard]] inline bool Matches(
-		std::span<const std::uint8_t> a_code,
-		std::size_t a_offset,
-		const std::array<std::uint8_t, N>& a_expected) noexcept
+	[[nodiscard]] inline bool Matches(std::span<const uint8_t> a_code, size_t a_offset, const std::initializer_list<uint8_t>& a_expected) noexcept
 	{
 		return a_offset <= a_code.size() &&
 			a_expected.size() <= a_code.size() - a_offset &&
@@ -113,7 +91,7 @@ namespace Addictol::ZlibInflate
 	}
 
 	[[nodiscard]] inline ContractValidation ValidateContract(
-		std::span<const std::uint8_t> a_code) noexcept
+		std::span<const uint8_t> a_code) noexcept
 	{
 		return {
 			Matches(a_code, 0, Contract::PROLOGUE),
@@ -125,12 +103,12 @@ namespace Addictol::ZlibInflate
 		};
 	}
 
-	[[nodiscard]] inline volatile std::uint32_t* ModePointer(const Stream& a_stream) noexcept
+	[[nodiscard]] inline volatile uint32_t* ModePointer(const Stream& a_stream) noexcept
 	{
-		return static_cast<volatile std::uint32_t*>(a_stream.state);
+		return static_cast<volatile uint32_t*>(a_stream.state);
 	}
 
-	[[nodiscard]] inline volatile std::uint32_t* LastPointer(const Stream& a_stream) noexcept
+	[[nodiscard]] inline volatile uint32_t* LastPointer(const Stream& a_stream) noexcept
 	{
 		return ModePointer(a_stream) + 1;
 	}
@@ -145,12 +123,12 @@ namespace Addictol::ZlibInflate
 		return *ModePointer(*a_stream) == MODE_HEAD;
 	}
 
-	[[nodiscard]] inline std::uint32_t ReadBigEndian32(const std::uint8_t* a_bytes) noexcept
+	[[nodiscard]] inline uint32_t ReadBigEndian32(const uint8_t* a_bytes) noexcept
 	{
-		return (static_cast<std::uint32_t>(a_bytes[0]) << 24) |
-			(static_cast<std::uint32_t>(a_bytes[1]) << 16) |
-			(static_cast<std::uint32_t>(a_bytes[2]) << 8) |
-			static_cast<std::uint32_t>(a_bytes[3]);
+		return (static_cast<uint32_t>(a_bytes[0]) << 24) |
+			(static_cast<uint32_t>(a_bytes[1]) << 16) |
+			(static_cast<uint32_t>(a_bytes[2]) << 8) |
+			static_cast<uint32_t>(a_bytes[3]);
 	}
 
 	[[nodiscard]] inline bool CommitCompletedStream(
@@ -161,7 +139,7 @@ namespace Addictol::ZlibInflate
 	{
 		if (!a_stream || !a_expectedState || a_stream->state != a_expectedState ||
 			!a_stream->next_in || !a_stream->next_out ||
-			a_stream->total_in || a_stream->total_out || a_consumed < sizeof(std::uint32_t) ||
+			a_stream->total_in || a_stream->total_out || a_consumed < sizeof(uint32_t) ||
 			a_consumed > a_stream->avail_in || a_produced > a_stream->avail_out)
 			return false;
 
@@ -169,9 +147,9 @@ namespace Addictol::ZlibInflate
 		if (*mode != MODE_HEAD)
 			return false;
 
-		const auto consumed = static_cast<std::uint32_t>(a_consumed);
-		const auto produced = static_cast<std::uint32_t>(a_produced);
-		const auto adler = ReadBigEndian32(a_stream->next_in + consumed - sizeof(std::uint32_t));
+		const auto consumed = static_cast<uint32_t>(a_consumed);
+		const auto produced = static_cast<uint32_t>(a_produced);
+		const auto adler = ReadBigEndian32(a_stream->next_in + consumed - sizeof(uint32_t));
 
 		a_stream->next_in += consumed;
 		a_stream->avail_in -= consumed;
