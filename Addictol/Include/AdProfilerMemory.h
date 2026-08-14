@@ -8,17 +8,12 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	// MemorySnapshot field mapping (process-level, not per-allocation):
-	//   totalAllocated  = WorkingSetSize     (current physical memory)
-	//   totalFreed      = PagefileUsage      (committed virtual memory)
-	//   peakUsage       = PeakWorkingSetSize (peak physical memory)
-	//   allocationCount = WorkingSetSize delta from baseline (net growth)
 	class ProfilerMemory :
 		public REX::Singleton<ProfilerMemory>
 	{
 		std::size_t m_baselineWorkingSet{ 0 };
-		std::size_t m_baselinePagefile{ 0 };
-		std::size_t m_baselinePeak{ 0 };
+		std::size_t m_baselineCommit{ 0 };
+		std::size_t m_baselinePeakWorkingSet{ 0 };
 		bool m_baselineCaptured{ false };
 
 		ProfilerMemory(const ProfilerMemory&) = delete;

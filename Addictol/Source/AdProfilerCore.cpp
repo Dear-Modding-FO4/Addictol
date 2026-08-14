@@ -459,8 +459,13 @@ namespace Addictol
 		REX::INFO("[Profiler] ===== Memory Usage Report ====="sv);
 		for (const auto& snap : snapshots)
 		{
-			REX::INFO("[Profiler] {:30s} Alloc: {:>10} bytes  Freed: {:>10} bytes  Peak: {:>10} bytes  Count: {}"sv,
-				snap.phaseName, snap.totalAllocated, snap.totalFreed, snap.peakUsage, snap.allocationCount);
+			REX::INFO(
+				"[Profiler] {:30s} Working Set: {:>10} bytes  Commit: {:>10} bytes  Peak Working Set: {:>10} bytes  Working Set Delta: {:>11} bytes"sv,
+				snap.phaseName,
+				snap.workingSetBytes,
+				snap.commitBytes,
+				snap.peakWorkingSetBytes,
+				snap.workingSetDeltaBytes);
 		}
 	}
 

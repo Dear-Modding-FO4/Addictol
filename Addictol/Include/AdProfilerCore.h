@@ -71,10 +71,10 @@ namespace Addictol
 	struct MemorySnapshot
 	{
 		std::string phaseName;
-		std::size_t totalAllocated{ 0 };
-		std::size_t totalFreed{ 0 };
-		std::size_t peakUsage{ 0 };
-		std::size_t allocationCount{ 0 };
+		std::size_t workingSetBytes{ 0 };
+		std::size_t commitBytes{ 0 };
+		std::size_t peakWorkingSetBytes{ 0 };
+		std::int64_t workingSetDeltaBytes{ 0 };
 	};
 
 	struct ProfileMetricEntry

@@ -4,10 +4,24 @@
 #include <Windows.h>
 #include <Psapi.h>
 
+#include <algorithm>
+#include <limits>
+
 #pragma comment(lib, "Psapi.lib")
 
 namespace Addictol
 {
+	[[nodiscard]] static std::int64_t SignedByteDelta(
+		std::size_t a_current,
+		std::size_t a_baseline) noexcept
+	{
+		constexpr auto maxDelta =
+			static_cast<std::size_t>(std::numeric_limits<std::int64_t>::max());
+		if (a_current >= a_baseline)
+			return static_cast<std::int64_t>(std::min(a_current - a_baseline, maxDelta));
+		return -static_cast<std::int64_t>(std::min(a_baseline - a_current, maxDelta));
+	}
+
 	void ProfilerMemory::CaptureBaseline() noexcept
 	{
 		if (!ProfilerCore::GetSingleton()->IsActive())
@@ -24,12 +38,15 @@ namespace Addictol
 		}
 
 		m_baselineWorkingSet = static_cast<std::size_t>(pmc.WorkingSetSize);
-		m_baselinePagefile = static_cast<std::size_t>(pmc.PagefileUsage);
-		m_baselinePeak = static_cast<std::size_t>(pmc.PeakWorkingSetSize);
+		m_baselineCommit = static_cast<std::size_t>(pmc.PagefileUsage);
+		m_baselinePeakWorkingSet = static_cast<std::size_t>(pmc.PeakWorkingSetSize);
 		m_baselineCaptured = true;
 
-		REX::INFO("[Profiler] Memory baseline captured: WS={} bytes, PF={} bytes, Peak={} bytes"sv,
-			m_baselineWorkingSet, m_baselinePagefile, m_baselinePeak);
+		REX::INFO(
+			"[Profiler] Memory baseline captured: working set {} bytes, commit {} bytes, peak working set {} bytes"sv,
+			m_baselineWorkingSet,
+			m_baselineCommit,
+			m_baselinePeakWorkingSet);
 
 		// The baseline is also the zero-delta first snapshot.
 		CaptureSnapshot("Baseline"sv);
@@ -50,21 +67,19 @@ namespace Addictol
 			return;
 		}
 
-		auto currentWS = static_cast<std::size_t>(pmc.WorkingSetSize);
-		auto currentPF = static_cast<std::size_t>(pmc.PagefileUsage);
-		auto currentPeak = static_cast<std::size_t>(pmc.PeakWorkingSetSize);
-
-		// Unsigned deltas clamp working-set shrinkage to zero.
-		std::size_t deltaWS = 0;
-		if (m_baselineCaptured && currentWS > m_baselineWorkingSet)
-			deltaWS = currentWS - m_baselineWorkingSet;
+		const auto workingSetBytes = static_cast<std::size_t>(pmc.WorkingSetSize);
+		const auto commitBytes = static_cast<std::size_t>(pmc.PagefileUsage);
+		const auto peakWorkingSetBytes = static_cast<std::size_t>(pmc.PeakWorkingSetSize);
+		const auto workingSetDeltaBytes = m_baselineCaptured ?
+			SignedByteDelta(workingSetBytes, m_baselineWorkingSet) :
+			0;
 
 		MemorySnapshot snapshot;
-		snapshot.phaseName      = std::string(a_phaseName);
-		snapshot.totalAllocated = currentWS;    // WorkingSetSize     (current physical memory)
-		snapshot.totalFreed     = currentPF;    // PagefileUsage      (committed virtual memory)
-		snapshot.peakUsage      = currentPeak;  // PeakWorkingSetSize (peak physical memory)
-		snapshot.allocationCount = deltaWS;     // WS delta from baseline (net growth in bytes)
+		snapshot.phaseName = std::string(a_phaseName);
+		snapshot.workingSetBytes = workingSetBytes;
+		snapshot.commitBytes = commitBytes;
+		snapshot.peakWorkingSetBytes = peakWorkingSetBytes;
+		snapshot.workingSetDeltaBytes = workingSetDeltaBytes;
 
 		ProfilerCore::GetSingleton()->AddMemorySnapshot(std::move(snapshot));
 	}
