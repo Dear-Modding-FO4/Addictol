@@ -257,7 +257,7 @@ namespace Addictol
 		}.address() : 0;
 
 		const auto code = std::span{
-			reinterpret_cast<const std::uint8_t*>(compileFilesAddr),
+			reinterpret_cast<const uint8_t*>(compileFilesAddr),
 			target.signature.size()
 		};
 		REX::INFO(
@@ -286,7 +286,7 @@ namespace Addictol
 				constructTarget.id,
 				constructAddr);
 			const auto constructCode = std::span{
-				reinterpret_cast<const std::uint8_t*>(constructAddr),
+				reinterpret_cast<const uint8_t*>(constructAddr),
 				constructTarget.signatureSize
 			};
 			if (!ESPSubHooks::Matches(constructCode, constructTarget))
@@ -307,7 +307,7 @@ namespace Addictol
 				initTarget.id,
 				initAddr);
 			const auto initCode = std::span{
-				reinterpret_cast<const std::uint8_t*>(initAddr),
+				reinterpret_cast<const uint8_t*>(initAddr),
 				initTarget.signatureSize
 			};
 			if (!ESPSubHooks::Matches(initCode, initTarget))

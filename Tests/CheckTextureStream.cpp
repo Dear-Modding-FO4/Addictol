@@ -13,26 +13,26 @@ namespace
 
 	struct StreamFixture
 	{
-		static constexpr std::size_t kChunks = 4;
+		static constexpr size_t kChunks = 4;
 
 		std::array<ChunkDesc, kChunks> chunks{};
-		std::array<std::uint32_t, kChunks> nominal{};
-		std::vector<std::uint8_t> compressed;
+		std::array<uint32_t, kChunks> nominal{};
+		std::vector<uint8_t> compressed;
 		std::vector<std::byte> destination;
-		std::array<std::uint32_t, 2> engineState{ ZlibInflate::MODE_HEAD, 0 };
-		std::uintptr_t vtable{ 0x140ABCDE };
+		std::array<uint32_t, 2> engineState{ ZlibInflate::MODE_HEAD, 0 };
+		uintptr_t vtable{ 0x140ABCDE };
 		Detail detail{};
 		ResidentState resident{};
 		Stream stream{};
 
 		StreamFixture()
 		{
-			std::uint32_t inputTotal = 0;
-			std::uint32_t outputTotal = 0;
-			for (std::size_t index = 0; index < kChunks; ++index)
+			uint32_t inputTotal = 0;
+			uint32_t outputTotal = 0;
+			for (size_t index = 0; index < kChunks; ++index)
 			{
-				chunks[index].compressedSize = static_cast<std::uint32_t>(16 + index * 4);
-				chunks[index].uncompressedSize = static_cast<std::uint32_t>(64 + index * 32);
+				chunks[index].compressedSize = static_cast<uint32_t>(16 + index * 4);
+				chunks[index].uncompressedSize = static_cast<uint32_t>(64 + index * 32);
 				nominal[index] = chunks[index].uncompressedSize;
 				inputTotal += chunks[index].compressedSize;
 				outputTotal += nominal[index];
@@ -61,9 +61,9 @@ namespace
 		// The resident buffer holds only the selected members, starting at the base.
 		void LayoutMembers() noexcept
 		{
-			std::fill(compressed.begin(), compressed.end(), std::uint8_t{ 0 });
-			std::uint32_t offset = 0;
-			for (std::uint32_t index = stream.first; index <= stream.last; ++index)
+			std::fill(compressed.begin(), compressed.end(), uint8_t{ 0 });
+			uint32_t offset = 0;
+			for (uint32_t index = stream.first; index <= stream.last; ++index)
 			{
 				compressed[offset] = 0x78;
 				compressed[offset + 1] = 0x9C;
@@ -71,7 +71,7 @@ namespace
 			}
 		}
 
-		void SetFirst(std::uint32_t a_first) noexcept
+		void SetFirst(uint32_t a_first) noexcept
 		{
 			stream.first = a_first;
 			LayoutMembers();
@@ -85,22 +85,22 @@ namespace
 
 	struct CallerFixture
 	{
-		std::vector<std::uint8_t> code;
-		std::uintptr_t root{ 0 };
-		std::uintptr_t seam{ 0 };
+		std::vector<uint8_t> code;
+		uintptr_t root{ 0 };
+		uintptr_t seam{ 0 };
 
-		explicit CallerFixture(const CallerSignature& a_signature, std::int32_t a_displacement)
+		explicit CallerFixture(const CallerSignature& a_signature, int32_t a_displacement)
 		{
 			code.assign(0x180, 0xCC);
-			root = reinterpret_cast<std::uintptr_t>(code.data());
+			root = reinterpret_cast<uintptr_t>(code.data());
 			std::memcpy(code.data() + a_signature.preOffset, a_signature.pre.data(), a_signature.pre.size());
 			std::memcpy(code.data() + a_signature.returnOffset, a_signature.post.data(), a_signature.post.size());
 			code[a_signature.callOffset] = 0xE8;
-			for (std::size_t byte = 0; byte < sizeof(a_displacement); ++byte)
+			for (size_t byte = 0; byte < sizeof(a_displacement); ++byte)
 				code[a_signature.callOffset + 1 + byte] =
-					static_cast<std::uint8_t>((static_cast<std::uint32_t>(a_displacement) >> (8 * byte)) & 0xFF);
+					static_cast<uint8_t>((static_cast<uint32_t>(a_displacement) >> (8 * byte)) & 0xFF);
 			seam = root + a_signature.callOffset + 5 +
-				static_cast<std::uintptr_t>(static_cast<std::intptr_t>(a_displacement));
+				static_cast<uintptr_t>(static_cast<std::intptr_t>(a_displacement));
 		}
 	};
 }
@@ -166,8 +166,8 @@ namespace vmm_tests
 				"the overwritten byte counts changed");
 
 			// Both overwrites must land on register-only instructions, never on a displacement.
-			const std::array<std::uint8_t, 5> modernOverwrite{ 0x40, 0x53, 0x57, 0x41, 0x56 };
-			const std::array<std::uint8_t, 7> ogOverwrite{ 0x48, 0x8B, 0x41, 0x18, 0x48, 0x85, 0xC0 };
+			const std::array<uint8_t, 5> modernOverwrite{ 0x40, 0x53, 0x57, 0x41, 0x56 };
+			const std::array<uint8_t, 7> ogOverwrite{ 0x48, 0x8B, 0x41, 0x18, 0x48, 0x85, 0xC0 };
 			require(
 				std::equal(modernOverwrite.begin(), modernOverwrite.end(), Guards::MODERN_ENTRY.begin()),
 				"the AE/NG overwrite prefix changed");
@@ -176,11 +176,11 @@ namespace vmm_tests
 				"the OG overwrite prefix changed");
 
 			// The resident loop must still pin the entry reset of the mutable chunk index.
-			const std::array<std::uint8_t, 7> residentReset{ 0xC7, 0x42, 0x44, 0x00, 0x00, 0x00, 0x00 };
+			const std::array<uint8_t, 7> residentReset{ 0xC7, 0x42, 0x44, 0x00, 0x00, 0x00, 0x00 };
 			require(
 				std::equal(residentReset.begin(), residentReset.end(), Guards::OG_RESIDENT_INNER.begin() + 23),
 				"the OG resident entry reset moved");
-			const std::array<std::uint8_t, 5> modernReset{ 0xC7, 0x41, 0x44, 0x00, 0x00 };
+			const std::array<uint8_t, 5> modernReset{ 0xC7, 0x41, 0x44, 0x00, 0x00 };
 			require(
 				std::equal(modernReset.begin(), modernReset.end(), Guards::MODERN_ENTRY.begin() + 28),
 				"the AE/NG entry reset moved");
@@ -208,7 +208,7 @@ namespace vmm_tests
 				require(control.targetOk, "a negative displacement did not resolve to the seam");
 
 				auto mutated = fixture;
-				mutated.root = reinterpret_cast<std::uintptr_t>(mutated.code.data());
+				mutated.root = reinterpret_cast<uintptr_t>(mutated.code.data());
 				mutated.code[signature.preOffset] ^= 0x01;
 				const auto preBroken = ValidateCallerSite(
 					mutated.code, signature, mutated.root, fixture.seam);
@@ -216,7 +216,7 @@ namespace vmm_tests
 				require(preBroken.postOk, "one mutation invalidated the post-call sequence");
 
 				auto postMutated = fixture;
-				postMutated.root = reinterpret_cast<std::uintptr_t>(postMutated.code.data());
+				postMutated.root = reinterpret_cast<uintptr_t>(postMutated.code.data());
 				postMutated.code[signature.returnOffset] ^= 0x01;
 				const auto postBroken = ValidateCallerSite(
 					postMutated.code, signature, postMutated.root, fixture.seam);
@@ -224,7 +224,7 @@ namespace vmm_tests
 				require(postBroken.preOk, "one mutation invalidated the pre-call sequence");
 
 				auto callMutated = fixture;
-				callMutated.root = reinterpret_cast<std::uintptr_t>(callMutated.code.data());
+				callMutated.root = reinterpret_cast<uintptr_t>(callMutated.code.data());
 				callMutated.code[signature.callOffset] = 0xE9;
 				require(
 					!ValidateCallerSite(callMutated.code, signature, callMutated.root, fixture.seam).callOk,
@@ -378,15 +378,15 @@ namespace vmm_tests
 			{
 				// The member pointers are never formed, let alone read, once the range cannot fit.
 				StreamFixture fixture;
-				fixture.resident.compressedBase = reinterpret_cast<const std::uint8_t*>(
-					std::numeric_limits<std::uintptr_t>::max() - 8);
+				fixture.resident.compressedBase = reinterpret_cast<const uint8_t*>(
+					std::numeric_limits<uintptr_t>::max() - 8);
 				require(fixture.Run().reason == DelegateReason::Arithmetic,
 					"an input range that wraps the address space was accepted");
 			}
 			{
 				StreamFixture fixture;
 				auto* destination = reinterpret_cast<std::byte*>(
-					std::numeric_limits<std::uintptr_t>::max() - 16);
+					std::numeric_limits<uintptr_t>::max() - 16);
 				require(Preflight(&fixture.stream, destination, fixture.vtable).reason ==
 						DelegateReason::Arithmetic,
 					"an output range that wraps the address space was accepted");
@@ -443,7 +443,7 @@ namespace vmm_tests
 			require(!ZlibInflate::IsZlibHeader(0x78, 0x20), "a preset dictionary was accepted");
 			require(!ZlibInflate::IsZlibHeader(0x79, 0x9C), "a non-deflate method was accepted");
 			require(!ZlibInflate::IsZlibHeader(0x88, 0x98), "an oversized window was accepted");
-			const std::array<std::uint8_t, 1> tooShort{ 0x78 };
+			const std::array<uint8_t, 1> tooShort{ 0x78 };
 			require(!ZlibInflate::HasZlibHeader(tooShort), "a one byte member was accepted");
 		});
 	}

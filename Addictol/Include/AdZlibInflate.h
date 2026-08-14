@@ -113,7 +113,7 @@ namespace Addictol::ZlibInflate
 		return ModePointer(a_stream) + 1;
 	}
 
-	[[nodiscard]] inline bool CanAttempt(const Stream* a_stream, std::int32_t a_flush) noexcept
+	[[nodiscard]] inline bool CanAttempt(const Stream* a_stream, int32_t a_flush) noexcept
 	{
 		if (!a_stream || !a_stream->state || !a_stream->next_in || !a_stream->next_out ||
 			!a_stream->avail_in || !a_stream->avail_out || a_stream->total_in || a_stream->total_out ||
@@ -147,8 +147,8 @@ namespace Addictol::ZlibInflate
 	[[nodiscard]] inline bool CommitCompletedStream(
 		Stream* a_stream,
 		const void* a_expectedState,
-		std::size_t a_consumed,
-		std::size_t a_produced) noexcept
+		size_t a_consumed,
+		size_t a_produced) noexcept
 	{
 		if (!a_stream || !a_expectedState || a_stream->state != a_expectedState ||
 			!a_stream->next_in || !a_stream->next_out ||

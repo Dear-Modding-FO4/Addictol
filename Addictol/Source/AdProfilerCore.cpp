@@ -29,9 +29,9 @@ namespace Addictol
 
 	[[nodiscard]] static std::string MakeProfilerSessionID() noexcept
 	{
-		const auto wallClock = static_cast<std::uint64_t>(
+		const auto wallClock = static_cast<uint64_t>(
 			std::chrono::system_clock::now().time_since_epoch().count());
-		const auto monotonic = static_cast<std::uint64_t>(
+		const auto monotonic = static_cast<uint64_t>(
 			std::chrono::steady_clock::now().time_since_epoch().count());
 		return std::format(
 			"{:016X}-{:08X}-{:016X}"sv, wallClock, GetCurrentProcessId(), monotonic);
@@ -109,7 +109,7 @@ namespace Addictol
 		a_file << "SummaryStall,,,ClearLoadingTask,"sv
 			<< a_entry.clearLoadingTask.totalMs << ",,"sv
 			<< a_entry.clearLoadingTask.calls << "\n"sv;
-		for (std::size_t phaseIndex = 0; phaseIndex < a_entry.phases.size(); ++phaseIndex)
+		for (size_t phaseIndex = 0; phaseIndex < a_entry.phases.size(); ++phaseIndex)
 		{
 			const auto& metric = a_entry.phases[phaseIndex];
 			if (metric.calls)
@@ -133,7 +133,7 @@ namespace Addictol
 			a_file << "HitchStall,"sv << hitch.sequence << ",,ClearLoadingTask,"sv
 				<< hitch.clearLoadingTask.totalMs << ",,"sv
 				<< hitch.clearLoadingTask.calls << "\n"sv;
-			for (std::size_t phaseIndex = 0; phaseIndex < hitch.phases.size(); ++phaseIndex)
+			for (size_t phaseIndex = 0; phaseIndex < hitch.phases.size(); ++phaseIndex)
 			{
 				const auto& metric = hitch.phases[phaseIndex];
 				if (metric.calls)
@@ -357,8 +357,8 @@ namespace Addictol
 			[](const auto& a, const auto& b) { return a.constructMs > b.constructMs; });
 
 		REX::INFO("[Profiler] --- Top files by load time ---"sv);
-		std::size_t reportCount = std::min(sorted.size(), static_cast<std::size_t>(20));
-		for (std::size_t i = 0; i < reportCount; ++i)
+		size_t reportCount = std::min(sorted.size(), static_cast<size_t>(20));
+		for (size_t i = 0; i < reportCount; ++i)
 		{
 			const auto& e = sorted[i];
 			REX::INFO("[Profiler] [{:3d}] {:40s} {:8.1f} ms (open: {:.1f}, construct: {:.1f}, close: {:.1f})"sv,
@@ -433,7 +433,7 @@ namespace Addictol
 			return;
 
 		REX::INFO("[Profiler] ===== Startup Timeline ====="sv);
-		for (std::size_t i = 0; i < m_startupPhases.size(); ++i)
+		for (size_t i = 0; i < m_startupPhases.size(); ++i)
 		{
 			const auto& phase = m_startupPhases[i];
 			double deltaMs = 0.0;
@@ -586,7 +586,7 @@ namespace Addictol
 			if (file.is_open())
 			{
 				file << "SessionId,Phase,ElapsedMs,DeltaMs\n"sv;
-				for (std::size_t i = 0; i < m_startupPhases.size(); ++i)
+				for (size_t i = 0; i < m_startupPhases.size(); ++i)
 				{
 					const auto& phase = m_startupPhases[i];
 					double delta = (i > 0) ? phase.elapsedFromStartMs - m_startupPhases[i - 1].elapsedFromStartMs : 0.0;

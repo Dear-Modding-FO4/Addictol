@@ -85,12 +85,12 @@ namespace vmm_tests
 
 		runner.test("escape freeze handles frame wrap and lock-pair layout", [] {
 			WatchState state;
-			(void)Observe(state, 0, std::numeric_limits<std::uint32_t>::max(), 0, 0, 100);
+			(void)Observe(state, 0, std::numeric_limits<uint32_t>::max(), 0, 0, 100);
 			(void)Observe(state, 10, 0, 0, 0, 100);
 			require(state.frameHeartbeatReady, "frame wrap did not advance the heartbeat");
 
-			constexpr std::uint64_t pair = 0x00000003F1234568ull;
-			require(PairOwner(pair) == static_cast<std::int32_t>(0xF1234568u), "owner word decoded incorrectly");
+			constexpr uint64_t pair = 0x00000003F1234568ull;
+			require(PairOwner(pair) == static_cast<int32_t>(0xF1234568u), "owner word decoded incorrectly");
 			require(PairCount(pair) == 3, "count word decoded incorrectly");
 		});
 	}

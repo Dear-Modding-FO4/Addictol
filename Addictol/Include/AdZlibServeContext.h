@@ -11,7 +11,7 @@
 namespace Addictol
 {
 	// How an inflate call nested inside a texture request must be served.
-	enum class ZlibServeMode : std::uint8_t
+	enum class ZlibServeMode : uint8_t
 	{
 		Normal,
 		ForceStockObserved,
@@ -20,20 +20,20 @@ namespace Addictol
 
 	struct ZlibReplayChunk
 	{
-		std::uint64_t qpc{ 0 };
-		std::uint32_t consumed{ 0 };
-		std::uint32_t produced{ 0 };
-		std::uint32_t calls{ 0 };
-		std::int32_t zlibResult{ 0 };
+		uint64_t qpc{ 0 };
+		uint32_t consumed{ 0 };
+		uint32_t produced{ 0 };
+		uint32_t calls{ 0 };
+		int32_t zlibResult{ 0 };
 	};
 
 	// Stock replay of one texture request, grouped by the live chunk index the engine is writing.
 	struct ZlibReplayCapture
 	{
 		std::array<ZlibReplayChunk, BA2Profile::kMaxBatchRows> chunks{};
-		const volatile std::uint32_t* liveChunkIndex{ nullptr };
-		std::uint32_t unattributedCalls{ 0 };
-		std::uint32_t overflowedSums{ 0 };
+		const volatile uint32_t* liveChunkIndex{ nullptr };
+		uint32_t unattributedCalls{ 0 };
+		uint32_t overflowedSums{ 0 };
 		bool timingEnabled{ false };
 
 		// Rows are only honest if every replayed byte landed on a known chunk.
@@ -43,10 +43,10 @@ namespace Addictol
 		}
 
 		void Account(
-			std::uint64_t a_qpc,
-			std::uint32_t a_consumed,
-			std::uint32_t a_produced,
-			std::int32_t a_result) noexcept
+			uint64_t a_qpc,
+			uint32_t a_consumed,
+			uint32_t a_produced,
+			int32_t a_result) noexcept
 		{
 			const auto index = liveChunkIndex ? *liveChunkIndex : BA2Profile::kMaxBatchRows;
 			if (index >= chunks.size())
@@ -56,10 +56,10 @@ namespace Addictol
 			}
 
 			auto& chunk = chunks[index];
-			constexpr auto byteLimit = std::numeric_limits<std::uint32_t>::max();
+			constexpr auto byteLimit = std::numeric_limits<uint32_t>::max();
 			if (a_consumed > byteLimit - chunk.consumed ||
 				a_produced > byteLimit - chunk.produced ||
-				chunk.calls == std::numeric_limits<std::uint32_t>::max())
+				chunk.calls == std::numeric_limits<uint32_t>::max())
 			{
 				++overflowedSums;
 				return;
@@ -78,9 +78,9 @@ namespace Addictol
 		ZlibServeMode mode{ ZlibServeMode::Normal };
 		ZlibReplayCapture* capture{ nullptr };
 		BA2Profile::CallerId callerId{ BA2Profile::kCallerNone };
-		std::uint64_t requestSequence{ 0 };
-		std::uint64_t streamAddress{ 0 };
-		std::uint32_t depth{ 0 };
+		uint64_t requestSequence{ 0 };
+		uint64_t streamAddress{ 0 };
+		uint32_t depth{ 0 };
 
 		[[nodiscard]] bool Active() const noexcept { return depth != 0; }
 	};
@@ -104,8 +104,8 @@ namespace Addictol
 		ZlibServeScope(
 			ZlibServeMode a_mode,
 			BA2Profile::CallerId a_callerId,
-			std::uint64_t a_requestSequence,
-			std::uint64_t a_streamAddress,
+			uint64_t a_requestSequence,
+			uint64_t a_streamAddress,
 			ZlibReplayCapture* a_capture = nullptr) noexcept :
 			m_state(CurrentZlibServe()),
 			m_previous(m_state)

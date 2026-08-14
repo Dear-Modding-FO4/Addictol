@@ -16,12 +16,12 @@ namespace Addictol::TextureStream
 	// BA2 DX10 chunk descriptor; uncompressedSize is the exact archive contract for one mip run.
 	struct ChunkDesc
 	{
-		std::uint64_t dataFileOffset;
-		std::uint32_t compressedSize;
-		std::uint32_t uncompressedSize;
-		std::uint16_t mipFirst;
-		std::uint16_t mipLast;
-		std::uint32_t padding;
+		uint64_t dataFileOffset;
+		uint32_t compressedSize;
+		uint32_t uncompressedSize;
+		uint16_t mipFirst;
+		uint16_t mipLast;
+		uint32_t padding;
 	};
 
 	static_assert(offsetof(ChunkDesc, compressedSize) == 0x08);
@@ -30,8 +30,8 @@ namespace Addictol::TextureStream
 
 	struct ResidentState
 	{
-		const std::uint8_t* compressedBase;
-		const std::uint8_t* compressedCursor;
+		const uint8_t* compressedBase;
+		const uint8_t* compressedCursor;
 	};
 
 	static_assert(offsetof(ResidentState, compressedCursor) == 0x08);
@@ -39,8 +39,8 @@ namespace Addictol::TextureStream
 	struct Detail
 	{
 		const void* vtable;
-		std::uint8_t directFlag;
-		std::uint8_t reserved09[7];
+		uint8_t directFlag;
+		uint8_t reserved09[7];
 		ZlibInflate::Stream stream;
 	};
 
@@ -52,18 +52,18 @@ namespace Addictol::TextureStream
 	{
 		Detail* detail;
 		ChunkDesc* chunks;
-		std::uint32_t* nominalSizes;
+		uint32_t* nominalSizes;
 		ResidentState* resident;
 		void* alternate;
 		void* reserved28;
 		std::byte* shadowBuffer;
-		std::uint32_t shadowSize;
-		std::uint32_t reserved3C;
-		std::uint32_t count;
-		std::uint32_t index;
-		std::uint32_t mip;
-		std::uint32_t first;
-		std::uint32_t last;
+		uint32_t shadowSize;
+		uint32_t reserved3C;
+		uint32_t count;
+		uint32_t index;
+		uint32_t mip;
+		uint32_t first;
+		uint32_t last;
 	};
 
 	static_assert(offsetof(Stream, chunks) == 0x08);
@@ -80,15 +80,15 @@ namespace Addictol::TextureStream
 	static_assert(offsetof(Stream, last) == 0x50);
 
 	// The engine tests this mode with a byte compare, so the bytes above it carry no contract.
-	inline constexpr std::uint8_t DETAIL_DIRECT = 1;
-	inline constexpr std::uint32_t MAX_CHUNK_COUNT = 255;
+	inline constexpr uint8_t DETAIL_DIRECT = 1;
+	inline constexpr uint32_t MAX_CHUNK_COUNT = 255;
 
 	// Address Library ids, written per runtime so the intent is explicit at every site.
 	struct RuntimeIds
 	{
-		std::uint64_t og{ 0 };
-		std::uint64_t ng{ 0 };
-		std::uint64_t ae{ 0 };
+		uint64_t og{ 0 };
+		uint64_t ng{ 0 };
+		uint64_t ae{ 0 };
 
 		[[nodiscard]] constexpr bool Shared() const noexcept { return og == ng && ng == ae && og; }
 		[[nodiscard]] constexpr bool OgOnly() const noexcept { return og && !ng && !ae; }
@@ -104,7 +104,7 @@ namespace Addictol::TextureStream
 	namespace Guards
 	{
 		// AE and NG enter the resident path directly; the reset of the mutable index pins the entry.
-		inline constexpr std::array<std::uint8_t, 35> MODERN_ENTRY{
+		inline constexpr std::array<uint8_t, 35> MODERN_ENTRY{
 			0x40, 0x53, 0x57, 0x41, 0x56, 0x48, 0x83, 0xEC, 0x20, 0x4C,
 			0x8B, 0x71, 0x18, 0x48, 0x8B, 0xFA, 0x48, 0x8B, 0xD9, 0x4D,
 			0x85, 0xF6, 0x0F, 0x84, 0x1F, 0x01, 0x00, 0x00, 0xC7, 0x41,
@@ -112,7 +112,7 @@ namespace Addictol::TextureStream
 		};
 
 		// OG enters a dispatcher that tail-jumps to the resident or the alternate loop.
-		inline constexpr std::array<std::uint8_t, 48> OG_DISPATCHER{
+		inline constexpr std::array<uint8_t, 48> OG_DISPATCHER{
 			0x48, 0x8B, 0x41, 0x18, 0x48, 0x85, 0xC0, 0x74, 0x0E, 0x4C,
 			0x8B, 0xC2, 0x48, 0x8B, 0xD1, 0x48, 0x8B, 0xC8, 0xE9, 0x69,
 			0x01, 0x00, 0x00, 0x48, 0x8B, 0x41, 0x20, 0x48, 0x85, 0xC0,
@@ -121,7 +121,7 @@ namespace Addictol::TextureStream
 		};
 
 		// Relocation-free prologue of the OG resident loop, up to its first branch.
-		inline constexpr std::array<std::uint8_t, 59> OG_RESIDENT_INNER{
+		inline constexpr std::array<uint8_t, 59> OG_RESIDENT_INNER{
 			0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10,
 			0x4C, 0x89, 0x44, 0x24, 0x18, 0x56, 0x57, 0x41, 0x56, 0x48,
 			0x83, 0xEC, 0x20, 0xC7, 0x42, 0x44, 0x00, 0x00, 0x00, 0x00,
@@ -131,7 +131,7 @@ namespace Addictol::TextureStream
 		};
 
 		// Relocation-free prologue of the OG alternate loop, up to its first branch.
-		inline constexpr std::array<std::uint8_t, 44> OG_ALTERNATE_INNER{
+		inline constexpr std::array<uint8_t, 44> OG_ALTERNATE_INNER{
 			0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10,
 			0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20,
 			0x41, 0x56, 0x48, 0x83, 0xEC, 0x40, 0x44, 0x8B, 0x4A, 0x4C,
@@ -139,14 +139,14 @@ namespace Addictol::TextureStream
 			0x44, 0x45, 0x85, 0xC9
 		};
 
-		inline constexpr std::size_t MODERN_ENTRY_OVERWRITE = 5;
-		inline constexpr std::size_t OG_DISPATCHER_OVERWRITE = 7;
+		inline constexpr size_t MODERN_ENTRY_OVERWRITE = 5;
+		inline constexpr size_t OG_DISPATCHER_OVERWRITE = 7;
 	}
 
 	[[nodiscard]] inline bool MatchesBytes(
-		std::span<const std::uint8_t> a_code,
-		std::size_t a_offset,
-		std::span<const std::uint8_t> a_expected) noexcept
+		std::span<const uint8_t> a_code,
+		size_t a_offset,
+		std::span<const uint8_t> a_expected) noexcept
 	{
 		return a_offset <= a_code.size() &&
 			a_expected.size() <= a_code.size() - a_offset &&
@@ -157,31 +157,31 @@ namespace Addictol::TextureStream
 	struct CallerSignature
 	{
 		BA2Profile::CallerId caller;
-		std::uint32_t preOffset;
-		std::uint32_t callOffset;
-		std::uint32_t returnOffset;
-		std::span<const std::uint8_t> pre;
-		std::span<const std::uint8_t> post;
+		uint32_t preOffset;
+		uint32_t callOffset;
+		uint32_t returnOffset;
+		std::span<const uint8_t> pre;
+		std::span<const uint8_t> post;
 	};
 
 	namespace CallerBytes
 	{
-		inline constexpr std::array<std::uint8_t, 9> MODERN_PRE{
+		inline constexpr std::array<uint8_t, 9> MODERN_PRE{
 			0x48, 0x8B, 0xF8, 0x48, 0x8B, 0xD0, 0x48, 0x8B, 0xCE
 		};
-		inline constexpr std::array<std::uint8_t, 14> MODERN_STREAMING_POST{
+		inline constexpr std::array<uint8_t, 14> MODERN_STREAMING_POST{
 			0x44, 0x8B, 0x4C, 0x24, 0x68, 0x44, 0x8B, 0xC3, 0x48, 0x8B, 0xD7, 0x48, 0x8B, 0xCD
 		};
-		inline constexpr std::array<std::uint8_t, 12> MODERN_ARRAY_POST{
+		inline constexpr std::array<uint8_t, 12> MODERN_ARRAY_POST{
 			0x45, 0x8B, 0xCE, 0x44, 0x8B, 0xC3, 0x48, 0x8B, 0xD7, 0x48, 0x8B, 0xCD
 		};
-		inline constexpr std::array<std::uint8_t, 9> OG_PRE{
+		inline constexpr std::array<uint8_t, 9> OG_PRE{
 			0x48, 0x8B, 0xCF, 0x48, 0x8B, 0xD0, 0x48, 0x8B, 0xF0
 		};
-		inline constexpr std::array<std::uint8_t, 14> OG_STREAMING_POST{
+		inline constexpr std::array<uint8_t, 14> OG_STREAMING_POST{
 			0x44, 0x8B, 0x4C, 0x24, 0x58, 0x44, 0x8B, 0xC3, 0x48, 0x8B, 0xD6, 0x48, 0x8B, 0xCD
 		};
-		inline constexpr std::array<std::uint8_t, 12> OG_ARRAY_POST{
+		inline constexpr std::array<uint8_t, 12> OG_ARRAY_POST{
 			0x45, 0x8B, 0xCE, 0x44, 0x8B, 0xC3, 0x48, 0x8B, 0xD6, 0x48, 0x8B, 0xCD
 		};
 	}
@@ -219,33 +219,33 @@ namespace Addictol::TextureStream
 
 	// The post bytes reload the return registers without reading AL, so the seam result is unused.
 	[[nodiscard]] inline CallerSiteCheck ValidateCallerSite(
-		std::span<const std::uint8_t> a_code,
+		std::span<const uint8_t> a_code,
 		const CallerSignature& a_signature,
-		std::uintptr_t a_root,
-		std::uintptr_t a_seam) noexcept
+		uintptr_t a_root,
+		uintptr_t a_seam) noexcept
 	{
 		CallerSiteCheck check;
 		check.preOk = MatchesBytes(a_code, a_signature.preOffset, a_signature.pre);
 		check.postOk = MatchesBytes(a_code, a_signature.returnOffset, a_signature.post);
 
-		constexpr std::size_t callSize = 5;
+		constexpr size_t callSize = 5;
 		if (a_signature.callOffset + callSize > a_code.size() ||
 			a_code[a_signature.callOffset] != 0xE8)
 			return check;
 
 		check.callOk = true;
-		std::int32_t displacement = 0;
-		for (std::size_t byte = 0; byte < sizeof(displacement); ++byte)
-			displacement |= static_cast<std::int32_t>(
-				static_cast<std::uint32_t>(a_code[a_signature.callOffset + 1 + byte]) << (8 * byte));
+		int32_t displacement = 0;
+		for (size_t byte = 0; byte < sizeof(displacement); ++byte)
+			displacement |= static_cast<int32_t>(
+				static_cast<uint32_t>(a_code[a_signature.callOffset + 1 + byte]) << (8 * byte));
 
 		const auto target = a_root + a_signature.callOffset + callSize +
-			static_cast<std::uintptr_t>(static_cast<std::intptr_t>(displacement));
+			static_cast<uintptr_t>(static_cast<std::intptr_t>(displacement));
 		check.targetOk = target == a_seam;
 		return check;
 	}
 
-	enum class DelegateReason : std::uint8_t
+	enum class DelegateReason : uint8_t
 	{
 		None = 0,
 		UnknownCaller,
@@ -288,18 +288,18 @@ namespace Addictol::TextureStream
 
 	struct RequestBounds
 	{
-		std::uint16_t first{ 0 };
-		std::uint16_t last{ 0 };
-		std::uint16_t count{ 0 };
-		std::uint16_t descMismatches{ 0 };
-		std::uint32_t inputTotal{ 0 };
-		std::uint32_t outputStart{ 0 };
-		std::uint32_t outputEnd{ 0 };
-		std::uint32_t outputTotal{ 0 };
+		uint16_t first{ 0 };
+		uint16_t last{ 0 };
+		uint16_t count{ 0 };
+		uint16_t descMismatches{ 0 };
+		uint32_t inputTotal{ 0 };
+		uint32_t outputStart{ 0 };
+		uint32_t outputEnd{ 0 };
+		uint32_t outputTotal{ 0 };
 
-		[[nodiscard]] constexpr std::uint16_t ChunkRows() const noexcept
+		[[nodiscard]] constexpr uint16_t ChunkRows() const noexcept
 		{
-			return static_cast<std::uint16_t>(last - first + 1);
+			return static_cast<uint16_t>(last - first + 1);
 		}
 	};
 
@@ -326,19 +326,19 @@ namespace Addictol::TextureStream
 	}
 
 	// Address arithmetic is checked before any member pointer is formed or dereferenced.
-	[[nodiscard]] inline bool PointerRangeFits(const void* a_base, std::uint64_t a_bytes) noexcept
+	[[nodiscard]] inline bool PointerRangeFits(const void* a_base, uint64_t a_bytes) noexcept
 	{
-		const auto base = reinterpret_cast<std::uintptr_t>(a_base);
+		const auto base = reinterpret_cast<uintptr_t>(a_base);
 		return base != 0 &&
-			a_bytes <= static_cast<std::uint64_t>(
-				std::numeric_limits<std::uintptr_t>::max() - base);
+			a_bytes <= static_cast<uint64_t>(
+				std::numeric_limits<uintptr_t>::max() - base);
 	}
 
 	// Everything the one-shot path needs is proven here, before any decode or write.
 	[[nodiscard]] inline PreflightResult Preflight(
 		const Stream* a_stream,
 		const std::byte* a_destination,
-		std::uintptr_t a_expectedDetailVtable) noexcept
+		uintptr_t a_expectedDetailVtable) noexcept
 	{
 		PreflightResult result;
 		if (!a_stream || !a_destination)
@@ -351,7 +351,7 @@ namespace Addictol::TextureStream
 			!a_stream->resident->compressedBase)
 			return { DelegateReason::ChunkMetadata };
 
-		if (reinterpret_cast<std::uintptr_t>(a_stream->detail->vtable) != a_expectedDetailVtable)
+		if (reinterpret_cast<uintptr_t>(a_stream->detail->vtable) != a_expectedDetailVtable)
 			return { DelegateReason::ForeignDetail };
 
 		if (a_stream->detail->directFlag != DETAIL_DIRECT)
@@ -366,16 +366,16 @@ namespace Addictol::TextureStream
 		if (!count || count > MAX_CHUNK_COUNT || first > last || last >= count)
 			return { DelegateReason::ChunkRange };
 
-		result.bounds.first = static_cast<std::uint16_t>(first);
-		result.bounds.last = static_cast<std::uint16_t>(last);
-		result.bounds.count = static_cast<std::uint16_t>(count);
+		result.bounds.first = static_cast<uint16_t>(first);
+		result.bounds.last = static_cast<uint16_t>(last);
+		result.bounds.count = static_cast<uint16_t>(count);
 
-		constexpr std::uint64_t byteLimit{ 0xFFFFFFFFull };
-		std::uint64_t inputTotal = 0;
-		std::uint64_t outputStart = 0;
-		std::uint64_t outputEnd = 0;
-		std::uint64_t outputTotal = 0;
-		for (std::uint32_t chunk = 0; chunk < count; ++chunk)
+		constexpr uint64_t byteLimit{ 0xFFFFFFFFull };
+		uint64_t inputTotal = 0;
+		uint64_t outputStart = 0;
+		uint64_t outputEnd = 0;
+		uint64_t outputTotal = 0;
+		for (uint32_t chunk = 0; chunk < count; ++chunk)
 		{
 			const auto& desc = a_stream->chunks[chunk];
 			const auto nominal = a_stream->nominalSizes[chunk];
@@ -414,8 +414,8 @@ namespace Addictol::TextureStream
 		if (!PointerRangeFits(base, inputTotal) || !PointerRangeFits(a_destination, outputTotal))
 			return { DelegateReason::Arithmetic };
 
-		std::uint32_t memberStart = 0;
-		for (std::uint32_t chunk = first; chunk <= last; ++chunk)
+		uint32_t memberStart = 0;
+		for (uint32_t chunk = first; chunk <= last; ++chunk)
 		{
 			const auto compressedSize = a_stream->chunks[chunk].compressedSize;
 			if (!ZlibInflate::HasZlibHeader({ base + memberStart, compressedSize }))
@@ -427,10 +427,10 @@ namespace Addictol::TextureStream
 			memberStart += compressedSize;
 		}
 
-		result.bounds.inputTotal = static_cast<std::uint32_t>(inputTotal);
-		result.bounds.outputStart = static_cast<std::uint32_t>(outputStart);
-		result.bounds.outputEnd = static_cast<std::uint32_t>(outputEnd);
-		result.bounds.outputTotal = static_cast<std::uint32_t>(outputTotal);
+		result.bounds.inputTotal = static_cast<uint32_t>(inputTotal);
+		result.bounds.outputStart = static_cast<uint32_t>(outputStart);
+		result.bounds.outputEnd = static_cast<uint32_t>(outputEnd);
+		result.bounds.outputTotal = static_cast<uint32_t>(outputTotal);
 		return result;
 	}
 }

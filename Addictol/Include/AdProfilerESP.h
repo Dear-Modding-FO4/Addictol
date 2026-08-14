@@ -15,7 +15,7 @@ namespace Addictol
 	private:
 		bool m_installed{ false };
 		bool m_installAttempted{ false };
-		std::int32_t m_currentFileIndex{ 0 };
+		int32_t m_currentFileIndex{ 0 };
 
 		// Address Library IDs: OG 57137, NG/AE 2192321.
 		static inline bool(__fastcall* OriginalCompileFiles)(void*, bool) = nullptr;

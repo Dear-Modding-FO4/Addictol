@@ -71,8 +71,8 @@ namespace vmm_tests
 
 	struct AllocationCase
 	{
-		std::size_t size;
-		std::uint8_t pool;
+		size_t size;
+		uint8_t pool;
 	};
 
 	inline constexpr std::array allocation_cases{
@@ -109,23 +109,23 @@ namespace vmm_tests
 		AllocationCase{ 16 * 1024 * 1024, 0xFF }
 	};
 
-	inline std::uint8_t pattern_byte(std::size_t index, std::size_t size, std::uint64_t seed)
+	inline uint8_t pattern_byte(size_t index, size_t size, uint64_t seed)
 	{
 		const auto value = seed + size * 17 + index * 131 + (index >> 8) * 29;
-		return static_cast<std::uint8_t>(value ^ (value >> 17) ^ (value >> 41));
+		return static_cast<uint8_t>(value ^ (value >> 17) ^ (value >> 41));
 	}
 
-	inline void fill_pattern(void* pointer, std::size_t size, std::uint64_t seed)
+	inline void fill_pattern(void* pointer, size_t size, uint64_t seed)
 	{
-		auto* bytes = static_cast<std::uint8_t*>(pointer);
-		for (std::size_t index = 0; index < size; ++index)
+		auto* bytes = static_cast<uint8_t*>(pointer);
+		for (size_t index = 0; index < size; ++index)
 			bytes[index] = pattern_byte(index, size, seed);
 	}
 
-	inline bool verify_pattern(const void* pointer, std::size_t size, std::uint64_t seed)
+	inline bool verify_pattern(const void* pointer, size_t size, uint64_t seed)
 	{
-		const auto* bytes = static_cast<const std::uint8_t*>(pointer);
-		for (std::size_t index = 0; index < size; ++index)
+		const auto* bytes = static_cast<const uint8_t*>(pointer);
+		for (size_t index = 0; index < size; ++index)
 		{
 			if (bytes[index] != pattern_byte(index, size, seed))
 				return false;
@@ -135,7 +135,7 @@ namespace vmm_tests
 
 	struct ChildProcessResult
 	{
-		std::uint32_t exit_code;
+		uint32_t exit_code;
 	};
 
 	ChildProcessResult run_child_process(std::string_view argument);

@@ -12,7 +12,7 @@
 
 namespace Addictol
 {
-	enum class ZlibBackendKind : std::uint8_t
+	enum class ZlibBackendKind : uint8_t
 	{
 		Stock,
 		LibDeflate
@@ -56,7 +56,7 @@ namespace Addictol
 	ZlibBackendKind GetSelectedZlibBackendKind() noexcept;
 	void InitializeZlibBackendConfig() noexcept;
 
-	enum class ZlibFallbackReason : std::uint8_t
+	enum class ZlibFallbackReason : uint8_t
 	{
 		None = 0,
 		State = 1,
@@ -94,7 +94,7 @@ namespace Addictol
 		}
 	}
 
-	[[nodiscard]] inline constexpr std::uint32_t ZlibBackendRegistryId(
+	[[nodiscard]] inline constexpr uint32_t ZlibBackendRegistryId(
 		ZlibBackendKind a_kind) noexcept
 	{
 		switch (a_kind)
@@ -108,13 +108,13 @@ namespace Addictol
 		}
 	}
 
-	[[nodiscard]] inline constexpr std::uint32_t ZlibFallbackReasonRegistryId(
+	[[nodiscard]] inline constexpr uint32_t ZlibFallbackReasonRegistryId(
 		ZlibFallbackReason a_reason) noexcept
 	{
-		return static_cast<std::uint32_t>(a_reason);
+		return static_cast<uint32_t>(a_reason);
 	}
 
-	enum class ZlibDecodeStatus : std::uint8_t
+	enum class ZlibDecodeStatus : uint8_t
 	{
 		Success,
 		Failed
@@ -123,17 +123,17 @@ namespace Addictol
 	struct ZlibDecodeResult
 	{
 		ZlibDecodeStatus status{ ZlibDecodeStatus::Failed };
-		std::size_t consumed{ 0 };
-		std::size_t produced{ 0 };
+		size_t consumed{ 0 };
+		size_t produced{ 0 };
 	};
 
 	// libdeflate result codes, mirrored so the classifier stays independent of the codec header.
-	inline constexpr std::uint32_t ZLIB_CODEC_SUCCESS{ 0 };
-	inline constexpr std::uint32_t ZLIB_CODEC_BAD_DATA{ 1 };
-	inline constexpr std::uint32_t ZLIB_CODEC_SHORT_OUTPUT{ 2 };
-	inline constexpr std::uint32_t ZLIB_CODEC_INSUFFICIENT_SPACE{ 3 };
+	inline constexpr uint32_t ZLIB_CODEC_SUCCESS{ 0 };
+	inline constexpr uint32_t ZLIB_CODEC_BAD_DATA{ 1 };
+	inline constexpr uint32_t ZLIB_CODEC_SHORT_OUTPUT{ 2 };
+	inline constexpr uint32_t ZLIB_CODEC_INSUFFICIENT_SPACE{ 3 };
 
-	enum class ZlibExactStatus : std::uint8_t
+	enum class ZlibExactStatus : uint8_t
 	{
 		Success,
 		Capacity,
@@ -143,15 +143,15 @@ namespace Addictol
 
 	struct ZlibExactDecode
 	{
-		std::uint32_t codecResult{ ZLIB_CODEC_BAD_DATA };
-		std::size_t consumed{ 0 };
-		std::size_t produced{ 0 };
+		uint32_t codecResult{ ZLIB_CODEC_BAD_DATA };
+		size_t consumed{ 0 };
+		size_t produced{ 0 };
 	};
 
 	[[nodiscard]] inline constexpr ZlibExactStatus ClassifyExactDecode(
 		const ZlibExactDecode& a_decode,
-		std::size_t a_expectedInput,
-		std::size_t a_expectedOutput) noexcept
+		size_t a_expectedInput,
+		size_t a_expectedOutput) noexcept
 	{
 		switch (a_decode.codecResult)
 		{
@@ -189,18 +189,18 @@ namespace Addictol
 
 	struct ZlibInflateOutcome
 	{
-		std::uint32_t primaryBackendId{ 0 };
+		uint32_t primaryBackendId{ 0 };
 		bool primaryAttempted{ false };
-		std::uint64_t primaryQpc{ 0 };
-		std::uint32_t fallbackBackendId{ 0 };
-		std::uint32_t fallbackReasonId{ 0 };
-		std::uint64_t fallbackQpc{ 0 };
-		std::uint32_t servedBackendId{ 0 };
-		std::int32_t zlibResult{ 0 };
-		std::uint64_t totalQpc{ 0 };
-		std::uint64_t qpcFrequency{ 0 };
-		std::size_t consumed{ 0 };
-		std::size_t produced{ 0 };
+		uint64_t primaryQpc{ 0 };
+		uint32_t fallbackBackendId{ 0 };
+		uint32_t fallbackReasonId{ 0 };
+		uint64_t fallbackQpc{ 0 };
+		uint32_t servedBackendId{ 0 };
+		int32_t zlibResult{ 0 };
+		uint64_t totalQpc{ 0 };
+		uint64_t qpcFrequency{ 0 };
+		size_t consumed{ 0 };
+		size_t produced{ 0 };
 	};
 
 	struct StockZlibBackend
@@ -214,11 +214,11 @@ namespace Addictol
 
 		static bool Prepare() noexcept;
 		static ZlibDecodeResult Decode(
-			std::span<const std::uint8_t> a_input,
-			std::span<std::uint8_t> a_output) noexcept;
+			std::span<const uint8_t> a_input,
+			std::span<uint8_t> a_output) noexcept;
 		static ZlibExactDecode DecodeExact(
-			std::span<const std::uint8_t> a_input,
-			std::span<std::uint8_t> a_output) noexcept;
+			std::span<const uint8_t> a_input,
+			std::span<uint8_t> a_output) noexcept;
 	};
 
 	template<class F>
@@ -235,7 +235,7 @@ namespace Addictol
 	}
 
 	template<class Clock>
-	[[nodiscard]] std::uint64_t ReadZlibQpc(bool a_timingEnabled, Clock& a_clock) noexcept
+	[[nodiscard]] uint64_t ReadZlibQpc(bool a_timingEnabled, Clock& a_clock) noexcept
 	{
 		return a_timingEnabled ? a_clock() : 0;
 	}
@@ -246,7 +246,7 @@ namespace Addictol
 		bool a_isFallback,
 		ZlibFallbackReason a_fallbackReason,
 		ZlibInflate::Stream* a_stream,
-		std::int32_t a_flush,
+		int32_t a_flush,
 		Original& a_original,
 		bool a_timingEnabled,
 		Clock& a_clock) noexcept
@@ -280,10 +280,10 @@ namespace Addictol
 	template<class Backend, class Original, class Clock>
 	ZlibInflateOutcome ServeZlib(
 		ZlibInflate::Stream* a_stream,
-		std::int32_t a_flush,
+		int32_t a_flush,
 		Original&& a_original,
 		bool a_timingEnabled,
-		std::uint64_t a_qpcFrequency,
+		uint64_t a_qpcFrequency,
 		Clock&& a_clock) noexcept
 	{
 		ZlibInflateOutcome outcome{};

@@ -64,7 +64,7 @@ namespace Addictol
 		// NG ID is reused on AE, so the trailing slot inherits 2205365 automatically.
 		auto quitTarget = REL::Relocation{ REL::ID{ 1497968, 2205365 } };
 		REL::WriteSafeFill(quitTarget.address(), REL::INT3, 0x29);
-		RELEX::DetourJump(quitTarget.address(), reinterpret_cast<std::uintptr_t>(QuitGame));
+		RELEX::DetourJump(quitTarget.address(), reinterpret_cast<uintptr_t>(QuitGame));
 
 		return true;
 	}

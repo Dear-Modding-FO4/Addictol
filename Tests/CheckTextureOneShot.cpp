@@ -10,9 +10,9 @@ namespace
 	using namespace Addictol;
 	using namespace Addictol::TextureOneShot;
 
-	constexpr std::uint8_t chunk_pattern(std::uint16_t a_chunk, std::size_t a_offset)
+	constexpr uint8_t chunk_pattern(uint16_t a_chunk, size_t a_offset)
 	{
-		return static_cast<std::uint8_t>((a_chunk * 31 + a_offset * 7 + 1) & 0xFF);
+		return static_cast<uint8_t>((a_chunk * 31 + a_offset * 7 + 1) & 0xFF);
 	}
 
 	enum class FaultKind
@@ -30,12 +30,12 @@ namespace
 		bool prepared{ true };
 		int prepareCalls{ 0 };
 		int decodeCalls{ 0 };
-		std::uint16_t faultChunk{ 0xFFFF };
+		uint16_t faultChunk{ 0xFFFF };
 		FaultKind fault{ FaultKind::None };
-		std::vector<std::uint32_t> expectedNominal;
-		std::uint16_t nextChunk{ 0 };
-		std::uint64_t* clock{ nullptr };
-		std::uint64_t decodeTicks{ 0 };
+		std::vector<uint32_t> expectedNominal;
+		uint16_t nextChunk{ 0 };
+		uint64_t* clock{ nullptr };
+		uint64_t decodeTicks{ 0 };
 
 		bool Prepare() noexcept
 		{
@@ -44,8 +44,8 @@ namespace
 		}
 
 		ZlibExactDecode Decode(
-			std::span<const std::uint8_t> a_input,
-			std::span<std::uint8_t> a_output) noexcept
+			std::span<const uint8_t> a_input,
+			std::span<uint8_t> a_output) noexcept
 		{
 			++decodeCalls;
 			const auto chunk = nextChunk++;
@@ -62,14 +62,14 @@ namespace
 				case FaultKind::Capacity:
 					return { ZLIB_CODEC_INSUFFICIENT_SPACE, 0, 0 };
 				case FaultKind::ShortInput:
-					for (std::size_t offset = 0; offset < nominal; ++offset)
+					for (size_t offset = 0; offset < nominal; ++offset)
 						a_output[offset] = chunk_pattern(chunk, offset);
 					return { ZLIB_CODEC_SUCCESS, a_input.size() - 1, nominal };
 				case FaultKind::LongOutput:
 					// The real codec never writes past its bound; it reports insufficient space.
 					if (a_output.size() < nominal + 1u)
 						return { ZLIB_CODEC_INSUFFICIENT_SPACE, 0, 0 };
-					for (std::size_t offset = 0; offset < nominal + 1u; ++offset)
+					for (size_t offset = 0; offset < nominal + 1u; ++offset)
 						a_output[offset] = chunk_pattern(chunk, offset);
 					return { ZLIB_CODEC_SUCCESS, a_input.size(), nominal + 1u };
 				default:
@@ -77,7 +77,7 @@ namespace
 				}
 			}
 
-			for (std::size_t offset = 0; offset < nominal; ++offset)
+			for (size_t offset = 0; offset < nominal; ++offset)
 				a_output[offset] = chunk_pattern(chunk, offset);
 			return { ZLIB_CODEC_SUCCESS, a_input.size(), nominal };
 		}
@@ -85,35 +85,35 @@ namespace
 
 	struct RequestFixture
 	{
-		static constexpr std::uint16_t kChunks = 4;
+		static constexpr uint16_t kChunks = 4;
 
 		std::array<TextureStream::ChunkDesc, kChunks> chunks{};
-		std::array<std::uint32_t, kChunks> nominal{};
-		std::vector<std::uint8_t> compressed;
+		std::array<uint32_t, kChunks> nominal{};
+		std::vector<uint8_t> compressed;
 		std::vector<std::byte> destination;
-		std::array<std::uint32_t, 2> engineState{ ZlibInflate::MODE_HEAD, 0 };
-		std::uintptr_t vtable{ 0x140FEED0 };
+		std::array<uint32_t, 2> engineState{ ZlibInflate::MODE_HEAD, 0 };
+		uintptr_t vtable{ 0x140FEED0 };
 		TextureStream::Detail detail{};
 		TextureStream::ResidentState resident{};
 		TextureStream::Stream stream{};
 		RequestRows rows{};
 		FakeCodec codec{};
-		std::uint64_t clock{ 0 };
+		uint64_t clock{ 0 };
 		int clockReads{ 0 };
 		int fallbackCalls{ 0 };
 		bool fallbackResult{ true };
 		bool breakAttribution{ false };
 		bool replayTimingEnabled{ true };
-		std::uint16_t fallbackFirstServed{ 0 };
+		uint16_t fallbackFirstServed{ 0 };
 
 		RequestFixture()
 		{
-			std::uint32_t inputTotal = 0;
-			std::uint32_t outputTotal = 0;
-			for (std::uint16_t index = 0; index < kChunks; ++index)
+			uint32_t inputTotal = 0;
+			uint32_t outputTotal = 0;
+			for (uint16_t index = 0; index < kChunks; ++index)
 			{
-				chunks[index].compressedSize = static_cast<std::uint32_t>(32 + index * 8);
-				chunks[index].uncompressedSize = static_cast<std::uint32_t>(128 + index * 64);
+				chunks[index].compressedSize = static_cast<uint32_t>(32 + index * 8);
+				chunks[index].uncompressedSize = static_cast<uint32_t>(128 + index * 64);
 				nominal[index] = chunks[index].uncompressedSize;
 				inputTotal += chunks[index].compressedSize;
 				outputTotal += nominal[index];
@@ -142,9 +142,9 @@ namespace
 		// The resident buffer holds only the selected members, starting at the base.
 		void LayoutMembers() noexcept
 		{
-			std::fill(compressed.begin(), compressed.end(), std::uint8_t{ 0 });
-			std::uint32_t offset = 0;
-			for (std::uint32_t index = stream.first; index <= stream.last; ++index)
+			std::fill(compressed.begin(), compressed.end(), uint8_t{ 0 });
+			uint32_t offset = 0;
+			for (uint32_t index = stream.first; index <= stream.last; ++index)
 			{
 				compressed[offset] = 0x78;
 				compressed[offset + 1] = 0x9C;
@@ -152,13 +152,13 @@ namespace
 			}
 		}
 
-		void SetFirst(std::uint32_t a_first) noexcept
+		void SetFirst(uint32_t a_first) noexcept
 		{
 			stream.first = a_first;
 			LayoutMembers();
 		}
 
-		void SetLast(std::uint32_t a_last) noexcept
+		void SetLast(uint32_t a_last) noexcept
 		{
 			stream.last = a_last;
 			LayoutMembers();
@@ -182,13 +182,13 @@ namespace
 			replayTimingEnabled = a_capture.timingEnabled;
 			stream.index = 0;
 			resident.compressedCursor = resident.compressedBase;
-			std::uint32_t outputOffset = 0;
-			for (std::uint16_t index = 0; index < kChunks; ++index)
+			uint32_t outputOffset = 0;
+			for (uint16_t index = 0; index < kChunks; ++index)
 			{
 				if (index >= fallbackFirstServed)
 				{
 					clock += 3;
-					for (std::size_t offset = 0; offset < nominal[index]; ++offset)
+					for (size_t offset = 0; offset < nominal[index]; ++offset)
 						destination[outputOffset + offset] =
 							static_cast<std::byte>(chunk_pattern(index, offset));
 					if (breakAttribution)
@@ -224,10 +224,10 @@ namespace
 
 		[[nodiscard]] bool OutputMatches() const noexcept
 		{
-			std::uint32_t outputOffset = 0;
-			for (std::uint16_t index = 0; index < kChunks; ++index)
+			uint32_t outputOffset = 0;
+			for (uint16_t index = 0; index < kChunks; ++index)
 			{
-				for (std::size_t offset = 0; offset < nominal[index]; ++offset)
+				for (size_t offset = 0; offset < nominal[index]; ++offset)
 				{
 					if (destination[outputOffset + offset] !=
 						static_cast<std::byte>(chunk_pattern(index, offset)))
@@ -238,10 +238,10 @@ namespace
 			return true;
 		}
 
-		[[nodiscard]] std::uint32_t InputTotal() const noexcept
+		[[nodiscard]] uint32_t InputTotal() const noexcept
 		{
-			std::uint32_t total = 0;
-			for (std::uint16_t index = stream.first; index <= stream.last; ++index)
+			uint32_t total = 0;
+			for (uint16_t index = stream.first; index <= stream.last; ++index)
 				total += chunks[index].compressedSize;
 			return total;
 		}
@@ -300,7 +300,7 @@ namespace vmm_tests
 
 			const auto& rows = fixture.rows;
 			require(rows.count == RequestFixture::kChunks, "one row per chunk was not buffered");
-			for (std::uint16_t index = 0; index < rows.count; ++index)
+			for (uint16_t index = 0; index < rows.count; ++index)
 			{
 				const auto& row = rows.rows[index];
 				require(row.observationSiteId == kSiteTextureChunk, "chunk row lost its site");
@@ -329,7 +329,7 @@ namespace vmm_tests
 				"the first chunk row is the request leader");
 			require(rows.rows[0].requestWallQpc >= rows.rows[0].totalQpc,
 				"the request wall clock must cover the leader codec time");
-			for (std::uint16_t index = 1; index < rows.count; ++index)
+			for (uint16_t index = 1; index < rows.count; ++index)
 				require(rows.rows[index].requestWallQpc == 0,
 					"only the leader row carries the request wall clock");
 		});
@@ -349,10 +349,10 @@ namespace vmm_tests
 					fixture.resident.compressedBase + fixture.InputTotal(),
 				"the resident cursor skipped members that were never read");
 			const auto skipped = fixture.nominal[0] + fixture.nominal[1];
-			for (std::size_t offset = 0; offset < skipped; ++offset)
+			for (size_t offset = 0; offset < skipped; ++offset)
 				require(fixture.destination[offset] == std::byte{ 0 },
 					"a partial request wrote over earlier mips");
-			for (std::size_t offset = 0; offset < fixture.nominal[2]; ++offset)
+			for (size_t offset = 0; offset < fixture.nominal[2]; ++offset)
 				require(
 					fixture.destination[skipped + offset] ==
 						static_cast<std::byte>(chunk_pattern(2, offset)),
@@ -360,7 +360,7 @@ namespace vmm_tests
 		});
 
 		runner.test("one-shot rejects an inexact decode and replays the whole request", [] {
-			const auto run = [](FaultKind a_fault, std::uint16_t a_chunk) {
+			const auto run = [](FaultKind a_fault, uint16_t a_chunk) {
 				RequestFixture fixture;
 				fixture.codec.fault = a_fault;
 				fixture.codec.faultChunk = a_chunk;
@@ -417,7 +417,7 @@ namespace vmm_tests
 
 			const auto& rows = fixture.rows;
 			require(rows.count == RequestFixture::kChunks, "the replay changed the row count");
-			for (std::uint16_t index = 0; index < rows.count; ++index)
+			for (uint16_t index = 0; index < rows.count; ++index)
 			{
 				const auto& row = rows.rows[index];
 				require(row.fallbackBackendId == kBackendStockZlib, "a replayed row lost the fallback");
@@ -465,7 +465,7 @@ namespace vmm_tests
 			require(!outcome.oneShot, "a failed request claimed a one-shot decode");
 			require(fixture.rows.count == RequestFixture::kChunks, "the request lost its rows");
 
-			for (std::uint16_t index = 0; index < 2; ++index)
+			for (uint16_t index = 0; index < 2; ++index)
 			{
 				const auto& row = fixture.rows.rows[index];
 				require(row.primaryAttempted &&
@@ -493,7 +493,7 @@ namespace vmm_tests
 			require(outcome.served && !outcome.oneShot, "the engine loop did not serve");
 			require(outcome.reason == ZlibFallbackReason::Allocation, "the allocation failure was lost");
 			require(outcome.evidence.samples == 0, "an unattempted request sampled sizes");
-			for (std::uint16_t index = 0; index < fixture.rows.count; ++index)
+			for (uint16_t index = 0; index < fixture.rows.count; ++index)
 			{
 				const auto& row = fixture.rows.rows[index];
 				require(row.fallbackReasonId == kReasonAllocation,
@@ -612,7 +612,7 @@ namespace vmm_tests
 			require(outcome.reason == ZlibFallbackReason::Capacity,
 				"overproduction past the selected range must be a capacity failure, not a write");
 			require(outcome.evidence.capacityFailures == 1, "the capacity failure was not counted");
-			for (std::size_t offset = trailingStart; offset < fixture.destination.size(); ++offset)
+			for (size_t offset = trailingStart; offset < fixture.destination.size(); ++offset)
 				require(fixture.destination[offset] == std::byte{ 0 },
 					"a chunk wrote past the last selected mip, which the engine loop never rewrites");
 
@@ -622,7 +622,7 @@ namespace vmm_tests
 			require(served.oneShot, "a well behaved partial request was rejected");
 			require(bounded.rows.rows[2].outputBytesAvailable == bounded.nominal[2],
 				"the last selected chunk was offered more room than the engine loop covers");
-			for (std::size_t offset = trailingStart; offset < bounded.destination.size(); ++offset)
+			for (size_t offset = trailingStart; offset < bounded.destination.size(); ++offset)
 				require(bounded.destination[offset] == std::byte{ 0 },
 					"a served request touched mips outside its range");
 		});
@@ -673,12 +673,12 @@ namespace vmm_tests
 
 		runner.test("replay capture refuses to fold calls it cannot attribute", [] {
 			ZlibReplayCapture capture;
-			std::uint32_t liveIndex = 0;
+			uint32_t liveIndex = 0;
 			capture.liveChunkIndex = &liveIndex;
 			capture.Account(1, 1, 1, 1);
 			require(capture.AttributionOk(), "a valid call was called unattributable");
 
-			liveIndex = static_cast<std::uint32_t>(capture.chunks.size());
+			liveIndex = static_cast<uint32_t>(capture.chunks.size());
 			capture.Account(1, 1, 1, 1);
 			require(!capture.AttributionOk(), "an out-of-range chunk index was tolerated");
 
@@ -719,7 +719,7 @@ namespace vmm_tests
 
 			const auto& rows = fixture.rows;
 			require(rows.count == RequestFixture::kChunks, "the request lost its rows");
-			for (std::uint16_t index = 0; index < rows.count; ++index)
+			for (uint16_t index = 0; index < rows.count; ++index)
 			{
 				const auto& row = rows.rows[index];
 				require(!row.primaryAttempted && row.primaryQpc == 0 &&
@@ -736,7 +736,7 @@ namespace vmm_tests
 				"the disagreeing chunk row must name the size mismatch");
 			require((rows.rows[2].evidenceFlags & kEvidenceNominalDescMismatch) != 0,
 				"the disagreeing chunk row lost its descriptor evidence");
-			for (const std::uint16_t sibling : { 0, 1, 3 })
+			for (const uint16_t sibling : { 0, 1, 3 })
 			{
 				require(rows.rows[sibling].fallbackReasonId == kReasonRequestRestart,
 					"a chunk that agreed with its descriptor must report a request restart");
@@ -785,7 +785,7 @@ namespace vmm_tests
 
 		runner.test("replay capture groups stock calls by the live chunk index", [] {
 			ZlibReplayCapture capture;
-			std::uint32_t liveIndex = 0;
+			uint32_t liveIndex = 0;
 			capture.liveChunkIndex = &liveIndex;
 
 			capture.Account(10, 4, 40, 1);

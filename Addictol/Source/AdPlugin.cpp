@@ -25,7 +25,7 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bAdditionalIgnoreCompatibilityChecks{ "Additional"sv, "bIgnoreCompatibilityChecks"sv, false };
 
-	[[nodiscard]] static const char* GetF4SEMessageName(std::uint32_t a_type) noexcept
+	[[nodiscard]] static const char* GetF4SEMessageName(uint32_t a_type) noexcept
 	{
 		switch (a_type)
 		{

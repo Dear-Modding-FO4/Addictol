@@ -11,9 +11,9 @@ namespace Addictol
 	class ProfilerMemory :
 		public REX::Singleton<ProfilerMemory>
 	{
-		std::size_t m_baselineWorkingSet{ 0 };
-		std::size_t m_baselineCommit{ 0 };
-		std::size_t m_baselinePeakWorkingSet{ 0 };
+		size_t m_baselineWorkingSet{ 0 };
+		size_t m_baselineCommit{ 0 };
+		size_t m_baselinePeakWorkingSet{ 0 };
 		bool m_baselineCaptured{ false };
 
 		ProfilerMemory(const ProfilerMemory&) = delete;
@@ -29,6 +29,6 @@ namespace Addictol
 		void CaptureSnapshot(std::string_view a_phaseName) noexcept;
 
 		[[nodiscard]] bool HasBaseline() const noexcept { return m_baselineCaptured; }
-		[[nodiscard]] std::size_t GetBaselineWorkingSet() const noexcept { return m_baselineWorkingSet; }
+		[[nodiscard]] size_t GetBaselineWorkingSet() const noexcept { return m_baselineWorkingSet; }
 	};
 }

@@ -35,7 +35,7 @@ namespace Addictol
 		TInflate OriginalInflate;
 
 		// Set immediately before the first Detours call so a retry can never re-enter patching.
-		enum class PatchState : std::uint8_t
+		enum class PatchState : uint8_t
 		{
 			NotAttempted,
 			Attempted
@@ -43,35 +43,35 @@ namespace Addictol
 
 		PatchState g_patchState{ PatchState::NotAttempted };
 
-		std::uint64_t ReadQpc() noexcept
+		uint64_t ReadQpc() noexcept
 		{
 			LARGE_INTEGER value{};
 			QueryPerformanceCounter(&value);
-			return static_cast<std::uint64_t>(value.QuadPart);
+			return static_cast<uint64_t>(value.QuadPart);
 		}
 
-		std::uint64_t GetQpcFrequency() noexcept
+		uint64_t GetQpcFrequency() noexcept
 		{
 			static const auto frequency = []() noexcept {
 				LARGE_INTEGER value{};
 				return QueryPerformanceFrequency(&value) && value.QuadPart > 0 ?
-					static_cast<std::uint64_t>(value.QuadPart) :
-					std::uint64_t{ 0 };
+					static_cast<uint64_t>(value.QuadPart) :
+					uint64_t{ 0 };
 			}();
 			return frequency;
 		}
 
 		struct AtomicCounters
 		{
-			std::atomic<std::uint64_t> attempted{ 0 };
-			std::atomic<std::uint64_t> succeeded{ 0 };
-			std::atomic<std::uint64_t> rejectedByState{ 0 };
-			std::atomic<std::uint64_t> codecFailed{ 0 };
-			std::atomic<std::uint64_t> commitRejected{ 0 };
-			std::atomic<std::uint64_t> allocationFailed{ 0 };
-			std::atomic<std::uint64_t> servedStock{ 0 };
-			std::atomic<std::uint64_t> servedLibDeflate{ 0 };
-			std::atomic<std::uint64_t> servedUnknown{ 0 };
+			std::atomic<uint64_t> attempted{ 0 };
+			std::atomic<uint64_t> succeeded{ 0 };
+			std::atomic<uint64_t> rejectedByState{ 0 };
+			std::atomic<uint64_t> codecFailed{ 0 };
+			std::atomic<uint64_t> commitRejected{ 0 };
+			std::atomic<uint64_t> allocationFailed{ 0 };
+			std::atomic<uint64_t> servedStock{ 0 };
+			std::atomic<uint64_t> servedLibDeflate{ 0 };
+			std::atomic<uint64_t> servedUnknown{ 0 };
 		};
 
 		AtomicCounters& GetAtomicCounters() noexcept
@@ -82,25 +82,25 @@ namespace Addictol
 
 		struct ThreadCounters
 		{
-			static constexpr std::uint32_t FLUSH_THRESHOLD = 256;
+			static constexpr uint32_t FLUSH_THRESHOLD = 256;
 
-			std::uint64_t attempted{ 0 };
-			std::uint64_t succeeded{ 0 };
-			std::uint64_t rejectedByState{ 0 };
-			std::uint64_t codecFailed{ 0 };
-			std::uint64_t commitRejected{ 0 };
-			std::uint64_t allocationFailed{ 0 };
-			std::uint64_t servedStock{ 0 };
-			std::uint64_t servedLibDeflate{ 0 };
-			std::uint64_t servedUnknown{ 0 };
-			std::uint32_t pending{ 0 };
+			uint64_t attempted{ 0 };
+			uint64_t succeeded{ 0 };
+			uint64_t rejectedByState{ 0 };
+			uint64_t codecFailed{ 0 };
+			uint64_t commitRejected{ 0 };
+			uint64_t allocationFailed{ 0 };
+			uint64_t servedStock{ 0 };
+			uint64_t servedLibDeflate{ 0 };
+			uint64_t servedUnknown{ 0 };
+			uint32_t pending{ 0 };
 
 			~ThreadCounters() noexcept
 			{
 				Flush();
 			}
 
-			void Count(std::uint64_t& a_counter) noexcept
+			void Count(uint64_t& a_counter) noexcept
 			{
 				++a_counter;
 				if (++pending == FLUSH_THRESHOLD)
@@ -192,8 +192,8 @@ namespace Addictol
 
 		void RecordOutcome(
 			const ZlibInflateOutcome& a_outcome,
-			std::uint64_t a_inputBytesAvailable,
-			std::uint64_t a_outputBytesAvailable,
+			uint64_t a_inputBytesAvailable,
+			uint64_t a_outputBytesAvailable,
 			const ZlibServeState& a_serve) noexcept
 		{
 			BA2Profile::CallObservation observation;
@@ -213,15 +213,15 @@ namespace Addictol
 			observation.primaryAttempted = a_outcome.primaryAttempted;
 			observation.observationSiteId = BA2Profile::kSiteInflate;
 			observation.callerId = a_serve.callerId;
-			observation.threadId = static_cast<std::uint32_t>(GetCurrentThreadId());
+			observation.threadId = static_cast<uint32_t>(GetCurrentThreadId());
 			observation.requestSequence = a_serve.requestSequence;
 			observation.streamAddress = a_serve.streamAddress;
 			if (a_outcome.servedBackendId == a_outcome.primaryBackendId)
 			{
 				observation.primaryInputBytesConsumed =
-					static_cast<std::uint32_t>(a_outcome.consumed);
+					static_cast<uint32_t>(a_outcome.consumed);
 				observation.primaryOutputBytesProduced =
-					static_cast<std::uint32_t>(a_outcome.produced);
+					static_cast<uint32_t>(a_outcome.produced);
 			}
 			ProfilerBA2::GetSingleton()->Record(observation);
 		}
@@ -298,7 +298,7 @@ namespace Addictol
 						return Z_STREAM_ERROR;
 					}
 
-					const auto original = [](ZlibInflate::Stream* a_stockStream, std::int32_t a_stockFlush) noexcept {
+					const auto original = [](ZlibInflate::Stream* a_stockStream, int32_t a_stockFlush) noexcept {
 						return OriginalInflate(a_stockStream, a_stockFlush);
 					};
 					const auto clock = []() noexcept { return ReadQpc(); };
@@ -366,7 +366,7 @@ namespace Addictol
 
 		const auto target = REL::ID{ 224011, 2168026 }.address();
 		const auto code = std::span{
-			reinterpret_cast<const std::uint8_t*>(target),
+			reinterpret_cast<const uint8_t*>(target),
 			ZlibInflate::Contract::VALIDATION_SIZE
 		};
 		const auto validation = ZlibInflate::ValidateContract(code);
@@ -404,7 +404,7 @@ namespace Addictol
 		}
 
 		const auto hook = VisitSelectedZlibBackend([]<class Backend>() {
-			return reinterpret_cast<std::uintptr_t>(&Decompression::Selected<Backend>::Inflate);
+			return reinterpret_cast<uintptr_t>(&Decompression::Selected<Backend>::Inflate);
 		});
 		g_patchState = PatchState::Attempted;
 		OriginalInflate = reinterpret_cast<TInflate>(RELEX::DetourJump(target, hook));

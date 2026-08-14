@@ -8,9 +8,9 @@ namespace Addictol
 {
 	struct FrameTick
 	{
-		std::uint64_t sequence;
-		std::uint64_t endQpc;
-		std::uint64_t elapsedQpc;
+		uint64_t sequence;
+		uint64_t endQpc;
+		uint64_t elapsedQpc;
 		double frameMs;
 	};
 

@@ -14,14 +14,14 @@ namespace Addictol::EscapeFreeze
 		bool ownerResultReported{};
 		bool frameSampled{};
 		bool frameHeartbeatReady{};
-		std::int32_t lastOwner{};
-		std::uint32_t lastFrame{};
-		std::uint64_t sampleSequenceStartQpc{};
-		std::uint64_t sampleSequenceStartFrame{};
-		std::uint64_t candidateQpc{};
-		std::uint64_t candidateFrame{};
-		std::uint64_t lastFrameAdvanceQpc{};
-		std::uint64_t lastOwnerCheckQpc{};
+		int32_t lastOwner{};
+		uint32_t lastFrame{};
+		uint64_t sampleSequenceStartQpc{};
+		uint64_t sampleSequenceStartFrame{};
+		uint64_t candidateQpc{};
+		uint64_t candidateFrame{};
+		uint64_t lastFrameAdvanceQpc{};
+		uint64_t lastOwnerCheckQpc{};
 	};
 
 	struct Observation
@@ -32,34 +32,34 @@ namespace Addictol::EscapeFreeze
 		bool rendererResumed{};
 		bool afterForcedRelease{};
 		bool shouldCheckOwner{};
-		std::uint64_t sampleSequenceTicks{};
-		std::uint64_t frameUnchangedTicks{};
+		uint64_t sampleSequenceTicks{};
+		uint64_t frameUnchangedTicks{};
 	};
 
-	[[nodiscard]] constexpr std::uint64_t Elapsed(
-		std::uint64_t a_now,
-		std::uint64_t a_start) noexcept
+	[[nodiscard]] constexpr uint64_t Elapsed(
+		uint64_t a_now,
+		uint64_t a_start) noexcept
 	{
 		return a_now >= a_start ? a_now - a_start : 0;
 	}
 
-	[[nodiscard]] constexpr std::int32_t PairOwner(std::uint64_t a_pair) noexcept
+	[[nodiscard]] constexpr int32_t PairOwner(uint64_t a_pair) noexcept
 	{
-		return static_cast<std::int32_t>(static_cast<std::uint32_t>(a_pair));
+		return static_cast<int32_t>(static_cast<uint32_t>(a_pair));
 	}
 
-	[[nodiscard]] constexpr std::int32_t PairCount(std::uint64_t a_pair) noexcept
+	[[nodiscard]] constexpr int32_t PairCount(uint64_t a_pair) noexcept
 	{
-		return static_cast<std::int32_t>(static_cast<std::uint32_t>(a_pair >> 32));
+		return static_cast<int32_t>(static_cast<uint32_t>(a_pair >> 32));
 	}
 
 	[[nodiscard]] constexpr Observation Observe(
 		WatchState& a_state,
-		std::uint64_t a_now,
-		std::uint32_t a_frame,
-		std::int32_t a_owner,
-		std::int32_t a_count,
-		std::uint64_t a_threshold) noexcept
+		uint64_t a_now,
+		uint32_t a_frame,
+		int32_t a_owner,
+		int32_t a_count,
+		uint64_t a_threshold) noexcept
 	{
 		Observation result;
 		bool frameAdvanced = false;

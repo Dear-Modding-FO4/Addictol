@@ -8,7 +8,7 @@
 
 namespace Addictol::ESPCompileFiles
 {
-	enum class Runtime : std::uint8_t
+	enum class Runtime : uint8_t
 	{
 		OG,
 		NG,
@@ -17,9 +17,9 @@ namespace Addictol::ESPCompileFiles
 
 	struct Target
 	{
-		std::uint64_t id;
+		uint64_t id;
 		std::string_view slot;
-		std::array<std::uint8_t, 16> signature;
+		std::array<uint8_t, 16> signature;
 	};
 
 	inline constexpr std::array<Target, 3> kTargets{ {
@@ -45,11 +45,11 @@ namespace Addictol::ESPCompileFiles
 
 	[[nodiscard]] constexpr const Target& GetTarget(Runtime a_runtime) noexcept
 	{
-		return kTargets[static_cast<std::size_t>(a_runtime)];
+		return kTargets[static_cast<size_t>(a_runtime)];
 	}
 
 	[[nodiscard]] inline bool Matches(
-		std::span<const std::uint8_t> a_code,
+		std::span<const uint8_t> a_code,
 		const Target& a_target) noexcept
 	{
 		return a_code.size() >= a_target.signature.size() &&

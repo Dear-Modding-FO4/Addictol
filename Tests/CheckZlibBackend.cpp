@@ -9,8 +9,8 @@ namespace
 
 	struct State
 	{
-		std::uint32_t mode;
-		std::uint32_t last;
+		uint32_t mode;
+		uint32_t last;
 	};
 
 	struct FakeLibDeflateBackend
@@ -19,8 +19,8 @@ namespace
 		inline static bool prepared = true;
 		inline static int prepareCalls = 0;
 		inline static int decodeCalls = 0;
-		inline static std::uint64_t* qpcValue = nullptr;
-		inline static std::uint64_t prepareQpc = 0;
+		inline static uint64_t* qpcValue = nullptr;
+		inline static uint64_t prepareQpc = 0;
 		inline static ZlibDecodeResult decodeResult{
 			ZlibDecodeStatus::Success, 8, 4
 		};
@@ -34,8 +34,8 @@ namespace
 		}
 
 		static ZlibDecodeResult Decode(
-			std::span<const std::uint8_t>,
-			std::span<std::uint8_t>) noexcept
+			std::span<const uint8_t>,
+			std::span<uint8_t>) noexcept
 		{
 			++decodeCalls;
 			return decodeResult;
@@ -54,10 +54,10 @@ namespace
 
 	struct TestClock
 	{
-		std::uint64_t value{ 0 };
+		uint64_t value{ 0 };
 		int calls{ 0 };
 
-		std::uint64_t operator()() noexcept
+		uint64_t operator()() noexcept
 		{
 			++calls;
 			value += 10;
@@ -67,16 +67,16 @@ namespace
 
 	ZlibInflate::Stream MakeStream(
 		State& a_state,
-		const std::uint8_t* a_input,
-		std::size_t a_inputSize,
-		std::uint8_t* a_output,
-		std::size_t a_outputSize)
+		const uint8_t* a_input,
+		size_t a_inputSize,
+		uint8_t* a_output,
+		size_t a_outputSize)
 	{
 		ZlibInflate::Stream stream{};
 		stream.next_in = a_input;
-		stream.avail_in = static_cast<std::uint32_t>(a_inputSize);
+		stream.avail_in = static_cast<uint32_t>(a_inputSize);
 		stream.next_out = a_output;
-		stream.avail_out = static_cast<std::uint32_t>(a_outputSize);
+		stream.avail_out = static_cast<uint32_t>(a_outputSize);
 		stream.state = &a_state;
 		return stream;
 	}
@@ -112,8 +112,8 @@ namespace vmm_tests
 		});
 
 		runner.test("selected stock delegates without a codec attempt", [] {
-			std::array<std::uint8_t, 8> input{};
-			std::array<std::uint8_t, 8> output{};
+			std::array<uint8_t, 8> input{};
+			std::array<uint8_t, 8> output{};
 			State state{ ZlibInflate::MODE_HEAD, 0 };
 			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
 			int stockCalls = 0;
@@ -122,7 +122,7 @@ namespace vmm_tests
 			const auto outcome = ServeZlib<StockZlibBackend>(
 				&stream,
 				2,
-				[&](ZlibInflate::Stream* a_stream, std::int32_t) noexcept {
+				[&](ZlibInflate::Stream* a_stream, int32_t) noexcept {
 					++stockCalls;
 					a_stream->next_in += 3;
 					a_stream->avail_in -= 3;
@@ -148,10 +148,10 @@ namespace vmm_tests
 		});
 
 		runner.test("libdeflate backend reports a completed serve", [] {
-			const std::array<std::uint8_t, 8> input{
+			const std::array<uint8_t, 8> input{
 				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
 			};
-			std::array<std::uint8_t, 8> output{};
+			std::array<uint8_t, 8> output{};
 			State state{ ZlibInflate::MODE_HEAD, 0 };
 			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
 			int stockCalls = 0;
@@ -161,7 +161,7 @@ namespace vmm_tests
 			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
 				&stream,
 				2,
-				[&](ZlibInflate::Stream*, std::int32_t) noexcept {
+				[&](ZlibInflate::Stream*, int32_t) noexcept {
 					++stockCalls;
 					return 0;
 				},
@@ -184,10 +184,10 @@ namespace vmm_tests
 		});
 
 		runner.test("libdeflate primary timing includes backend preparation", [] {
-			const std::array<std::uint8_t, 8> input{
+			const std::array<uint8_t, 8> input{
 				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
 			};
-			std::array<std::uint8_t, 8> output{};
+			std::array<uint8_t, 8> output{};
 			State state{ ZlibInflate::MODE_HEAD, 0 };
 			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
 			TestClock clock;
@@ -198,7 +198,7 @@ namespace vmm_tests
 			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
 				&stream,
 				2,
-				[](ZlibInflate::Stream*, std::int32_t) noexcept { return 0; },
+				[](ZlibInflate::Stream*, int32_t) noexcept { return 0; },
 				true,
 				1'000'000,
 				[&]() noexcept { return clock(); });
@@ -209,8 +209,8 @@ namespace vmm_tests
 		});
 
 		runner.test("libdeflate state rejection reports stock service", [] {
-			std::array<std::uint8_t, 8> input{};
-			std::array<std::uint8_t, 8> output{};
+			std::array<uint8_t, 8> input{};
+			std::array<uint8_t, 8> output{};
 			State state{ ZlibInflate::MODE_DONE, 1 };
 			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
 			int stockCalls = 0;
@@ -220,7 +220,7 @@ namespace vmm_tests
 			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
 				&stream,
 				2,
-				[&](ZlibInflate::Stream*, std::int32_t) noexcept {
+				[&](ZlibInflate::Stream*, int32_t) noexcept {
 					++stockCalls;
 					return ZlibInflate::Z_STREAM_END;
 				},
@@ -240,10 +240,10 @@ namespace vmm_tests
 		});
 
 		runner.test("libdeflate fallback reasons remain distinct", [] {
-			const std::array<std::uint8_t, 8> input{
+			const std::array<uint8_t, 8> input{
 				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
 			};
-			std::array<std::uint8_t, 8> output{};
+			std::array<uint8_t, 8> output{};
 
 			const auto run = [&](bool a_prepared, ZlibDecodeResult a_decoded) {
 				State state{ ZlibInflate::MODE_HEAD, 0 };
@@ -255,7 +255,7 @@ namespace vmm_tests
 				return ServeZlib<FakeLibDeflateBackend>(
 					&stream,
 					2,
-					[](ZlibInflate::Stream*, std::int32_t) noexcept { return 0; },
+					[](ZlibInflate::Stream*, int32_t) noexcept { return 0; },
 					true,
 					1'000'000,
 					[&]() noexcept { return clock(); });
@@ -284,8 +284,8 @@ namespace vmm_tests
 		});
 
 		runner.test("disabled zlib timing leaves raw QPC fields empty", [] {
-			std::array<std::uint8_t, 8> input{};
-			std::array<std::uint8_t, 8> output{};
+			std::array<uint8_t, 8> input{};
+			std::array<uint8_t, 8> output{};
 			State state{ ZlibInflate::MODE_DONE, 1 };
 			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
 			TestClock clock;
@@ -294,7 +294,7 @@ namespace vmm_tests
 			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
 				&stream,
 				2,
-				[](ZlibInflate::Stream*, std::int32_t) noexcept {
+				[](ZlibInflate::Stream*, int32_t) noexcept {
 					return ZlibInflate::Z_STREAM_END;
 				},
 				false,

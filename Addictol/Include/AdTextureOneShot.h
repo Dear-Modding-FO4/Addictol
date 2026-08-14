@@ -19,17 +19,17 @@ namespace Addictol::TextureOneShot
 	struct RequestIdentity
 	{
 		BA2Profile::CallerId caller{ BA2Profile::kCallerNone };
-		std::uint32_t threadId{ 0 };
-		std::uint64_t sequence{ 0 };
-		std::uint64_t streamAddress{ 0 };
-		std::uint64_t qpcFrequency{ 0 };
+		uint32_t threadId{ 0 };
+		uint64_t sequence{ 0 };
+		uint64_t streamAddress{ 0 };
+		uint64_t qpcFrequency{ 0 };
 	};
 
 	// One row per physical chunk, buffered until the request outcome is known.
 	struct RequestRows
 	{
 		std::array<CallObservation, BA2Profile::kMaxBatchRows> rows{};
-		std::uint16_t count{ 0 };
+		uint16_t count{ 0 };
 
 		[[nodiscard]] std::span<const CallObservation> Admitted() const noexcept
 		{
@@ -39,24 +39,24 @@ namespace Addictol::TextureOneShot
 
 	struct SizeEvidence
 	{
-		std::uint32_t samples{ 0 };
-		std::uint32_t mismatches{ 0 };
-		std::uint32_t descMismatches{ 0 };
-		std::uint32_t capacityFailures{ 0 };
-		std::int64_t minDelta{ 0 };
-		std::int64_t maxDelta{ 0 };
-		std::int64_t firstDelta{ 0 };
-		std::uint32_t firstNominal{ 0 };
-		std::uint32_t firstActual{ 0 };
-		std::uint16_t firstChunk{ 0 };
-		std::uint16_t firstChunkCount{ 0 };
+		uint32_t samples{ 0 };
+		uint32_t mismatches{ 0 };
+		uint32_t descMismatches{ 0 };
+		uint32_t capacityFailures{ 0 };
+		int64_t minDelta{ 0 };
+		int64_t maxDelta{ 0 };
+		int64_t firstDelta{ 0 };
+		uint32_t firstNominal{ 0 };
+		uint32_t firstActual{ 0 };
+		uint16_t firstChunk{ 0 };
+		uint16_t firstChunkCount{ 0 };
 
 		// Positive delta means the archive claimed more than the member decoded to.
 		void Sample(
-			std::uint16_t a_chunk,
-			std::uint16_t a_chunkCount,
-			std::uint32_t a_nominal,
-			std::uint32_t a_actual) noexcept
+			uint16_t a_chunk,
+			uint16_t a_chunkCount,
+			uint32_t a_nominal,
+			uint32_t a_actual) noexcept
 		{
 			++samples;
 			const auto delta = BA2Profile::ObservedSizeDelta(a_nominal, a_actual);
@@ -86,9 +86,9 @@ namespace Addictol::TextureOneShot
 		bool oneShot{ false };
 		bool attributionOk{ true };
 		ZlibFallbackReason reason{ ZlibFallbackReason::None };
-		std::uint16_t failingChunk{ 0 };
-		std::uint16_t chunkRows{ 0 };
-		std::uint64_t decodedBytes{ 0 };
+		uint16_t failingChunk{ 0 };
+		uint16_t chunkRows{ 0 };
+		uint64_t decodedBytes{ 0 };
 		SizeEvidence evidence{};
 	};
 
@@ -97,11 +97,11 @@ namespace Addictol::TextureOneShot
 		inline void SeedRow(
 			CallObservation& a_row,
 			const RequestIdentity& a_identity,
-			std::uint16_t a_chunk,
-			std::uint16_t a_count,
-			std::uint32_t a_compressedSize,
-			std::uint32_t a_nominal,
-			std::uint32_t a_capacity,
+			uint16_t a_chunk,
+			uint16_t a_count,
+			uint32_t a_compressedSize,
+			uint32_t a_nominal,
+			uint32_t a_capacity,
 			bool a_leader,
 			bool a_descMismatch) noexcept
 		{
@@ -174,19 +174,19 @@ namespace Addictol::TextureOneShot
 		auto&& codec = a_codec;
 		auto&& clock = a_clock;
 		auto&& fallback = a_fallback;
-		const auto readQpc = [&]() noexcept -> std::uint64_t {
+		const auto readQpc = [&]() noexcept -> uint64_t {
 			return a_timingEnabled ? clock() : 0;
 		};
 
 		auto* base = a_stream.resident->compressedBase;
-		auto* destination = reinterpret_cast<std::uint8_t*>(a_destination);
+		auto* destination = reinterpret_cast<uint8_t*>(a_destination);
 		const auto requestStart = readQpc();
 
 		if (a_rows)
 		{
 			a_rows->count = outcome.chunkRows;
-			std::uint32_t outputOffset = a_bounds.outputStart;
-			for (std::uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
+			uint32_t outputOffset = a_bounds.outputStart;
+			for (uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
 			{
 				const auto& desc = a_stream.chunks[chunk];
 				const auto nominal = a_stream.nominalSizes[chunk];
@@ -210,7 +210,7 @@ namespace Addictol::TextureOneShot
 		if (ineligible)
 		{
 			reason = ZlibFallbackReason::SizeMismatch;
-			for (std::uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
+			for (uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
 			{
 				if (a_stream.nominalSizes[chunk] != a_stream.chunks[chunk].uncompressedSize)
 				{
@@ -225,9 +225,9 @@ namespace Addictol::TextureOneShot
 		}
 		else
 		{
-			std::uint32_t inputOffset = 0;
-			std::uint32_t outputOffset = a_bounds.outputStart;
-			for (std::uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
+			uint32_t inputOffset = 0;
+			uint32_t outputOffset = a_bounds.outputStart;
+			for (uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
 			{
 				const auto& desc = a_stream.chunks[chunk];
 				const auto nominal = a_stream.nominalSizes[chunk];
@@ -236,8 +236,8 @@ namespace Addictol::TextureOneShot
 
 				const auto start = readQpc();
 				const auto decoded = codec.Decode(
-					std::span<const std::uint8_t>{ base + inputOffset, desc.compressedSize },
-					std::span<std::uint8_t>{ destination + outputOffset, capacity });
+					std::span<const uint8_t>{ base + inputOffset, desc.compressedSize },
+					std::span<uint8_t>{ destination + outputOffset, capacity });
 				const auto end = readQpc();
 				const auto status = ClassifyExactDecode(decoded, desc.compressedSize, nominal);
 				const auto measured = decoded.codecResult == ZLIB_CODEC_SUCCESS;
@@ -247,7 +247,7 @@ namespace Addictol::TextureOneShot
 						chunk,
 						a_bounds.count,
 						nominal,
-						static_cast<std::uint32_t>(decoded.produced));
+						static_cast<uint32_t>(decoded.produced));
 				if (status == ZlibExactStatus::Capacity)
 					++outcome.evidence.capacityFailures;
 
@@ -259,8 +259,8 @@ namespace Addictol::TextureOneShot
 					row.totalQpc = row.primaryQpc;
 					if (measured)
 					{
-						row.primaryInputBytesConsumed = static_cast<std::uint32_t>(decoded.consumed);
-						row.primaryOutputBytesProduced = static_cast<std::uint32_t>(decoded.produced);
+						row.primaryInputBytesConsumed = static_cast<uint32_t>(decoded.consumed);
+						row.primaryOutputBytesProduced = static_cast<uint32_t>(decoded.produced);
 						row.evidenceFlags |= BA2Profile::kEvidenceSizeMeasured;
 						if (decoded.produced != nominal)
 							row.evidenceFlags |= BA2Profile::kEvidenceSizeMismatch;
@@ -315,7 +315,7 @@ namespace Addictol::TextureOneShot
 
 		if (a_rows && a_rows->count)
 		{
-			for (std::uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
+			for (uint16_t chunk = a_bounds.first; chunk <= a_bounds.last; ++chunk)
 			{
 				auto& row = a_rows->rows[chunk - a_bounds.first];
 				const auto rowReason = [&]() noexcept {
@@ -337,7 +337,7 @@ namespace Addictol::TextureOneShot
 		return outcome;
 	}
 
-	enum class InstallState : std::uint8_t
+	enum class InstallState : uint8_t
 	{
 		NotAttempted,
 		Rejected,

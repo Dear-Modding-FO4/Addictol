@@ -23,9 +23,9 @@ namespace Addictol
 	struct RuntimeRowMetadata
 	{
 		std::string_view sessionID;
-		std::uint64_t saveLoadEpoch{ 0 };
-		std::uint64_t monotonicUs{ 0 };
-		std::uint64_t channelSequence{ 0 };
+		uint64_t saveLoadEpoch{ 0 };
+		uint64_t monotonicUs{ 0 };
+		uint64_t channelSequence{ 0 };
 	};
 
 	class RuntimeSessionContext
@@ -33,7 +33,7 @@ namespace Addictol
 		std::chrono::steady_clock::time_point m_startTime;
 		std::string m_sessionID;
 		std::string m_outputDirectory;
-		std::atomic<std::uint64_t> m_saveLoadEpoch{ 0 };
+		std::atomic<uint64_t> m_saveLoadEpoch{ 0 };
 
 	public:
 		void Start(std::string a_sessionID, std::string a_outputDirectory) noexcept
@@ -56,7 +56,7 @@ namespace Addictol
 			return {
 				m_sessionID,
 				m_saveLoadEpoch.load(std::memory_order_acquire),
-				static_cast<std::uint64_t>(elapsed.count()),
+				static_cast<uint64_t>(elapsed.count()),
 				0
 			};
 		}
@@ -116,7 +116,7 @@ namespace Addictol
 			}
 		}
 
-		[[nodiscard]] std::uint64_t GetFailureCount() const noexcept { return m_failures; }
+		[[nodiscard]] uint64_t GetFailureCount() const noexcept { return m_failures; }
 		[[nodiscard]] const std::string& GetPath() const noexcept { return m_path; }
 
 	private:
@@ -169,7 +169,7 @@ namespace Addictol
 		HeaderWriter m_headerWriter;
 		std::string m_path;
 		std::ofstream m_stream;
-		std::uint64_t m_failures{ 0 };
+		uint64_t m_failures{ 0 };
 		bool m_headerWritten{ false };
 	};
 
@@ -182,7 +182,7 @@ namespace Addictol
 
 		RuntimeChannel(
 			RuntimeSessionContext& a_session,
-			std::size_t a_capacity,
+			size_t a_capacity,
 			std::string_view a_fileStem,
 			HeaderWriter a_headerWriter,
 			EntryWriter a_entryWriter) noexcept :
@@ -233,12 +233,12 @@ namespace Addictol
 		}
 
 		RuntimeSessionContext& m_session;
-		std::size_t m_capacity;
+		size_t m_capacity;
 		RuntimeCsvFile m_file;
 		EntryWriter m_entryWriter;
 		std::deque<T> m_entries;
 		std::mutex m_entriesMutex;
 		std::mutex m_streamMutex;
-		std::uint64_t m_nextSequence{ 0 };
+		uint64_t m_nextSequence{ 0 };
 	};
 }

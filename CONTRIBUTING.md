@@ -399,6 +399,10 @@ There is no `.clang-format`, so match the file you are editing.
 
 Tabs for indentation, Allman braces, no enforced line length.
 
+Fixed-width integer types are unqualified: `uint8_t`, `int32_t`, `size_t`, not `std::uint8_t`. Real
+library facilities keep the namespace: `std::span`, `std::array`, `std::initializer_list`,
+`std::atomic`.
+
 Files are prefixed `Ad`, and modules are `AdModule<Name>.h` / `.cpp` declaring `class Module<Name>`
 in `namespace Addictol`. Functions and methods are PascalCase, and hook functions are conventionally
 `HK<OriginalName>`. Parameters take an `a_` prefix, except in a hook or thunk mirroring an external

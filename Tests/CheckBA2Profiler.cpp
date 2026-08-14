@@ -17,7 +17,7 @@ namespace vmm_tests
 		[[nodiscard]] std::vector<std::string> split_columns(std::string_view line)
 		{
 			std::vector<std::string> columns;
-			std::size_t start = 0;
+			size_t start = 0;
 			while (true)
 			{
 				const auto comma = line.find(',', start);
@@ -48,7 +48,7 @@ namespace vmm_tests
 		[[nodiscard]] CallObservation served_call(
 			BackendId served,
 			FallbackReasonId reason,
-			std::uint64_t ticks)
+			uint64_t ticks)
 		{
 			CallObservation observation;
 			observation.primaryBackendId = kBackendLibDeflate;
@@ -73,9 +73,9 @@ namespace vmm_tests
 		}
 
 		[[nodiscard]] CallObservation chunk_call(
-			std::uint16_t chunk,
-			std::uint16_t count,
-			std::uint64_t sequence,
+			uint16_t chunk,
+			uint16_t count,
+			uint64_t sequence,
 			bool leader)
 		{
 			CallObservation observation;
@@ -145,7 +145,7 @@ namespace vmm_tests
 				const auto rows = oversized ?
 					std::span<CallRecord>{} :
 					ReserveRows(arena, cursor, observations.size());
-				for (std::size_t index = 0; index < observations.size(); ++index)
+				for (size_t index = 0; index < observations.size(); ++index)
 				{
 					const auto check = ValidateObservation(
 						observations[index], observations[index].qpcFrequency);
@@ -157,9 +157,9 @@ namespace vmm_tests
 				return rows;
 			}
 
-			[[nodiscard]] std::size_t ChunkOf(const CallRecord& record) const
+			[[nodiscard]] size_t ChunkOf(const CallRecord& record) const
 			{
-				return static_cast<std::size_t>(&record - arena.rows) / kChunkRows;
+				return static_cast<size_t>(&record - arena.rows) / kChunkRows;
 			}
 
 			[[nodiscard]] RowEvidence Evidence() const
@@ -563,7 +563,7 @@ namespace vmm_tests
 			require(lines.size() == 4, "expected a header row and three scope rows");
 			const auto header = split_columns(lines[0]);
 			require(header.size() == kSummaryColumnCount, "summary header column count changed");
-			for (std::size_t index = 1; index < lines.size(); ++index)
+			for (size_t index = 1; index < lines.size(); ++index)
 				require(split_columns(lines[index]).size() == kSummaryColumnCount,
 					"a summary row was ragged");
 
@@ -584,7 +584,7 @@ namespace vmm_tests
 					backendRow[25] == "5" && backendRow[26] == "6" &&
 					backendRow[27] == "7" && backendRow[28] == "8",
 				"backend aggregate fields shifted or lost precision");
-			for (std::size_t index = 1; index < lines.size(); ++index)
+			for (size_t index = 1; index < lines.size(); ++index)
 				require(split_columns(lines[index])[51] == "1",
 					"healthy summary scope reported ReconciliationOk=false");
 		});
@@ -592,10 +592,10 @@ namespace vmm_tests
 		runner.test("BA2 batch admission keeps one request contiguous in one bank", [] {
 			BatchAdmission admission;
 			std::vector<CallObservation> filler;
-			for (std::uint16_t chunk = 0; chunk < 100; ++chunk)
+			for (uint16_t chunk = 0; chunk < 100; ++chunk)
 				filler.push_back(chunk_call(chunk, 100, 6, chunk == 0));
 			std::vector<CallObservation> request;
-			for (std::uint16_t chunk = 0; chunk < 200; ++chunk)
+			for (uint16_t chunk = 0; chunk < 200; ++chunk)
 				request.push_back(chunk_call(chunk, 200, 7, chunk == 0));
 
 			admission.Admit(filler);
@@ -617,8 +617,8 @@ namespace vmm_tests
 
 			BatchAdmission bounded;
 			std::vector<CallObservation> full;
-			for (std::size_t index = 0; index < kMaxBatchRows; ++index)
-				full.push_back(chunk_call(static_cast<std::uint16_t>(index), 256, 9, index == 0));
+			for (size_t index = 0; index < kMaxBatchRows; ++index)
+				full.push_back(chunk_call(static_cast<uint16_t>(index), 256, 9, index == 0));
 			const auto boundedRows = bounded.Admit(full);
 			require(boundedRows.size() == kMaxBatchRows, "a full batch was not admitted contiguously");
 			require(bounded.arena.nextChunk.load() == 1, "a full batch used more than one chunk");
@@ -638,7 +638,7 @@ namespace vmm_tests
 		runner.test("BA2 reconciliation rejects post-admission row identity edits", [] {
 			BatchAdmission admission;
 			std::vector<CallObservation> request;
-			for (std::uint16_t chunk = 0; chunk < 4; ++chunk)
+			for (uint16_t chunk = 0; chunk < 4; ++chunk)
 				request.push_back(chunk_call(chunk, 4, 21, chunk == 0));
 			auto rows = admission.Admit(request);
 			const auto control = admission.Evidence();
@@ -684,7 +684,7 @@ namespace vmm_tests
 
 			rows[1].evidenceFlags |= kEvidenceRequestLeader;
 			rejects("a forged leader row passed reconciliation");
-			rows[1].evidenceFlags &= static_cast<std::uint8_t>(~kEvidenceRequestLeader);
+			rows[1].evidenceFlags &= static_cast<uint8_t>(~kEvidenceRequestLeader);
 
 			rows[1].primaryOutputBytesProduced += 1;
 			rejects("a rewritten decoded size passed reconciliation");

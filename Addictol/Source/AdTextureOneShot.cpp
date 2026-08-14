@@ -35,40 +35,40 @@ namespace Addictol::TextureOneShot
 		using TSeam = bool(__fastcall*)(TextureStream::Stream*, std::byte*) noexcept;
 		using TInner = bool(__fastcall*)(void*, TextureStream::Stream*, std::byte*) noexcept;
 
-		constexpr std::size_t kCallerCodeSize = 0x160;
+		constexpr size_t kCallerCodeSize = 0x160;
 
 		struct Counters
 		{
-			std::atomic<std::uint64_t> requests{ 0 };
-			std::atomic<std::uint64_t> oneShotRequests{ 0 };
-			std::atomic<std::uint64_t> fallbackRequests{ 0 };
-			std::atomic<std::uint64_t> fallbackFailures{ 0 };
-			std::atomic<std::uint64_t> nestedDelegations{ 0 };
-			std::atomic<std::uint64_t> unknownCallerDelegations{ 0 };
-			std::atomic<std::uint64_t> delegations{ 0 };
-			std::atomic<std::uint64_t> chunksObserved{ 0 };
-			std::atomic<std::uint64_t> chunksDecoded{ 0 };
-			std::atomic<std::uint64_t> decodedBytes{ 0 };
-			std::atomic<std::uint64_t> sizeSamples{ 0 };
-			std::atomic<std::uint64_t> sizeMismatches{ 0 };
-			std::atomic<std::int64_t> minSizeDelta{ std::numeric_limits<std::int64_t>::max() };
-			std::atomic<std::int64_t> maxSizeDelta{ std::numeric_limits<std::int64_t>::min() };
-			std::atomic<std::uint64_t> attributionFailures{ 0 };
+			std::atomic<uint64_t> requests{ 0 };
+			std::atomic<uint64_t> oneShotRequests{ 0 };
+			std::atomic<uint64_t> fallbackRequests{ 0 };
+			std::atomic<uint64_t> fallbackFailures{ 0 };
+			std::atomic<uint64_t> nestedDelegations{ 0 };
+			std::atomic<uint64_t> unknownCallerDelegations{ 0 };
+			std::atomic<uint64_t> delegations{ 0 };
+			std::atomic<uint64_t> chunksObserved{ 0 };
+			std::atomic<uint64_t> chunksDecoded{ 0 };
+			std::atomic<uint64_t> decodedBytes{ 0 };
+			std::atomic<uint64_t> sizeSamples{ 0 };
+			std::atomic<uint64_t> sizeMismatches{ 0 };
+			std::atomic<int64_t> minSizeDelta{ std::numeric_limits<int64_t>::max() };
+			std::atomic<int64_t> maxSizeDelta{ std::numeric_limits<int64_t>::min() };
+			std::atomic<uint64_t> attributionFailures{ 0 };
 			std::atomic<bool> attributionWarned{ false };
 			std::atomic<bool> firstMismatchClaimed{ false };
 			std::atomic<bool> firstMismatchPublished{ false };
-			std::atomic<std::int64_t> firstMismatchDelta{ 0 };
-			std::atomic<std::uint32_t> firstMismatchNominal{ 0 };
-			std::atomic<std::uint32_t> firstMismatchActual{ 0 };
-			std::atomic<std::uint32_t> firstMismatchChunk{ 0 };
-			std::atomic<std::uint32_t> firstMismatchChunkCount{ 0 };
-			std::atomic<std::uint64_t> nominalDescMismatches{ 0 };
-			std::atomic<std::uint64_t> zeroCompressedChunks{ 0 };
-			std::atomic<std::uint64_t> badChunkHeaders{ 0 };
-			std::atomic<std::uint64_t> capacityFailures{ 0 };
-			std::atomic<std::uint64_t> rowBufferUnavailable{ 0 };
-			std::array<std::atomic<std::uint64_t>, 16> delegateReasons{};
-			std::array<std::atomic<std::uint64_t>, kKnownReasonCount> fallbackReasons{};
+			std::atomic<int64_t> firstMismatchDelta{ 0 };
+			std::atomic<uint32_t> firstMismatchNominal{ 0 };
+			std::atomic<uint32_t> firstMismatchActual{ 0 };
+			std::atomic<uint32_t> firstMismatchChunk{ 0 };
+			std::atomic<uint32_t> firstMismatchChunkCount{ 0 };
+			std::atomic<uint64_t> nominalDescMismatches{ 0 };
+			std::atomic<uint64_t> zeroCompressedChunks{ 0 };
+			std::atomic<uint64_t> badChunkHeaders{ 0 };
+			std::atomic<uint64_t> capacityFailures{ 0 };
+			std::atomic<uint64_t> rowBufferUnavailable{ 0 };
+			std::array<std::atomic<uint64_t>, 16> delegateReasons{};
+			std::array<std::atomic<uint64_t>, kKnownReasonCount> fallbackReasons{};
 		};
 
 		Counters& GetCounters() noexcept
@@ -78,7 +78,7 @@ namespace Addictol::TextureOneShot
 		}
 
 		// Sentinel seeded extrema need no first-writer special case, so there is no overwrite race.
-		void SampleSizeDelta(Counters& a_counters, std::int64_t a_delta) noexcept
+		void SampleSizeDelta(Counters& a_counters, int64_t a_delta) noexcept
 		{
 			auto minimum = a_counters.minSizeDelta.load(std::memory_order_relaxed);
 			while (a_delta < minimum &&
@@ -112,7 +112,7 @@ namespace Addictol::TextureOneShot
 			a_counters.firstMismatchPublished.store(true, std::memory_order_release);
 		}
 
-		[[nodiscard]] std::uint64_t PerTenThousand(std::uint64_t a_part, std::uint64_t a_whole) noexcept
+		[[nodiscard]] uint64_t PerTenThousand(uint64_t a_part, uint64_t a_whole) noexcept
 		{
 			return a_whole ? (a_part * 10000 + a_whole / 2) / a_whole : 0;
 		}
@@ -138,16 +138,16 @@ namespace Addictol::TextureOneShot
 		};
 
 		thread_local ThreadRowBuffer g_threadRows;
-		thread_local std::uint64_t g_threadRequestSequence{ 0 };
+		thread_local uint64_t g_threadRequestSequence{ 0 };
 
 		InstallState g_installState{ InstallState::NotAttempted };
 		TSeam g_originalSeam{ nullptr };
 		TInner g_ogResident{ nullptr };
 		TInner g_ogAlternate{ nullptr };
-		std::uintptr_t g_seam{ 0 };
-		std::uintptr_t g_detailVtable{ 0 };
-		std::uintptr_t g_streamingReturn{ 0 };
-		std::uintptr_t g_arraySliceReturn{ 0 };
+		uintptr_t g_seam{ 0 };
+		uintptr_t g_detailVtable{ 0 };
+		uintptr_t g_streamingReturn{ 0 };
+		uintptr_t g_arraySliceReturn{ 0 };
 		std::string_view g_runtime;
 		bool g_runtimeIsOG{ false };
 
@@ -161,32 +161,32 @@ namespace Addictol::TextureOneShot
 			static bool Prepare() noexcept { return LibDeflateZlibBackend::Prepare(); }
 
 			static ZlibExactDecode Decode(
-				std::span<const std::uint8_t> a_input,
-				std::span<std::uint8_t> a_output) noexcept
+				std::span<const uint8_t> a_input,
+				std::span<uint8_t> a_output) noexcept
 			{
 				return LibDeflateZlibBackend::DecodeExact(a_input, a_output);
 			}
 		};
 
-		[[nodiscard]] std::uint64_t ReadQpc() noexcept
+		[[nodiscard]] uint64_t ReadQpc() noexcept
 		{
 			LARGE_INTEGER value{};
 			QueryPerformanceCounter(&value);
-			return static_cast<std::uint64_t>(value.QuadPart);
+			return static_cast<uint64_t>(value.QuadPart);
 		}
 
-		[[nodiscard]] std::uint64_t GetQpcFrequency() noexcept
+		[[nodiscard]] uint64_t GetQpcFrequency() noexcept
 		{
 			static const auto frequency = []() noexcept {
 				LARGE_INTEGER value{};
 				return QueryPerformanceFrequency(&value) && value.QuadPart > 0 ?
-					static_cast<std::uint64_t>(value.QuadPart) :
-					std::uint64_t{ 0 };
+					static_cast<uint64_t>(value.QuadPart) :
+					uint64_t{ 0 };
 			}();
 			return frequency;
 		}
 
-		[[nodiscard]] CallerId ClassifyCaller(std::uintptr_t a_returnAddress) noexcept
+		[[nodiscard]] CallerId ClassifyCaller(uintptr_t a_returnAddress) noexcept
 		{
 			if (a_returnAddress == g_streamingReturn)
 				return kCallerStreamingTexture;
@@ -219,7 +219,7 @@ namespace Addictol::TextureOneShot
 				ZlibServeMode::ForceStockObserved,
 				a_caller,
 				++g_threadRequestSequence,
-				reinterpret_cast<std::uint64_t>(a_stream));
+				reinterpret_cast<uint64_t>(a_stream));
 			return CallEngineLoop(a_stream, a_destination);
 		}
 
@@ -227,7 +227,7 @@ namespace Addictol::TextureOneShot
 		{
 			auto& counters = GetCounters();
 			counters.delegations.fetch_add(1, std::memory_order_relaxed);
-			const auto index = static_cast<std::size_t>(a_reason);
+			const auto index = static_cast<size_t>(a_reason);
 			if (index < counters.delegateReasons.size())
 				counters.delegateReasons[index].fetch_add(1, std::memory_order_relaxed);
 		}
@@ -284,7 +284,7 @@ namespace Addictol::TextureOneShot
 			std::byte* a_destination) noexcept
 		{
 			const auto caller = ClassifyCaller(
-				reinterpret_cast<std::uintptr_t>(_ReturnAddress()));
+				reinterpret_cast<uintptr_t>(_ReturnAddress()));
 
 			// Work reached through an already managed request keeps that request's serve rules.
 			if (CurrentZlibServe().Active())
@@ -319,9 +319,9 @@ namespace Addictol::TextureOneShot
 
 			RequestIdentity identity;
 			identity.caller = caller;
-			identity.threadId = static_cast<std::uint32_t>(GetCurrentThreadId());
+			identity.threadId = static_cast<uint32_t>(GetCurrentThreadId());
 			identity.sequence = ++g_threadRequestSequence;
-			identity.streamAddress = reinterpret_cast<std::uint64_t>(a_stream);
+			identity.streamAddress = reinterpret_cast<uint64_t>(a_stream);
 			identity.qpcFrequency = qpcFrequency;
 
 			auto* rows = timingEnabled ? g_threadRows.Acquire() : nullptr;
@@ -366,18 +366,18 @@ namespace Addictol::TextureOneShot
 			}
 		};
 
-		[[nodiscard]] std::span<const std::uint8_t> CodeAt(
-			std::uintptr_t a_address,
-			std::size_t a_size) noexcept
+		[[nodiscard]] std::span<const uint8_t> CodeAt(
+			uintptr_t a_address,
+			size_t a_size) noexcept
 		{
-			return { reinterpret_cast<const std::uint8_t*>(a_address), a_size };
+			return { reinterpret_cast<const uint8_t*>(a_address), a_size };
 		}
 
 		[[nodiscard]] bool ValidateCaller(
-			std::uintptr_t a_root,
+			uintptr_t a_root,
 			const TextureStream::CallerSignature& a_signature,
-			std::uintptr_t a_seam,
-			std::uintptr_t& a_returnAddress,
+			uintptr_t a_seam,
+			uintptr_t& a_returnAddress,
 			std::string_view a_runtime) noexcept
 		{
 			const auto check = TextureStream::ValidateCallerSite(
@@ -449,8 +449,8 @@ namespace Addictol::TextureOneShot
 				TextureStream::Guards::MODERN_ENTRY);
 		}
 
-		std::uintptr_t streamingReturn = 0;
-		std::uintptr_t arraySliceReturn = 0;
+		uintptr_t streamingReturn = 0;
+		uintptr_t arraySliceReturn = 0;
 		validation.streamingCaller = ValidateCaller(
 			streamingRoot, callers[0], seam, streamingReturn, a_runtime);
 		validation.arraySliceCaller = ValidateCaller(
@@ -497,7 +497,7 @@ namespace Addictol::TextureOneShot
 
 		g_installState = InstallState::Attempted;
 		const auto trampoline = RELEX::DetourJump(
-			g_seam, reinterpret_cast<std::uintptr_t>(&TextureSeamHook));
+			g_seam, reinterpret_cast<uintptr_t>(&TextureSeamHook));
 		if (!trampoline)
 		{
 			g_installState = InstallState::Indeterminate;

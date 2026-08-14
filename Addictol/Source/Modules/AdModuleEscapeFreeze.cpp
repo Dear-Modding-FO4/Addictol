@@ -25,51 +25,51 @@ namespace Addictol
 
 	namespace escapeFreezeDetail
 	{
-		constexpr std::int32_t kMinSleepMs = 1;
-		constexpr std::int32_t kMaxSleepMs = 60'000;
-		constexpr std::int32_t kMinLockPolls = 1;
-		constexpr std::int32_t kMaxLockPolls = 1'000'000;
+		constexpr int32_t kMinSleepMs = 1;
+		constexpr int32_t kMaxSleepMs = 60'000;
+		constexpr int32_t kMinLockPolls = 1;
+		constexpr int32_t kMaxLockPolls = 1'000'000;
 
 		struct Counters
 		{
-			std::atomic<std::uint64_t> sampledStallCandidates{};
-			std::atomic<std::uint64_t> forcedOrphanReleases{};
-			std::atomic<std::uint64_t> abortedOrphanReleases{};
-			std::atomic<std::uint64_t> rendererResumptionsWithoutIntervention{};
-			std::atomic<std::uint64_t> rendererResumptionsAfterForcedRelease{};
-			std::atomic<std::uint64_t> healthySampleSequences{};
-			std::atomic<std::uint64_t> corruptCountObservations{};
+			std::atomic<uint64_t> sampledStallCandidates{};
+			std::atomic<uint64_t> forcedOrphanReleases{};
+			std::atomic<uint64_t> abortedOrphanReleases{};
+			std::atomic<uint64_t> rendererResumptionsWithoutIntervention{};
+			std::atomic<uint64_t> rendererResumptionsAfterForcedRelease{};
+			std::atomic<uint64_t> healthySampleSequences{};
+			std::atomic<uint64_t> corruptCountObservations{};
 		};
 
 		struct RuntimeState
 		{
-			std::uint64_t* lockPair{};
-			std::uint32_t* frameCount{};
+			uint64_t* lockPair{};
+			uint32_t* frameCount{};
 			HANDLE wakeEvent{};
 			HANDLE worker{};
 			std::atomic<bool> stopping{};
 			Counters counters;
-			std::uint64_t qpcFrequency{};
-			std::uint64_t thresholdTicks{};
+			uint64_t qpcFrequency{};
+			uint64_t thresholdTicks{};
 			DWORD sleepMs{};
-			std::uint32_t maxLockPolls{};
+			uint32_t maxLockPolls{};
 		};
 
 		struct CounterSnapshot
 		{
-			std::uint64_t sampledStallCandidates{};
-			std::uint64_t forcedOrphanReleases{};
-			std::uint64_t abortedOrphanReleases{};
-			std::uint64_t rendererResumptionsWithoutIntervention{};
-			std::uint64_t rendererResumptionsAfterForcedRelease{};
-			std::uint64_t healthySampleSequences{};
-			std::uint64_t unresolvedCandidates{};
-			std::uint64_t corruptCountObservations{};
+			uint64_t sampledStallCandidates{};
+			uint64_t forcedOrphanReleases{};
+			uint64_t abortedOrphanReleases{};
+			uint64_t rendererResumptionsWithoutIntervention{};
+			uint64_t rendererResumptionsAfterForcedRelease{};
+			uint64_t healthySampleSequences{};
+			uint64_t unresolvedCandidates{};
+			uint64_t corruptCountObservations{};
 		};
 
 		struct LockSnapshot
 		{
-			std::uint64_t pair{};
+			uint64_t pair{};
 			LONG owner{};
 			LONG count{};
 		};
@@ -94,26 +94,26 @@ namespace Addictol
 			DWORD error{};
 		};
 
-		static REL::Relocation<std::int32_t*> g_conditionLockCount{
+		static REL::Relocation<int32_t*> g_conditionLockCount{
 			REL::ID{ 998070, 2692050, 4799342 }
 		};
 		static std::atomic<RuntimeState*> g_runtime;
-		static_assert(sizeof(LONG) == sizeof(std::int32_t));
-		static_assert(sizeof(LONG64) == sizeof(std::uint64_t));
-		static_assert(std::atomic_ref<std::uint32_t>::is_always_lock_free);
-		static_assert(std::atomic_ref<std::uint64_t>::is_always_lock_free);
+		static_assert(sizeof(LONG) == sizeof(int32_t));
+		static_assert(sizeof(LONG64) == sizeof(uint64_t));
+		static_assert(std::atomic_ref<uint32_t>::is_always_lock_free);
+		static_assert(std::atomic_ref<uint64_t>::is_always_lock_free);
 
-		[[nodiscard]] static std::uint32_t ReadFrameCount(
+		[[nodiscard]] static uint32_t ReadFrameCount(
 			const RuntimeState& a_runtime) noexcept
 		{
-			return std::atomic_ref<std::uint32_t>(*a_runtime.frameCount).load(
+			return std::atomic_ref<uint32_t>(*a_runtime.frameCount).load(
 				std::memory_order_relaxed);
 		}
 
 		[[nodiscard]] static LockSnapshot ReadLockSnapshot(
 			const RuntimeState& a_runtime) noexcept
 		{
-			const auto pair = std::atomic_ref<std::uint64_t>(*a_runtime.lockPair).load(
+			const auto pair = std::atomic_ref<uint64_t>(*a_runtime.lockPair).load(
 				std::memory_order_relaxed);
 			return {
 				pair,
@@ -122,30 +122,30 @@ namespace Addictol
 			};
 		}
 
-		[[nodiscard]] static std::uint64_t Counter() noexcept
+		[[nodiscard]] static uint64_t Counter() noexcept
 		{
 			LARGE_INTEGER value{};
 			QueryPerformanceCounter(&value);
-			return static_cast<std::uint64_t>(value.QuadPart);
+			return static_cast<uint64_t>(value.QuadPart);
 		}
 
-		[[nodiscard]] static std::uint64_t Milliseconds(
+		[[nodiscard]] static uint64_t Milliseconds(
 			const RuntimeState& a_runtime,
-			std::uint64_t a_ticks) noexcept
+			uint64_t a_ticks) noexcept
 		{
 			if (!a_runtime.qpcFrequency)
 				return 0;
 
 			const auto seconds = a_ticks / a_runtime.qpcFrequency;
 			const auto remainder = a_ticks % a_runtime.qpcFrequency;
-			if (seconds > std::numeric_limits<std::uint64_t>::max() / 1000)
-				return std::numeric_limits<std::uint64_t>::max();
+			if (seconds > std::numeric_limits<uint64_t>::max() / 1000)
+				return std::numeric_limits<uint64_t>::max();
 			return seconds * 1000 + remainder * 1000 / a_runtime.qpcFrequency;
 		}
 
 		[[nodiscard]] static bool IsAccessibleRange(
 			const void* a_address,
-			std::size_t a_size,
+			size_t a_size,
 			RangeAccess a_access) noexcept
 		{
 			MEMORY_BASIC_INFORMATION memory{};
@@ -168,9 +168,9 @@ namespace Addictol
 			if (a_access == RangeAccess::kWrite ? !writable : !readable)
 				return false;
 
-			const auto start = reinterpret_cast<std::uintptr_t>(a_address);
+			const auto start = reinterpret_cast<uintptr_t>(a_address);
 			const auto end = start + a_size;
-			const auto regionStart = reinterpret_cast<std::uintptr_t>(memory.BaseAddress);
+			const auto regionStart = reinterpret_cast<uintptr_t>(memory.BaseAddress);
 			const auto regionEnd = regionStart + memory.RegionSize;
 			return end >= start && regionEnd >= regionStart &&
 				start >= regionStart && end <= regionEnd;
@@ -251,7 +251,7 @@ namespace Addictol
 					return { OrphanReleaseResult::kOwnerUnknown, openError };
 			}
 
-			const auto observed = static_cast<std::uint64_t>(InterlockedCompareExchange64(
+			const auto observed = static_cast<uint64_t>(InterlockedCompareExchange64(
 				reinterpret_cast<volatile LONG64*>(a_runtime.lockPair),
 				0,
 				static_cast<LONG64>(a_snapshot.pair)));
@@ -264,8 +264,8 @@ namespace Addictol
 			RuntimeState& a_runtime,
 			const EscapeFreeze::WatchState& a_state,
 			const EscapeFreeze::Observation& a_observation,
-			std::uint64_t a_now,
-			std::uint64_t a_frameSequence) noexcept
+			uint64_t a_now,
+			uint64_t a_frameSequence) noexcept
 		{
 			if (!a_observation.rendererResumed)
 				return;
@@ -299,7 +299,7 @@ namespace Addictol
 		static void CheckOrphanedOwner(
 			RuntimeState& a_runtime,
 			EscapeFreeze::WatchState& a_state,
-			std::uint64_t a_now,
+			uint64_t a_now,
 			const LockSnapshot& a_snapshot) noexcept
 		{
 			if (a_state.forcedRelease ||
@@ -322,7 +322,7 @@ namespace Addictol
 					"thread {} at recursion count {}; this intervention is not evidence that "
 					"the renderer resumed. "
 					"forced orphan releases={}, unresolved candidates={}."sv,
-					static_cast<std::uint32_t>(a_snapshot.owner),
+					static_cast<uint32_t>(a_snapshot.owner),
 					a_snapshot.count,
 					stats.forcedOrphanReleases,
 					stats.unresolvedCandidates);
@@ -334,7 +334,7 @@ namespace Addictol
 					REX::WARN(
 						"Escape Freeze: sampled candidate owner thread {} is still alive; "
 						"no forced release was attempted."sv,
-						static_cast<std::uint32_t>(a_snapshot.owner));
+						static_cast<uint32_t>(a_snapshot.owner));
 					a_state.ownerResultReported = true;
 				}
 				break;
@@ -344,7 +344,7 @@ namespace Addictol
 					REX::WARN(
 						"Escape Freeze: could not prove sampled candidate owner thread {} terminated "
 						"(error {}); no forced release was attempted."sv,
-						static_cast<std::uint32_t>(a_snapshot.owner),
+						static_cast<uint32_t>(a_snapshot.owner),
 						attempt.error);
 					a_state.ownerResultReported = true;
 				}
@@ -368,8 +368,8 @@ namespace Addictol
 				a_state,
 				now,
 				frameSequence,
-				static_cast<std::int32_t>(lock.owner),
-				static_cast<std::int32_t>(lock.count),
+				static_cast<int32_t>(lock.owner),
+				static_cast<int32_t>(lock.count),
 				a_runtime.thresholdTicks);
 
 			ReportRendererResumption(a_runtime, a_state, observation, now, frameSequence);
@@ -383,7 +383,7 @@ namespace Addictol
 					"Escape Freeze: condition lock has corrupt negative recursion count {} "
 					"with owner {}; no write was attempted. corrupt count observation {}."sv,
 					lock.count,
-					static_cast<std::uint32_t>(lock.owner),
+					static_cast<uint32_t>(lock.owner),
 					corruptObservation);
 			}
 
@@ -399,7 +399,7 @@ namespace Addictol
 					"Escape Freeze: condition lock was observed nonzero with owner {} at every poll "
 					"for {} ms while renderer frame advanced from {} to {}; "
 					"healthy sampled sequence {}."sv,
-					static_cast<std::uint32_t>(lock.owner),
+					static_cast<uint32_t>(lock.owner),
 					Milliseconds(a_runtime, observation.sampleSequenceTicks),
 					a_state.sampleSequenceStartFrame,
 					frameSequence,
@@ -415,7 +415,7 @@ namespace Addictol
 					"with owner {} at every poll for {} ms (latest recursion count {}), while "
 					"renderer frame {} was unchanged across polls for {} ms. "
 					"sampled candidates={}, unresolved candidates={}."sv,
-					static_cast<std::uint32_t>(lock.owner),
+					static_cast<uint32_t>(lock.owner),
 					Milliseconds(a_runtime, observation.sampleSequenceTicks),
 					lock.count,
 					frameSequence,
@@ -497,11 +497,11 @@ namespace Addictol
 			return true;
 		}
 
-		const auto lockAddress = reinterpret_cast<std::uintptr_t>(g_conditionLockCount.get());
+		const auto lockAddress = reinterpret_cast<uintptr_t>(g_conditionLockCount.get());
 		const auto lockPairAddress = lockAddress - sizeof(LONG);
 		if (lockAddress < sizeof(LONG) ||
 			lockAddress % alignof(LONG) != 0 ||
-			lockPairAddress % std::atomic_ref<std::uint64_t>::required_alignment != 0)
+			lockPairAddress % std::atomic_ref<uint64_t>::required_alignment != 0)
 		{
 			REX::ERROR(
 				"Escape Freeze: condition-lock relocation {:X} is invalid or not atomically aligned."sv,
@@ -509,10 +509,10 @@ namespace Addictol
 			return false;
 		}
 
-		auto lockPair = reinterpret_cast<std::uint64_t*>(lockPairAddress);
+		auto lockPair = reinterpret_cast<uint64_t*>(lockPairAddress);
 		if (!IsAccessibleRange(
 				reinterpret_cast<const void*>(lockPairAddress),
-				sizeof(std::uint64_t),
+				sizeof(uint64_t),
 				RangeAccess::kWrite))
 		{
 			REX::ERROR(
@@ -523,12 +523,12 @@ namespace Addictol
 
 		auto graphicsState = RE::BSGraphics::State::GetSingleton();
 		auto frameCount = graphicsState ? std::addressof(graphicsState->frameCount) : nullptr;
-		const auto frameAddress = reinterpret_cast<std::uintptr_t>(frameCount);
+		const auto frameAddress = reinterpret_cast<uintptr_t>(frameCount);
 		if (!frameAddress ||
-			frameAddress % std::atomic_ref<std::uint32_t>::required_alignment != 0 ||
+			frameAddress % std::atomic_ref<uint32_t>::required_alignment != 0 ||
 			!IsAccessibleRange(
 				reinterpret_cast<const void*>(frameAddress),
-				sizeof(std::uint32_t),
+				sizeof(uint32_t),
 				RangeAccess::kRead))
 		{
 			REX::ERROR(
@@ -565,12 +565,12 @@ namespace Addictol
 
 		runtime->lockPair = lockPair;
 		runtime->frameCount = frameCount;
-		runtime->qpcFrequency = static_cast<std::uint64_t>(frequency.QuadPart);
+		runtime->qpcFrequency = static_cast<uint64_t>(frequency.QuadPart);
 		runtime->sleepMs = static_cast<DWORD>(sleepMs);
-		runtime->maxLockPolls = static_cast<std::uint32_t>(maxLockPolls);
+		runtime->maxLockPolls = static_cast<uint32_t>(maxLockPolls);
 		const auto thresholdMs =
-			static_cast<std::uint64_t>(sleepMs) *
-			static_cast<std::uint64_t>(maxLockPolls);
+			static_cast<uint64_t>(sleepMs) *
+			static_cast<uint64_t>(maxLockPolls);
 		runtime->thresholdTicks =
 			runtime->qpcFrequency * (thresholdMs / 1000) +
 			runtime->qpcFrequency * (thresholdMs % 1000) / 1000;

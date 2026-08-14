@@ -32,24 +32,24 @@ namespace
 	using DecompressorPtr = std::unique_ptr<libdeflate_decompressor, DecompressorDeleter>;
 
 	// Texture-like payload: repeated structure with enough entropy to exercise both codec paths.
-	std::vector<std::uint8_t> make_payload(std::size_t a_size, std::uint64_t a_seed)
+	std::vector<uint8_t> make_payload(size_t a_size, uint64_t a_seed)
 	{
-		std::vector<std::uint8_t> payload(a_size);
-		std::uint64_t state = a_seed | 1;
-		for (std::size_t index = 0; index < a_size; ++index)
+		std::vector<uint8_t> payload(a_size);
+		uint64_t state = a_seed | 1;
+		for (size_t index = 0; index < a_size; ++index)
 		{
 			state = state * 6364136223846793005ull + 1442695040888963407ull;
-			payload[index] = static_cast<std::uint8_t>(
+			payload[index] = static_cast<uint8_t>(
 				(index % 61 == 0) ? (state >> 33) : (index & 0xFF));
 		}
 		return payload;
 	}
 
-	std::vector<std::uint8_t> compress(
+	std::vector<uint8_t> compress(
 		libdeflate_compressor* a_compressor,
-		const std::vector<std::uint8_t>& a_payload)
+		const std::vector<uint8_t>& a_payload)
 	{
-		std::vector<std::uint8_t> compressed(
+		std::vector<uint8_t> compressed(
 			libdeflate_zlib_compress_bound(a_compressor, a_payload.size()));
 		const auto written = libdeflate_zlib_compress(
 			a_compressor,
@@ -63,11 +63,11 @@ namespace
 
 	ZlibExactDecode decode_exact(
 		libdeflate_decompressor* a_decompressor,
-		std::span<const std::uint8_t> a_input,
-		std::span<std::uint8_t> a_output)
+		std::span<const uint8_t> a_input,
+		std::span<uint8_t> a_output)
 	{
 		ZlibExactDecode decode{};
-		decode.codecResult = static_cast<std::uint32_t>(libdeflate_zlib_decompress_ex(
+		decode.codecResult = static_cast<uint32_t>(libdeflate_zlib_decompress_ex(
 			a_decompressor,
 			a_input.data(),
 			a_input.size(),
@@ -106,9 +106,9 @@ namespace vmm_tests
 
 			for (const auto size : sizes)
 			{
-				const auto payload = make_payload(static_cast<std::size_t>(size), size);
+				const auto payload = make_payload(static_cast<size_t>(size), size);
 				const auto compressed = compress(compressor.get(), payload);
-				std::vector<std::uint8_t> output(payload.size() + 4096, 0);
+				std::vector<uint8_t> output(payload.size() + 4096, 0);
 
 				const auto decode = decode_exact(decompressor.get(), compressed, output);
 				require(
@@ -139,9 +139,9 @@ namespace vmm_tests
 
 			const auto payload = make_payload(256 * 1024, 7);
 			const auto compressed = compress(compressor.get(), payload);
-			std::vector<std::uint8_t> output(payload.size(), 0);
+			std::vector<uint8_t> output(payload.size(), 0);
 
-			std::vector<std::uint8_t> tooSmall(payload.size() / 2, 0);
+			std::vector<uint8_t> tooSmall(payload.size() / 2, 0);
 			const auto capacity = decode_exact(decompressor.get(), compressed, tooSmall);
 			require(
 				ClassifyExactDecode(capacity, compressed.size(), payload.size()) ==

@@ -44,11 +44,11 @@ namespace Addictol
 	}
 
 	ZlibDecodeResult LibDeflateZlibBackend::Decode(
-		std::span<const std::uint8_t> a_input,
-		std::span<std::uint8_t> a_output) noexcept
+		std::span<const uint8_t> a_input,
+		std::span<uint8_t> a_output) noexcept
 	{
-		std::size_t consumed = 0;
-		std::size_t produced = 0;
+		size_t consumed = 0;
+		size_t produced = 0;
 		const auto result = libdeflate_zlib_decompress_ex(
 			GetThreadDecompressor(),
 			a_input.data(),
@@ -64,8 +64,8 @@ namespace Addictol
 	}
 
 	ZlibExactDecode LibDeflateZlibBackend::DecodeExact(
-		std::span<const std::uint8_t> a_input,
-		std::span<std::uint8_t> a_output) noexcept
+		std::span<const uint8_t> a_input,
+		std::span<uint8_t> a_output) noexcept
 	{
 		static_assert(ZLIB_CODEC_SUCCESS == LIBDEFLATE_SUCCESS);
 		static_assert(ZLIB_CODEC_BAD_DATA == LIBDEFLATE_BAD_DATA);
@@ -77,7 +77,7 @@ namespace Addictol
 			return {};
 
 		ZlibExactDecode decode{};
-		decode.codecResult = static_cast<std::uint32_t>(libdeflate_zlib_decompress_ex(
+		decode.codecResult = static_cast<uint32_t>(libdeflate_zlib_decompress_ex(
 			decompressor,
 			a_input.data(),
 			a_input.size(),

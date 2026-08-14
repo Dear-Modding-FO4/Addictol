@@ -41,7 +41,7 @@ namespace Addictol
 		char buf[4096]{};
 		if (REX::W32::GetModuleFileNameA(
 			reinterpret_cast<REX::W32::HMODULE>(a_module), buf,
-			static_cast<std::uint32_t>(sizeof(buf))))
+			static_cast<uint32_t>(sizeof(buf))))
 		{
 			return buf;
 		}
@@ -125,7 +125,7 @@ namespace Addictol
 	static FARPROC WINAPI Hooked_GetProcAddress(HMODULE a_module, LPCSTR a_procName) noexcept
 	{
 		// HIWORD == 0 denotes an ordinal import rather than a string.
-		if ((reinterpret_cast<std::uintptr_t>(a_procName) >> 16) == 0)
+		if ((reinterpret_cast<uintptr_t>(a_procName) >> 16) == 0)
 			return s_origGetProcAddress(a_module, a_procName);
 
 		if (a_module == s_ownModule)
@@ -215,8 +215,8 @@ namespace Addictol
 		if (!a_path || !*a_path)
 			return {};
 
-		std::uint32_t dummy = 0;
-		std::uint32_t verSize = REX::W32::GetFileVersionInfoSizeA(a_path, &dummy);
+		uint32_t dummy = 0;
+		uint32_t verSize = REX::W32::GetFileVersionInfoSizeA(a_path, &dummy);
 		if (!verSize)
 			return {};
 
@@ -225,23 +225,23 @@ namespace Addictol
 			return {};
 
 		void*         infoPtr = nullptr;
-		std::uint32_t infoLen = 0;
+		uint32_t infoLen = 0;
 		if (!REX::W32::VerQueryValueA(verBuf.get(), "\\", &infoPtr, &infoLen))
 			return {};
 
 		// VS_FIXEDFILEINFO is 13 DWORDs, starts with 0xFEEF04BD, and stores version words at indices 2 and 3.
-		constexpr std::uint32_t kFixedInfoMinSize = 52;
+		constexpr uint32_t kFixedInfoMinSize = 52;
 		if (!infoPtr || infoLen < kFixedInfoMinSize)
 			return {};
 
-		auto info = static_cast<const std::uint32_t*>(infoPtr);
+		auto info = static_cast<const uint32_t*>(infoPtr);
 
-		constexpr std::uint32_t kSignature = 0xFEEF04BD;
+		constexpr uint32_t kSignature = 0xFEEF04BD;
 		if (info[0] != kSignature)
 			return {};
 
-		std::uint32_t ms = info[2];
-		std::uint32_t ls = info[3];
+		uint32_t ms = info[2];
+		uint32_t ls = info[3];
 
 		return std::format("{}.{}.{}.{}"sv,
 			(ms >> 16) & 0xFFFF,

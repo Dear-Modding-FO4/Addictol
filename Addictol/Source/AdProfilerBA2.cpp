@@ -29,10 +29,10 @@ namespace Addictol
 	{
 		using namespace BA2Profile;
 
-		constexpr std::size_t kLeasedShardCount{ 64 };
-		constexpr std::size_t kSpillShardIndex{ kLeasedShardCount };
-		constexpr std::size_t kShardCount{ kLeasedShardCount + 1 };
-		constexpr std::size_t kBankCount{ 2 };
+		constexpr size_t kLeasedShardCount{ 64 };
+		constexpr size_t kSpillShardIndex{ kLeasedShardCount };
+		constexpr size_t kShardCount{ kLeasedShardCount + 1 };
+		constexpr size_t kBankCount{ 2 };
 
 		static_assert(kBankCount == 2);
 		static_assert(kSchemaVersion == 3);
@@ -48,23 +48,23 @@ namespace Addictol
 		{
 			std::mutex lock;
 			std::array<ShardBank, kBankCount> banks{};
-			std::uint64_t sequence{ 0 };
-			std::uint64_t generation{ 0 };
-			std::uint32_t activeBank{ 0 };
-			std::uint16_t index{ 0 };
+			uint64_t sequence{ 0 };
+			uint64_t generation{ 0 };
+			uint32_t activeBank{ 0 };
+			uint16_t index{ 0 };
 		};
 
 		struct ShardRows
 		{
-			std::uint16_t firstChunk{ kNoChunk };
-			std::uint32_t bank{ 0 };
+			uint16_t firstChunk{ kNoChunk };
+			uint32_t bank{ 0 };
 		};
 
 		struct RecorderState
 		{
 			RecorderState(
 				RuntimeSessionContext& a_session,
-				std::uint64_t a_qpcFrequency,
+				uint64_t a_qpcFrequency,
 				bool a_exportCSV,
 				bool a_shutdownPublishEnabled) :
 				calls(a_session, "ba2_calls_v3"sv, WriteCallsHeader),
@@ -74,8 +74,8 @@ namespace Addictol
 				exportCSV(a_exportCSV),
 				shutdownPublishEnabled(a_shutdownPublishEnabled)
 			{
-				for (std::size_t index = 0; index < kShardCount; ++index)
-					shards[index].index = static_cast<std::uint16_t>(index);
+				for (size_t index = 0; index < kShardCount; ++index)
+					shards[index].index = static_cast<uint16_t>(index);
 			}
 
 			std::array<RowArena, kBankCount> arenas{};
@@ -84,14 +84,14 @@ namespace Addictol
 			RuntimeCsvFile calls;
 			RuntimeCsvFile summary;
 			RuntimeSessionContext& session;
-			std::atomic<std::uint64_t> freeShardMask{
-				std::numeric_limits<std::uint64_t>::max()
+			std::atomic<uint64_t> freeShardMask{
+				std::numeric_limits<uint64_t>::max()
 			};
-			std::atomic<std::size_t> activeDedicatedLeases{ 0 };
+			std::atomic<size_t> activeDedicatedLeases{ 0 };
 			std::atomic<bool> spillLogged{ false };
-			std::uint64_t qpcFrequency{ 0 };
-			std::uint64_t publishSequence{ 0 };
-			std::uint64_t intervalStartMonotonicUs{ 0 };
+			uint64_t qpcFrequency{ 0 };
+			uint64_t publishSequence{ 0 };
+			uint64_t intervalStartMonotonicUs{ 0 };
 			bool exportCSV{ false };
 			bool shutdownPublishEnabled{ false };
 			std::atomic<bool> accepting{ true };
@@ -102,8 +102,8 @@ namespace Addictol
 		{
 			RecorderState* state{ nullptr };
 			Shard* shard{ nullptr };
-			std::uint16_t shardIndex{ kNoChunk };
-			std::uint64_t countedGeneration{ std::numeric_limits<std::uint64_t>::max() };
+			uint16_t shardIndex{ kNoChunk };
+			uint64_t countedGeneration{ std::numeric_limits<uint64_t>::max() };
 
 			~ThreadLease()
 			{
@@ -117,14 +117,14 @@ namespace Addictol
 				if (shardIndex < kLeasedShardCount)
 				{
 					state->freeShardMask.fetch_or(
-						std::uint64_t{ 1 } << shardIndex,
+						uint64_t{ 1 } << shardIndex,
 						std::memory_order_release);
 					state->activeDedicatedLeases.fetch_sub(1, std::memory_order_release);
 				}
 				state = nullptr;
 				shard = nullptr;
 				shardIndex = kNoChunk;
-				countedGeneration = std::numeric_limits<std::uint64_t>::max();
+				countedGeneration = std::numeric_limits<uint64_t>::max();
 			}
 		};
 		static thread_local ThreadLease g_threadLease;
@@ -139,8 +139,8 @@ namespace Addictol
 			auto freeMask = a_state.freeShardMask.load(std::memory_order_acquire);
 			while (freeMask)
 			{
-				const auto index = static_cast<std::uint16_t>(std::countr_zero(freeMask));
-				const auto claimedMask = freeMask & ~(std::uint64_t{ 1 } << index);
+				const auto index = static_cast<uint16_t>(std::countr_zero(freeMask));
+				const auto claimedMask = freeMask & ~(uint64_t{ 1 } << index);
 				if (a_state.freeShardMask.compare_exchange_weak(
 						freeMask,
 						claimedMask,
@@ -179,7 +179,7 @@ namespace Addictol
 			std::ostream& a_file,
 			const FileContext& a_context,
 			const ShardRows& a_rows,
-			std::uint16_t a_shardIndex) noexcept
+			uint16_t a_shardIndex) noexcept
 		{
 			RowEvidence evidence;
 			ForEachRow(
@@ -192,7 +192,7 @@ namespace Addictol
 			return evidence;
 		}
 
-		void ResetBank(Shard& a_shard, std::uint32_t a_bank) noexcept
+		void ResetBank(Shard& a_shard, uint32_t a_bank) noexcept
 		{
 			auto& bank = a_shard.banks[a_bank];
 			bank.aggregate.Reset();
@@ -201,7 +201,7 @@ namespace Addictol
 
 		[[nodiscard]] SummaryRow MakeShardRow(
 			const ShardAggregate& a_aggregate,
-			std::size_t a_index,
+			size_t a_index,
 			const Reconciliation& a_reconciliation) noexcept
 		{
 			SummaryRow row;
@@ -243,9 +243,9 @@ namespace Addictol
 			SummaryContext context;
 			ShardAggregate totals;
 			Reconciliation reconciliation;
-			std::uint64_t leasedShards{ 0 };
-			std::uint64_t overflowedThreads{ 0 };
-			std::uint64_t spillCalls{ 0 };
+			uint64_t leasedShards{ 0 };
+			uint64_t overflowedThreads{ 0 };
+			uint64_t spillCalls{ 0 };
 		};
 
 		void WriteSummary(
@@ -296,7 +296,7 @@ namespace Addictol
 			interval.reconciliation = a_report.reconciliation;
 			WriteSummaryRow(*file, a_report.context, interval);
 
-			for (std::size_t index = 0; index < a_shards.size(); ++index)
+			for (size_t index = 0; index < a_shards.size(); ++index)
 			{
 				if (a_shards[index].callsSeen)
 					WriteSummaryRow(
@@ -330,13 +330,13 @@ namespace Addictol
 				row.reconciliation = a_report.reconciliation;
 				WriteSummaryRow(*file, a_report.context, row);
 
-				for (std::size_t bucket = 0; bucket < kOutputSizeBucketCount; ++bucket)
+				for (size_t bucket = 0; bucket < kOutputSizeBucketCount; ++bucket)
 				{
 					if (!backend.servedBucketCalls[bucket])
 						continue;
 					SummaryRow bucketRow;
 					bucketRow.scope = "BackendBucket"sv;
-					bucketRow.scopeID = (static_cast<std::uint64_t>(backend.id) << 8) | bucket;
+					bucketRow.scopeID = (static_cast<uint64_t>(backend.id) << 8) | bucket;
 					bucketRow.scopeLabel = kOutputSizeBucketNames[bucket];
 					bucketRow.backendID = backend.id;
 					bucketRow.outputSizeBucket = bucket;
@@ -357,7 +357,7 @@ namespace Addictol
 			unserved.reconciliation = a_report.reconciliation;
 			WriteSummaryRow(*file, a_report.context, unserved);
 
-			for (std::size_t reason = 0; reason < kKnownReasonCount; ++reason)
+			for (size_t reason = 0; reason < kKnownReasonCount; ++reason)
 			{
 				SummaryRow row;
 				row.scope = "Reason"sv;
@@ -371,7 +371,7 @@ namespace Addictol
 				WriteSummaryRow(*file, a_report.context, row);
 			}
 
-			for (std::size_t site = 0; site < kKnownSiteCount; ++site)
+			for (size_t site = 0; site < kKnownSiteCount; ++site)
 			{
 				SummaryRow row;
 				row.scope = "Site"sv;
@@ -393,7 +393,7 @@ namespace Addictol
 				WriteSummaryRow(*file, a_report.context, row);
 			}
 
-			for (std::size_t caller = 0; caller < kKnownCallerCount; ++caller)
+			for (size_t caller = 0; caller < kKnownCallerCount; ++caller)
 			{
 				SummaryRow row;
 				row.scope = "Caller"sv;
@@ -639,7 +639,7 @@ namespace Addictol
 			const auto shutdownPublishEnabled = ModuleSafeExit::IsEnabledInConfig();
 			state = new RecorderState(
 				ProfilerCore::GetRuntimeSession(),
-				static_cast<std::uint64_t>(frequency.QuadPart),
+				static_cast<uint64_t>(frequency.QuadPart),
 				ProfilerCore::IsCSVExportEnabled(),
 				shutdownPublishEnabled);
 		}
@@ -750,7 +750,7 @@ namespace Addictol
 			ReserveRows(state->arenas[bankIndex], bank.cursor, a_observations.size()) :
 			std::span<CallRecord>{};
 
-		for (std::size_t index = 0; index < a_observations.size(); ++index)
+		for (size_t index = 0; index < a_observations.size(); ++index)
 		{
 			const auto& observation = a_observations[index];
 			const auto check = ValidateObservation(observation, state->qpcFrequency);
@@ -762,7 +762,7 @@ namespace Addictol
 					check,
 					shard.index,
 					shard.sequence,
-					static_cast<std::uint32_t>(metadata.saveLoadEpoch),
+					static_cast<uint32_t>(metadata.saveLoadEpoch),
 					metadata.monotonicUs);
 			}
 			++shard.sequence;
@@ -784,7 +784,7 @@ namespace Addictol
 
 		std::array<ShardRows, kShardCount> rows{};
 		std::array<ShardAggregate, kShardCount> aggregates{};
-		for (std::size_t index = 0; index < kShardCount; ++index)
+		for (size_t index = 0; index < kShardCount; ++index)
 		{
 			auto& shard = state->shards[index];
 			std::lock_guard lock(shard.lock);
@@ -834,14 +834,14 @@ namespace Addictol
 				{
 					const auto failuresBefore = state->calls.GetFailureCount();
 					RowEvidence evidence;
-					for (std::size_t index = 0; index < rows.size(); ++index)
+					for (size_t index = 0; index < rows.size(); ++index)
 					{
 						shardEvidence[index] = SerializeShardRows(
 							*state,
 							*file,
 							fileContext,
 							rows[index],
-							static_cast<std::uint16_t>(index));
+							static_cast<uint16_t>(index));
 						evidence.Merge(shardEvidence[index]);
 					}
 					state->calls.End();
@@ -885,7 +885,7 @@ namespace Addictol
 		if (report.totals.callsSeen || a_closeAdmission)
 			LogInterval(*state, report);
 
-		for (std::size_t index = 0; index < kShardCount; ++index)
+		for (size_t index = 0; index < kShardCount; ++index)
 			ResetBank(state->shards[index], rows[index].bank);
 		state->arenas[rows[0].bank].Reset();
 

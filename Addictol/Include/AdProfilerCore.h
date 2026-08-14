@@ -35,7 +35,7 @@ namespace Addictol
 	struct ESPProfileEntry
 	{
 		std::string filename;
-		std::int32_t loadOrderIndex{ 0 };
+		int32_t loadOrderIndex{ 0 };
 		double openMs{ 0.0 };
 		double constructMs{ 0.0 };
 		double closeMs{ 0.0 };
@@ -71,56 +71,56 @@ namespace Addictol
 	struct MemorySnapshot
 	{
 		std::string phaseName;
-		std::size_t workingSetBytes{ 0 };
-		std::size_t commitBytes{ 0 };
-		std::size_t peakWorkingSetBytes{ 0 };
-		std::int64_t workingSetDeltaBytes{ 0 };
+		size_t workingSetBytes{ 0 };
+		size_t commitBytes{ 0 };
+		size_t peakWorkingSetBytes{ 0 };
+		int64_t workingSetDeltaBytes{ 0 };
 	};
 
 	struct ProfileMetricEntry
 	{
 		double totalMs{ 0.0 };
-		std::uint64_t calls{ 0 };
+		uint64_t calls{ 0 };
 	};
 
 	struct AnimSubGraphPassProfileEntry
 	{
 		double totalMs{ 0.0 };
 		double maxMs{ 0.0 };
-		std::uint64_t calls{ 0 };
-		std::uint64_t matchesAdded{ 0 };
+		uint64_t calls{ 0 };
+		uint64_t matchesAdded{ 0 };
 	};
 
 	struct AnimSubGraphProfileEntry
 	{
-		std::uint32_t role{ 0 };
+		uint32_t role{ 0 };
 		ProfileMetricEntry request;
 		ProfileMetricEntry matched;
 		ProfileMetricEntry gather;
 		ProfileMetricEntry initialize;
 		ProfileMetricEntry load;
-		std::uint64_t eligibleCalls{ 0 };
-		std::uint64_t projectedHits{ 0 };
-		std::uint64_t projectedCalls{ 0 };
-		std::uint64_t actualHits{ 0 };
-		std::uint64_t actualCalls{ 0 };
-		std::uint64_t ineligibleCalls{ 0 };
-		std::uint64_t droppedSamples{ 0 };
+		uint64_t eligibleCalls{ 0 };
+		uint64_t projectedHits{ 0 };
+		uint64_t projectedCalls{ 0 };
+		uint64_t actualHits{ 0 };
+		uint64_t actualCalls{ 0 };
+		uint64_t ineligibleCalls{ 0 };
+		uint64_t droppedSamples{ 0 };
 		AnimSubGraphPassProfileEntry movement;
 		AnimSubGraphPassProfileEntry activate1;
 		AnimSubGraphPassProfileEntry activate2;
-		std::uint64_t rawFilenames{ 0 };
-		std::uint64_t uniqueFilenames{ 0 };
-		std::uint64_t filenameGathers{ 0 };
+		uint64_t rawFilenames{ 0 };
+		uint64_t uniqueFilenames{ 0 };
+		uint64_t filenameGathers{ 0 };
 	};
 
-	inline constexpr std::size_t kFrameHitchProfilePhaseCount{ 12 };
-	inline constexpr std::size_t kAnimSubGraphProfileEntryCapacity{ 256 };
-	inline constexpr std::size_t kFrameHitchProfileEntryCapacity{ 32 };
+	inline constexpr size_t kFrameHitchProfilePhaseCount{ 12 };
+	inline constexpr size_t kAnimSubGraphProfileEntryCapacity{ 256 };
+	inline constexpr size_t kFrameHitchProfileEntryCapacity{ 32 };
 
 	struct FrameHitchFrameProfileEntry
 	{
-		std::uint64_t sequence{ 0 };
+		uint64_t sequence{ 0 };
 		double frameMs{ 0.0 };
 		ProfileMetricEntry loadQueuedPriority;
 		ProfileMetricEntry clearLoadingTask;
@@ -135,18 +135,18 @@ namespace Addictol
 
 	struct FrameHitchProfileEntry
 	{
-		std::uint64_t frameCount{ 0 };
+		uint64_t frameCount{ 0 };
 		double meanMs{ 0.0 };
 		double p95Ms{ 0.0 };
 		double p99Ms{ 0.0 };
 		double maxMs{ 0.0 };
-		std::size_t percentileSamples{ 0 };
-		std::uint64_t droppedSamples{ 0 };
+		size_t percentileSamples{ 0 };
+		uint64_t droppedSamples{ 0 };
 		ProfileMetricEntry loadQueuedPriority;
 		ProfileMetricEntry clearLoadingTask;
 		std::array<ProfileMetricEntry, kFrameHitchProfilePhaseCount> phases;
 		std::vector<FrameHitchWindowProfileEntry> hitches;
-		std::uint64_t droppedHitches{ 0 };
+		uint64_t droppedHitches{ 0 };
 	};
 
 	class ProfilerCore :

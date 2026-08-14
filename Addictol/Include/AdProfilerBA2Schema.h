@@ -14,42 +14,42 @@ namespace Addictol::BA2Profile
 {
 	using namespace std::literals;
 
-	inline constexpr std::uint32_t kSchemaVersion{ 3 };
+	inline constexpr uint32_t kSchemaVersion{ 3 };
 
-	using BackendId = std::uint32_t;
+	using BackendId = uint32_t;
 
 	inline constexpr BackendId kBackendNone{ 0 };
 	inline constexpr BackendId kBackendStockZlib{ 1 };
 	inline constexpr BackendId kBackendLibDeflate{ 2 };
-	inline constexpr std::size_t kKnownBackendCount{ 3 };
+	inline constexpr size_t kKnownBackendCount{ 3 };
 
 	inline constexpr std::array<std::string_view, kKnownBackendCount> kBackendNames{
 		"None"sv, "StockZlib"sv, "LibDeflate"sv
 	};
 
-	using SiteId = std::uint16_t;
+	using SiteId = uint16_t;
 
 	inline constexpr SiteId kSiteNone{ 0 };
 	inline constexpr SiteId kSiteInflate{ 1 };
 	inline constexpr SiteId kSiteTextureChunk{ 2 };
-	inline constexpr std::size_t kKnownSiteCount{ 3 };
+	inline constexpr size_t kKnownSiteCount{ 3 };
 
 	inline constexpr std::array<std::string_view, kKnownSiteCount> kSiteNames{
 		"None"sv, "Inflate"sv, "TextureChunk"sv
 	};
 
-	using CallerId = std::uint16_t;
+	using CallerId = uint16_t;
 
 	inline constexpr CallerId kCallerNone{ 0 };
 	inline constexpr CallerId kCallerStreamingTexture{ 1 };
 	inline constexpr CallerId kCallerArraySlice{ 2 };
-	inline constexpr std::size_t kKnownCallerCount{ 3 };
+	inline constexpr size_t kKnownCallerCount{ 3 };
 
 	inline constexpr std::array<std::string_view, kKnownCallerCount> kCallerNames{
 		"None"sv, "StreamingTexture"sv, "ArraySlice"sv
 	};
 
-	using FallbackReasonId = std::uint32_t;
+	using FallbackReasonId = uint32_t;
 
 	inline constexpr FallbackReasonId kReasonNone{ 0 };
 	inline constexpr FallbackReasonId kReasonState{ 1 };
@@ -59,7 +59,7 @@ namespace Addictol::BA2Profile
 	inline constexpr FallbackReasonId kReasonCapacity{ 5 };
 	inline constexpr FallbackReasonId kReasonSizeMismatch{ 6 };
 	inline constexpr FallbackReasonId kReasonRequestRestart{ 7 };
-	inline constexpr std::size_t kKnownReasonCount{ 8 };
+	inline constexpr size_t kKnownReasonCount{ 8 };
 
 	inline constexpr std::array<std::string_view, kKnownReasonCount> kReasonNames{
 		"None"sv, "State"sv, "Allocation"sv, "Decode"sv, "Commit"sv,
@@ -87,35 +87,35 @@ namespace Addictol::BA2Profile
 	}
 
 	// Malformed bits invalidate the contract; unknown-id bits only mark the row for analysis.
-	inline constexpr std::uint16_t kFlagByteRangeOverflow{ 1u << 0 };
-	inline constexpr std::uint16_t kFlagByteAccounting{ 1u << 1 };
-	inline constexpr std::uint16_t kFlagTickAccounting{ 1u << 2 };
-	inline constexpr std::uint16_t kFlagServedMismatch{ 1u << 3 };
-	inline constexpr std::uint16_t kFlagReasonMismatch{ 1u << 4 };
-	inline constexpr std::uint16_t kFlagUnknownReason{ 1u << 5 };
-	inline constexpr std::uint16_t kFlagUnknownBackend{ 1u << 6 };
-	inline constexpr std::uint16_t kFlagQpcFrequency{ 1u << 7 };
-	inline constexpr std::uint16_t kFlagChunkIdentity{ 1u << 8 };
-	inline constexpr std::uint16_t kFlagRequestIdentity{ 1u << 9 };
-	inline constexpr std::uint16_t kFlagPrimaryBytes{ 1u << 10 };
-	inline constexpr std::uint16_t kFlagUnknownSite{ 1u << 11 };
-	inline constexpr std::uint16_t kFlagUnknownCaller{ 1u << 12 };
-	inline constexpr std::uint16_t kMalformedFlags{
+	inline constexpr uint16_t kFlagByteRangeOverflow{ 1u << 0 };
+	inline constexpr uint16_t kFlagByteAccounting{ 1u << 1 };
+	inline constexpr uint16_t kFlagTickAccounting{ 1u << 2 };
+	inline constexpr uint16_t kFlagServedMismatch{ 1u << 3 };
+	inline constexpr uint16_t kFlagReasonMismatch{ 1u << 4 };
+	inline constexpr uint16_t kFlagUnknownReason{ 1u << 5 };
+	inline constexpr uint16_t kFlagUnknownBackend{ 1u << 6 };
+	inline constexpr uint16_t kFlagQpcFrequency{ 1u << 7 };
+	inline constexpr uint16_t kFlagChunkIdentity{ 1u << 8 };
+	inline constexpr uint16_t kFlagRequestIdentity{ 1u << 9 };
+	inline constexpr uint16_t kFlagPrimaryBytes{ 1u << 10 };
+	inline constexpr uint16_t kFlagUnknownSite{ 1u << 11 };
+	inline constexpr uint16_t kFlagUnknownCaller{ 1u << 12 };
+	inline constexpr uint16_t kMalformedFlags{
 		kFlagByteRangeOverflow | kFlagByteAccounting | kFlagTickAccounting |
 		kFlagServedMismatch | kFlagReasonMismatch | kFlagQpcFrequency |
 		kFlagChunkIdentity | kFlagRequestIdentity | kFlagPrimaryBytes
 	};
 
 	// Evidence bits describe what the call observed; they never invalidate the contract.
-	inline constexpr std::uint8_t kEvidenceChunkRow{ 1u << 0 };
-	inline constexpr std::uint8_t kEvidenceRequestLeader{ 1u << 1 };
-	inline constexpr std::uint8_t kEvidenceSizeMeasured{ 1u << 2 };
-	inline constexpr std::uint8_t kEvidenceSizeMismatch{ 1u << 3 };
-	inline constexpr std::uint8_t kEvidenceNominalDescMismatch{ 1u << 4 };
-	inline constexpr std::uint8_t kEvidenceZeroCompressed{ 1u << 5 };
-	inline constexpr std::uint8_t kEvidenceCapacity{ 1u << 6 };
+	inline constexpr uint8_t kEvidenceChunkRow{ 1u << 0 };
+	inline constexpr uint8_t kEvidenceRequestLeader{ 1u << 1 };
+	inline constexpr uint8_t kEvidenceSizeMeasured{ 1u << 2 };
+	inline constexpr uint8_t kEvidenceSizeMismatch{ 1u << 3 };
+	inline constexpr uint8_t kEvidenceNominalDescMismatch{ 1u << 4 };
+	inline constexpr uint8_t kEvidenceZeroCompressed{ 1u << 5 };
+	inline constexpr uint8_t kEvidenceCapacity{ 1u << 6 };
 	// Set only when the stock replay actually rewrote this chunk.
-	inline constexpr std::uint8_t kEvidenceReplayed{ 1u << 7 };
+	inline constexpr uint8_t kEvidenceReplayed{ 1u << 7 };
 
 	struct CallObservation
 	{
@@ -123,52 +123,52 @@ namespace Addictol::BA2Profile
 		BackendId fallbackBackendId{ kBackendNone };
 		BackendId servedBackendId{ kBackendNone };
 		FallbackReasonId fallbackReasonId{ kReasonNone };
-		std::uint64_t primaryQpc{ 0 };
-		std::uint64_t fallbackQpc{ 0 };
-		std::uint64_t totalQpc{ 0 };
-		std::uint64_t qpcFrequency{ 0 };
-		std::uint64_t requestWallQpc{ 0 };
-		std::uint64_t requestSequence{ 0 };
-		std::uint64_t streamAddress{ 0 };
-		std::uint64_t inputBytesAvailable{ 0 };
-		std::uint64_t outputBytesAvailable{ 0 };
-		std::uint64_t inputBytesConsumed{ 0 };
-		std::uint64_t outputBytesProduced{ 0 };
-		std::uint32_t primaryInputBytesConsumed{ 0 };
-		std::uint32_t primaryOutputBytesProduced{ 0 };
-		std::uint32_t nominalOutputBytes{ 0 };
-		std::uint32_t threadId{ 0 };
-		std::int32_t zlibResult{ 0 };
+		uint64_t primaryQpc{ 0 };
+		uint64_t fallbackQpc{ 0 };
+		uint64_t totalQpc{ 0 };
+		uint64_t qpcFrequency{ 0 };
+		uint64_t requestWallQpc{ 0 };
+		uint64_t requestSequence{ 0 };
+		uint64_t streamAddress{ 0 };
+		uint64_t inputBytesAvailable{ 0 };
+		uint64_t outputBytesAvailable{ 0 };
+		uint64_t inputBytesConsumed{ 0 };
+		uint64_t outputBytesProduced{ 0 };
+		uint32_t primaryInputBytesConsumed{ 0 };
+		uint32_t primaryOutputBytesProduced{ 0 };
+		uint32_t nominalOutputBytes{ 0 };
+		uint32_t threadId{ 0 };
+		int32_t zlibResult{ 0 };
 		SiteId observationSiteId{ kSiteNone };
 		CallerId callerId{ kCallerNone };
-		std::uint16_t chunkIndex{ 0 };
-		std::uint16_t chunkCount{ 0 };
-		std::uint8_t evidenceFlags{ 0 };
+		uint16_t chunkIndex{ 0 };
+		uint16_t chunkCount{ 0 };
+		uint8_t evidenceFlags{ 0 };
 		bool primaryAttempted{ false };
 	};
 
 	struct ObservationCheck
 	{
-		std::uint16_t flags{ 0 };
+		uint16_t flags{ 0 };
 
 		[[nodiscard]] constexpr bool WellFormed() const noexcept { return (flags & kMalformedFlags) == 0; }
 	};
 
 	// Positive means the archive claimed more bytes than the member decoded to.
-	[[nodiscard]] constexpr std::int64_t ObservedSizeDelta(
-		std::uint32_t a_nominalOutputBytes,
-		std::uint32_t a_primaryOutputBytesProduced) noexcept
+	[[nodiscard]] constexpr int64_t ObservedSizeDelta(
+		uint32_t a_nominalOutputBytes,
+		uint32_t a_primaryOutputBytesProduced) noexcept
 	{
-		return static_cast<std::int64_t>(a_nominalOutputBytes) -
-			static_cast<std::int64_t>(a_primaryOutputBytesProduced);
+		return static_cast<int64_t>(a_nominalOutputBytes) -
+			static_cast<int64_t>(a_primaryOutputBytesProduced);
 	}
 
 	[[nodiscard]] constexpr ObservationCheck ValidateObservation(
 		const CallObservation& a_observation,
-		std::uint64_t a_expectedQpcFrequency = 0) noexcept
+		uint64_t a_expectedQpcFrequency = 0) noexcept
 	{
-		constexpr std::uint64_t byteLimit{ 0xFFFFFFFFull };
-		std::uint16_t flags{ 0 };
+		constexpr uint64_t byteLimit{ 0xFFFFFFFFull };
+		uint16_t flags{ 0 };
 
 		if (a_observation.inputBytesAvailable > byteLimit ||
 			a_observation.outputBytesAvailable > byteLimit ||
@@ -182,7 +182,7 @@ namespace Addictol::BA2Profile
 
 		const auto tickSumOverflows =
 			a_observation.primaryQpc >
-			std::numeric_limits<std::uint64_t>::max() - a_observation.fallbackQpc;
+			std::numeric_limits<uint64_t>::max() - a_observation.fallbackQpc;
 		if (tickSumOverflows ||
 			a_observation.totalQpc < a_observation.primaryQpc + a_observation.fallbackQpc)
 			flags |= kFlagTickAccounting;
@@ -254,36 +254,36 @@ namespace Addictol::BA2Profile
 
 	struct CallRecord
 	{
-		std::uint64_t shardSequence;
-		std::uint64_t monotonicUs;
-		std::uint64_t primaryQpc;
-		std::uint64_t fallbackQpc;
-		std::uint64_t totalQpc;
-		std::uint64_t requestWallQpc;
-		std::uint64_t requestSequence;
-		std::uint64_t streamAddress;
-		std::uint32_t saveLoadEpoch;
+		uint64_t shardSequence;
+		uint64_t monotonicUs;
+		uint64_t primaryQpc;
+		uint64_t fallbackQpc;
+		uint64_t totalQpc;
+		uint64_t requestWallQpc;
+		uint64_t requestSequence;
+		uint64_t streamAddress;
+		uint32_t saveLoadEpoch;
 		BackendId primaryBackendId;
 		BackendId fallbackBackendId;
 		FallbackReasonId fallbackReasonId;
 		BackendId servedBackendId;
-		std::uint32_t inputBytesAvailable;
-		std::uint32_t outputBytesAvailable;
-		std::uint32_t inputBytesConsumed;
-		std::uint32_t outputBytesProduced;
-		std::uint32_t primaryInputBytesConsumed;
-		std::uint32_t primaryOutputBytesProduced;
-		std::uint32_t nominalOutputBytes;
-		std::uint32_t threadId;
-		std::int32_t zlibResult;
-		std::uint16_t shardIndex;
+		uint32_t inputBytesAvailable;
+		uint32_t outputBytesAvailable;
+		uint32_t inputBytesConsumed;
+		uint32_t outputBytesProduced;
+		uint32_t primaryInputBytesConsumed;
+		uint32_t primaryOutputBytesProduced;
+		uint32_t nominalOutputBytes;
+		uint32_t threadId;
+		int32_t zlibResult;
+		uint16_t shardIndex;
 		SiteId observationSiteId;
 		CallerId callerId;
-		std::uint16_t chunkIndex;
-		std::uint16_t chunkCount;
-		std::uint16_t observationFlags;
-		std::uint8_t primaryAttempted;
-		std::uint8_t evidenceFlags;
+		uint16_t chunkIndex;
+		uint16_t chunkCount;
+		uint16_t observationFlags;
+		uint8_t primaryAttempted;
+		uint8_t evidenceFlags;
 	};
 
 	static_assert(sizeof(CallRecord) == 136);
@@ -291,19 +291,19 @@ namespace Addictol::BA2Profile
 	static_assert(std::is_standard_layout_v<CallRecord>);
 	static_assert(std::is_trivially_copyable_v<CallRecord>);
 
-	[[nodiscard]] constexpr std::uint32_t SaturateBytes(std::uint64_t a_value) noexcept
+	[[nodiscard]] constexpr uint32_t SaturateBytes(uint64_t a_value) noexcept
 	{
-		constexpr std::uint64_t byteLimit{ 0xFFFFFFFFull };
-		return static_cast<std::uint32_t>(a_value > byteLimit ? byteLimit : a_value);
+		constexpr uint64_t byteLimit{ 0xFFFFFFFFull };
+		return static_cast<uint32_t>(a_value > byteLimit ? byteLimit : a_value);
 	}
 
 	[[nodiscard]] constexpr CallRecord MakeCallRecord(
 		const CallObservation& a_observation,
 		const ObservationCheck& a_check,
-		std::uint16_t a_shardIndex,
-		std::uint64_t a_shardSequence,
-		std::uint32_t a_saveLoadEpoch,
-		std::uint64_t a_monotonicUs) noexcept
+		uint16_t a_shardIndex,
+		uint64_t a_shardSequence,
+		uint32_t a_saveLoadEpoch,
+		uint64_t a_monotonicUs) noexcept
 	{
 		return {
 			a_shardSequence,
@@ -334,13 +334,13 @@ namespace Addictol::BA2Profile
 			a_observation.chunkIndex,
 			a_observation.chunkCount,
 			a_check.flags,
-			static_cast<std::uint8_t>(a_observation.primaryAttempted ? 1 : 0),
+			static_cast<uint8_t>(a_observation.primaryAttempted ? 1 : 0),
 			a_observation.evidenceFlags
 		};
 	}
 
-	inline constexpr std::size_t kBackendTableCapacity{ 8 };
-	inline constexpr std::size_t kOutputSizeBucketCount{ 8 };
+	inline constexpr size_t kBackendTableCapacity{ 8 };
+	inline constexpr size_t kOutputSizeBucketCount{ 8 };
 	inline constexpr std::array<std::string_view, kOutputSizeBucketCount> kOutputSizeBucketNames{
 		"0"sv,
 		"1-255"sv,
@@ -352,7 +352,7 @@ namespace Addictol::BA2Profile
 		"262144+"sv
 	};
 
-	[[nodiscard]] constexpr std::size_t OutputSizeBucket(std::uint64_t a_bytes) noexcept
+	[[nodiscard]] constexpr size_t OutputSizeBucket(uint64_t a_bytes) noexcept
 	{
 		if (!a_bytes)
 			return 0;
@@ -374,18 +374,18 @@ namespace Addictol::BA2Profile
 	struct BackendAggregate
 	{
 		BackendId id{ kBackendNone };
-		std::uint64_t selectedCalls{ 0 };
-		std::uint64_t primaryCalls{ 0 };
-		std::uint64_t primaryQpc{ 0 };
-		std::uint64_t fallbackCalls{ 0 };
-		std::uint64_t fallbackQpc{ 0 };
-		std::uint64_t servedCalls{ 0 };
-		std::uint64_t servedQpc{ 0 };
-		std::uint64_t inputBytesConsumed{ 0 };
-		std::uint64_t outputBytesProduced{ 0 };
-		std::array<std::uint64_t, kOutputSizeBucketCount> servedBucketCalls{};
-		std::array<std::uint64_t, kOutputSizeBucketCount> servedBucketQpc{};
-		std::array<std::uint64_t, kOutputSizeBucketCount> servedBucketBytes{};
+		uint64_t selectedCalls{ 0 };
+		uint64_t primaryCalls{ 0 };
+		uint64_t primaryQpc{ 0 };
+		uint64_t fallbackCalls{ 0 };
+		uint64_t fallbackQpc{ 0 };
+		uint64_t servedCalls{ 0 };
+		uint64_t servedQpc{ 0 };
+		uint64_t inputBytesConsumed{ 0 };
+		uint64_t outputBytesProduced{ 0 };
+		std::array<uint64_t, kOutputSizeBucketCount> servedBucketCalls{};
+		std::array<uint64_t, kOutputSizeBucketCount> servedBucketQpc{};
+		std::array<uint64_t, kOutputSizeBucketCount> servedBucketBytes{};
 
 		constexpr void Merge(const BackendAggregate& a_other) noexcept
 		{
@@ -398,7 +398,7 @@ namespace Addictol::BA2Profile
 			servedQpc += a_other.servedQpc;
 			inputBytesConsumed += a_other.inputBytesConsumed;
 			outputBytesProduced += a_other.outputBytesProduced;
-			for (std::size_t index = 0; index < kOutputSizeBucketCount; ++index)
+			for (size_t index = 0; index < kOutputSizeBucketCount; ++index)
 			{
 				servedBucketCalls[index] += a_other.servedBucketCalls[index];
 				servedBucketQpc[index] += a_other.servedBucketQpc[index];
@@ -427,8 +427,8 @@ namespace Addictol::BA2Profile
 		{
 			if (a_backend == kBackendNone)
 				return nullptr;
-			const auto start = static_cast<std::size_t>(a_backend) % kBackendTableCapacity;
-			for (std::size_t probe = 0; probe < kBackendTableCapacity; ++probe)
+			const auto start = static_cast<size_t>(a_backend) % kBackendTableCapacity;
+			for (size_t probe = 0; probe < kBackendTableCapacity; ++probe)
 			{
 				auto& entry = entries[(start + probe) % kBackendTableCapacity];
 				if (entry.id == kBackendNone)
@@ -447,9 +447,9 @@ namespace Addictol::BA2Profile
 			entries = {};
 		}
 
-		[[nodiscard]] constexpr std::uint64_t ServedTotal() const noexcept
+		[[nodiscard]] constexpr uint64_t ServedTotal() const noexcept
 		{
-			std::uint64_t total{ 0 };
+			uint64_t total{ 0 };
 			for (const auto& entry : entries)
 				total += entry.servedCalls;
 			return total;
@@ -459,41 +459,41 @@ namespace Addictol::BA2Profile
 	// One accumulator, fed identically from admitted observations and from persisted rows.
 	struct RequestEvidence
 	{
-		std::array<std::uint64_t, kKnownSiteCount> siteCounts{};
-		std::array<std::uint64_t, kKnownCallerCount> callerCounts{};
-		std::uint64_t unknownSiteCalls{ 0 };
-		std::uint64_t unknownCallerCalls{ 0 };
-		std::uint64_t chunkRows{ 0 };
-		std::uint64_t leaderRows{ 0 };
-		std::uint64_t requestWallQpc{ 0 };
-		std::uint64_t requestSequenceTotal{ 0 };
-		std::uint64_t streamAddressTotal{ 0 };
-		std::uint64_t threadIdTotal{ 0 };
-		std::uint64_t chunkIndexTotal{ 0 };
-		std::uint64_t chunkCountTotal{ 0 };
-		std::uint64_t nominalOutputBytes{ 0 };
-		std::uint64_t primaryInputBytesConsumed{ 0 };
-		std::uint64_t primaryOutputBytesProduced{ 0 };
-		std::uint64_t sizeDeltaSamples{ 0 };
-		std::uint64_t sizeMismatchChunks{ 0 };
-		std::uint64_t nominalDescMismatches{ 0 };
-		std::uint64_t capacityFailures{ 0 };
-		std::int64_t minSizeDelta{ 0 };
-		std::int64_t maxSizeDelta{ 0 };
+		std::array<uint64_t, kKnownSiteCount> siteCounts{};
+		std::array<uint64_t, kKnownCallerCount> callerCounts{};
+		uint64_t unknownSiteCalls{ 0 };
+		uint64_t unknownCallerCalls{ 0 };
+		uint64_t chunkRows{ 0 };
+		uint64_t leaderRows{ 0 };
+		uint64_t requestWallQpc{ 0 };
+		uint64_t requestSequenceTotal{ 0 };
+		uint64_t streamAddressTotal{ 0 };
+		uint64_t threadIdTotal{ 0 };
+		uint64_t chunkIndexTotal{ 0 };
+		uint64_t chunkCountTotal{ 0 };
+		uint64_t nominalOutputBytes{ 0 };
+		uint64_t primaryInputBytesConsumed{ 0 };
+		uint64_t primaryOutputBytesProduced{ 0 };
+		uint64_t sizeDeltaSamples{ 0 };
+		uint64_t sizeMismatchChunks{ 0 };
+		uint64_t nominalDescMismatches{ 0 };
+		uint64_t capacityFailures{ 0 };
+		int64_t minSizeDelta{ 0 };
+		int64_t maxSizeDelta{ 0 };
 
 		constexpr void Account(
 			SiteId a_site,
 			CallerId a_caller,
-			std::uint8_t a_evidenceFlags,
-			std::uint16_t a_chunkIndex,
-			std::uint16_t a_chunkCount,
-			std::uint64_t a_requestSequence,
-			std::uint64_t a_streamAddress,
-			std::uint32_t a_threadId,
-			std::uint64_t a_requestWallQpc,
-			std::uint32_t a_primaryInputBytesConsumed,
-			std::uint32_t a_primaryOutputBytesProduced,
-			std::uint32_t a_nominalOutputBytes) noexcept
+			uint8_t a_evidenceFlags,
+			uint16_t a_chunkIndex,
+			uint16_t a_chunkCount,
+			uint64_t a_requestSequence,
+			uint64_t a_streamAddress,
+			uint32_t a_threadId,
+			uint64_t a_requestWallQpc,
+			uint32_t a_primaryInputBytesConsumed,
+			uint32_t a_primaryOutputBytesProduced,
+			uint32_t a_nominalOutputBytes) noexcept
 		{
 			if (a_site < kKnownSiteCount)
 				++siteCounts[a_site];
@@ -577,9 +577,9 @@ namespace Addictol::BA2Profile
 
 		constexpr void Merge(const RequestEvidence& a_other) noexcept
 		{
-			for (std::size_t index = 0; index < kKnownSiteCount; ++index)
+			for (size_t index = 0; index < kKnownSiteCount; ++index)
 				siteCounts[index] += a_other.siteCounts[index];
-			for (std::size_t index = 0; index < kKnownCallerCount; ++index)
+			for (size_t index = 0; index < kKnownCallerCount; ++index)
 				callerCounts[index] += a_other.callerCounts[index];
 			unknownSiteCalls += a_other.unknownSiteCalls;
 			unknownCallerCalls += a_other.unknownCallerCalls;
@@ -608,17 +608,17 @@ namespace Addictol::BA2Profile
 			}
 		}
 
-		[[nodiscard]] constexpr std::uint64_t SiteTotal() const noexcept
+		[[nodiscard]] constexpr uint64_t SiteTotal() const noexcept
 		{
-			std::uint64_t total{ unknownSiteCalls };
+			uint64_t total{ unknownSiteCalls };
 			for (const auto count : siteCounts)
 				total += count;
 			return total;
 		}
 
-		[[nodiscard]] constexpr std::uint64_t CallerTotal() const noexcept
+		[[nodiscard]] constexpr uint64_t CallerTotal() const noexcept
 		{
-			std::uint64_t total{ unknownCallerCalls };
+			uint64_t total{ unknownCallerCalls };
 			for (const auto count : callerCounts)
 				total += count;
 			return total;
@@ -629,28 +629,28 @@ namespace Addictol::BA2Profile
 
 	struct ShardAggregate
 	{
-		std::uint64_t callsSeen{ 0 };
-		std::uint64_t rowsWritten{ 0 };
-		std::uint64_t rowsDropped{ 0 };
-		std::uint64_t rowsDisabled{ 0 };
-		std::uint64_t totalQpc{ 0 };
-		std::uint64_t rowTotalQpc{ 0 };
-		std::uint64_t inputBytesConsumed{ 0 };
-		std::uint64_t outputBytesProduced{ 0 };
-		std::array<std::uint64_t, kKnownReasonCount> reasonCounts{};
-		std::array<std::uint64_t, kKnownReasonCount> reasonPrimaryQpc{};
-		std::array<std::uint64_t, kKnownReasonCount> reasonFallbackQpc{};
-		std::array<std::uint64_t, kKnownReasonCount> reasonTotalQpc{};
-		std::uint64_t unknownReasonCalls{ 0 };
-		std::uint64_t unknownReasonPrimaryQpc{ 0 };
-		std::uint64_t unknownReasonFallbackQpc{ 0 };
-		std::uint64_t unknownReasonTotalQpc{ 0 };
-		std::uint64_t unservedCalls{ 0 };
-		std::uint64_t malformedObservations{ 0 };
-		std::uint64_t overflowedThreads{ 0 };
-		std::uint64_t backendTableOverflowCalls{ 0 };
-		std::uint64_t servedBackendOverflowCalls{ 0 };
-		std::uint64_t oversizedBatches{ 0 };
+		uint64_t callsSeen{ 0 };
+		uint64_t rowsWritten{ 0 };
+		uint64_t rowsDropped{ 0 };
+		uint64_t rowsDisabled{ 0 };
+		uint64_t totalQpc{ 0 };
+		uint64_t rowTotalQpc{ 0 };
+		uint64_t inputBytesConsumed{ 0 };
+		uint64_t outputBytesProduced{ 0 };
+		std::array<uint64_t, kKnownReasonCount> reasonCounts{};
+		std::array<uint64_t, kKnownReasonCount> reasonPrimaryQpc{};
+		std::array<uint64_t, kKnownReasonCount> reasonFallbackQpc{};
+		std::array<uint64_t, kKnownReasonCount> reasonTotalQpc{};
+		uint64_t unknownReasonCalls{ 0 };
+		uint64_t unknownReasonPrimaryQpc{ 0 };
+		uint64_t unknownReasonFallbackQpc{ 0 };
+		uint64_t unknownReasonTotalQpc{ 0 };
+		uint64_t unservedCalls{ 0 };
+		uint64_t malformedObservations{ 0 };
+		uint64_t overflowedThreads{ 0 };
+		uint64_t backendTableOverflowCalls{ 0 };
+		uint64_t servedBackendOverflowCalls{ 0 };
+		uint64_t oversizedBatches{ 0 };
 		FallbackReasonId firstUnknownReasonId{ 0 };
 		BackendTable backends{};
 		RequestEvidence requests{};
@@ -776,7 +776,7 @@ namespace Addictol::BA2Profile
 			rowTotalQpc += a_other.rowTotalQpc;
 			inputBytesConsumed += a_other.inputBytesConsumed;
 			outputBytesProduced += a_other.outputBytesProduced;
-			for (std::size_t index = 0; index < kKnownReasonCount; ++index)
+			for (size_t index = 0; index < kKnownReasonCount; ++index)
 			{
 				reasonCounts[index] += a_other.reasonCounts[index];
 				reasonPrimaryQpc[index] += a_other.reasonPrimaryQpc[index];
@@ -850,19 +850,19 @@ namespace Addictol::BA2Profile
 
 	struct RowEvidence
 	{
-		std::uint64_t rowsSeen{ 0 };
-		std::uint64_t totalQpc{ 0 };
-		std::array<std::uint64_t, kKnownReasonCount> reasonCounts{};
-		std::uint64_t unknownReasonCalls{ 0 };
-		std::uint64_t unservedCalls{ 0 };
-		std::uint64_t malformedRows{ 0 };
-		std::uint64_t shardMismatchRows{ 0 };
+		uint64_t rowsSeen{ 0 };
+		uint64_t totalQpc{ 0 };
+		std::array<uint64_t, kKnownReasonCount> reasonCounts{};
+		uint64_t unknownReasonCalls{ 0 };
+		uint64_t unservedCalls{ 0 };
+		uint64_t malformedRows{ 0 };
+		uint64_t shardMismatchRows{ 0 };
 		BackendTable servedBackends{};
 		RequestEvidence requests{};
 
 		constexpr void Account(
 			const CallRecord& a_record,
-			std::uint16_t a_expectedShardIndex) noexcept
+			uint16_t a_expectedShardIndex) noexcept
 		{
 			++rowsSeen;
 			totalQpc += a_record.totalQpc;
@@ -892,7 +892,7 @@ namespace Addictol::BA2Profile
 			rowsSeen += a_other.rowsSeen;
 			totalQpc += a_other.totalQpc;
 			requests.Merge(a_other.requests);
-			for (std::size_t index = 0; index < kKnownReasonCount; ++index)
+			for (size_t index = 0; index < kKnownReasonCount; ++index)
 				reasonCounts[index] += a_other.reasonCounts[index];
 			unknownReasonCalls += a_other.unknownReasonCalls;
 			unservedCalls += a_other.unservedCalls;
@@ -942,7 +942,7 @@ namespace Addictol::BA2Profile
 		const ShardAggregate& a_totals,
 		const RowEvidence* a_rows = nullptr) noexcept
 	{
-		std::uint64_t reasonSum{ a_totals.unknownReasonCalls };
+		uint64_t reasonSum{ a_totals.unknownReasonCalls };
 		for (const auto count : a_totals.reasonCounts)
 			reasonSum += count;
 
@@ -983,7 +983,7 @@ namespace Addictol::BA2Profile
 		return result;
 	}
 
-	inline constexpr std::size_t kCallsColumnCount{ 37 };
+	inline constexpr size_t kCallsColumnCount{ 37 };
 	inline constexpr std::string_view kCallsColumns{
 		"SchemaVersion,SessionId,QpcFrequency,PublishSequence,PublishReason,"
 		"SaveLoadEpoch,MonotonicUs,ShardIndex,ShardSequence,"
@@ -997,8 +997,8 @@ namespace Addictol::BA2Profile
 	struct FileContext
 	{
 		std::string_view sessionID;
-		std::uint64_t qpcFrequency{ 0 };
-		std::uint64_t publishSequence{ 0 };
+		uint64_t qpcFrequency{ 0 };
+		uint64_t publishSequence{ 0 };
 		std::string_view publishReason;
 		bool shutdownPublishEnabled{ false };
 		bool admissionClosed{ false };
@@ -1056,7 +1056,7 @@ namespace Addictol::BA2Profile
 			<< static_cast<unsigned>(a_context.admissionClosed) << "\n"sv;
 	}
 
-	inline constexpr std::size_t kSummaryColumnCount{ 61 };
+	inline constexpr size_t kSummaryColumnCount{ 61 };
 	inline constexpr std::string_view kSummaryColumns{
 		"SchemaVersion,SessionId,QpcFrequency,PublishSequence,PublishReason,SaveLoadEpoch,"
 		"IntervalStartMonotonicUs,IntervalEndMonotonicUs,Scope,ScopeId,ScopeLabel,BackendId,OutputSizeBucket,"
@@ -1079,11 +1079,11 @@ namespace Addictol::BA2Profile
 	{
 		std::string_view sessionID;
 		std::string_view publishReason;
-		std::uint64_t qpcFrequency{ 0 };
-		std::uint64_t publishSequence{ 0 };
-		std::uint64_t saveLoadEpoch{ 0 };
-		std::uint64_t intervalStartMonotonicUs{ 0 };
-		std::uint64_t intervalEndMonotonicUs{ 0 };
+		uint64_t qpcFrequency{ 0 };
+		uint64_t publishSequence{ 0 };
+		uint64_t saveLoadEpoch{ 0 };
+		uint64_t intervalStartMonotonicUs{ 0 };
+		uint64_t intervalEndMonotonicUs{ 0 };
 		bool shutdownPublishEnabled{ false };
 		bool admissionClosed{ false };
 	};
@@ -1092,32 +1092,32 @@ namespace Addictol::BA2Profile
 	{
 		std::string_view scope;
 		std::string_view scopeLabel;
-		std::uint64_t scopeID{ 0 };
-		std::uint64_t backendID{ 0 };
-		std::uint64_t outputSizeBucket{ 0 };
-		std::uint64_t callsSeen{ 0 };
-		std::uint64_t rowsWritten{ 0 };
-		std::uint64_t rowsDropped{ 0 };
-		std::uint64_t totalQpc{ 0 };
-		std::uint64_t rowTotalQpc{ 0 };
-		std::uint64_t inputBytesConsumed{ 0 };
-		std::uint64_t outputBytesProduced{ 0 };
-		std::uint64_t selectedCalls{ 0 };
-		std::uint64_t primaryCalls{ 0 };
-		std::uint64_t primaryQpc{ 0 };
-		std::uint64_t fallbackCalls{ 0 };
-		std::uint64_t fallbackQpc{ 0 };
-		std::uint64_t servedCalls{ 0 };
-		std::uint64_t servedQpc{ 0 };
-		std::uint64_t unservedCalls{ 0 };
-		std::uint64_t malformedObservations{ 0 };
-		std::uint64_t unknownReasonCalls{ 0 };
-		std::uint64_t firstUnknownReasonId{ 0 };
-		std::uint64_t backendTableOverflowCalls{ 0 };
-		std::uint64_t leasedShards{ 0 };
-		std::uint64_t overflowedThreads{ 0 };
-		std::uint64_t spillCalls{ 0 };
-		std::uint64_t oversizedBatches{ 0 };
+		uint64_t scopeID{ 0 };
+		uint64_t backendID{ 0 };
+		uint64_t outputSizeBucket{ 0 };
+		uint64_t callsSeen{ 0 };
+		uint64_t rowsWritten{ 0 };
+		uint64_t rowsDropped{ 0 };
+		uint64_t totalQpc{ 0 };
+		uint64_t rowTotalQpc{ 0 };
+		uint64_t inputBytesConsumed{ 0 };
+		uint64_t outputBytesProduced{ 0 };
+		uint64_t selectedCalls{ 0 };
+		uint64_t primaryCalls{ 0 };
+		uint64_t primaryQpc{ 0 };
+		uint64_t fallbackCalls{ 0 };
+		uint64_t fallbackQpc{ 0 };
+		uint64_t servedCalls{ 0 };
+		uint64_t servedQpc{ 0 };
+		uint64_t unservedCalls{ 0 };
+		uint64_t malformedObservations{ 0 };
+		uint64_t unknownReasonCalls{ 0 };
+		uint64_t firstUnknownReasonId{ 0 };
+		uint64_t backendTableOverflowCalls{ 0 };
+		uint64_t leasedShards{ 0 };
+		uint64_t overflowedThreads{ 0 };
+		uint64_t spillCalls{ 0 };
+		uint64_t oversizedBatches{ 0 };
 		RequestEvidence requests{};
 		Reconciliation reconciliation{};
 	};
