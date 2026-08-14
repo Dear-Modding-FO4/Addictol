@@ -244,17 +244,21 @@ target("vmm-tests", function()
     -- add dependencies
     add_deps("vmm")
 
+    -- add packages
+    add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
+
     -- add source files
     add_files("Tests/**.cpp")
 
     -- add include directories
-    add_includedirs("Tests", "Depends/vmm/source")
+    add_includedirs("Tests", "Depends", "Depends/vmm/source")
 
     -- add defines
     add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN")
 
     -- add libraries
-    add_links("Psapi")
+    add_linkdirs(xmake_library_dir)
+    add_links("deflatestatic", "Psapi")
 end)
 
 target(plugin_name, function()

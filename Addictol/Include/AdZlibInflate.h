@@ -123,6 +123,19 @@ namespace Addictol::ZlibInflate
 		return *ModePointer(*a_stream) == MODE_HEAD;
 	}
 
+	[[nodiscard]] constexpr bool IsZlibHeader(uint8_t a_cmf, uint8_t a_flg) noexcept
+	{
+		return (a_cmf & 0x0F) == 8 &&
+			((a_cmf >> 4) & 0x0F) <= 7 &&
+			(a_flg & 0x20) == 0 &&
+			((static_cast<uint32_t>(a_cmf) << 8 | a_flg) % 31) == 0;
+	}
+
+	[[nodiscard]] inline bool HasZlibHeader(std::span<const uint8_t> a_input) noexcept
+	{
+		return a_input.size() >= 2 && IsZlibHeader(a_input[0], a_input[1]);
+	}
+
 	[[nodiscard]] inline uint32_t ReadBigEndian32(const uint8_t* a_bytes) noexcept
 	{
 		return (static_cast<uint32_t>(a_bytes[0]) << 24) |

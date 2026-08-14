@@ -1,9 +1,11 @@
 #include <Modules/AdModuleLibDeflate.h>
 #include <AdProfilerBA2.h>
 #include <AdProfilerCore.h>
+#include <AdTextureOneShot.h>
 #include <AdUtils.h>
 #include <AdZlibBackend.h>
 #include <AdZlibInflate.h>
+#include <AdZlibServeContext.h>
 #include <Windows.h>
 #ifdef ERROR
 #	undef ERROR
@@ -25,9 +27,21 @@ namespace Addictol
 		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Allocation) == BA2Profile::kReasonAllocation);
 		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Decode) == BA2Profile::kReasonDecode);
 		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Commit) == BA2Profile::kReasonCommit);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Capacity) == BA2Profile::kReasonCapacity);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::SizeMismatch) == BA2Profile::kReasonSizeMismatch);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::RequestRestart) == BA2Profile::kReasonRequestRestart);
 
 		using TInflate = int32_t(*)(ZlibInflate::Stream*, int32_t) noexcept;
 		TInflate OriginalInflate;
+
+		// Set immediately before the first Detours call so a retry can never re-enter patching.
+		enum class PatchState : std::uint8_t
+		{
+			NotAttempted,
+			Attempted
+		};
+
+		PatchState g_patchState{ PatchState::NotAttempted };
 
 		std::uint64_t ReadQpc() noexcept
 		{
@@ -179,7 +193,8 @@ namespace Addictol
 		void RecordOutcome(
 			const ZlibInflateOutcome& a_outcome,
 			std::uint64_t a_inputBytesAvailable,
-			std::uint64_t a_outputBytesAvailable) noexcept
+			std::uint64_t a_outputBytesAvailable,
+			const ZlibServeState& a_serve) noexcept
 		{
 			BA2Profile::CallObservation observation;
 			observation.primaryBackendId = a_outcome.primaryBackendId;
@@ -196,6 +211,18 @@ namespace Addictol
 			observation.outputBytesProduced = a_outcome.produced;
 			observation.zlibResult = a_outcome.zlibResult;
 			observation.primaryAttempted = a_outcome.primaryAttempted;
+			observation.observationSiteId = BA2Profile::kSiteInflate;
+			observation.callerId = a_serve.callerId;
+			observation.threadId = static_cast<std::uint32_t>(GetCurrentThreadId());
+			observation.requestSequence = a_serve.requestSequence;
+			observation.streamAddress = a_serve.streamAddress;
+			if (a_outcome.servedBackendId == a_outcome.primaryBackendId)
+			{
+				observation.primaryInputBytesConsumed =
+					static_cast<std::uint32_t>(a_outcome.consumed);
+				observation.primaryOutputBytesProduced =
+					static_cast<std::uint32_t>(a_outcome.produced);
+			}
 			ProfilerBA2::GetSingleton()->Record(observation);
 		}
 
@@ -219,11 +246,37 @@ namespace Addictol
 
 		namespace Decompression
 		{
+			// Inner calls of a stock replay are the request's own bytes; they are aggregated, not rowed.
+			inline int32_t ServeReplay(
+				ZlibInflate::Stream* a_stream,
+				int32_t a_flush,
+				ZlibReplayCapture& a_capture) noexcept
+			{
+				const auto inputBefore = a_stream->avail_in;
+				const auto outputBefore = a_stream->avail_out;
+				const auto start = a_capture.timingEnabled ? ReadQpc() : 0;
+				const auto result = OriginalInflate(a_stream, a_flush);
+				const auto end = a_capture.timingEnabled ? ReadQpc() : 0;
+				const auto inputAfter = a_stream->avail_in;
+				const auto outputAfter = a_stream->avail_out;
+				a_capture.Account(
+					end - start,
+					inputAfter <= inputBefore ? inputBefore - inputAfter : 0,
+					outputAfter <= outputBefore ? outputBefore - outputAfter : 0,
+					result);
+				return result;
+			}
+
 			template<class Backend>
 			struct Selected
 			{
 				static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
 				{
+					auto& serve = CurrentZlibServe();
+					if (serve.mode == ZlibServeMode::CaptureReplay && serve.capture &&
+						a_stream && OriginalInflate)
+						return ServeReplay(a_stream, a_flush, *serve.capture);
+
 					const auto recording = ProfilerBA2::GetSingleton()->IsRecording();
 					const auto qpcFrequency = recording ? GetQpcFrequency() : 0;
 					const auto timingEnabled = recording && qpcFrequency != 0;
@@ -240,23 +293,24 @@ namespace Addictol
 							const auto start = ReadQpc();
 							const auto end = ReadQpc();
 							outcome.totalQpc = end - start;
-							RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable);
+							RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable, serve);
 						}
 						return Z_STREAM_ERROR;
 					}
 
-					const auto outcome = ServeZlib<Backend>(
-						a_stream,
-						a_flush,
-						[](ZlibInflate::Stream* a_stockStream, std::int32_t a_stockFlush) noexcept {
-							return OriginalInflate(a_stockStream, a_stockFlush);
-						},
-						timingEnabled,
-						qpcFrequency,
-						[]() noexcept { return ReadQpc(); });
+					const auto original = [](ZlibInflate::Stream* a_stockStream, std::int32_t a_stockFlush) noexcept {
+						return OriginalInflate(a_stockStream, a_stockFlush);
+					};
+					const auto clock = []() noexcept { return ReadQpc(); };
+					// Delegated request work must not reattempt the codec, but is still observed.
+					const auto outcome = serve.mode == ZlibServeMode::ForceStockObserved ?
+						ServeZlib<StockZlibBackend>(
+							a_stream, a_flush, original, timingEnabled, qpcFrequency, clock) :
+						ServeZlib<Backend>(
+							a_stream, a_flush, original, timingEnabled, qpcFrequency, clock);
 					CountOutcome(outcome);
 					if (timingEnabled)
-						RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable);
+						RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable, serve);
 
 					return outcome.zlibResult;
 				}
@@ -301,6 +355,15 @@ namespace Addictol
 		using namespace zlibDetail;
 		const auto runtime = RELEX::IsRuntimeOG() ? "OG"sv :
 			(RELEX::IsRuntimeAE() ? "AE"sv : "NG"sv);
+
+		if (g_patchState != PatchState::NotAttempted)
+		{
+			REX::ERROR(
+				"LibDeflate: {} install re-entered after a detour attempt; the hooks are left exactly as they are."sv,
+				runtime);
+			return false;
+		}
+
 		const auto target = REL::ID{ 224011, 2168026 }.address();
 		const auto code = std::span{
 			reinterpret_cast<const std::uint8_t*>(target),
@@ -327,14 +390,28 @@ namespace Addictol
 			Skip("BA2 profiler could not start"sv);
 			return false;
 		}
+
+		// Every target is proven before the first write; a rejection here still leaves both untouched.
+		const auto textureSelected = GetSelectedZlibBackendKind() == ZlibBackendKind::LibDeflate;
+		const auto textureValidated = textureSelected &&
+			TextureOneShot::Validate(runtime) == TextureOneShot::InstallState::Validated;
+		if (!textureSelected)
+		{
+			REX::INFO(
+				"LibDeflate: {} one-shot texture decompression stays off because the selected backend is {}."sv,
+				runtime,
+				ZlibBackendKindName(GetSelectedZlibBackendKind()));
+		}
+
 		const auto hook = VisitSelectedZlibBackend([]<class Backend>() {
 			return reinterpret_cast<std::uintptr_t>(&Decompression::Selected<Backend>::Inflate);
 		});
+		g_patchState = PatchState::Attempted;
 		OriginalInflate = reinterpret_cast<TInflate>(RELEX::DetourJump(target, hook));
 		if (!OriginalInflate)
 		{
 			REX::ERROR(
-				"LibDeflate: {} detour failed for selected backend {}; inflate may be left in an indeterminate state."sv,
+				"LibDeflate: {} detour failed for selected backend {}; inflate may be left in an indeterminate state and the texture seam is not attempted."sv,
 				runtime,
 				ZlibBackendKindName(GetSelectedZlibBackendKind()));
 			return false;
@@ -344,6 +421,21 @@ namespace Addictol
 			"LibDeflate: {} zlib contract validated; backend {} enabled (mode +0x0, HEAD 0, DONE 28)."sv,
 			runtime,
 			ZlibBackendKindName(GetSelectedZlibBackendKind()));
+
+		// The seam decodes whole requests through the same backend, so it is patched second by design.
+		if (textureValidated &&
+			TextureOneShot::InstallValidated() != TextureOneShot::InstallState::Installed)
+		{
+			REX::WARN(
+				"LibDeflate: {} one-shot texture decompression is disabled; the validated inflate hook stays installed and textures decompress per chunk."sv,
+				runtime);
+		}
+		else if (textureSelected && !textureValidated)
+		{
+			REX::WARN(
+				"LibDeflate: {} one-shot texture decompression was not installed because its targets did not validate; the inflate hook stays installed and textures decompress per chunk."sv,
+				runtime);
+		}
 		return true;
 	}
 
@@ -352,7 +444,10 @@ namespace Addictol
 		if (a_msg &&
 			(a_msg->type == F4SE::MessagingInterface::kPostLoadGame ||
 				a_msg->type == F4SE::MessagingInterface::kPostSaveGame))
+		{
 			zlibDetail::LogCounters();
+			TextureOneShot::LogCounters();
+		}
 
 		return true;
 	}

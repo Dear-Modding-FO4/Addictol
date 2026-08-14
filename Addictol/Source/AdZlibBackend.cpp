@@ -62,4 +62,29 @@ namespace Addictol
 
 		return { ZlibDecodeStatus::Success, consumed, produced };
 	}
+
+	ZlibExactDecode LibDeflateZlibBackend::DecodeExact(
+		std::span<const std::uint8_t> a_input,
+		std::span<std::uint8_t> a_output) noexcept
+	{
+		static_assert(ZLIB_CODEC_SUCCESS == LIBDEFLATE_SUCCESS);
+		static_assert(ZLIB_CODEC_BAD_DATA == LIBDEFLATE_BAD_DATA);
+		static_assert(ZLIB_CODEC_SHORT_OUTPUT == LIBDEFLATE_SHORT_OUTPUT);
+		static_assert(ZLIB_CODEC_INSUFFICIENT_SPACE == LIBDEFLATE_INSUFFICIENT_SPACE);
+
+		auto* decompressor = GetThreadDecompressor();
+		if (!decompressor)
+			return {};
+
+		ZlibExactDecode decode{};
+		decode.codecResult = static_cast<std::uint32_t>(libdeflate_zlib_decompress_ex(
+			decompressor,
+			a_input.data(),
+			a_input.size(),
+			a_output.data(),
+			a_output.size(),
+			&decode.consumed,
+			&decode.produced));
+		return decode;
+	}
 }

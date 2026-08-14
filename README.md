@@ -27,7 +27,7 @@ One DLL covers all three; there is no separate download per version.
 
 - **Memory Manager** - Replaces the game's allocator with a selectable backend
 - **Faster Workshop** - O(1) keyword lookups instead of scanning all constructible objects
-- **Zlib Decompression** - Selectable stock/libdeflate backend, with libdeflate as the default
+- **Zlib Decompression** - Selectable stock/libdeflate backend, with direct whole-chunk texture decoding by default
 - **Facegen** - Validates NPC face textures before using preprocessed data
 - **Input Switch** - Proper keyboard/gamepad device switching
 - **Scaleform Allocator** - Replaces Scaleform's memory mapper with configurable page/heap sizes

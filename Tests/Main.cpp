@@ -53,6 +53,9 @@ int main(int argc, char** argv)
 	run_bits_regions_check(runner);
 	run_zlib_backend_checks(runner);
 	run_zlib_inflate_checks(runner);
+	run_libdeflate_checks(runner);
+	run_texture_stream_checks(runner);
+	run_texture_one_shot_checks(runner);
 	run_esp_profiler_checks(runner);
 	run_ba2_profiler_checks(runner);
 	run_escape_freeze_checks(runner);

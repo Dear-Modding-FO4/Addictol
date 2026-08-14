@@ -1,4 +1,5 @@
 #include <AdProfilerBA2.h>
+#include <AdProfilerBA2Rows.h>
 #include <AdProfilerCore.h>
 #include <AdProfilerRuntimeChannel.h>
 #include <Modules/AdModuleSafeExit.h>
@@ -32,31 +33,15 @@ namespace Addictol
 		constexpr std::size_t kSpillShardIndex{ kLeasedShardCount };
 		constexpr std::size_t kShardCount{ kLeasedShardCount + 1 };
 		constexpr std::size_t kBankCount{ 2 };
-		constexpr std::size_t kChunkRows{ 256 };
-		constexpr std::size_t kArenaChunkCount{ 1024 };
-		constexpr std::size_t kArenaRowCapacity{ kChunkRows * kArenaChunkCount };
-		constexpr std::uint16_t kNoChunk{ 0xFFFF };
 
-		static_assert(kArenaRowCapacity == 262144);
-		static_assert(kArenaChunkCount < kNoChunk);
 		static_assert(kBankCount == 2);
-		static_assert(kSchemaVersion == 2);
-		static_assert(sizeof(CallRecord) * kArenaRowCapacity == 22ull * 1024 * 1024);
-
-		struct Arena
-		{
-			CallRecord* rows{ nullptr };
-			std::array<std::uint16_t, kArenaChunkCount> chunkNext{};
-			std::atomic<std::uint32_t> nextChunk{ 0 };
-		};
+		static_assert(kSchemaVersion == 3);
+		static_assert(kArenaRowCapacity == 262144);
 
 		struct ShardBank
 		{
 			ShardAggregate aggregate{};
-			std::uint16_t firstChunk{ kNoChunk };
-			std::uint16_t currentChunk{ kNoChunk };
-			std::uint32_t rowsInCurrentChunk{ 0 };
-			bool exhausted{ false };
+			BankCursor cursor{};
 		};
 
 		struct alignas(64) Shard
@@ -72,7 +57,6 @@ namespace Addictol
 		struct ShardRows
 		{
 			std::uint16_t firstChunk{ kNoChunk };
-			std::uint32_t rowsInCurrentChunk{ 0 };
 			std::uint32_t bank{ 0 };
 		};
 
@@ -83,8 +67,8 @@ namespace Addictol
 				std::uint64_t a_qpcFrequency,
 				bool a_exportCSV,
 				bool a_shutdownPublishEnabled) :
-				calls(a_session, "ba2_calls_v2"sv, WriteCallsHeader),
-				summary(a_session, "ba2_summary_v2"sv, WriteSummaryHeader),
+				calls(a_session, "ba2_calls_v3"sv, WriteCallsHeader),
+				summary(a_session, "ba2_summary_v3"sv, WriteSummaryHeader),
 				session(a_session),
 				qpcFrequency(a_qpcFrequency),
 				exportCSV(a_exportCSV),
@@ -94,7 +78,7 @@ namespace Addictol
 					shards[index].index = static_cast<std::uint16_t>(index);
 			}
 
-			std::array<Arena, kBankCount> arenas{};
+			std::array<RowArena, kBankCount> arenas{};
 			std::array<Shard, kShardCount> shards{};
 			std::mutex publishLock;
 			RuntimeCsvFile calls;
@@ -190,34 +174,6 @@ namespace Addictol
 			delete a_state;
 		}
 
-		[[nodiscard]] CallRecord* ReserveRow(Arena& a_arena, ShardBank& a_bank) noexcept
-		{
-			if (a_bank.exhausted)
-				return nullptr;
-
-			if (a_bank.currentChunk == kNoChunk || a_bank.rowsInCurrentChunk == kChunkRows)
-			{
-				const auto reserved = a_arena.nextChunk.fetch_add(1, std::memory_order_relaxed);
-				if (reserved >= kArenaChunkCount)
-				{
-					a_bank.exhausted = true;
-					return nullptr;
-				}
-
-				const auto chunk = static_cast<std::uint16_t>(reserved);
-				a_arena.chunkNext[chunk] = kNoChunk;
-				if (a_bank.currentChunk == kNoChunk)
-					a_bank.firstChunk = chunk;
-				else
-					a_arena.chunkNext[a_bank.currentChunk] = chunk;
-				a_bank.currentChunk = chunk;
-				a_bank.rowsInCurrentChunk = 0;
-			}
-
-			return &a_arena.rows[static_cast<std::size_t>(a_bank.currentChunk) * kChunkRows +
-				a_bank.rowsInCurrentChunk++];
-		}
-
 		[[nodiscard]] RowEvidence SerializeShardRows(
 			RecorderState& a_state,
 			std::ostream& a_file,
@@ -225,23 +181,14 @@ namespace Addictol
 			const ShardRows& a_rows,
 			std::uint16_t a_shardIndex) noexcept
 		{
-			const auto& arena = a_state.arenas[a_rows.bank];
 			RowEvidence evidence;
-			auto chunk = a_rows.firstChunk;
-			while (chunk != kNoChunk)
-			{
-				const auto next = arena.chunkNext[chunk];
-				const auto rows = next == kNoChunk ?
-					static_cast<std::size_t>(a_rows.rowsInCurrentChunk) :
-					kChunkRows;
-				const auto* base = &arena.rows[static_cast<std::size_t>(chunk) * kChunkRows];
-				for (std::size_t row = 0; row < rows; ++row)
-				{
-					evidence.Account(base[row], a_shardIndex);
-					WriteCallRow(a_file, a_context, base[row]);
-				}
-				chunk = next;
-			}
+			ForEachRow(
+				a_state.arenas[a_rows.bank],
+				a_rows.firstChunk,
+				[&](const CallRecord& a_record) noexcept {
+					evidence.Account(a_record, a_shardIndex);
+					WriteCallRow(a_file, a_context, a_record);
+				});
 			return evidence;
 		}
 
@@ -249,10 +196,7 @@ namespace Addictol
 		{
 			auto& bank = a_shard.banks[a_bank];
 			bank.aggregate.Reset();
-			bank.firstChunk = kNoChunk;
-			bank.currentChunk = kNoChunk;
-			bank.rowsInCurrentChunk = 0;
-			bank.exhausted = false;
+			bank.cursor.Reset();
 		}
 
 		[[nodiscard]] SummaryRow MakeShardRow(
@@ -277,6 +221,8 @@ namespace Addictol
 			row.firstUnknownReasonId = a_aggregate.firstUnknownReasonId;
 			row.backendTableOverflowCalls = a_aggregate.backendTableOverflowCalls;
 			row.overflowedThreads = a_aggregate.overflowedThreads;
+			row.oversizedBatches = a_aggregate.oversizedBatches;
+			row.requests = a_aggregate.requests;
 			row.spillCalls = a_index == kSpillShardIndex ? a_aggregate.callsSeen : 0;
 			for (const auto& backend : a_aggregate.backends.entries)
 			{
@@ -332,6 +278,8 @@ namespace Addictol
 			interval.unknownReasonCalls = totals.unknownReasonCalls;
 			interval.firstUnknownReasonId = totals.firstUnknownReasonId;
 			interval.backendTableOverflowCalls = totals.backendTableOverflowCalls;
+			interval.oversizedBatches = totals.oversizedBatches;
+			interval.requests = totals.requests;
 			interval.leasedShards = a_report.leasedShards;
 			interval.overflowedThreads = a_report.overflowedThreads;
 			interval.spillCalls = a_report.spillCalls;
@@ -423,6 +371,50 @@ namespace Addictol
 				WriteSummaryRow(*file, a_report.context, row);
 			}
 
+			for (std::size_t site = 0; site < kKnownSiteCount; ++site)
+			{
+				SummaryRow row;
+				row.scope = "Site"sv;
+				row.scopeLabel = kSiteNames[site];
+				row.scopeID = site;
+				row.callsSeen = totals.requests.siteCounts[site];
+				row.reconciliation = a_report.reconciliation;
+				WriteSummaryRow(*file, a_report.context, row);
+			}
+
+			if (totals.requests.unknownSiteCalls)
+			{
+				SummaryRow row;
+				row.scope = "Site"sv;
+				row.scopeLabel = "Unknown"sv;
+				row.scopeID = kKnownSiteCount;
+				row.callsSeen = totals.requests.unknownSiteCalls;
+				row.reconciliation = a_report.reconciliation;
+				WriteSummaryRow(*file, a_report.context, row);
+			}
+
+			for (std::size_t caller = 0; caller < kKnownCallerCount; ++caller)
+			{
+				SummaryRow row;
+				row.scope = "Caller"sv;
+				row.scopeLabel = kCallerNames[caller];
+				row.scopeID = caller;
+				row.callsSeen = totals.requests.callerCounts[caller];
+				row.reconciliation = a_report.reconciliation;
+				WriteSummaryRow(*file, a_report.context, row);
+			}
+
+			if (totals.requests.unknownCallerCalls)
+			{
+				SummaryRow row;
+				row.scope = "Caller"sv;
+				row.scopeLabel = "Unknown"sv;
+				row.scopeID = kKnownCallerCount;
+				row.callsSeen = totals.requests.unknownCallerCalls;
+				row.reconciliation = a_report.reconciliation;
+				WriteSummaryRow(*file, a_report.context, row);
+			}
+
 			if (totals.unknownReasonCalls)
 			{
 				SummaryRow row;
@@ -456,7 +448,7 @@ namespace Addictol
 				totals.rowTotalQpc,
 				context.qpcFrequency);
 			REX::INFO(
-				"BA2 profiler [{} #{}]: unserved {}, reasons none {}, state {}, allocation {}, decode {}, commit {}, unknown {}."sv,
+				"BA2 profiler [{} #{}]: unserved {}, reasons none {}, state {}, allocation {}, decode {}, commit {}, capacity {}, size-mismatch {}, request-restart {}, unknown {}."sv,
 				context.publishReason,
 				context.publishSequence,
 				totals.unservedCalls,
@@ -465,7 +457,57 @@ namespace Addictol
 				totals.reasonCounts[kReasonAllocation],
 				totals.reasonCounts[kReasonDecode],
 				totals.reasonCounts[kReasonCommit],
+				totals.reasonCounts[kReasonCapacity],
+				totals.reasonCounts[kReasonSizeMismatch],
+				totals.reasonCounts[kReasonRequestRestart],
 				totals.unknownReasonCalls);
+			REX::INFO(
+				"BA2 profiler [{} #{}]: sites inflate {}, texture-chunk {}, unknown {}; callers streaming {}, array-slice {}, unknown {}; texture requests {}, chunk rows {}."sv,
+				context.publishReason,
+				context.publishSequence,
+				totals.requests.siteCounts[kSiteInflate],
+				totals.requests.siteCounts[kSiteTextureChunk],
+				totals.requests.unknownSiteCalls,
+				totals.requests.callerCounts[kCallerStreamingTexture],
+				totals.requests.callerCounts[kCallerArraySlice],
+				totals.requests.unknownCallerCalls,
+				totals.requests.leaderRows,
+				totals.requests.chunkRows);
+			REX::INFO(
+				"BA2 profiler [{} #{}]: chunk size evidence: {} of {} measured and {} observed chunks mismatched fullSize ({} per 10000 measured); nominal-minus-decoded delta over mismatching chunks min {} max {}; nominal-vs-desc mismatches {}, capacity failures {}."sv,
+				context.publishReason,
+				context.publishSequence,
+				totals.requests.sizeMismatchChunks,
+				totals.requests.sizeDeltaSamples,
+				totals.requests.chunkRows,
+				totals.requests.sizeDeltaSamples ?
+					(totals.requests.sizeMismatchChunks * 10000 +
+						totals.requests.sizeDeltaSamples / 2) /
+						totals.requests.sizeDeltaSamples :
+					0,
+				totals.requests.sizeMismatchChunks ? totals.requests.minSizeDelta : 0,
+				totals.requests.sizeMismatchChunks ? totals.requests.maxSizeDelta : 0,
+				totals.requests.nominalDescMismatches,
+				totals.requests.capacityFailures);
+			if (totals.requests.sizeMismatchChunks || totals.requests.nominalDescMismatches)
+			{
+				REX::WARN(
+					"BA2 profiler [{} #{}]: {} of {} measured chunks decoded to a size other than the archive fullSize and {} chunk sizes disagreed with the descriptor; the exact-size contract is not holding."sv,
+					context.publishReason,
+					context.publishSequence,
+					totals.requests.sizeMismatchChunks,
+					totals.requests.sizeDeltaSamples,
+					totals.requests.nominalDescMismatches);
+			}
+			if (totals.oversizedBatches)
+			{
+				REX::ERROR(
+					"BA2 profiler [{} #{}]: {} request batches exceeded the {}-row batch bound; their rows were dropped and only the aggregates are exact."sv,
+					context.publishReason,
+					context.publishSequence,
+					totals.oversizedBatches,
+					kMaxBatchRows);
+			}
 			REX::INFO(
 				"BA2 profiler [{} #{}]: leased shards {}, overflowed threads {}, spill calls {}; an interval edge is a per-shard aggregation boundary, not one global instant."sv,
 				context.publishReason,
@@ -543,13 +585,16 @@ namespace Addictol
 			if (!a_report.reconciliation.Ok())
 			{
 				REX::ERROR(
-					"BA2 profiler [{} #{}]: ReconciliationOk=false (reason {}, backend {}, row {}, tick {}, evidence {}, contract {})."sv,
+					"BA2 profiler [{} #{}]: ReconciliationOk=false (reason {}, backend {}, site {}, caller {}, row {}, tick {}, request {}, evidence {}, contract {})."sv,
 					context.publishReason,
 					context.publishSequence,
 					a_report.reconciliation.reasonPartitionOk,
 					a_report.reconciliation.backendPartitionOk,
+					a_report.reconciliation.sitePartitionOk,
+					a_report.reconciliation.callerPartitionOk,
 					a_report.reconciliation.rowPartitionOk,
 					a_report.reconciliation.tickIdentityOk,
+					a_report.reconciliation.requestEvidenceOk,
 					a_report.reconciliation.rowEvidenceOk,
 					a_report.reconciliation.contractOk);
 			}
@@ -668,13 +713,18 @@ namespace Addictol
 
 	void ProfilerBA2::Record(const BA2Profile::CallObservation& a_observation) noexcept
 	{
+		RecordBatch({ &a_observation, 1 });
+	}
+
+	void ProfilerBA2::RecordBatch(
+		std::span<const BA2Profile::CallObservation> a_observations) noexcept
+	{
 		using namespace ba2ProfilerDetail;
 
 		auto* state = g_state.load(std::memory_order_acquire);
-		if (!state)
+		if (!state || a_observations.empty())
 			return;
 
-		const auto check = ValidateObservation(a_observation, state->qpcFrequency);
 		RuntimeRowMetadata metadata{};
 		if (state->exportCSV)
 			metadata = state->session.Capture();
@@ -691,19 +741,33 @@ namespace Addictol
 			++bank.aggregate.overflowedThreads;
 			g_threadLease.countedGeneration = shard.generation;
 		}
-		auto* row = state->exportCSV ? ReserveRow(state->arenas[bankIndex], bank) : nullptr;
-		if (row)
+
+		// One request occupies contiguous rows in one bank, so it cannot straddle a publish.
+		const auto oversized = a_observations.size() > kMaxBatchRows;
+		if (oversized)
+			++bank.aggregate.oversizedBatches;
+		const auto rows = state->exportCSV && !oversized ?
+			ReserveRows(state->arenas[bankIndex], bank.cursor, a_observations.size()) :
+			std::span<CallRecord>{};
+
+		for (std::size_t index = 0; index < a_observations.size(); ++index)
 		{
-			*row = MakeCallRecord(
-				a_observation,
-				check,
-				shard.index,
-				shard.sequence,
-				static_cast<std::uint32_t>(metadata.saveLoadEpoch),
-				metadata.monotonicUs);
+			const auto& observation = a_observations[index];
+			const auto check = ValidateObservation(observation, state->qpcFrequency);
+			const auto written = index < rows.size();
+			if (written)
+			{
+				rows[index] = MakeCallRecord(
+					observation,
+					check,
+					shard.index,
+					shard.sequence,
+					static_cast<std::uint32_t>(metadata.saveLoadEpoch),
+					metadata.monotonicUs);
+			}
+			++shard.sequence;
+			bank.aggregate.Account(observation, check, state->exportCSV, written);
 		}
-		++shard.sequence;
-		bank.aggregate.Account(a_observation, check, state->exportCSV, row != nullptr);
 	}
 
 	void ProfilerBA2::Publish(std::string_view a_reason, bool a_closeAdmission) noexcept
@@ -726,7 +790,7 @@ namespace Addictol
 			std::lock_guard lock(shard.lock);
 			const auto bankIndex = shard.activeBank;
 			const auto& bank = shard.banks[bankIndex];
-			rows[index] = { bank.firstChunk, bank.rowsInCurrentChunk, bankIndex };
+			rows[index] = { bank.cursor.firstChunk, bankIndex };
 			aggregates[index] = bank.aggregate;
 			shard.activeBank = bankIndex ^ 1u;
 			++shard.generation;
@@ -823,7 +887,7 @@ namespace Addictol
 
 		for (std::size_t index = 0; index < kShardCount; ++index)
 			ResetBank(state->shards[index], rows[index].bank);
-		state->arenas[rows[0].bank].nextChunk.store(0, std::memory_order_relaxed);
+		state->arenas[rows[0].bank].Reset();
 
 		state->intervalStartMonotonicUs = metadata.monotonicUs;
 		++state->publishSequence;

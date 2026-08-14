@@ -6,6 +6,7 @@
 bThreads = true
 
 # Enables the validated zlib decompression hook. Backend selected by sZlibBackend.
+# With libdeflate selected, a validated texture seam decodes complete chunks directly; ineligible or failed requests replay through stock.
 bLibDeflate = true
 
 # Black loading screen with fixes for 21:9 display. Need High FPS Physics Fix mod, otherwise slowly loads game.
@@ -292,7 +293,7 @@ bUseNewRedistributable = false
 # Selects the allocator backend: voltek.
 sAllocator = "voltek"
 
-# Selects the zlib decompression backend: libdeflate or stock (needs bLibDeflate).
+# Selects the zlib decompression backend: libdeflate or stock (needs bLibDeflate). One-shot texture decompression requires libdeflate.
 sZlibBackend = "libdeflate"
 
 # The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
@@ -377,7 +378,7 @@ bStartupTimeline = true
 # Track memory usage snapshots at key lifecycle points.
 bMemoryTracking = true
 
-# Record BA2 decompression timing into ba2_calls_v2/ba2_summary_v2. When bLibDeflate is false, profiling installs the stock hook. Per-call CSV export reserves 44 MiB.
+# Record BA2 decompression timing into ba2_calls_v3/ba2_summary_v3. The one-shot texture path records whole chunks; other paths record inflate calls. When bLibDeflate is false, profiling installs the stock hook. Per-call CSV export reserves 68 MiB.
 bBA2Timing = true
 
 # Export profiler data to CSV alongside the log report. Requires bProfiler = true.

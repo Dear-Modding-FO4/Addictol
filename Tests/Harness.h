@@ -146,6 +146,9 @@ namespace vmm_tests
 	void run_shape_checks(Runner& runner);
 	void run_zlib_backend_checks(Runner& runner);
 	void run_zlib_inflate_checks(Runner& runner);
+	void run_libdeflate_checks(Runner& runner);
+	void run_texture_stream_checks(Runner& runner);
+	void run_texture_one_shot_checks(Runner& runner);
 	void run_esp_profiler_checks(Runner& runner);
 	void run_ba2_profiler_checks(Runner& runner);
 	int run_oversized_case();

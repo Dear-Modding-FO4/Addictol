@@ -62,7 +62,10 @@ namespace Addictol
 		State = 1,
 		Allocation = 2,
 		Decode = 3,
-		Commit = 4
+		Commit = 4,
+		Capacity = 5,
+		SizeMismatch = 6,
+		RequestRestart = 7
 	};
 
 	[[nodiscard]] inline constexpr std::string_view ZlibFallbackReasonName(
@@ -80,6 +83,12 @@ namespace Addictol
 			return "decode";
 		case ZlibFallbackReason::Commit:
 			return "commit";
+		case ZlibFallbackReason::Capacity:
+			return "capacity";
+		case ZlibFallbackReason::SizeMismatch:
+			return "size-mismatch";
+		case ZlibFallbackReason::RequestRestart:
+			return "request-restart";
 		default:
 			return "unknown";
 		}
@@ -118,6 +127,66 @@ namespace Addictol
 		std::size_t produced{ 0 };
 	};
 
+	// libdeflate result codes, mirrored so the classifier stays independent of the codec header.
+	inline constexpr std::uint32_t ZLIB_CODEC_SUCCESS{ 0 };
+	inline constexpr std::uint32_t ZLIB_CODEC_BAD_DATA{ 1 };
+	inline constexpr std::uint32_t ZLIB_CODEC_SHORT_OUTPUT{ 2 };
+	inline constexpr std::uint32_t ZLIB_CODEC_INSUFFICIENT_SPACE{ 3 };
+
+	enum class ZlibExactStatus : std::uint8_t
+	{
+		Success,
+		Capacity,
+		SizeMismatch,
+		Decode
+	};
+
+	struct ZlibExactDecode
+	{
+		std::uint32_t codecResult{ ZLIB_CODEC_BAD_DATA };
+		std::size_t consumed{ 0 };
+		std::size_t produced{ 0 };
+	};
+
+	[[nodiscard]] inline constexpr ZlibExactStatus ClassifyExactDecode(
+		const ZlibExactDecode& a_decode,
+		std::size_t a_expectedInput,
+		std::size_t a_expectedOutput) noexcept
+	{
+		switch (a_decode.codecResult)
+		{
+		case ZLIB_CODEC_SUCCESS:
+			break;
+		case ZLIB_CODEC_INSUFFICIENT_SPACE:
+			return ZlibExactStatus::Capacity;
+		case ZLIB_CODEC_SHORT_OUTPUT:
+			return ZlibExactStatus::SizeMismatch;
+		default:
+			return ZlibExactStatus::Decode;
+		}
+
+		// The archive contract is exact on both sides; a disagreement is metadata, not corruption.
+		if (a_decode.consumed != a_expectedInput || a_decode.produced != a_expectedOutput)
+			return ZlibExactStatus::SizeMismatch;
+		return ZlibExactStatus::Success;
+	}
+
+	[[nodiscard]] inline constexpr ZlibFallbackReason ExactStatusFallbackReason(
+		ZlibExactStatus a_status) noexcept
+	{
+		switch (a_status)
+		{
+		case ZlibExactStatus::Capacity:
+			return ZlibFallbackReason::Capacity;
+		case ZlibExactStatus::SizeMismatch:
+			return ZlibFallbackReason::SizeMismatch;
+		case ZlibExactStatus::Decode:
+			return ZlibFallbackReason::Decode;
+		default:
+			return ZlibFallbackReason::None;
+		}
+	}
+
 	struct ZlibInflateOutcome
 	{
 		std::uint32_t primaryBackendId{ 0 };
@@ -145,6 +214,9 @@ namespace Addictol
 
 		static bool Prepare() noexcept;
 		static ZlibDecodeResult Decode(
+			std::span<const std::uint8_t> a_input,
+			std::span<std::uint8_t> a_output) noexcept;
+		static ZlibExactDecode DecodeExact(
 			std::span<const std::uint8_t> a_input,
 			std::span<std::uint8_t> a_output) noexcept;
 	};

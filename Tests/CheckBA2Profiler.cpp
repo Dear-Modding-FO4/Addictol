@@ -1,7 +1,9 @@
+#include "../Addictol/Include/AdProfilerBA2Rows.h"
 #include "../Addictol/Include/AdProfilerBA2Schema.h"
 #include "Harness.h"
 
 #include <array>
+#include <span>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -55,6 +57,7 @@ namespace vmm_tests
 			observation.servedBackendId = served;
 			observation.fallbackReasonId = reason;
 			observation.qpcFrequency = 10000000;
+			observation.observationSiteId = kSiteInflate;
 			if (reason != kReasonNone)
 			{
 				observation.fallbackBackendId = kBackendStockZlib;
@@ -66,6 +69,43 @@ namespace vmm_tests
 			observation.inputBytesConsumed = 4096;
 			observation.outputBytesProduced = 65536;
 			observation.zlibResult = 1;
+			return observation;
+		}
+
+		[[nodiscard]] CallObservation chunk_call(
+			std::uint16_t chunk,
+			std::uint16_t count,
+			std::uint64_t sequence,
+			bool leader)
+		{
+			CallObservation observation;
+			observation.primaryBackendId = kBackendLibDeflate;
+			observation.servedBackendId = kBackendLibDeflate;
+			observation.primaryAttempted = true;
+			observation.primaryQpc = 100;
+			observation.totalQpc = 100;
+			observation.qpcFrequency = 10000000;
+			observation.observationSiteId = kSiteTextureChunk;
+			observation.callerId = kCallerStreamingTexture;
+			observation.threadId = 4321;
+			observation.requestSequence = sequence;
+			observation.streamAddress = 0x1400ull + chunk;
+			observation.chunkIndex = chunk;
+			observation.chunkCount = count;
+			observation.nominalOutputBytes = 65536;
+			observation.inputBytesAvailable = 4096;
+			observation.outputBytesAvailable = 65536;
+			observation.inputBytesConsumed = 4096;
+			observation.outputBytesProduced = 65536;
+			observation.primaryInputBytesConsumed = 4096;
+			observation.primaryOutputBytesProduced = 65536;
+			observation.zlibResult = 1;
+			observation.evidenceFlags = kEvidenceChunkRow | kEvidenceSizeMeasured;
+			if (leader)
+			{
+				observation.evidenceFlags |= kEvidenceRequestLeader;
+				observation.requestWallQpc = 5000;
+			}
 			return observation;
 		}
 
@@ -81,29 +121,94 @@ namespace vmm_tests
 				rowsEnabled,
 				rowWritten);
 		}
+
+		struct BatchAdmission
+		{
+			std::vector<CallRecord> storage;
+			RowArena arena{};
+			BankCursor cursor{};
+			ShardAggregate aggregate{};
+
+			BatchAdmission()
+			{
+				storage.resize(2 * kChunkRows);
+				arena.rows = storage.data();
+				arena.chunkBudget = storage.size() / kChunkRows;
+			}
+
+			// Mirrors ProfilerBA2::RecordBatch: one reservation, then exact per-row admission.
+			std::span<CallRecord> Admit(std::span<const CallObservation> observations)
+			{
+				const auto oversized = observations.size() > kMaxBatchRows;
+				if (oversized)
+					++aggregate.oversizedBatches;
+				const auto rows = oversized ?
+					std::span<CallRecord>{} :
+					ReserveRows(arena, cursor, observations.size());
+				for (std::size_t index = 0; index < observations.size(); ++index)
+				{
+					const auto check = ValidateObservation(
+						observations[index], observations[index].qpcFrequency);
+					const auto written = index < rows.size();
+					if (written)
+						rows[index] = MakeCallRecord(observations[index], check, 0, index, 0, 0);
+					aggregate.Account(observations[index], check, true, written);
+				}
+				return rows;
+			}
+
+			[[nodiscard]] std::size_t ChunkOf(const CallRecord& record) const
+			{
+				return static_cast<std::size_t>(&record - arena.rows) / kChunkRows;
+			}
+
+			[[nodiscard]] RowEvidence Evidence() const
+			{
+				RowEvidence evidence;
+				ForEachRow(arena, cursor.firstChunk, [&](const CallRecord& record) noexcept {
+					evidence.Account(record, 0);
+				});
+				return evidence;
+			}
+		};
 	}
 
 	void run_ba2_profiler_checks(Runner& runner)
 	{
 		runner.test("BA2 record layout matches the documented memory budget", [] {
-			require(sizeof(CallRecord) == 88, "CallRecord size changed");
+			require(sizeof(CallRecord) == 136, "CallRecord size changed");
 			require(alignof(CallRecord) == 8, "CallRecord alignment changed");
-			require(sizeof(CallRecord) * 262144 == 22ull * 1024 * 1024, "arena row budget changed");
-			require(kSchemaVersion == 2, "schema version changed");
+			require(sizeof(CallRecord) * kArenaRowCapacity == 34ull * 1024 * 1024,
+				"arena row budget changed");
+			require(kSchemaVersion == 3, "schema version changed");
 		});
 
 		runner.test("BA2 enum and label tables stay pinned", [] {
 			require(kBackendNames.size() == kKnownBackendCount, "backend label table size changed");
 			require(kReasonNames.size() == kKnownReasonCount, "reason label table size changed");
+			require(kSiteNames.size() == kKnownSiteCount, "site label table size changed");
+			require(kCallerNames.size() == kKnownCallerCount, "caller label table size changed");
 			require(kKnownBackendCount == 3, "known backend count changed");
-			require(kKnownReasonCount == 5, "known reason count changed");
+			require(kKnownReasonCount == 8, "known reason count changed");
+			require(kKnownSiteCount == 3 && kKnownCallerCount == 3, "site or caller count changed");
 			require(kBackendNone == 0 && kBackendStockZlib == 1 && kBackendLibDeflate == 2,
 				"backend id registry changed");
 			require(kReasonNone == 0 && kReasonState == 1 && kReasonAllocation == 2 &&
-				kReasonDecode == 3 && kReasonCommit == 4, "fallback reason ids changed");
+				kReasonDecode == 3 && kReasonCommit == 4 && kReasonCapacity == 5 &&
+				kReasonSizeMismatch == 6 && kReasonRequestRestart == 7,
+				"fallback reason ids changed");
+			require(kSiteNone == 0 && kSiteInflate == 1 && kSiteTextureChunk == 2,
+				"observation site ids changed");
+			require(kCallerNone == 0 && kCallerStreamingTexture == 1 && kCallerArraySlice == 2,
+				"caller ids changed");
 			require(kReasonNames[kReasonState] == "State", "reason label mismatch");
+			require(kReasonNames[kReasonSizeMismatch] == "SizeMismatch", "reason label mismatch");
+			require(kSiteNames[kSiteTextureChunk] == "TextureChunk", "site label mismatch");
+			require(kCallerNames[kCallerArraySlice] == "ArraySlice", "caller label mismatch");
 			require(BackendName(7) == "Unknown", "unknown backend must not borrow a known label");
 			require(ReasonName(9) == "Unknown", "unknown reason must not borrow a known label");
+			require(SiteName(9) == "Unknown", "unknown site must not borrow a known label");
+			require(CallerName(9) == "Unknown", "unknown caller must not borrow a known label");
 			require(kBackendTableCapacity == 8, "backend table capacity changed");
 			require(kOutputSizeBucketNames.size() == kOutputSizeBucketCount, "size bucket labels changed");
 			require(
@@ -344,6 +449,7 @@ namespace vmm_tests
 			observation.outputBytesAvailable = 4294967295u;
 			observation.inputBytesConsumed = 4294967295u;
 			observation.outputBytesProduced = 4294967295u;
+			observation.observationSiteId = kSiteInflate;
 			observation.zlibResult = -2;
 
 			const auto record = MakeCallRecord(
@@ -369,14 +475,41 @@ namespace vmm_tests
 			require(row[3] == "3" && row[4] == "PostLoadGame", "publish identity was not written");
 			require(row[7] == "64", "shard index was not written");
 			require(row[8] == "1234567890123456789", "shard sequence lost precision");
-			require(row[9] == "4294967295", "raw primary backend id was rewritten");
-			require(row[11] == "18446744073709551615", "primary ticks lost precision");
-			require(row[16] == "-2", "raw zlib result was rewritten");
-			require(row[17] == "18446744073709551615", "total ticks lost precision");
-			require(row[21] == "4294967295", "output bytes lost precision");
-			require(row[23] == "1", "shutdown publish setting was not written");
-			require(row[24] == "0", "normal publish closed admission");
+			require(row[9] == "1", "observation site was not written");
+			require(row[16] == "4294967295", "raw primary backend id was rewritten");
+			require(row[18] == "18446744073709551615", "primary ticks lost precision");
+			require(row[23] == "-2", "raw zlib result was rewritten");
+			require(row[24] == "18446744073709551615", "total ticks lost precision");
+			require(row[29] == "4294967295", "output bytes lost precision");
+			require(row[35] == "1", "shutdown publish setting was not written");
+			require(row[36] == "0", "normal publish closed admission");
 			require(stream.str().find('.') == std::string::npos, "a row emitted a decimal duration");
+		});
+
+		runner.test("BA2 chunk rows carry request and size evidence", [] {
+			const auto observation = chunk_call(3, 8, 42, true);
+			const auto record = MakeCallRecord(
+				observation, ValidateObservation(observation, observation.qpcFrequency), 1, 2, 3, 4);
+
+			std::ostringstream stream;
+			WriteCallRow(
+				stream,
+				FileContext{ "SESSION", 10000000, 0, "Interval", false, false },
+				record);
+
+			const auto row = split_columns(data_lines(stream.str())[0]);
+			require(row.size() == kCallsColumnCount, "chunk row column count changed");
+			require(row[9] == "2" && row[10] == "1", "chunk row lost its site or caller identity");
+			require(row[11] == "4321" && row[12] == "42", "chunk row lost its request identity");
+			require(row[13] == std::to_string(0x1400ull + 3), "chunk row lost the stream address");
+			require(row[14] == "3" && row[15] == "8", "chunk row lost its chunk identity");
+			require(row[25] == "5000", "leader row lost the request wall clock");
+			require(row[30] == "4096" && row[31] == "65536", "primary byte columns were not written");
+			require(row[32] == "65536", "nominal output bytes were not written");
+			require(
+				row[34] == std::to_string(
+					kEvidenceChunkRow | kEvidenceSizeMeasured | kEvidenceRequestLeader),
+				"evidence flags were not written");
 		});
 
 		runner.test("BA2 summary rows share one fixed width", [] {
@@ -441,8 +574,8 @@ namespace vmm_tests
 			require(intervalRow[15] == "2" && intervalRow[16] == "1" && intervalRow[17] == "1",
 				"interval counts wrong");
 			require(intervalRow[18] == "200" && intervalRow[19] == "100", "interval ticks wrong");
-			require(intervalRow[37] == "1", "RowsTruncated was not published");
-			require(intervalRow[38] == "1", "ReconciliationOk was not published");
+			require(intervalRow[50] == "1", "RowsTruncated was not published");
+			require(intervalRow[51] == "1", "ReconciliationOk was not published");
 			require(split_columns(lines[2])[9] == "64", "shard scope id wrong");
 			const auto backendRow = split_columns(lines[3]);
 			require(backendRow[10] == "StockZlib", "backend scope label wrong");
@@ -452,8 +585,225 @@ namespace vmm_tests
 					backendRow[27] == "7" && backendRow[28] == "8",
 				"backend aggregate fields shifted or lost precision");
 			for (std::size_t index = 1; index < lines.size(); ++index)
-				require(split_columns(lines[index])[38] == "1",
+				require(split_columns(lines[index])[51] == "1",
 					"healthy summary scope reported ReconciliationOk=false");
+		});
+
+		runner.test("BA2 batch admission keeps one request contiguous in one bank", [] {
+			BatchAdmission admission;
+			std::vector<CallObservation> filler;
+			for (std::uint16_t chunk = 0; chunk < 100; ++chunk)
+				filler.push_back(chunk_call(chunk, 100, 6, chunk == 0));
+			std::vector<CallObservation> request;
+			for (std::uint16_t chunk = 0; chunk < 200; ++chunk)
+				request.push_back(chunk_call(chunk, 200, 7, chunk == 0));
+
+			admission.Admit(filler);
+			const auto rows = admission.Admit(request);
+			require(rows.size() == request.size(), "the request did not get one contiguous block");
+			require(
+				admission.ChunkOf(rows.front()) == admission.ChunkOf(rows.back()),
+				"a request straddled two arena chunks");
+			require(
+				admission.ChunkOf(rows.front()) == 1 && admission.arena.nextChunk.load() == 2,
+				"the request did not start a fresh chunk when the current one was too short");
+			require(admission.aggregate.requests.chunkRows == 300, "chunk rows were not counted");
+			require(admission.aggregate.requests.leaderRows == 2, "leader rows were not counted");
+
+			const auto evidence = admission.Evidence();
+			require(evidence.rowsSeen == 300, "serialized rows disagreed with admission");
+			require(Reconcile(admission.aggregate, &evidence).Ok(),
+				"a healthy batch failed reconciliation");
+
+			BatchAdmission bounded;
+			std::vector<CallObservation> full;
+			for (std::size_t index = 0; index < kMaxBatchRows; ++index)
+				full.push_back(chunk_call(static_cast<std::uint16_t>(index), 256, 9, index == 0));
+			const auto boundedRows = bounded.Admit(full);
+			require(boundedRows.size() == kMaxBatchRows, "a full batch was not admitted contiguously");
+			require(bounded.arena.nextChunk.load() == 1, "a full batch used more than one chunk");
+			require(bounded.aggregate.oversizedBatches == 0, "a full batch was called oversized");
+
+			BatchAdmission rejected;
+			full.push_back(chunk_call(0, 257, 11, false));
+			require(rejected.Admit(full).empty(), "an over-long batch reserved rows");
+			require(rejected.aggregate.oversizedBatches == 1, "an over-long batch was not disclosed");
+			require(rejected.aggregate.callsSeen == full.size(), "an over-long batch lost aggregates");
+			require(rejected.aggregate.rowsDropped == full.size(), "dropped rows were not counted");
+			const auto rejectedResult = Reconcile(rejected.aggregate);
+			require(rejectedResult.rowPartitionOk, "an over-long batch broke the row partition");
+			require(!rejectedResult.contractOk, "an over-long batch did not break the contract");
+		});
+
+		runner.test("BA2 reconciliation rejects post-admission row identity edits", [] {
+			BatchAdmission admission;
+			std::vector<CallObservation> request;
+			for (std::uint16_t chunk = 0; chunk < 4; ++chunk)
+				request.push_back(chunk_call(chunk, 4, 21, chunk == 0));
+			auto rows = admission.Admit(request);
+			const auto control = admission.Evidence();
+			require(Reconcile(admission.aggregate, &control).Ok(),
+				"unmutated persisted rows failed reconciliation");
+
+			const auto rejects = [&](const char* a_what) {
+				const auto evidence = admission.Evidence();
+				const auto result = Reconcile(admission.aggregate, &evidence);
+				require(!result.rowEvidenceOk, a_what);
+				require(!result.Ok(), a_what);
+			};
+
+			const auto site = rows[1].observationSiteId;
+			rows[1].observationSiteId = kSiteInflate;
+			rejects("a rewritten observation site passed reconciliation");
+			rows[1].observationSiteId = site;
+
+			const auto caller = rows[1].callerId;
+			rows[1].callerId = kCallerArraySlice;
+			rejects("a rewritten caller id passed reconciliation");
+			rows[1].callerId = caller;
+
+			++rows[2].requestSequence;
+			rejects("a rewritten request sequence passed reconciliation");
+			--rows[2].requestSequence;
+
+			++rows[2].chunkIndex;
+			rejects("a rewritten chunk index passed reconciliation");
+			--rows[2].chunkIndex;
+
+			++rows[3].chunkCount;
+			rejects("a rewritten chunk count passed reconciliation");
+			--rows[3].chunkCount;
+
+			rows[0].requestWallQpc += 7;
+			rejects("a rewritten request wall clock passed reconciliation");
+			rows[0].requestWallQpc -= 7;
+
+			++rows[0].threadId;
+			rejects("a rewritten thread id passed reconciliation");
+			--rows[0].threadId;
+
+			rows[1].evidenceFlags |= kEvidenceRequestLeader;
+			rejects("a forged leader row passed reconciliation");
+			rows[1].evidenceFlags &= static_cast<std::uint8_t>(~kEvidenceRequestLeader);
+
+			rows[1].primaryOutputBytesProduced += 1;
+			rejects("a rewritten decoded size passed reconciliation");
+			rows[1].primaryOutputBytesProduced -= 1;
+
+			const auto restored = admission.Evidence();
+			require(Reconcile(admission.aggregate, &restored).Ok(),
+				"restoring the rows did not restore reconciliation");
+		});
+
+		runner.test("BA2 size evidence is derived from persisted sizes, not the row flag", [] {
+			ShardAggregate exact;
+			account(exact, chunk_call(0, 2, 5, true), true);
+			require(exact.requests.sizeDeltaSamples == 1, "a measured chunk was not sampled");
+			require(exact.requests.sizeMismatchChunks == 0, "an exact chunk was called a mismatch");
+			require(exact.requests.minSizeDelta == 0 && exact.requests.maxSizeDelta == 0,
+				"an exact chunk moved the signed extremes");
+
+			auto longDecode = chunk_call(1, 2, 5, false);
+			longDecode.primaryOutputBytesProduced += 6;
+			longDecode.outputBytesProduced += 6;
+			longDecode.evidenceFlags |= kEvidenceSizeMismatch;
+			account(exact, longDecode, true);
+			require(exact.requests.sizeMismatchChunks == 1, "a longer decode was not counted");
+			require(exact.requests.minSizeDelta == -6 && exact.requests.maxSizeDelta == -6,
+				"a decode longer than fullSize must read as a negative delta");
+
+			ShardAggregate forged;
+			auto liar = chunk_call(0, 2, 7, true);
+			liar.evidenceFlags |= kEvidenceSizeMismatch;
+			account(forged, liar, true);
+			require(forged.requests.sizeMismatchChunks == 0,
+				"a row flag alone must not create a size mismatch");
+
+			ShardAggregate shortDecode;
+			auto shrunk = chunk_call(0, 2, 9, true);
+			shrunk.primaryOutputBytesProduced -= 2;
+			account(shortDecode, shrunk, true);
+			require(shortDecode.requests.minSizeDelta == 2 && shortDecode.requests.maxSizeDelta == 2,
+				"padded fullSize must read as a positive delta");
+
+			ShardAggregate merged{ exact };
+			merged.Merge(shortDecode);
+			require(merged.requests.sizeMismatchChunks == 2, "merged mismatch counts were lost");
+			require(merged.requests.minSizeDelta == -6 && merged.requests.maxSizeDelta == 2,
+				"merging did not keep the widest signed extremes");
+			require(merged.requests.sizeDeltaSamples == 3, "merged measured chunks were lost");
+		});
+
+		runner.test("BA2 site and caller partitions are exact", [] {
+			ShardAggregate aggregate;
+			account(aggregate, chunk_call(0, 2, 5, true), true);
+			account(aggregate, chunk_call(1, 2, 5, false), true);
+			account(aggregate, served_call(kBackendStockZlib, kReasonState, 100), true);
+			require(aggregate.requests.siteCounts[kSiteTextureChunk] == 2, "texture site was not counted");
+			require(aggregate.requests.siteCounts[kSiteInflate] == 1, "inflate site was not counted");
+			require(aggregate.requests.callerCounts[kCallerStreamingTexture] == 2,
+				"caller partition was not counted");
+			require(aggregate.requests.callerCounts[kCallerNone] == 1,
+				"an unattributed call left the caller partition");
+			require(Reconcile(aggregate).Ok(), "an exact site partition failed reconciliation");
+
+			aggregate.requests.siteCounts[kSiteTextureChunk] = 1;
+			const auto broken = Reconcile(aggregate);
+			require(!broken.sitePartitionOk, "a missing site count was not detected");
+			require(!broken.requestEvidenceOk, "chunk rows must match the texture site count");
+			require(!broken.Ok(), "a broken site partition did not invalidate the interval");
+		});
+
+		runner.test("BA2 chunk identity is required on chunk rows", [] {
+			auto leaderWithoutChunk = served_call(kBackendLibDeflate, kReasonNone, 100);
+			leaderWithoutChunk.evidenceFlags = kEvidenceRequestLeader;
+			require(
+				(ValidateObservation(leaderWithoutChunk).flags & kFlagRequestIdentity) != 0,
+				"a leader row without a chunk row was accepted");
+
+			auto wallWithoutLeader = served_call(kBackendLibDeflate, kReasonNone, 100);
+			wallWithoutLeader.requestWallQpc = 10;
+			require(
+				(ValidateObservation(wallWithoutLeader).flags & kFlagRequestIdentity) != 0,
+				"a non-leader row carrying the request wall clock was accepted");
+
+			auto shortWall = chunk_call(0, 2, 3, true);
+			shortWall.requestWallQpc = shortWall.totalQpc - 1;
+			require(
+				(ValidateObservation(shortWall).flags & kFlagTickAccounting) != 0,
+				"a request wall shorter than its own codec time was accepted");
+
+			auto strayChunk = served_call(kBackendLibDeflate, kReasonNone, 100);
+			strayChunk.chunkCount = 4;
+			require(
+				(ValidateObservation(strayChunk).flags & kFlagChunkIdentity) != 0,
+				"a non-chunk row carrying chunk identity was accepted");
+
+			auto outOfRange = chunk_call(4, 4, 9, false);
+			require(
+				(ValidateObservation(outOfRange).flags & kFlagChunkIdentity) != 0,
+				"a chunk index outside the chunk count was accepted");
+
+			auto anonymous = chunk_call(1, 4, 0, false);
+			require(
+				(ValidateObservation(anonymous).flags & kFlagChunkIdentity) != 0,
+				"a chunk row without a request sequence was accepted");
+
+			auto unattempted = chunk_call(1, 4, 9, false);
+			unattempted.primaryAttempted = false;
+			unattempted.primaryQpc = 0;
+			unattempted.servedBackendId = kBackendNone;
+			require(
+				(ValidateObservation(unattempted).flags & kFlagPrimaryBytes) != 0,
+				"primary bytes without a primary attempt were accepted");
+
+			auto future = chunk_call(1, 4, 9, false);
+			future.observationSiteId = 9;
+			future.callerId = 9;
+			const auto check = ValidateObservation(future);
+			require(check.WellFormed(), "an additive site or caller id must stay well formed");
+			require((check.flags & kFlagUnknownSite) != 0, "unknown site was not flagged");
+			require((check.flags & kFlagUnknownCaller) != 0, "unknown caller was not flagged");
 		});
 	}
 }

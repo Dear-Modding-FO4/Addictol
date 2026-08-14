@@ -3,6 +3,7 @@
 #include <REX/REX.h>
 
 #include <cstddef>
+#include <span>
 #include <string_view>
 
 #include <AdProfilerBA2Schema.h>
@@ -21,6 +22,7 @@ namespace Addictol
 		[[nodiscard]] bool IsRecording() const noexcept;
 
 		void Record(const BA2Profile::CallObservation& a_observation) noexcept;
+		void RecordBatch(std::span<const BA2Profile::CallObservation> a_observations) noexcept;
 		void Publish(std::string_view a_reason) noexcept;
 		void PublishFinal(std::string_view a_reason) noexcept;
 	};
