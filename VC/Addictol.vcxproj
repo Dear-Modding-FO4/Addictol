@@ -306,7 +306,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>

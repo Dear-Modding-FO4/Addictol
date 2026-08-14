@@ -162,6 +162,8 @@
       <AdditionalIncludeDirectories>$(ProjectDir)commonlibf4\lib\commonlib-shared\include;$(ProjectDir)spdlog\include;$(ProjectDir)toml11\single_include;$(ProjectDir)INI\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

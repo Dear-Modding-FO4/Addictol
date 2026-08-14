@@ -1716,6 +1716,8 @@
       </PrecompiledHeaderFile>
       <ForcedIncludeFiles>F4SE\Impl\PCH.h</ForcedIncludeFiles>
       <DisableSpecificWarnings>4200</DisableSpecificWarnings>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
