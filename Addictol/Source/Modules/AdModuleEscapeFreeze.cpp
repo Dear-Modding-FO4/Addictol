@@ -43,7 +43,7 @@ namespace Addictol
 
 		struct RuntimeState
 		{
-			volatile LONG64* lockPair{};
+			std::uint64_t* lockPair{};
 			std::uint32_t* frameCount{};
 			HANDLE wakeEvent{};
 			HANDLE worker{};
@@ -101,6 +101,7 @@ namespace Addictol
 		static_assert(sizeof(LONG) == sizeof(std::int32_t));
 		static_assert(sizeof(LONG64) == sizeof(std::uint64_t));
 		static_assert(std::atomic_ref<std::uint32_t>::is_always_lock_free);
+		static_assert(std::atomic_ref<std::uint64_t>::is_always_lock_free);
 
 		[[nodiscard]] static std::uint32_t ReadFrameCount(
 			const RuntimeState& a_runtime) noexcept
@@ -112,8 +113,8 @@ namespace Addictol
 		[[nodiscard]] static LockSnapshot ReadLockSnapshot(
 			const RuntimeState& a_runtime) noexcept
 		{
-			const auto pair = static_cast<std::uint64_t>(
-				InterlockedCompareExchange64(a_runtime.lockPair, 0, 0));
+			const auto pair = std::atomic_ref<std::uint64_t>(*a_runtime.lockPair).load(
+				std::memory_order_relaxed);
 			return {
 				pair,
 				static_cast<LONG>(EscapeFreeze::PairOwner(pair)),
@@ -251,7 +252,7 @@ namespace Addictol
 			}
 
 			const auto observed = static_cast<std::uint64_t>(InterlockedCompareExchange64(
-				a_runtime.lockPair,
+				reinterpret_cast<volatile LONG64*>(a_runtime.lockPair),
 				0,
 				static_cast<LONG64>(a_snapshot.pair)));
 			return observed == a_snapshot.pair ?
@@ -500,7 +501,7 @@ namespace Addictol
 		const auto lockPairAddress = lockAddress - sizeof(LONG);
 		if (lockAddress < sizeof(LONG) ||
 			lockAddress % alignof(LONG) != 0 ||
-			lockPairAddress % alignof(LONG64) != 0)
+			lockPairAddress % std::atomic_ref<std::uint64_t>::required_alignment != 0)
 		{
 			REX::ERROR(
 				"Escape Freeze: condition-lock relocation {:X} is invalid or not atomically aligned."sv,
@@ -508,10 +509,10 @@ namespace Addictol
 			return false;
 		}
 
-		auto lockPair = reinterpret_cast<volatile LONG64*>(lockPairAddress);
+		auto lockPair = reinterpret_cast<std::uint64_t*>(lockPairAddress);
 		if (!IsAccessibleRange(
 				reinterpret_cast<const void*>(lockPairAddress),
-				sizeof(LONG) * 2,
+				sizeof(std::uint64_t),
 				RangeAccess::kWrite))
 		{
 			REX::ERROR(
