@@ -88,6 +88,7 @@
 #include <Modules/AdModuleWaterJetpackFix.h>
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
+#include <Modules/AdModulePlatformImgui.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -178,6 +179,7 @@ static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIc
 static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJetpackFix>();
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
+static auto sModulePlatformImgui					= std::make_shared<Addictol::ModulePlatformImgui>();
 
 void AdRegisterPreloadModules()
 {
@@ -278,6 +280,7 @@ void AdRegisterModules()
 	modules.Register(sModuleWaterJetpackFix);
 	modules.Register(sModuleAIProcess3DUpdateFlag);
 	modules.Register(sModuleHighResLocalMaps);
+	modules.Register(sModulePlatformImgui);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
@@ -297,6 +300,7 @@ void AdRegisterModules()
 	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
 	modules.Register(sModuleUtilityShader,					kGameLoaded);
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
+	modules.Register(sModulePlatformImgui,					kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
 	modules.Register(sModuleRobCoPatcherCache,				kPostLoad);
