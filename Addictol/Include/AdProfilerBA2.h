@@ -1,8 +1,11 @@
 #pragma once
 
-#include <atomic>
+#include <REX/REX.h>
 
-#include <AdProfilerCore.h>
+#include <cstddef>
+#include <string_view>
+
+#include <AdProfilerBA2Schema.h>
 
 namespace Addictol
 {
@@ -11,12 +14,14 @@ namespace Addictol
 	class ProfilerBA2 :
 		public REX::Singleton<ProfilerBA2>
 	{
-		std::atomic<std::uint64_t> m_chunkCounter{ 0 };
+		void Publish(std::string_view a_reason, bool a_closeAdmission) noexcept;
 
 	public:
-		// Calls may arrive concurrently from BA2 decompression workers.
-		void RecordDecompression(std::size_t a_compressedSize,
-			std::size_t a_uncompressedSize,
-			double a_elapsedMs) noexcept;
+		[[nodiscard]] bool Start() noexcept;
+		[[nodiscard]] bool IsRecording() const noexcept;
+
+		void Record(const BA2Profile::CallObservation& a_observation) noexcept;
+		void Publish(std::string_view a_reason) noexcept;
+		void PublishFinal(std::string_view a_reason) noexcept;
 	};
 }

@@ -385,6 +385,9 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerBA2.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerBA2Schema.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdProfilerCore.h">
       <Filter>Include</Filter>
     </ClInclude>

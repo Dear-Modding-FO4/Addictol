@@ -5,6 +5,7 @@
 #include <AdProfilerMemory.h>
 #include <AdProfilerAnimSubGraph.h>
 #include <AdProfilerAllocator.h>
+#include <AdProfilerBA2.h>
 #include <AdProfilerFrameHitch.h>
 #include <AdUtils.h>
 
@@ -16,6 +17,7 @@ namespace Addictol
 		Module("Profiler", &bProfilerEnabled, {
 			F4SE::MessagingInterface::kPreLoadGame,
 			F4SE::MessagingInterface::kPostLoadGame,
+			F4SE::MessagingInterface::kPostSaveGame,
 			F4SE::MessagingInterface::kNewGame,
 			F4SE::MessagingInterface::kGameDataReady })
 	{}
@@ -40,6 +42,7 @@ namespace Addictol
 					ProfilerMemory::GetSingleton()->CaptureSnapshot("GameDataReady"sv);
 
 				profiler->MarkPhase("GameDataReady"sv);
+				ProfilerBA2::GetSingleton()->Publish("GameDataReady"sv);
 				profiler->GenerateReport();
 			}
 			return true;
@@ -97,6 +100,20 @@ namespace Addictol
 
 	bool ModuleProfiler::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		if (a_msg &&
+			(a_msg->type == F4SE::MessagingInterface::kPreLoadGame ||
+			a_msg->type == F4SE::MessagingInterface::kPostLoadGame ||
+			a_msg->type == F4SE::MessagingInterface::kNewGame ||
+			a_msg->type == F4SE::MessagingInterface::kPostSaveGame))
+		{
+			const auto reason =
+				a_msg->type == F4SE::MessagingInterface::kPreLoadGame ? "PreLoadGame"sv :
+				a_msg->type == F4SE::MessagingInterface::kPostLoadGame ? "PostLoadGame"sv :
+				a_msg->type == F4SE::MessagingInterface::kNewGame ? "NewGame"sv :
+				"PostSaveGame"sv;
+			ProfilerBA2::GetSingleton()->Publish(reason);
+		}
+
 		// Pre-load and post-load both advance so rows written during loading use an intermediate epoch.
 		if (a_msg &&
 			(a_msg->type == F4SE::MessagingInterface::kPreLoadGame ||

@@ -377,7 +377,7 @@ bStartupTimeline = true
 # Track memory usage snapshots at key lifecycle points.
 bMemoryTracking = true
 
-# Time BA2 decompression calls (libdeflate).
+# Record BA2 decompression timing into ba2_calls_v2/ba2_summary_v2. When bLibDeflate is false, profiling installs the stock hook. Per-call CSV export reserves 44 MiB.
 bBA2Timing = true
 
 # Export profiler data to CSV alongside the log report. Requires bProfiler = true.

@@ -1,4 +1,5 @@
 #include <Modules/AdModuleSafeExit.h>
+#include <AdProfilerBA2.h>
 #include <AdUtils.h>
 
 #include <RE/M/Main.h>
@@ -17,6 +18,7 @@ namespace Addictol
 
 	inline static void Shutdown() noexcept
 	{
+		ProfilerBA2::GetSingleton()->PublishFinal("Shutdown"sv);
 #if AD_TRACER
 		MemoryTracer::GetSingleton()->Dump();
 #endif
@@ -42,6 +44,11 @@ namespace Addictol
 	ModuleSafeExit::ModuleSafeExit() :
 		Module("Safe Exit", &bFixesSafeExit)
 	{}
+
+	bool ModuleSafeExit::IsEnabledInConfig() noexcept
+	{
+		return bFixesSafeExit.GetValue();
+	}
 
 	bool ModuleSafeExit::DoQuery() const noexcept
 	{

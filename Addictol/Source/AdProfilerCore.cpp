@@ -300,15 +300,6 @@ namespace Addictol
 		m_memorySnapshots.push_back(std::move(a_snapshot));
 	}
 
-	void ProfilerCore::AddBA2Entry(BA2ProfileEntry&& a_entry) noexcept
-	{
-		if (!IsActive())
-			return;
-
-		std::lock_guard lock(m_ba2Mutex);
-		m_ba2Entries.push_back(std::move(a_entry));
-	}
-
 	void ProfilerCore::RecordAnimSubGraphRuntimeInterval(AnimSubGraphProfileEntry&& a_entry) noexcept
 	{
 		auto& runtime = GetRuntimeCollector();
@@ -473,49 +464,6 @@ namespace Addictol
 		}
 	}
 
-	void ProfilerCore::LogBA2Report() noexcept
-	{
-		std::vector<BA2ProfileEntry> entries;
-		{
-			std::lock_guard lock(m_ba2Mutex);
-			entries = m_ba2Entries;
-		}
-
-		if (entries.empty())
-			return;
-
-		REX::INFO("[Profiler] ===== BA2 Decompression Report ====="sv);
-
-		double totalMs = 0.0;
-		std::size_t totalCompressed = 0, totalUncompressed = 0;
-		for (const auto& e : entries)
-		{
-			totalMs += e.decompressMs;
-			totalCompressed += e.compressedSize;
-			totalUncompressed += e.uncompressedSize;
-		}
-
-		double totalMBps = totalMs > 0.0 ? (static_cast<double>(totalUncompressed) / (1024.0 * 1024.0)) / (totalMs / 1000.0) : 0.0;
-
-		REX::INFO("[Profiler] Archives: {}"sv, entries.size());
-		REX::INFO("[Profiler] Total decompress time: {:.1f} ms"sv, totalMs);
-		REX::INFO("[Profiler] Total compressed: {:.2f} MB"sv, static_cast<double>(totalCompressed) / (1024.0 * 1024.0));
-		REX::INFO("[Profiler] Total uncompressed: {:.2f} MB"sv, static_cast<double>(totalUncompressed) / (1024.0 * 1024.0));
-		REX::INFO("[Profiler] Average throughput: {:.1f} MB/s"sv, totalMBps);
-
-		auto sorted = entries;
-		std::sort(sorted.begin(), sorted.end(),
-			[](const auto& a, const auto& b) { return a.decompressMs > b.decompressMs; });
-
-		std::size_t reportCount = std::min(sorted.size(), static_cast<std::size_t>(20));
-		for (std::size_t i = 0; i < reportCount; ++i)
-		{
-			const auto& e = sorted[i];
-			REX::INFO("[Profiler] {:40s} {:8.1f} ms ({:.1f} MB/s)"sv,
-				e.archiveName, e.decompressMs, e.throughputMBps);
-		}
-	}
-
 	void ProfilerCore::GenerateReport() noexcept
 	{
 		if (!IsActive())
@@ -538,8 +486,6 @@ namespace Addictol
 			LogModuleReport();
 		if (bMemoryTracking.GetValue())
 			LogMemoryReport();
-		if (bBA2Timing.GetValue())
-			LogBA2Report();
 
 		if (bCSVExport.GetValue())
 			ExportCSV();
@@ -625,32 +571,6 @@ namespace Addictol
 						<< (e.skipped ? "true"sv : "false"sv) << "\n"sv;
 				}
 				REX::INFO("[Profiler] Module CSV exported: {}"sv, path);
-			}
-		}
-
-		std::vector<BA2ProfileEntry> ba2Entries;
-		{
-			std::lock_guard lock(m_ba2Mutex);
-			ba2Entries = m_ba2Entries;
-		}
-		if (!ba2Entries.empty())
-		{
-			std::string path = std::format("{}ba2_decompress_times_{}.csv"sv, dir, timeBuf);
-			std::ofstream file(path);
-			if (file.is_open())
-			{
-				file << "SessionId,ArchiveName,DecompressMs,CompressedBytes,UncompressedBytes,ThroughputMBps\n"sv;
-				for (const auto& e : ba2Entries)
-				{
-					file << sessionID << ","sv
-						<< "\""sv << e.archiveName << "\","sv
-						<< std::fixed << std::setprecision(1)
-						<< e.decompressMs << ","sv
-						<< e.compressedSize << ","sv
-						<< e.uncompressedSize << ","sv
-						<< std::setprecision(1) << e.throughputMBps << "\n"sv;
-				}
-				REX::INFO("[Profiler] BA2 CSV exported: {}"sv, path);
 			}
 		}
 

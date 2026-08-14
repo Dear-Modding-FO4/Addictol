@@ -268,7 +268,6 @@ namespace Addictol
 				}
 				else
 				{
-					const auto primaryStart = ReadZlibQpc(a_timingEnabled, clock);
 					const auto decoded = Backend::Decode(
 						{ a_stream->next_in, a_stream->avail_in },
 						{ a_stream->next_out, a_stream->avail_out });
@@ -276,7 +275,7 @@ namespace Addictol
 					if (decoded.status != ZlibDecodeStatus::Success)
 					{
 						const auto primaryEnd = ReadZlibQpc(a_timingEnabled, clock);
-						outcome.primaryQpc = primaryEnd - primaryStart;
+						outcome.primaryQpc = primaryEnd - prepareStart;
 						// Raw and gzip streams fail the zlib probe without reading private wrap.
 						ServeStockZlib(
 							outcome,
@@ -293,7 +292,7 @@ namespace Addictol
 						const auto committed = ZlibInflate::CommitCompletedStream(
 							a_stream, expectedState, decoded.consumed, decoded.produced);
 						const auto primaryEnd = ReadZlibQpc(a_timingEnabled, clock);
-						outcome.primaryQpc = primaryEnd - primaryStart;
+						outcome.primaryQpc = primaryEnd - prepareStart;
 
 						if (!committed)
 						{

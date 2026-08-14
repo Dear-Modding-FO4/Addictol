@@ -77,15 +77,6 @@ namespace Addictol
 		std::size_t allocationCount{ 0 };
 	};
 
-	struct BA2ProfileEntry
-	{
-		std::string archiveName;
-		double decompressMs{ 0.0 };
-		std::size_t compressedSize{ 0 };
-		std::size_t uncompressedSize{ 0 };
-		double throughputMBps{ 0.0 };
-	};
-
 	struct ProfileMetricEntry
 	{
 		double totalMs{ 0.0 };
@@ -180,9 +171,6 @@ namespace Addictol
 		std::vector<MemorySnapshot> m_memorySnapshots;
 		std::mutex m_memoryMutex;
 
-		std::vector<BA2ProfileEntry> m_ba2Entries;
-		std::mutex m_ba2Mutex;
-
 		ProfilerCore(const ProfilerCore&) = delete;
 		ProfilerCore& operator=(const ProfilerCore&) = delete;
 	public:
@@ -214,8 +202,6 @@ namespace Addictol
 
 		void AddMemorySnapshot(MemorySnapshot&& a_snapshot) noexcept;
 
-		void AddBA2Entry(BA2ProfileEntry&& a_entry) noexcept;
-
 		// Startup entries report once at kGameDataReady; runtime intervals stream for the session.
 		static void RecordAnimSubGraphRuntimeInterval(AnimSubGraphProfileEntry&& a_entry) noexcept;
 		static void RecordFrameHitchRuntimeInterval(FrameHitchProfileEntry&& a_entry) noexcept;
@@ -231,7 +217,6 @@ namespace Addictol
 		[[nodiscard]] const std::vector<DLLProfileEntry>& GetDLLEntries() const noexcept { return m_dllEntries; }
 		[[nodiscard]] const std::vector<ModuleProfileEntry>& GetModuleEntries() const noexcept { return m_moduleEntries; }
 		[[nodiscard]] const std::vector<StartupPhase>& GetStartupPhases() const noexcept { return m_startupPhases; }
-		[[nodiscard]] const std::vector<BA2ProfileEntry>& GetBA2Entries() const noexcept { return m_ba2Entries; }
 	private:
 		[[nodiscard]] std::string GetOutputDir() const noexcept;
 		void LogESPReport() noexcept;
@@ -239,6 +224,5 @@ namespace Addictol
 		void LogModuleReport() noexcept;
 		void LogStartupTimeline() noexcept;
 		void LogMemoryReport() noexcept;
-		void LogBA2Report() noexcept;
 	};
 }

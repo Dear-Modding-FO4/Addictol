@@ -78,55 +78,49 @@ namespace Addictol
 			<< a_metadata.channelSequence << ","sv;
 	}
 
-	template <class T>
-	class RuntimeChannel
+	class RuntimeCsvFile
 	{
 	public:
 		using HeaderWriter = void(*)(std::ostream&);
-		using EntryWriter = void(*)(std::ostream&, const T&, const RuntimeRowMetadata&);
 
-		RuntimeChannel(
+		RuntimeCsvFile(
 			RuntimeSessionContext& a_session,
-			std::size_t a_capacity,
 			std::string_view a_fileStem,
-			HeaderWriter a_headerWriter,
-			EntryWriter a_entryWriter) noexcept :
+			HeaderWriter a_headerWriter) noexcept :
 			m_session(a_session),
-			m_capacity(a_capacity),
 			m_fileStem(a_fileStem),
-			m_headerWriter(a_headerWriter),
-			m_entryWriter(a_entryWriter)
+			m_headerWriter(a_headerWriter)
 		{}
 
-		RuntimeChannel(const RuntimeChannel&) = delete;
-		RuntimeChannel& operator=(const RuntimeChannel&) = delete;
+		RuntimeCsvFile(const RuntimeCsvFile&) = delete;
+		RuntimeCsvFile& operator=(const RuntimeCsvFile&) = delete;
 
-		void Record(T&& a_entry, bool a_exportCSV) noexcept
+		[[nodiscard]] std::ostream* Begin() noexcept
 		{
-			std::optional<T> exportEntry;
-			RuntimeRowMetadata metadata;
-			if (a_exportCSV)
+			if (!Open())
 			{
-				metadata = m_session.Capture();
-				exportEntry.emplace(a_entry);
+				++m_failures;
+				return nullptr;
 			}
-
-			{
-				std::lock_guard lock(m_entriesMutex);
-				if (m_capacity)
-				{
-					if (m_entries.size() >= m_capacity)
-						m_entries.pop_front();
-					m_entries.push_back(std::move(a_entry));
-				}
-			}
-
-			if (exportEntry)
-				AppendCSV(*exportEntry, metadata);
+			return &m_stream;
 		}
 
+		void End() noexcept
+		{
+			m_stream.flush();
+			if (!m_stream.good())
+			{
+				++m_failures;
+				m_stream.close();
+				m_stream.clear();
+			}
+		}
+
+		[[nodiscard]] std::uint64_t GetFailureCount() const noexcept { return m_failures; }
+		[[nodiscard]] const std::string& GetPath() const noexcept { return m_path; }
+
 	private:
-		[[nodiscard]] bool OpenCSV() noexcept
+		[[nodiscard]] bool Open() noexcept
 		{
 			if (m_stream.is_open() && m_stream.good())
 				return true;
@@ -170,33 +164,81 @@ namespace Addictol
 			return true;
 		}
 
+		RuntimeSessionContext& m_session;
+		std::string_view m_fileStem;
+		HeaderWriter m_headerWriter;
+		std::string m_path;
+		std::ofstream m_stream;
+		std::uint64_t m_failures{ 0 };
+		bool m_headerWritten{ false };
+	};
+
+	template <class T>
+	class RuntimeChannel
+	{
+	public:
+		using HeaderWriter = RuntimeCsvFile::HeaderWriter;
+		using EntryWriter = void(*)(std::ostream&, const T&, const RuntimeRowMetadata&);
+
+		RuntimeChannel(
+			RuntimeSessionContext& a_session,
+			std::size_t a_capacity,
+			std::string_view a_fileStem,
+			HeaderWriter a_headerWriter,
+			EntryWriter a_entryWriter) noexcept :
+			m_session(a_session),
+			m_capacity(a_capacity),
+			m_file(a_session, a_fileStem, a_headerWriter),
+			m_entryWriter(a_entryWriter)
+		{}
+
+		RuntimeChannel(const RuntimeChannel&) = delete;
+		RuntimeChannel& operator=(const RuntimeChannel&) = delete;
+
+		void Record(T&& a_entry, bool a_exportCSV) noexcept
+		{
+			std::optional<T> exportEntry;
+			RuntimeRowMetadata metadata;
+			if (a_exportCSV)
+			{
+				metadata = m_session.Capture();
+				exportEntry.emplace(a_entry);
+			}
+
+			{
+				std::lock_guard lock(m_entriesMutex);
+				if (m_capacity)
+				{
+					if (m_entries.size() >= m_capacity)
+						m_entries.pop_front();
+					m_entries.push_back(std::move(a_entry));
+				}
+			}
+
+			if (exportEntry)
+				AppendCSV(*exportEntry, metadata);
+		}
+
+	private:
 		void AppendCSV(const T& a_entry, RuntimeRowMetadata a_metadata) noexcept
 		{
 			std::lock_guard lock(m_streamMutex);
 			a_metadata.channelSequence = m_nextSequence++;
-			if (!OpenCSV())
+			auto* stream = m_file.Begin();
+			if (!stream)
 				return;
 
-			m_entryWriter(m_stream, a_entry, a_metadata);
-			m_stream.flush();
-			if (!m_stream.good())
-			{
-				m_stream.close();
-				m_stream.clear();
-			}
+			m_entryWriter(*stream, a_entry, a_metadata);
+			m_file.End();
 		}
 
 		RuntimeSessionContext& m_session;
 		std::size_t m_capacity;
-		std::string_view m_fileStem;
-		HeaderWriter m_headerWriter;
+		RuntimeCsvFile m_file;
 		EntryWriter m_entryWriter;
 		std::deque<T> m_entries;
 		std::mutex m_entriesMutex;
-		std::string m_path;
-		std::ofstream m_stream;
 		std::mutex m_streamMutex;
 		std::uint64_t m_nextSequence{ 0 };
-		bool m_headerWritten{ false };
 	};
 }

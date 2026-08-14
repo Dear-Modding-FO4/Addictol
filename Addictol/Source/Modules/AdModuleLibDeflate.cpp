@@ -18,6 +18,14 @@ namespace Addictol
 	{
 		constexpr static int32_t Z_STREAM_ERROR		= -2;
 
+		static_assert(ZlibBackendRegistryId(ZlibBackendKind::Stock) == BA2Profile::kBackendStockZlib);
+		static_assert(ZlibBackendRegistryId(ZlibBackendKind::LibDeflate) == BA2Profile::kBackendLibDeflate);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::None) == BA2Profile::kReasonNone);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::State) == BA2Profile::kReasonState);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Allocation) == BA2Profile::kReasonAllocation);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Decode) == BA2Profile::kReasonDecode);
+		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Commit) == BA2Profile::kReasonCommit);
+
 		using TInflate = int32_t(*)(ZlibInflate::Stream*, int32_t) noexcept;
 		TInflate OriginalInflate;
 
@@ -168,6 +176,29 @@ namespace Addictol
 			}
 		}
 
+		void RecordOutcome(
+			const ZlibInflateOutcome& a_outcome,
+			std::uint64_t a_inputBytesAvailable,
+			std::uint64_t a_outputBytesAvailable) noexcept
+		{
+			BA2Profile::CallObservation observation;
+			observation.primaryBackendId = a_outcome.primaryBackendId;
+			observation.fallbackBackendId = a_outcome.fallbackBackendId;
+			observation.servedBackendId = a_outcome.servedBackendId;
+			observation.fallbackReasonId = a_outcome.fallbackReasonId;
+			observation.primaryQpc = a_outcome.primaryQpc;
+			observation.fallbackQpc = a_outcome.fallbackQpc;
+			observation.totalQpc = a_outcome.totalQpc;
+			observation.qpcFrequency = a_outcome.qpcFrequency;
+			observation.inputBytesAvailable = a_inputBytesAvailable;
+			observation.outputBytesAvailable = a_outputBytesAvailable;
+			observation.inputBytesConsumed = a_outcome.consumed;
+			observation.outputBytesProduced = a_outcome.produced;
+			observation.zlibResult = a_outcome.zlibResult;
+			observation.primaryAttempted = a_outcome.primaryAttempted;
+			ProfilerBA2::GetSingleton()->Record(observation);
+		}
+
 		void LogCounters() noexcept
 		{
 			g_threadCounters.Flush();
@@ -193,16 +224,27 @@ namespace Addictol
 			{
 				static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
 				{
-					if (!a_stream)
+					const auto recording = ProfilerBA2::GetSingleton()->IsRecording();
+					const auto qpcFrequency = recording ? GetQpcFrequency() : 0;
+					const auto timingEnabled = recording && qpcFrequency != 0;
+					const auto inputBytesAvailable = a_stream ? a_stream->avail_in : 0;
+					const auto outputBytesAvailable = a_stream ? a_stream->avail_out : 0;
+					if (!a_stream || !OriginalInflate)
+					{
+						if (timingEnabled)
+						{
+							ZlibInflateOutcome outcome;
+							outcome.primaryBackendId = ZlibBackendRegistryId(Backend::kind);
+							outcome.zlibResult = Z_STREAM_ERROR;
+							outcome.qpcFrequency = qpcFrequency;
+							const auto start = ReadQpc();
+							const auto end = ReadQpc();
+							outcome.totalQpc = end - start;
+							RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable);
+						}
 						return Z_STREAM_ERROR;
-					if (!OriginalInflate)
-						return Z_STREAM_ERROR;
+					}
 
-					const auto timingRequested =
-						ProfilerCore::GetSingleton()->IsActive() &&
-						ProfilerCore::IsBA2TimingEnabled();
-					const auto qpcFrequency = timingRequested ? GetQpcFrequency() : 0;
-					const auto timingEnabled = timingRequested && qpcFrequency != 0;
 					const auto outcome = ServeZlib<Backend>(
 						a_stream,
 						a_flush,
@@ -213,17 +255,8 @@ namespace Addictol
 						qpcFrequency,
 						[]() noexcept { return ReadQpc(); });
 					CountOutcome(outcome);
-
-					if (timingEnabled &&
-						outcome.servedBackendId == ZlibBackendRegistryId(ZlibBackendKind::LibDeflate))
-					{
-						// Legacy millisecond sink; the raw tick fields remain authoritative.
-						const auto elapsedMs =
-							static_cast<double>(outcome.primaryQpc) * 1000.0 /
-							static_cast<double>(outcome.qpcFrequency);
-						ProfilerBA2::GetSingleton()->RecordDecompression(
-							outcome.consumed, outcome.produced, elapsedMs);
-					}
+					if (timingEnabled)
+						RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable);
 
 					return outcome.zlibResult;
 				}
@@ -233,9 +266,15 @@ namespace Addictol
 
 	void InitializeZlibBackendConfig() noexcept
 	{
-		ResolveZlibBackendSelection(sAdditionalZlibBackend.GetValue());
 		if (!bPatchesLibDeflate.GetValue())
-			REX::INFO("Zlib decompression backend: stock (bLibDeflate is disabled; hook not installed)."sv);
+		{
+			ResolveZlibBackendSelection("stock"sv);
+			REX::INFO("Zlib decompression backend: stock (bLibDeflate is disabled)."sv);
+		}
+		else
+		{
+			ResolveZlibBackendSelection(sAdditionalZlibBackend.GetValue());
+		}
 	}
 
 	ModuleLibDeflate::ModuleLibDeflate() :
@@ -243,6 +282,13 @@ namespace Addictol
 			F4SE::MessagingInterface::kPostLoadGame,
 			F4SE::MessagingInterface::kPostSaveGame })
 	{}
+
+	const REX::TOML::Bool<>* ModuleLibDeflate::GetOption() const noexcept
+	{
+		if (ProfilerCore::IsEnabledInConfig() && ProfilerCore::IsBA2TimingEnabled())
+			return nullptr;
+		return &bPatchesLibDeflate;
+	}
 
 	bool ModuleLibDeflate::DoQuery() const noexcept
 	{
@@ -275,6 +321,12 @@ namespace Addictol
 			return false;
 		}
 
+		const auto recording = ProfilerBA2::GetSingleton()->Start();
+		if (!bPatchesLibDeflate.GetValue() && !recording)
+		{
+			Skip("BA2 profiler could not start"sv);
+			return false;
+		}
 		const auto hook = VisitSelectedZlibBackend([]<class Backend>() {
 			return reinterpret_cast<std::uintptr_t>(&Decompression::Selected<Backend>::Inflate);
 		});

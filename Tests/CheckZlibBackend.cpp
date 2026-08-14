@@ -19,6 +19,8 @@ namespace
 		inline static bool prepared = true;
 		inline static int prepareCalls = 0;
 		inline static int decodeCalls = 0;
+		inline static std::uint64_t* qpcValue = nullptr;
+		inline static std::uint64_t prepareQpc = 0;
 		inline static ZlibDecodeResult decodeResult{
 			ZlibDecodeStatus::Success, 8, 4
 		};
@@ -26,6 +28,8 @@ namespace
 		static bool Prepare() noexcept
 		{
 			++prepareCalls;
+			if (qpcValue)
+				*qpcValue += prepareQpc;
 			return prepared;
 		}
 
@@ -42,6 +46,8 @@ namespace
 			prepared = true;
 			prepareCalls = 0;
 			decodeCalls = 0;
+			qpcValue = nullptr;
+			prepareQpc = 0;
 			decodeResult = { ZlibDecodeStatus::Success, 8, 4 };
 		}
 	};
@@ -172,9 +178,34 @@ namespace vmm_tests
 			require(outcome.fallbackBackendId == 0, "codec success reported fallback backend");
 			require(outcome.fallbackReasonId == 0, "codec success reported fallback reason");
 			require(outcome.servedBackendId == 2, "codec success service ID mismatch");
-			require(outcome.totalQpc == 40, "libdeflate total timing mismatch");
+			require(outcome.totalQpc == 30, "libdeflate total timing mismatch");
 			require(outcome.consumed == 8 && outcome.produced == 4, "codec byte counts mismatch");
 			require(state.mode == ZlibInflate::MODE_DONE, "codec success did not commit DONE");
+		});
+
+		runner.test("libdeflate primary timing includes backend preparation", [] {
+			const std::array<std::uint8_t, 8> input{
+				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
+			};
+			std::array<std::uint8_t, 8> output{};
+			State state{ ZlibInflate::MODE_HEAD, 0 };
+			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
+			TestClock clock;
+			FakeLibDeflateBackend::Reset();
+			FakeLibDeflateBackend::qpcValue = &clock.value;
+			FakeLibDeflateBackend::prepareQpc = 70;
+
+			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
+				&stream,
+				2,
+				[](ZlibInflate::Stream*, std::int32_t) noexcept { return 0; },
+				true,
+				1'000'000,
+				[&]() noexcept { return clock(); });
+
+			FakeLibDeflateBackend::Reset();
+			require(outcome.primaryQpc == 80, "primary timing excluded backend preparation");
+			require(outcome.totalQpc == 100, "total timing excluded backend preparation");
 		});
 
 		runner.test("libdeflate state rejection reports stock service", [] {
@@ -241,14 +272,14 @@ namespace vmm_tests
 			require(decode.fallbackReasonId == 3, "decode fallback reason mismatch");
 			require(
 				decode.primaryQpc == 10 && decode.fallbackQpc == 10 &&
-					decode.totalQpc == 60,
+					decode.totalQpc == 50,
 				"decode timing split mismatch");
 
 			const auto commit = run(true, { ZlibDecodeStatus::Success, 3, 3 });
 			require(commit.fallbackReasonId == 4, "commit fallback reason mismatch");
 			require(
 				commit.primaryQpc == 10 && commit.fallbackQpc == 10 &&
-					commit.totalQpc == 60,
+					commit.totalQpc == 50,
 				"commit timing split mismatch");
 		});
 

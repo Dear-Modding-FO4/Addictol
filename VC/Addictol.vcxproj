@@ -141,6 +141,7 @@
     <ClInclude Include="..\Addictol\Include\AdProfilerRuntimeChannel.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerMemory.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerBA2.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerBA2Schema.h" />
     <ClInclude Include="..\Addictol\Include\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerModules.h" />
     <ClInclude Include="..\Addictol\Include\AdProfilerDLL.h" />

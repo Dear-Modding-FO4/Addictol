@@ -146,6 +146,7 @@ namespace vmm_tests
 	void run_zlib_backend_checks(Runner& runner);
 	void run_zlib_inflate_checks(Runner& runner);
 	void run_esp_profiler_checks(Runner& runner);
+	void run_ba2_profiler_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
 	int run_benchmarks();
