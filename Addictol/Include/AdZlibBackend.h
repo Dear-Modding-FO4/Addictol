@@ -127,7 +127,7 @@ namespace Addictol
 		size_t produced{ 0 };
 	};
 
-	// libdeflate result codes, mirrored so the classifier stays independent of the codec header.
+	// Mirrored so the classifier stays independent of the codec header.
 	inline constexpr uint32_t ZLIB_CODEC_SUCCESS{ 0 };
 	inline constexpr uint32_t ZLIB_CODEC_BAD_DATA{ 1 };
 	inline constexpr uint32_t ZLIB_CODEC_SHORT_OUTPUT{ 2 };
@@ -165,7 +165,7 @@ namespace Addictol
 			return ZlibExactStatus::Decode;
 		}
 
-		// The archive contract is exact on both sides; a disagreement is metadata, not corruption.
+		// Exact on both sides; a disagreement is metadata, not corruption.
 		if (a_decode.consumed != a_expectedInput || a_decode.produced != a_expectedOutput)
 			return ZlibExactStatus::SizeMismatch;
 		return ZlibExactStatus::Success;

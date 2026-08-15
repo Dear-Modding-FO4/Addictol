@@ -34,7 +34,7 @@ namespace Addictol
 		using TInflate = int32_t(*)(ZlibInflate::Stream*, int32_t) noexcept;
 		TInflate OriginalInflate;
 
-		// Set immediately before the first Detours call so a retry can never re-enter patching.
+		// Set before the first Detours call, so a retry cannot re-enter.
 		enum class PatchState : uint8_t
 		{
 			NotAttempted,
@@ -246,7 +246,7 @@ namespace Addictol
 
 		namespace Decompression
 		{
-			// Inner calls of a stock replay are the request's own bytes; they are aggregated, not rowed.
+			// A replay's inner calls are the request's own bytes; aggregated, not rowed.
 			inline int32_t ServeReplay(
 				ZlibInflate::Stream* a_stream,
 				int32_t a_flush,
@@ -302,7 +302,7 @@ namespace Addictol
 						return OriginalInflate(a_stockStream, a_stockFlush);
 					};
 					const auto clock = []() noexcept { return ReadQpc(); };
-					// Delegated request work must not reattempt the codec, but is still observed.
+					// Delegated work must not reattempt the codec, but is still observed.
 					const auto outcome = serve.mode == ZlibServeMode::ForceStockObserved ?
 						ServeZlib<StockZlibBackend>(
 							a_stream, a_flush, original, timingEnabled, qpcFrequency, clock) :
@@ -391,7 +391,7 @@ namespace Addictol
 			return false;
 		}
 
-		// Every target is proven before the first write; a rejection here still leaves both untouched.
+		// Every target is proven before the first write.
 		const auto textureSelected = GetSelectedZlibBackendKind() == ZlibBackendKind::LibDeflate;
 		const auto textureValidated = textureSelected &&
 			TextureOneShot::Validate(runtime) == TextureOneShot::InstallState::Validated;
@@ -422,7 +422,7 @@ namespace Addictol
 			runtime,
 			ZlibBackendKindName(GetSelectedZlibBackendKind()));
 
-		// The seam decodes whole requests through the same backend, so it is patched second by design.
+		// The seam routes through the same backend, so it is patched second.
 		if (textureValidated &&
 			TextureOneShot::InstallValidated() != TextureOneShot::InstallState::Installed)
 		{

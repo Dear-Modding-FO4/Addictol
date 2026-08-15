@@ -77,7 +77,7 @@ namespace Addictol::TextureOneShot
 			return *counters;
 		}
 
-		// Sentinel seeded extrema need no first-writer special case, so there is no overwrite race.
+		// Sentinel seeding removes the first-writer race.
 		void SampleSizeDelta(Counters& a_counters, int64_t a_delta) noexcept
 		{
 			auto minimum = a_counters.minSizeDelta.load(std::memory_order_relaxed);
@@ -95,7 +95,7 @@ namespace Addictol::TextureOneShot
 			}
 		}
 
-		// Claimed before publishing so a reader never sees a half-written first mismatch.
+		// Claimed before publishing, so no reader sees a half-written mismatch.
 		void CaptureFirstMismatch(Counters& a_counters, const SizeEvidence& a_evidence) noexcept
 		{
 			auto claimed = false;
@@ -195,7 +195,7 @@ namespace Addictol::TextureOneShot
 			return kCallerNone;
 		}
 
-		// The engine loop for the whole request: the validated seam on AE/NG, the inner loop on OG.
+		// The validated seam on AE/NG, the inner loop on OG.
 		[[nodiscard]] bool CallEngineLoop(
 			TextureStream::Stream* a_stream,
 			std::byte* a_destination) noexcept
@@ -286,7 +286,7 @@ namespace Addictol::TextureOneShot
 			const auto caller = ClassifyCaller(
 				reinterpret_cast<uintptr_t>(_ReturnAddress()));
 
-			// Work reached through an already managed request keeps that request's serve rules.
+			// Nested work keeps the outer request's serve rules.
 			if (CurrentZlibServe().Active())
 			{
 				GetCounters().nestedDelegations.fetch_add(1, std::memory_order_relaxed);
@@ -569,7 +569,7 @@ namespace Addictol::TextureOneShot
 
 		if (mismatches)
 		{
-			// Uniform sign points at a packer padding fullSize; mixed signs do not.
+			// Uniform sign points at a packer padding fullSize.
 			const auto reading = minDelta > 0 ?
 				"every mismatch decoded shorter than fullSize, which is consistent with a third-party packer padding fullSize"sv :
 				(maxDelta < 0 ?

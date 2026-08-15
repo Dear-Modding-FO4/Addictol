@@ -582,7 +582,7 @@ namespace Addictol
 			return false;
 		}
 
-		// Worker code must survive F4SE's failure-path FreeLibrary.
+		// Must survive F4SE's failure-path FreeLibrary.
 		HMODULE module{};
 		if (!GetModuleHandleExW(
 				GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,

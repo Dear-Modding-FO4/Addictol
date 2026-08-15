@@ -86,7 +86,7 @@ namespace Addictol::BA2Profile
 		return a_caller < kKnownCallerCount ? kCallerNames[a_caller] : "Unknown"sv;
 	}
 
-	// Malformed bits invalidate the contract; unknown-id bits only mark the row for analysis.
+	// Malformed bits invalidate the contract; unknown-id bits only mark the row.
 	inline constexpr uint16_t kFlagByteRangeOverflow{ 1u << 0 };
 	inline constexpr uint16_t kFlagByteAccounting{ 1u << 1 };
 	inline constexpr uint16_t kFlagTickAccounting{ 1u << 2 };
@@ -106,7 +106,7 @@ namespace Addictol::BA2Profile
 		kFlagChunkIdentity | kFlagRequestIdentity | kFlagPrimaryBytes
 	};
 
-	// Evidence bits describe what the call observed; they never invalidate the contract.
+	// Evidence bits describe what the call observed, never invalidating it.
 	inline constexpr uint8_t kEvidenceChunkRow{ 1u << 0 };
 	inline constexpr uint8_t kEvidenceRequestLeader{ 1u << 1 };
 	inline constexpr uint8_t kEvidenceSizeMeasured{ 1u << 2 };
@@ -456,7 +456,7 @@ namespace Addictol::BA2Profile
 		}
 	};
 
-	// One accumulator, fed identically from admitted observations and from persisted rows.
+	// Fed identically from admitted observations and from persisted rows.
 	struct RequestEvidence
 	{
 		std::array<uint64_t, kKnownSiteCount> siteCounts{};
@@ -524,7 +524,7 @@ namespace Addictol::BA2Profile
 			if (a_evidenceFlags & kEvidenceCapacity)
 				++capacityFailures;
 
-			// The mismatch count is derived from the persisted sizes, not from the row's own flag.
+			// Derived from the persisted sizes, not the row's own flag.
 			if (a_evidenceFlags & kEvidenceSizeMeasured)
 			{
 				++sizeDeltaSamples;

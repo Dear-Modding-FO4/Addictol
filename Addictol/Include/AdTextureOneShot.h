@@ -25,7 +25,7 @@ namespace Addictol::TextureOneShot
 		uint64_t qpcFrequency{ 0 };
 	};
 
-	// One row per physical chunk, buffered until the request outcome is known.
+	// One row per chunk, buffered until the request outcome is known.
 	struct RequestRows
 	{
 		std::array<CallObservation, BA2Profile::kMaxBatchRows> rows{};
@@ -51,7 +51,7 @@ namespace Addictol::TextureOneShot
 		uint16_t firstChunk{ 0 };
 		uint16_t firstChunkCount{ 0 };
 
-		// Positive delta means the archive claimed more than the member decoded to.
+		// Positive means the archive claimed more than the member decoded to.
 		void Sample(
 			uint16_t a_chunk,
 			uint16_t a_chunkCount,
@@ -63,7 +63,7 @@ namespace Addictol::TextureOneShot
 			if (!delta)
 				return;
 
-			// Exact chunks carry no signal, so the extremes span mismatches only.
+			// Extremes span mismatches only; exact chunks carry no signal.
 			if (!mismatches || delta < minDelta)
 				minDelta = delta;
 			if (!mismatches || delta > maxDelta)
@@ -144,7 +144,7 @@ namespace Addictol::TextureOneShot
 			}
 			else
 			{
-				// Nothing rewrote this chunk, so no codec result or bytes may survive on the row.
+				// Nothing rewrote this chunk, so no result may survive on the row.
 				a_row.servedBackendId = BA2Profile::kBackendNone;
 				a_row.inputBytesConsumed = 0;
 				a_row.outputBytesProduced = 0;
@@ -153,7 +153,7 @@ namespace Addictol::TextureOneShot
 		}
 	}
 
-	// Decodes one whole request into the caller buffer, or hands it back to the engine loop.
+	// Decodes a whole request, or hands it back to the engine loop.
 	template <class Codec, class Clock, class Fallback>
 	RequestOutcome RunRequest(
 		TextureStream::Stream& a_stream,
@@ -205,7 +205,7 @@ namespace Addictol::TextureOneShot
 		}
 
 		auto reason = ZlibFallbackReason::None;
-		// Two disagreeing size sources leave no trustworthy exact target, so nothing is attempted.
+		// Disagreeing size sources leave no trustworthy target.
 		const auto ineligible = a_bounds.descMismatches != 0;
 		if (ineligible)
 		{
@@ -231,7 +231,7 @@ namespace Addictol::TextureOneShot
 			{
 				const auto& desc = a_stream.chunks[chunk];
 				const auto nominal = a_stream.nominalSizes[chunk];
-				// The engine loop only rewrites the selected mips, so nothing may decode past them.
+				// The engine loop rewrites only the selected mips.
 				const auto capacity = a_bounds.outputEnd - outputOffset;
 
 				const auto start = readQpc();
@@ -309,7 +309,7 @@ namespace Addictol::TextureOneShot
 		outcome.served = fallback(capture);
 		outcome.attributionOk = capture.AttributionOk();
 
-		// An unattributable replay would produce well formed but wrong rows, so admit none.
+		// An unattributable replay yields well formed but wrong rows.
 		if (a_rows && !outcome.attributionOk)
 			a_rows->count = 0;
 
@@ -347,7 +347,7 @@ namespace Addictol::TextureOneShot
 		Indeterminate
 	};
 
-	// A pre-write rejection stays retryable; anything past a Detours attempt is terminal.
+	// Pre-write rejection stays retryable; past a Detours attempt is terminal.
 	[[nodiscard]] constexpr bool MayValidate(InstallState a_state) noexcept
 	{
 		return a_state == InstallState::NotAttempted || a_state == InstallState::Rejected;
@@ -359,7 +359,7 @@ namespace Addictol::TextureOneShot
 		return a_state == InstallState::Validated;
 	}
 
-	// Resolves and proves every target; it never writes, so a rejection stays retryable.
+	// Never writes, so a rejection stays retryable.
 	InstallState Validate(std::string_view a_runtime) noexcept;
 	InstallState InstallValidated() noexcept;
 	[[nodiscard]] InstallState GetInstallState() noexcept;

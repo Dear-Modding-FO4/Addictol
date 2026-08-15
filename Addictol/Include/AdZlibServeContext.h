@@ -10,7 +10,7 @@
 
 namespace Addictol
 {
-	// How an inflate call nested inside a texture request must be served.
+	// How an inflate call nested in a texture request is served.
 	enum class ZlibServeMode : uint8_t
 	{
 		Normal,
@@ -27,7 +27,7 @@ namespace Addictol
 		int32_t zlibResult{ 0 };
 	};
 
-	// Stock replay of one texture request, grouped by the live chunk index the engine is writing.
+	// Grouped by the live chunk index the engine is writing.
 	struct ZlibReplayCapture
 	{
 		std::array<ZlibReplayChunk, BA2Profile::kMaxBatchRows> chunks{};
@@ -36,7 +36,7 @@ namespace Addictol
 		uint32_t overflowedSums{ 0 };
 		bool timingEnabled{ false };
 
-		// Rows are only honest if every replayed byte landed on a known chunk.
+		// Rows are honest only if every replayed byte landed on a known chunk.
 		[[nodiscard]] bool AttributionOk() const noexcept
 		{
 			return !unattributedCalls && !overflowedSums;
@@ -91,7 +91,7 @@ namespace Addictol
 		return state;
 	}
 
-	// Depth-aware and restoring, so nested engine work never inherits a stale mode.
+	// Restores on exit, so nested work never inherits a stale mode.
 	class ZlibServeScope
 	{
 		ZlibServeState& m_state;

@@ -15,7 +15,7 @@ namespace Addictol::BA2Profile
 	inline constexpr size_t kArenaRowCapacity{ kChunkRows * kArenaChunkCount };
 	inline constexpr uint16_t kNoChunk{ 0xFFFF };
 
-	// A texture request never exceeds the stream chunk count, which the fast path pins below 256.
+	// The fast path pins the chunk count below 256.
 	inline constexpr size_t kMaxRequestChunks{ 255 };
 	inline constexpr size_t kMaxBatchRows{ kChunkRows };
 
@@ -44,7 +44,7 @@ namespace Addictol::BA2Profile
 		void Reset() noexcept { *this = BankCursor{}; }
 	};
 
-	// Rows of one batch stay contiguous, so a full batch starts a new chunk rather than straddling two.
+	// A full batch starts a new chunk rather than straddling two.
 	[[nodiscard]] inline std::span<CallRecord> ReserveRows(
 		RowArena& a_arena,
 		BankCursor& a_cursor,

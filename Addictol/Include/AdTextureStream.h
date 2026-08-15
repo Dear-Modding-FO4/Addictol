@@ -13,7 +13,7 @@
 
 namespace Addictol::TextureStream
 {
-	// BA2 DX10 chunk descriptor; uncompressedSize is the exact archive contract for one mip run.
+	// uncompressedSize is the archive's exact size for one mip run.
 	struct ChunkDesc
 	{
 		uint64_t dataFileOffset;
@@ -79,11 +79,10 @@ namespace Addictol::TextureStream
 	static_assert(offsetof(Stream, first) == 0x4C);
 	static_assert(offsetof(Stream, last) == 0x50);
 
-	// The engine tests this mode with a byte compare, so the bytes above it carry no contract.
+	// Engine byte-compares this mode; bytes above it carry no contract.
 	inline constexpr uint8_t DETAIL_DIRECT = 1;
 	inline constexpr uint32_t MAX_CHUNK_COUNT = 255;
 
-	// Address Library ids, written per runtime so the intent is explicit at every site.
 	struct RuntimeIds
 	{
 		uint64_t og{ 0 };
@@ -103,7 +102,7 @@ namespace Addictol::TextureStream
 
 	namespace Guards
 	{
-		// AE and NG enter the resident path directly; the reset of the mutable index pins the entry.
+		// AE/NG enter the resident path directly; the index reset pins the entry.
 		inline constexpr std::array<uint8_t, 35> MODERN_ENTRY{
 			0x40, 0x53, 0x57, 0x41, 0x56, 0x48, 0x83, 0xEC, 0x20, 0x4C,
 			0x8B, 0x71, 0x18, 0x48, 0x8B, 0xFA, 0x48, 0x8B, 0xD9, 0x4D,
@@ -120,7 +119,7 @@ namespace Addictol::TextureStream
 			0xC8, 0xE9, 0xB2, 0x06, 0x00, 0x00, 0xF3, 0xC3
 		};
 
-		// Relocation-free prologue of the OG resident loop, up to its first branch.
+		// Relocation-free prologue, up to the first branch.
 		inline constexpr std::array<uint8_t, 59> OG_RESIDENT_INNER{
 			0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10,
 			0x4C, 0x89, 0x44, 0x24, 0x18, 0x56, 0x57, 0x41, 0x56, 0x48,
@@ -130,7 +129,7 @@ namespace Addictol::TextureStream
 			0x4C, 0x8B, 0xF1, 0x40, 0xB6, 0x01, 0x41, 0x3B, 0xD0
 		};
 
-		// Relocation-free prologue of the OG alternate loop, up to its first branch.
+		// Relocation-free prologue, up to the first branch.
 		inline constexpr std::array<uint8_t, 44> OG_ALTERNATE_INNER{
 			0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10,
 			0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20,
@@ -153,7 +152,7 @@ namespace Addictol::TextureStream
 			std::equal(a_expected.begin(), a_expected.end(), a_code.begin() + a_offset);
 	}
 
-	// One validated call site; the return address it leaves classifies the request.
+	// The return address classifies the request.
 	struct CallerSignature
 	{
 		BA2Profile::CallerId caller;
@@ -217,7 +216,7 @@ namespace Addictol::TextureStream
 		}
 	};
 
-	// The post bytes reload the return registers without reading AL, so the seam result is unused.
+	// Post bytes reload return registers without reading AL.
 	[[nodiscard]] inline CallerSiteCheck ValidateCallerSite(
 		std::span<const uint8_t> a_code,
 		const CallerSignature& a_signature,
@@ -321,11 +320,10 @@ namespace Addictol::TextureStream
 		const auto& stream = a_detail.stream;
 		if (stream.total_in || stream.total_out)
 			return false;
-		// A detail that has never decoded has no private state to disturb.
+		// Never decoded, so no private state to disturb.
 		return !stream.state || *ZlibInflate::ModePointer(stream) == ZlibInflate::MODE_HEAD;
 	}
 
-	// Address arithmetic is checked before any member pointer is formed or dereferenced.
 	[[nodiscard]] inline bool PointerRangeFits(const void* a_base, uint64_t a_bytes) noexcept
 	{
 		const auto base = reinterpret_cast<uintptr_t>(a_base);
@@ -334,7 +332,7 @@ namespace Addictol::TextureStream
 				std::numeric_limits<uintptr_t>::max() - base);
 	}
 
-	// Everything the one-shot path needs is proven here, before any decode or write.
+	// Proven before any decode or write.
 	[[nodiscard]] inline PreflightResult Preflight(
 		const Stream* a_stream,
 		const std::byte* a_destination,
@@ -391,7 +389,7 @@ namespace Addictol::TextureStream
 			if (chunk < first || chunk > last)
 				continue;
 
-			// Only the selected mips are evidence for this request.
+			// Only the selected mips are evidence.
 			if (nominal != desc.uncompressedSize)
 				++result.bounds.descMismatches;
 
