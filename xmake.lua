@@ -287,6 +287,7 @@ target(plugin_name, function()
     add_deps("commonlib-shared", dependency_interface)
     add_deps("commonlibf4", dependency_interface)
     add_deps("vmm", dependency_interface)
+    add_deps("imgui", dependency_interface)
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
