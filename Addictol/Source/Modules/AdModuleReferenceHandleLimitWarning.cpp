@@ -8,6 +8,8 @@
 #include <RE/T/TESObjectREFR.h>
 #include <RE/B/BGSSaveLoadManager.h>
 
+#define AD_NOMESSAGE_REFMANAGER 1
+
 namespace Addictol
 {
 	// the ratio at which we start warning in console log.
@@ -74,8 +76,12 @@ namespace Addictol
 	}
 
 	ModuleReferenceHandleLimitWarning::ModuleReferenceHandleLimitWarning() :
-		Module("Reference Handle Limit Warning", &bWarningsReferenceHandleLimit,
-			{ F4SE::MessagingInterface::kPostLoadGame })
+		Module("Reference Handle Limit Warning", &bWarningsReferenceHandleLimit
+#if !AD_NOMESSAGE_REFMANAGER
+			,
+			{ F4SE::MessagingInterface::kPostLoadGame }
+#endif
+		)
 	{}
 
 	bool ModuleReferenceHandleLimitWarning::DoQuery() const noexcept
@@ -122,6 +128,7 @@ namespace Addictol
 
 	bool ModuleReferenceHandleLimitWarning::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+#if !AD_NOMESSAGE_REFMANAGER
 		if (a_msg && (a_msg->type == F4SE::MessagingInterface::kPostLoadGame))
 		{
 			HandleManager::DebugInfo(GetMessagingInterfaceString(a_msg));
@@ -130,6 +137,9 @@ namespace Addictol
 		}
 
 		return false;
+#else
+		return true;
+#endif
 	}
 
 	bool ModuleReferenceHandleLimitWarning::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept

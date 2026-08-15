@@ -263,6 +263,8 @@ namespace Addictol
 		~Timer() noexcept;
 	};
 
+	[[nodiscard]] uint64_t ReadQpc() noexcept;
+	[[nodiscard]] uint64_t GetQpcFrequency() noexcept;
 	[[nodiscard]] uint32_t Extend16(uint32_t a_in) noexcept;
 	[[nodiscard]] uint32_t Extend8(uint32_t a_in) noexcept;
 	[[nodiscard]] uint16_t Swap16(uint16_t a_in) noexcept;

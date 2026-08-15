@@ -341,6 +341,9 @@ fLocalMapScaleFactor = 1.5
 
 [Profiler]
 
+# Master toggle for the performance profiler. When false, all profiling is disabled.
+bProfiler = false
+
 # Profiles main-thread frame hitches, engine phases, and loading stalls. Requires bProfiler = true.
 bFrameHitchProfiler = false
 
@@ -350,36 +353,38 @@ bAllocatorProfiler = false
 # Publishes allocator-profiler intervals every N completed frames. Requires bProfiler = true.
 uAllocatorProfilerDrainFrames = 30
 
-# Master toggle for the performance profiler. When false, all profiling is disabled.
-bProfiler = false
-
 # Profiles animation-subgraph matching and reports the projected cache hit rate by role. Requires bProfiler = true.
 bAnimSubGraphProfiler = false
 
 # Experimental diagnostic that skips animation-subgraph preloading and changes engine behavior. Requires bProfiler = true.
 bAnimSubGraphSkipPreload = false
 
-# Profile ESP/ESM load times during CompileFiles.
+# Profile ESP/ESM load times during CompileFiles. Requires bProfiler = true.
 bESPProfiler = true
 
 # Also hook ConstructObjectList and InitAllForms for per-file timing (needs bESPProfiler).
 # Exact runtime signatures are validated before writes; matching Address Library ids are required at startup.
 bESPSubHooks = false
 
-# Profile F4SE DLL plugin load times via GetProcAddress IAT hook.
+# Profile F4SE DLL plugin load times via GetProcAddress IAT hook. Requires bProfiler = true.
 bDLLProfiler = true
 
-# Profile Addictol internal module query/install times.
+# Profile Addictol internal module query/install times. Requires bProfiler = true.
 bModuleProfiler = true
 
-# Record startup phase timeline markers.
+# Record startup phase timeline markers. Requires bProfiler = true.
 bStartupTimeline = true
 
-# Track memory usage snapshots at key lifecycle points.
+# Track memory usage snapshots at key lifecycle points. Requires bProfiler = true.
 bMemoryTracking = true
 
-# Record BA2 decompression timing into ba2_calls_v3/ba2_summary_v3. The one-shot texture path records whole chunks; other paths record inflate calls. When bLibDeflate is false, profiling installs the stock hook. Per-call CSV export reserves 68 MiB.
+# Record BA2 decompression timing into ba2_calls_v3/ba2_summary_v3. The one-shot texture path records whole chunks;
+# other paths record inflate calls. When bLibDeflate is false, profiling installs the stock hook.
+# Per-call CSV export reserves 68 MiB. Requires bProfiler = true.
 bBA2Timing = true
+
+# Output of information about decompression to log (attempted/succeeded/rejected). Requires bProfiler = true.
+bZlibTracking = true
 
 # Export profiler data to CSV alongside the log report. Requires bProfiler = true.
 bCSVExport = false
