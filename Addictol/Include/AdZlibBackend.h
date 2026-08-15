@@ -30,7 +30,7 @@ namespace Addictol
 	};
 	inline constexpr auto DEFAULT_ZLIB_BACKEND = ZlibBackendKind::LibDeflate;
 
-	[[nodiscard]] inline constexpr std::string_view ZlibBackendKindName(
+	[[nodiscard]] constexpr std::string_view ZlibBackendKindName(
 		ZlibBackendKind a_kind) noexcept
 	{
 		for (const auto& backend : ZLIB_BACKEND_NAMES)
@@ -41,7 +41,7 @@ namespace Addictol
 		return "unknown";
 	}
 
-	[[nodiscard]] inline constexpr std::optional<ZlibBackendKind> ParseZlibBackend(
+	[[nodiscard]] constexpr std::optional<ZlibBackendKind> ParseZlibBackend(
 		std::string_view a_name) noexcept
 	{
 		for (const auto& backend : ZLIB_BACKEND_NAMES)
@@ -52,8 +52,8 @@ namespace Addictol
 		return std::nullopt;
 	}
 
-	[[nodiscard]] ZlibBackendKind ResolveZlibBackendSelection(std::string_view a_name) noexcept;
-	[[nodiscard]] ZlibBackendKind GetSelectedZlibBackendKind() noexcept;
+	ZlibBackendKind ResolveZlibBackendSelection(std::string_view a_name) noexcept;
+	ZlibBackendKind GetSelectedZlibBackendKind() noexcept;
 	void InitializeZlibBackendConfig() noexcept;
 
 	enum class ZlibFallbackReason : uint8_t
@@ -68,7 +68,7 @@ namespace Addictol
 		RequestRestart = 7
 	};
 
-	[[nodiscard]] inline constexpr std::string_view ZlibFallbackReasonName(
+	[[nodiscard]] constexpr std::string_view ZlibFallbackReasonName(
 		ZlibFallbackReason a_reason) noexcept
 	{
 		switch (a_reason)
@@ -94,7 +94,7 @@ namespace Addictol
 		}
 	}
 
-	[[nodiscard]] inline constexpr uint32_t ZlibBackendRegistryId(
+	[[nodiscard]] constexpr uint32_t ZlibBackendRegistryId(
 		ZlibBackendKind a_kind) noexcept
 	{
 		switch (a_kind)
@@ -108,10 +108,10 @@ namespace Addictol
 		}
 	}
 
-	[[nodiscard]] inline constexpr uint32_t ZlibFallbackReasonRegistryId(
+	[[nodiscard]] constexpr uint32_t ZlibFallbackReasonRegistryId(
 		ZlibFallbackReason a_reason) noexcept
 	{
-		return static_cast<uint32_t>(a_reason);
+		return std::to_underlying(a_reason);
 	}
 
 	enum class ZlibDecodeStatus : uint8_t
@@ -148,7 +148,7 @@ namespace Addictol
 		size_t produced{ 0 };
 	};
 
-	[[nodiscard]] inline constexpr ZlibExactStatus ClassifyExactDecode(
+	[[nodiscard]] constexpr ZlibExactStatus ClassifyExactDecode(
 		const ZlibExactDecode& a_decode,
 		size_t a_expectedInput,
 		size_t a_expectedOutput) noexcept
@@ -171,7 +171,7 @@ namespace Addictol
 		return ZlibExactStatus::Success;
 	}
 
-	[[nodiscard]] inline constexpr ZlibFallbackReason ExactStatusFallbackReason(
+	[[nodiscard]] constexpr ZlibFallbackReason ExactStatusFallbackReason(
 		ZlibExactStatus a_status) noexcept
 	{
 		switch (a_status)
@@ -224,14 +224,11 @@ namespace Addictol
 	template<class F>
 	decltype(auto) VisitSelectedZlibBackend(F&& a_fn)
 	{
-		switch (GetSelectedZlibBackendKind())
-		{
-		case ZlibBackendKind::Stock:
-			return a_fn.template operator()<StockZlibBackend>();
-		case ZlibBackendKind::LibDeflate:
-		default:
-			return a_fn.template operator()<LibDeflateZlibBackend>();
-		}
+		auto fn = std::forward<F>(a_fn);
+		if (GetSelectedZlibBackendKind() == ZlibBackendKind::Stock)
+			return fn.template operator()<StockZlibBackend>();
+		else
+			return fn.template operator()<LibDeflateZlibBackend>();
 	}
 
 	template<class Clock>
@@ -273,18 +270,18 @@ namespace Addictol
 
 		a_outcome.servedBackendId = ZlibBackendRegistryId(ZlibBackendKind::Stock);
 		a_outcome.zlibResult = result;
-		a_outcome.consumed = inputAfter <= inputBefore ? inputBefore - inputAfter : 0;
-		a_outcome.produced = outputAfter <= outputBefore ? outputBefore - outputAfter : 0;
+		a_outcome.consumed = (inputAfter <= inputBefore) ? inputBefore - inputAfter : 0;
+		a_outcome.produced = (outputAfter <= outputBefore) ? outputBefore - outputAfter : 0;
 	}
 
 	template<class Backend, class Original, class Clock>
 	ZlibInflateOutcome ServeZlib(
 		ZlibInflate::Stream* a_stream,
 		int32_t a_flush,
-		Original&& a_original,
+		Original& a_original,
 		bool a_timingEnabled,
 		uint64_t a_qpcFrequency,
-		Clock&& a_clock) noexcept
+		Clock& a_clock) noexcept
 	{
 		ZlibInflateOutcome outcome{};
 		outcome.primaryBackendId = ZlibBackendRegistryId(Backend::kind);

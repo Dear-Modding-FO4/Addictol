@@ -308,9 +308,7 @@ namespace Addictol
 			REX::INFO("Zlib decompression backend: stock (bLibDeflate is disabled)."sv);
 		}
 		else
-		{
 			ResolveZlibBackendSelection(sAdditionalZlibBackend.GetValue());
-		}
 	}
 
 	ModuleLibDeflate::ModuleLibDeflate() :
