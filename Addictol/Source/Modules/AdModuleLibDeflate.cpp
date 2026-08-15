@@ -7,6 +7,7 @@
 #include <AdZlibInflate.h>
 #include <AdZlibServeContext.h>
 #include <Windows.h>
+
 #ifdef ERROR
 #	undef ERROR
 #endif
@@ -15,6 +16,7 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches"sv, "bLibDeflate"sv, true };
 	static REX::TOML::Str<> sAdditionalZlibBackend{ "Additional"sv, "sZlibBackend"sv, "libdeflate" };
+	static REX::TOML::Bool<> bProfilerZlibTracking{ "Profiler"sv, "bZlibTracking"sv, true };
 
 	namespace zlibDetail
 	{
@@ -421,7 +423,7 @@ namespace Addictol
 
 	bool ModuleLibDeflate::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (a_msg &&
+		if (ProfilerCore::IsEnabledInConfig() && bProfilerZlibTracking.GetValue() && a_msg &&
 			(a_msg->type == F4SE::MessagingInterface::kPostLoadGame ||
 				a_msg->type == F4SE::MessagingInterface::kPostSaveGame))
 		{

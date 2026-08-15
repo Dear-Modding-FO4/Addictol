@@ -54,3 +54,4 @@
 /Depends/vmm/x64/MemoryManager/Debug/microsoft/STL
 .vscode
 .clangd
+*.lastcodeanalysissucceeded
