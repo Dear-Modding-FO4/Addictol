@@ -223,6 +223,20 @@ namespace Addictol
 		REX::INFO("Time: {} microsec"sv, elapsed.count());
 	}
 
+	uint64_t ReadQpc() noexcept
+	{
+		LARGE_INTEGER value{};
+		QueryPerformanceCounter(&value);
+		return static_cast<uint64_t>(value.QuadPart);
+	}
+
+	uint64_t GetQpcFrequency() noexcept
+	{
+		LARGE_INTEGER value{};
+		return QueryPerformanceFrequency(&value) && (value.QuadPart > 0) ?
+			static_cast<uint64_t>(value.QuadPart) : 0;
+	}
+
 	uint32_t Extend16(uint32_t a_in) noexcept
 	{
 		return (a_in & 0x8000) ? (0xFFFF0000 | a_in) : a_in;

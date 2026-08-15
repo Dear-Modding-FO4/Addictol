@@ -43,24 +43,6 @@ namespace Addictol
 
 		PatchState g_patchState{ PatchState::NotAttempted };
 
-		uint64_t ReadQpc() noexcept
-		{
-			LARGE_INTEGER value{};
-			QueryPerformanceCounter(&value);
-			return static_cast<uint64_t>(value.QuadPart);
-		}
-
-		uint64_t GetQpcFrequency() noexcept
-		{
-			static const auto frequency = []() noexcept {
-				LARGE_INTEGER value{};
-				return QueryPerformanceFrequency(&value) && value.QuadPart > 0 ?
-					static_cast<uint64_t>(value.QuadPart) :
-					uint64_t{ 0 };
-			}();
-			return frequency;
-		}
-
 		struct AtomicCounters
 		{
 			std::atomic<uint64_t> attempted{ 0 };
@@ -74,7 +56,7 @@ namespace Addictol
 			std::atomic<uint64_t> servedUnknown{ 0 };
 		};
 
-		AtomicCounters& GetAtomicCounters() noexcept
+		static AtomicCounters& GetAtomicCounters() noexcept
 		{
 			static auto* counters = new AtomicCounters();
 			return *counters;
@@ -147,7 +129,7 @@ namespace Addictol
 
 		thread_local ThreadCounters g_threadCounters;
 
-		void CountOutcome(const ZlibInflateOutcome& a_outcome) noexcept
+		static void CountOutcome(const ZlibInflateOutcome& a_outcome) noexcept
 		{
 			switch (a_outcome.servedBackendId)
 			{
@@ -190,7 +172,7 @@ namespace Addictol
 			}
 		}
 
-		void RecordOutcome(
+		static void RecordOutcome(
 			const ZlibInflateOutcome& a_outcome,
 			uint64_t a_inputBytesAvailable,
 			uint64_t a_outputBytesAvailable,
@@ -226,7 +208,7 @@ namespace Addictol
 			ProfilerBA2::GetSingleton()->Record(observation);
 		}
 
-		void LogCounters() noexcept
+		static void LogCounters() noexcept
 		{
 			g_threadCounters.Flush();
 			const auto& counters = GetAtomicCounters();
@@ -247,7 +229,7 @@ namespace Addictol
 		namespace Decompression
 		{
 			// A replay's inner calls are the request's own bytes; aggregated, not rowed.
-			inline int32_t ServeReplay(
+			[[nodiscard]] inline static int32_t ServeReplay(
 				ZlibInflate::Stream* a_stream,
 				int32_t a_flush,
 				ZlibReplayCapture& a_capture) noexcept

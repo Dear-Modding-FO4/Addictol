@@ -52,8 +52,8 @@ namespace Addictol
 		return std::nullopt;
 	}
 
-	ZlibBackendKind ResolveZlibBackendSelection(std::string_view a_name) noexcept;
-	ZlibBackendKind GetSelectedZlibBackendKind() noexcept;
+	[[nodiscard]] ZlibBackendKind ResolveZlibBackendSelection(std::string_view a_name) noexcept;
+	[[nodiscard]] ZlibBackendKind GetSelectedZlibBackendKind() noexcept;
 	void InitializeZlibBackendConfig() noexcept;
 
 	enum class ZlibFallbackReason : uint8_t
