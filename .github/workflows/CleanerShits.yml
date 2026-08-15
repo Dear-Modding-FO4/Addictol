@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: read
+      contents: write
     steps:
       - name: Delete old workflow runs
         uses: Mattraks/delete-workflow-runs@v2
@@ -25,7 +25,6 @@ jobs:
         with:
           delete_releases: true
           prerelease_option: true
-          releases_keep_latest: 6
           releases_keep_keyword: none
           releases_keep_latest: 14
           delete_tags: true
