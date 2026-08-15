@@ -3,6 +3,7 @@
 #include <vbits.h>
 #include <vmmblock.h>
 #include <vmmgeometry.h>
+#include <vmmpage.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -70,6 +71,10 @@ namespace
 	static_assert(std::is_same_v<mm::page_map<mm::block8_t>, voltek::core::bits_regions>);
 	static_assert(std::is_same_v<mm::page_map<mm::block16_t>, voltek::core::bits_regions>);
 	static_assert(std::is_same_v<mm::page_map<mm::block32_t>, voltek::core::bits>);
+	static_assert(mm::is_region_page_map_safe(mm::blocks_per_page<mm::block8_t>));
+	static_assert(mm::is_region_page_map_safe(mm::blocks_per_page<mm::block16_t>));
+	static_assert(mm::blocks_per_page<mm::block8_t> >= mm::region_page_map_minimum);
+	static_assert(mm::blocks_per_page<mm::block16_t> >= mm::region_page_map_minimum);
 
 	// Re-derived here rather than reused from the policy, so a loosened policy cannot hide a regression.
 	constexpr bool every_count_is_scan_safe()
@@ -99,6 +104,13 @@ namespace
 	// 100.5078125 MiB of one-page bodies across all fourteen size classes.
 	static_assert(mm::all_page_bodies_bytes == 100u * mebibyte + 532480u,
 		"aggregate one-page commit moved");
+	// These bounds guard the over-read; the runtime test below covers only the scalar handover.
+	static_assert(voltek::core::_internal::complete_simd_word_count(2048, 2048) == 32);
+	static_assert(voltek::core::_internal::complete_simd_word_count(2305, 2048) == 32);
+	static_assert(voltek::core::_internal::complete_simd_word_count(4096, 2048) == 64);
+	static_assert(voltek::core::_internal::complete_simd_word_count(2048, 1024) == 32);
+	static_assert(voltek::core::_internal::complete_simd_word_count(2305, 1024) == 32);
+	static_assert(voltek::core::_internal::complete_simd_word_count(4096, 1024) == 64);
 
 	std::string size_message(std::string_view message, std::size_t size)
 	{
@@ -298,6 +310,44 @@ namespace vmm_tests
 
 	void run_bits_regions_check(Runner& runner)
 	{
+		runner.test("partial SIMD chunks hand off to the scalar scan", [] {
+			const auto check_tail = [](size_t set_index) {
+				constexpr size_t count = 2305;
+				voltek::core::bits map;
+				map.resize(count);
+				map.all_unset();
+				require(map.set(set_index), "tail test could not set its target bit");
+
+				size_t index = SIZE_MAX;
+				require(map.find_first_set_bit(index), "tail test lost its only set bit");
+				require(index == set_index, "tail test returned the wrong bit index");
+				require(index < count, "tail test returned an index outside the bitmap");
+			};
+
+			const bool original_avx2 = voltek::core::avx2_supported;
+			const bool original_sse41 = voltek::core::sse41_supported;
+			struct RestoreFeatures
+			{
+				bool avx2;
+				bool sse41;
+				~RestoreFeatures()
+				{
+					voltek::core::avx2_supported = avx2;
+					voltek::core::sse41_supported = sse41;
+				}
+			} restore{ original_avx2, original_sse41 };
+
+			check_tail(2200);
+			check_tail(2304);
+			if (original_sse41)
+			{
+				voltek::core::avx2_supported = false;
+				voltek::core::sse41_supported = true;
+				check_tail(2200);
+				check_tail(2304);
+			}
+		});
+
 		runner.test("bits scan reports no index outside a configured page", [] {
 			for (const auto& item : configured_geometry)
 			{
@@ -341,6 +391,15 @@ namespace vmm_tests
 			require(
 				regions.count() == 0,
 				"bits_regions minimum changed -- page-size reduction for pools 8..8192 may now be possible; re-evaluate the blocks-per-page constants and confirm the AVX2 scan in find_first_free is safe at the new size");
+		});
+
+		runner.test("page rejects an undersized region bitmap", [] {
+			using RegionPage = voltek::memory_manager::page_t<
+				voltek::memory_manager::block8_t,
+				voltek::core::bits_regions>;
+			RegionPage page{ 32768 };
+			require(page.empty(), "page accepted a body after its region bitmap rejected the size");
+			require(page.count() == 0, "page recorded a size its region bitmap rejected");
 		});
 	}
 

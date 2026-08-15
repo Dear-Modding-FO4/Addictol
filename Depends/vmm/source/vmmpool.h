@@ -204,6 +204,12 @@ namespace voltek
 							_vassert_msg(true, "Failed new free page");
 							return false;
 						}
+						if (_current->empty())
+						{
+							delete _current;
+							_current = nullptr;
+							return false;
+						}
 						// Привязываем индекс, как дополнитульную информацию.
 						_current->set_user_data(static_cast<uintptr_t>(index));
 

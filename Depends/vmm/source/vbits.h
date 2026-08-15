@@ -12,6 +12,17 @@ namespace voltek
 {
 	namespace core
 	{
+		namespace _internal
+		{
+			// SIMD scans may read only complete chunks.
+			[[nodiscard]] constexpr size_t complete_simd_word_count(
+				size_t bit_count,
+				size_t chunk_bit_count) noexcept
+			{
+				return (bit_count / chunk_bit_count) * (chunk_bit_count >> 6);
+			}
+		}
+
 		// Класс для битовых манипуляций.
 		// Битовая карта, всё взаимодействие в битах.
 		//

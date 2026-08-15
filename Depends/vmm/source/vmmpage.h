@@ -72,6 +72,11 @@ namespace voltek
 				}
 
 				map.resize(new_size);
+				if (map.count() != new_size)
+				{
+					_vassert(map.count() == new_size);
+					return;
+				}
 				size_t alloc_size = new_size * sizeof(_type);
 
 #ifdef MAPPER_USE
