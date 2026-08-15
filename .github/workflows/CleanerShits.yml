@@ -21,12 +21,14 @@ jobs:
           retain_days: 14 # Keeps only the last 14 days of runs
           keep_minimum_runs: 6 # Ensures you don't delete everything
       - name: Delete old beta releases
-        uses: jay2610/delete-older-releases@1.0.0
+        uses: ophub/delete-releases-workflows@main
         with:
-          repo: <owner>/<repoName> # defaults to current repo
-          keep_latest: 6
-          delete_tag_pattern: beta # defaults to ""
-          delete_type: 'release'
-          target_branch: 'master'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          delete_releases: true
+          prerelease_option: true
+          releases_keep_latest: 6
+          releases_keep_keyword: none
+          releases_keep_latest: 14
+          delete_tags: true
+          delete_workflows: false
+          workflows_keep_day: 14
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
