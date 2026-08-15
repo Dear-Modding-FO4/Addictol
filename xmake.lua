@@ -143,6 +143,17 @@ target("commonlibf4", function()
     add_defines("NDEBUG")
 end)
 
+target("imgui", function()
+    set_languages("c++latest")
+    set_optimize("fastest")
+    set_runtimes("MT")
+    set_symbols("debug")
+    set_targetdir(xmake_library_dir)
+    set_objectdir(".LinkConf/xmake/imgui")
+    set_dependir(".LinkConf/xmake/imgui/deps")
+    add_defines("NDEBUG")
+end)
+
 target("detours", function()
     set_kind("static")
     set_arch("x64")
@@ -300,7 +311,8 @@ target(plugin_name, function()
         "shlwapi",
         "winhttp",
         "Shell32",
-        "VoltekLib.MemoryManager"
+        "VoltekLib.MemoryManager",
+        "imgui"
     )
 
     -- add source files
@@ -318,7 +330,8 @@ target(plugin_name, function()
         "Version",
         "Addictol/Include",
         "Depends/vmm/include",
-        "Depends/vmm/source"
+        "Depends/vmm/source",
+        "Depends/imgui"
     )
 
     -- add defines
