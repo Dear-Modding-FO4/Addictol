@@ -9,6 +9,8 @@
 #include <RE/P/PlayerCharacter.h>
 #include <RE/RTTI.h>
 
+#define AD_NOMESSAGE_WATERJETPACK 1
+
 namespace RE
 {
 	class bhkCharacterStateChangeEvent
@@ -112,7 +114,9 @@ namespace Addictol
 				{
 					static_cast<RE::BSTEventSource<RE::bhkCharacterStateChangeEvent>*>(controller)->RegisterSink
 						(waterJetpackFixDetail::CharacterStateChangeEventSink::GetSingleton());
+#if !AD_NOMESSAGE_WATERJETPACK
 					REX::INFO("WaterJetpackFix: RegisterSink succeeded");
+#endif
 				}
 			}
 		}
