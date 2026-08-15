@@ -1,55 +1,32 @@
 #pragma once
 
-#include <REX/W32.h>
+#include <AdImguiPlatformTargets.h>
+
+#include <string_view>
 
 namespace Addictol
 {
-	struct PlatformImguiContext
+	using PlatformImguiDrawSink = void (*)() noexcept;
+	using PlatformImguiToggleSink = void (*)(uint32_t a_virtualKey) noexcept;
+
+	// One engine detour plus a window subclass, both permanent: teardown order at process exit makes removal unsafe.
+	namespace PlatformImgui
 	{
-		REX::W32::HWND hwnd{ nullptr };
-		REX::W32::ID3D11Device* device{ nullptr };
-		REX::W32::ID3D11DeviceContext* deviceContext{ nullptr };
-		REX::W32::RECT windowRect{};
-		void* imguiContext{ nullptr };
-	};
+		// Sinks are permanent and must register from a load-stage module install.
+		[[nodiscard]] bool RegisterDrawSink(std::string_view a_name, PlatformImguiDrawSink a_sink) noexcept;
+		// Toggle sinks are global and receive fresh key presses even while ImGui captures keyboard input.
+		[[nodiscard]] bool RegisterToggleSink(std::string_view a_name, PlatformImguiToggleSink a_sink) noexcept;
 
-	using PlatformImguiDrawEventSink = void(*)(void);
+		// Clients call this after load-stage registration, before rendering starts.
+		[[nodiscard]] bool InstallHooks() noexcept;
 
-	class PlatformImgui :
-		public REX::TSingleton<PlatformImgui>
-	{
-		bool initMain{ false };
-		bool initHooks{ false };
-		PlatformImguiContext context{};
-		std::unordered_map<std::string, PlatformImguiDrawEventSink> DrawBeforeCursorHandlers{};
-		std::unordered_map<std::string, PlatformImguiDrawEventSink> DrawOverlappHandlers{};
+		// Called at kGameLoaded, after the render window and device exist.
+		[[nodiscard]] bool InitializeWindow() noexcept;
 
-		static void RefreshCursor() noexcept;
+		void SetDrawingEnabled(bool a_enabled) noexcept;
 
-		static void KillWindow(uint32_t a_unk) noexcept;
-		inline static decltype(&KillWindow) KillWindowOrig{ nullptr };
-		static void WindowSizeChanged(uint32_t a_unk) noexcept;
-		inline static decltype(&WindowSizeChanged) WindowSizeChangedOrig{ nullptr };
-		static void UIBeforeCursorEndFrame(void* a_UI) noexcept;
-		inline static decltype(&UIBeforeCursorEndFrame) UIBeforeCursorEndFrameOrig{ nullptr };
-		static void UIEndFrame() noexcept;
-		inline static decltype(&UIEndFrame) UIEndFrameOrig{ nullptr };
-		static uint64_t WindowProc(REX::W32::HWND a_hwnd, uint32_t a_msg, uint64_t a_wparam, uint64_t a_lparam) noexcept;
-		inline static decltype(&WindowProc) WindowProcOrig{ nullptr };
-
-		PlatformImgui(const PlatformImgui&) = delete;
-		PlatformImgui(PlatformImgui&&) = delete;
-		PlatformImgui operator=(PlatformImgui&&) = delete;
-		PlatformImgui operator=(const PlatformImgui&) = delete;
-	public:
-		constexpr PlatformImgui() noexcept = default;
-		virtual ~PlatformImgui() noexcept;
-
-		[[nodiscard]] virtual bool InitHooks() noexcept;
-		[[nodiscard]] virtual bool InitSDM() noexcept;
-		virtual void KillHooks() noexcept;
-		virtual void KillSDM() noexcept;
-
-		[[nodiscard]] inline virtual const PlatformImguiContext& GetContext() const noexcept { return context; }
-	};
+		[[nodiscard]] bool IsDrawingEnabled() noexcept;
+		[[nodiscard]] bool IsReady() noexcept;
+		[[nodiscard]] ImguiPlatform::InstallState GetInstallState() noexcept;
+	}
 }

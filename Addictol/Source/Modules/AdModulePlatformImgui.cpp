@@ -1,6 +1,6 @@
 #include <Modules/AdModulePlatformImgui.h>
-#include <AdUtils.h>
 #include <AdPlatformImgui.h>
+#include <AdUtils.h>
 
 namespace Addictol
 {
@@ -15,9 +15,11 @@ namespace Addictol
 
 	bool ModulePlatformImgui::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (a_msg && (a_msg->type == F4SE::MessagingInterface::kGameLoaded))
-			return PlatformImgui::GetSingleton()->InitSDM();
-		return PlatformImgui::GetSingleton()->InitHooks();
+		// The load stage only exists so sinks can register before the renderer is up.
+		if (!a_msg || a_msg->type != F4SE::MessagingInterface::kGameLoaded)
+			return true;
+
+		return PlatformImgui::InitializeWindow();
 	}
 
 	bool ModulePlatformImgui::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

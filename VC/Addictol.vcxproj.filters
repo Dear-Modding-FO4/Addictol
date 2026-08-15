@@ -727,6 +727,9 @@
     <ClInclude Include="..\Addictol\Include\AdPlatformImgui.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdImguiPlatformTargets.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />

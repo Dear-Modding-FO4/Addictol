@@ -136,6 +136,7 @@
     <ClInclude Include="..\Addictol\Include\AdAssert.h" />
     <ClInclude Include="..\Addictol\Include\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\AdPlatformImgui.h" />
+    <ClInclude Include="..\Addictol\Include\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\AdZlibInflate.h" />
     <ClInclude Include="..\Addictol\Include\AdZlibServeContext.h" />
     <ClInclude Include="..\Addictol\Include\AdTextureStream.h" />

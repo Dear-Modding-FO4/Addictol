@@ -58,6 +58,7 @@ int main(int argc, char** argv)
 	run_texture_one_shot_checks(runner);
 	run_esp_profiler_checks(runner);
 	run_ba2_profiler_checks(runner);
+	run_imgui_platform_checks(runner);
 	run_escape_freeze_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";

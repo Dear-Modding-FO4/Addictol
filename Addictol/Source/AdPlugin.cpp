@@ -6,6 +6,7 @@
 #include <AdProfilerMemory.h>
 #include <AdZlibBackend.h>
 #include <AdProfilerModules.h>
+#include <AdPlatformImgui.h>
 
 #include <RE/B/BSCRC32.h>
 #include <RE/B/BSScriptUtil.h>
@@ -266,6 +267,7 @@ namespace Addictol
 				ProfilerCore::GetSingleton()->MarkPhase("ModulesQueried"sv);
 			// Install load patches
 			moduleManager.InstallLoadAll();
+			(void)PlatformImgui::InstallHooks();
 			// Profiler phase
 			if (ProfilerCore::IsEnabledInConfig())
 			{

@@ -231,6 +231,52 @@ target("vmm", function()
     )
 end)
 
+target("imgui-vendored", function()
+    set_kind("static")
+    set_basename("imgui")
+    set_arch("x64")
+    set_languages("c++latest")
+    set_optimize("fastest")
+    set_runtimes("MT")
+    set_symbols("debug")
+    set_exceptions("cxx")
+    set_targetdir(xmake_library_dir)
+    set_objectdir(".LinkConf/xmake/imgui")
+    set_dependir(".LinkConf/xmake/imgui/deps")
+
+    -- add source files, matching Depends/imgui/imgui.vcxproj exactly
+    add_files(
+        "Depends/imgui/imgui.cpp",
+        "Depends/imgui/imgui_demo.cpp",
+        "Depends/imgui/imgui_draw.cpp",
+        "Depends/imgui/imgui_tables.cpp",
+        "Depends/imgui/imgui_widgets.cpp",
+        "Depends/imgui/backends/imgui_impl_win32.cpp",
+        "Depends/imgui/backends/imgui_impl_dx11.cpp"
+    )
+
+    -- add include directories
+    add_includedirs("Depends/imgui", { public = true })
+
+    -- add defines
+    add_defines("NDEBUG", "_LIB")
+
+    -- add compiler flags
+    add_cxxflags(
+        "/Ob2",
+        "/Oi",
+        "/Ot",
+        "/Gy",
+        "/GS",
+        "/arch:AVX",
+        "/fp:fast",
+        "/permissive-",
+        "/sdl",
+        "/MP",
+        { force = true }
+    )
+end)
+
 target("vmm-tests", function()
     set_kind("binary")
     set_arch("x64")
@@ -276,6 +322,7 @@ target(plugin_name, function()
     add_deps("commonlib-shared", dependency_interface)
     add_deps("commonlibf4", dependency_interface)
     add_deps("vmm", dependency_interface)
+    add_deps("imgui-vendored", dependency_interface)
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
@@ -289,6 +336,7 @@ target(plugin_name, function()
         "commonlibf4",
         "commonlib-shared",
         "spdlog",
+        "imgui",
         "Advapi32",
         "Bcrypt",
         "dxgi",
@@ -318,7 +366,8 @@ target(plugin_name, function()
         "Version",
         "Addictol/Include",
         "Depends/vmm/include",
-        "Depends/vmm/source"
+        "Depends/vmm/source",
+        "Depends/imgui"
     )
 
     -- add defines
