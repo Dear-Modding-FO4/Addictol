@@ -269,7 +269,6 @@ namespace Addictol
 				ProfilerCore::GetSingleton()->MarkPhase("ModulesQueried"sv);
 			// Install load patches
 			moduleManager.InstallLoadAll();
-			(void)PlatformImgui::InstallHooks();
 			// Profiler phase
 			if (ProfilerCore::IsEnabledInConfig())
 			{

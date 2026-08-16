@@ -252,19 +252,51 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	class Timer
+	class ITimer
 	{
-		std::chrono::steady_clock::time_point start;
-
-		Timer(const Timer&) = delete;
-		Timer& operator=(const Timer&) = delete;
+		ITimer(const ITimer&) = delete;
+		ITimer(ITimer&&) = delete;
+		ITimer& operator=(const ITimer&) = delete;
+		ITimer& operator=(ITimer&&) = delete;
 	public:
-		Timer() noexcept;
-		~Timer() noexcept;
+		ITimer() noexcept = default;
+
+		[[nodiscard]] virtual double Now() const noexcept = 0;
 	};
+
+	class QpcTimer : 
+		public ITimer
+	{
+		uint64_t freq{ 0 };
+
+		QpcTimer(const QpcTimer&) = delete;
+		QpcTimer(QpcTimer&&) = delete;
+		QpcTimer& operator=(const QpcTimer&) = delete;
+		QpcTimer& operator=(QpcTimer&&) = delete;
+	public:
+		QpcTimer() noexcept;
+
+		[[nodiscard]] virtual double Now() const noexcept override;
+	};
+
+	class StdTimer :
+		public ITimer
+	{
+		StdTimer(const StdTimer&) = delete;
+		StdTimer(StdTimer&&) = delete;
+		StdTimer& operator=(const StdTimer&) = delete;
+		StdTimer& operator=(StdTimer&&) = delete;
+	public:
+		StdTimer() noexcept = default;
+		[[nodiscard]] virtual double Now() const noexcept override;
+	};
+
+	extern StdTimer globalStdTimer;
+	extern QpcTimer globalQpcTimer;
 
 	[[nodiscard]] uint64_t ReadQpc() noexcept;
 	[[nodiscard]] uint64_t GetQpcFrequency() noexcept;
+	[[nodiscard]] double QpcToMilliseconds(uint64_t a_ticks, uint64_t a_qpcFrequency) noexcept;
 	[[nodiscard]] uint32_t Extend16(uint32_t a_in) noexcept;
 	[[nodiscard]] uint32_t Extend8(uint32_t a_in) noexcept;
 	[[nodiscard]] uint16_t Swap16(uint16_t a_in) noexcept;

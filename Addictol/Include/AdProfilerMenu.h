@@ -1,6 +1,7 @@
 #pragma once
 
-#include "AdLogControl.h"
+#include <AdLogControl.h>
+#include <AdUtils.h>
 
 #include <array>
 #include <cstddef>
@@ -35,7 +36,7 @@ namespace Addictol
 
 	[[nodiscard]] constexpr std::string_view Describe(ProfilerMenuTab a_tab) noexcept
 	{
-		const auto index = static_cast<size_t>(a_tab);
+		const auto index = std::to_underlying(a_tab);
 		return index < kProfilerMenuTabCount ? kProfilerMenuTabNames[index] : "Unknown"sv;
 	}
 
@@ -49,8 +50,7 @@ namespace Addictol
 		LogControl::Level::kOff
 	};
 	static_assert(
-		kProfilerMenuLogLevels.size() ==
-		static_cast<size_t>(LogControl::Level::kOff) + 1);
+		kProfilerMenuLogLevels.size() == std::to_underlying(LogControl::Level::kOff) + 1);
 
 	struct ProfilerMenuToggleKey
 	{
@@ -155,16 +155,8 @@ namespace Addictol
 		if (a_nowQpc <= a_refreshedAtQpc)
 			return false;
 
-		const auto elapsedMs =
-			((a_nowQpc - a_refreshedAtQpc) * 1000ull) / a_qpcFrequency;
+		const auto elapsedMs = QpcToMilliseconds(a_nowQpc - a_refreshedAtQpc, a_qpcFrequency);
 		return elapsedMs >= ClampProfilerMenuRefreshMs(a_refreshMs);
-	}
-
-	[[nodiscard]] constexpr double QpcToMilliseconds(uint64_t a_ticks, uint64_t a_qpcFrequency) noexcept
-	{
-		return a_qpcFrequency ?
-			(static_cast<double>(a_ticks) * 1000.0) / static_cast<double>(a_qpcFrequency) :
-			0.0;
 	}
 
 	[[nodiscard]] constexpr size_t ClampProfilerMenuFormattedLength(

@@ -12,7 +12,7 @@ namespace Addictol
 		inline constexpr size_t kBufferCapacity{ 96 };
 
 		// Several formatted values are live inside one ImGui call, so the buffers rotate.
-		[[nodiscard]] char* NextBuffer() noexcept
+		[[nodiscard]] static char* NextBuffer() noexcept
 		{
 			static thread_local std::array<std::array<char, kBufferCapacity>, kBufferCount> buffers{};
 			static thread_local size_t next{ 0 };
@@ -21,7 +21,7 @@ namespace Addictol
 			return buffer.data();
 		}
 
-		[[nodiscard]] std::string_view Print(const char* a_format, auto... a_args) noexcept
+		[[nodiscard]] static std::string_view Print(const char* a_format, auto... a_args) noexcept
 		{
 			auto* buffer = NextBuffer();
 			const auto written = std::snprintf(buffer, kBufferCapacity, a_format, a_args...);

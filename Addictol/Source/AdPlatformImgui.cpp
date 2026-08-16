@@ -4,6 +4,9 @@
 #include <RE/B/BSGraphics.h>
 #include <RE/C/ControlMap.h>
 
+#include <RE/U/UI.h>
+#include <RE/H/HUDMenuUtils.h>
+
 #include <Windows.h>
 #include <d3d11.h>
 
@@ -31,6 +34,7 @@ namespace Addictol
 			"mouse message range must match the Windows SDK");
 		static_assert(kKeyDownMessage == WM_KEYDOWN, "key down message must match the Windows SDK");
 
+		using TUIRenderMenus = void (*)() noexcept;
 		using TUIEndFrame = void (*)(void*) noexcept;
 
 		enum class Backend : uint32_t
@@ -46,11 +50,18 @@ namespace Addictol
 		static std::atomic<InstallState> s_installState{ InstallState::kNotAttempted };
 		static std::atomic<bool> s_drawingEnabled{ false };
 		static std::atomic<Backend> s_backend{ Backend::kUninitialized };
+		static std::atomic<TUIRenderMenus> s_uiRenderMenusOriginal{ nullptr };
 		static std::atomic<TUIEndFrame> s_uiEndFrameOriginal{ nullptr };
 		static std::atomic<bool> s_windowReady{ false };
 		static std::string s_iniPath;
 
 		static HWND s_window{ nullptr };
+		static int32_t s_windowLeft{ 0 };
+		static int32_t s_windowTop{ 0 };
+		static int32_t s_windowWidth{ 0 };
+		static int32_t s_windowHeight{ 0 };
+		static float s_globalScale{ 1.0f };
+		static float s_globalDpiScale{ 1.0f };
 		static std::atomic<WNDPROC> s_previousWindowProc{ nullptr };
 		static bool s_windowIsUnicode{ false };
 		static RE::BSGraphics::RendererData* s_rendererData{ nullptr };
@@ -174,7 +185,8 @@ namespace Addictol
 			// The path must outlive every frame, so ImGui keeps pointing at owned storage.
 			s_iniPath = (directory / "imgui.ini").string();
 			a_io.IniFilename = s_iniPath.c_str();
-			a_io.IniSavingRate = 1.0f;
+			// To avoid overloading the disk.
+			a_io.IniSavingRate = 10.0f;
 		}
 
 		// Runs once on whichever thread the engine calls UIEndFrame from; a failure is permanent, never retried.
@@ -200,10 +212,11 @@ namespace Addictol
 			// Setup sinks own any persisted geometry path, so nothing is written until one asks for it.
 			io.IniFilename = nullptr;
 			// Frames only run while drawing is enabled, so the drawn cursor follows that state.
-			io.MouseDrawCursor = true;
+			io.MouseDrawCursor = false;
 			// Process DPI awareness is deliberately left to the DPI Scaling module, which owns that user option.
 
 			ConfigureIniPath(io);
+			s_globalDpiScale = ImGui_ImplWin32_GetDpiScaleForHwnd(s_window);
 
 			// Style, fonts, and ini path must be settled before the backend uploads the font atlas.
 			for (size_t index = 0, count = s_setupSinks.Size(); index < count; ++index)
@@ -279,7 +292,30 @@ namespace Addictol
 			return ready;
 		}
 
-		
+		static void UIDrawCursor() noexcept
+		{
+			// Get the current mouse position
+			ImVec2 mousePos = ImGui::GetIO().MousePos;
+
+			// Get the foreground draw list (draws over all windows)
+			ImDrawList* drawList = ImGui::GetForegroundDrawList();
+
+			// Define the three vertices of the triangle cursor
+			float cursorSize = 28.0f * s_globalScale * s_globalDpiScale;
+			ImVec2 p1 = mousePos; // Tip of the cursor
+			auto p2 = ImVec2(mousePos.x + cursorSize, mousePos.y + cursorSize * 0.5f); // Bottom right
+			auto p3 = ImVec2(mousePos.x + cursorSize * 0.5f, mousePos.y + cursorSize); // Bottom left
+
+			// RE::HUDMenuUtils::GetGameplayHUDBackgroundColor(); <-- this dark option
+			auto color = RE::HUDMenuUtils::GetGameplayHUDColor();
+			// Define colors (RGBA format)
+			ImU32 fillColor = ImColor{ color.r, color.g, color.b }; // White fill
+			ImU32 borderColor = IM_COL32(0, 0, 0, 255);				// Black border
+
+			// Draw the triangle
+			drawList->AddTriangleFilled(p1, p2, p3, fillColor);
+			drawList->AddTriangle(p1, p2, p3, borderColor, 1.0f); // 1.0f is thickness
+		}
 
 		static void HKUIEndFrame(void* a_ui) noexcept
 		{
@@ -319,7 +355,7 @@ namespace Addictol
 			for (size_t index = 0, count = s_drawSinks.Size(); index < count; ++index)
 				s_drawSinks.At(index)();
 
-			//UIDrawCursor();
+			UIDrawCursor();
 			ImGui::Render();
 			std::array<ID3D11RenderTargetView*, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT> previousTargets{};
 			ID3D11DepthStencilView* previousDepth{ nullptr };
@@ -340,6 +376,21 @@ namespace Addictol
 			}
 			if (previousDepth)
 				previousDepth->Release();
+		}
+
+		static void HKUIRenderMenus() noexcept
+		{
+			// Skips drawing cursor if imgui enabled
+			if (!s_drawingEnabled.load(std::memory_order_acquire))
+			{
+				auto original = s_uiRenderMenusOriginal.load(std::memory_order_acquire);
+				if (original)
+					original();
+				else
+					return;
+			}
+
+			// TODO
 		}
 
 		static LRESULT CALLBACK HKWindowProc(HWND a_hwnd, UINT a_msg, WPARAM a_wparam, LPARAM a_lparam) noexcept
@@ -464,13 +515,6 @@ namespace Addictol
 		if (!AllowsInstallAttempt(state))
 			return IsInstalled(state);
 
-		// Nobody draws, so the game keeps its untouched code and window procedure.
-		if (s_drawSinks.Empty() && s_toggleSinks.Empty())
-		{
-			CloseSinkRegistration();
-			return true;
-		}
-
 		const auto runtime = CurrentRuntime();
 		const REL::ID id{ kUIEndFrameId.og, kUIEndFrameId.ng, kUIEndFrameId.ae };
 		const auto target = id.address();
@@ -481,19 +525,28 @@ namespace Addictol
 			return false;
 		}
 
-		// Everything past this point may write, so late registration must fail visibly.
-		CloseSinkRegistration();
 		s_installState.store(InstallState::kAttempted, std::memory_order_release);
-
 		const auto original = RELEX::DetourClassJump(target, &HKUIEndFrame);
 		if (!original)
 		{
+			CloseSinkRegistration();
 			s_installState.store(InstallState::kIndeterminate, std::memory_order_release);
 			REX::ERROR("Platform Imgui: detouring UIEndFrame at {:X} returned zero after Detours may have NOP-filled its prologue; a crash is likely and nothing is rolled back"sv,
 				target);
 			return false;
 		}
 
+		const auto original2 = RELEX::DetourClassJump(REL::ID{ 230711, 2284762 }.address(), &HKUIRenderMenus);
+		if (!original2)
+		{
+			CloseSinkRegistration();
+			s_installState.store(InstallState::kIndeterminate, std::memory_order_release);
+			REX::ERROR("Platform Imgui: detouring UIRenderMenus at {:X} returned zero after Detours may have NOP-filled its prologue; a crash is likely and nothing is rolled back"sv,
+				target);
+			return false;
+		}
+
+		s_uiRenderMenusOriginal.store(reinterpret_cast<TUIRenderMenus>(original2), std::memory_order_release);
 		s_uiEndFrameOriginal.store(reinterpret_cast<TUIEndFrame>(original), std::memory_order_release);
 		s_installState.store(InstallState::kInstalled, std::memory_order_release);
 		REX::INFO("Platform Imgui: {} UIEndFrame id {} detoured at {:X} with {} draw, {} toggle, and {} setup sinks"sv,
@@ -528,6 +581,12 @@ namespace Addictol
 			s_device = nullptr;
 			return false;
 		}
+
+		s_windowLeft = rendererData->renderWindow[0].windowX;
+		s_windowTop = rendererData->renderWindow[0].windowY;
+		s_windowWidth = rendererData->renderWindow[0].windowWidth;
+		s_windowHeight = rendererData->renderWindow[0].windowHeight;
+		s_globalScale = static_cast<float>(s_windowWidth) / 1920.f;
 
 		if (!SubclassWindow())
 		{

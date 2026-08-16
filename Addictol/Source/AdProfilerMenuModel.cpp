@@ -13,14 +13,7 @@ namespace Addictol
 {
 	namespace profilerMenuModelDetail
 	{
-		[[nodiscard]] uint64_t ReadQpc() noexcept
-		{
-			LARGE_INTEGER counter{};
-			QueryPerformanceCounter(&counter);
-			return static_cast<uint64_t>(counter.QuadPart);
-		}
-
-		void FinishRefresh(ProfilerMenuPanelState& a_state, uint64_t a_startQpc) noexcept
+		static void FinishRefresh(ProfilerMenuPanelState& a_state, uint64_t a_startQpc) noexcept
 		{
 			const auto end = ReadQpc();
 			a_state.refreshedAtQpc = end;
@@ -28,7 +21,7 @@ namespace Addictol
 			a_state.hasData = true;
 		}
 
-		[[nodiscard]] ProfilerMenuStatus ReadStatus() noexcept
+		[[nodiscard]] static ProfilerMenuStatus ReadStatus() noexcept
 		{
 			ProfilerMenuStatus status;
 			status.sessionID = ProfilerCore::GetSessionID();

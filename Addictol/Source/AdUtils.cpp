@@ -212,15 +212,26 @@ namespace RELEX
 
 namespace Addictol
 {
-	Timer::Timer() noexcept :
-		start(std::chrono::steady_clock::now())
+	StdTimer globalStdTimer{};
+	QpcTimer globalQpcTimer{};
+
+	QpcTimer::QpcTimer() noexcept :
+		freq(GetQpcFrequency())
 	{}
 
-	Timer::~Timer() noexcept
+	double QpcTimer::Now() const noexcept
 	{
-		auto end = std::chrono::steady_clock::now();
-		auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-		REX::INFO("Time: {} microsec"sv, elapsed.count());
+		LARGE_INTEGER value{};
+		return (freq && QueryPerformanceCounter(&value)) ?
+			(static_cast<double>(value.QuadPart) * 1000.0) / static_cast<double>(freq) :
+			0.0;
+	}
+
+	double StdTimer::Now() const noexcept
+	{
+		auto now = std::chrono::steady_clock::now();
+		std::chrono::duration<double, std::milli> time_since_epoch = now.time_since_epoch();
+		return time_since_epoch.count();
 	}
 
 	uint64_t ReadQpc() noexcept
@@ -235,6 +246,13 @@ namespace Addictol
 		LARGE_INTEGER value{};
 		return QueryPerformanceFrequency(&value) && (value.QuadPart > 0) ?
 			static_cast<uint64_t>(value.QuadPart) : 0;
+	}
+
+	double QpcToMilliseconds(uint64_t a_ticks, uint64_t a_qpcFrequency) noexcept
+	{
+		return a_qpcFrequency ?
+			(static_cast<double>(a_ticks) * 1000.0) / static_cast<double>(a_qpcFrequency) :
+			0.0;
 	}
 
 	uint32_t Extend16(uint32_t a_in) noexcept
