@@ -3,7 +3,14 @@ includes("Depends/commonlibf4")
 
 -- set project constants
 local plugin_name = "Addictol"
-local xmake_library_dir = ".Lib/xmake"
+
+-- output paths follow the project, not the working directory: a build invoked with a
+-- project root elsewhere must not write generated headers into this tree
+local function project_dir(relative)
+    return path.join(os.projectdir(), relative)
+end
+
+local xmake_library_dir = project_dir(".Lib/xmake")
 local xmake_compile_pdb = path.join(os.projectdir(), ".LinkConf", "xmake", "Addictol", "Addictol.pdb")
 local xmake_ltcg_output = path.join(os.projectdir(), ".LinkConf", "xmake", "Addictol", "Addictol.iobj")
 local xmake_plugin_pdb = path.join(os.projectdir(), ".Build", "F4SE", "Plugins", "Addictol.pdb")
@@ -60,8 +67,8 @@ target("spdlog-vendored", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(".LinkConf/xmake/spdlog")
-    set_dependir(".LinkConf/xmake/spdlog/deps")
+    set_objectdir(project_dir(".LinkConf/xmake/spdlog"))
+    set_dependir(project_dir(".LinkConf/xmake/spdlog/deps"))
 
     -- add source files
     add_files(
@@ -111,8 +118,8 @@ target("commonlib-shared", function()
     set_runtimes("MT")
     set_symbols("debug")
     set_targetdir(xmake_library_dir)
-    set_objectdir(".LinkConf/xmake/commonlib-shared")
-    set_dependir(".LinkConf/xmake/commonlib-shared/deps")
+    set_objectdir(project_dir(".LinkConf/xmake/commonlib-shared"))
+    set_dependir(project_dir(".LinkConf/xmake/commonlib-shared/deps"))
 
     -- preserve the MSBuild spdlog build
     add_deps("spdlog-vendored", dependency_interface)
@@ -138,8 +145,8 @@ target("commonlibf4", function()
     set_runtimes("MT")
     set_symbols("debug")
     set_targetdir(xmake_library_dir)
-    set_objectdir(".LinkConf/xmake/commonlibf4")
-    set_dependir(".LinkConf/xmake/commonlibf4/deps")
+    set_objectdir(project_dir(".LinkConf/xmake/commonlibf4"))
+    set_dependir(project_dir(".LinkConf/xmake/commonlibf4/deps"))
     add_defines("NDEBUG")
 end)
 
@@ -152,8 +159,8 @@ target("imgui", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(".LinkConf/xmake/imgui")
-    set_dependir(".LinkConf/xmake/imgui/deps")
+    set_objectdir(project_dir(".LinkConf/xmake/imgui"))
+    set_dependir(project_dir(".LinkConf/xmake/imgui/deps"))
 
     -- add source files, matching Depends/imgui/imgui.vcxproj exactly
     add_files(
@@ -197,8 +204,8 @@ target("detours", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(".LinkConf/xmake/detours")
-    set_dependir(".LinkConf/xmake/detours/deps")
+    set_objectdir(project_dir(".LinkConf/xmake/detours"))
+    set_dependir(project_dir(".LinkConf/xmake/detours/deps"))
 
     -- add source files
     add_files(
@@ -236,8 +243,8 @@ target("vmm", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(".LinkConf/xmake/vmm")
-    set_dependir(".LinkConf/xmake/vmm/deps")
+    set_objectdir(project_dir(".LinkConf/xmake/vmm"))
+    set_dependir(project_dir(".LinkConf/xmake/vmm/deps"))
 
     -- add source files
     add_files(
@@ -282,12 +289,12 @@ target("vmm-tests", function()
     set_languages("c++23")
     set_optimize("fastest")
     set_runtimes("MT")
-    set_targetdir(".Build/Tests")
-    set_objectdir(".LinkConf/xmake/vmm-tests")
-    set_dependir(".LinkConf/xmake/vmm-tests/deps")
+    set_targetdir(project_dir(".Build/Tests"))
+    set_objectdir(project_dir(".LinkConf/xmake/vmm-tests"))
+    set_dependir(project_dir(".LinkConf/xmake/vmm-tests/deps"))
 
     -- add dependencies
-    add_deps("vmm")
+    add_deps("vmm", "spdlog-vendored")
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
@@ -296,10 +303,10 @@ target("vmm-tests", function()
     add_files("Tests/**.cpp")
 
     -- add include directories
-    add_includedirs("Tests", "Depends", "Depends/vmm/source")
+    add_includedirs("Tests", "Addictol/Include", "Depends", "Depends/spdlog/include", "Depends/vmm/source")
 
     -- add defines
-    add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN")
+    add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN", "SPDLOG_COMPILED_LIB", "SPDLOG_USE_STD_FORMAT")
 
     -- add libraries
     add_linkdirs(xmake_library_dir)
@@ -312,9 +319,9 @@ target(plugin_name, function()
     set_languages("c++latest")
     set_runtimes("MT")
     set_warnings("all")
-    set_targetdir(".Build/F4SE/Plugins")
-    set_objectdir(".LinkConf/xmake/Addictol")
-    set_dependir(".LinkConf/xmake/Addictol/deps")
+    set_targetdir(project_dir(".Build/F4SE/Plugins"))
+    set_objectdir(project_dir(".LinkConf/xmake/Addictol"))
+    set_dependir(project_dir(".LinkConf/xmake/Addictol/deps"))
 
     -- add dependencies
     add_deps("detours", dependency_interface)
@@ -347,8 +354,7 @@ target(plugin_name, function()
         "shlwapi",
         "winhttp",
         "Shell32",
-        "VoltekLib.MemoryManager",
-        "imgui"
+        "VoltekLib.MemoryManager"
     )
 
     -- add source files
@@ -361,6 +367,7 @@ target(plugin_name, function()
     add_includedirs(
         "Depends/commonlibf4/include",
         "Depends",
+        "Depends/spdlog/include",
         "Depends/detours",
         "Depends/commonlibf4/lib/commonlib-shared/include",
         "Version",
@@ -380,6 +387,7 @@ target(plugin_name, function()
         "COMMONLIB_OPTION_XBYAK",
         "COMMONLIB_OPTION_INI",
         "COMMONLIB_OPTION_TOML",
+        "SPDLOG_COMPILED_LIB",
         "SPDLOG_USE_STD_FORMAT",
         "SPDLOG_WCHAR_TO_UTF8_SUPPORT",
         "FMT_UNICODE=0",
