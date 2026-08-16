@@ -69,7 +69,8 @@ namespace Addictol
 			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv,
 			"bAnimSubGraphSkipPreload"sv, "bFrameHitchProfiler"sv,
 			"bAllocatorProfiler"sv, "uAllocatorProfilerDrainFrames"sv,
-			"bProfilerMenu"sv, "sProfilerMenuToggleKey"sv, "uProfilerMenuRefreshMs"sv
+			"bProfilerMenu"sv, "sProfilerMenuToggleKey"sv, "uProfilerMenuRefreshMs"sv,
+			"bZlibTracking"sv
 		}}
 	};
 
