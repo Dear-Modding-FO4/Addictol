@@ -31,6 +31,47 @@ namespace vmm_tests
 			require(!Observe(state, 1200, 5, 55, 1, 1000).healthySampleSequence, "healthy sequence counted twice");
 		});
 
+		runner.test("escape freeze healthy sequence produces no log-worthy event", [] {
+			WatchState state;
+			(void)Observe(state, 0, 1, 0, 0, 1000);
+			(void)Observe(state, 100, 2, 55, 1, 1000);
+			(void)Observe(state, 900, 3, 55, 1, 1000);
+			const auto healthy = Observe(state, 1100, 4, 55, 1, 1000);
+			require(healthy.healthySampleSequence, "test sequence was not healthy");
+			require(!healthy.corruptCountStarted, "healthy sequence produced a corruption event");
+			require(!healthy.stallCandidateStarted, "healthy sequence produced a stall event");
+			require(!healthy.shouldCheckOwner, "healthy sequence requested an owner check");
+		});
+
+		runner.test("escape freeze owner check dispatch is independent of logging", [] {
+			Observation observation;
+			observation.shouldCheckOwner = true;
+			bool checked = false;
+			DispatchOwnerCheck(observation, [&] {
+				checked = true;
+			});
+			require(checked, "owner check request did not reach the orphan check");
+		});
+
+		runner.test("escape freeze stop path publishes after joining the worker", [] {
+			int sequence = 0;
+			bool joined = false;
+			bool published = false;
+			FinishWorker(
+				[&] {
+					joined = true;
+					sequence = 1;
+				},
+				[&] {
+					published = true;
+					require(joined, "summary ran before worker join");
+					require(sequence == 1, "summary did not immediately follow worker join");
+					sequence = 2;
+				});
+			require(published, "stop path did not publish the summary");
+			require(sequence == 2, "stop path did not complete summary publication");
+		});
+
 		runner.test("escape freeze restarts the hold window when ownership changes", [] {
 			WatchState state;
 			(void)Observe(state, 0, 1, 0, 0, 1000);

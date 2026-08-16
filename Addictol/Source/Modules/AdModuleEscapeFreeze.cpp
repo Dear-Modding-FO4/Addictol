@@ -12,13 +12,12 @@
 #include <algorithm>
 #include <atomic>
 #include <cerrno>
+#include <cstdlib>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <new>
 #include <string_view>
-
-#define AD_NOMESSAGE_FREEZES 1
 
 namespace Addictol
 {
@@ -42,6 +41,13 @@ namespace Addictol
 			std::atomic<uint64_t> rendererResumptionsAfterForcedRelease{};
 			std::atomic<uint64_t> healthySampleSequences{};
 			std::atomic<uint64_t> corruptCountObservations{};
+			std::atomic<uint64_t> ownerAliveObservations{};
+			std::atomic<uint64_t> ownerUnknownObservations{};
+			std::atomic<bool> stallCandidateReported{};
+			std::atomic<bool> forcedOrphanReleaseReported{};
+			std::atomic<bool> corruptCountReported{};
+			std::atomic<bool> ownerAliveReported{};
+			std::atomic<bool> ownerUnknownReported{};
 		};
 
 		struct RuntimeState
@@ -68,6 +74,8 @@ namespace Addictol
 			uint64_t healthySampleSequences{};
 			uint64_t unresolvedCandidates{};
 			uint64_t corruptCountObservations{};
+			uint64_t ownerAliveObservations{};
+			uint64_t ownerUnknownObservations{};
 		};
 
 		struct LockSnapshot
@@ -198,6 +206,10 @@ namespace Addictol
 				a_runtime.counters.healthySampleSequences.load(std::memory_order_relaxed);
 			snapshot.corruptCountObservations =
 				a_runtime.counters.corruptCountObservations.load(std::memory_order_relaxed);
+			snapshot.ownerAliveObservations =
+				a_runtime.counters.ownerAliveObservations.load(std::memory_order_relaxed);
+			snapshot.ownerUnknownObservations =
+				a_runtime.counters.ownerUnknownObservations.load(std::memory_order_relaxed);
 			const auto resumptions =
 				snapshot.rendererResumptionsWithoutIntervention +
 				snapshot.rendererResumptionsAfterForcedRelease;
@@ -208,17 +220,29 @@ namespace Addictol
 			return snapshot;
 		}
 
-#if !AD_NOMESSAGE_FREEZES
-		static void LogSummary(const RuntimeState& a_runtime, std::string_view a_reason) noexcept
+		[[nodiscard]] static bool HasAnomaly(const CounterSnapshot& a_stats) noexcept
+		{
+			return a_stats.sampledStallCandidates ||
+				a_stats.forcedOrphanReleases ||
+				a_stats.abortedOrphanReleases ||
+				a_stats.corruptCountObservations ||
+				a_stats.ownerAliveObservations ||
+				a_stats.ownerUnknownObservations;
+		}
+
+		static void LogShutdownSummary(const RuntimeState& a_runtime) noexcept
 		{
 			const auto stats = CaptureCounters(a_runtime);
+			if (!HasAnomaly(stats))
+				return;
+
 			REX::INFO(
-				"Escape Freeze summary ({}): sampled stall candidates={}, forced orphan releases={}, "
+				"Escape Freeze shutdown summary: sampled stall candidates={}, forced orphan releases={}, "
 				"aborted orphan releases={}, "
 				"renderer resumptions without intervention={}, "
 				"renderer resumptions after forced release={}, healthy sampled sequences={}, "
-				"unresolved candidates={}, corrupt count observations={}."sv,
-				a_reason,
+				"unresolved candidates={}, corrupt count observations={}, "
+				"owner-alive observations={}, owner-unknown observations={}."sv,
 				stats.sampledStallCandidates,
 				stats.forcedOrphanReleases,
 				stats.abortedOrphanReleases,
@@ -226,9 +250,10 @@ namespace Addictol
 				stats.rendererResumptionsAfterForcedRelease,
 				stats.healthySampleSequences,
 				stats.unresolvedCandidates,
-				stats.corruptCountObservations);
+				stats.corruptCountObservations,
+				stats.ownerAliveObservations,
+				stats.ownerUnknownObservations);
 		}
-#endif
 
 		[[nodiscard]] static OrphanReleaseAttempt TryReleaseOrphan(
 			RuntimeState& a_runtime,
@@ -267,10 +292,7 @@ namespace Addictol
 
 		static void ReportRendererResumption(
 			RuntimeState& a_runtime,
-			[[maybe_unused]] const EscapeFreeze::WatchState& a_state,
-			const EscapeFreeze::Observation& a_observation,
-			[[maybe_unused]] uint64_t a_now,
-			[[maybe_unused]] uint64_t a_frameSequence) noexcept
+			const EscapeFreeze::Observation& a_observation) noexcept
 		{
 			if (!a_observation.rendererResumed)
 				return;
@@ -281,26 +303,6 @@ namespace Addictol
 			else
 				a_runtime.counters.rendererResumptionsWithoutIntervention.fetch_add(
 					1, std::memory_order_relaxed);
-
-#if !AD_NOMESSAGE_FREEZES
-			const auto stats = CaptureCounters(a_runtime);
-			REX::INFO(
-				"Escape Freeze: observed renderer resumption {} ms after a sampled stall candidate "
-				"({}); frame advanced from {} to {}. sampled candidates={}, forced orphan releases={}, "
-				"resumptions without intervention={}, resumptions after forced release={}, "
-				"unresolved candidates={}."sv,
-				Milliseconds(a_runtime, EscapeFreeze::Elapsed(a_now, a_state.candidateQpc)),
-				a_observation.afterForcedRelease ?
-					"after forced orphan release"sv :
-					"without intervention"sv,
-				a_state.candidateFrame,
-				a_frameSequence,
-				stats.sampledStallCandidates,
-				stats.forcedOrphanReleases,
-				stats.rendererResumptionsWithoutIntervention,
-				stats.rendererResumptionsAfterForcedRelease,
-				stats.unresolvedCandidates);
-#endif
 		}
 
 		static void CheckOrphanedOwner(
@@ -323,43 +325,43 @@ namespace Addictol
 			{
 				a_runtime.counters.forcedOrphanReleases.fetch_add(1, std::memory_order_relaxed);
 				a_state.forcedRelease = true;
-#if !AD_NOMESSAGE_FREEZES
-				const auto stats = CaptureCounters(a_runtime);
-				REX::WARN(
-					"Escape Freeze: force-released orphaned condition lock owned by terminated "
-					"thread {} at recursion count {}; this intervention is not evidence that "
-					"the renderer resumed. "
-					"forced orphan releases={}, unresolved candidates={}."sv,
-					static_cast<uint32_t>(a_snapshot.owner),
-					a_snapshot.count,
-					stats.forcedOrphanReleases,
-					stats.unresolvedCandidates);
-#endif
+				if (!a_runtime.counters.forcedOrphanReleaseReported.exchange(
+						true, std::memory_order_relaxed))
+				{
+					const auto stats = CaptureCounters(a_runtime);
+					REX::WARN(
+						"Escape Freeze: force-released orphaned condition lock owned by terminated "
+						"thread {} at recursion count {}; this intervention is not evidence that "
+						"the renderer resumed. "
+						"forced orphan releases={}, unresolved candidates={}."sv,
+						static_cast<uint32_t>(a_snapshot.owner),
+						a_snapshot.count,
+						stats.forcedOrphanReleases,
+						stats.unresolvedCandidates);
+				}
 				break;
 			}
 			case OrphanReleaseResult::kOwnerAlive:
-				if (!a_state.ownerResultReported)
+				a_runtime.counters.ownerAliveObservations.fetch_add(1, std::memory_order_relaxed);
+				if (!a_runtime.counters.ownerAliveReported.exchange(
+						true, std::memory_order_relaxed))
 				{
-#if !AD_NOMESSAGE_FREEZES
 					REX::WARN(
 						"Escape Freeze: sampled candidate owner thread {} is still alive; "
 						"no forced release was attempted."sv,
 						static_cast<uint32_t>(a_snapshot.owner));
-#endif
-					a_state.ownerResultReported = true;
 				}
 				break;
 			case OrphanReleaseResult::kOwnerUnknown:
-				if (!a_state.ownerResultReported)
+				a_runtime.counters.ownerUnknownObservations.fetch_add(1, std::memory_order_relaxed);
+				if (!a_runtime.counters.ownerUnknownReported.exchange(
+						true, std::memory_order_relaxed))
 				{
-#if !AD_NOMESSAGE_FREEZES
 					REX::WARN(
 						"Escape Freeze: could not prove sampled candidate owner thread {} terminated "
 						"(error {}); no forced release was attempted."sv,
 						static_cast<uint32_t>(a_snapshot.owner),
 						attempt.error);
-#endif
-					a_state.ownerResultReported = true;
 				}
 				break;
 			case OrphanReleaseResult::kStateChanged:
@@ -385,85 +387,60 @@ namespace Addictol
 				static_cast<int32_t>(lock.count),
 				a_runtime.thresholdTicks);
 
-			ReportRendererResumption(a_runtime, a_state, observation, now, frameSequence);
+			ReportRendererResumption(a_runtime, observation);
 
 			if (observation.corruptCountStarted)
 			{
-#if !AD_NOMESSAGE_FREEZES
 				const auto corruptObservation =
 					a_runtime.counters.corruptCountObservations.fetch_add(
 						1, std::memory_order_relaxed) + 1;
-				REX::ERROR(
-					"Escape Freeze: condition lock has corrupt negative recursion count {} "
-					"with owner {}; no write was attempted. corrupt count observation {}."sv,
-					lock.count,
-					static_cast<uint32_t>(lock.owner),
-					corruptObservation);
-#else
-				a_runtime.counters.corruptCountObservations.fetch_add(1, std::memory_order_relaxed);
-#endif
+				if (!a_runtime.counters.corruptCountReported.exchange(
+						true, std::memory_order_relaxed))
+				{
+					REX::ERROR(
+						"Escape Freeze: condition lock has corrupt negative recursion count {} "
+						"with owner {}; no write was attempted. corrupt count observation {}."sv,
+						lock.count,
+						static_cast<uint32_t>(lock.owner),
+						corruptObservation);
+				}
 			}
-
-			if (lock.count <= 0)
-				return;
 
 			if (observation.healthySampleSequence)
-			{
 				a_runtime.counters.healthySampleSequences.fetch_add(1, std::memory_order_relaxed);
-
-#if !AD_NOMESSAGE_FREEZES
-				const auto healthy = a_runtime.counters.healthySampleSequences.load(
-					std::memory_order_relaxed);
-				REX::INFO(
-					"Escape Freeze: condition lock was observed nonzero with owner {} at every poll "
-					"for {} ms while renderer frame advanced from {} to {}; "
-					"healthy sampled sequence {}."sv,
-					static_cast<uint32_t>(lock.owner),
-					Milliseconds(a_runtime, observation.sampleSequenceTicks),
-					a_state.sampleSequenceStartFrame,
-					frameSequence,
-					healthy);
-#endif
-			}
 
 			if (observation.stallCandidateStarted)
 			{
 				a_runtime.counters.sampledStallCandidates.fetch_add(1, std::memory_order_relaxed);
 
-#if !AD_NOMESSAGE_FREEZES
-				const auto stats = CaptureCounters(a_runtime);
-				REX::WARN(
-					"Escape Freeze: sampled stall candidate; condition lock was observed nonzero "
-					"with owner {} at every poll for {} ms (latest recursion count {}), while "
-					"renderer frame {} was unchanged across polls for {} ms. "
-					"sampled candidates={}, unresolved candidates={}."sv,
-					static_cast<uint32_t>(lock.owner),
-					Milliseconds(a_runtime, observation.sampleSequenceTicks),
-					lock.count,
-					frameSequence,
-					Milliseconds(a_runtime, observation.frameUnchangedTicks),
-					stats.sampledStallCandidates,
-					stats.unresolvedCandidates);
-#endif
+				if (!a_runtime.counters.stallCandidateReported.exchange(
+						true, std::memory_order_relaxed))
+				{
+					const auto stats = CaptureCounters(a_runtime);
+					REX::WARN(
+						"Escape Freeze: sampled stall candidate; condition lock was observed nonzero "
+						"with owner {} at every poll for {} ms (latest recursion count {}), while "
+						"renderer frame {} was unchanged across polls for {} ms. "
+						"sampled candidates={}, unresolved candidates={}."sv,
+						static_cast<uint32_t>(lock.owner),
+						Milliseconds(a_runtime, observation.sampleSequenceTicks),
+						lock.count,
+						frameSequence,
+						Milliseconds(a_runtime, observation.frameUnchangedTicks),
+						stats.sampledStallCandidates,
+						stats.unresolvedCandidates);
+				}
 			}
 
-			if (observation.shouldCheckOwner)
+			EscapeFreeze::DispatchOwnerCheck(observation, [&]() noexcept {
 				CheckOrphanedOwner(a_runtime, a_state, now, lock);
+			});
 		}
 
 		unsigned __stdcall WorkerMain(void* a_context) noexcept
 		{
 			auto& runtime = *static_cast<RuntimeState*>(a_context);
 			EscapeFreeze::WatchState state;
-
-#if !AD_NOMESSAGE_FREEZES
-			REX::INFO(
-				"Escape Freeze: watcher started with {} ms sampling interval and "
-				"{}-interval ({} ms) sampling threshold."sv,
-				runtime.sleepMs,
-				runtime.maxLockPolls,
-				Milliseconds(runtime, runtime.thresholdTicks));
-#endif
 
 			while (!runtime.stopping.load(std::memory_order_acquire))
 			{
@@ -476,7 +453,7 @@ namespace Addictol
 			return 0;
 		}
 
-		static void StopFailedRuntime(RuntimeState* a_runtime) noexcept
+		static void StopRuntime(RuntimeState* a_runtime) noexcept
 		{
 			if (!a_runtime)
 				return;
@@ -484,14 +461,20 @@ namespace Addictol
 			auto expected = a_runtime;
 			g_runtime.compare_exchange_strong(
 				expected, nullptr, std::memory_order_acq_rel, std::memory_order_acquire);
-			if (a_runtime->worker)
-			{
-				a_runtime->stopping.store(true, std::memory_order_release);
-				SetEvent(a_runtime->wakeEvent);
-				WaitForSingleObject(a_runtime->worker, INFINITE);
-				CloseHandle(a_runtime->worker);
-				a_runtime->worker = nullptr;
-			}
+			EscapeFreeze::FinishWorker(
+				[&]() noexcept {
+					if (a_runtime->worker)
+					{
+						a_runtime->stopping.store(true, std::memory_order_release);
+						SetEvent(a_runtime->wakeEvent);
+						WaitForSingleObject(a_runtime->worker, INFINITE);
+						CloseHandle(a_runtime->worker);
+						a_runtime->worker = nullptr;
+					}
+				},
+				[&]() noexcept {
+					LogShutdownSummary(*a_runtime);
+				});
 			if (a_runtime->wakeEvent)
 			{
 				CloseHandle(a_runtime->wakeEvent);
@@ -500,17 +483,15 @@ namespace Addictol
 
 			delete a_runtime;
 		}
+
+		static void DestroyRuntime() noexcept
+		{
+			StopRuntime(g_runtime.exchange(nullptr, std::memory_order_acq_rel));
+		}
 	}
 
 	ModuleEscapeFreeze::ModuleEscapeFreeze() :
-		Module("Escape Freeze", &bFixesEscapeFreeze
-#if !AD_NOMESSAGE_FREEZES
-			, {
-			F4SE::MessagingInterface::kPreSaveGame,
-			F4SE::MessagingInterface::kGameDataReady 
-			}
-#endif
-		)
+		Module("Escape Freeze", &bFixesEscapeFreeze)
 	{}
 
 	bool ModuleEscapeFreeze::DoQuery() const noexcept
@@ -636,36 +617,28 @@ namespace Addictol
 			return true;
 		}
 
+		if (std::atexit(DestroyRuntime) != 0)
+		{
+			REX::ERROR("Escape Freeze: shutdown registration failed."sv);
+			StopRuntime(runtime);
+			return false;
+		}
+
 		const auto workerValue = _beginthreadex(nullptr, 0, WorkerMain, runtime, 0, nullptr);
 		runtime->worker = reinterpret_cast<HANDLE>(workerValue);
 		if (!runtime->worker)
 		{
 			REX::ERROR("Escape Freeze: worker thread creation failed (error {})."sv, errno);
-			StopFailedRuntime(runtime);
+			StopRuntime(runtime);
 			return false;
 		}
 
-#if !AD_NOMESSAGE_FREEZES
-		LogSummary(*runtime, "installed"sv);
-#endif
 		return true;
 	}
 
-	bool ModuleEscapeFreeze::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	bool ModuleEscapeFreeze::DoListener(
+		[[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-#if !AD_NOMESSAGE_FREEZES
-		using namespace escapeFreezeDetail;
-
-		auto runtime = g_runtime.load(std::memory_order_acquire);
-		if (!runtime || !a_msg)
-			return true;
-
-		const auto reason = a_msg->type == F4SE::MessagingInterface::kPreSaveGame ?
-			"pre-save"sv :
-			"game-data-ready"sv;
-		LogSummary(*runtime, reason);
-#endif
-
 		return true;
 	}
 

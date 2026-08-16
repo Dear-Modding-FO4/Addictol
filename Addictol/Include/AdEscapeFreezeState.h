@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <utility>
 
 namespace Addictol::EscapeFreeze
 {
@@ -11,7 +12,6 @@ namespace Addictol::EscapeFreeze
 		bool corruptReported{};
 		bool sampledStallActive{};
 		bool forcedRelease{};
-		bool ownerResultReported{};
 		bool frameSampled{};
 		bool frameHeartbeatReady{};
 		int32_t lastOwner{};
@@ -35,6 +35,26 @@ namespace Addictol::EscapeFreeze
 		uint64_t sampleSequenceTicks{};
 		uint64_t frameUnchangedTicks{};
 	};
+
+	template <class CheckOwner>
+	constexpr void DispatchOwnerCheck(
+		const Observation& a_observation,
+		CheckOwner&& a_checkOwner) noexcept(noexcept(std::forward<CheckOwner>(a_checkOwner)()))
+	{
+		if (a_observation.shouldCheckOwner)
+			std::forward<CheckOwner>(a_checkOwner)();
+	}
+
+	template <class JoinWorker, class PublishSummary>
+	constexpr void FinishWorker(
+		JoinWorker&& a_joinWorker,
+		PublishSummary&& a_publishSummary) noexcept(
+			noexcept(std::forward<JoinWorker>(a_joinWorker)()) &&
+			noexcept(std::forward<PublishSummary>(a_publishSummary)()))
+	{
+		std::forward<JoinWorker>(a_joinWorker)();
+		std::forward<PublishSummary>(a_publishSummary)();
+	}
 
 	[[nodiscard]] constexpr uint64_t Elapsed(
 		uint64_t a_now,
@@ -83,7 +103,6 @@ namespace Addictol::EscapeFreeze
 			result.afterForcedRelease = a_state.forcedRelease;
 			a_state.sampledStallActive = false;
 			a_state.forcedRelease = false;
-			a_state.ownerResultReported = false;
 		}
 
 		if (a_count < 0)
@@ -110,7 +129,6 @@ namespace Addictol::EscapeFreeze
 			a_state.sampleSequenceStartQpc = a_now;
 			a_state.sampleSequenceStartFrame = a_frame;
 			a_state.sampleSequenceClassified = a_state.sampledStallActive;
-			a_state.ownerResultReported = false;
 			a_state.lastOwnerCheckQpc = 0;
 		}
 
@@ -136,7 +154,6 @@ namespace Addictol::EscapeFreeze
 		{
 			a_state.sampledStallActive = true;
 			a_state.forcedRelease = false;
-			a_state.ownerResultReported = false;
 			a_state.candidateQpc = a_now;
 			a_state.candidateFrame = a_frame;
 			a_state.lastOwnerCheckQpc = 0;
