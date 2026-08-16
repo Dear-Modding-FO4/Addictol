@@ -301,6 +301,7 @@ target("vmm-tests", function()
 
     -- add source files
     add_files("Tests/**.cpp")
+    add_files("Addictol/Source/AdLogControl.cpp")
 
     -- add include directories
     add_includedirs("Tests", "Addictol/Include", "Depends", "Depends/spdlog/include", "Depends/vmm/source")

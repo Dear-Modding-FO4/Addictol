@@ -43,6 +43,9 @@
     <ClCompile Include="..\Addictol\Source\AdConfigValidation.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdLogControl.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -407,6 +410,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdConfigValidation.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdLogControl.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h">

@@ -50,7 +50,7 @@ namespace Addictol
 			"bRobCoPatcherCache"sv
 		}},
 		{ "Additional"sv, {
-			"sAllocator"sv, "sZlibBackend"sv,
+			"sAllocator"sv, "sZlibBackend"sv, "sLogLevel"sv, "sLogFlushLevel"sv,
 			"bDbgFacegenOutput"sv, "bUseNewRedistributable"sv,
 			"uScaleformPageSize"sv, "uScaleformHeapSize"sv,
 			"nSleepTimer"sv, "nMaxLockCount"sv,

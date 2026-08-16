@@ -60,6 +60,7 @@ int main(int argc, char** argv)
 	run_ba2_profiler_checks(runner);
 	run_imgui_platform_checks(runner);
 	run_escape_freeze_checks(runner);
+	run_log_control_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
 	return runner.failures() == 0 ? 0 : 1;

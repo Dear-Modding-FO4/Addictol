@@ -296,6 +296,12 @@ sAllocator = "voltek"
 # Selects the zlib decompression backend: libdeflate or stock (needs bLibDeflate). One-shot texture decompression requires libdeflate.
 sZlibBackend = "libdeflate"
 
+# Sets the runtime log level: trace, debug, info, warn, error, critical, or off.
+sLogLevel = "info"
+
+# Flushes the log after messages at this level or higher: trace, debug, info, warn, error, critical, or off.
+sLogFlushLevel = "info"
+
 # The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
 uScaleformPageSize = 64
 
