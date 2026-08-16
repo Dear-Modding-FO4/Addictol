@@ -65,22 +65,7 @@ namespace Addictol
 			PanelEntry{ ProfilerMenuTab::kTextureDecode, &DrawProfilerMenuTextureDecode }
 		};
 
-		[[nodiscard]] uint64_t ReadQpc() noexcept
-		{
-			LARGE_INTEGER counter{};
-			QueryPerformanceCounter(&counter);
-			return static_cast<uint64_t>(counter.QuadPart);
-		}
-
-		[[nodiscard]] uint64_t ReadQpcFrequency() noexcept
-		{
-			LARGE_INTEGER frequency{};
-			if (!QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0)
-				return 0;
-			return static_cast<uint64_t>(frequency.QuadPart);
-		}
-
-		void ConfigureIniPath(ImGuiIO& a_io) noexcept
+		static void ConfigureIniPath(ImGuiIO& a_io) noexcept
 		{
 			std::error_code ec;
 			const std::filesystem::path directory{
@@ -100,7 +85,7 @@ namespace Addictol
 			a_io.IniSavingRate = 1.0f;
 		}
 
-		void SetupSink(void* a_window) noexcept
+		static void SetupSink(void* a_window) noexcept
 		{
 			ProfilerAllocator::SamplingScope sampling;
 			auto& io = ImGui::GetIO();
@@ -113,7 +98,7 @@ namespace Addictol
 			REX::INFO("Profiler menu: ImGui configured at {:.2f}x DPI scale"sv, s_dpiScale);
 		}
 
-		[[nodiscard]] ProfilerMenuModel* EnsureModel() noexcept
+		[[nodiscard]] static ProfilerMenuModel* EnsureModel() noexcept
 		{
 			if (s_model)
 				return s_model;
@@ -127,16 +112,16 @@ namespace Addictol
 			}
 
 			s_model->Reserve();
-			s_qpcFrequency = ReadQpcFrequency();
+			s_qpcFrequency = GetQpcFrequency();
 			return s_model;
 		}
 
-		void ClearTransientState(ProfilerMenuModel& a_model) noexcept
+		static void ClearTransientState(ProfilerMenuModel& a_model) noexcept
 		{
 			a_model.MutableModules().filter = {};
 		}
 
-		void SaveWindowGeometry() noexcept
+		static void SaveWindowGeometry() noexcept
 		{
 			if (!ImGui::GetCurrentContext() || s_iniPath.empty())
 				return;
@@ -145,7 +130,7 @@ namespace Addictol
 			ImGui::SaveIniSettingsToDisk(s_iniPath.c_str());
 		}
 
-		void DrawWindow(ProfilerMenuModel& a_model) noexcept
+		static void DrawWindow(ProfilerMenuModel& a_model) noexcept
 		{
 			ProfilerMenuDrawContext context;
 			context.nowQpc = ReadQpc();
@@ -209,7 +194,7 @@ namespace Addictol
 			}
 		}
 
-		void DrawSink() noexcept
+		static void DrawSink() noexcept
 		{
 			// A closed menu costs one atomic load: no timing, no snapshot, no allocation.
 			if (!s_open.load(std::memory_order_acquire))
@@ -238,7 +223,7 @@ namespace Addictol
 		}
 
 		// Runs on the window thread; the platform serializes context and input transitions.
-		void ToggleSink(uint32_t a_virtualKey) noexcept
+		static void ToggleSink(uint32_t a_virtualKey) noexcept
 		{
 			if (a_virtualKey != s_toggleKey.load(std::memory_order_relaxed))
 				return;
