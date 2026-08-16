@@ -81,6 +81,7 @@ namespace Addictol
 			std::array<RowArena, kBankCount> arenas{};
 			std::array<Shard, kShardCount> shards{};
 			std::mutex publishLock;
+			BA2PublishedStore published;
 			RuntimeCsvFile calls;
 			RuntimeCsvFile summary;
 			RuntimeSessionContext& session;
@@ -708,7 +709,8 @@ namespace Addictol
 
 	bool ProfilerBA2::IsRecording() const noexcept
 	{
-		return ba2ProfilerDetail::g_state.load(std::memory_order_acquire) != nullptr;
+		auto* state = ba2ProfilerDetail::g_state.load(std::memory_order_acquire);
+		return state && state->accepting.load(std::memory_order_acquire);
 	}
 
 	void ProfilerBA2::Record(const BA2Profile::CallObservation& a_observation) noexcept
@@ -815,6 +817,7 @@ namespace Addictol
 		report.leasedShards = leased < kLeasedShardCount ? leased : kLeasedShardCount;
 		report.overflowedThreads = report.totals.overflowedThreads;
 		report.spillCalls = aggregates[kSpillShardIndex].callsSeen;
+		const auto shouldPublish = ShouldPublishBA2Interval(report.totals.callsSeen, a_closeAdmission);
 
 		if (state->exportCSV)
 		{
@@ -869,7 +872,7 @@ namespace Addictol
 
 			if (!callsOutputOk)
 				report.reconciliation.contractOk = false;
-			if (report.totals.callsSeen || a_closeAdmission)
+			if (shouldPublish)
 			{
 				std::array<RowEvidence, kShardCount> noEvidence{};
 				WriteSummary(
@@ -882,8 +885,21 @@ namespace Addictol
 			}
 		}
 
-		if (report.totals.callsSeen || a_closeAdmission)
+		if (shouldPublish)
 			LogInterval(*state, report);
+
+		if (shouldPublish)
+		{
+			// One small fixed copy per publish; readers never see shard state.
+			const auto snapshot = MakeBA2PublishedSnapshot(
+				report.context,
+				report.totals,
+				report.reconciliation,
+				report.leasedShards,
+				report.overflowedThreads,
+				report.spillCalls);
+			state->published.Retain(snapshot);
+		}
 
 		for (size_t index = 0; index < kShardCount; ++index)
 			ResetBank(state->shards[index], rows[index].bank);
@@ -903,4 +919,14 @@ namespace Addictol
 		Publish(a_reason, true);
 	}
 
+	bool ProfilerBA2::CopyLatestPublished(BA2PublishedSnapshot& a_out) const noexcept
+	{
+		using namespace ba2ProfilerDetail;
+
+		auto* state = g_state.load(std::memory_order_acquire);
+		if (!state)
+			return false;
+
+		return state->published.CopyLatest(a_out);
+	}
 }

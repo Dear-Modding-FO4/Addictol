@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <mutex>
 #include <ostream>
 #include <span>
 #include <string_view>
@@ -1199,4 +1200,102 @@ namespace Addictol::BA2Profile
 			<< flag(a_row.reconciliation.rowEvidenceOk) << ","sv
 			<< flag(a_row.reconciliation.contractOk) << "\n"sv;
 	}
+}
+
+namespace Addictol
+{
+	[[nodiscard]] constexpr bool ShouldPublishBA2Interval(
+		uint64_t a_callsSeen,
+		bool a_admissionClosed) noexcept
+	{
+		return a_callsSeen != 0 || a_admissionClosed;
+	}
+
+	// The publish point retains this fixed-size copy so a reader never touches live shards or arenas.
+	struct BA2PublishedSnapshot
+	{
+		static constexpr size_t kReasonCapacity{ 32 };
+
+		bool valid{ false };
+		std::array<char, kReasonCapacity> reason{};
+		uint64_t publishSequence{ 0 };
+		uint64_t saveLoadEpoch{ 0 };
+		uint64_t qpcFrequency{ 0 };
+		uint64_t intervalStartMonotonicUs{ 0 };
+		uint64_t intervalEndMonotonicUs{ 0 };
+		uint64_t leasedShards{ 0 };
+		uint64_t overflowedThreads{ 0 };
+		uint64_t spillCalls{ 0 };
+		bool shutdownPublishEnabled{ false };
+		bool admissionClosed{ false };
+		BA2Profile::ShardAggregate totals{};
+		BA2Profile::Reconciliation reconciliation{};
+
+		[[nodiscard]] constexpr std::string_view Reason() const noexcept
+		{
+			return std::string_view{ reason.data() };
+		}
+
+		[[nodiscard]] constexpr uint64_t IntervalMicroseconds() const noexcept
+		{
+			return intervalEndMonotonicUs > intervalStartMonotonicUs ?
+				intervalEndMonotonicUs - intervalStartMonotonicUs :
+				0;
+		}
+	};
+
+	// The reason is copied into fixed storage because the caller's view does not outlive the publish.
+	[[nodiscard]] constexpr BA2PublishedSnapshot MakeBA2PublishedSnapshot(
+		const BA2Profile::SummaryContext& a_context,
+		const BA2Profile::ShardAggregate& a_totals,
+		const BA2Profile::Reconciliation& a_reconciliation,
+		uint64_t a_leasedShards,
+		uint64_t a_overflowedThreads,
+		uint64_t a_spillCalls) noexcept
+	{
+		BA2PublishedSnapshot snapshot;
+		snapshot.valid = true;
+		const auto length = std::min(
+			a_context.publishReason.size(),
+			BA2PublishedSnapshot::kReasonCapacity - 1);
+		for (size_t index = 0; index < length; ++index)
+			snapshot.reason[index] = a_context.publishReason[index];
+		snapshot.publishSequence = a_context.publishSequence;
+		snapshot.saveLoadEpoch = a_context.saveLoadEpoch;
+		snapshot.qpcFrequency = a_context.qpcFrequency;
+		snapshot.intervalStartMonotonicUs = a_context.intervalStartMonotonicUs;
+		snapshot.intervalEndMonotonicUs = a_context.intervalEndMonotonicUs;
+		snapshot.shutdownPublishEnabled = a_context.shutdownPublishEnabled;
+		snapshot.admissionClosed = a_context.admissionClosed;
+		snapshot.leasedShards = a_leasedShards;
+		snapshot.overflowedThreads = a_overflowedThreads;
+		snapshot.spillCalls = a_spillCalls;
+		snapshot.totals = a_totals;
+		snapshot.reconciliation = a_reconciliation;
+		return snapshot;
+	}
+
+	class BA2PublishedStore
+	{
+	public:
+		void Retain(const BA2PublishedSnapshot& a_snapshot) noexcept
+		{
+			std::lock_guard lock(m_lock);
+			m_published = a_snapshot;
+		}
+
+		[[nodiscard]] bool CopyLatest(BA2PublishedSnapshot& a_out) const noexcept
+		{
+			std::lock_guard lock(m_lock);
+			if (!m_published.valid)
+				return false;
+
+			a_out = m_published;
+			return true;
+		}
+
+	private:
+		mutable std::mutex m_lock;
+		BA2PublishedSnapshot m_published{};
+	};
 }

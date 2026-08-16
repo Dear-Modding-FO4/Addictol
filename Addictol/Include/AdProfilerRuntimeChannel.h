@@ -15,6 +15,7 @@
 #include <string_view>
 #include <system_error>
 #include <utility>
+#include <vector>
 
 namespace Addictol
 {
@@ -219,6 +220,49 @@ namespace Addictol
 				AppendCSV(*exportEntry, metadata);
 		}
 
+		// Readers copy retained entries; nothing is drained and no CSV sequence advances.
+		[[nodiscard]] bool CopyLatest(T& a_out) const noexcept
+		{
+			std::lock_guard lock(m_entriesMutex);
+			if (m_entries.empty())
+				return false;
+
+			a_out = m_entries.back();
+			return true;
+		}
+
+		void CopyEntries(std::vector<T>& a_out) const noexcept
+		{
+			std::lock_guard lock(m_entriesMutex);
+			a_out.assign(m_entries.begin(), m_entries.end());
+		}
+
+		template <class Summary, class Projection>
+		[[nodiscard]] bool CopyLatestAndProject(
+			T& a_latest,
+			std::vector<Summary>& a_summaries,
+			const Projection& a_projection) const noexcept
+		{
+			std::lock_guard lock(m_entriesMutex);
+			if (m_entries.empty())
+			{
+				a_summaries.clear();
+				return false;
+			}
+
+			a_latest = m_entries.back();
+			a_summaries.resize(m_entries.size());
+			for (size_t index = 0; index < m_entries.size(); ++index)
+				a_summaries[index] = a_projection(m_entries[index]);
+			return true;
+		}
+
+		[[nodiscard]] size_t RetainedCount() const noexcept
+		{
+			std::lock_guard lock(m_entriesMutex);
+			return m_entries.size();
+		}
+
 	private:
 		void AppendCSV(const T& a_entry, RuntimeRowMetadata a_metadata) noexcept
 		{
@@ -237,7 +281,7 @@ namespace Addictol
 		RuntimeCsvFile m_file;
 		EntryWriter m_entryWriter;
 		std::deque<T> m_entries;
-		std::mutex m_entriesMutex;
+		mutable std::mutex m_entriesMutex;
 		std::mutex m_streamMutex;
 		uint64_t m_nextSequence{ 0 };
 	};

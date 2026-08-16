@@ -22,6 +22,17 @@
     <ClCompile Include="..\Addictol\Source\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPlatformImgui.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdImguiTheme.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProfilerMenu.cpp" />
+    <ClCompile Include="..\Addictol\Source\AdProfilerMenuModel.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuWidgets.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuOverview.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuFrameHitch.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuDecompression.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuAllocator.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuMemory.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuModules.cpp" />
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuTextureDecode.cpp" />
     <ClCompile Include="..\Addictol\Source\AdPlugin.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerCore.cpp" />
     <ClCompile Include="..\Addictol\Source\AdProfilerMemory.cpp" />
@@ -48,6 +59,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePlatformImgui.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfilerMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAIProcess3DUpdateFlag.cpp" />
@@ -139,6 +151,10 @@
     <ClInclude Include="..\Addictol\Include\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\AdPlatformImgui.h" />
     <ClInclude Include="..\Addictol\Include\AdImguiPlatformTargets.h" />
+    <ClInclude Include="..\Addictol\Include\AdImguiTheme.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerMenu.h" />
+    <ClInclude Include="..\Addictol\Include\AdProfilerMenuModel.h" />
+    <ClInclude Include="..\Addictol\Include\ProfilerMenu\AdProfilerMenuPanels.h" />
     <ClInclude Include="..\Addictol\Include\AdZlibInflate.h" />
     <ClInclude Include="..\Addictol\Include\AdZlibServeContext.h" />
     <ClInclude Include="..\Addictol\Include\AdTextureStream.h" />
@@ -175,6 +191,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePlatformImgui.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfilerMenu.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAIProcess3DUpdateFlag.h" />

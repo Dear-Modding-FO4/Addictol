@@ -89,6 +89,7 @@
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
 #include <Modules/AdModulePlatformImgui.h>
+#include <Modules/AdModuleProfilerMenu.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -180,6 +181,7 @@ static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJ
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 static auto sModulePlatformImgui					= std::make_shared<Addictol::ModulePlatformImgui>();
+static auto sModuleProfilerMenu						= std::make_shared<Addictol::ModuleProfilerMenu>();
 
 void AdRegisterPreloadModules()
 {
@@ -310,4 +312,7 @@ void AdRegisterModules()
 	// Profiler - registered at load stage, listener at GameDataReady for report generation
 	modules.Register(sModuleProfiler);
 	modules.Register(sModuleProfiler,						kGameDataReady);
+
+	// Profiler menu - registers its platform sinks during the load stage, before the hooks go in
+	modules.Register(sModuleProfilerMenu);
 }

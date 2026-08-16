@@ -42,6 +42,7 @@ namespace Addictol
 
 		static SinkTable<PlatformImguiDrawSink> s_drawSinks{};
 		static SinkTable<PlatformImguiToggleSink> s_toggleSinks{};
+		static SinkTable<PlatformImguiSetupSink> s_setupSinks{};
 		static std::atomic<InstallState> s_installState{ InstallState::kNotAttempted };
 		static std::atomic<bool> s_drawingEnabled{ false };
 		static std::atomic<Backend> s_backend{ Backend::kUninitialized };
@@ -175,11 +176,15 @@ namespace Addictol
 
 			auto& io = ImGui::GetIO();
 			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-			// No window geometry is persisted until a feature owns a path under the plugin directory.
+			// Setup sinks own any persisted geometry path, so nothing is written until one asks for it.
 			io.IniFilename = nullptr;
 			// Frames only run while drawing is enabled, so the drawn cursor follows that state.
 			io.MouseDrawCursor = true;
 			// Process DPI awareness is deliberately left to the DPI Scaling module, which owns that user option.
+
+			// Style, fonts, and ini path must be settled before the backend uploads the font atlas.
+			for (size_t index = 0, count = s_setupSinks.Size(); index < count; ++index)
+				s_setupSinks.At(index)(s_window);
 
 			// Upscalers can leave a proxy in RendererData::context, so ask the device for the real one.
 			ID3D11DeviceContext* immediate{ nullptr };
@@ -209,6 +214,17 @@ namespace Addictol
 				ImGui::DestroyContext(context);
 				ReleaseDevice();
 				REX::ERROR("Platform Imgui: ImGui_ImplDX11_Init() failed; drawing stays disabled"sv);
+				return false;
+			}
+
+			if (!ImGui_ImplDX11_CreateDeviceObjects())
+			{
+				ImGui_ImplDX11_Shutdown();
+				ImGui_ImplWin32_Shutdown();
+				ReleaseImmediateContext();
+				ImGui::DestroyContext(context);
+				ReleaseDevice();
+				REX::ERROR("Platform Imgui: D3D11 device-object creation failed; drawing stays disabled"sv);
 				return false;
 			}
 
@@ -374,6 +390,13 @@ namespace Addictol
 			return true;
 		}
 
+		static void CloseSinkRegistration() noexcept
+		{
+			s_drawSinks.Close();
+			s_toggleSinks.Close();
+			s_setupSinks.Close();
+		}
+
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -398,6 +421,16 @@ namespace Addictol
 		return result == Registration::kAccepted;
 	}
 
+	bool PlatformImgui::RegisterSetupSink(std::string_view a_name, PlatformImguiSetupSink a_sink) noexcept
+	{
+		using namespace platformImguiDetail;
+
+		const auto result = s_setupSinks.Add(a_name, a_sink);
+		if (result != Registration::kAccepted)
+			REX::WARN("Platform Imgui: setup sink \"{}\" rejected, {}."sv, a_name, Describe(result));
+		return result == Registration::kAccepted;
+	}
+
 	bool PlatformImgui::InstallHooks() noexcept
 	{
 		using namespace platformImguiDetail;
@@ -409,8 +442,7 @@ namespace Addictol
 		// Nobody draws, so the game keeps its untouched code and window procedure.
 		if (s_drawSinks.Empty() && s_toggleSinks.Empty())
 		{
-			s_drawSinks.Close();
-			s_toggleSinks.Close();
+			CloseSinkRegistration();
 			return true;
 		}
 
@@ -419,15 +451,13 @@ namespace Addictol
 		const auto target = id.address();
 		if (!ValidateUIEndFrame(target, id.id(), runtime))
 		{
-			s_drawSinks.Close();
-			s_toggleSinks.Close();
+			CloseSinkRegistration();
 			s_installState.store(InstallState::kRejected, std::memory_order_release);
 			return false;
 		}
 
 		// Everything past this point may write, so late registration must fail visibly.
-		s_drawSinks.Close();
-		s_toggleSinks.Close();
+		CloseSinkRegistration();
 		s_installState.store(InstallState::kAttempted, std::memory_order_release);
 
 		const auto original = RELEX::DetourClassJump(target, &HKUIEndFrame);
@@ -441,8 +471,8 @@ namespace Addictol
 
 		s_uiEndFrameOriginal.store(reinterpret_cast<TUIEndFrame>(original), std::memory_order_release);
 		s_installState.store(InstallState::kInstalled, std::memory_order_release);
-		REX::INFO("Platform Imgui: {} UIEndFrame id {} detoured at {:X} with {} draw and {} toggle sinks"sv,
-			Describe(runtime), id.id(), target, s_drawSinks.Size(), s_toggleSinks.Size());
+		REX::INFO("Platform Imgui: {} UIEndFrame id {} detoured at {:X} with {} draw, {} toggle, and {} setup sinks"sv,
+			Describe(runtime), id.id(), target, s_drawSinks.Size(), s_toggleSinks.Size(), s_setupSinks.Size());
 		return true;
 	}
 

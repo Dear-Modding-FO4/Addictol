@@ -394,3 +394,12 @@ bZlibTracking = true
 
 # Export profiler data to CSV alongside the log report. Requires bProfiler = true.
 bCSVExport = false
+
+# In-game profiler viewer drawn over the game. It never enables profiling by itself. Requires bProfiler = true.
+bProfilerMenu = false
+
+# Key that opens and closes the profiler menu: F1-F12, Home, End, Insert, or Delete (needs bProfilerMenu).
+sProfilerMenuToggleKey = "F11"
+
+# How often the open panel refreshes its copy of profiler data, in milliseconds. Clamped to 100-2000 (needs bProfilerMenu).
+uProfilerMenuRefreshMs = 250

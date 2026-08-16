@@ -80,6 +80,8 @@ jobs:
           Copy-Item -Path '.\.Build\Scripts\*' -Destination "$name\scripts" -Recurse -Force
         }
 
+        Copy-Item -Path '.\.Build\F4SE\Plugins\Addictol' -Destination "$name\f4se\plugins" -Recurse -Force
+
         "BUNDLE_NAME=$name" >> $env:GITHUB_ENV
 
     - name: Upload PR / non-release artifact

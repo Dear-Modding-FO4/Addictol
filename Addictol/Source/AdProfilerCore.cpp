@@ -27,6 +27,13 @@ namespace Addictol
 		"PostThreadsProcess"
 	};
 
+	std::string_view FrameHitchPhaseName(size_t a_index) noexcept
+	{
+		return a_index < s_frameHitchPhaseNames.size() ?
+			std::string_view{ s_frameHitchPhaseNames[a_index] } :
+			"Unknown"sv;
+	}
+
 	[[nodiscard]] static std::string MakeProfilerSessionID() noexcept
 	{
 		const auto wallClock = static_cast<uint64_t>(
@@ -328,6 +335,45 @@ namespace Addictol
 	RuntimeSessionContext& ProfilerCore::GetRuntimeSession() noexcept
 	{
 		return GetRuntimeCollector().session;
+	}
+
+	bool ProfilerCore::CopyLatestFrameHitchInterval(FrameHitchProfileEntry& a_out) noexcept
+	{
+		return GetRuntimeCollector().frameHitch.CopyLatest(a_out);
+	}
+
+	bool ProfilerCore::CopyFrameHitchView(
+		FrameHitchProfileEntry& a_latest,
+		std::vector<FrameHitchIntervalSummary>& a_summaries) noexcept
+	{
+		return GetRuntimeCollector().frameHitch.CopyLatestAndProject(
+			a_latest,
+			a_summaries,
+			[](const FrameHitchProfileEntry& a_entry) noexcept {
+				return MakeFrameHitchIntervalSummary(a_entry);
+			});
+	}
+
+	void ProfilerCore::CopyMemorySnapshots(std::vector<MemorySnapshot>& a_out) noexcept
+	{
+		std::lock_guard lock(m_memoryMutex);
+		a_out.assign(m_memorySnapshots.begin(), m_memorySnapshots.end());
+	}
+
+	void ProfilerCore::CopyModuleEntries(std::vector<ModuleProfileEntry>& a_out) noexcept
+	{
+		std::lock_guard lock(m_moduleMutex);
+		a_out.assign(m_moduleEntries.begin(), m_moduleEntries.end());
+	}
+
+	std::string_view ProfilerCore::GetSessionID() noexcept
+	{
+		return GetRuntimeCollector().session.GetSessionID();
+	}
+
+	uint64_t ProfilerCore::GetSaveLoadEpoch() noexcept
+	{
+		return GetRuntimeCollector().session.Capture().saveLoadEpoch;
 	}
 
 	std::string ProfilerCore::GetOutputDir() const noexcept

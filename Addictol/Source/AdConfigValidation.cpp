@@ -11,6 +11,9 @@ namespace Addictol
 {
 	using namespace std::literals;
 
+	// Options declared here so the dependency warning can read them before any module installs.
+	static REX::TOML::Bool<> bProfilerMenuEnabled{ "Profiler"sv, "bProfilerMenu"sv, false };
+
 	// Known config keys by section, derived from REX::TOML declarations across all modules.
 	// Update this when adding or removing a config key.
 	static const std::unordered_map<std::string_view, std::unordered_set<std::string_view>> s_knownKeys = {
@@ -65,7 +68,8 @@ namespace Addictol
 			"bModuleProfiler"sv, "bStartupTimeline"sv, "bMemoryTracking"sv,
 			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv,
 			"bAnimSubGraphSkipPreload"sv, "bFrameHitchProfiler"sv,
-			"bAllocatorProfiler"sv, "uAllocatorProfilerDrainFrames"sv
+			"bAllocatorProfiler"sv, "uAllocatorProfilerDrainFrames"sv,
+			"bProfilerMenu"sv, "sProfilerMenuToggleKey"sv, "uProfilerMenuRefreshMs"sv
 		}}
 	};
 
@@ -93,6 +97,8 @@ namespace Addictol
 			addKey("bAllocatorProfiler"sv);
 		if (ProfilerCore::IsCSVExportEnabled())
 			addKey("bCSVExport"sv);
+		if (bProfilerMenuEnabled.GetValue())
+			addKey("bProfilerMenu"sv);
 
 		if (!keys.empty())
 			REX::WARN("Config: enabled profiler keys [{}] require bProfiler = true; they will be ignored."sv, keys);

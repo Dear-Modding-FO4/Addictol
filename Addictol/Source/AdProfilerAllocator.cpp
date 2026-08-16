@@ -62,7 +62,6 @@ namespace Addictol
 
 		inline constexpr std::size_t kSlotCount{ 512 };
 		inline constexpr std::size_t kRingCapacity{ 128 };
-		inline constexpr std::size_t kRuntimeEntryCapacity{ 64 };
 		inline constexpr std::array<std::uint64_t, kAllocatorSizeClassCount> kPoolPayloadCapacities{
 			sizeof(voltek::memory_manager::block8_t) - sizeof(voltek::memory_manager::block_base),
 			sizeof(voltek::memory_manager::block16_t) - sizeof(voltek::memory_manager::block_base),
@@ -160,55 +159,6 @@ namespace Addictol
 			std::uint64_t pool4096Le2048Allocations{};
 			std::size_t leasedSlots{};
 			std::size_t overflowedThreads{};
-		};
-
-		struct BucketEntry
-		{
-			std::uint64_t allocations{};
-			std::uint64_t frees{};
-			std::uint64_t allocationBytes{};
-			std::uint64_t freeBytes{};
-			std::int64_t liveBlocks{};
-			std::int64_t liveBytes{};
-			std::int64_t highWaterLiveBlocks{};
-			std::int64_t highWaterLiveBytes{};
-			std::uint64_t cumulativeAllocations{};
-			std::uint64_t cumulativeFrees{};
-			std::uint64_t cumulativeAllocationBytes{};
-			std::uint64_t cumulativeFreeBytes{};
-			std::uint64_t cumulativeSpillAllocations{};
-			std::uint32_t touchingThreads{};
-			std::uint32_t allocatingThreads{};
-			std::uint32_t freeingThreads{};
-		};
-
-		struct AllocatorProfileEntry
-		{
-			std::uint64_t saveLoadEpoch{};
-			std::uint64_t monotonicUs{};
-			std::uint64_t frameSequence{};
-			std::uint64_t frameEndQpc{};
-			std::uint64_t frameElapsedQpc{};
-			double frameMs{};
-			std::uint64_t intervalQpc{};
-			double intervalSeconds{};
-			std::uint64_t maxFrameElapsedQpc{};
-			double maxFrameMs{};
-			bool spansGap{};
-			std::uint64_t intervalOversizeAllocations{};
-			std::uint64_t cumulativeOversizeAllocations{};
-			std::uint64_t intervalFailedAllocations{};
-			std::uint64_t cumulativeFailedAllocations{};
-			std::uint64_t intervalZeroSizeAllocations{};
-			std::uint64_t cumulativeZeroSizeAllocations{};
-			std::uint64_t intervalZeroSizeFrees{};
-			std::uint64_t cumulativeZeroSizeFrees{};
-			std::uint64_t intervalPool4096Le2048Allocations{};
-			std::uint64_t cumulativePool4096Le2048Allocations{};
-			std::uint64_t droppedSamples{};
-			std::size_t leasedSlots{};
-			std::size_t overflowedThreads{};
-			std::array<BucketEntry, kAllocatorSizeClassCount> buckets{};
 		};
 
 		template <class T, std::size_t Capacity>
@@ -647,7 +597,7 @@ namespace Addictol
 				bool a_exportCSV) :
 				channel(
 					a_session,
-					kRuntimeEntryCapacity,
+					kAllocatorProfileEntryCapacity,
 					"allocator_runtime"sv,
 					WriteAllocatorCSVHeader,
 					WriteAllocatorCSVEntry),
@@ -942,6 +892,59 @@ namespace Addictol
 	void ProfilerAllocator::RecordFree(const AllocatorBlockInfo& a_info) noexcept
 	{
 		allocatorProfilerDetail::RecordFreedAllocation(a_info);
+	}
+
+	std::string_view AllocatorSizeClassName(std::size_t a_index) noexcept
+	{
+		using namespace allocatorProfilerDetail;
+
+		return a_index < kClassNames.size() ? kClassNames[a_index] : "Unknown"sv;
+	}
+
+	AllocatorBucketDerived AllocatorBucketDerivedBytes(
+		std::size_t a_class,
+		const AllocatorBucketEntry& a_bucket) noexcept
+	{
+		using namespace allocatorProfilerDetail;
+
+		if (a_class >= kAllocatorSizeClassCount)
+			return {};
+
+		AllocatorBucketDerived derived;
+		derived.payloadCapacityBytes =
+			LivePayloadCapacityBytes(a_class, a_bucket.liveBlocks, a_bucket.liveBytes);
+		derived.allocatorBytes =
+			LiveAllocatorBytes(a_class, a_bucket.liveBlocks, a_bucket.liveBytes);
+		derived.overheadBytes = LiveOverheadBytes(a_class, a_bucket.liveBlocks);
+		derived.granularityWasteBytes = derived.payloadCapacityBytes - a_bucket.liveBytes;
+		return derived;
+	}
+
+	bool ProfilerAllocator::CopyLatestInterval(AllocatorProfileEntry& a_out) noexcept
+	{
+		using namespace allocatorProfilerDetail;
+
+		auto runtime = g_runtime.load(std::memory_order_acquire);
+		if (!runtime)
+			return false;
+
+		SamplingScope scope;
+		return runtime->channel.CopyLatest(a_out);
+	}
+
+	void ProfilerAllocator::CopyIntervals(std::vector<AllocatorProfileEntry>& a_out) noexcept
+	{
+		using namespace allocatorProfilerDetail;
+
+		auto runtime = g_runtime.load(std::memory_order_acquire);
+		if (!runtime)
+		{
+			a_out.clear();
+			return;
+		}
+
+		SamplingScope scope;
+		runtime->channel.CopyEntries(a_out);
 	}
 
 	void ProfilerAllocator::Disable() noexcept

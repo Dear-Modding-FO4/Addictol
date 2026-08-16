@@ -247,11 +247,11 @@ namespace Addictol::TextureOneShot
 
 			if (a_outcome.evidence.mismatches)
 			{
-				counters.sizeMismatches.fetch_add(
-					a_outcome.evidence.mismatches, std::memory_order_relaxed);
 				SampleSizeDelta(counters, a_outcome.evidence.minDelta);
 				SampleSizeDelta(counters, a_outcome.evidence.maxDelta);
 				CaptureFirstMismatch(counters, a_outcome.evidence);
+				counters.sizeMismatches.fetch_add(
+					a_outcome.evidence.mismatches, std::memory_order_release);
 			}
 
 			if (!a_outcome.attributionOk)
@@ -516,6 +516,51 @@ namespace Addictol::TextureOneShot
 		return g_installState;
 	}
 
+	CountersSnapshot ReadCounters() noexcept
+	{
+		const auto& counters = GetCounters();
+		CountersSnapshot snapshot;
+		snapshot.installState = g_installState;
+		snapshot.requests = counters.requests.load(std::memory_order_relaxed);
+		snapshot.oneShotRequests = counters.oneShotRequests.load(std::memory_order_relaxed);
+		snapshot.fallbackRequests = counters.fallbackRequests.load(std::memory_order_relaxed);
+		snapshot.fallbackFailures = counters.fallbackFailures.load(std::memory_order_relaxed);
+		snapshot.delegations = counters.delegations.load(std::memory_order_relaxed);
+		snapshot.nestedDelegations = counters.nestedDelegations.load(std::memory_order_relaxed);
+		snapshot.unknownCallerDelegations =
+			counters.unknownCallerDelegations.load(std::memory_order_relaxed);
+		snapshot.chunksObserved = counters.chunksObserved.load(std::memory_order_relaxed);
+		snapshot.chunksDecoded = counters.chunksDecoded.load(std::memory_order_relaxed);
+		snapshot.decodedBytes = counters.decodedBytes.load(std::memory_order_relaxed);
+		snapshot.sizeSamples = counters.sizeSamples.load(std::memory_order_relaxed);
+		snapshot.sizeMismatches = counters.sizeMismatches.load(std::memory_order_acquire);
+		// The sentinels only carry meaning once a mismatch has been sampled.
+		snapshot.minSizeDelta = snapshot.sizeMismatches ?
+			counters.minSizeDelta.load(std::memory_order_relaxed) :
+			0;
+		snapshot.maxSizeDelta = snapshot.sizeMismatches ?
+			counters.maxSizeDelta.load(std::memory_order_relaxed) :
+			0;
+		snapshot.attributionFailures = counters.attributionFailures.load(std::memory_order_relaxed);
+		snapshot.nominalDescMismatches =
+			counters.nominalDescMismatches.load(std::memory_order_relaxed);
+		snapshot.zeroCompressedChunks = counters.zeroCompressedChunks.load(std::memory_order_relaxed);
+		snapshot.badChunkHeaders = counters.badChunkHeaders.load(std::memory_order_relaxed);
+		snapshot.capacityFailures = counters.capacityFailures.load(std::memory_order_relaxed);
+		snapshot.rowBufferUnavailable = counters.rowBufferUnavailable.load(std::memory_order_relaxed);
+		snapshot.firstMismatchPublished =
+			counters.firstMismatchPublished.load(std::memory_order_acquire);
+		snapshot.firstMismatchDelta = counters.firstMismatchDelta.load(std::memory_order_relaxed);
+		snapshot.firstMismatchNominal = counters.firstMismatchNominal.load(std::memory_order_relaxed);
+		snapshot.firstMismatchActual = counters.firstMismatchActual.load(std::memory_order_relaxed);
+		snapshot.firstMismatchChunk = counters.firstMismatchChunk.load(std::memory_order_relaxed);
+		snapshot.firstMismatchChunkCount =
+			counters.firstMismatchChunkCount.load(std::memory_order_relaxed);
+		for (size_t index = 0; index < snapshot.fallbackReasons.size(); ++index)
+			snapshot.fallbackReasons[index] = counters.fallbackReasons[index].load(std::memory_order_relaxed);
+		return snapshot;
+	}
+
 	void LogCounters() noexcept
 	{
 		if (g_installState != InstallState::Installed)
@@ -524,7 +569,7 @@ namespace Addictol::TextureOneShot
 		const auto& counters = GetCounters();
 		const auto observed = counters.chunksObserved.load(std::memory_order_relaxed);
 		const auto samples = counters.sizeSamples.load(std::memory_order_relaxed);
-		const auto mismatches = counters.sizeMismatches.load(std::memory_order_relaxed);
+		const auto mismatches = counters.sizeMismatches.load(std::memory_order_acquire);
 		const auto minDelta = mismatches ? counters.minSizeDelta.load(std::memory_order_relaxed) : 0;
 		const auto maxDelta = mismatches ? counters.maxSizeDelta.load(std::memory_order_relaxed) : 0;
 		REX::INFO(

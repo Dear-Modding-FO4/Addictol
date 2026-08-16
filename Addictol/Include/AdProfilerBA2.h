@@ -25,5 +25,8 @@ namespace Addictol
 		void RecordBatch(std::span<const BA2Profile::CallObservation> a_observations) noexcept;
 		void Publish(std::string_view a_reason) noexcept;
 		void PublishFinal(std::string_view a_reason) noexcept;
+
+		// Reads the retained publish summary only; live shards and call arenas are never touched.
+		[[nodiscard]] bool CopyLatestPublished(BA2PublishedSnapshot& a_out) const noexcept;
 	};
 }

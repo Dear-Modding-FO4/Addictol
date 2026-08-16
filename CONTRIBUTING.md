@@ -68,10 +68,11 @@ Addictol/Source/           AdPlugin.cpp (init, F4SE messages), AdModuleManager.c
                            AdRegisterModules.cpp (every module is registered here),
                            AdConfigValidation.cpp (known config keys)
 Addictol/Source/Modules/   one .cpp per feature module (~80 of them)
+Addictol/Source/ProfilerMenu/  one .cpp per in-game profiler panel
 VC/                        MSBuild solution and project files
 Depends/                   submodules and vendored libraries
 Version/                   version resource and the build number script
-.Build/F4SE/Plugins/       build output, and the tracked shipped config
+.Build/F4SE/Plugins/       build output, the tracked shipped config, and shipped resources
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`

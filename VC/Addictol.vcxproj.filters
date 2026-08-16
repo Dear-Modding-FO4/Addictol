@@ -358,6 +358,42 @@
     <ClCompile Include="..\Addictol\Source\AdPlatformImgui.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdImguiTheme.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProfilerMenu.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\AdProfilerMenuModel.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuWidgets.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuOverview.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuFrameHitch.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuDecompression.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuAllocator.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuMemory.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuModules.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\ProfilerMenu\AdProfilerMenuTextureDecode.cpp">
+      <Filter>Source\ProfilerMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfilerMenu.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
@@ -736,6 +772,21 @@
     <ClInclude Include="..\Addictol\Include\AdImguiPlatformTargets.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdImguiTheme.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerMenu.h">
+      <Filter>Include\ProfilerMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\AdProfilerMenuModel.h">
+      <Filter>Include\ProfilerMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\ProfilerMenu\AdProfilerMenuPanels.h">
+      <Filter>Include\ProfilerMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfilerMenu.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
@@ -874,6 +925,12 @@
     </Filter>
     <Filter Include="Source\Profiler">
       <UniqueIdentifier>{c0e08474-d645-4e46-bce4-a69a406efebe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\ProfilerMenu">
+      <UniqueIdentifier>{7a2f1d64-9c58-4d3a-8f21-5c6b0e4a7d18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\ProfilerMenu">
+      <UniqueIdentifier>{2b58e0c7-4f3d-4a19-95c2-6d81ab37f4e9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

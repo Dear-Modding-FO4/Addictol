@@ -359,9 +359,63 @@ namespace Addictol::TextureOneShot
 		return a_state == InstallState::Validated;
 	}
 
+	[[nodiscard]] constexpr std::string_view Describe(InstallState a_state) noexcept
+	{
+		switch (a_state)
+		{
+		case InstallState::Rejected:
+			return "rejected before any write";
+		case InstallState::Validated:
+			return "validated";
+		case InstallState::Attempted:
+			return "write attempted";
+		case InstallState::Installed:
+			return "installed";
+		case InstallState::Indeterminate:
+			return "indeterminate";
+		default:
+			return "not attempted";
+		}
+	}
+
 	// Never writes, so a rejection stays retryable.
 	InstallState Validate(std::string_view a_runtime) noexcept;
 	InstallState InstallValidated() noexcept;
 	[[nodiscard]] InstallState GetInstallState() noexcept;
 	void LogCounters() noexcept;
+
+	// Cumulative process totals; the seam owns the atomics and no reader resets them.
+	struct CountersSnapshot
+	{
+		InstallState installState{ InstallState::NotAttempted };
+		uint64_t requests{ 0 };
+		uint64_t oneShotRequests{ 0 };
+		uint64_t fallbackRequests{ 0 };
+		uint64_t fallbackFailures{ 0 };
+		uint64_t delegations{ 0 };
+		uint64_t nestedDelegations{ 0 };
+		uint64_t unknownCallerDelegations{ 0 };
+		uint64_t chunksObserved{ 0 };
+		uint64_t chunksDecoded{ 0 };
+		uint64_t decodedBytes{ 0 };
+		uint64_t sizeSamples{ 0 };
+		uint64_t sizeMismatches{ 0 };
+		int64_t minSizeDelta{ 0 };
+		int64_t maxSizeDelta{ 0 };
+		uint64_t attributionFailures{ 0 };
+		uint64_t nominalDescMismatches{ 0 };
+		uint64_t zeroCompressedChunks{ 0 };
+		uint64_t badChunkHeaders{ 0 };
+		uint64_t capacityFailures{ 0 };
+		uint64_t rowBufferUnavailable{ 0 };
+		bool firstMismatchPublished{ false };
+		int64_t firstMismatchDelta{ 0 };
+		uint32_t firstMismatchNominal{ 0 };
+		uint32_t firstMismatchActual{ 0 };
+		uint32_t firstMismatchChunk{ 0 };
+		uint32_t firstMismatchChunkCount{ 0 };
+		std::array<uint64_t, BA2Profile::kKnownReasonCount> fallbackReasons{};
+	};
+
+	[[nodiscard]] CountersSnapshot ReadCounters() noexcept;
 }

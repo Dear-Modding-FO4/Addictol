@@ -118,6 +118,8 @@ namespace Addictol
 	inline constexpr size_t kAnimSubGraphProfileEntryCapacity{ 256 };
 	inline constexpr size_t kFrameHitchProfileEntryCapacity{ 32 };
 
+	[[nodiscard]] std::string_view FrameHitchPhaseName(size_t a_index) noexcept;
+
 	struct FrameHitchFrameProfileEntry
 	{
 		uint64_t sequence{ 0 };
@@ -148,6 +150,31 @@ namespace Addictol
 		std::vector<FrameHitchWindowProfileEntry> hitches;
 		uint64_t droppedHitches{ 0 };
 	};
+
+	struct FrameHitchIntervalSummary
+	{
+		uint64_t frameCount{ 0 };
+		double meanMs{ 0.0 };
+		double p95Ms{ 0.0 };
+		double p99Ms{ 0.0 };
+		double maxMs{ 0.0 };
+		size_t percentileSamples{ 0 };
+		size_t hitchCount{ 0 };
+	};
+
+	[[nodiscard]] inline FrameHitchIntervalSummary MakeFrameHitchIntervalSummary(
+		const FrameHitchProfileEntry& a_entry) noexcept
+	{
+		return {
+			a_entry.frameCount,
+			a_entry.meanMs,
+			a_entry.p95Ms,
+			a_entry.p99Ms,
+			a_entry.maxMs,
+			a_entry.percentileSamples,
+			a_entry.hitches.size()
+		};
+	}
 
 	class ProfilerCore :
 		public REX::Singleton<ProfilerCore>
@@ -210,13 +237,18 @@ namespace Addictol
 		// Shared by every runtime channel so their rows correlate on one clock and epoch.
 		[[nodiscard]] static RuntimeSessionContext& GetRuntimeSession() noexcept;
 
+		// Copy-out methods for readers outside the profiler; every one takes the owning lock.
+		[[nodiscard]] static bool CopyLatestFrameHitchInterval(FrameHitchProfileEntry& a_out) noexcept;
+		[[nodiscard]] static bool CopyFrameHitchView(
+			FrameHitchProfileEntry& a_latest,
+			std::vector<FrameHitchIntervalSummary>& a_summaries) noexcept;
+		void CopyMemorySnapshots(std::vector<MemorySnapshot>& a_out) noexcept;
+		void CopyModuleEntries(std::vector<ModuleProfileEntry>& a_out) noexcept;
+		[[nodiscard]] static std::string_view GetSessionID() noexcept;
+		[[nodiscard]] static uint64_t GetSaveLoadEpoch() noexcept;
+
 		void GenerateReport() noexcept;
 		void ExportCSV() noexcept;
-
-		[[nodiscard]] const std::vector<ESPProfileEntry>& GetESPEntries() const noexcept { return m_espEntries; }
-		[[nodiscard]] const std::vector<DLLProfileEntry>& GetDLLEntries() const noexcept { return m_dllEntries; }
-		[[nodiscard]] const std::vector<ModuleProfileEntry>& GetModuleEntries() const noexcept { return m_moduleEntries; }
-		[[nodiscard]] const std::vector<StartupPhase>& GetStartupPhases() const noexcept { return m_startupPhases; }
 	private:
 		[[nodiscard]] std::string GetOutputDir() const noexcept;
 		void LogESPReport() noexcept;
