@@ -48,6 +48,7 @@ namespace Addictol
 		static std::atomic<Backend> s_backend{ Backend::kUninitialized };
 		static std::atomic<TUIEndFrame> s_uiEndFrameOriginal{ nullptr };
 		static std::atomic<bool> s_windowReady{ false };
+		static std::string s_iniPath;
 
 		static HWND s_window{ nullptr };
 		static std::atomic<WNDPROC> s_previousWindowProc{ nullptr };
@@ -397,6 +398,25 @@ namespace Addictol
 			s_setupSinks.Close();
 		}
 
+		static void ConfigureIniPath(ImGuiIO& a_io) noexcept
+		{
+			std::error_code ec;
+			const std::filesystem::path directory{
+				AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\Addictol"
+			};
+			std::filesystem::create_directories(directory, ec);
+			if (ec)
+			{
+				REX::WARN("Profiler menu: \"{}\" could not be created; window geometry is not persisted."sv,
+					directory.string());
+				return;
+			}
+
+			// The path must outlive every frame, so ImGui keeps pointing at owned storage.
+			s_iniPath = (directory / "imgui.ini").string();
+			a_io.IniFilename = s_iniPath.c_str();
+			a_io.IniSavingRate = 1.0f;
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -511,6 +531,9 @@ namespace Addictol
 			return false;
 		}
 
+		auto& io = ImGui::GetIO();
+		ConfigureIniPath(io);
+
 		s_device->AddRef();
 		s_windowReady.store(true, std::memory_order_release);
 		REX::INFO("Platform Imgui: renderer window subclassed; ImGui will initialize on first open"sv);
@@ -548,4 +571,29 @@ namespace Addictol
 	{
 		return platformImguiDetail::s_installState.load(std::memory_order_acquire);
 	}
+
+	std::string PlatformImgui::GetConfigurePath() noexcept
+	{
+		return platformImguiDetail::s_iniPath;
+	}
+}
+
+F4SE_EXPORT void* ADPlugin_ImGui_GetContext() noexcept
+{
+	return ImGui::GetCurrentContext();
+}
+
+F4SE_EXPORT bool ADPlugin_ImGui_RegisterDrawSink(const char* a_name, Addictol::PlatformImguiDrawSink a_sink) noexcept
+{
+	return Addictol::PlatformImgui::RegisterDrawSink(a_name, a_sink);
+}
+
+F4SE_EXPORT bool ADPlugin_ImGui_RegisterToggleSink(const char* a_name, Addictol::PlatformImguiToggleSink a_sink) noexcept
+{
+	return Addictol::PlatformImgui::RegisterToggleSink(a_name, a_sink);
+}
+
+F4SE_EXPORT bool ADPlugin_ImGui_RegisterSetupSink(const char* a_name, Addictol::PlatformImguiSetupSink a_sink) noexcept
+{
+	return Addictol::PlatformImgui::RegisterSetupSink(a_name, a_sink);
 }

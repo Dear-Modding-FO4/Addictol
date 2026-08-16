@@ -31,5 +31,6 @@ namespace Addictol
 		[[nodiscard]] bool IsDrawingEnabled() noexcept;
 		[[nodiscard]] bool IsReady() noexcept;
 		[[nodiscard]] ImguiPlatform::InstallState GetInstallState() noexcept;
+		[[nodiscard]] std::string GetConfigurePath() noexcept;
 	}
 }

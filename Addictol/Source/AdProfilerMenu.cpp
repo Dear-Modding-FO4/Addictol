@@ -43,7 +43,6 @@ namespace Addictol
 		static uint64_t s_qpcFrequency{ 0 };
 		static double s_lastDrawMs{ 0.0 };
 		static float s_dpiScale{ 1.0f };
-		static std::string s_iniPath;
 		static ImVec2 s_lastWindowPosition{};
 		static ImVec2 s_lastWindowSize{};
 		static bool s_geometryObserved{ false };
@@ -65,31 +64,10 @@ namespace Addictol
 			PanelEntry{ ProfilerMenuTab::kTextureDecode, &DrawProfilerMenuTextureDecode }
 		};
 
-		static void ConfigureIniPath(ImGuiIO& a_io) noexcept
-		{
-			std::error_code ec;
-			const std::filesystem::path directory{
-				AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\Addictol"
-			};
-			std::filesystem::create_directories(directory, ec);
-			if (ec)
-			{
-				REX::WARN("Profiler menu: \"{}\" could not be created; window geometry is not persisted."sv,
-					directory.string());
-				return;
-			}
-
-			// The path must outlive every frame, so ImGui keeps pointing at owned storage.
-			s_iniPath = (directory / "imgui.ini").string();
-			a_io.IniFilename = s_iniPath.c_str();
-			a_io.IniSavingRate = 1.0f;
-		}
-
 		static void SetupSink(void* a_window) noexcept
 		{
 			ProfilerAllocator::SamplingScope sampling;
 			auto& io = ImGui::GetIO();
-			ConfigureIniPath(io);
 
 			s_dpiScale = a_window ? ImGui_ImplWin32_GetDpiScaleForHwnd(a_window) : 1.0f;
 			if (s_dpiScale <= 0.0f)
@@ -123,11 +101,12 @@ namespace Addictol
 
 		static void SaveWindowGeometry() noexcept
 		{
-			if (!ImGui::GetCurrentContext() || s_iniPath.empty())
+			auto iniPath = PlatformImgui::GetConfigurePath();
+			if (!ImGui::GetCurrentContext() || iniPath.empty())
 				return;
 
 			const ProfilerAllocator::SamplingScope sampling;
-			ImGui::SaveIniSettingsToDisk(s_iniPath.c_str());
+			ImGui::SaveIniSettingsToDisk(iniPath.c_str());
 		}
 
 		static void DrawWindow(ProfilerMenuModel& a_model) noexcept
