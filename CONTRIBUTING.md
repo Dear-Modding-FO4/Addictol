@@ -88,7 +88,7 @@ one concern. Nearly all are toggled by exactly one TOML key; a few are mandatory
 
 ```cpp
 Module(const char* a_name, const REX::TOML::Bool<>* a_option = nullptr,
-	std::initializer_list<std::uint32_t> a_listeners = {}, bool a_papyrusListener = false);
+	std::initializer_list<uint32_t> a_listeners = {}, bool a_papyrusListener = false);
 ```
 
 `a_name` is the registry key and appears in every log line, and it must be unique; a collision is
@@ -181,7 +181,7 @@ namespace Addictol
 
 	bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
+		const auto target = REL::Relocation<uintptr_t>{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
 
 		if (RELEX::IsRuntimeOG())
 		{
@@ -190,7 +190,7 @@ namespace Addictol
 		}
 
 		// ApplySkinningToGeometry
-		const std::uint8_t value = 0x10;
+		const uint8_t value = 0x10;
 		REL::WriteSafe(target, &value, sizeof(value));
 
 		return true;
@@ -269,11 +269,11 @@ runtime at load time.
 auto sub = REL::ID(2190427).address();
 
 // OG id plus a shared NG/AE id, with per runtime offsets into the function
-const auto target = REL::Relocation<std::uintptr_t>{ REL::ID{ 44611, 2277131 },
+const auto target = REL::Relocation<uintptr_t>{ REL::ID{ 44611, 2277131 },
 	REL::Offset{ 0x174, 0x192 } }.address();
 
 // All three ids differ
-const auto target = REL::Relocation<std::uintptr_t>(REL::ID{ 224250, 2277018, 4492363 },
+const auto target = REL::Relocation<uintptr_t>(REL::ID{ 224250, 2277018, 4492363 },
 	REL::Offset{ 0x114, 0x114, 0x10B }).address();
 ```
 
@@ -389,7 +389,7 @@ byte `E9` relative jump yourself:
 
 ```cpp
 const auto rel = static_cast<std::int32_t>(dst - (src + 5));
-const auto* const r = reinterpret_cast<const std::uint8_t*>(&rel);
+const auto* const r = reinterpret_cast<const uint8_t*>(&rel);
 RELEX::WriteSafe(src, { 0xE9, r[0], r[1], r[2], r[3], 0x90 });
 ```
 
@@ -399,9 +399,24 @@ There is no `.clang-format`, so match the file you are editing.
 
 Tabs for indentation, Allman braces, no enforced line length.
 
-Fixed-width integer types are unqualified: `uint8_t`, `int32_t`, `size_t`, not `std::uint8_t`. Real
+Fixed-width integer types are unqualified: `uint8_t`, `int32_t`, `size_t`, not `uint8_t`. Real
 library facilities keep the namespace: `std::span`, `std::array`, `std::initializer_list`,
 `std::atomic`.
+
+Machine-code literals — engine signatures, opcode patches, expected pre-patch bytes — are
+`std::initializer_list<uint8_t>`, never `std::array<uint8_t, N>`. A hand-counted `N` that is too
+small is silently zero-filled, producing a signature that reads correctly and validates wrong, so
+the length must always be deduced from the bytes themselves:
+
+```cpp
+inline constexpr std::initializer_list<uint8_t> MODE_LOAD{ 0x41, 0x8B, 0x45, 0x00 };
+
+if (!RELEX::Validate(target, { 0x48, 0x83, 0xEC, 0x28, 0xC6, 0x44, 0x24, 0x38, 0x00 }))
+	return;
+```
+
+`std::array` remains correct for fixed-capacity storage that owns its bytes, such as saved original
+instructions or an API output buffer.
 
 Files are prefixed `Ad`, and modules are `AdModule<Name>.h` / `.cpp` declaring `class Module<Name>`
 in `namespace Addictol`. Functions and methods are PascalCase, and hook functions are conventionally

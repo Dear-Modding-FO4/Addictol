@@ -27,6 +27,9 @@ namespace Addictol::LogControl
 		constexpr uint64_t kBucketCount = 60;
 		constexpr uint64_t kCountMask = std::numeric_limits<uint32_t>::max();
 
+		// Each bucket packs its second into the high half and the count into the low half of one
+		// atomic, so a reader can never observe a count against the wrong second.
+
 		class CountingSink final : public spdlog::sinks::sink
 		{
 		public:

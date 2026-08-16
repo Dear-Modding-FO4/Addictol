@@ -32,13 +32,13 @@ namespace Addictol
 			const auto base = REL::Relocation{ REL::ID(768994) }.address();
 			for (const auto offset : offsets)
 			{
-				const std::uint8_t value = 0x11;
+				const uint8_t value = 0x11;
 				REL::WriteSafe(base + offset + 0x1, &value, sizeof(value));  // movaps -> movups
 			}
 		}
 
 		// ApplySkinningToGeometry
-		const std::uint8_t value = 0x10;
+		const uint8_t value = 0x10;
 		REL::WriteSafe(target, &value, sizeof(value));
 
 		return true;
