@@ -11,6 +11,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <initializer_list>
 #include <span>
 
 namespace Addictol
@@ -945,10 +946,10 @@ namespace Addictol
 			std::int32_t displacement{};
 			std::memcpy(&displacement, ownership.targetBytes.data() + 1, sizeof(displacement));
 			const auto trampoline = ownership.target + 5 + static_cast<std::intptr_t>(displacement);
-			static constexpr std::array<std::uint8_t, 6> stub{ 0xFF, 0x25, 0, 0, 0, 0 };
+			static constexpr std::initializer_list<std::uint8_t> stub{ 0xFF, 0x25, 0, 0, 0, 0 };
 			std::array<std::uint8_t, stub.size()> actualStub{};
 			if (!TryReadMemory(trampoline, actualStub.data(), actualStub.size()) ||
-				actualStub != stub)
+				!std::ranges::equal(actualStub, stub))
 				return ownership;
 			std::uintptr_t destination{};
 			if (!TryReadMemory(

@@ -363,9 +363,8 @@ namespace Addictol
 
 		[[nodiscard]] static bool ValidateUIEndFrame(uintptr_t a_target, uint64_t a_id, Runtime a_runtime) noexcept
 		{
-			const auto signature = UIEndFrameSignature(a_runtime);
-			const std::span<const uint8_t> candidate{ reinterpret_cast<const uint8_t*>(a_target), signature.size() };
-			if (!MatchesSignature(candidate, signature) ||
+			const auto& signature = UIEndFrameSignature(a_runtime);
+			if (!RELEX::Validate(a_target, signature) ||
 				!AnimSubGraphRuntime::ValidateUniqueSignature(a_target, signature))
 			{
 				REX::WARN("Platform Imgui: {} UIEndFrame id {} at {:X} failed exact unique-signature validation; installing nothing."sv,

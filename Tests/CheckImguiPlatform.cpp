@@ -1,8 +1,8 @@
 #include "../Addictol/Include/AdImguiPlatformTargets.h"
 #include "Harness.h"
 
-#include <array>
-#include <span>
+#include <initializer_list>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -39,7 +39,7 @@ namespace
 	void check_every_byte_mutation(vmm_tests::Runner& runner, std::string_view name, Runtime runtime)
 	{
 		runner.test(name, [runtime] {
-			const auto signature = UIEndFrameSignature(runtime);
+			const auto& signature = UIEndFrameSignature(runtime);
 			vmm_tests::require(MatchesSignature(signature, signature), "unmutated signature must match");
 
 			std::vector<uint8_t> mutated(signature.begin(), signature.end());
@@ -52,14 +52,15 @@ namespace
 					if (mutated[index] == original)
 						continue;
 					vmm_tests::require(
-						!MatchesSignature(std::span<const uint8_t>{ mutated }, signature),
+						!MatchesSignature(mutated, signature),
 						"byte " + std::to_string(index) + " must be load bearing");
 				}
 				mutated[index] = original;
 			}
 
+			const std::vector<uint8_t> truncated(signature.begin(), std::prev(signature.end()));
 			vmm_tests::require(
-				!MatchesSignature(std::span<const uint8_t>{ mutated }.first(mutated.size() - 1), signature),
+				!MatchesSignature(truncated, signature),
 				"a truncated candidate must not match");
 		});
 	}
@@ -86,7 +87,8 @@ namespace vmm_tests
 				"NG and AE differ in the displacement and must not cross match");
 			require(!MatchesSignature(expected_og, UIEndFrameSignature(Runtime::kNG)),
 				"OG and NG signatures must not cross match");
-			require(!MatchesSignature({}, UIEndFrameSignature(Runtime::kOG)), "an empty candidate must not match");
+			require(!MatchesSignature(std::initializer_list<uint8_t>{}, UIEndFrameSignature(Runtime::kOG)),
+				"an empty candidate must not match");
 			require(!MatchesSignature(expected_og, {}), "an empty signature must never validate");
 		});
 
@@ -180,7 +182,13 @@ namespace vmm_tests
 			require(DispatchesToggleSinks(0x0100, 0x0001), "a fresh WM_KEYDOWN dispatches");
 			require(!DispatchesToggleSinks(0x0100, kKeyRepeatBit | 0x0001), "a held key does not redispatch");
 			require(!DispatchesToggleSinks(0x0101, 0x0001), "WM_KEYUP does not dispatch");
-			require(!DispatchesToggleSinks(0x0104, 0x0001), "WM_SYSKEYDOWN does not dispatch");
+			require(DispatchesToggleSinks(0x0104, 0x0001),
+				"bare F10 arrives as WM_SYSKEYDOWN and must dispatch");
+			require(!DispatchesToggleSinks(0x0104, kKeyRepeatBit | 0x0001),
+				"a held system key does not redispatch");
+			require(!DispatchesToggleSinks(0x0105, 0x0001), "WM_SYSKEYUP does not dispatch");
+			require(ClassifyMessage(0x0104) == MessageClass::kKeyboard,
+				"WM_SYSKEYDOWN is keyboard traffic and follows the capture state");
 		});
 	}
 }
