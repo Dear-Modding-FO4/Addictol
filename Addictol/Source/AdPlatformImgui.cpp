@@ -157,6 +157,26 @@ namespace Addictol
 			}
 		}
 
+		static void ConfigureIniPath(ImGuiIO& a_io) noexcept
+		{
+			std::error_code ec;
+			const std::filesystem::path directory{
+				AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\Addictol"
+			};
+			std::filesystem::create_directories(directory, ec);
+			if (ec)
+			{
+				REX::WARN("Profiler menu: \"{}\" could not be created; window geometry is not persisted."sv,
+					directory.string());
+				return;
+			}
+
+			// The path must outlive every frame, so ImGui keeps pointing at owned storage.
+			s_iniPath = (directory / "imgui.ini").string();
+			a_io.IniFilename = s_iniPath.c_str();
+			a_io.IniSavingRate = 1.0f;
+		}
+
 		// Runs once on whichever thread the engine calls UIEndFrame from; a failure is permanent, never retried.
 		[[nodiscard]] static bool InitializeBackend() noexcept
 		{
@@ -182,6 +202,8 @@ namespace Addictol
 			// Frames only run while drawing is enabled, so the drawn cursor follows that state.
 			io.MouseDrawCursor = true;
 			// Process DPI awareness is deliberately left to the DPI Scaling module, which owns that user option.
+
+			ConfigureIniPath(io);
 
 			// Style, fonts, and ini path must be settled before the backend uploads the font atlas.
 			for (size_t index = 0, count = s_setupSinks.Size(); index < count; ++index)
@@ -257,6 +279,8 @@ namespace Addictol
 			return ready;
 		}
 
+		
+
 		static void HKUIEndFrame(void* a_ui) noexcept
 		{
 			auto original = s_uiEndFrameOriginal.load(std::memory_order_acquire);
@@ -295,6 +319,7 @@ namespace Addictol
 			for (size_t index = 0, count = s_drawSinks.Size(); index < count; ++index)
 				s_drawSinks.At(index)();
 
+			//UIDrawCursor();
 			ImGui::Render();
 			std::array<ID3D11RenderTargetView*, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT> previousTargets{};
 			ID3D11DepthStencilView* previousDepth{ nullptr };
@@ -396,26 +421,6 @@ namespace Addictol
 			s_drawSinks.Close();
 			s_toggleSinks.Close();
 			s_setupSinks.Close();
-		}
-
-		static void ConfigureIniPath(ImGuiIO& a_io) noexcept
-		{
-			std::error_code ec;
-			const std::filesystem::path directory{
-				AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\Addictol"
-			};
-			std::filesystem::create_directories(directory, ec);
-			if (ec)
-			{
-				REX::WARN("Profiler menu: \"{}\" could not be created; window geometry is not persisted."sv,
-					directory.string());
-				return;
-			}
-
-			// The path must outlive every frame, so ImGui keeps pointing at owned storage.
-			s_iniPath = (directory / "imgui.ini").string();
-			a_io.IniFilename = s_iniPath.c_str();
-			a_io.IniSavingRate = 1.0f;
 		}
 	}
 
@@ -530,9 +535,6 @@ namespace Addictol
 			s_device = nullptr;
 			return false;
 		}
-
-		auto& io = ImGui::GetIO();
-		ConfigureIniPath(io);
 
 		s_device->AddRef();
 		s_windowReady.store(true, std::memory_order_release);
