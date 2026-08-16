@@ -4,7 +4,7 @@
 
 #pragma once
 
-#ifdef _DEBUG
+#if !defined(NDEBUG)
 
 namespace voltek
 {
