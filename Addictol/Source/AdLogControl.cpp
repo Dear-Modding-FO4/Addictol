@@ -99,33 +99,39 @@ namespace Addictol::LogControl
 		std::shared_ptr<CountingSink> g_countingSink;
 		std::once_flag g_installOnce;
 
+		struct LevelEntry
+		{
+			Level level;
+			std::string_view name;
+			spdlog::level::level_enum spdlogLevel;
+		};
+
+		constexpr std::array LEVEL_NAMES{
+			LevelEntry{ Level::kTrace, "trace", spdlog::level::trace },
+			LevelEntry{ Level::kDebug, "debug", spdlog::level::debug },
+			LevelEntry{ Level::kInfo, "info", spdlog::level::info },
+			LevelEntry{ Level::kWarn, "warn", spdlog::level::warn },
+			LevelEntry{ Level::kError, "error", spdlog::level::err },
+			LevelEntry{ Level::kCritical, "critical", spdlog::level::critical },
+			LevelEntry{ Level::kOff, "off", spdlog::level::off }
+		};
+
 		[[nodiscard]] constexpr spdlog::level::level_enum ToSpdlog(Level a_level) noexcept
 		{
-			switch (a_level)
+			for (const auto& entry : LEVEL_NAMES)
 			{
-			case Level::kTrace: return spdlog::level::trace;
-			case Level::kDebug: return spdlog::level::debug;
-			case Level::kInfo: return spdlog::level::info;
-			case Level::kWarn: return spdlog::level::warn;
-			case Level::kError: return spdlog::level::err;
-			case Level::kCritical: return spdlog::level::critical;
-			case Level::kOff: return spdlog::level::off;
+				if (entry.level == a_level)
+					return entry.spdlogLevel;
 			}
 			return spdlog::level::off;
 		}
 
 		[[nodiscard]] constexpr Level FromSpdlog(spdlog::level::level_enum a_level) noexcept
 		{
-			switch (a_level)
+			for (const auto& entry : LEVEL_NAMES)
 			{
-			case spdlog::level::trace: return Level::kTrace;
-			case spdlog::level::debug: return Level::kDebug;
-			case spdlog::level::info: return Level::kInfo;
-			case spdlog::level::warn: return Level::kWarn;
-			case spdlog::level::err: return Level::kError;
-			case spdlog::level::critical: return Level::kCritical;
-			case spdlog::level::off: return Level::kOff;
-			case spdlog::level::n_levels: break;
+				if (entry.spdlogLevel == a_level)
+					return entry.level;
 			}
 			return Level::kOff;
 		}
@@ -168,35 +174,21 @@ namespace Addictol::LogControl
 
 	std::string_view LevelName(Level a_level) noexcept
 	{
-		switch (a_level)
+		for (const auto& level : LEVEL_NAMES)
 		{
-		case Level::kTrace: return "trace";
-		case Level::kDebug: return "debug";
-		case Level::kInfo: return "info";
-		case Level::kWarn: return "warn";
-		case Level::kError: return "error";
-		case Level::kCritical: return "critical";
-		case Level::kOff: return "off";
+			if (level.level == a_level)
+				return level.name;
 		}
 		return "off";
 	}
 
 	std::optional<Level> ParseLevel(std::string_view a_name) noexcept
 	{
-		if (EqualIgnoreCase(a_name, "trace"))
-			return Level::kTrace;
-		if (EqualIgnoreCase(a_name, "debug"))
-			return Level::kDebug;
-		if (EqualIgnoreCase(a_name, "info"))
-			return Level::kInfo;
-		if (EqualIgnoreCase(a_name, "warn"))
-			return Level::kWarn;
-		if (EqualIgnoreCase(a_name, "error"))
-			return Level::kError;
-		if (EqualIgnoreCase(a_name, "critical"))
-			return Level::kCritical;
-		if (EqualIgnoreCase(a_name, "off"))
-			return Level::kOff;
+		for (const auto& level : LEVEL_NAMES)
+		{
+			if (EqualIgnoreCase(a_name, level.name))
+				return level.level;
+		}
 		return std::nullopt;
 	}
 

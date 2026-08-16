@@ -18,40 +18,29 @@ namespace Addictol::ImguiPlatform
 		kAE
 	};
 
-	[[nodiscard]] constexpr std::string_view Describe(Runtime a_runtime) noexcept
-	{
-		switch (a_runtime)
-		{
-		case Runtime::kOG:
-			return "OG";
-		case Runtime::kNG:
-			return "NG";
-		default:
-			return "AE";
-		}
-	}
-
 	struct TargetId
 	{
 		uint64_t og{ 0 };
 		uint64_t ng{ 0 };
 		uint64_t ae{ 0 };
+
+		[[nodiscard]] constexpr uint64_t For(Runtime a_runtime) const noexcept
+		{
+			return a_runtime == Runtime::kOG ? og : a_runtime == Runtime::kNG ? ng : ae;
+		}
 	};
 
 	// UIEndFrame is the only engine function this provider patches; every id was round tripped per runtime.
 	inline constexpr TargetId kUIEndFrameId{ 137303, 2284763, 2284763 };
 
+	[[nodiscard]] constexpr std::string_view Describe(Runtime a_runtime) noexcept
+	{
+		return a_runtime == Runtime::kOG ? "OG" : a_runtime == Runtime::kNG ? "NG" : "AE";
+	}
+
 	[[nodiscard]] constexpr uint64_t UIEndFrameId(Runtime a_runtime) noexcept
 	{
-		switch (a_runtime)
-		{
-		case Runtime::kOG:
-			return kUIEndFrameId.og;
-		case Runtime::kNG:
-			return kUIEndFrameId.ng;
-		default:
-			return kUIEndFrameId.ae;
-		}
+		return kUIEndFrameId.For(a_runtime);
 	}
 
 	// Each signature runs into runtime specific bytes because the bare prologue repeats across hundreds of functions.
@@ -68,15 +57,9 @@ namespace Addictol::ImguiPlatform
 
 	[[nodiscard]] constexpr const std::initializer_list<uint8_t>& UIEndFrameSignature(Runtime a_runtime) noexcept
 	{
-		switch (a_runtime)
-		{
-		case Runtime::kOG:
-			return kUIEndFrameSignatureOG;
-		case Runtime::kNG:
-			return kUIEndFrameSignatureNG;
-		default:
-			return kUIEndFrameSignatureAE;
-		}
+		return a_runtime == Runtime::kOG ? kUIEndFrameSignatureOG :
+			a_runtime == Runtime::kNG ? kUIEndFrameSignatureNG :
+			kUIEndFrameSignatureAE;
 	}
 
 	// A candidate of a different length is a mismatch: partial prologue agreement proves nothing.
