@@ -202,7 +202,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("FollowerStrayBulletFix.dll"))
 		{
-			Skip("Companion Shoots At Player Fix is installed"sv);
+			Skip("Standalone 'FollowerStrayBulletFix.dll' is installed, skipping module"sv);
 			return false;
 		}
 

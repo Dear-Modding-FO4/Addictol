@@ -57,7 +57,7 @@ namespace Addictol
 	{
 		if (RELEX::IsRuntimeOG() && IsModDLLPresent("Drop7FFFPatch.dll"))
 		{
-			Skip("Drop7FFFPatch.dll is installed"sv);
+			Skip("Standalone 'Drop7FFFPatch.dll' is installed, skipping module"sv);
 			return false;
 		}
 
