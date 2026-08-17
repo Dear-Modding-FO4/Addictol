@@ -11,13 +11,13 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesManyItems{ "Fixes"sv, "bManyItems"sv, true };
 
-	using TDropItemIntoWorld = uint32_t* (*)(RE::TESObjectREFR*, uint32_t*, RE::TESBoundObject*, int32_t, RE::TESObjectREFR*, 
+	using TDropItemIntoWorld = uint32_t* (*)(RE::TESObjectREFR*, uint32_t*, RE::TESBoundObject*, int32_t, RE::TESObjectREFR*,
 		RE::NiPoint3*, RE::NiPoint3*, RE::ExtraDataList*);
 	using TExtraDataList__Ctor = void (*)(RE::ExtraDataList*);
 	using TExtraDataList__CopyExtraList = void (*)(RE::ExtraDataList*, RE::ExtraDataList*);
 	using TExtraDataList__SetCount = void (*)(RE::ExtraDataList*, int16_t);
 
-	TDropItemIntoWorld DropItemIntoWorld_orig = nullptr; 
+	TDropItemIntoWorld DropItemIntoWorld_orig = nullptr;
 	TExtraDataList__Ctor ExtraDataList__Ctor = nullptr;
 	TExtraDataList__CopyExtraList ExtraDataList__CopyExtraList_orig = nullptr;
 	TExtraDataList__SetCount ExtraDataList__SetCount_orig = nullptr;
@@ -55,7 +55,7 @@ namespace Addictol
 
 	bool ModuleManyItemsFix::DoQuery() const noexcept
 	{
-		if (RELEX::IsRuntimeOG() && REX::W32::GetModuleHandleW(L"Drop7FFFPatch.dll")) 
+		if (RELEX::IsRuntimeOG() && IsModDLLPresent("Drop7FFFPatch.dll"))
 		{
 			Skip("Drop7FFFPatch.dll is installed"sv);
 			return false;

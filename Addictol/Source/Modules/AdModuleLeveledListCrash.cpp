@@ -44,17 +44,17 @@ namespace Addictol
 
 	bool ModuleLeveledListCrash::DoQuery() const noexcept
 	{
-		return true;
-	}
-
-	bool ModuleLeveledListCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
 		if (IsModDLLPresent("GLXRM_InjectionBlocker.dll"))
 		{
 			Skip("GLXRM_InjectionBlocker.dll is installed"sv);
 			return false;
 		}
 
+		return true;
+	}
+
+	bool ModuleLeveledListCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
 		REL::Relocation target{ REL::ID{ 860553, 2193269 }, REL::Offset{ 0x6C, 0x6D } };
 		AddScriptAddedLeveledObject_Original = target.write_call<5>(AddScriptAddedLeveledObject_Hook);
 
