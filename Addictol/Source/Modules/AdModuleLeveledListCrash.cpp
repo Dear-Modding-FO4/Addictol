@@ -11,7 +11,7 @@ namespace Addictol
 	typedef void(AddScriptAddedLeveledObject_Signature)(RE::TESLeveledList*, RE::TESForm*, uint16_t, uint16_t, RE::TESForm*);
 	REL::Relocation<AddScriptAddedLeveledObject_Signature> AddScriptAddedLeveledObject_Original;
 
-	// it's worth noting that this may be susceptible to the same issue as LeveledListEntryCount where 
+	// it's worth noting that this may be susceptible to the same issue as LeveledListEntryCount where
 	// entryCount is inaccurate sometimes, so we should keep an eye on it
 	static void AddScriptAddedLeveledObject_Hook(RE::TESLeveledList* a_this, RE::TESForm* a_owner, uint16_t a_level,
 		uint16_t a_count, RE::TESForm* a_form)
@@ -49,7 +49,7 @@ namespace Addictol
 
 	bool ModuleLeveledListCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (REX::W32::GetModuleHandleW(L"GLXRM_InjectionBlocker.dll"))
+		if (IsModDLLPresent("GLXRM_InjectionBlocker.dll"))
 		{
 			Skip("GLXRM_InjectionBlocker.dll is installed"sv);
 			return false;

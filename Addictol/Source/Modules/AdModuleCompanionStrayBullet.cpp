@@ -133,7 +133,7 @@ namespace Addictol
 			RE::TESObjectREFR *ref = refPtr.get();
 			if (ref && ref->GetSavedFormType() == RE::ENUM_FORM_ID::kACHR)
 				return static_cast<RE::Actor *>(ref);
-			
+
 			return nullptr;
 		}
 
@@ -200,7 +200,7 @@ namespace Addictol
 
 	bool ModuleCompanionStrayBullet::DoQuery() const noexcept
 	{
-		if (REX::W32::GetModuleHandleW(L"FollowerStrayBulletFix.dll")) 
+		if (IsModDLLPresent("FollowerStrayBulletFix.dll"))
 		{
 			Skip("Companion Shoots At Player Fix is installed"sv);
 			return false;
@@ -216,7 +216,7 @@ namespace Addictol
 		{
 			if (a_msg->type == F4SE::MessagingInterface::kGameDataReady)
 				companionStrayBulletDetail::RegisterCrosshairPickSink();
-			
+
 			return true;
 		}
 

@@ -1181,7 +1181,7 @@ namespace Addictol
 
 	bool ModuleFullPrecisionDecals::DoQuery() const noexcept
 	{
-		if (REX::W32::GetModuleHandleW(L"DecalFix.dll"))
+		if (IsModDLLPresent("DecalFix.dll"))
 		{
 			Skip("DecalFix.dll is present; standalone fix already active"sv);
 			return false;

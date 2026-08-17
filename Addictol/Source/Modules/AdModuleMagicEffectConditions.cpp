@@ -73,7 +73,7 @@ namespace Addictol
 
 	bool ModuleMagicEffectConditions::DoQuery() const noexcept
 	{
-		if (REX::W32::GetModuleHandleW(L"MGEFConditionFix.dll"))
+		if (IsModDLLPresent("MGEFConditionFix.dll"))
 		{
 			Skip("MGEFConditionFix.dll is present; standalone fix already active"sv);
 			return false;
