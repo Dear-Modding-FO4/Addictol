@@ -491,10 +491,9 @@ namespace Addictol
 			return false;
 
 		auto hmod = REX::W32::GetModuleHandleA(moduleName);
-		if (!hmod)
-			return false;
+		auto dllPresent = std::filesystem::exists(std::format("{}Data\\F4SE\\Plugins\\{}", AdGetRuntimeDirectory(), moduleName));
 
-		if (!std::filesystem::exists(std::format("{}Data\\F4SE\\Plugins\\{}", AdGetRuntimeDirectory(), moduleName)))
+		if (!hmod && !dllPresent)
 			return false;
 
 		return true;

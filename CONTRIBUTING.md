@@ -317,7 +317,7 @@ bool ModuleToggleGrassCommand::DoQuery() const noexcept
 ## Patching safely
 
 **Disable yourself, do not crash.** If a patch cannot apply safely, return `false` from `DoQuery()`
-and log why with `REX::WARN`. Never terminate the process or deliberately fault over a condition you
+and log why with `Skip`. Never terminate the process or deliberately fault over a condition you
 merely dislike. Termination is legitimate only when quitting is the feature, as in `SafeExit`, or
 behind an explicit user choice in a message box.
 
@@ -325,14 +325,14 @@ Real reasons modules bow out, all from current code:
 
 ```cpp
 // A standalone mod already fixes this
-if (REX::W32::GetModuleHandleW(L"FollowerStrayBulletFix.dll"))
+if (IsModDLLPresent("FollowerStrayBulletFix.dll"))
 {
-	REX::WARN("..."sv);
+	Skip("..."sv);
 	return false;
 }
 
 // Only conflicts on one runtime
-if (RELEX::IsRuntimeOG() && REX::W32::GetModuleHandleW(L"Drop7FFFPatch.dll"))
+if (RELEX::IsRuntimeOG() && IsModDLLPresent("Drop7FFFPatch.dll"))
 	return false;
 ```
 
@@ -349,7 +349,7 @@ byte patches should verify. It costs a few bytes of code and converts "a future 
 corrupts memory" into "the module cleanly disables itself".
 
 **Check for conflicts.** If a standalone mod already fixes the same bug, detect it with
-`REX::W32::GetModuleHandleW` and stand down rather than double patching. Probe for several filenames
+`IsModDLLPresent` and stand down rather than double patching. Probe for several filenames
 when a mod ships under more than one name.
 
 **Respect Wine and Proton.** Use `Addictol::UserUseWine()` to gate threading and performance paths
