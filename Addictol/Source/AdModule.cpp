@@ -1,8 +1,10 @@
 #include <AdModule.h>
 
+#include <RE/C/ConsoleLog.h>
+
 namespace Addictol
 {
-	Module::Module(const char* a_name, const REX::TOML::Bool<>* a_option, 
+	Module::Module(const char* a_name, const REX::TOML::Bool<>* a_option,
 		std::initializer_list<uint32_t> a_listeners, bool a_papyrusListener) :
 		name(a_name),
 		option(a_option),
@@ -32,6 +34,10 @@ namespace Addictol
 	{
 		skipped = true;
 		skipReason.assign(a_reason);
+
+		RE::ConsoleLog *log = RE::ConsoleLog::GetSingleton();
+		if (log)
+			log->Log("Addictol Module '{}': {}.", name, a_reason);
 	}
 
 	void Module::ClearSkip() const noexcept
