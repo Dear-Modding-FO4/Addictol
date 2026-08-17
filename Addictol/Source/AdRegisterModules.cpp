@@ -293,6 +293,7 @@ void AdRegisterModules()
 	modules.Register(sModuleControlSamplers,				kGameDataReady);
 	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
+	modules.Register(sModuleFasterWorkshop,					kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);

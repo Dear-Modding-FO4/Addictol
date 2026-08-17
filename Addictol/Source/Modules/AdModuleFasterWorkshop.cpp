@@ -102,25 +102,19 @@ namespace Addictol
 				for (const auto& object : objectArray)
 				{
 					if (!object || !object->createdItem)
-					{
 						continue;
-					}
 
 					// Use only 1 Keyword from Possibly Corrupt Objects
 					uint32_t count = object->filterKeywords.size;
 					if (count > 32)
-					{
 						count = 1;
-					}
 
 					// Recipe Filter
 					auto recipeFiltered{ std::span{object->filterKeywords.array, count} };
 
 					if (recipeFiltered.empty())
-					{
 						// Keyword Count is Empty
 						continue;
-					}
 
 					for (int i{ 0 }; i < recipeFiltered.size(); ++i)
 					{
@@ -134,9 +128,7 @@ namespace Addictol
 
 						auto& keywordValue{ recipeFiltered[i] };
 						if (const RE::BGSKeyword* keyword{ GetKeywordByIndex(RE::KeywordType::kRecipeFilter, keywordValue.keywordIndex) }; keyword)
-						{
 							g_cobjMap[keyword].push_back(object);
-						}
 					}
 				}
 
@@ -204,9 +196,7 @@ namespace Addictol
 						for (auto* cobj : it->second)
 						{
 							if (RE::Workshop::WorkshopCanShowRecipe(const_cast<RE::BGSConstructibleObject*>(cobj), keyword))
-							{
 								return true;
-							}
 						}
 					}
 				}
@@ -344,7 +334,7 @@ namespace Addictol
 	}
 
 	ModuleFasterWorkshop::ModuleFasterWorkshop() :
-		Module("Faster Workshop", &bPatchesFasterWorkshop, { F4SE::MessagingInterface::kGameDataReady })
+		Module("Faster Workshop", &bPatchesFasterWorkshop)
 	{}
 
 	bool ModuleFasterWorkshop::DoQuery() const noexcept
@@ -354,38 +344,38 @@ namespace Addictol
 
 	bool ModuleFasterWorkshop::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation HookCheckForValidChildrenTarget{ REL::ID{ 934716, 2195480 }, REL::Offset{ 0x51, 0x4F } };
-		REL::Relocation HookIconLoadLagTarget{ REL::ID{ 1280212, 2224975 }, REL::Offset{ 0x3A5, 0x3A0 } };
-
-		// Workshop Lag Fix
-		RELEX::DetourCall(HookCheckForValidChildrenTarget.address(), (uintptr_t)&fasterWorkshopDetail::CachedCheckForValidChildren);
-
-		if (RELEX::IsRuntimeOG())
-			RELEX::XbyakJump<fasterWorkshopDetail::LeafNodePatch>(fasterWorkshopDetail::LeafNodeTargetOG());
+		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
+			fasterWorkshopDetail::ClearBuiltMap();
 		else
 		{
-			*(uintptr_t*)&fasterWorkshopDetail::Workshop__Workbench__AddRecipe = REL::ID(2195494).address();
-			*(uintptr_t*)&fasterWorkshopDetail::GetDefaultObjectFromDefaultManager = REL::ID(2192850).address();
+			REL::Relocation HookCheckForValidChildrenTarget{ REL::ID{ 934716, 2195480 }, REL::Offset{ 0x51, 0x4F } };
+			REL::Relocation HookIconLoadLagTarget{ REL::ID{ 1280212, 2224975 }, REL::Offset{ 0x3A5, 0x3A0 } };
 
-			RELEX::DetourJump(REL::ID(2195247).address(), (uintptr_t)&fasterWorkshopDetail::Workshop__Workbench__StoreAll);
+			// Workshop Lag Fix
+			RELEX::DetourCall(HookCheckForValidChildrenTarget.address(), (uintptr_t)&fasterWorkshopDetail::CachedCheckForValidChildren);
+
+			if (RELEX::IsRuntimeOG())
+				RELEX::XbyakJump<fasterWorkshopDetail::LeafNodePatch>(fasterWorkshopDetail::LeafNodeTargetOG());
+			else
+			{
+				*(uintptr_t*)&fasterWorkshopDetail::Workshop__Workbench__AddRecipe = REL::ID(2195494).address();
+				*(uintptr_t*)&fasterWorkshopDetail::GetDefaultObjectFromDefaultManager = REL::ID(2192850).address();
+
+				RELEX::DetourJump(REL::ID(2195247).address(), (uintptr_t)&fasterWorkshopDetail::Workshop__Workbench__StoreAll);
+			}
+
+			// Icon Lag Fix
+			if (RELEX::IsRuntimeOG())
+				RELEX::WriteSafe(HookIconLoadLagTarget.address(), { 0x90, 0x90, 0x90 });
+			else
+				RELEX::WriteSafe(HookIconLoadLagTarget.address(), { 0x66, 0x90 });
 		}
-
-		// Icon Lag Fix
-		if (RELEX::IsRuntimeOG())
-			RELEX::WriteSafe(HookIconLoadLagTarget.address(), { 0x90, 0x90, 0x90 });
-		else
-			RELEX::WriteSafe(HookIconLoadLagTarget.address(), { 0x66, 0x90 });
 
 		return true;
 	}
 
 	bool ModuleFasterWorkshop::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
-		{
-			fasterWorkshopDetail::ClearBuiltMap();
-		}
-
 		return true;
 	}
 
