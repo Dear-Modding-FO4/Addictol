@@ -64,7 +64,7 @@ namespace RELEX
 
 		[[nodiscard]] inline bool Empty() const noexcept { return !handle; }
 		[[nodiscard]] Result WaitFor(uint32_t a_ms, bool a_alertable = false) const noexcept;
-		
+
 		void Set() const noexcept;
 		void Reset() const noexcept;
 	};
@@ -264,7 +264,7 @@ namespace Addictol
 		[[nodiscard]] virtual double Now() const noexcept = 0;
 	};
 
-	class QpcTimer : 
+	class QpcTimer :
 		public ITimer
 	{
 		uint64_t freq{ 0 };
@@ -319,6 +319,7 @@ namespace Addictol
 	[[nodiscard]] bool UserUseWine() noexcept;
 	[[nodiscard]] bool IsWineBuiltinDLL(const char* moduleName) noexcept;
 	[[nodiscard]] bool IsWineFakeDLL(const char* moduleName) noexcept;
+	[[nodiscard]] bool IsModDLLPresent(const char* moduleName) noexcept;
 
 	template <class T>
 	void emplace_vtable(T* a_ptr)

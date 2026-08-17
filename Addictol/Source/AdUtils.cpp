@@ -372,7 +372,7 @@ namespace Addictol
 			ini.SetValue(sec.c_str(), op.c_str(), a_value, nullptr, true);
 			ini.SaveFile(a_INIFile);
 		}
-		
+
 		return WritePrivateProfileStringW(sec.c_str(), op.c_str(), a_value, a_INIFile);
 	}
 
@@ -483,5 +483,20 @@ namespace Addictol
 
 		static constexpr char wineFakeSignature[] = "Wine placeholder DLL";
 		return !std::memcmp(dos + 1, wineFakeSignature, sizeof(wineFakeSignature));
+	}
+
+	bool IsModDLLPresent(const char* moduleName) noexcept
+	{
+		if (!moduleName)
+			return false;
+
+		auto hmod = REX::W32::GetModuleHandleA(moduleName);
+		if (!hmod)
+			return false;
+
+		if (!std::filesystem::exists(std::format("{}Data\\F4SE\\Plugins\\{}", AdGetRuntimeDirectory(), moduleName)))
+			return false;
+
+		return true;
 	}
 }
