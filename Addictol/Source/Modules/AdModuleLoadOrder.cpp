@@ -12,48 +12,6 @@ namespace Addictol
 
 	namespace loadOrderDetail
 	{
-		struct Entry
-		{
-			const char* 	fileName;		// 00
-			std::byte 		unk08[0x98];	// 08
-			std::uint32_t 	index;			// A0
-			std::byte 		unkA4[0x15];	// A4
-			bool 			checked;		// B9
-			bool 			invalid;		// BA
-		};
-
-		struct ModManagerSetChecked
-		{
-			static std::uintptr_t thunk(Entry* a_entry, bool a_checked)
-			{
-				if (!a_checked)
-				{
-					RE::TESDataHandler* dataHandler = RE::TESDataHandler::GetSingleton();
-					const RE::TESFile* file = dataHandler && a_entry->fileName ? dataHandler->LookupModByName(a_entry->fileName) : nullptr;
-
-					if (file && file->IsActive())
-						a_checked = true;
-				}
-
-				return func(a_entry, a_checked);
-			}
-
-			static inline REL::Relocation<decltype(thunk)> func;
-		};
-
-		struct TESFileSetChecked
-		{
-			static void thunk(RE::TESFile* a_self, bool a_checked)
-			{
-				if (!a_checked && a_self->IsActive())
-					a_checked = true;
-
-				return func(a_self, a_checked);
-			}
-
-			static inline REL::Relocation<decltype(thunk)> func;
-		};
-
 		static BOOL WINAPI SetFileAttributes(LPCSTR a_fileName, DWORD a_fileAttributes) noexcept
 		{
 			const auto currentAttributes = ::GetFileAttributesA(a_fileName);
@@ -173,8 +131,6 @@ namespace Addictol
 		// Targets
 		const auto targetSetFileAttributes1 	= REL::Relocation{ REL::ID{ 4476764 }, REL::Offset{ 0x074 } }.address();
 		const auto targetSetFileAttributes2 	= REL::Relocation{ REL::ID{ 2189106 }, REL::Offset{ 0x092 } }.address();
-		const auto targetSetChecked1 			= REL::Relocation{ REL::ID{ 4487533 }, REL::Offset{ 0x0A9 } }.address();
-		const auto targetSetChecked2 			= REL::Relocation{ REL::ID{ 4487533 }, REL::Offset{ 0x0B8 } }.address();
 		const auto targetValidateDependencies 	= REL::Relocation{ REL::ID{ 4487642 }, REL::Offset{ 0x221 } }.address();
 		const auto targetDeferLoop				= REL::Relocation{ REL::ID{ 8517260 }, REL::Offset{ 0x0AD } }.address();
 		const auto targetDeferRefresh			= REL::Relocation{ REL::ID{ 4487501 }, REL::Offset{ 0x04E } }.address();
@@ -186,8 +142,6 @@ namespace Addictol
 		// Validate
 		if (!RELEX::Validate(targetSetFileAttributes1,		{ 0xFF, 0x15 })				||
 			!RELEX::Validate(targetSetFileAttributes2, 		{ 0xFF, 0x15 })				||
-			!RELEX::Validate(targetSetChecked1,				{ 0xE8 })					||
-			!RELEX::Validate(targetSetChecked2,				{ 0xE8 })					||
 			!RELEX::Validate(targetValidateDependencies,	{ 0xE8 })					||
 			!RELEX::Validate(targetDeferLoop,				{ 0xE8 })					||
 			!RELEX::Validate(targetDeferRefresh,			{ 0xE8 })					||
@@ -201,10 +155,6 @@ namespace Addictol
 		// SetFileAttributes Patches
 		RELEX::DetourClassCall(targetSetFileAttributes1, &loadOrderDetail::SetFileAttributes);
 		RELEX::DetourClassCall(targetSetFileAttributes2, &loadOrderDetail::SetFileAttributes);
-
-		// SetChecked Patches
-		loadOrderDetail::ModManagerSetChecked::func = RELEX::DetourClassCall(targetSetChecked1, &loadOrderDetail::ModManagerSetChecked::thunk);
-		loadOrderDetail::TESFileSetChecked::func 	= RELEX::DetourClassCall(targetSetChecked2, &loadOrderDetail::TESFileSetChecked::thunk);
 
 		// Validate Dependencies Patch
 		loadOrderDetail::ModManagerValidateDependencies::func = RELEX::DetourClassCall(targetValidateDependencies, &loadOrderDetail::ModManagerValidateDependencies::thunk);
@@ -220,9 +170,7 @@ namespace Addictol
 		RELEX::WriteSafe(targetLoadOrder3, { 0xEB, 0x2B, 0x90, 0x90 });
 
 		// Validate the Funcs
-		return 	loadOrderDetail::ModManagerSetChecked::func != 0 &&
-				loadOrderDetail::TESFileSetChecked::func != 0 &&
-				loadOrderDetail::ModManagerValidateDependencies::func != 0 &&
+		return 	loadOrderDetail::ModManagerValidateDependencies::func != 0 &&
 				loadOrderDetail::DeferRefresh_Loop::func != 0 &&
 				loadOrderDetail::DeferRefresh_Refresh::func != 0 &&
 				loadOrderDetail::DeferRefresh_Finish::func != 0;
