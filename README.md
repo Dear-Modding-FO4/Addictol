@@ -21,7 +21,7 @@ One DLL covers all three; there is no separate download per version.
 | --- | --- |
 | OG | 1.10.163 |
 | NG | 1.10.984 |
-| AE | 1.11.221 |
+| AE | 1.11.240 |
 
 ## Features
 
