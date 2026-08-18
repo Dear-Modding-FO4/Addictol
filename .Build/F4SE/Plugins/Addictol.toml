@@ -43,7 +43,8 @@ bBSPreCulledObjects = true
 bINISettingCollection = true
 
 # Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355.
-bArchiveLimits = true
+# Off by default: 1.11.240 raised the limit natively and changed the layout this patches.
+bArchiveLimits = false
 
 # Automatically swaps inputs between Keyboard + Mouse / Controller.
 bInputSwitch = false
