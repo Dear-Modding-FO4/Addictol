@@ -223,6 +223,17 @@ namespace Addictol
 		Module("MaxPapyrusOps", &bFixesBakaMaxPapyrusOps)
 	{}
 
+	bool ModuleMaxPapyrusOps::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("BakaMaxPapyrusOps.dll"))
+		{
+			Skip("Standalone 'BakaMaxPapyrusOps.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleMaxPapyrusOps::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kPostLoad)
