@@ -55,7 +55,13 @@ namespace Addictol
 
 	bool ModuleManyItemsFix::DoQuery() const noexcept
 	{
-		if (RELEX::IsRuntimeOG() && IsModDLLPresent("Drop7FFFPatch.dll"))
+		if (IsModDLLPresent("AddFFFFFix.dll"))
+		{
+			Skip("Standalone 'AddFFFFFix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		if (IsModDLLPresent("Drop7FFFPatch.dll"))
 		{
 			Skip("Standalone 'Drop7FFFPatch.dll' is installed, skipping module"sv);
 			return false;
