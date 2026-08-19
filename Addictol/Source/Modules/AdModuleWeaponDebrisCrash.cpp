@@ -9,6 +9,17 @@ namespace Addictol
 		Module("Weapon Debris Crash", &bFixesWeaponDebrisCrash)
 	{}
 
+	bool ModuleWeaponDebrisCrash::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("WeaponDebrisCrashFix.dll"))
+		{
+			Skip("Standalone 'WeaponDebrisCrashFix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleWeaponDebrisCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const REL::Relocation func{ REL::ID{ 22388, 2195766 } };
