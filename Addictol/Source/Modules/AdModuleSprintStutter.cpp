@@ -9,6 +9,17 @@ namespace Addictol
 		Module("Sprint Stutter", &bFixesSprintStutter)
 	{}
 
+	bool ModuleSprintStutter::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("SprintStutteringFix.dll"))
+		{
+			Skip("Standalone 'SprintStutteringFix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleSprintStutter::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		static REL::Relocation<float*> CameraSnapThreshold{ REL::ID{ 61995, 2664490 } };
