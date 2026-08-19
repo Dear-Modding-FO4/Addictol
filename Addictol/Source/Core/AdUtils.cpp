@@ -194,13 +194,17 @@ namespace RELEX
 
 	bool Validate(uintptr_t a_target, const std::initializer_list<uint8_t>& a_expected) noexcept
 	{
-		return !std::memcmp(reinterpret_cast<const void*>(a_target), a_expected.begin(), a_expected.size());
+		return a_expected.size() != 0 && !std::memcmp(reinterpret_cast<const void*>(a_target), a_expected.begin(), a_expected.size());
+	}
+
+	bool Validate(uintptr_t a_target, std::span<const uint8_t> a_expected) noexcept
+	{
+		return !a_expected.empty() && !std::memcmp(reinterpret_cast<const void*>(a_target), a_expected.data(), a_expected.size());
 	}
 
 	bool ValidateUniqueSignature(uintptr_t a_target, std::span<const uint8_t> a_signature) noexcept
 	{
-		if (a_signature.empty() ||
-			std::memcmp(reinterpret_cast<const void*>(a_target), a_signature.data(), a_signature.size()) != 0)
+		if (!Validate(a_target, a_signature))
 			return false;
 
 		const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleA("Fallout4.exe"));
@@ -215,15 +219,40 @@ namespace RELEX
 				continue;
 			const auto* begin = reinterpret_cast<const uint8_t*>(base + section[index].VirtualAddress);
 			const auto size = static_cast<size_t>(section[index].Misc.VirtualSize);
-			size_t matches = 0;
+
+			bool matched = false;
 			for (size_t offset = 0; offset + a_signature.size() <= size; ++offset)
 			{
 				if (std::memcmp(begin + offset, a_signature.data(), a_signature.size()) == 0)
-					++matches;
+				{
+					if (matched)
+					 	return false;
+
+					matched = true;
+				}
 			}
-			return matches == 1;
+
+			return matched;
 		}
+
 		return false;
+	}
+
+	std::vector<uint8_t> GetWildcardSignature(uintptr_t a_target, std::span<const std::optional<uint8_t>> a_expected) noexcept
+	{
+		if (a_expected.empty())
+			return {};
+
+		std::vector<uint8_t> expected;
+		expected.reserve(a_expected.size());
+
+		const auto* target = reinterpret_cast<const std::uint8_t*>(a_target);
+		for (size_t i = 0; i < a_expected.size(); i++)
+		{
+			expected.push_back(a_expected[i].value_or(target[i]));
+		}
+
+		return expected;
 	}
 
 	uintptr_t TryDetourJump(uintptr_t a_target, uintptr_t a_function,

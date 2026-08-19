@@ -505,8 +505,8 @@ namespace Addictol
 		[[nodiscard]] static bool ValidateUIEndFrame(uintptr_t a_target, uint64_t a_id, Runtime a_runtime) noexcept
 		{
 			const auto& signature = UIEndFrameSignature(a_runtime);
-			if (!RELEX::Validate(a_target, signature) ||
-				!RELEX::ValidateUniqueSignature(a_target, signature))
+			if (!RELEX::Validate(a_target, RELEX::GetWildcardSignature(a_target, signature)) ||
+				!RELEX::ValidateUniqueSignature(a_target, RELEX::GetWildcardSignature(a_target, signature)))
 			{
 				REX::WARN("Platform Imgui: {} UIEndFrame id {} at {:X} failed exact unique-signature validation; installing nothing."sv,
 					Describe(a_runtime), a_id, a_target);

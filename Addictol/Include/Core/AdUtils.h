@@ -141,7 +141,9 @@ namespace RELEX
 	uintptr_t DetourIATDelayed(uintptr_t a_targetModule, const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept;
 
 	[[nodiscard]] bool Validate(uintptr_t a_target, const std::initializer_list<uint8_t>& a_expected) noexcept;
+	[[nodiscard]] bool Validate(uintptr_t a_target, std::span<const uint8_t> a_expected) noexcept;
 	[[nodiscard]] bool ValidateUniqueSignature(uintptr_t a_target, std::span<const uint8_t> a_signature) noexcept;
+	[[nodiscard]] std::vector<uint8_t> GetWildcardSignature(uintptr_t a_target, std::span<const std::optional<uint8_t>> a_expected) noexcept;
 
 	[[nodiscard]] __forceinline bool Validate(const REL::Relocation<>& a_target,
 		const std::initializer_list<uint8_t>& a_expected) noexcept
