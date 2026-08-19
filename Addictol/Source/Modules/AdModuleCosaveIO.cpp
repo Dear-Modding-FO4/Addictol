@@ -366,6 +366,17 @@ namespace Addictol
 		Module("Cosave IO", &bCosaveIO)
 	{}
 
+	bool ModuleCosaveIO::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("FastSavingFallout.dll"))
+		{
+			Skip("Standalone 'FastSavingFallout.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleCosaveIO::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		using namespace cosaveIODetail;

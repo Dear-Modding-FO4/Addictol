@@ -35,13 +35,24 @@ namespace Addictol
 		Module("Save Compression", &bPatchesSaveCompression)
 	{}
 
+	bool ModuleSaveCompression::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("FastSavingFallout.dll"))
+		{
+			Skip("Standalone 'FastSavingFallout.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleSaveCompression::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation{ REL::ID{ 104318, 2228204 } }.address();
 
 		if (!(saveCompDetail::CompressBufferOrig = reinterpret_cast<saveCompDetail::TCompressBuffer>(
 			RELEX::TryDetourJump(target, reinterpret_cast<uintptr_t>(&saveCompDetail::CompressBuffer),
-			// CompressBuffer prologue, byte-identical OG/NG/AE. 
+			// CompressBuffer prologue, byte-identical OG/NG/AE.
 			{
 			0x48, 0x8B, 0xC4, 0x48, 0x89, 0x68, 0x10, 0x48, 0x89, 0x70, 0x18, 0x48, 0x89, 0x78, 0x20,
 			0x41, 0x56, 0x48, 0x81, 0xEC, 0x90, 0x00, 0x00, 0x00, 0x33, 0xFF, 0x49, 0x8B, 0xE8, 0x8B,
