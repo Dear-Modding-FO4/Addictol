@@ -9,6 +9,17 @@ namespace Addictol
 		Module("IO Cacher", &bFixesIOChacher)
 	{}
 
+	bool ModuleIOCacher::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("libdiskCacheEnabler.dll"))
+		{
+			Skip("Standalone 'libdiskCacheEnabler.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleIOCacher::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto id = REL::ID{ 165043, 2268775 };
