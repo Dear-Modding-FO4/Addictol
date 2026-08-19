@@ -511,6 +511,23 @@ namespace Addictol
 		EscapeFreezeMetricSource(kEscapeFreezeMetricSchema, &escapeFreezeDetail::ReadTelemetry)
 	{}
 
+	bool ModuleEscapeFreeze::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("EscapeFreeze.dll"))
+		{
+			Skip("Standalone 'EscapeFreeze.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		if (IsModDLLPresent("EscapeFreezeNG.dll"))
+		{
+			Skip("Standalone 'EscapeFreezeNG.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleEscapeFreeze::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		using namespace escapeFreezeDetail;
