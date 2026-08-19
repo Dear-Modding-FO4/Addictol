@@ -92,6 +92,17 @@ namespace Addictol
 		Module("Water Jetpack Fix", &bFixesWaterJetpackFix, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
+	bool ModuleWaterJetpackFix::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("WaterJetpackFix.dll"))
+		{
+			Skip("Standalone 'WaterJetpackFix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleWaterJetpackFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
