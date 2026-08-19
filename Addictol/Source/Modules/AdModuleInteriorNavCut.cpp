@@ -213,6 +213,17 @@ namespace Addictol
 		Module("Interior NavCut", &bFixesInteriorNavCut, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
+	bool ModuleInteriorNavCut::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("Interior-NavCut-Fix.dll"))
+		{
+			Skip("Standalone 'Interior-NavCut-Fix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleInteriorNavCut::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
