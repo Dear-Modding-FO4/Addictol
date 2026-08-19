@@ -13,6 +13,7 @@ namespace Addictol
 		ModuleAudioSwitch();
 		virtual ~ModuleAudioSwitch() = default;
 
+		[[nodiscard]] virtual bool DoQuery() const noexcept override;
 		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
 		[[nodiscard]] virtual bool HasProcessDefender() noexcept override;
 	};

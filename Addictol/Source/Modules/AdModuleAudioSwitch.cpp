@@ -1391,7 +1391,7 @@ namespace Addictol
 			{
 				static REL::Relocation<BSXAudio2Monitors*> arr{ REL::ID{ 850059, 2666257 } };
 				return arr.get();
-			}			
+			}
 
 			// add member
 			X3DAUDIO_HANDLE X3DAudioHandle;	// 18
@@ -1412,7 +1412,7 @@ namespace Addictol
 				RunDisabled = 1 << 5
 			};
 
-			[[nodiscard]] inline uint8_t HasStateFlag(State a_state) const noexcept 
+			[[nodiscard]] inline uint8_t HasStateFlag(State a_state) const noexcept
 			{ return (stateFlags & std::to_underlying(a_state)) != 0; }
 			inline void SetStateFlag(State a_state) noexcept { stateFlags |= std::to_underlying(a_state); }
 			inline void UnsetStateFlag(State a_state) noexcept { stateFlags &= ~std::to_underlying(a_state); }
@@ -1676,7 +1676,7 @@ namespace Addictol
 			KillAudioMonitors();
 			KillEngine();
 
-			a_audioManager->SetManagerInitialized(false);	// important: needs disable it, otherwise, 
+			a_audioManager->SetManagerInitialized(false);	// important: needs disable it, otherwise,
 															// the game will still try to play the sounds.
 			a_audioManager->SetPlatformInitialized(false);
 			a_audioManager->SetPlatformInitFailed(false);
@@ -1706,7 +1706,7 @@ namespace Addictol
 				const auto recreatedEngine = Engine.load(std::memory_order_acquire);
 				graph->registerCallbacks = recreatedEngine &&
 					SUCCEEDED(recreatedEngine->RegisterForCallbacks(graph));
-				
+
 				// Bethesda don't use X3DAUDIO_SPEED_OF_SOUND... they send magick value 24041.6
 				static REL::Relocation<float*> speed{ REL::ID{ 207777, 207777, 4563742 } };
 				X3DAudioInitialize(graph->channelMask, *speed, audio->X3DAudioHandle);
@@ -1720,7 +1720,7 @@ namespace Addictol
 				a_audioManager->ClearMaps();
 				a_audioManager->ClearCache();
 			}
-			
+
 			UpdateEvent.Reset();
 		}
 
@@ -1755,7 +1755,7 @@ namespace Addictol
 
 				std::thread([] {
 					// Timeout
-					std::this_thread::sleep_for(100ms); 
+					std::this_thread::sleep_for(100ms);
 					// Update
 					if (AudioBethesdaSystem::BSAudioManager::QInitialized())
 						AudioEngine::UpdateEvent.Set();
@@ -2009,6 +2009,17 @@ namespace Addictol
 		AudioPerformanceMetricSource(
 			kAudioPerformanceMetricSchema, &AudioEngine::ReadTelemetry)
 	{}
+
+	bool ModuleAudioSwitch::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("AudioDeviceFollowFix.dll"))
+		{
+			Skip("Standalone 'AudioDeviceFollowFix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
 
 	bool ModuleAudioSwitch::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
