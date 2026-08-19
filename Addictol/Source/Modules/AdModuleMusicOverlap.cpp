@@ -1,7 +1,7 @@
 // #original: https://github.com/aers/EngineFixesSkyrim64/blob/master/src/fixes/music_overlap.h
 
 #include <Modules/AdModuleMusicOverlap.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSMusicType.h>
 

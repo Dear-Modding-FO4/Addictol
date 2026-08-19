@@ -52,7 +52,7 @@ time. By convention also add the header as `<ClInclude>`, and add both to
 `VC/Addictol.vcxproj.filters` so they land in the right IDE folder. The `.filters` file affects only
 Visual Studio's presentation, not the build.
 
-**You do not include the precompiled header.** `Addictol/Include/AdPCH.h` is force included into
+**You do not include the precompiled header.** `Addictol/Include/Core/AdPCH.h` is force included into
 every translation unit via `/FI`. Never add anything to it that the build regenerates (notably
 `resource_version2.h`), which would invalidate the PCH on every build.
 
@@ -62,17 +62,19 @@ Addictol project, or the link step will not find the dependency libraries.
 ## Repository layout
 
 ```
-Addictol/Include/          AdModule.h (base class), AdUtils.h (RELEX helpers)
-Addictol/Include/Modules/  one header per feature module
-Addictol/Source/           AdPlugin.cpp (init, F4SE messages), AdModuleManager.cpp (lifecycle),
-                           AdRegisterModules.cpp (every module is registered here),
-                           AdConfigValidation.cpp (known config keys)
-Addictol/Source/Modules/   one .cpp per feature module (~80 of them)
-Addictol/Source/Menu/      the plugin-wide menu window, its widgets, and the log control panel
-VC/                        MSBuild solution and project files
-Depends/                   submodules and vendored libraries
-Version/                   version resource and the build number script
-.Build/F4SE/Plugins/       build output, the tracked shipped config, and shipped resources
+Addictol/Include/Core/       core infrastructure and utilities
+Addictol/Include/Memory/     memory allocation and tracing
+Addictol/Include/Zlib/       compression backend and helpers
+Addictol/Include/Telemetry/  telemetry interfaces and hub
+Addictol/Include/Menu/       menu interfaces and widgets
+Addictol/Include/Platform/   ImGui platform integration
+Addictol/Include/Modules/    one header per feature module
+Addictol/Source/             mirrors the concern folders under Include
+Addictol/Source/Modules/     one .cpp per feature module (~80 of them)
+VC/                          MSBuild solution and project files
+Depends/                     submodules and vendored libraries
+Version/                     version resource and the build number script
+.Build/F4SE/Plugins/         build output, the tracked shipped config, and shipped resources
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`
@@ -84,7 +86,7 @@ Crash logging is not part of this plugin. It ships separately as
 
 ## The module model
 
-Every feature is a subclass of `Addictol::Module` (`Addictol/Include/AdModule.h`) that owns exactly
+Every feature is a subclass of `Addictol::Module` (`Addictol/Include/Core/AdModule.h`) that owns exactly
 one concern. Nearly all are toggled by exactly one TOML key; a few are mandatory and always run.
 
 ```cpp
@@ -149,12 +151,12 @@ ones people forget.
 1. `Addictol/Include/Modules/AdModule<Name>.h`, the class declaration.
 2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the TOML option and the implementation.
 3. The constructor, inside that `.cpp`, wiring name, option, listener stages and Papyrus flag.
-4. `Addictol/Source/AdRegisterModules.cpp`: the `#include`, the `static auto sModule<Name> =
+4. `Addictol/Source/Core/AdRegisterModules.cpp`: the `#include`, the `static auto sModule<Name> =
    std::make_shared<...>()`, and the `modules.Register(...)` call.
 5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
 6. `.Build/F4SE/Plugins/Addictol.toml`, the key with a user facing comment under the right section.
    Skip it and the option is undiscoverable and cannot be overridden without a warning.
-7. `Addictol/Source/AdConfigValidation.cpp`, adding the key to `s_knownKeys`, or the plugin logs a
+7. `Addictol/Source/Core/AdConfigValidation.cpp`, adding the key to `s_knownKeys`, or the plugin logs a
    spurious `Config: unknown key` warning at every launch.
 
 ### Worked example
@@ -165,7 +167,7 @@ The header is boilerplate: a constructor and the four `DoX` overrides, each `[[n
 
 ```cpp
 #include <Modules/AdModuleUnalignedLoad.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {
@@ -295,7 +297,7 @@ porting an id from another mod, since mods that ship a single NG/AE DLL frequent
 across without checking.
 
 If a runtime has no equivalent site, gate the code rather than inventing an id. `RELEX::IsRuntimeOG()`,
-`IsRuntimeNG()` and `IsRuntimeAE()` are declared in `Addictol/Include/AdUtils.h`:
+`IsRuntimeNG()` and `IsRuntimeAE()` are declared in `Addictol/Include/Core/AdUtils.h`:
 
 ```cpp
 if (RELEX::IsRuntimeOG())
@@ -374,7 +376,7 @@ The default for small surgical changes such as flipping an instruction or NOPing
 the original disassembly next to the bytes; it is the only thing that makes such a patch reviewable.
 
 **Function detours** through the `RELEX` wrappers over Nukem Detours in
-`Addictol/Include/AdUtils.h`: `DetourJump`, `DetourCall`, `DetourVTable`, `DetourIAT`,
+`Addictol/Include/Core/AdUtils.h`: `DetourJump`, `DetourCall`, `DetourVTable`, `DetourIAT`,
 `DetourIATDelayed`, `DetourClassVTable`, plus the validating `TryDetourJump` and `TryDetourCall`.
 Prefer these over hand rolled hooks.
 

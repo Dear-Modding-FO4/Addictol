@@ -1,7 +1,7 @@
 #pragma once
 
-#include <AdMenuTargets.h>
-#include <AdTelemetry.h>
+#include <Menu/AdMenuTargets.h>
+#include <Telemetry/AdTelemetry.h>
 
 #include <array>
 #include <cstdio>

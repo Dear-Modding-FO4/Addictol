@@ -1,6 +1,6 @@
 #include <Modules/AdModuleInputSwitch.h>
-#include <AdUtils.h>
-#include <AdAssert.h>
+#include <Core/AdUtils.h>
+#include <Core/AdAssert.h>
 
 #include <RE/B/BSInputDeviceManager.h>
 #include <RE/B/BSInputEventUser.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <AdModule.h>
-#include <AdTelemetry.h>
+#include <Core/AdModule.h>
+#include <Telemetry/AdTelemetry.h>
 
 #include <atomic>
 

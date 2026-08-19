@@ -1,8 +1,8 @@
 #include <Modules/AdModuleLibDeflate.h>
-#include <AdUtils.h>
-#include <AdZlibBackend.h>
-#include <AdZlibInflate.h>
-#include <AdZlibTelemetry.h>
+#include <Core/AdUtils.h>
+#include <Zlib/AdZlibBackend.h>
+#include <Zlib/AdZlibInflate.h>
+#include <Zlib/AdZlibTelemetry.h>
 #include <Windows.h>
 
 #ifdef ERROR

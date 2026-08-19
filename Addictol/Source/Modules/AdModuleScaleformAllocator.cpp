@@ -1,6 +1,6 @@
 #include <Modules/AdModuleScaleformAllocator.h>
-#include <AdAllocator.h>
-#include <AdUtils.h>
+#include <Memory/AdAllocator.h>
+#include <Core/AdUtils.h>
 
 #include <Scaleform/S/SysAlloc.h>
 #include <Scaleform/M/MemoryHeap.h>

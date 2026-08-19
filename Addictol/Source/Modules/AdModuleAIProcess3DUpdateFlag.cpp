@@ -1,5 +1,5 @@
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/A/AIProcess.h>
 #include <RE/M/MiddleHighProcessData.h>

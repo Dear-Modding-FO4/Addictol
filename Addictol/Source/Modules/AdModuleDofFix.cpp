@@ -1,5 +1,5 @@
 #include <Modules/AdModuleDofFix.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSShaderAccumulator.h>
 #include <RE/I/ImageSpaceEffectDepthOfField.h>

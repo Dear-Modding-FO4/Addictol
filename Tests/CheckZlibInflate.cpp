@@ -1,4 +1,4 @@
-#include "../Addictol/Include/AdZlibInflate.h"
+#include "../Addictol/Include/Zlib/AdZlibInflate.h"
 #include "Harness.h"
 
 #include <algorithm>

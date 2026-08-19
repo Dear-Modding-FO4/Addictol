@@ -1,5 +1,5 @@
 #include <Modules/AdModuleCellInit.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/E/ExtraLocation.h>
 #include "RE/T/TESFormUtil.h"

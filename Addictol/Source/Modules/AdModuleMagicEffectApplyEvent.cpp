@@ -1,5 +1,5 @@
 #include <Modules/AdModuleMagicEffectApplyEvent.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/G/GameScript.h>
 #include <RE/T/TESMagicEffectApplyEvent.h>

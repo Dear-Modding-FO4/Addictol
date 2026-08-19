@@ -1,6 +1,6 @@
 #include <Modules/AdModuleEscapeFreeze.h>
-#include <AdEscapeFreezeState.h>
-#include <AdUtils.h>
+#include <Modules/AdEscapeFreezeState.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSGraphics.h>
 

@@ -1,5 +1,5 @@
 #include <Modules/AdModuleLoadOrder.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/T/TESDataHandler.h>
 #include <RE/T/TESFile.h>

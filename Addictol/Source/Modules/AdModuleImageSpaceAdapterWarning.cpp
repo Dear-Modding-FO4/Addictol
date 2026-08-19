@@ -1,5 +1,5 @@
 #include <Modules/AdModuleImageSpaceAdapterWarning.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/T/TESImageSpaceModifier.h>
 

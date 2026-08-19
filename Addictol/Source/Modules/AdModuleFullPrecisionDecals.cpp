@@ -1,5 +1,5 @@
 #include <Modules/AdModuleFullPrecisionDecals.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/Fallout.h>
 

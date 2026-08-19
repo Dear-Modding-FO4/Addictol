@@ -1,5 +1,5 @@
 #include <Modules/AdModuleWaterJetpackFix.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/A/ActiveEffect.h>
 #include <RE/B/bhkCharacterController.h>

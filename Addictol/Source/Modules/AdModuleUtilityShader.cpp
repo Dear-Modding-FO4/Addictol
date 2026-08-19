@@ -1,6 +1,6 @@
 #include <Modules/AdModuleUtilityShader.h>
-#include <AdUtils.h>
-#include <AdAssert.h>
+#include <Core/AdUtils.h>
+#include <Core/AdAssert.h>
 
 #include <RE/B/BSGraphics.h>
 

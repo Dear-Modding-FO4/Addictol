@@ -1,5 +1,5 @@
 #include <Modules/AdModuleActorIsHostileToActor.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/A/Actor.h>
 #include <RE/G/GameScript.h>

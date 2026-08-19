@@ -1,5 +1,5 @@
 #include <Modules/AdModuleProfile.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 #include <RE/S/Setting.h>
 
 #define strcasecmp _stricmp

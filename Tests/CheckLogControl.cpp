@@ -1,4 +1,4 @@
-#include "../Addictol/Include/AdLogControl.h"
+#include "../Addictol/Include/Core/AdLogControl.h"
 #include "Harness.h"
 
 #include <spdlog/logger.h>

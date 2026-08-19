@@ -1,5 +1,5 @@
 #include <Modules/AdModuleTESObjectREFRGetEncounterZone.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSEncounterZone.h>
 #include <RE/B/BGSLocation.h>

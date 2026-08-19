@@ -1,5 +1,5 @@
 #include <Modules/AdModuleSaveAddedSoundCategories.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSSoundCategory.h>
 #include <RE/S/Setting.h>

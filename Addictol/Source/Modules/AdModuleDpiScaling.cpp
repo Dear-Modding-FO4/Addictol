@@ -1,5 +1,5 @@
 #include <Modules/AdModuleDpiScaling.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <windows.h>
 

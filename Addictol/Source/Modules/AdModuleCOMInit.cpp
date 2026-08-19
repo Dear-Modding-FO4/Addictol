@@ -1,5 +1,5 @@
 #include <Modules/AdModuleCOMInit.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

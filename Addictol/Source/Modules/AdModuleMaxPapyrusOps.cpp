@@ -1,5 +1,5 @@
 #include <Modules/AdModuleMaxPapyrusOps.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSScript_Internal_IVMSaveLoadInterface.h>
 #include <RE/B/BSScript_SimpleAllocMemoryPagePolicy.h>

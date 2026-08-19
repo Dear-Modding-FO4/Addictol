@@ -1,6 +1,6 @@
-#include <AdImguiTheme.h>
-#include <AdMenu.h>
-#include <AdTelemetryHub.h>
+#include <Platform/AdImguiTheme.h>
+#include <Menu/AdMenu.h>
+#include <Telemetry/AdTelemetryHub.h>
 #include <Menu/AdMenuTelemetry.h>
 #include <Menu/AdMenuWidgets.h>
 

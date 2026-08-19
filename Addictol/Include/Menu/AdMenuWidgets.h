@@ -1,7 +1,7 @@
 #pragma once
 
-#include <AdMenuTargets.h>
-#include <AdUtils.h>
+#include <Menu/AdMenuTargets.h>
+#include <Core/AdUtils.h>
 
 #include <imgui/imgui.h>
 

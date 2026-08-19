@@ -1,0 +1,313 @@
+#include <Core/AdPlugin.h>
+#include <Core/AdUtils.h>
+#include <Modules/AdModuleThreads.h>
+#include <Modules/AdModuleGreyMovie.h>
+#include <Modules/AdModulePackageAllocateLocation.h>
+#include <Modules/AdModuleLibDeflate.h>
+#include <Modules/AdModuleSaveCompression.h>
+#include <Modules/AdModuleRobCoPatcherCache.h>
+#include <Modules/AdModuleProfile.h>
+#include <Modules/AdModuleLoadScreen.h>
+#include <Modules/AdModuleAchievements.h>
+#include <Modules/AdModuleLODDistance.h>
+#include <Modules/AdModuleInitTints.h>
+#include <Modules/AdModuleActorIsHostileToActor.h>
+#include <Modules/AdModuleFacegen.h>
+#include <Modules/AdModuleBGSAIWorldLocationRefRadius.h>
+#include <Modules/AdModuleSafeExit.h>
+#include <Modules/AdModuleUnalignedLoad.h>
+#include <Modules/AdModuleCellInit.h>
+#include <Modules/AdModuleMemoryManager.h>
+#include <Modules/AdModuleSmallblockAllocator.h>
+#include <Modules/AdModuleScaleformAllocator.h>
+#include <Modules/AdModuleWorkbenchSwap.h>
+#include <Modules/AdModuleManyItemsFix.h>
+#include <Modules/AdModuleMaxStdIO.h>
+#include <Modules/AdModuleMovementPlanner.h>
+#include <Modules/AdModuleEscapeFreeze.h>
+#include <Modules/AdModuleIOCacher.h>
+#include <Modules/AdModuleCosaveIO.h>
+#include <Modules/AdModuleBSMTAManager.h>
+#include <Modules/AdModuleBSPreCulledObjects.h>
+#include <Modules/AdModuleTESObjectREFRGetEncounterZone.h>
+#include <Modules/AdModuleINISettingCollection.h>
+#include <Modules/AdModulePipBoyLightInv.h>
+#include <Modules/AdModuleInteriorNavCut.h>
+#include <Modules/AdModuleControlSamplers.h>
+#include <Modules/AdModuleMagicEffectApplyEvent.h>
+#include <Modules/AdModuleMagicEffectConditions.h>
+#include <Modules/AdModuleEncounterZoneReset.h>
+#include <Modules/AdModuleArchiveLimits.h>
+#include <Modules/AdModuleImageSpaceAdapterWarning.h>
+#include <Modules/AdModuleDuplicateAddonNodeIndex.h>
+#include <Modules/AdModuleInputSwitch.h>
+#include <Modules/AdModuleLeveledListCrash.h>
+#include <Modules/AdModuleMaxPapyrusOps.h>
+#include <Modules/AdModuleCreateD3DAndSwapchain.h>
+#include <Modules/AdModuleCheckInternetAccess.h>
+#include <Modules/AdModuleFasterWorkshop.h>
+#include <Modules/AdModuleStolenPowerArmorOwnership.h>
+#include <Modules/AdModuleSaveAddedSoundCategories.h>
+#include <Modules/AdModuleCOMInit.h>
+#include <Modules/AdModulePapyrusGC.h>
+#include <Modules/AdModuleCombatMusic.h>
+#include <Modules/AdModuleWorkbenchSound.h>
+#include <Modules/AdModuleActorCauseSaveBloat.h>
+#include <Modules/AdModuleAnimSignedCrash.h>
+#include <Modules/AdModuleBethesdaNetCrash.h>
+#include <Modules/AdModuleMuzzleFlashLight.h>
+#include <Modules/AdModuleHighResBloom.h>
+#include <Modules/AdModuleAltTabFullscreen.h>
+#include <Modules/AdModulePowerGridScrap.h>
+#include <Modules/AdModuleDpiScaling.h>
+#include <Modules/AdModuleViewmodelShading.h>
+#include <Modules/AdModuleDofFix.h>
+#include <Modules/AdModuleUtilityShader.h>
+#include <Modules/AdModulePipBoyCursorConstraints.h>
+#include <Modules/AdModuleReferenceHandleLimitWarning.h>
+#include <Modules/AdModuleToggleGrassCommand.h>
+#include <Modules/AdModuleTextureLoadCrash.h>
+#include <Modules/AdModuleFullPrecisionDecals.h>
+#include <Modules/AdModuleMagicKeywordCrash.h>
+#include <Modules/AdModuleAttachLightCrash.h>
+#include <Modules/AdModuleDownwardAiming.h>
+#include <Modules/AdModuleSprintStutter.h>
+#include <Modules/AdModuleMoonRotation.h>
+#include <Modules/AdModuleWeaponDebrisCrash.h>
+#include <Modules/AdModuleCrashRemoveRef.h>
+#include <Modules/AdModuleClimateLoad.h>
+#include <Modules/AdModuleMusicOverlap.h>
+#include <Modules/AdModulePuddleCubemaps.h>
+#include <Modules/AdModuleCompanionStrayBullet.h>
+#include <Modules/AdModuleAudioSwitch.h>
+#include <Modules/AdModuleStringPoolRelease.h>
+#include <Modules/AdModuleLoadOrder.h>
+#include <Modules/AdModuleHUDMessageQueue.h>
+#include <Modules/AdModuleProcessIcon.h>
+#include <Modules/AdModuleWaterJetpackFix.h>
+#include <Modules/AdModuleAIProcess3DUpdateFlag.h>
+#include <Modules/AdModuleHighResLocalMaps.h>
+#include <Modules/AdModulePlatformImgui.h>
+#include <Modules/AdModuleMenu.h>
+
+// Create patches
+static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
+static auto sModuleGreyMovie						= std::make_shared<Addictol::ModuleGreyMovie>();
+static auto sModulePackageAllocateLocation			= std::make_shared<Addictol::ModulePackageAllocateLocation>();
+static auto sModuleLibDeflate						= std::make_shared<Addictol::ModuleLibDeflate>();
+static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
+static auto sModuleRobCoPatcherCache				= std::make_shared<Addictol::ModuleRobCoPatcherCache>();
+static auto sModuleProfile							= std::make_shared<Addictol::ModuleProfile>();
+static auto sModuleLoadScreen						= std::make_shared<Addictol::ModuleLoadScreen>();
+static auto sModuleAchievements						= std::make_shared<Addictol::ModuleAchievements>();
+static auto sModuleLODDistance						= std::make_shared<Addictol::ModuleLODDistance>();
+static auto sModuleInitTints						= std::make_shared<Addictol::ModuleInitTints>();
+static auto sModuleActorIsHostileToActor			= std::make_shared<Addictol::ModuleActorIsHostileToActor>();
+static auto sModuleFacegen							= std::make_shared<Addictol::ModuleFacegen>();
+static auto sModuleBGSAIWorldLocationRefRadius		= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
+static auto sModuleSafeExit							= std::make_shared<Addictol::ModuleSafeExit>();
+static auto sModuleUnalignedLoad					= std::make_shared<Addictol::ModuleUnalignedLoad>();
+static auto sModuleCellInit							= std::make_shared<Addictol::ModuleCellInit>();
+static auto sModuleMemoryManager					= std::make_shared<Addictol::ModuleMemoryManager>();
+static auto sModuleSmallblockAllocator				= std::make_shared<Addictol::ModuleSmallblockAllocator>();
+static auto sModuleScaleformAllocator				= std::make_shared<Addictol::ModuleScaleformAllocator>();
+static auto sModuleWorkbenchSwap					= std::make_shared<Addictol::ModuleWorkbenchSwap>();
+static auto sModuleManyItemsFix						= std::make_shared<Addictol::ModuleManyItemsFix>();
+static auto sModuleMaxStdIO							= std::make_shared<Addictol::ModuleMaxStdIO>();
+static auto sModuleMovementPlanner					= std::make_shared<Addictol::ModuleMovementPlanner>();
+static auto sModuleEscapeFreeze						= std::make_shared<Addictol::ModuleEscapeFreeze>();
+static auto sModuleIOCacher							= std::make_shared<Addictol::ModuleIOCacher>();
+static auto sModuleCosaveIO							= std::make_shared<Addictol::ModuleCosaveIO>();
+static auto sModuleBSMTAManager						= std::make_shared<Addictol::ModuleBSMTAManager>();
+static auto sModuleBSPreCulledObjects				= std::make_shared<Addictol::ModuleBSPreCulledObjects>();
+static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::ModuleTESObjectREFRGetEncounterZone>();
+static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
+static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
+static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
+static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
+static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
+static auto sModuleMagicEffectConditions			= std::make_shared<Addictol::ModuleMagicEffectConditions>();
+static auto sModuleEncounterZoneReset				= std::make_shared<Addictol::ModuleEncounterZoneReset>();
+static auto sModuleArchiveLimits					= std::make_shared<Addictol::ModuleArchiveLimits>();
+static auto sModuleImageSpaceAdapterWarning			= std::make_shared<Addictol::ModuleImageSpaceAdapterWarning>();
+static auto sModuleDuplicateAddonNodeIndex			= std::make_shared<Addictol::ModuleDuplicateAddonNodeIndex>();
+static auto sModuleInputSwitch						= std::make_shared<Addictol::ModuleInputSwitch>();
+static auto sModuleLeveledListCrash					= std::make_shared<Addictol::ModuleLeveledListCrash>();
+static auto sModuleMaxPapyrusOps					= std::make_shared<Addictol::ModuleMaxPapyrusOps>();
+static auto sModuleCreateD3DAndSwapchain			= std::make_shared<Addictol::ModuleCreateD3DAndSwapchain>();
+static auto sModuleCheckInternetAccess				= std::make_shared<Addictol::ModuleCheckInternetAccess>();
+static auto sModuleFasterWorkshop					= std::make_shared<Addictol::ModuleFasterWorkshop>();
+static auto sModuleStolenPowerArmorOwnership		= std::make_shared<Addictol::ModuleStolenPowerArmorOwnership>();
+static auto sModuleSaveAddedSoundCategories			= std::make_shared<Addictol::ModuleSaveAddedSoundCategories>();
+static auto sModuleCOMInit							= std::make_shared<Addictol::ModuleCOMInit>();
+static auto sModulePapyrusGC						= std::make_shared<Addictol::ModulePapyrusGC>();
+static auto sModuleCombatMusic						= std::make_shared<Addictol::ModuleCombatMusic>();
+static auto sModuleWorkbenchSound					= std::make_shared<Addictol::ModuleWorkbenchSound>();
+static auto sModuleActorCauseSaveBloat				= std::make_shared<Addictol::ModuleActorCauseSaveBloat>();
+static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSignedCrash>();
+static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
+static auto sModuleMuzzleFlashLight					= std::make_shared<Addictol::ModuleMuzzleFlashLight>();
+static auto sModuleHighResBloom						= std::make_shared<Addictol::ModuleHighResBloom>();
+static auto sModuleAltTabFullscreen					= std::make_shared<Addictol::ModuleAltTabFullscreen>();
+static auto sModulePowerGridScrap					= std::make_shared<Addictol::ModulePowerGridScrap>();
+static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling>();
+static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
+static auto sModuleDofFix							= std::make_shared<Addictol::ModuleDofFix>();
+static auto sModuleUtilityShader					= std::make_shared<Addictol::ModuleUtilityShader>();
+static auto sModulePipBoyCursorConstraints			= std::make_shared<Addictol::ModulePipBoyCursorConstraints>();
+static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::ModuleReferenceHandleLimitWarning>();
+static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleToggleGrassCommand>();
+static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
+static auto sModuleFullPrecisionDecals				= std::make_shared<Addictol::ModuleFullPrecisionDecals>();
+static auto sModuleMagicKeywordCrash				= std::make_shared<Addictol::ModuleMagicKeywordCrash>();
+static auto sModuleAttachLightCrash					= std::make_shared<Addictol::ModuleAttachLightCrash>();
+static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
+static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
+static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
+static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
+static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
+static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
+static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
+static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
+static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCompanionStrayBullet>();
+static auto sModuleAudioSwitch						= std::make_shared<Addictol::ModuleAudioSwitch>();
+static auto sModuleStringPoolRelease				= std::make_shared<Addictol::ModuleStringPoolRelease>();
+static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>();
+static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
+static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIcon>();
+static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJetpackFix>();
+static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
+static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
+static auto sModulePlatformImgui					= std::make_shared<Addictol::ModulePlatformImgui>();
+static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
+
+void AdRegisterPreloadModules()
+{
+	auto plugin = Addictol::Plugin::GetSingleton();
+	if (!plugin) return;
+
+	auto& modules = plugin->GetModules();
+
+	// Registers preload stage patches
+	modules.Register(sModuleMaxStdIO);
+	modules.Register(sModuleCheckInternetAccess);
+	modules.Register(sModuleCOMInit);
+	modules.Register(sModuleDpiScaling);
+	modules.Register(sModuleProcessIcon);
+}
+
+void AdRegisterModules()
+{
+	using enum Addictol::ModuleManager::Type;
+
+	// for OG preload stage not implemented
+	if (RELEX::IsRuntimeOG())
+		AdRegisterPreloadModules();
+
+	auto plugin = Addictol::Plugin::GetSingleton();
+	if (!plugin) return;
+
+	auto& modules = plugin->GetModules();
+
+	// Registers load stage patches
+	modules.Register(sModuleGreyMovie);
+	modules.Register(sModulePackageAllocateLocation);
+	modules.Register(sModuleLibDeflate);
+	modules.Register(sModuleSaveCompression);
+	modules.Register(sModuleProfile);
+	modules.Register(sModuleAchievements);
+	modules.Register(sModuleLODDistance);
+	modules.Register(sModuleInitTints);
+	modules.Register(sModuleActorIsHostileToActor);
+	modules.Register(sModuleFacegen);
+	modules.Register(sModuleBGSAIWorldLocationRefRadius);
+	modules.Register(sModuleSafeExit);
+	modules.Register(sModuleUnalignedLoad);
+	modules.Register(sModuleCellInit);
+	modules.Register(sModuleMemoryManager);
+	modules.Register(sModuleSmallblockAllocator);
+	modules.Register(sModuleScaleformAllocator);
+	modules.Register(sModuleWorkbenchSwap);
+	modules.Register(sModuleManyItemsFix);
+	modules.Register(sModuleMovementPlanner);
+	modules.Register(sModuleCompanionStrayBullet);
+	modules.Register(sModuleEscapeFreeze);
+	modules.Register(sModuleIOCacher);
+	modules.Register(sModuleCosaveIO);
+	modules.Register(sModuleBSMTAManager);
+	modules.Register(sModuleBSPreCulledObjects);
+	modules.Register(sModuleTESObjectREFRGetEncounterZone);
+	modules.Register(sModuleINISettingCollection);
+	modules.Register(sModulePipBoyLightInv);
+	modules.Register(sModuleInteriorNavCut);
+	modules.Register(sModuleMagicEffectApplyEvent);
+	modules.Register(sModuleMagicEffectConditions);
+	modules.Register(sModuleArchiveLimits);
+	modules.Register(sModuleImageSpaceAdapterWarning);
+	modules.Register(sModuleInputSwitch);
+	modules.Register(sModuleCreateD3DAndSwapchain);
+	modules.Register(sModuleControlSamplers);
+	modules.Register(sModuleFasterWorkshop);
+	modules.Register(sModuleStolenPowerArmorOwnership);
+	modules.Register(sModuleCombatMusic);
+	modules.Register(sModuleWorkbenchSound);
+	modules.Register(sModuleActorCauseSaveBloat);
+	modules.Register(sModuleAnimSignedCrash);
+	modules.Register(sModuleBethesdaNetCrash);
+	modules.Register(sModuleMuzzleFlashLight);
+	modules.Register(sModuleHighResBloom);
+	modules.Register(sModuleAltTabFullscreen);
+	modules.Register(sModulePowerGridScrap);
+	modules.Register(sModuleViewmodelShading);
+	modules.Register(sModuleDofFix);
+	modules.Register(sModuleReferenceHandleLimitWarning);
+	modules.Register(sModuleToggleGrassCommand);
+	modules.Register(sModuleTextureLoadCrash);
+	modules.Register(sModuleFullPrecisionDecals);
+	modules.Register(sModuleMagicKeywordCrash);
+	modules.Register(sModuleAttachLightCrash);
+	modules.Register(sModuleDownwardAiming);
+	modules.Register(sModuleSprintStutter);
+	modules.Register(sModuleMoonRotation);
+	modules.Register(sModuleWeaponDebrisCrash);
+	modules.Register(sModuleCrashRemoveRef);
+	modules.Register(sModuleClimateLoadFix);
+	modules.Register(sModuleMusicOverlap);
+	modules.Register(sModuleAudioSwitch);
+	modules.Register(sModuleStringPoolRelease);
+	modules.Register(sModuleLoadOrder);
+	modules.Register(sModuleHUDMessageQueue);
+	modules.Register(sModuleWaterJetpackFix);
+	modules.Register(sModuleAIProcess3DUpdateFlag);
+	modules.Register(sModuleHighResLocalMaps);
+	modules.Register(sModulePlatformImgui);
+
+	// Registers other patches
+	modules.Register(sModuleThreads,						kGameDataReady);
+	modules.Register(sModuleFacegen,						kGameDataReady);
+	modules.Register(sModuleSafeExit,						kGameDataReady);
+	modules.Register(sModuleInteriorNavCut,					kGameDataReady);
+	modules.Register(sModulePuddleCubemaps,					kGameDataReady);
+	modules.Register(sModuleControlSamplers,				kGameDataReady);
+	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
+	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
+	modules.Register(sModuleFasterWorkshop,					kGameDataReady);
+	modules.Register(sModuleCombatMusic,					kGameDataReady);
+	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
+	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
+	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
+	modules.Register(sModuleInputSwitch,					kGameLoaded);
+	modules.Register(sModuleLoadScreen,						kGameLoaded);
+	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
+	modules.Register(sModuleUtilityShader,					kGameLoaded);
+	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
+	modules.Register(sModulePlatformImgui,					kGameLoaded);
+	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
+	modules.Register(sModulePapyrusGC,						kPostLoad);
+	modules.Register(sModuleRobCoPatcherCache,				kPostLoad);
+	modules.Register(sModuleRobCoPatcherCache,				kNewGame);
+	modules.Register(sModuleRobCoPatcherCache,				kGameLoaded);
+
+	// Menu
+	modules.Register(sModuleMenu);
+}

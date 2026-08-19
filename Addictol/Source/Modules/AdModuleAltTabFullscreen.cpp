@@ -1,5 +1,5 @@
 #include <Modules/AdModuleAltTabFullscreen.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <Windows.h>
 #include <d3d11.h>

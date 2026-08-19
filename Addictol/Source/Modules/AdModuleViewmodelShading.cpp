@@ -1,5 +1,5 @@
 #include <Modules/AdModuleViewmodelShading.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSShaderAccumulator.h>
 #include <RE/B/BSShaderManager.h>

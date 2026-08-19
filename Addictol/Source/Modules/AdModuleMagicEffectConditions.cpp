@@ -1,5 +1,5 @@
 #include <Modules/AdModuleMagicEffectConditions.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/A/Actor.h>
 #include <RE/A/ActiveEffect.h>

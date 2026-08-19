@@ -1,5 +1,5 @@
 #include <Modules/AdModuleBethesdaNetCrash.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <array>
 #include <Windows.h>

@@ -1,7 +1,7 @@
 [
   {
     "name": "menu requires log control before platform registration",
-    "target": "Addictol/Include/AdMenuTargets.h",
+    "target": "Addictol/Include/Menu/AdMenuTargets.h",
     "find": "if (a_menuRequested && result == Registration::kAccepted)",
     "replace": "if (a_menuRequested)",
     "check": "a menu that cannot register log control asks for no platform sinks",
@@ -9,7 +9,7 @@
   },
   {
     "name": "public warning level name",
-    "target": "Addictol/Source/AdLogControl.cpp",
+    "target": "Addictol/Source/Core/AdLogControl.cpp",
     "find": "LevelEntry{ Level::kWarn, \"warn\", spdlog::level::warn }",
     "replace": "LevelEntry{ Level::kWarn, \"warning\", spdlog::level::warn }",
     "check": "log level combo matches the public levels",
@@ -17,7 +17,7 @@
   },
   {
     "name": "one-shot requires exact input and output sizes",
-    "target": "Addictol/Include/AdZlibBackend.h",
+    "target": "Addictol/Include/Zlib/AdZlibBackend.h",
     "find": "if (a_decode.consumed != a_expectedInput || a_decode.produced != a_expectedOutput)",
     "replace": "if (a_decode.consumed != a_expectedInput && a_decode.produced != a_expectedOutput)",
     "check": "libdeflate failures classify into distinct fallback reasons",
@@ -25,7 +25,7 @@
   },
   {
     "name": "platform signature rejects a truncated candidate",
-    "target": "Addictol/Include/AdImguiPlatformTargets.h",
+    "target": "Addictol/Include/Platform/AdImguiPlatformTargets.h",
     "find": "return a_signature.size() != 0 && std::ranges::equal(a_candidate, a_signature);",
     "replace": "return a_signature.size() != 0 && std::ranges::starts_with(a_signature, a_candidate);",
     "check": "UIEndFrame signature bytes are pinned per runtime",
@@ -33,7 +33,7 @@
   },
   {
     "name": "allocator busy metric reads busy pages",
-    "target": "Addictol/Include/AdAllocatorPoolTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h",
     "find": "a_out[1] = { static_cast<double>(a_stats.pages_busy), a_active };",
     "replace": "a_out[1] = { static_cast<double>(a_stats.page_capacity + 1), a_active };",
     "check": "allocator busy pages stay within capacity",
@@ -41,7 +41,7 @@
   },
   {
     "name": "process page faults report interval delta",
-    "target": "Addictol/Source/AdTelemetryHub.cpp",
+    "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
     "find": "sample.pageFaults - m_previousPageFaults : 0;",
     "replace": "sample.pageFaults : 0;",
     "check": "process page faults report interval deltas",
@@ -49,7 +49,7 @@
   },
   {
     "name": "frame observation requires enabled telemetry",
-    "target": "Addictol/Source/AdTelemetryHub.cpp",
+    "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
     "find": "if (!telemetryEnabled)",
     "replace": "if (false)",
     "check": "disabled telemetry skips the frame clock",
@@ -57,7 +57,7 @@
   },
   {
     "name": "frame minimum validity rejects the sentinel",
-    "target": "Addictol/Source/AdTelemetryHub.cpp",
+    "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
     "find": "minimum != std::numeric_limits<uint32_t>::max();",
     "replace": "minimum != std::numeric_limits<uint32_t>::max() || count != 0;",
     "check": "split frame fields keep their own validity",
@@ -65,7 +65,7 @@
   },
   {
     "name": "frame maximum retains its winning offset",
-    "target": "Addictol/Source/AdTelemetryHub.cpp",
+    "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
     "find": "(static_cast<uint64_t>(a_durationUs) << 32) | a_offsetUs;",
     "replace": "(static_cast<uint64_t>(a_durationUs) << 32);",
     "check": "frame maximum and offset stay paired under interleaved updates",
@@ -73,7 +73,7 @@
   },
   {
     "name": "zlib size bucket keeps the first upper edge",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "ZlibSizeBucketDescriptor{ 255, \"1-255\" }",
     "replace": "ZlibSizeBucketDescriptor{ 254, \"1-255\" }",
     "check": "zlib size bucket boundaries are stable",
@@ -81,7 +81,7 @@
   },
   {
     "name": "zlib empty size has a dedicated bucket",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "return index;",
     "replace": "return index ? index : 7;",
     "check": "zlib size bucket boundaries are stable",
@@ -89,7 +89,7 @@
   },
   {
     "name": "zlib size bucket labels stay aligned",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "ZlibSizeBucketDescriptor{ 1023, \"256-1023\" }",
     "replace": "ZlibSizeBucketDescriptor{ 1023, \"1024-4095\" }",
     "check": "zlib size bucket labels are stable",
@@ -97,7 +97,7 @@
   },
   {
     "name": "zlib hook timing requires enabled telemetry",
-    "target": "Addictol/Include/AdZlibTelemetry.h",
+    "target": "Addictol/Include/Zlib/AdZlibTelemetry.h",
     "find": "const auto telemetryEnabled = Telemetry::EnabledRelaxed();",
     "replace": "const auto telemetryEnabled = true;",
     "check": "disabled telemetry leaves zlib counters untouched",
@@ -105,7 +105,7 @@
   },
   {
     "name": "zlib hook thread attribution requires enabled telemetry",
-    "target": "Addictol/Include/AdZlibTelemetry.h",
+    "target": "Addictol/Include/Zlib/AdZlibTelemetry.h",
     "find": "recordEnabled ? threadReader() : 0;",
     "replace": "threadReader();",
     "check": "disabled telemetry leaves zlib counters untouched",
@@ -113,7 +113,7 @@
   },
   {
     "name": "zlib hook counters require enabled telemetry",
-    "target": "Addictol/Include/AdZlibTelemetry.h",
+    "target": "Addictol/Include/Zlib/AdZlibTelemetry.h",
     "find": "recorder(outcome, recordEnabled, currentThreadId);",
     "replace": "recorder(outcome, true, currentThreadId);",
     "check": "disabled telemetry leaves zlib counters untouched",
@@ -121,7 +121,7 @@
   },
   {
     "name": "series append enforces span capacity",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "if (a_offset >= a_out.size())",
     "replace": "if (false)",
     "check": "series append stays within the provided span",
@@ -129,7 +129,7 @@
   },
   {
     "name": "escape schema retains unresolved candidates",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "MetricDescriptor{ \"escape.unresolved_candidates\", Unit::kCount }",
     "replace": "MetricDescriptor{ \"escape.unresolved\", Unit::kCount }",
     "check": "escape telemetry schema is stable",
@@ -137,7 +137,7 @@
   },
   {
     "name": "reference handle usage is a percentage",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "static_cast<double>(a_count) * 100.0 /",
     "replace": "static_cast<double>(a_count) * 10.0 /",
     "check": "reference handle usage percentage is correct",
@@ -145,7 +145,7 @@
   },
   {
     "name": "module outcome total includes install failures",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "a_counts[0] + a_counts[1] + a_counts[2] + a_counts[3] + a_counts[4]",
     "replace": "a_counts[0] + a_counts[1] + a_counts[2] + a_counts[3]",
     "check": "module outcome total includes every event",
@@ -153,7 +153,7 @@
   },
   {
     "name": "module outcome reader preserves field order",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "a_counts[0], a_counts[1], a_counts[2], a_counts[3], a_counts[4],",
     "replace": "a_counts[1], a_counts[0], a_counts[2], a_counts[3], a_counts[4],",
     "check": "module outcome reader mapping is stable",
@@ -161,7 +161,7 @@
   },
   {
     "name": "audio performance reader preserves field order",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "a_performance.GlitchesSinceEngineStarted, a_performance.ActiveSourceVoiceCount,",
     "replace": "a_performance.ActiveSourceVoiceCount, a_performance.GlitchesSinceEngineStarted,",
     "check": "audio performance reader mapping is stable",
@@ -169,7 +169,7 @@
   },
   {
     "name": "audio performance requires a live engine",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "if (!a_engine) return false;",
     "replace": "if (!a_engine) return true;",
     "check": "unavailable runtime telemetry stays invalid",
@@ -177,7 +177,7 @@
   },
   {
     "name": "audio performance requires a mastering voice",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "if (!a_masteringVoice) return false;",
     "replace": "if (!a_masteringVoice) return true;",
     "check": "half-initialized audio telemetry stays invalid",
@@ -185,7 +185,7 @@
   },
   {
     "name": "snapshot source preserves invalid readers",
-    "target": "Addictol/Include/AdTelemetry.h",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "const auto valid = m_reader && m_reader(values);",
     "replace": "const auto valid = true;",
     "check": "unavailable runtime telemetry stays invalid",
