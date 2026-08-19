@@ -1,5 +1,6 @@
 #include "../Addictol/Include/Telemetry/AdTelemetryHub.h"
 #include "../Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h"
+#include "../Addictol/Include/Telemetry/AdLoadTiming.h"
 #include "../Addictol/Include/Zlib/AdZlibBackend.h"
 #include "../Addictol/Include/Zlib/AdZlibTelemetry.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
@@ -189,6 +190,38 @@ namespace
 			if (a_out.size() > 1)
 				a_out[1] = { "test.series", "second", 4, 5, 6 };
 			return 3;
+		}
+	};
+
+	inline constexpr std::array kTestBurstMetricSchema{
+		MetricDescriptor{ "test.overflow_events", Unit::kCount },
+		MetricDescriptor{ "test.name_failures", Unit::kCount }
+	};
+
+	class TestBurstSeriesSource final :
+		public BurstSeriesMetricSource<kTestBurstMetricSchema.size(), 2>
+	{
+	public:
+		TestBurstSeriesSource() :
+			BurstSeriesMetricSource(kTestBurstMetricSchema)
+		{}
+
+		void ActivateForTest() noexcept
+		{
+			Activate();
+		}
+
+		[[nodiscard]] bool RecordForTest(
+			std::string_view a_series,
+			std::string_view a_bucket,
+			uint64_t a_ticks) noexcept
+		{
+			return Record(a_series, a_bucket, a_ticks);
+		}
+
+		void CountNameFailure() noexcept
+		{
+			CountMetric(1);
 		}
 	};
 
@@ -385,12 +418,355 @@ namespace
 			static_cast<const uint8_t*>(nullptr),
 			a_values);
 	}
+
+	constexpr uint8_t kExpectedCompileFilesOG[]{
+		0x88, 0x54, 0x24, 0x10, 0x53, 0x55, 0x56, 0x57,
+		0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57
+	};
+	constexpr uint8_t kExpectedCompileFilesNG[]{
+		0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C,
+		0x24, 0x18, 0x48, 0x89, 0x74, 0x24, 0x20, 0x57
+	};
+	constexpr uint8_t kExpectedCompileFilesAE[]{
+		0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C,
+		0x24, 0x18, 0x48, 0x89, 0x74, 0x24, 0x20, 0x57
+	};
+	constexpr uint8_t kExpectedConstructObjectListOG[]{
+		0x48, 0x89, 0x5C, 0x24, 0x18, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56,
+		0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x48, 0x8B, 0xDA, 0x45, 0x0F, 0xB6,
+		0xE8, 0x4C, 0x8B, 0xF9, 0x45, 0x33, 0xC0, 0x33, 0xD2, 0x48, 0x8B, 0xCB
+	};
+	constexpr uint8_t kExpectedConstructObjectListNG[]{
+		0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C, 0x24, 0x18, 0x57, 0x41,
+		0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x48,
+		0x8B, 0xDA, 0x45, 0x0F, 0xB6, 0xE0, 0x4C, 0x8B, 0xE9, 0x45, 0x33, 0xC0,
+		0x48, 0x8B, 0xCB, 0x33, 0xD2
+	};
+	constexpr uint8_t kExpectedConstructObjectListAE[]{
+		0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C, 0x24, 0x18, 0x57, 0x41,
+		0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x48,
+		0x8B, 0xDA, 0x45, 0x0F, 0xB6, 0xE0, 0x4C, 0x8B, 0xE9, 0x45, 0x33, 0xC0,
+		0x48, 0x8B, 0xCB, 0x33, 0xD2
+	};
+
+	void CheckEveryLoadTimingSignatureByte(
+		vmm_tests::Runner& a_runner,
+		std::string_view a_name,
+		LoadTiming::Runtime a_runtime,
+		bool a_compileFiles)
+	{
+		a_runner.test(a_name, [a_runtime, a_compileFiles] {
+			const auto signature = a_compileFiles ?
+				LoadTiming::CompileFilesSignature(a_runtime) :
+				LoadTiming::ConstructObjectListSignature(a_runtime);
+			vmm_tests::require(
+				LoadTiming::ValidateSignature(signature, signature),
+				"unmutated form hook signature was rejected");
+			std::vector<uint8_t> mutated(signature.begin(), signature.end());
+			for (size_t index = 0; index < mutated.size(); ++index)
+			{
+				const auto original = mutated[index];
+				for (const uint8_t delta :
+					{ uint8_t{ 1 }, uint8_t{ 0x80 }, uint8_t{ 0xFF } })
+				{
+					mutated[index] = static_cast<uint8_t>(original ^ delta);
+					if (mutated[index] == original)
+						continue;
+					vmm_tests::require(
+						!LoadTiming::ValidateSignature(mutated, signature),
+						"form hook signature accepted byte mutation " +
+							std::to_string(index));
+				}
+				mutated[index] = original;
+			}
+			mutated.pop_back();
+			vmm_tests::require(
+				!LoadTiming::ValidateSignature(mutated, signature),
+				"truncated form hook signature was accepted");
+		});
+	}
 }
 
 namespace vmm_tests
 {
 	void run_telemetry_checks(Runner& runner)
 	{
+		runner.test("load timing hook ids are pinned per runtime", [] {
+			require(LoadTiming::kCompileFilesId.og == 57137,
+				"OG CompileFiles id changed");
+			require(LoadTiming::kCompileFilesId.ng == 2192321,
+				"NG CompileFiles id changed");
+			require(LoadTiming::kCompileFilesId.ae == 2192321,
+				"AE CompileFiles id changed");
+			require(LoadTiming::kConstructObjectListId.og == 1043280,
+				"OG ConstructObjectList id changed");
+			require(LoadTiming::kConstructObjectListId.ng == 2192326,
+				"NG ConstructObjectList id changed");
+			require(LoadTiming::kConstructObjectListId.ae == 2192326,
+				"AE ConstructObjectList id changed");
+		});
+
+		runner.test("load timing signatures are pinned per runtime", [] {
+			using LoadTiming::Runtime;
+			require(
+				LoadTiming::ValidateSignature(
+					kExpectedCompileFilesOG,
+					LoadTiming::CompileFilesSignature(Runtime::kOG)),
+				"OG CompileFiles signature changed");
+			require(
+				LoadTiming::ValidateSignature(
+					kExpectedCompileFilesNG,
+					LoadTiming::CompileFilesSignature(Runtime::kNG)),
+				"NG CompileFiles signature changed");
+			require(
+				LoadTiming::ValidateSignature(
+					kExpectedCompileFilesAE,
+					LoadTiming::CompileFilesSignature(Runtime::kAE)),
+				"AE CompileFiles signature changed");
+			require(
+				LoadTiming::ValidateSignature(
+					kExpectedConstructObjectListOG,
+					LoadTiming::ConstructObjectListSignature(Runtime::kOG)),
+				"OG ConstructObjectList signature changed");
+			require(
+				LoadTiming::ValidateSignature(
+					kExpectedConstructObjectListNG,
+					LoadTiming::ConstructObjectListSignature(Runtime::kNG)),
+				"NG ConstructObjectList signature changed");
+			require(
+				LoadTiming::ValidateSignature(
+					kExpectedConstructObjectListAE,
+					LoadTiming::ConstructObjectListSignature(Runtime::kAE)),
+				"AE ConstructObjectList signature changed");
+			require(
+				LoadTiming::ValidateSignature(
+					reinterpret_cast<uintptr_t>(kExpectedCompileFilesOG),
+					LoadTiming::CompileFilesSignature(Runtime::kOG)),
+				"production signature validation path changed");
+		});
+
+		CheckEveryLoadTimingSignatureByte(
+			runner,
+			"every OG CompileFiles signature byte is load bearing",
+			LoadTiming::Runtime::kOG,
+			true);
+		CheckEveryLoadTimingSignatureByte(
+			runner,
+			"every NG CompileFiles signature byte is load bearing",
+			LoadTiming::Runtime::kNG,
+			true);
+		CheckEveryLoadTimingSignatureByte(
+			runner,
+			"every AE CompileFiles signature byte is load bearing",
+			LoadTiming::Runtime::kAE,
+			true);
+		CheckEveryLoadTimingSignatureByte(
+			runner,
+			"every OG ConstructObjectList signature byte is load bearing",
+			LoadTiming::Runtime::kOG,
+			false);
+		CheckEveryLoadTimingSignatureByte(
+			runner,
+			"every NG ConstructObjectList signature byte is load bearing",
+			LoadTiming::Runtime::kNG,
+			false);
+		CheckEveryLoadTimingSignatureByte(
+			runner,
+			"every AE ConstructObjectList signature byte is load bearing",
+			LoadTiming::Runtime::kAE,
+			false);
+
+		runner.test("load timing series schema is stable", [] {
+			require(
+				LoadTiming::kPluginSeriesNames ==
+					std::array<std::string_view, 2>{ "plugin.query", "plugin.load" },
+				"plugin timing series changed");
+			require(
+				LoadTiming::kFormSeriesNames ==
+					std::array<std::string_view, 2>{ "esp.compile", "esp.construct" },
+				"form timing series changed");
+			require(LoadTiming::kCompileBucket == "all",
+				"CompileFiles total bucket changed");
+			require(LoadTiming::kPluginBurstCapacity == 1024,
+				"plugin timing burst capacity changed");
+			require(LoadTiming::kFormBurstCapacity == 4608,
+				"form timing burst capacity changed");
+			require(kBurstSeriesDrainCapacity == 256,
+				"load timing drain capacity changed");
+			require(LoadTiming::kPluginMetricSchema[0].key == "plugin.overflow_events",
+				"plugin overflow metric changed");
+			require(LoadTiming::kPluginMetricSchema[1].key == "plugin.name_failures",
+				"plugin name-failure metric changed");
+			require(LoadTiming::kFormMetricSchema[0].key == "esp.overflow_events",
+				"form overflow metric changed");
+			require(
+				ClassifyTelemetryMetric(LoadTiming::kPluginMetricSchema[0].key).panel ==
+					TelemetryPanel::kStability,
+				"plugin overflow metric lost its panel");
+			require(
+				ClassifyTelemetryMetric(LoadTiming::kFormMetricSchema[0].key).panel ==
+					TelemetryPanel::kStability,
+				"form overflow metric lost its panel");
+		});
+
+		runner.test("disabled load timing produces zero rows", [] {
+			SingleProducerBurstSeriesBuffer<2> series;
+			series.EnableDrain();
+			require(
+				!series.Record("plugin.load", "disabled.dll", 10),
+				"disabled timing buffer accepted an event");
+			std::array<SeriesSample, 2> rows{};
+			require(series.Drain(rows) == 0,
+				"disabled timing buffer emitted a row");
+			uint64_t overflow{ 99 };
+			require(!series.DrainOverflow(overflow) && overflow == 0,
+				"disabled timing buffer emitted overflow");
+		});
+
+		runner.test("load timing startup rows survive the initial clear", [] {
+			SingleProducerBurstSeriesBuffer<2> series;
+			series.Activate();
+			require(series.Record("plugin.query", "early.dll", 20),
+				"startup timing row was rejected");
+			std::array<SeriesSample, 2> rows{};
+			require(series.Drain(rows) == 0,
+				"startup timing row drained before the hub started");
+			series.EnableDrain();
+			require(series.Drain(rows) == 1,
+				"startup timing row was lost when the hub started");
+			require(rows[0].bucket == "early.dll" && rows[0].ticks == 20,
+				"startup timing row changed before publication");
+		});
+
+		runner.test("load timing burst overflow is accounted", [] {
+			SingleProducerBurstSeriesBuffer<2> series;
+			series.Activate();
+			series.EnableDrain();
+			require(series.Record("esp.construct", "one.esm", 1),
+				"first burst row was rejected");
+			require(series.Record("esp.construct", "two.esp", 2),
+				"second burst row was rejected");
+			require(!series.Record("esp.construct", "three.esl", 3),
+				"out-of-capacity burst row was accepted");
+			std::array rows{
+				SeriesSample{},
+				SeriesSample{},
+				SeriesSample{ "guard", "guard", 99, 99, 99 }
+			};
+			require(series.Drain(std::span{ rows }.first(2)) == 2,
+				"in-capacity burst rows were lost");
+			require(rows[0].bucket == "one.esm" && rows[1].bucket == "two.esp",
+				"burst rows changed before publication");
+			require(rows[2].series == "guard" && rows[2].calls == 99,
+				"burst overflow corrupted the guard row");
+			uint64_t overflow{ 0 };
+			require(series.DrainOverflow(overflow) && overflow == 1,
+				"burst overflow was not counted");
+			require(series.DrainOverflow(overflow) && overflow == 0,
+				"burst overflow repeated after drain");
+		});
+
+		runner.test("load timing burst drains incrementally", [] {
+			SingleProducerBurstSeriesBuffer<5> series;
+			series.Activate();
+			series.EnableDrain();
+			for (uint64_t tick = 1; tick <= 5; ++tick)
+			{
+				require(series.Record("plugin.load", "burst.dll", tick),
+					"incremental burst row was rejected");
+			}
+			std::array<SeriesSample, 2> rows{};
+			require(series.Drain(rows) == 2 && rows[0].ticks == 1 && rows[1].ticks == 2,
+				"first incremental burst drain changed");
+			require(series.Drain(rows) == 2 && rows[0].ticks == 3 && rows[1].ticks == 4,
+				"second incremental burst drain changed");
+			require(series.Drain(rows) == 1 && rows[0].ticks == 5,
+				"final incremental burst drain changed");
+			require(series.Drain(rows) == 0,
+				"incremental burst rows repeated after drain");
+		});
+
+		runner.test("load timing ring reclaims drained slots", [] {
+			SingleProducerBurstSeriesBuffer<2> series;
+			series.Activate();
+			series.EnableDrain();
+			require(series.Record("esp.construct", "one.esm", 1),
+				"first reclaim row was rejected");
+			require(series.Record("esp.construct", "two.esp", 2),
+				"second reclaim row was rejected");
+			std::array<SeriesSample, 1> row{};
+			require(series.Drain(row) == 1 && row[0].ticks == 1,
+				"first reclaim drain changed");
+			require(series.Record("esp.construct", "three.esl", 3),
+				"drained ring slot was not reclaimed");
+			require(series.Drain(row) == 1 && row[0].ticks == 2,
+				"wrapped ring changed the older row");
+			require(series.Drain(row) == 1 && row[0].ticks == 3,
+				"wrapped ring lost the reclaimed row");
+			require(series.Record("esp.compile", "all", 4),
+				"fully drained ring rejected a later burst");
+			require(series.Drain(row) == 1 && row[0].ticks == 4,
+				"later burst did not survive ring reuse");
+		});
+
+		runner.test("burst series source owns shared telemetry plumbing", [] {
+			TelemetryHub hub{ 1000000 };
+			auto source = std::make_shared<TestBurstSeriesSource>();
+			require(
+				hub.Register(source) == TelemetryRegistration::kAccepted,
+				"burst series source registration failed");
+			require(hub.Freeze(1), "burst series source freeze failed");
+			source->ActivateForTest();
+			require(source->RecordForTest("test.series", "early", 1),
+				"burst series startup row was rejected");
+			source->CountNameFailure();
+			require(hub.Start(60000), "burst series source worker did not start");
+			require(source->RecordForTest("test.series", "later", 2),
+				"burst series second row was rejected");
+			require(!source->RecordForTest("test.series", "overflow", 3),
+				"burst series overflow row was accepted");
+			TelemetryTest::HubAccess::Collect(hub, 100, 1.0, 0.0);
+			TelemetrySnapshot snapshot;
+			require(hub.CopyLatest(snapshot), "burst series snapshot was unavailable");
+			require(
+				snapshot.values.size() == 2 &&
+					snapshot.values[0].valid && snapshot.values[0].value == 1.0 &&
+					snapshot.values[1].valid && snapshot.values[1].value == 1.0,
+				"burst series counters changed");
+			require(
+				snapshot.series.size() == kBurstSeriesDrainCapacity &&
+					snapshot.series[0].bucket == "early" &&
+					snapshot.series[1].bucket == "later",
+				"burst series rows changed");
+			hub.Stop();
+		});
+
+		runner.test("DLL filename extraction handles paths", [] {
+			require(
+				LoadTiming::FileNameFromPath(
+					R"(C:\Games\Fallout 4\Data\F4SE\Plugins\Example.dll)") ==
+					"Example.dll",
+				"Windows DLL path did not yield its filename");
+			require(
+				LoadTiming::FileNameFromPath("/games/f4se/plugins/Example.dll") ==
+					"Example.dll",
+				"Unix DLL path did not yield its filename");
+			require(LoadTiming::FileNameFromPath("Example.dll") == "Example.dll",
+				"bare DLL filename changed");
+			require(LoadTiming::FileNameFromPath(R"(C:\plugins\)").empty(),
+				"trailing separator did not yield an empty filename");
+			require(LoadTiming::FileNameFromPath({}).empty(),
+				"empty DLL path did not stay empty");
+			require(LoadTiming::IsOrdinalProcName(1),
+				"ordinal export was not recognized");
+			require(!LoadTiming::IsOrdinalProcName(0x10000),
+				"string export was mistaken for an ordinal");
+			require(LoadTiming::kTESFileNameOffset == 0x70,
+				"TESFile filename offset changed");
+			require(LoadTiming::kTESFileNameCapacity == 260,
+				"TESFile filename capacity changed");
+		});
+
 		runner.test("disabled telemetry leaves zlib counters untouched", [] {
 			ZlibIntervalCounters counters{};
 			require(!Telemetry::EnabledRelaxed(), "telemetry unexpectedly started enabled");
@@ -608,11 +984,13 @@ namespace vmm_tests
 			append(kReferenceHandleMetricSchema);
 			append(kModuleOutcomeMetricSchema);
 			append(kAudioPerformanceMetricSchema);
+			append(LoadTiming::kPluginMetricSchema);
+			append(LoadTiming::kFormMetricSchema);
 			append(process.Schema());
 			append(gpu.Schema());
 			append(system.Schema());
 			append(frame.Schema());
-			require(columns.size() == 52, "real telemetry column count changed");
+			require(columns.size() == 55, "real telemetry column count changed");
 			for (const auto key : kTelemetryOverviewMetrics)
 			{
 				require(
@@ -633,7 +1011,7 @@ namespace vmm_tests
 				++counts[static_cast<size_t>(classification.panel)];
 			}
 			require(
-				counts == std::array<size_t, 5>{ 5, 12, 12, 18, 5 },
+				counts == std::array<size_t, 5>{ 5, 12, 12, 21, 5 },
 				"telemetry panel metric distribution changed");
 		});
 
@@ -732,7 +1110,9 @@ namespace vmm_tests
 			const std::array samples{
 				SeriesSample{ "zlib.served.stock", "256-1023", 1234, 5678, 9012 },
 				SeriesSample{ "zlib.flush", "finish", 0, 99, 88 },
-				SeriesSample{ "zlib.served.thread", "worker", 3, 4, 5 }
+				SeriesSample{ "zlib.served.thread", "worker", 3, 4, 5 },
+				SeriesSample{ "plugin.load", "comma,name.dll", 1, 7, 0 },
+				SeriesSample{ "test\"series", "quote\"bucket", 1, 8, 0 }
 			};
 			std::ostringstream csv;
 			csv.imbue(std::locale{ std::locale::classic(), new GroupedNumberPunct });
@@ -744,7 +1124,9 @@ namespace vmm_tests
 				csv.str() ==
 					"qpc,series,bucket,calls,ticks,bytes\n"
 					"1234567,zlib.served.stock,256-1023,1234,5678,9012\n"
-					"1234567,zlib.served.thread,worker,3,4,5\n",
+					"1234567,zlib.served.thread,worker,3,4,5\n"
+					"1234567,plugin.load,\"comma,name.dll\",1,7,0\n"
+					"1234567,\"test\"\"series\",\"quote\"\"bucket\",1,8,0\n",
 				"series CSV serialization changed or honored the stream locale");
 			require(csv.str().find("zlib.flush") == std::string::npos,
 				"zero-call series row was not skipped");

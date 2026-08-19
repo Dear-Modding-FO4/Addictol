@@ -59,6 +59,8 @@ namespace Addictol
 		TelemetryMetricGroup{ "escape."sv, "Escape recovery"sv, TelemetryPanel::kStability },
 		TelemetryMetricGroup{ "references."sv, "Reference handles"sv, TelemetryPanel::kStability },
 		TelemetryMetricGroup{ "modules."sv, "Module outcomes"sv, TelemetryPanel::kStability },
+		TelemetryMetricGroup{ "plugin."sv, "Plugin timing"sv, TelemetryPanel::kStability },
+		TelemetryMetricGroup{ "esp."sv, "Form loading"sv, TelemetryPanel::kStability },
 		TelemetryMetricGroup{ "audio."sv, "XAudio2"sv, TelemetryPanel::kAudio }
 	};
 

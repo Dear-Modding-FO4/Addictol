@@ -81,6 +81,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFormLoadTiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResLocalMaps.cpp" />
@@ -111,6 +112,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePipBoyLightInv.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePluginTiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveAddedSoundCategories.cpp" />
@@ -131,6 +133,7 @@
     <ClInclude Include="..\Addictol\Include\Core\AdConfigValidation.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdLoadTiming.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetryHub.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdAllocator.h" />
@@ -201,6 +204,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFormLoadTiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResLocalMaps.h" />
@@ -231,6 +235,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePipBoyLightInv.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePluginTiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveAddedSoundCategories.h" />

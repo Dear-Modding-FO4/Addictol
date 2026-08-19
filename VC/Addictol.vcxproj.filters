@@ -154,6 +154,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp">
       <Filter>Source\Modules\F</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFormLoadTiming.cpp">
+      <Filter>Source\Modules\F</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp">
       <Filter>Source\Modules\G</Filter>
     </ClCompile>
@@ -251,6 +254,9 @@
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp">
+      <Filter>Source\Modules\P</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModulePluginTiming.cpp">
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp">
@@ -394,6 +400,9 @@
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
       <Filter>Include\Telemetry</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdLoadTiming.h">
+      <Filter>Include\Telemetry</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdAllocatorPoolTelemetry.h">
       <Filter>Include\Telemetry</Filter>
     </ClInclude>
@@ -505,6 +514,9 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h">
       <Filter>Include\Modules\F</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFormLoadTiming.h">
+      <Filter>Include\Modules\F</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h">
       <Filter>Include\Modules\G</Filter>
     </ClInclude>
@@ -602,6 +614,9 @@
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h">
+      <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModulePluginTiming.h">
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h">

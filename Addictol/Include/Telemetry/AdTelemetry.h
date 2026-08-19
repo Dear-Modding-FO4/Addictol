@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <atomic>
+#include <cassert>
 #include <cstdint>
 #include <limits>
 #include <span>
@@ -196,6 +198,162 @@ namespace Addictol
 		virtual void Drain(std::span<MetricValue> a_out) noexcept = 0;
 		virtual void BeginInterval(uint64_t) noexcept {}
 		friend class TelemetryHub;
+	};
+
+	inline constexpr size_t kBurstSeriesDrainCapacity{ 256 };
+
+	template<size_t Capacity>
+	class SingleProducerBurstSeriesBuffer
+	{
+		static_assert(Capacity > 0);
+		static_assert(std::atomic<uint64_t>::is_always_lock_free);
+
+	public:
+		void Activate([[maybe_unused]] uint32_t a_threadId = 0) noexcept
+		{
+			m_active = true;
+#ifndef NDEBUG
+			m_producerThreadId = a_threadId;
+#endif
+		}
+
+		void EnableDrain() noexcept
+		{
+			m_drainEnabled = true;
+		}
+
+		[[nodiscard]] bool Record(
+			std::string_view a_series,
+			std::string_view a_bucket,
+			uint64_t a_ticks,
+			[[maybe_unused]] uint32_t a_threadId = 0) noexcept
+		{
+			if (!m_active)
+				return false;
+#ifndef NDEBUG
+			assert(!m_producerThreadId || m_producerThreadId == a_threadId);
+#endif
+			const auto consumed = m_consumed.load(std::memory_order_acquire);
+			if (m_write - consumed >= Capacity)
+			{
+				m_overflow.fetch_add(1, std::memory_order_relaxed);
+				return false;
+			}
+
+			m_entries[static_cast<size_t>(m_write % Capacity)] =
+				{ a_series, a_bucket, 1, a_ticks, 0 };
+			++m_write;
+			m_published.store(m_write, std::memory_order_release);
+			return true;
+		}
+
+		[[nodiscard]] size_t Drain(std::span<SeriesSample> a_out) noexcept
+		{
+			if (!m_active || !m_drainEnabled)
+				return 0;
+			const auto published = m_published.load(std::memory_order_acquire);
+			const auto count = (std::min)(
+				a_out.size(),
+				static_cast<size_t>(published - m_read));
+			for (size_t index = 0; index < count; ++index)
+			{
+				a_out[index] =
+					m_entries[static_cast<size_t>((m_read + index) % Capacity)];
+			}
+			m_read += count;
+			if (count)
+				m_consumed.store(m_read, std::memory_order_release);
+			return count;
+		}
+
+		[[nodiscard]] bool DrainOverflow(uint64_t& a_overflow) noexcept
+		{
+			if (!m_active || !m_drainEnabled)
+			{
+				a_overflow = 0;
+				return false;
+			}
+			a_overflow = m_overflow.exchange(0, std::memory_order_relaxed);
+			return true;
+		}
+
+	private:
+		SeriesSample m_entries[Capacity]{};
+		std::atomic<uint64_t> m_published{ 0 };
+		std::atomic<uint64_t> m_consumed{ 0 };
+		std::atomic<uint64_t> m_overflow{ 0 };
+		uint64_t m_write{ 0 };
+		uint64_t m_read{ 0 };
+		bool m_active{ false };
+		bool m_drainEnabled{ false };
+#ifndef NDEBUG
+		uint32_t m_producerThreadId{ 0 };
+#endif
+	};
+
+	template<size_t MetricCount, size_t RingCapacity>
+	class BurstSeriesMetricSource :
+		public MetricSource,
+		public SeriesSource
+	{
+		static_assert(MetricCount > 0);
+
+	public:
+		explicit BurstSeriesMetricSource(
+			std::span<const MetricDescriptor, MetricCount> a_schema) noexcept :
+			m_schema(a_schema)
+		{}
+
+		[[nodiscard]] std::span<const MetricDescriptor> Schema() const noexcept override { return m_schema; }
+		[[nodiscard]] size_t SeriesCapacity() const noexcept override { return kBurstSeriesDrainCapacity; }
+
+	protected:
+		void Activate(uint32_t a_threadId = 0) noexcept { m_series.Activate(a_threadId); }
+
+		[[nodiscard]] bool Record(
+			std::string_view a_series,
+			std::string_view a_bucket,
+			uint64_t a_ticks,
+			uint32_t a_threadId = 0) noexcept
+		{
+			return m_series.Record(a_series, a_bucket, a_ticks, a_threadId);
+		}
+
+		void CountMetric(size_t a_index) noexcept
+		{
+			assert(a_index > 0 && a_index < MetricCount);
+			m_counters[a_index - 1].fetch_add(1, std::memory_order_relaxed);
+		}
+
+	private:
+		void Drain(std::span<MetricValue> a_out) noexcept override
+		{
+			if (a_out.size() != MetricCount)
+				return;
+			uint64_t overflow{ 0 };
+			const auto valid = m_series.DrainOverflow(overflow);
+			a_out[0] = { static_cast<double>(overflow), valid };
+			for (size_t index = 1; index < MetricCount; ++index)
+			{
+				const auto value = valid ?
+					m_counters[index - 1].exchange(0, std::memory_order_relaxed) : 0;
+				a_out[index] = { static_cast<double>(value), valid };
+			}
+		}
+
+		void BeginInterval(uint64_t) noexcept override { m_series.EnableDrain(); }
+
+		[[nodiscard]] size_t DrainSeries(
+			std::span<SeriesSample> a_out) noexcept override
+		{
+			if (a_out.size() != SeriesCapacity())
+				return 0;
+			return m_series.Drain(a_out);
+		}
+
+		std::span<const MetricDescriptor, MetricCount> m_schema;
+		SingleProducerBurstSeriesBuffer<RingCapacity> m_series{};
+		std::array<std::atomic<uint64_t>, MetricCount - 1> m_counters{};
 	};
 
 	template<size_t N>

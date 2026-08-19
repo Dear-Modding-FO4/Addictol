@@ -95,6 +95,24 @@ namespace Addictol
 			a_stream.write(buffer.data(), result.ptr - buffer.data());
 			return a_stream.good();
 		}
+
+		bool WriteCsvField(std::ostream& a_stream, std::string_view a_value)
+		{
+			if (a_value.find_first_of(",\"\r\n") == std::string_view::npos)
+			{
+				a_stream.write(a_value.data(), a_value.size());
+				return a_stream.good();
+			}
+			a_stream.put('"');
+			for (const auto character : a_value)
+			{
+				if (character == '"')
+					a_stream.put('"');
+				a_stream.put(character);
+			}
+			a_stream.put('"');
+			return a_stream.good();
+		}
 	}
 
 	uint64_t TelemetryDetail::ReadQpc() noexcept
@@ -510,7 +528,13 @@ namespace Addictol
 				continue;
 			if (!WriteUnsigned(a_stream, a_qpc))
 				return false;
-			a_stream << ',' << sample.series << ',' << sample.bucket << ',';
+			a_stream << ',';
+			if (!WriteCsvField(a_stream, sample.series))
+				return false;
+			a_stream << ',';
+			if (!WriteCsvField(a_stream, sample.bucket))
+				return false;
+			a_stream << ',';
 			if (!WriteUnsigned(a_stream, sample.calls))
 				return false;
 			a_stream << ',';

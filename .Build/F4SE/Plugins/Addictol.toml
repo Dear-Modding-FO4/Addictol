@@ -294,6 +294,12 @@ uFrameRecordMs = 50
 # Exports sampled telemetry to AddictolTelemetry.csv and AddictolSeries.csv.
 bCsv = false
 
+# times f4se plugin query and load exports
+bPluginTiming = false
+
+# times form compilation and construction
+bFormLoadTiming = false
+
 
 [Additional]
 

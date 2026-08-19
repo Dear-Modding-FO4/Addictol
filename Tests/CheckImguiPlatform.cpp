@@ -1,3 +1,4 @@
+#include "../Addictol/Include/Core/AdSignature.h"
 #include "../Addictol/Include/Platform/AdImguiPlatformTargets.h"
 #include "Harness.h"
 
@@ -73,6 +74,41 @@ namespace vmm_tests
 {
 	void run_imgui_platform_checks(Runner& runner)
 	{
+		runner.test("wildcard signature takes target bytes only at masked positions", [] {
+			constexpr uint8_t target[]{ 0x48, 0x8B, 0x11, 0x22, 0x33, 0x44, 0x90 };
+			constexpr std::optional<uint8_t> masked[]{
+				0x48, 0x8B, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x90
+			};
+			const auto address = reinterpret_cast<uintptr_t>(target);
+			const auto built = RELEX::GetWildcardSignature(address, masked);
+
+			require(built.size() == std::size(masked), "wildcard signature must keep its length");
+			require(built[0] == 0x48 && built[1] == 0x8B, "concrete bytes must survive");
+			require(built[6] == 0x90, "trailing concrete byte must survive");
+			require(built[2] == 0x11 && built[3] == 0x22 && built[4] == 0x33 && built[5] == 0x44,
+				"masked positions must take the target's own bytes");
+			require(RELEX::Validate(address, built), "a wildcard signature must match its target");
+
+			uint8_t moved[std::size(target)]{};
+			std::ranges::copy(target, std::begin(moved));
+			moved[3] = 0x99;
+			const auto relocated = RELEX::GetWildcardSignature(reinterpret_cast<uintptr_t>(moved), masked);
+			require(RELEX::Validate(reinterpret_cast<uintptr_t>(moved), relocated),
+				"a masked operand must not break validation when it changes");
+
+			moved[1] = 0x8C;
+			require(!RELEX::Validate(reinterpret_cast<uintptr_t>(moved), built),
+				"a changed concrete byte must fail validation");
+		});
+
+		runner.test("wildcard signature rejects an empty mask", [] {
+			constexpr uint8_t target[]{ 0x48 };
+			const auto address = reinterpret_cast<uintptr_t>(target);
+			require(RELEX::GetWildcardSignature(address, {}).empty(),
+				"an empty mask must produce no signature");
+			require(!RELEX::Validate(address, {}), "an empty signature must never validate");
+		});
+
 		runner.test("UIEndFrame ids are pinned per runtime", [] {
 			require(kUIEndFrameId.og == 137303, "OG id must be 137303");
 			require(kUIEndFrameId.ng == 2284763, "NG id must be 2284763");

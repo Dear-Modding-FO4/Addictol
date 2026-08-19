@@ -13,6 +13,7 @@
 #include <Modules/AdModuleInitTints.h>
 #include <Modules/AdModuleActorIsHostileToActor.h>
 #include <Modules/AdModuleFacegen.h>
+#include <Modules/AdModuleFormLoadTiming.h>
 #include <Modules/AdModuleBGSAIWorldLocationRefRadius.h>
 #include <Modules/AdModuleSafeExit.h>
 #include <Modules/AdModuleUnalignedLoad.h>
@@ -32,6 +33,7 @@
 #include <Modules/AdModuleTESObjectREFRGetEncounterZone.h>
 #include <Modules/AdModuleINISettingCollection.h>
 #include <Modules/AdModulePipBoyLightInv.h>
+#include <Modules/AdModulePluginTiming.h>
 #include <Modules/AdModuleInteriorNavCut.h>
 #include <Modules/AdModuleControlSamplers.h>
 #include <Modules/AdModuleMagicEffectApplyEvent.h>
@@ -104,6 +106,7 @@ static auto sModuleLODDistance						= std::make_shared<Addictol::ModuleLODDistan
 static auto sModuleInitTints						= std::make_shared<Addictol::ModuleInitTints>();
 static auto sModuleActorIsHostileToActor			= std::make_shared<Addictol::ModuleActorIsHostileToActor>();
 static auto sModuleFacegen							= std::make_shared<Addictol::ModuleFacegen>();
+static auto sModuleFormLoadTiming					= std::make_shared<Addictol::ModuleFormLoadTiming>();
 static auto sModuleBGSAIWorldLocationRefRadius		= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
 static auto sModuleSafeExit							= std::make_shared<Addictol::ModuleSafeExit>();
 static auto sModuleUnalignedLoad					= std::make_shared<Addictol::ModuleUnalignedLoad>();
@@ -123,6 +126,7 @@ static auto sModuleBSPreCulledObjects				= std::make_shared<Addictol::ModuleBSPr
 static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::ModuleTESObjectREFRGetEncounterZone>();
 static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
 static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
+static auto sModulePluginTiming						= std::make_shared<Addictol::ModulePluginTiming>();
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
 static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
 static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
@@ -194,6 +198,7 @@ void AdRegisterPreloadModules()
 	modules.Register(sModuleCOMInit);
 	modules.Register(sModuleDpiScaling);
 	modules.Register(sModuleProcessIcon);
+	modules.Register(sModulePluginTiming);
 }
 
 void AdRegisterModules()
@@ -220,6 +225,7 @@ void AdRegisterModules()
 	modules.Register(sModuleInitTints);
 	modules.Register(sModuleActorIsHostileToActor);
 	modules.Register(sModuleFacegen);
+	modules.Register(sModuleFormLoadTiming);
 	modules.Register(sModuleBGSAIWorldLocationRefRadius);
 	modules.Register(sModuleSafeExit);
 	modules.Register(sModuleUnalignedLoad);

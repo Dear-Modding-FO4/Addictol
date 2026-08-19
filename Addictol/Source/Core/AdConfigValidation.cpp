@@ -48,7 +48,8 @@ namespace Addictol
 			"bRobCoPatcherCache"sv
 		}},
 		{ "Telemetry"sv, {
-			"bEnabled"sv, "uSampleMs"sv, "uFrameRecordMs"sv, "bCsv"sv
+			"bEnabled"sv, "uSampleMs"sv, "uFrameRecordMs"sv, "bCsv"sv,
+			"bPluginTiming"sv, "bFormLoadTiming"sv
 		}},
 		{ "Additional"sv, {
 			"sAllocator"sv, "sZlibBackend"sv, "sLogLevel"sv, "sLogFlushLevel"sv,

@@ -24,12 +24,12 @@
     "message": "a wrong expected size was accepted"
   },
   {
-    "name": "platform signature rejects a truncated candidate",
-    "target": "Addictol/Include/Platform/AdImguiPlatformTargets.h",
-    "find": "return a_signature.size() != 0 && std::ranges::equal(a_candidate, a_signature);",
-    "replace": "return a_signature.size() != 0 && std::ranges::starts_with(a_signature, a_candidate);",
-    "check": "UIEndFrame signature bytes are pinned per runtime",
-    "message": "an empty candidate must not match"
+    "name": "wildcard mask takes the target byte",
+    "target": "Addictol/Include/Core/AdSignature.h",
+    "find": "expected.push_back(a_expected[i].value_or(target[i]));",
+    "replace": "expected.push_back(a_expected[i].value_or(0));",
+    "check": "wildcard signature takes target bytes only at masked positions",
+    "message": "masked positions must take the target's own bytes"
   },
   {
     "name": "allocator busy metric reads busy pages",
@@ -206,5 +206,85 @@
     "replace": "if (a_value.valid)",
     "check": "invalid telemetry values stay visually distinct",
     "message": "invalid telemetry value did not render as a placeholder"
+  },
+  {
+    "name": "plugin timing series name stays public",
+    "target": "Addictol/Include/Telemetry/AdLoadTiming.h",
+    "find": "\"plugin.query\",\r\n\t\t\"plugin.load\"",
+    "replace": "\"plugin.resolve\",\r\n\t\t\"plugin.load\"",
+    "check": "load timing series schema is stable",
+    "message": "plugin timing series changed"
+  },
+  {
+    "name": "disabled timing rejects records",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
+    "find": "if (!m_active)\r\n\t\t\t\treturn false;",
+    "replace": "if (false)\r\n\t\t\t\treturn false;",
+    "check": "disabled load timing produces zero rows",
+    "message": "disabled timing buffer accepted an event"
+  },
+  {
+    "name": "timing burst overflow increments",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
+    "find": "m_overflow.fetch_add(1, std::memory_order_relaxed);",
+    "replace": "m_overflow.fetch_add(0, std::memory_order_relaxed);",
+    "check": "load timing burst overflow is accounted",
+    "message": "burst overflow was not counted"
+  },
+  {
+    "name": "startup timing waits for hub start",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
+    "find": "if (!m_active || !m_drainEnabled)\r\n\t\t\t\treturn 0;",
+    "replace": "if (!m_active)\r\n\t\t\t\treturn 0;",
+    "check": "load timing startup rows survive the initial clear",
+    "message": "startup timing row drained before the hub started"
+  },
+  {
+    "name": "DLL filename extraction handles backslashes",
+    "target": "Addictol/Include/Telemetry/AdLoadTiming.h",
+    "find": "const auto separator = a_path.find_last_of(\"\\\\/\");",
+    "replace": "const auto separator = a_path.find_last_of(\"/\");",
+    "check": "DLL filename extraction handles paths",
+    "message": "Windows DLL path did not yield its filename"
+  },
+  {
+    "name": "ConstructObjectList OG id stays pinned",
+    "target": "Addictol/Include/Telemetry/AdLoadTiming.h",
+    "find": "inline constexpr TargetId kConstructObjectListId{ 1043280, 2192326, 2192326 };",
+    "replace": "inline constexpr TargetId kConstructObjectListId{ 1043281, 2192326, 2192326 };",
+    "check": "load timing hook ids are pinned per runtime",
+    "message": "OG ConstructObjectList id changed"
+  },
+  {
+    "name": "production form signature validation rejects prefixes",
+    "target": "Addictol/Include/Telemetry/AdLoadTiming.h",
+    "find": "return !a_signature.empty() && std::ranges::equal(a_candidate, a_signature);",
+    "replace": "return !a_signature.empty() && std::ranges::starts_with(a_signature, a_candidate);",
+    "check": "every OG CompileFiles signature byte is load bearing",
+    "message": "truncated form hook signature was accepted"
+  },
+  {
+    "name": "timing ring publishes reclaimed slots",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
+    "find": "m_consumed.store(m_read, std::memory_order_release);",
+    "replace": "m_consumed.store(0, std::memory_order_release);",
+    "check": "load timing ring reclaims drained slots",
+    "message": "drained ring slot was not reclaimed"
+  },
+  {
+    "name": "series CSV doubles embedded quotes",
+    "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
+    "find": "if (character == '\"')",
+    "replace": "if (false)",
+    "check": "series CSV is exact and locale independent",
+    "message": "series CSV serialization changed or honored the stream locale"
+  },
+  {
+    "name": "shared series metric counters increment",
+    "target": "Addictol/Include/Telemetry/AdTelemetry.h",
+    "find": "m_counters[a_index - 1].fetch_add(1, std::memory_order_relaxed);",
+    "replace": "m_counters[a_index - 1].fetch_add(0, std::memory_order_relaxed);",
+    "check": "burst series source owns shared telemetry plumbing",
+    "message": "burst series counters changed"
   }
 ]
