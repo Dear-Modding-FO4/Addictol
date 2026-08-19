@@ -17,7 +17,16 @@ namespace Addictol
 	// Off by default: 1.11.240 reworked the archive index layout these patches hardcode.
 	static REX::TOML::Bool<> bPatchesArchiveLimits{ "Patches"sv, "bArchiveLimits"sv, false };
 
-	constexpr static auto MAX_SIZE = 64 * 1024;
+	constexpr static auto MAX_SIZE = 64ul * 1024ul;
+
+	enum class ArchiveMode : uint8_t
+	{
+		kOldArchitecture = 0,
+		k1kAvailableArchitecture
+	};
+
+	// Mode for AE 
+	ArchiveMode s_ArchiveArchitecture = ArchiveMode::kOldArchitecture;
 
 	namespace BSGraphics
 	{
@@ -51,18 +60,6 @@ namespace Addictol
 
 	struct IDHash
 	{
-#if 0
-		using Hasher = std::hash<std::string_view>;
-		[[nodiscard]] std::size_t operator()(const RE::BSResource::ID& a_id) const noexcept
-		{
-			static char szBuffer[13]{};
-			szBuffer[12] = '\0';	// paranoid
-			*(uint32_t*)(&szBuffer[0]) = a_id.file;
-			*(uint32_t*)(&szBuffer[4]) = a_id.ext;
-			*(uint32_t*)(&szBuffer[8]) = a_id.dir;
-			return Hasher()(szBuffer);
-		}	
-#else
 		[[nodiscard]] std::size_t operator()(const RE::BSResource::ID& a_id) const noexcept
 		{
 			union hash_t
@@ -76,7 +73,6 @@ namespace Addictol
 			hash.v[1] = a_id.dir ^ a_id.ext;
 			return hash.hash;
 		}
-#endif
 	};
 
 	using Storage = ankerl::unordered_dense::map<RE::BSResource::ID, uint16_t, IDHash>;
@@ -190,11 +186,49 @@ namespace Addictol
 
 			RELEX::DetourJump(REL::ID{ 270048, 2269366 }.address(), (uintptr_t)&AddDataFile);
 
-			if (!RELEX::IsRuntimeOG())
+			if (RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::k1kAvailableArchitecture))
 			{
-				struct AddDataFromReaderPatch_NG_AE : Xbyak::CodeGenerator
+				struct AddDataFromReaderPatch_AE : Xbyak::CodeGenerator
 				{
-					AddDataFromReaderPatch_NG_AE(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
+					AddDataFromReaderPatch_AE(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
+					{
+						// run erase code
+						mov(ptr[rsp + 0x4C], r12w);
+
+						push(rax);
+						push(rcx);
+						push(rdx);
+						sub(rsp, 0x28);
+
+						// get ID
+						lea(rcx, ptr[rsp + 0x80]);
+						// get index arch
+						mov(edx, ptr[rbp + 0x108]);
+						// call link ID with arch
+						mov(rax, funcAddr);
+						call(rax);
+
+						add(rsp, 0x28);
+						pop(rdx);
+						pop(rcx);
+						pop(rax);
+
+						// return back (ret)
+						jmp(ptr[rip]);
+						dq(targetAddr + 5);
+					}
+				};
+
+				auto target = REL::ID(2269367).address() + 0x155;
+				RELEX::XbyakJump<AddDataFromReaderPatch_AE>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
+			}
+			else if 
+				(RELEX::IsRuntimeNG() || 
+				(RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)))
+			{
+				struct AddDataFromReaderPatch_NG : Xbyak::CodeGenerator
+				{
+					AddDataFromReaderPatch_NG(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
 					{
 						// run erase code
 						mov(ptr[rsp + 0x3C], r12b);
@@ -224,7 +258,7 @@ namespace Addictol
 				};
 
 				auto target = REL::ID(2269367).address() + 0xF5;
-				RELEX::XbyakJump<AddDataFromReaderPatch_NG_AE>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
+				RELEX::XbyakJump<AddDataFromReaderPatch_NG>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
 			}
 			else
 			{
@@ -313,7 +347,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID{ 1298455, 2269311 }.address() + REL::Offset{ 0xB5 }.offset();
+				auto target = REL::Relocation(REL::ID{ 1298455, 2269311 }, 0xB5).address();
 				RELEX::XbyakJump<FindGeneralPatch>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			{
@@ -329,7 +363,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID{ 1298455, 2269311 }.address() + REL::Offset{ 0xD6, 0xC8 }.offset();
+				auto target = REL::Relocation(REL::ID{ 1298455, 2269311 }, REL::Offset{ 0xD6, 0xC8 }).address();
 				RELEX::XbyakJump<GetDataFilePatch>(target, target);
 			}
 			{
@@ -364,7 +398,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID{ 1298455, 2269311 }.address() + REL::Offset{ 0x13F, 0x12F }.offset();
+				auto target = REL::Relocation(REL::ID{ 1298455, 2269311 }, REL::Offset{ 0x13F, 0x12F }).address();
 				RELEX::XbyakJump<FindGeneralPatch2>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			////////////////////////////////////////////////
@@ -403,7 +437,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(2269323).address() + REL::Offset{ 0x8C }.offset();
+				auto target = REL::Relocation(REL::ID(2269323), 0x8C).address();
 				RELEX::XbyakJump<FindGeneralPatch_AE>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			else
@@ -438,8 +472,8 @@ namespace Addictol
 						dq(funcAddr);
 					}
 				};
-
-				auto target = REL::ID{ 788223, 2269323 }.address() + REL::Offset{ 0x8C }.offset();
+				
+				auto target = REL::Relocation(REL::ID{ 788223, 2269323 }, 0x8C).address();
 				RELEX::XbyakJump<FindGeneralPatch_OG_NG>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			{
@@ -455,7 +489,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID{ 788223, 2269323 }.address() + REL::Offset{ 0xB5, 0xAD }.offset();
+				auto target = REL::Relocation(REL::ID{ 788223, 2269323 }, REL::Offset{ 0xB5, 0xAD }).address();
 				RELEX::XbyakJump<GetAsyncDataFilePatch>(target, target);
 			}
 			////////////////////////////////////////////////
@@ -502,7 +536,7 @@ namespace Addictol
 					}
 				};
 				
-				auto target = REL::ID(2269319).address() + REL::Offset{ 0x296 }.offset();
+				auto target = REL::Relocation(REL::ID(2269319), 0x296).address();
 				RELEX::XbyakJump<ReplicateDirToPatch_NG_AE>(target, target, (uintptr_t)&InsertReplicatedGeneralID);
 			}
 			else
@@ -546,7 +580,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(338420).address() + REL::Offset{ 0x2FD }.offset();
+				auto target = REL::Relocation(REL::ID(338420), 0x2FD).address();
 				RELEX::XbyakJump<ReplicateDirToPatch_OG>(target, target, (uintptr_t)&InsertReplicatedGeneralID);
 			}
 		}
@@ -585,9 +619,13 @@ namespace Addictol
 			if (!RELEX::IsRuntimeOG())
 			{
 				auto id1 = REL::ID(2275558);
-				// movzx r15d, r13b -> mov r15d, r13d; nop;
-				RELEX::WriteSafe(REL::Relocation{ id1, REL::Offset{ 0x33A } }.get(),
-					{ 0x45, 0x89, 0xEF, 0x90 });
+
+				if (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)
+				{
+					// movzx r15d, r13b -> mov r15d, r13d; nop;
+					RELEX::WriteSafe(REL::Relocation{ id1, 0x33A }.get(),
+						{ 0x45, 0x89, 0xEF, 0x90 });
+				}
 
 				struct AddDataFilePatch_NG_AE : Xbyak::CodeGenerator
 				{
@@ -629,7 +667,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = id1.address() + REL::Offset{ 0x3B2 }.offset();
+				auto target = id1.address() + REL::Offset(0x3B2).offset();
 				RELEX::XbyakJump<AddDataFilePatch_NG_AE>(target, target);
 			}
 			else
@@ -687,6 +725,20 @@ namespace Addictol
 	{
 		namespace Manager
 		{
+			class EntryHeaderOld
+			{
+			public:
+				[[nodiscard]] bool IsChunk() const noexcept { return this->chunkOffsetOrType != 0; }
+				[[nodiscard]] bool IsLoose() const noexcept { return this->chunkOffsetOrType == 0; }
+
+				// members
+				RE::BSResource::ID nameID;            // 00
+				std::uint8_t dataFileIndex = 0;       // 0C
+				std::uint8_t  chunkCount = 0;         // 0D
+				std::uint16_t chunkOffsetOrType = 0;  // 0E
+			};
+			static_assert(sizeof(EntryHeaderOld) == 0x10);
+
 			struct TextureRequest
 			{
 				RE::BSResource::Archive2::Index::EntryHeader header;
@@ -697,7 +749,19 @@ namespace Addictol
 				RE::BSFixedString texturePath;
 				char unkD8[0x38];
 			};
-			static_assert(sizeof(TextureRequest) == 0x110);
+			static_assert(sizeof(TextureRequest) == 0x118);
+
+			struct TextureRequestOld
+			{
+				EntryHeaderOld header;
+				char unk10[0x68];
+				RE::BSFixedString unk78;
+				char unk80[0x48];
+				RE::NiTexture* texture;
+				RE::BSFixedString texturePath;
+				char unkD8[0x38];
+			};
+			static_assert(sizeof(TextureRequestOld) == 0x110);
 
 			static void ProcessPath(const char* inputPath, char* outputPath) noexcept
 			{
@@ -734,7 +798,30 @@ namespace Addictol
 				strcat_s(outputPath, REX::W32::MAX_PATH, p);
 			}
 
-			static uint16_t FindArchiveIndexByTextureRequest(const TextureRequest& request) noexcept
+			static uint16_t FindArchiveIndexByTextureRequestEx(const TextureRequest& request) noexcept
+			{
+				auto fileName = request.texturePath.c_str();
+				if (fileName && fileName[0])
+				{
+					char processedPath[REX::W32::MAX_PATH];
+					ProcessPath(fileName, processedPath);
+
+					RE::BSResource::ID id(processedPath);
+					return FindTexturesArchiveIndex(id);
+				}
+
+				if (request.texture && request.texture->rendererTexture)
+				{
+					auto Renderer = (BSGraphics::Texture*)request.texture->rendererTexture;
+					if (Renderer->data)
+						return (((uint16_t)Renderer->data->dataFileHighIndex) << 8) | Renderer->data->dataFileIndex;
+				}
+
+				RE::BSResource::ID id = request.header.nameID;
+				return FindTexturesArchiveIndex(id);
+			}
+
+			static uint16_t FindArchiveIndexByTextureRequest(const TextureRequestOld& request) noexcept
 			{
 				auto fileName = request.texturePath.c_str();
 				if (fileName && fileName[0])
@@ -762,11 +849,50 @@ namespace Addictol
 				////////////////////////////////////////////////
 				// Process Event
 				////////////////////////////////////////////////
-				if (!RELEX::IsRuntimeOG())
+				if (RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::k1kAvailableArchitecture))
 				{
-					struct ProcessEventPatch_NG_AE : Xbyak::CodeGenerator
+					struct ProcessEventPatch_AE : Xbyak::CodeGenerator
 					{
-						ProcessEventPatch_NG_AE(uintptr_t target, uintptr_t func)
+						ProcessEventPatch_AE(uintptr_t target, uintptr_t func)
+						{
+							Xbyak::Label retnLabel;
+							Xbyak::Label funcLabel;
+
+							mov(ptr[rsp + 0x6C], r13w);
+
+							push(rcx);
+							push(rdx);
+							sub(rsp, 0x20);
+
+							lea(rcx, ptr[rsp + 0x90]);
+							movzx(edx, r13w);
+
+							call(ptr[rip + funcLabel]);
+
+							add(rsp, 0x20);
+							pop(rdx);
+							pop(rcx);
+
+							jmp(ptr[rip + retnLabel]);
+
+							L(retnLabel);
+							dq(target + 0x5);
+
+							L(funcLabel);
+							dq(func);
+						}
+					};
+
+					auto target = REL::Relocation{ REL::ID(2275558), REL::Offset{ 0x2AB } }.get();
+					RELEX::XbyakJump<ProcessEventPatch_AE>(target, target, (uintptr_t)&PushTexturesArchiveIndex);
+				}
+				else if
+					(RELEX::IsRuntimeNG() ||
+						(RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)))
+				{
+					struct ProcessEventPatch_NG : Xbyak::CodeGenerator
+					{
+						ProcessEventPatch_NG(uintptr_t target, uintptr_t func)
 						{
 							Xbyak::Label retnLabel;
 							Xbyak::Label funcLabel;
@@ -778,7 +904,7 @@ namespace Addictol
 							sub(rsp, 0x20);
 
 							lea(rcx, ptr[rsp + 0x60]);
-							mov(edx, r13d);
+							movzx(edx, r13w);
 
 							call(ptr[rip + funcLabel]);
 
@@ -797,7 +923,7 @@ namespace Addictol
 					};
 					
 					auto target = REL::Relocation{ REL::ID(2275558), REL::Offset{ 0x2BB } }.get();
-					RELEX::XbyakJump<ProcessEventPatch_NG_AE>(target, target, (uintptr_t)&PushTexturesArchiveIndex);
+					RELEX::XbyakJump<ProcessEventPatch_NG>(target, target, (uintptr_t)&PushTexturesArchiveIndex);
 				}
 				else
 				{
@@ -875,7 +1001,11 @@ namespace Addictol
 					};
 
 					auto target = REL::Relocation{ REL::ID(2275576), REL::Offset{ 0x3D } }.get();
-					RELEX::XbyakJump<StartStreamingChunksPatch_NG_AE>(target, target, (uintptr_t)&FindArchiveIndexByTextureRequest);
+
+					RELEX::XbyakJump<StartStreamingChunksPatch_NG_AE>(target, target, 
+						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
+							(uintptr_t)&FindArchiveIndexByTextureRequest :
+							(uintptr_t)&FindArchiveIndexByTextureRequestEx);
 				}
 				else
 				{
@@ -954,7 +1084,10 @@ namespace Addictol
 					};
 
 					auto target = REL::Relocation{ REL::ID(2275577), REL::Offset{ 0x9AD } }.get();
-					RELEX::XbyakJump<DecompressStreamedLoadPatch_NG_AE>(target, target, (uintptr_t)&FindArchiveIndexByTextureRequest);
+					RELEX::XbyakJump<DecompressStreamedLoadPatch_NG_AE>(target, target,
+						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
+						(uintptr_t)&FindArchiveIndexByTextureRequest :
+						(uintptr_t)&FindArchiveIndexByTextureRequestEx);
 				}
 				else
 				{
@@ -991,7 +1124,10 @@ namespace Addictol
 					};
 
 					auto target = REL::Relocation{ REL::ID(1296411), REL::Offset{ 0x62 } }.get();
-					RELEX::XbyakJump<DecompressStreamedLoadPatch_OG>(target, target, (uintptr_t)&FindArchiveIndexByTextureRequest);
+					RELEX::XbyakJump<DecompressStreamedLoadPatch_OG>(target, target,
+						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
+						(uintptr_t)&FindArchiveIndexByTextureRequest :
+						(uintptr_t)&FindArchiveIndexByTextureRequestEx);
 				}
 				////////////////////////////////////////////////
 				// BSGraphics::Renderer::CreateStreamingTexture
@@ -1183,7 +1319,10 @@ namespace Addictol
 							movzx(ebx, byte[rdx + 0xC]);
 
 							L("RET");
-							movzx(edi, byte[rdx + 0xD]);
+							if (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)
+								movzx(edi, byte[rdx + 0xD]);
+							else
+								movzx(edi, byte[rdx + 0xE]);
 							if (RELEX::IsRuntimeOG()) 
 								cmp(dword[rdx + 0x104], 1);
 							jmp(ptr[rip + retnLabel]);
@@ -1197,7 +1336,10 @@ namespace Addictol
 					};
 
 					auto target = REL::Relocation{ REL::ID{ 979945, 2275550 }, REL::Offset{ 0x27, 0x32 } }.get();
-					RELEX::XbyakJump<LoadChunksPatch>(target, target, (uintptr_t)&FindArchiveIndexByTextureRequest);
+					RELEX::XbyakJump<LoadChunksPatch>(target, target,
+						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
+						(uintptr_t)&FindArchiveIndexByTextureRequest :
+						(uintptr_t)&FindArchiveIndexByTextureRequestEx);
 				}
 			}
 		}
@@ -1211,6 +1353,9 @@ namespace Addictol
 
 	bool ModuleArchiveLimits::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		if (REX::FModule::GetExecutingModule().GetFileVersion() >= F4SE::RUNTIME_1_11_240)
+			s_ArchiveArchitecture = ArchiveMode::k1kAvailableArchitecture;
+
 		Archive2::Hook_Init();
 		SDirectory2::Hook_Init();
 		BSScaleformImageLoader::Hook_Init();
