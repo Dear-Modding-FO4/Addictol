@@ -172,6 +172,17 @@ namespace Addictol
 		Module("PapyrusGC", &bFixesPapyrusGCBug)
 	{}
 
+	bool ModulePapyrusGC::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("GCBugFix.dll"))
+		{
+			Skip("Standalone 'GCBugFix.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModulePapyrusGC::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kPostLoad)
