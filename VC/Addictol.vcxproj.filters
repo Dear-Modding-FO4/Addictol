@@ -121,6 +121,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCosaveIO.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCraftingMenuFix.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
@@ -470,6 +473,9 @@
       <Filter>Include\Modules\C</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCosaveIO.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCraftingMenuFix.h">
       <Filter>Include\Modules\C</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h">

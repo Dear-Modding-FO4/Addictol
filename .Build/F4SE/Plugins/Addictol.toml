@@ -254,6 +254,9 @@ bHUDMessageQueue = true
 # Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again.
 bWaterJetpackFix = true
 
+# Reduces the lag when browsing mod slots in the weapon/armor crafting menu. The menu stops walking the whole COBJ/OMOD form arrays on every slot switch.
+bCraftingMenuFix = true
+
 # Fixes a bug where there is no check for nullptr when AI for a character is disabled.
 bAIProcess3DUpdateFlag = true
 
