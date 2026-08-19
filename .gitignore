@@ -55,3 +55,4 @@
 .vscode
 .clangd
 *.lastcodeanalysissucceeded
+compile_commands.json

@@ -1,8 +1,10 @@
 #include "../Addictol/Include/AdImguiPlatformTargets.h"
 #include "Harness.h"
 
+#include <algorithm>
 #include <initializer_list>
 #include <iterator>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -18,23 +20,21 @@ namespace
 	using KeySink = void (*)(uint32_t) noexcept;
 
 	// Pinned independently of the header so a silent edit to either side fails the check.
-	constexpr uint8_t expected_og[]{
-		0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20,
-		0x8B, 0x15, 0xAF, 0x0C, 0x6F, 0x04, 0x65, 0x48, 0x8B, 0x04, 0x25, 0x58, 0x00, 0x00, 0x00,
-		0x48, 0x8B, 0xF1, 0x48, 0x8B, 0x3C, 0xD0, 0xB9, 0xC0, 0x09, 0x00, 0x00
-	};
+	constexpr std::optional<uint8_t> expected_og[]{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48,
+		0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x8B, 0x15, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x65, 0x48,
+		0x8B, 0x04, 0x25, 0x58, 0x00, 0x00, 0x00, 0x48, 0x8B, 0xF1, 0x48, 0x8B, 0x3C, 0xD0, 0xB9, 0xC0, 0x09,
+		0x00, 0x00 };
+	constexpr std::optional<uint8_t> expected_ngandae[]{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48,
+		0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x54, 0x41,
+		0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x8B, 0x15, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x4C, 0x8B, 0xF9 };
 
-	constexpr uint8_t expected_ng[]{
-		0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18,
-		0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x54, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20,
-		0x8B, 0x15, 0xE4, 0x05, 0x35, 0x02, 0x4C, 0x8B, 0xF9
-	};
-
-	constexpr uint8_t expected_ae[]{
-		0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18,
-		0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x54, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20,
-		0x8B, 0x15, 0x64, 0x0C, 0x3F, 0x02, 0x4C, 0x8B, 0xF9
-	};
+	// A candidate of a different length is a mismatch: partial prologue agreement proves nothing.
+	[[nodiscard]] constexpr bool MatchesSignature(
+		std::ranges::contiguous_range auto&& a_candidate,
+		const std::initializer_list<std::optional<uint8_t>>& a_signature) noexcept
+	{
+		return a_signature.size() != 0 && std::ranges::equal(a_candidate, a_signature);
+	}
 
 	void check_every_byte_mutation(vmm_tests::Runner& runner, std::string_view name, Runtime runtime)
 	{
@@ -42,13 +42,16 @@ namespace
 			const auto& signature = UIEndFrameSignature(runtime);
 			vmm_tests::require(MatchesSignature(signature, signature), "unmutated signature must match");
 
-			std::vector<uint8_t> mutated(signature.begin(), signature.end());
+			std::vector<std::optional<uint8_t>> mutated(signature.begin(), signature.end());
 			for (size_t index = 0; index < mutated.size(); ++index)
 			{
 				const auto original = mutated[index];
+				if (!original)
+					continue;
+
 				for (const uint8_t delta : { uint8_t{ 1 }, uint8_t{ 0x80 }, uint8_t{ 0xFF } })
 				{
-					mutated[index] = static_cast<uint8_t>(original ^ delta);
+					mutated[index] = static_cast<uint8_t>(*original ^ delta);
 					if (mutated[index] == original)
 						continue;
 					vmm_tests::require(
@@ -58,7 +61,7 @@ namespace
 				mutated[index] = original;
 			}
 
-			const std::vector<uint8_t> truncated(signature.begin(), std::prev(signature.end()));
+			const std::vector<std::optional<uint8_t>> truncated(signature.begin(), std::prev(signature.end()));
 			vmm_tests::require(
 				!MatchesSignature(truncated, signature),
 				"a truncated candidate must not match");
@@ -81,10 +84,8 @@ namespace vmm_tests
 
 		runner.test("UIEndFrame signature bytes are pinned per runtime", [] {
 			require(MatchesSignature(expected_og, UIEndFrameSignature(Runtime::kOG)), "OG signature drifted");
-			require(MatchesSignature(expected_ng, UIEndFrameSignature(Runtime::kNG)), "NG signature drifted");
-			require(MatchesSignature(expected_ae, UIEndFrameSignature(Runtime::kAE)), "AE signature drifted");
-			require(!MatchesSignature(expected_ng, UIEndFrameSignature(Runtime::kAE)),
-				"NG and AE differ in the displacement and must not cross match");
+			require(MatchesSignature(expected_ngandae, UIEndFrameSignature(Runtime::kNG)), "NG signature drifted");
+			require(MatchesSignature(expected_ngandae, UIEndFrameSignature(Runtime::kAE)), "AE signature drifted");
 			require(!MatchesSignature(expected_og, UIEndFrameSignature(Runtime::kNG)),
 				"OG and NG signatures must not cross match");
 			require(!MatchesSignature(std::initializer_list<uint8_t>{}, UIEndFrameSignature(Runtime::kOG)),

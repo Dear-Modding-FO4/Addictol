@@ -1,12 +1,10 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <initializer_list>
-#include <ranges>
+#include <optional>
 #include <string_view>
 
 namespace Addictol::ImguiPlatform
@@ -55,14 +53,6 @@ namespace Addictol::ImguiPlatform
 	[[nodiscard]] constexpr const std::initializer_list<std::optional<uint8_t>>& UIEndFrameSignature(Runtime a_runtime) noexcept
 	{
 		return a_runtime == Runtime::kOG ? kUIEndFrameSignatureOG : kUIEndFrameSignatureNGandAE;
-	}
-
-	// A candidate of a different length is a mismatch: partial prologue agreement proves nothing.
-	[[nodiscard]] constexpr bool MatchesSignature(
-		std::ranges::contiguous_range auto&& a_candidate,
-		const std::initializer_list<uint8_t>& a_signature) noexcept
-	{
-		return a_signature.size() != 0 && std::ranges::equal(a_candidate, a_signature);
 	}
 
 	enum class InstallState : uint32_t
