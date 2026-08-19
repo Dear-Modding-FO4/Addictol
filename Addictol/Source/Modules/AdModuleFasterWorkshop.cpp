@@ -337,6 +337,29 @@ namespace Addictol
 		Module("Faster Workshop", &bPatchesFasterWorkshop)
 	{}
 
+	bool ModuleFasterWorkshop::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("FasterWorkshopAE.dll"))
+		{
+			Skip("Standalone 'FasterWorkshopAE.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		if (IsModDLLPresent("FasterWorkshopNG_F4SE.dll"))
+		{
+			Skip("Standalone 'FasterWorkshopNG_F4SE.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		if (IsModDLLPresent("faster_workshop.dll"))
+		{
+			Skip("Standalone 'faster_workshop.dll' is installed, skipping module"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleFasterWorkshop::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
