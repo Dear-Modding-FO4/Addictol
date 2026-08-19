@@ -9,11 +9,6 @@ namespace Addictol
 		Module("LOD Distance", &bFixesLODDistance)
 	{}
 
-	bool ModuleLODDistance::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleLODDistance::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		//
@@ -54,13 +49,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLODDistance::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleLODDistance::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

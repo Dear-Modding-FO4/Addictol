@@ -1,7 +1,7 @@
 #include <AdAssert.h>
 #include <AdUtils.h>
 #include <AdModuleManager.h>
-#include <AdProfilerModules.h>
+#include <AdTelemetryHub.h>
 
 namespace Addictol
 {
@@ -24,17 +24,13 @@ namespace Addictol
 
 	bool ModuleManager::SafeQueryMod(const ModulePtr& a_mod) const
 	{
-		ProfilerBeginModuleQuery(a_mod->GetName());
 		__try
 		{
-			auto result = a_mod->DoQuery();
-			ProfilerEndModuleQuery(a_mod->GetName(), result, a_mod->WasSkipped());
-			return result;
+			return a_mod->DoQuery();
 		}
 		__except (1)
 		{
 			a_mod->ClearSkip();
-			ProfilerEndModuleQuery(a_mod->GetName(), false);
 			REX::ERROR("Module \"{}\": caught exception during query"sv, a_mod->GetName());
 			return false;
 		}
@@ -42,17 +38,13 @@ namespace Addictol
 
 	bool ModuleManager::SafeInstallMod(const ModulePtr& a_mod, F4SE::MessagingInterface::Message* a_msg) const
 	{
-		ProfilerBeginModuleInstall(a_mod->GetName());
 		__try
 		{
-			auto result = a_mod->DoInstall(a_msg);
-			ProfilerEndModuleInstall(a_mod->GetName(), result, a_mod->WasSkipped());
-			return result;
+			return a_mod->DoInstall(a_msg);
 		}
 		__except (1)
 		{
 			a_mod->ClearSkip();
-			ProfilerEndModuleInstall(a_mod->GetName(), false);
 			REX::ERROR("Module \"{}\": caught exception during install"sv, a_mod->GetName());
 			return false;
 		}
@@ -117,6 +109,8 @@ namespace Addictol
 			}
 
 			modules.try_emplace(a_mod->GetName(), a_mod);
+			if (const auto source = std::dynamic_pointer_cast<MetricSource>(a_mod))
+				(void)Telemetry::Hub().Register(source);
 			return true;
 		}
 		else
@@ -138,6 +132,8 @@ namespace Addictol
 			}
 
 			modules_by_type.try_emplace(a_mod->GetName(), a_mod);
+			if (const auto source = std::dynamic_pointer_cast<MetricSource>(a_mod))
+				(void)Telemetry::Hub().Register(source);
 			return true;
 		}
 	}
@@ -497,8 +493,9 @@ namespace Addictol
 
 	void ModuleManager::LogSummary() const noexcept
 	{
-		auto total = m_installed + m_disabled + m_skipped + m_failedQuery + m_failedInstall;
+		const auto outcomes = ModuleOutcomeCounts();
 		REX::INFO("Module Summary: {} installed, {} disabled, {} skipped, {} failed query, {} failed install ({} total)"sv,
-			m_installed, m_disabled, m_skipped, m_failedQuery, m_failedInstall, total);
+			outcomes[0], outcomes[1], outcomes[2], outcomes[3], outcomes[4],
+			outcomes[0] + outcomes[1] + outcomes[2] + outcomes[3] + outcomes[4]);
 	}
 }

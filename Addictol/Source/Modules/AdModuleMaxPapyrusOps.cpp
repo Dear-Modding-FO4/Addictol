@@ -223,11 +223,6 @@ namespace Addictol
 		Module("MaxPapyrusOps", &bFixesBakaMaxPapyrusOps)
 	{}
 
-	bool ModuleMaxPapyrusOps::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMaxPapyrusOps::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kPostLoad)
@@ -251,13 +246,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleMaxPapyrusOps::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMaxPapyrusOps::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

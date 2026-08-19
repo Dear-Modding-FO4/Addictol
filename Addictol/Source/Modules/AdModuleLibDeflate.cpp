@@ -1,11 +1,8 @@
 #include <Modules/AdModuleLibDeflate.h>
-#include <AdProfilerBA2.h>
-#include <AdProfilerCore.h>
-#include <AdTextureOneShot.h>
 #include <AdUtils.h>
 #include <AdZlibBackend.h>
 #include <AdZlibInflate.h>
-#include <AdZlibServeContext.h>
+#include <AdZlibTelemetry.h>
 #include <Windows.h>
 
 #ifdef ERROR
@@ -16,22 +13,10 @@ namespace Addictol
 {
 	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches"sv, "bLibDeflate"sv, true };
 	static REX::TOML::Str<> sAdditionalZlibBackend{ "Additional"sv, "sZlibBackend"sv, "libdeflate" };
-	static REX::TOML::Bool<> bProfilerZlibTracking{ "Profiler"sv, "bZlibTracking"sv, true };
 
 	namespace zlibDetail
 	{
 		constexpr static int32_t Z_STREAM_ERROR		= -2;
-
-		static_assert(ZlibBackendRegistryId(ZlibBackendKind::Stock) == BA2Profile::kBackendStockZlib);
-		static_assert(ZlibBackendRegistryId(ZlibBackendKind::LibDeflate) == BA2Profile::kBackendLibDeflate);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::None) == BA2Profile::kReasonNone);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::State) == BA2Profile::kReasonState);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Allocation) == BA2Profile::kReasonAllocation);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Decode) == BA2Profile::kReasonDecode);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Commit) == BA2Profile::kReasonCommit);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::Capacity) == BA2Profile::kReasonCapacity);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::SizeMismatch) == BA2Profile::kReasonSizeMismatch);
-		static_assert(ZlibFallbackReasonRegistryId(ZlibFallbackReason::RequestRestart) == BA2Profile::kReasonRequestRestart);
 
 		using TInflate = int32_t(*)(ZlibInflate::Stream*, int32_t) noexcept;
 		TInflate OriginalInflate;
@@ -45,257 +30,51 @@ namespace Addictol
 
 		PatchState g_patchState{ PatchState::NotAttempted };
 
-		struct AtomicCounters
-		{
-			std::atomic<uint64_t> attempted{ 0 };
-			std::atomic<uint64_t> succeeded{ 0 };
-			std::atomic<uint64_t> rejectedByState{ 0 };
-			std::atomic<uint64_t> codecFailed{ 0 };
-			std::atomic<uint64_t> commitRejected{ 0 };
-			std::atomic<uint64_t> allocationFailed{ 0 };
-			std::atomic<uint64_t> servedStock{ 0 };
-			std::atomic<uint64_t> servedLibDeflate{ 0 };
-			std::atomic<uint64_t> servedUnknown{ 0 };
-		};
-
-		static AtomicCounters& GetAtomicCounters() noexcept
-		{
-			static auto* counters = new AtomicCounters();
-			return *counters;
-		}
-
-		struct ThreadCounters
-		{
-			static constexpr uint32_t FLUSH_THRESHOLD = 256;
-
-			uint64_t attempted{ 0 };
-			uint64_t succeeded{ 0 };
-			uint64_t rejectedByState{ 0 };
-			uint64_t codecFailed{ 0 };
-			uint64_t commitRejected{ 0 };
-			uint64_t allocationFailed{ 0 };
-			uint64_t servedStock{ 0 };
-			uint64_t servedLibDeflate{ 0 };
-			uint64_t servedUnknown{ 0 };
-			uint32_t pending{ 0 };
-
-			~ThreadCounters() noexcept
-			{
-				Flush();
-			}
-
-			void Count(uint64_t& a_counter) noexcept
-			{
-				++a_counter;
-				if (++pending == FLUSH_THRESHOLD)
-					Flush();
-			}
-
-			void Flush() noexcept
-			{
-				if (!pending)
-					return;
-
-				auto& totals = GetAtomicCounters();
-				if (attempted)
-					totals.attempted.fetch_add(attempted, std::memory_order_relaxed);
-				if (succeeded)
-					totals.succeeded.fetch_add(succeeded, std::memory_order_relaxed);
-				if (rejectedByState)
-					totals.rejectedByState.fetch_add(rejectedByState, std::memory_order_relaxed);
-				if (codecFailed)
-					totals.codecFailed.fetch_add(codecFailed, std::memory_order_relaxed);
-				if (commitRejected)
-					totals.commitRejected.fetch_add(commitRejected, std::memory_order_relaxed);
-				if (allocationFailed)
-					totals.allocationFailed.fetch_add(allocationFailed, std::memory_order_relaxed);
-				if (servedStock)
-					totals.servedStock.fetch_add(servedStock, std::memory_order_relaxed);
-				if (servedLibDeflate)
-					totals.servedLibDeflate.fetch_add(servedLibDeflate, std::memory_order_relaxed);
-				if (servedUnknown)
-					totals.servedUnknown.fetch_add(servedUnknown, std::memory_order_relaxed);
-
-				attempted = 0;
-				succeeded = 0;
-				rejectedByState = 0;
-				codecFailed = 0;
-				commitRejected = 0;
-				allocationFailed = 0;
-				servedStock = 0;
-				servedLibDeflate = 0;
-				servedUnknown = 0;
-				pending = 0;
-			}
-		};
-
-		thread_local ThreadCounters g_threadCounters;
-
-		static void CountOutcome(const ZlibInflateOutcome& a_outcome) noexcept
-		{
-			switch (a_outcome.servedBackendId)
-			{
-			case ZlibBackendRegistryId(ZlibBackendKind::Stock):
-				g_threadCounters.Count(g_threadCounters.servedStock);
-				break;
-			case ZlibBackendRegistryId(ZlibBackendKind::LibDeflate):
-				g_threadCounters.Count(g_threadCounters.servedLibDeflate);
-				break;
-			default:
-				g_threadCounters.Count(g_threadCounters.servedUnknown);
-				break;
-			}
-
-			if (a_outcome.primaryBackendId != ZlibBackendRegistryId(ZlibBackendKind::LibDeflate))
-				return;
-
-			switch (static_cast<ZlibFallbackReason>(a_outcome.fallbackReasonId))
-			{
-			case ZlibFallbackReason::None:
-				g_threadCounters.Count(g_threadCounters.attempted);
-				g_threadCounters.Count(g_threadCounters.succeeded);
-				break;
-			case ZlibFallbackReason::State:
-				g_threadCounters.Count(g_threadCounters.rejectedByState);
-				break;
-			case ZlibFallbackReason::Allocation:
-				g_threadCounters.Count(g_threadCounters.allocationFailed);
-				break;
-			case ZlibFallbackReason::Decode:
-				g_threadCounters.Count(g_threadCounters.attempted);
-				g_threadCounters.Count(g_threadCounters.codecFailed);
-				break;
-			case ZlibFallbackReason::Commit:
-				g_threadCounters.Count(g_threadCounters.attempted);
-				g_threadCounters.Count(g_threadCounters.commitRejected);
-				break;
-			default:
-				break;
-			}
-		}
-
-		static void RecordOutcome(
-			const ZlibInflateOutcome& a_outcome,
-			uint64_t a_inputBytesAvailable,
-			uint64_t a_outputBytesAvailable,
-			const ZlibServeState& a_serve) noexcept
-		{
-			BA2Profile::CallObservation observation;
-			observation.primaryBackendId = a_outcome.primaryBackendId;
-			observation.fallbackBackendId = a_outcome.fallbackBackendId;
-			observation.servedBackendId = a_outcome.servedBackendId;
-			observation.fallbackReasonId = a_outcome.fallbackReasonId;
-			observation.primaryQpc = a_outcome.primaryQpc;
-			observation.fallbackQpc = a_outcome.fallbackQpc;
-			observation.totalQpc = a_outcome.totalQpc;
-			observation.qpcFrequency = a_outcome.qpcFrequency;
-			observation.inputBytesAvailable = a_inputBytesAvailable;
-			observation.outputBytesAvailable = a_outputBytesAvailable;
-			observation.inputBytesConsumed = a_outcome.consumed;
-			observation.outputBytesProduced = a_outcome.produced;
-			observation.zlibResult = a_outcome.zlibResult;
-			observation.primaryAttempted = a_outcome.primaryAttempted;
-			observation.observationSiteId = BA2Profile::kSiteInflate;
-			observation.callerId = a_serve.callerId;
-			observation.threadId = static_cast<uint32_t>(GetCurrentThreadId());
-			observation.requestSequence = a_serve.requestSequence;
-			observation.streamAddress = a_serve.streamAddress;
-			if (a_outcome.servedBackendId == a_outcome.primaryBackendId)
-			{
-				observation.primaryInputBytesConsumed =
-					static_cast<uint32_t>(a_outcome.consumed);
-				observation.primaryOutputBytesProduced =
-					static_cast<uint32_t>(a_outcome.produced);
-			}
-			ProfilerBA2::GetSingleton()->Record(observation);
-		}
-
-		static void LogCounters() noexcept
-		{
-			g_threadCounters.Flush();
-			const auto& counters = GetAtomicCounters();
-			REX::INFO(
-				"Zlib backend counters (selected {}): served-stock {}, served-libdeflate {}, served-unknown {}, attempted {}, succeeded {}, rejected-by-state {}, codec-failed {}, commit-rejected {}, allocation-failed {}"sv,
-				ZlibBackendKindName(GetSelectedZlibBackendKind()),
-				counters.servedStock.load(std::memory_order_relaxed),
-				counters.servedLibDeflate.load(std::memory_order_relaxed),
-				counters.servedUnknown.load(std::memory_order_relaxed),
-				counters.attempted.load(std::memory_order_relaxed),
-				counters.succeeded.load(std::memory_order_relaxed),
-				counters.rejectedByState.load(std::memory_order_relaxed),
-				counters.codecFailed.load(std::memory_order_relaxed),
-				counters.commitRejected.load(std::memory_order_relaxed),
-				counters.allocationFailed.load(std::memory_order_relaxed));
-		}
-
 		namespace Decompression
 		{
-			// A replay's inner calls are the request's own bytes; aggregated, not rowed.
-			[[nodiscard]] inline static int32_t ServeReplay(
-				ZlibInflate::Stream* a_stream,
-				int32_t a_flush,
-				ZlibReplayCapture& a_capture) noexcept
-			{
-				const auto inputBefore = a_stream->avail_in;
-				const auto outputBefore = a_stream->avail_out;
-				const auto start = a_capture.timingEnabled ? ReadQpc() : 0;
-				const auto result = OriginalInflate(a_stream, a_flush);
-				const auto end = a_capture.timingEnabled ? ReadQpc() : 0;
-				const auto inputAfter = a_stream->avail_in;
-				const auto outputAfter = a_stream->avail_out;
-				a_capture.Account(
-					end - start,
-					inputAfter <= inputBefore ? inputBefore - inputAfter : 0,
-					outputAfter <= outputBefore ? outputBefore - outputAfter : 0,
-					result);
-				return result;
-			}
-
 			template<class Backend>
 			struct Selected
 			{
 				static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
 				{
-					auto& serve = CurrentZlibServe();
-					if (serve.mode == ZlibServeMode::CaptureReplay && serve.capture &&
-						a_stream && OriginalInflate)
-						return ServeReplay(a_stream, a_flush, *serve.capture);
-
-					const auto recording = ProfilerBA2::GetSingleton()->IsRecording();
-					const auto qpcFrequency = recording ? GetQpcFrequency() : 0;
-					const auto timingEnabled = recording && qpcFrequency != 0;
-					const auto inputBytesAvailable = a_stream ? a_stream->avail_in : 0;
-					const auto outputBytesAvailable = a_stream ? a_stream->avail_out : 0;
 					if (!a_stream || !OriginalInflate)
-					{
-						if (timingEnabled)
-						{
-							ZlibInflateOutcome outcome;
-							outcome.primaryBackendId = ZlibBackendRegistryId(Backend::kind);
-							outcome.zlibResult = Z_STREAM_ERROR;
-							outcome.qpcFrequency = qpcFrequency;
-							const auto start = ReadQpc();
-							const auto end = ReadQpc();
-							outcome.totalQpc = end - start;
-							RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable, serve);
-						}
 						return Z_STREAM_ERROR;
-					}
 
 					const auto original = [](ZlibInflate::Stream* a_stockStream, int32_t a_stockFlush) noexcept {
 						return OriginalInflate(a_stockStream, a_stockFlush);
 					};
-					const auto clock = []() noexcept { return ReadQpc(); };
-					// Delegated work must not reattempt the codec, but is still observed.
-					const auto outcome = serve.mode == ZlibServeMode::ForceStockObserved ?
-						ServeZlib<StockZlibBackend>(
-							a_stream, a_flush, original, timingEnabled, qpcFrequency, clock) :
-						ServeZlib<Backend>(
-							a_stream, a_flush, original, timingEnabled, qpcFrequency, clock);
-					CountOutcome(outcome);
-					if (timingEnabled)
-						RecordOutcome(outcome, inputBytesAvailable, outputBytesAvailable, serve);
-
+					const auto clock = []() noexcept {
+						return TelemetryDetail::ReadQpc();
+					};
+					const auto bytesInBefore = a_stream->total_in;
+					const auto bytesOutBefore = a_stream->total_out;
+					const auto outcome = [&] {
+						if constexpr (Backend::kind == ZlibBackendKind::LibDeflate)
+						{
+							return TelemetryDetail::ServeTelemetryZlib<Backend>(
+								a_stream,
+								a_flush,
+								original,
+								clock,
+								[]() noexcept { return GetCurrentThreadId(); },
+								[&](const ZlibInflateOutcome& a_outcome,
+									bool a_enabled,
+									uint32_t a_threadId) noexcept {
+									ModuleLibDeflate::Record(
+										a_outcome,
+										a_enabled,
+										a_flush,
+										a_threadId,
+										static_cast<uint32_t>(
+											a_stream->total_in - bytesInBefore),
+										static_cast<uint32_t>(
+											a_stream->total_out - bytesOutBefore));
+								});
+						}
+						else
+							return ServeZlib<Backend>(
+								a_stream, a_flush, original, false, 0, clock);
+					}();
 					return outcome.zlibResult;
 				}
 			};
@@ -314,21 +93,14 @@ namespace Addictol
 	}
 
 	ModuleLibDeflate::ModuleLibDeflate() :
-		Module("LibDeflate", &bPatchesLibDeflate, {
-			F4SE::MessagingInterface::kPostLoadGame,
-			F4SE::MessagingInterface::kPostSaveGame })
-	{}
+		Module("LibDeflate", &bPatchesLibDeflate)
+	{
+		s_instance = this;
+	}
 
 	const REX::TOML::Bool<>* ModuleLibDeflate::GetOption() const noexcept
 	{
-		if (ProfilerCore::IsEnabledInConfig() && ProfilerCore::IsBA2TimingEnabled())
-			return nullptr;
 		return &bPatchesLibDeflate;
-	}
-
-	bool ModuleLibDeflate::DoQuery() const noexcept
-	{
-		return true;
 	}
 
 	bool ModuleLibDeflate::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
@@ -366,25 +138,6 @@ namespace Addictol
 			return false;
 		}
 
-		const auto recording = ProfilerBA2::GetSingleton()->Start();
-		if (!bPatchesLibDeflate.GetValue() && !recording)
-		{
-			Skip("BA2 profiler could not start"sv);
-			return false;
-		}
-
-		// Every target is proven before the first write.
-		const auto textureSelected = GetSelectedZlibBackendKind() == ZlibBackendKind::LibDeflate;
-		const auto textureValidated = textureSelected &&
-			TextureOneShot::Validate(runtime) == TextureOneShot::InstallState::Validated;
-		if (!textureSelected)
-		{
-			REX::INFO(
-				"LibDeflate: {} one-shot texture decompression stays off because the selected backend is {}."sv,
-				runtime,
-				ZlibBackendKindName(GetSelectedZlibBackendKind()));
-		}
-
 		const auto hook = VisitSelectedZlibBackend([]<class Backend>() {
 			return reinterpret_cast<uintptr_t>(&Decompression::Selected<Backend>::Inflate);
 		});
@@ -393,7 +146,7 @@ namespace Addictol
 		if (!OriginalInflate)
 		{
 			REX::ERROR(
-				"LibDeflate: {} detour failed for selected backend {}; inflate may be left in an indeterminate state and the texture seam is not attempted."sv,
+				"LibDeflate: {} detour failed for selected backend {}; inflate may be left in an indeterminate state."sv,
 				runtime,
 				ZlibBackendKindName(GetSelectedZlibBackendKind()));
 			return false;
@@ -404,38 +157,119 @@ namespace Addictol
 			runtime,
 			ZlibBackendKindName(GetSelectedZlibBackendKind()));
 
-		// The seam routes through the same backend, so it is patched second.
-		if (textureValidated &&
-			TextureOneShot::InstallValidated() != TextureOneShot::InstallState::Installed)
-		{
-			REX::WARN(
-				"LibDeflate: {} one-shot texture decompression is disabled; the validated inflate hook stays installed and textures decompress per chunk."sv,
-				runtime);
-		}
-		else if (textureSelected && !textureValidated)
-		{
-			REX::WARN(
-				"LibDeflate: {} one-shot texture decompression was not installed because its targets did not validate; the inflate hook stays installed and textures decompress per chunk."sv,
-				runtime);
-		}
+		m_active.store(
+			GetSelectedZlibBackendKind() == ZlibBackendKind::LibDeflate,
+			std::memory_order_relaxed);
 		return true;
 	}
 
-	bool ModuleLibDeflate::DoListener(F4SE::MessagingInterface::Message* a_msg) noexcept
+	std::span<const MetricDescriptor> ModuleLibDeflate::Schema() const noexcept
 	{
-		if (ProfilerCore::IsEnabledInConfig() && bProfilerZlibTracking.GetValue() && a_msg &&
-			(a_msg->type == F4SE::MessagingInterface::kPostLoadGame ||
-				a_msg->type == F4SE::MessagingInterface::kPostSaveGame))
-		{
-			zlibDetail::LogCounters();
-			TextureOneShot::LogCounters();
-		}
-
-		return true;
+		return ZlibIntervalCounters::Schema();
 	}
 
-	bool ModuleLibDeflate::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	size_t ModuleLibDeflate::SeriesCapacity() const noexcept
 	{
-		return true;
+		return kSeriesCapacity;
 	}
+
+	void ModuleLibDeflate::Record(
+		const ZlibInflateOutcome& a_outcome,
+		bool a_telemetryEnabled,
+		int32_t a_flush,
+		uint32_t a_currentThreadId,
+		uint64_t a_bytesIn,
+		uint64_t a_bytesOut) noexcept
+	{
+		if (!a_telemetryEnabled || !s_instance)
+			return;
+		const auto fallbackReason =
+			static_cast<ZlibFallbackReason>(a_outcome.fallbackReasonId);
+		Telemetry::ObserveZlibCall(
+			s_instance->m_interval,
+			a_telemetryEnabled,
+			fallbackReason,
+			a_outcome.servedBackendId ==
+				ZlibBackendRegistryId(ZlibBackendKind::LibDeflate),
+			a_flush,
+			a_currentThreadId,
+			a_bytesIn,
+			a_bytesOut,
+			a_outcome.totalQpc);
+	}
+
+	void ModuleLibDeflate::Drain(std::span<MetricValue> a_out) noexcept
+	{
+		if (a_out.size() != Schema().size())
+			return;
+		const auto packed = m_interval.Drain();
+		const auto bytesIn = m_interval.DrainBytesIn();
+		const auto bytesOut = m_interval.DrainBytesOut();
+		const auto fallbackBytesOut = m_interval.DrainFallbackBytesOut();
+		const auto active = m_active.load(std::memory_order_relaxed);
+		a_out[0] = { static_cast<double>(static_cast<uint32_t>(packed)), active };
+		a_out[1] = { static_cast<double>(packed >> 32), active };
+		a_out[2] = { static_cast<double>(bytesOut), active };
+		a_out[3] = { static_cast<double>(bytesIn), active };
+		a_out[4] = { static_cast<double>(fallbackBytesOut), active };
+		for (size_t index = 0; index < ZlibIntervalCounters::kFallbackReasonCount; ++index)
+		{
+			a_out[index + 5] = {
+				static_cast<double>(m_interval.DrainFallbackReason(index)),
+				active
+			};
+		}
+	}
+
+	size_t ModuleLibDeflate::DrainSeries(
+		std::span<SeriesSample> a_out) noexcept
+	{
+		if (a_out.size() != SeriesCapacity())
+			return 0;
+		size_t offset{ 0 };
+		const auto append = [&]<size_t N>(
+			std::string_view a_series,
+			const std::array<std::string_view, N>& a_labels,
+			const std::array<HistogramBucket, N>& a_histogram) noexcept {
+			for (size_t index = 0; index < N; ++index)
+			{
+				if (!AppendSeriesSample(a_out, offset, {
+					a_series,
+					a_labels[index],
+					a_histogram[index].calls,
+					a_histogram[index].ticks,
+					a_histogram[index].bytes
+				}))
+					break;
+			}
+		};
+
+		append(
+			"zlib.served.libdeflate",
+			kSizeBucketLabels,
+			m_interval.servedLibDeflateOutput.Drain());
+		append(
+			"zlib.served.stock",
+			kSizeBucketLabels,
+			m_interval.servedStockOutput.Drain());
+		append(
+			"zlib.input.libdeflate",
+			kSizeBucketLabels,
+			m_interval.servedLibDeflateInput.Drain());
+		append(
+			"zlib.input.stock",
+			kSizeBucketLabels,
+			m_interval.servedStockInput.Drain());
+		append(
+			"zlib.fallback.thread",
+			kThreadBucketLabels,
+			m_interval.fallbackThread.Drain());
+		append(
+			"zlib.served.thread",
+			kThreadBucketLabels,
+			m_interval.servedThread.Drain());
+		append("zlib.flush", kFlushBucketLabels, m_interval.flush.Drain());
+		return std::min(offset, a_out.size());
+	}
+
 }

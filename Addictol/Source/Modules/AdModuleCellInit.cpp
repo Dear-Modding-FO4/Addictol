@@ -46,11 +46,6 @@ namespace Addictol
 		Module("Cell Init", &bFixesCellInit)
 	{}
 
-	bool ModuleCellInit::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleCellInit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation Target{ REL::ID{ 868663, 2200179 }, REL::Offset(0x3E) };
@@ -64,13 +59,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleCellInit::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCellInit::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

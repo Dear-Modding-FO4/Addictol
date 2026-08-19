@@ -41,11 +41,6 @@ namespace Addictol
 		Module("PipBoy Light Env", &bPatchesPipBoyLightInv)
 	{}
 
-	bool ModulePipBoyLightInv::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModulePipBoyLightInv::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto base = REL::ID{ 566261, 2233255 }.address();
@@ -69,13 +64,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModulePipBoyLightInv::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModulePipBoyLightInv::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

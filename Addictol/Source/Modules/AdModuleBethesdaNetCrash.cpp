@@ -63,11 +63,6 @@ namespace Addictol
 		Module("Bethesda.net Crash", &bFixesBethesdaNetCrash)
 	{}
 
-	bool ModuleBethesdaNetCrash::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleBethesdaNetCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// OG (1.10.163) imports wcsrtombs_s from MSVCR110.dll; NG/AE use the modern api-ms-* CRT shim.
@@ -93,13 +88,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleBethesdaNetCrash::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleBethesdaNetCrash::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -176,13 +176,4 @@ namespace Addictol
 				loadOrderDetail::DeferRefresh_Finish::func != 0;
 	}
 
-	bool ModuleLoadOrder::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleLoadOrder::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

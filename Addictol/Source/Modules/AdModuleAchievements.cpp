@@ -24,11 +24,6 @@ namespace Addictol
 		Module("Achievements", &bPatchesAchievements)
 	{}
 
-	bool ModuleAchievements::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleAchievements::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation{ REL::ID{ 1432894, 2192323 } }.address();
@@ -48,13 +43,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAchievements::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleAchievements::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

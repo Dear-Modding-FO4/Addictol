@@ -28,11 +28,6 @@ namespace Addictol
 		Module("Profile", &bPatchesProfile)
 	{}
 
-	bool ModuleProfile::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleProfile::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		RELEX::DetourCall(REL::Relocation{ REL::ID{ 665510, 2228907 }, REL::Offset{ 0x3BE, 0x4A7, 0x538 } }.get(), 
@@ -41,13 +36,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleProfile::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleProfile::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

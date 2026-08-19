@@ -2,12 +2,10 @@
 #include <AdUtils.h>
 #include <AdConfigValidation.h>
 #include <AdLogControl.h>
-#include <AdProfilerCore.h>
-#include <AdProfilerDLL.h>
-#include <AdProfilerMemory.h>
+#include <AdMenu.h>
 #include <AdZlibBackend.h>
-#include <AdProfilerModules.h>
 #include <AdPlatformImgui.h>
+#include <AdTelemetryHub.h>
 
 #include <RE/B/BSCRC32.h>
 #include <RE/B/BSScriptUtil.h>
@@ -26,25 +24,6 @@ extern void AdRegisterPreloadModules();
 namespace Addictol
 {
 	static REX::TOML::Bool<> bAdditionalIgnoreCompatibilityChecks{ "Additional"sv, "bIgnoreCompatibilityChecks"sv, false };
-
-	[[nodiscard]] static const char* GetF4SEMessageName(uint32_t a_type) noexcept
-	{
-		switch (a_type)
-		{
-		case F4SE::MessagingInterface::kPostLoad:      return "PostLoad";
-		case F4SE::MessagingInterface::kPostPostLoad:  return "PostPostLoad";
-		case F4SE::MessagingInterface::kPreLoadGame:   return "PreLoadGame";
-		case F4SE::MessagingInterface::kPostLoadGame:  return "PostLoadGame";
-		case F4SE::MessagingInterface::kPreSaveGame:   return "PreSaveGame";
-		case F4SE::MessagingInterface::kPostSaveGame:  return "PostSaveGame";
-		case F4SE::MessagingInterface::kDeleteGame:    return "DeleteGame";
-		case F4SE::MessagingInterface::kInputLoaded:   return "InputLoaded";
-		case F4SE::MessagingInterface::kNewGame:       return "NewGame";
-		case F4SE::MessagingInterface::kGameLoaded:    return "GameLoaded";
-		case F4SE::MessagingInterface::kGameDataReady: return "GameDataReady";
-		default:                                       return "Unknown";
-		}
-	}
 
 	static std::vector<const RE::TESFile*> AnalyzeGameCollectionCriticalCompatibility() noexcept
 	{
@@ -112,12 +91,6 @@ namespace Addictol
 
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		{
-			auto profiler = ProfilerCore::GetSingleton();
-			if (profiler->IsActive())
-				profiler->MarkPhase(std::string("F4SE_"sv) + GetF4SEMessageName(a_msg->type));
-		}
-
 		auto plugin = Plugin::GetSingleton();
 		if (!plugin->IsInstall())
 		{
@@ -228,27 +201,10 @@ namespace Addictol
 				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName ".toml");
 				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
-				// Early profiler start: install DLL profiler before other modules load
-				if (ProfilerCore::IsEnabledInConfig())
-				{
-					auto profiler = ProfilerCore::GetSingleton();
-					if (!profiler->IsActive())
-						profiler->Start();
-					profiler->MarkPhase("ConfigLoaded"sv);
-					if (ProfilerCore::IsMemoryTrackingEnabled())
-						ProfilerMemory::GetSingleton()->CaptureBaseline();
-				}
 			}
-
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig() && ProfilerCore::IsDLLEnabled())
-				ProfilerDLL::GetSingleton()->Install(a_f4se);
 
 			// Register all modules
 			AdRegisterModules();
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig())
-				ProfilerCore::GetSingleton()->MarkPhase("ModulesRegistered"sv);
 
 			// Listen for Messages (to Install PostInit Patches)
 			auto MessagingInterface = F4SE::GetMessagingInterface();
@@ -264,19 +220,11 @@ namespace Addictol
 
 			// Query patches
 			moduleManager.QueryLoadAll();
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig())
-				ProfilerCore::GetSingleton()->MarkPhase("ModulesQueried"sv);
 			// Install load patches
 			moduleManager.InstallLoadAll();
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig())
-			{
-				ProfilerCore::GetSingleton()->MarkPhase("ModulesInstalled"sv);
-				ProfilerFlushModuleEntries();
-				if (ProfilerCore::IsMemoryTrackingEnabled())
-					ProfilerMemory::GetSingleton()->CaptureSnapshot("AfterModuleInstall"sv);
-			}
+			Telemetry::Initialize(moduleManager);
+			// every module has contributed by now
+			Menu::FinalizeRegistration();
 
 			isInit = true;
 		});
@@ -316,35 +264,12 @@ namespace Addictol
 			ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName ".toml");
 			ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
-			// Early profiler start: install DLL profiler before other modules load
-			if (ProfilerCore::IsEnabledInConfig())
-			{
-				auto profiler = ProfilerCore::GetSingleton();
-				if (!profiler->IsActive())
-					profiler->Start();
-				profiler->MarkPhase("PreloadConfigLoaded"sv);
-				if (ProfilerCore::IsMemoryTrackingEnabled())
-					ProfilerMemory::GetSingleton()->CaptureBaseline();
-			}
-
 			// Register preload all modules
 			AdRegisterPreloadModules();
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig())
-				ProfilerCore::GetSingleton()->MarkPhase("PreloadModulesRegistered"sv);
 			// Query preload patches
 			moduleManager.QueryPreloadAll();
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig())
-				ProfilerCore::GetSingleton()->MarkPhase("PreloadModulesQueried"sv);
 			// Install  patches
 			moduleManager.InstallPreloadAll();
-			// Profiler phase
-			if (ProfilerCore::IsEnabledInConfig())
-			{
-				ProfilerCore::GetSingleton()->MarkPhase("PreloadModulesInstalled"sv);
-				ProfilerFlushModuleEntries();
-			}
 
 			isPreloadInit = true;
 		});

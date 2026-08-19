@@ -1,5 +1,5 @@
 #include <Modules/AdModuleSafeExit.h>
-#include <AdProfilerBA2.h>
+#include <AdTelemetryHub.h>
 #include <AdUtils.h>
 
 #include <RE/M/Main.h>
@@ -18,11 +18,11 @@ namespace Addictol
 
 	inline static void Shutdown() noexcept
 	{
-		ProfilerBA2::GetSingleton()->PublishFinal("Shutdown"sv);
 #if AD_TRACER
 		MemoryTracer::GetSingleton()->Dump();
 #endif
 		REX::INFO("Shutting Down Game..."sv);
+		Telemetry::Hub().Stop();
 		REX::W32::TerminateProcess(REX::W32::GetCurrentProcess(), EXIT_SUCCESS);
 	}
 
@@ -50,11 +50,6 @@ namespace Addictol
 		return bFixesSafeExit.GetValue();
 	}
 
-	bool ModuleSafeExit::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleSafeExit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& trampoline = REL::GetTrampoline();
@@ -69,13 +64,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleSafeExit::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleSafeExit::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

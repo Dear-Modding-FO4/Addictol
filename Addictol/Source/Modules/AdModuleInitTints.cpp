@@ -11,11 +11,6 @@ namespace Addictol
 		Module("Init Tints", &bFixesInitTints)
 	{}
 
-	bool ModuleInitTints::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleInitTints::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!RELEX::IsRuntimeOG())
@@ -58,13 +53,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleInitTints::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleInitTints::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

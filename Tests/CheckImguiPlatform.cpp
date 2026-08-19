@@ -33,7 +33,7 @@ namespace
 	constexpr uint8_t expected_ae[]{
 		0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18,
 		0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x54, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20,
-		0x8B, 0x15, 0xE4, 0xA7, 0x3D, 0x02, 0x4C, 0x8B, 0xF9
+		0x8B, 0x15, 0x64, 0x0C, 0x3F, 0x02, 0x4C, 0x8B, 0xF9
 	};
 
 	void check_every_byte_mutation(vmm_tests::Runner& runner, std::string_view name, Runtime runtime)
@@ -131,28 +131,21 @@ namespace vmm_tests
 			require(table.Name(1).size() == kSinkNameCapacity - 1, "the longest name round trips");
 		});
 
-		runner.test("sink registration rejects overflow and late arrivals", [] {
+		runner.test("sink registration remains open for late arrivals and rejects overflow", [] {
 			SinkTable<KeySink> table;
-			for (size_t index = 0; index < table.MaxSize(); ++index)
+			require(table.Add("early", key_sink) == Registration::kAccepted,
+				"the initial sink is accepted");
+			require(table.IsOpen(), "an accepted sink did not leave registration open");
+			require(table.Add("late", key_sink) == Registration::kAccepted,
+				"a later sink is accepted while registration remains open");
+
+			for (size_t index = table.Size(); index < table.MaxSize(); ++index)
 			{
 				require(table.Add("sink" + std::to_string(index), key_sink) == Registration::kAccepted,
 					"capacity must hold " + std::to_string(table.MaxSize()) + " sinks");
 			}
 			require(table.Size() == table.MaxSize(), "the table is full");
 			require(table.Add("overflow", key_sink) == Registration::kFull, "overflow is rejected");
-
-			table.Close();
-			require(!table.IsOpen(), "closing is visible");
-			require(table.Add("late", key_sink) == Registration::kClosed, "late registration is rejected");
-			require(table.Size() == table.MaxSize(), "closing preserves the registered sinks");
-			require(table.At(0) == key_sink, "closing keeps the sinks callable");
-
-			SinkTable<KeySink> closedFirst;
-			closedFirst.Close();
-			require(closedFirst.Add("late", key_sink) == Registration::kClosed,
-				"a closed table rejects before it inspects the callback");
-			require(closedFirst.Add("late", nullptr) == Registration::kClosed,
-				"closed outranks every other rejection reason");
 		});
 
 		runner.test("window messages are classified and swallowed by capture state", [] {

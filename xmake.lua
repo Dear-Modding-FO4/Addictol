@@ -302,12 +302,13 @@ target("vmm-tests", function()
     -- add source files
     add_files("Tests/**.cpp")
     add_files("Addictol/Source/AdLogControl.cpp")
+    add_files("Addictol/Source/AdTelemetryHub.cpp")
 
     -- add include directories
     add_includedirs("Tests", "Addictol/Include", "Depends", "Depends/spdlog/include", "Depends/vmm/source")
 
     -- add defines
-    add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN", "SPDLOG_COMPILED_LIB", "SPDLOG_USE_STD_FORMAT")
+    add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN", "SPDLOG_COMPILED_LIB", "SPDLOG_USE_STD_FORMAT", "AD_TELEMETRY_TESTS")
 
     -- add libraries
     add_linkdirs(xmake_library_dir)

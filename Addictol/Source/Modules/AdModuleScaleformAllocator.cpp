@@ -111,11 +111,6 @@ namespace Addictol
 		Module("Scaleform Allocator", &bPatchesScaleformAllocator)
 	{}
 
-	bool ModuleScaleformAllocator::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleScaleformAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		BSScaleformAllocator<ProxyCurrentHeap>::Install();
@@ -123,13 +118,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleScaleformAllocator::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleScaleformAllocator::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

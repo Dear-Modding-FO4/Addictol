@@ -48,11 +48,6 @@ namespace Addictol
 		Module("Attach Light Crash", &bFixesAttachLightCrash)
 	{}
 
-	bool ModuleAttachLightCrash::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleAttachLightCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation vtable{ RE::AttachLightHitEffectVisitor::VTABLE[0] };
@@ -61,13 +56,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAttachLightCrash::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleAttachLightCrash::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

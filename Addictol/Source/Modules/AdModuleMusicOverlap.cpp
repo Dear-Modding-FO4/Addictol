@@ -25,11 +25,6 @@ namespace Addictol
 		Module("Music Overlap", &bFixesMusicOverlap)
 	{}
 
-	bool ModuleMusicOverlap::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMusicOverlap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto vtable = RE::VTABLE::BGSMusicType[1].address();
@@ -42,13 +37,4 @@ namespace Addictol
 		return RELEX::DetourVTable(vtable, reinterpret_cast<uintptr_t>(&detail::DoFinish), 3) != 0;
 	}
 
-	bool ModuleMusicOverlap::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMusicOverlap::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

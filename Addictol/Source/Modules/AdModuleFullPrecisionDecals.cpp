@@ -1202,13 +1202,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleFullPrecisionDecals::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleFullPrecisionDecals::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

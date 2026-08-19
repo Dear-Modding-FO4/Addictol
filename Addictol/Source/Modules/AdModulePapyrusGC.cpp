@@ -172,11 +172,6 @@ namespace Addictol
 		Module("PapyrusGC", &bFixesPapyrusGCBug)
 	{}
 
-	bool ModulePapyrusGC::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModulePapyrusGC::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kPostLoad)
@@ -185,13 +180,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModulePapyrusGC::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModulePapyrusGC::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

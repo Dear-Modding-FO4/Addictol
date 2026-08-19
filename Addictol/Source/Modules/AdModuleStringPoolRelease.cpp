@@ -29,11 +29,6 @@ namespace Addictol
 		Module("String Pool Release", &bFixesStringPoolRelease)
 	{}
 
-	bool ModuleStringPoolRelease::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleStringPoolRelease::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		*(uintptr_t*)&detail::BSStringPool__Entry__Release_orig =
@@ -43,13 +38,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleStringPoolRelease::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleStringPoolRelease::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

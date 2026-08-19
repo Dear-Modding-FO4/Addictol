@@ -62,11 +62,6 @@ namespace Addictol
 		Module("AIProcess 3DUpdateFlag", &bFixesAIProcess3DUpdateFlag)
 	{}
 
-	bool ModuleAIProcess3DUpdateFlag::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleAIProcess3DUpdateFlag::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg)
@@ -94,13 +89,4 @@ namespace Addictol
 			(RELEX::DetourClassJump(targetGetAll,	&Detail::AIProcess::GetAll3DUpdateFlags		) != 0);
 	}
 
-	bool ModuleAIProcess3DUpdateFlag::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleAIProcess3DUpdateFlag::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

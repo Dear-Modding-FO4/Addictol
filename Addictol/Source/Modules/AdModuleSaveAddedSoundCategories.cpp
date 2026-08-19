@@ -136,11 +136,6 @@ namespace Addictol
 		Module("Save Added Sound Categories", &bPatchesSaveAddedSoundCategories)
 	{}
 
-	bool ModuleSaveAddedSoundCategories::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleSaveAddedSoundCategories::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// Loading
@@ -153,13 +148,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleSaveAddedSoundCategories::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleSaveAddedSoundCategories::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

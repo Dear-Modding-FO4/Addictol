@@ -17,11 +17,6 @@ namespace Addictol
 		Module("High Res Bloom", &bPatchesHighResBloom)
 	{}
 
-	bool ModuleHighResBloom::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleHighResBloom::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto scale = nAdditionalBloomScale.GetValue();
@@ -63,13 +58,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleHighResBloom::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleHighResBloom::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

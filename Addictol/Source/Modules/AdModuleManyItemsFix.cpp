@@ -84,13 +84,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleManyItemsFix::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleManyItemsFix::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

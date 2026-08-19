@@ -96,11 +96,6 @@ namespace Addictol
 		Module("High Res Local Maps", &bPatchesHighResLocalMaps)
 	{}
 
-	bool ModuleHighResLocalMaps::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleHighResLocalMaps::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// Targets
@@ -140,16 +135,6 @@ namespace Addictol
 				highResLocalMapsDetail::CreateDepthStencilTarget::func != 0 &&
 				highResLocalMapsDetail::Render::func != 0 &&
 				highResLocalMapsDetail::RenderEffect::func != 0;
-	}
-
-	bool ModuleHighResLocalMaps::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleHighResLocalMaps::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
 	}
 
 	bool ModuleHighResLocalMaps::HasProcessDefender() noexcept

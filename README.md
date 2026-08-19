@@ -27,13 +27,12 @@ One DLL covers all three; there is no separate download per version.
 
 - **Memory Manager** - Replaces the game's allocator with a selectable backend
 - **Faster Workshop** - O(1) keyword lookups instead of scanning all constructible objects
-- **Zlib Decompression** - Selectable stock/libdeflate backend, with direct whole-chunk texture decoding by default
+- **Zlib Decompression** - Selectable stock/libdeflate backend
 - **Facegen** - Validates NPC face textures before using preprocessed data
 - **Input Switch** - Proper keyboard/gamepad device switching
 - **Scaleform Allocator** - Replaces Scaleform's memory mapper with configurable page/heap sizes
 - **Archive Limits** - Increases max BA2 archives the game can load
-- **Profiler** - Profiler for definitions performance your collection mods
-- **Profiler Menu** - In-game viewer for the profiler data, drawn over the game on a configurable key
+- **Menu** - In-game diagnostics window drawn over the game on a configurable key
 - **Papyrus GC Bug** - Fixes a critical bug in garbage collection that causes premature loop termination
 - ~80 modules in total, covering crash fixes, engine bug fixes and stability patches
 
@@ -77,27 +76,28 @@ bUnalignedLoad = false
 
 Options are grouped into `[Patches]` (subsystem replacements), `[Fixes]` (bug and crash fixes),
 `[Warnings]` (diagnostics for problems in your load order), `[Others]` (patches for specific
-third-party mods), `[Additional]` (tunables belonging to another option) and `[Profiler]`
-(diagnostics).
+third-party mods) and `[Additional]` (tunables belonging to another option).
 
 Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`, listing which modules loaded
 and any that disabled themselves. Check it first if something is not working.
 
-### Profiler menu
+### Menu
 
-`[Profiler] bProfilerMenu` adds an in-game viewer for whatever the profiler already records. It
-never enables profiling by itself, so it needs `bProfiler = true` and the recorders you want to
-read. `sProfilerMenuToggleKey` accepts F1-F12, Home, End, Insert, and Delete, and falls back to F11
-when it does not recognize the name. `uProfilerMenuRefreshMs` sets how often the open panel copies
-fresh data, clamped to 100-2000 ms.
+`[Additional] bMenu` adds an in-game diagnostics window drawn over the game.
+`sMenuToggleKey` accepts F1-F12, Home, End, Insert, and Delete, and falls back to F11 when it does
+not recognize the name. `uMenuRefreshMs` sets how often the open tab copies fresh data, clamped to
+100-2000 ms.
 
-The menu always starts closed, only the visible panel refreshes, and nothing is timed, copied, or
-allocated while it is closed. Window geometry is kept in
+Tabs appear in module name order and Log Control is always last.
+
+The menu always starts closed. The ImGui host installs its hook for external F4SE plugins regardless
+of `bMenu`; a disabled menu registers no setup, draw, or toggle sinks. Window geometry is kept in
 `Data\F4SE\Plugins\Addictol\imgui.ini`; the open state is not persisted.
 
-Overview can change the log record and flush levels for the current session and shows the live
-output rate. These overrides are not persisted; `[Additional] sLogLevel` and `sLogFlushLevel` are
-the persistent controls.
+Log Control changes the record and flush levels for the current session and shows the live output
+rate. The record level decides which lines are kept; the flush level forces a synchronous disk
+write at that level or higher. These overrides are not persisted; `[Additional] sLogLevel` and
+`sLogFlushLevel` are the persistent controls.
 
 ## Building
 
@@ -120,7 +120,7 @@ handling game addresses across the three runtimes, and what a pull request needs
 
 GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPTIONS).
 
-The profiler menu theme is adapted from Fallout 4 Community Shaders (`src/Menu/Theme.h` and
+The menu theme is adapted from Fallout 4 Community Shaders (`src/Menu/Theme.h` and
 `src/Menu/Theme.cpp`), which is GPL-3.0. The bundled Inter and JetBrains Mono fonts in
 `Data\F4SE\Plugins\Addictol\Fonts` ship under the SIL Open Font License; their license texts sit
 next to them.

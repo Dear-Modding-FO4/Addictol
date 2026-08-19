@@ -92,11 +92,6 @@ namespace Addictol
 		Module("Water Jetpack Fix", &bFixesWaterJetpackFix, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
-	bool ModuleWaterJetpackFix::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleWaterJetpackFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
@@ -124,8 +119,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleWaterJetpackFix::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -30,11 +30,6 @@ namespace Addictol
 		Module("Workbench Swap", &bFixesWorkbenchSwap)
 	{}
 
-	bool ModuleWorkbenchSwap::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleWorkbenchSwap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation Target{ REL::ID{ 1573164, 2267897 }, 0x48 };
@@ -49,13 +44,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleWorkbenchSwap::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleWorkbenchSwap::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

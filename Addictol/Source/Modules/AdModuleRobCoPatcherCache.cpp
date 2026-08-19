@@ -265,11 +265,6 @@ namespace Addictol
 		Module("RobCo Patcher Cache", &bPatchesRobCoPatcherCache)
 	{}
 
-	bool ModuleRobCoPatcherCache::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleRobCoPatcherCache::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!a_msg)
@@ -282,13 +277,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleRobCoPatcherCache::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleRobCoPatcherCache::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

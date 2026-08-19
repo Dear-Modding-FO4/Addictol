@@ -27,11 +27,6 @@ namespace Addictol
 		Module("Threads", &bPatchesThreads)
 	{}
 
-	bool ModuleThreads::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleThreads::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto Handle = GetModuleHandleA(NULL);
@@ -116,13 +111,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleThreads::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleThreads::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

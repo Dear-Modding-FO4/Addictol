@@ -9,11 +9,6 @@ namespace Addictol
 		Module("IO Cacher", &bFixesIOChacher)
 	{}
 
-	bool ModuleIOCacher::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleIOCacher::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto id = REL::ID{ 165043, 2268775 };
@@ -25,13 +20,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleIOCacher::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleIOCacher::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

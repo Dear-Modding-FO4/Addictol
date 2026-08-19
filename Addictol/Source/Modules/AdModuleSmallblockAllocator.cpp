@@ -110,11 +110,6 @@ namespace Addictol
 		Module("Smallblock Allocator", &bPatchesSmallBlockAllocator)
 	{}
 
-	bool ModuleSmallblockAllocator::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto allocSite = REL::ID{ 674967, 2268154 }.address();
@@ -137,13 +132,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleSmallblockAllocator::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleSmallblockAllocator::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

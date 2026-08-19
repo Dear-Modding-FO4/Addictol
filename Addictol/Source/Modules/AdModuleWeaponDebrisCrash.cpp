@@ -9,11 +9,6 @@ namespace Addictol
 		Module("Weapon Debris Crash", &bFixesWeaponDebrisCrash)
 	{}
 
-	bool ModuleWeaponDebrisCrash::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleWeaponDebrisCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const REL::Relocation func{ REL::ID{ 22388, 2195766 } };
@@ -40,13 +35,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleWeaponDebrisCrash::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleWeaponDebrisCrash::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

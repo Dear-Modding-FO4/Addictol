@@ -9,11 +9,6 @@ namespace Addictol
 		Module("Unaligned Load", &bFixesUnalignedLoad)
 	{}
 
-	bool ModuleUnalignedLoad::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
@@ -44,13 +39,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleUnalignedLoad::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleUnalignedLoad::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

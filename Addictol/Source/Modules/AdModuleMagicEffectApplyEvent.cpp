@@ -25,11 +25,6 @@ namespace Addictol
 		Module("MagicEffectApplyEvent", &bFixesMagicEffectApplyEvent)
 	{}
 
-	bool ModuleMagicEffectApplyEvent::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMagicEffectApplyEvent::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation Target{ REL::ID(RE::GameScript::CombatEventHandler::VTABLE[1]) };
@@ -38,13 +33,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleMagicEffectApplyEvent::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMagicEffectApplyEvent::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

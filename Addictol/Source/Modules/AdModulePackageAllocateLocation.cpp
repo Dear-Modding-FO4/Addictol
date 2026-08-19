@@ -21,11 +21,6 @@ namespace Addictol
 		Module("Package Allocate Location", &bFixesPackageAllocateLocation)
 	{}
 
-	bool ModulePackageAllocateLocation::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModulePackageAllocateLocation::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation Target{ REL::ID{ 1248203, 2211931 }, REL::Offset{ 0x141, 0x144 } };
@@ -34,13 +29,4 @@ namespace Addictol
 		return GetPrimitive::func != 0;
 	}
 
-	bool ModulePackageAllocateLocation::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModulePackageAllocateLocation::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

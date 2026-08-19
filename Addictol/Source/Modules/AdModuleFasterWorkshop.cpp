@@ -337,11 +337,6 @@ namespace Addictol
 		Module("Faster Workshop", &bPatchesFasterWorkshop)
 	{}
 
-	bool ModuleFasterWorkshop::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleFasterWorkshop::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
@@ -374,13 +369,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleFasterWorkshop::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleFasterWorkshop::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

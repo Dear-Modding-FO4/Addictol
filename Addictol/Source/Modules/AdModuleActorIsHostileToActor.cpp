@@ -29,11 +29,6 @@ namespace Addictol
 		Module("ActorIsHostileToActor", &bFixesActorIsHostileToActor)
 	{}
 
-	bool ModuleActorIsHostileToActor::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleActorIsHostileToActor::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// NG has no ID for this site, so it anchors 0x10 off the preceding one.
@@ -47,13 +42,4 @@ namespace Addictol
 		return RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&actorIsHostileToActorDetail::IsHostileToActor)) != 0;
 	}
 
-	bool ModuleActorIsHostileToActor::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleActorIsHostileToActor::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -117,23 +117,9 @@ namespace Addictol
 		Module("PipBoy Cursor Constraints", &bFixesPipBoyCursorConstraints)
 	{}
 
-	bool ModulePipBoyCursorConstraints::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModulePipBoyCursorConstraints::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return pipBoyCursorConstraintsDetail::UpdatePipBoyCursorConstraints();
 	}
 
-	bool ModulePipBoyCursorConstraints::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModulePipBoyCursorConstraints::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

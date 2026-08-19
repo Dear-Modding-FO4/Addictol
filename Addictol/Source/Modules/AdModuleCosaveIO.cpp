@@ -366,11 +366,6 @@ namespace Addictol
 		Module("Cosave IO", &bCosaveIO)
 	{}
 
-	bool ModuleCosaveIO::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleCosaveIO::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		using namespace cosaveIODetail;
@@ -427,13 +422,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleCosaveIO::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCosaveIO::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

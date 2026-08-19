@@ -213,11 +213,6 @@ namespace Addictol
 		Module("Interior NavCut", &bFixesInteriorNavCut, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
-	bool ModuleInteriorNavCut::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleInteriorNavCut::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
@@ -247,8 +242,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleInteriorNavCut::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

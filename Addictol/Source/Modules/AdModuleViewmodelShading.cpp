@@ -46,11 +46,6 @@ namespace Addictol
 		Module("Viewmodel Shading", &bFixesViewmodelShading)
 	{}
 
-	bool ModuleViewmodelShading::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleViewmodelShading::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		g_stateGlobal = reinterpret_cast<RE::BSShaderManager::State**>(REL::ID{ 1444212, 2712877 }.address());
@@ -62,13 +57,4 @@ namespace Addictol
 		return OriginalMove1stPersonToOrigin != nullptr;
 	}
 
-	bool ModuleViewmodelShading::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleViewmodelShading::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

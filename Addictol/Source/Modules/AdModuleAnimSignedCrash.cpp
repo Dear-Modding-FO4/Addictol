@@ -11,11 +11,6 @@ namespace Addictol
 		Module("Anim Signed Crash", &bFixesAnimSignedCrash)
 	{}
 
-	bool ModuleAnimSignedCrash::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleAnimSignedCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// hkbBehaviorGraph::processEventlessGlobalTransitions, movsx->movzx on the 16 - bit event - id read.
@@ -30,13 +25,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAnimSignedCrash::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleAnimSignedCrash::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

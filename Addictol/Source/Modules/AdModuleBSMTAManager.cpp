@@ -151,11 +151,6 @@ namespace Addictol
 		Module("BSMTAManager", &bPatchesBSMTAManager)
 	{}
 
-	bool ModuleBSMTAManager::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleBSMTAManager::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& trampoline = REL::GetTrampoline();
@@ -169,13 +164,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleBSMTAManager::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleBSMTAManager::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -30,6 +30,7 @@ namespace Addictol
 
 		[[nodiscard]] bool IsDrawingEnabled() noexcept;
 		[[nodiscard]] bool IsReady() noexcept;
+		[[nodiscard]] bool QueryVideoMemory(uint64_t& a_used, uint64_t& a_budget) noexcept;
 		[[nodiscard]] ImguiPlatform::InstallState GetInstallState() noexcept;
 		[[nodiscard]] std::string GetConfigurePath() noexcept;
 	}

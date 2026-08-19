@@ -129,13 +129,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleHUDMessageQueue::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleHUDMessageQueue::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

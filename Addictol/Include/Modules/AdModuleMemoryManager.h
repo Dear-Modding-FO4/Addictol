@@ -1,11 +1,15 @@
 #pragma once
 
 #include <AdModule.h>
+#include <AdTelemetry.h>
+
+#include <atomic>
 
 namespace Addictol
 {
 	class ModuleMemoryManager :
-		public Module
+		public Module,
+		public MetricSource
 	{
 	public:
 		ModuleMemoryManager();
@@ -13,8 +17,12 @@ namespace Addictol
 
 		[[nodiscard]] virtual bool DoQuery() const noexcept override;
 		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
-		[[nodiscard]] virtual bool DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
-		[[nodiscard]] virtual bool DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept override;
 		[[nodiscard]] virtual bool HasProcessDefender() noexcept override;
+		[[nodiscard]] std::span<const MetricDescriptor> Schema() const noexcept override;
+
+	private:
+		void Drain(std::span<MetricValue> a_out) noexcept override;
+
+		std::atomic<bool> m_active{ false };
 	};
 }

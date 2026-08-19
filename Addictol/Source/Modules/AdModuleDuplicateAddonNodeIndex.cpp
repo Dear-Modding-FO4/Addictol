@@ -13,11 +13,6 @@ namespace Addictol
 		: Module("Duplicate Addon Node Index", &bWarningsDuplicateAddonNodeIndex)
 	{}
 
-	bool ModuleDuplicateAddonNodeIndex::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleDuplicateAddonNodeIndex::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
 		if (!a_msg)
@@ -80,13 +75,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleDuplicateAddonNodeIndex::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleDuplicateAddonNodeIndex::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine *a_vm) noexcept
-	{
-		return true;
-	}
 }

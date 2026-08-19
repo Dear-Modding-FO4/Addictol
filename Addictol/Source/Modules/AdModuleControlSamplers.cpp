@@ -204,11 +204,6 @@ namespace Addictol
 		Module("Control Samplers", nullptr, { F4SE::MessagingInterface::kPostLoadGame }, true)
 	{}
 
-	bool ModuleControlSamplers::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleControlSamplers::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)

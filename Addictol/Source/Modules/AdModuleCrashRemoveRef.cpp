@@ -26,11 +26,6 @@ namespace Addictol
 		Module("Crash Remove Ref", &bCrashRemoveRefFix)
 	{}
 
-	bool ModuleCrashRemoveRef::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleCrashRemoveRef::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		*((uintptr_t*)&BGSObjectVisibilityManager::RemoveReference_orig) = 
@@ -40,13 +35,4 @@ namespace Addictol
 		return BGSObjectVisibilityManager::RemoveReference_orig != nullptr;
 	}
 
-	bool ModuleCrashRemoveRef::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCrashRemoveRef::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

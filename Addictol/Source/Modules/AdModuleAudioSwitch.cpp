@@ -8,6 +8,7 @@
 #include <functional>
 #include <mmdeviceapi.h>
 #include <mmreg.h>
+#include <mutex>
 #include <new>
 #include <objbase.h>
 #include <Windows.h>
@@ -1591,9 +1592,19 @@ namespace Addictol
 	{
 		static bool RetryAudio{ false };
 		static AudioSystem::XAUDIO2_DEVICE_DETAILS CurrentDevice{};
-		static AudioSystem::IXAudio2* Engine{ nullptr };
+		static std::atomic<AudioSystem::IXAudio2*> Engine{ nullptr };
 		static AudioSystem::IXAudio2MasteringVoice* MasteringVoice{ nullptr };
 		static RELEX::ScopeEvent UpdateEvent{ true, false, "FO4__AudioEngine__UpdateEvent"sv };
+		// guards the owned engine reference
+		static std::mutex EngineLifetimeLock{};
+
+		[[nodiscard]] static bool ReadTelemetry(
+			AudioPerformanceMetricSource::Values& a_values) noexcept
+		{
+			const std::lock_guard lock{ EngineLifetimeLock };
+			return ReadAudioPerformanceMetricValues<AudioSystem::XAUDIO2_PERFORMANCE_DATA>(
+				Engine.load(std::memory_order_acquire), MasteringVoice, a_values);
+		}
 
 		static void KillGameSounds(AudioBethesdaSystem::BSAudioManager* a_audioManager)
 		{
@@ -1626,8 +1637,11 @@ namespace Addictol
 
 		static void KillEngine() noexcept
 		{
-			if (Engine)
-				Engine->StopEngine();
+			const std::lock_guard lock{ EngineLifetimeLock };
+			const auto engine = Engine.exchange(nullptr, std::memory_order_acq_rel);
+			MasteringVoice = nullptr;
+			if (engine)
+				engine->StopEngine();
 
 			auto graph = AudioBethesdaSystem::BSXAudio2Graph::GetSingleton();
 			if (graph)
@@ -1636,20 +1650,19 @@ namespace Addictol
 					if (effect.submixVoice)
 						std::exchange(effect.submixVoice, nullptr)->DestroyVoice();
 
-				Engine->UnregisterForCallbacks(graph);
-
+				if (engine)
+					engine->UnregisterForCallbacks(graph);
 				std::exchange(graph->masteringVoice, nullptr)->DestroyVoice();
-				MasteringVoice = nullptr;
 
 				if (graph->xaudio)
 					std::exchange(graph->xaudio, nullptr)->Release();
-
-				Engine = nullptr;
 
 				graph->initEngine = false;
 				graph->initEffects = false;
 				graph->registerCallbacks = false;
 			}
+			if (engine)
+				engine->Release();
 
 			// idk how restore
 			//auto audio = AudioBethesdaSystem::BSXAudio2Audio::GetSingleton();
@@ -1673,16 +1686,14 @@ namespace Addictol
 		{
 			using namespace AudioBethesdaSystem;
 
-			if (!Engine || !MasteringVoice)
+			const auto engine = Engine.load(std::memory_order_acquire);
+			if (!engine || !MasteringVoice)
 				return;
 
-			if (Engine)
-			{
-				std::uint32_t deviceCount{};
-				Engine->GetDeviceCount(std::addressof(deviceCount));
-				if (deviceCount == 0)
-					return;
-			}
+			uint32_t deviceCount{};
+			engine->GetDeviceCount(std::addressof(deviceCount));
+			if (deviceCount == 0)
+				return;
 
 			SilentMode(a_audioManager);
 
@@ -1692,7 +1703,9 @@ namespace Addictol
 			auto graph = AudioBethesdaSystem::BSXAudio2Graph::GetSingleton();
 			if (audio && graph && graph->Recreate() && graph->xaudio)
 			{
-				graph->registerCallbacks = SUCCEEDED(Engine->RegisterForCallbacks(graph));
+				const auto recreatedEngine = Engine.load(std::memory_order_acquire);
+				graph->registerCallbacks = recreatedEngine &&
+					SUCCEEDED(recreatedEngine->RegisterForCallbacks(graph));
 				
 				// Bethesda don't use X3DAUDIO_SPEED_OF_SOUND... they send magick value 24041.6
 				static REL::Relocation<float*> speed{ REL::ID{ 207777, 207777, 4563742 } };
@@ -1775,8 +1788,11 @@ namespace Addictol
 
 			hr = originalMasteringVoice(a_xaudio, a_masteringVoice, a_inputChannels,
 				a_inputSampleRate, a_flags, a_deviceIndex, a_effectChain);
-			if (SUCCEEDED(hr) && a_masteringVoice && *a_masteringVoice)
+			if (SUCCEEDED(hr) && a_masteringVoice)
+			{
+				const std::lock_guard lock{ AudioEngine::EngineLifetimeLock };
 				AudioEngine::MasteringVoice = *a_masteringVoice;
+			}
 
 			return hr;
 		}
@@ -1793,7 +1809,15 @@ namespace Addictol
 					originalMasteringVoice = reinterpret_cast<TThunkMasteringVoice*>(RELEX::DetourVTable(*vfptr,
 						reinterpret_cast<uintptr_t>(&ThunkMasteringVoice), 10));
 					});
-				AudioEngine::Engine = *reinterpret_cast<AudioSystem::IXAudio2**>(a_ppv);
+				const auto engine = *reinterpret_cast<AudioSystem::IXAudio2**>(a_ppv);
+				const std::lock_guard lock{ AudioEngine::EngineLifetimeLock };
+				engine->AddRef();
+				const auto previous =
+					AudioEngine::Engine.exchange(engine, std::memory_order_acq_rel);
+				if (previous != engine)
+					AudioEngine::MasteringVoice = nullptr;
+				if (previous)
+					previous->Release();
 			}
 			return hr;
 		}
@@ -1981,13 +2005,10 @@ namespace Addictol
 	}
 
 	ModuleAudioSwitch::ModuleAudioSwitch() :
-		Module("Audio Switch", &bPatchesAudioSwitch)
+		Module("Audio Switch", &bPatchesAudioSwitch),
+		AudioPerformanceMetricSource(
+			kAudioPerformanceMetricSchema, &AudioEngine::ReadTelemetry)
 	{}
-
-	bool ModuleAudioSwitch::DoQuery() const noexcept
-	{
-		return true;
-	}
 
 	bool ModuleAudioSwitch::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
@@ -2014,16 +2035,6 @@ namespace Addictol
 		else
 			REX::WARN("Failed to register for Audio Device Notifications"sv);
 
-		return true;
-	}
-
-	bool ModuleAudioSwitch::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleAudioSwitch::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
 		return true;
 	}
 

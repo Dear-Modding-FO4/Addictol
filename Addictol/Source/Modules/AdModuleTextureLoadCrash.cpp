@@ -76,11 +76,6 @@ namespace Addictol
 		Module("Texture Load Crash", &bFixesTextureLoadCrash)
 	{}
 
-	bool ModuleTextureLoadCrash::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleTextureLoadCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation vtable{ RE::VTABLE::BSShaderResourceManager[0] };
@@ -89,13 +84,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleTextureLoadCrash::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleTextureLoadCrash::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

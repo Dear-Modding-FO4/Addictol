@@ -280,13 +280,4 @@ namespace Addictol
 		return installed;
 	}
 
-	bool ModuleCompanionStrayBullet::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCompanionStrayBullet::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine *a_vm) noexcept
-	{
-		return true;
-	}
 }

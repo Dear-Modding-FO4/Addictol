@@ -21,11 +21,6 @@ namespace Addictol
 		Module("COM Init", &bPatchesCOMInit)
 	{}
 
-	bool ModuleCOMInit::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleCOMInit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto dll = REX::W32::GetModuleHandleA("Ole32.dll");
@@ -54,13 +49,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleCOMInit::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCOMInit::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

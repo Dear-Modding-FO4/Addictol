@@ -68,7 +68,7 @@ Addictol/Source/           AdPlugin.cpp (init, F4SE messages), AdModuleManager.c
                            AdRegisterModules.cpp (every module is registered here),
                            AdConfigValidation.cpp (known config keys)
 Addictol/Source/Modules/   one .cpp per feature module (~80 of them)
-Addictol/Source/ProfilerMenu/  one .cpp per in-game profiler panel
+Addictol/Source/Menu/      the plugin-wide menu window, its widgets, and the log control panel
 VC/                        MSBuild solution and project files
 Depends/                   submodules and vendored libraries
 Version/                   version resource and the build number script
@@ -238,7 +238,6 @@ There is no type named `Float`, so floating point options use `F64<>`.
 | `[Warnings]` | Detectors for problems in the user's load order. They exist to report, not to change gameplay. |
 | `[Others]` | Patches aimed at specific third party mods. Off by default and unsupported. |
 | `[Additional]` | Tunables belonging to a feature in another section. Cross reference the owner with `(needs bX)`. |
-| `[Profiler]` | Diagnostics, all gated behind the master `bProfiler` switch. |
 
 Prefix keys by type: `b` boolean, `n` signed, `u` unsigned, `f` float. The C++ variable name
 conventionally embeds the section too, as in `bFixesUnalignedLoad`.
@@ -400,7 +399,7 @@ There is no `.clang-format`, so match the file you are editing.
 
 Tabs for indentation, Allman braces, no enforced line length.
 
-Fixed-width integer types are unqualified: `uint8_t`, `int32_t`, `size_t`, not `uint8_t`. Real
+Fixed-width integer types are unqualified: `uint8_t`, `int32_t`, `size_t`, not `std::uint8_t`. Real
 library facilities keep the namespace: `std::span`, `std::array`, `std::initializer_list`,
 `std::atomic`.
 
@@ -441,6 +440,18 @@ Logging is `REX::INFO`, `REX::WARN` and `REX::ERROR` with `{}` placeholders:
 ```cpp
 REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
 ```
+
+## Mutation controls
+
+Run `python Tests/run_mutations.py` from the repository root to prove the named negative controls in
+`Tests/mutations.json`. The runner requires a green baseline, rebuilds and runs `vmm-tests` for each
+mutation, matches the exact named failure and message, restores the target byte-for-byte, then
+requires a green restored suite. It is a deliberate local check, not a CI gate, because every entry
+requires a rebuild.
+
+To add an entry, provide its unique exact `find` string, `replace` string, production `target`, and
+the exact `check` and `message` printed by the expected `[FAIL]` line. Run the complete manifest
+before submitting; a missing or repeated find string is a stale-manifest failure, never a skip.
 
 ## Submitting a pull request
 

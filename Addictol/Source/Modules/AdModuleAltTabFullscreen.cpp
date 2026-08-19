@@ -56,11 +56,6 @@ namespace Addictol
 	{
 	}
 
-	bool ModuleAltTabFullscreen::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleAltTabFullscreen::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
 		OriginalCreate = reinterpret_cast<TD3D11CreateDeviceAndSwapChain>(RELEX::DetourIAT(
@@ -77,13 +72,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleAltTabFullscreen::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleAltTabFullscreen::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine *a_vm) noexcept
-	{
-		return true;
-	}
 }

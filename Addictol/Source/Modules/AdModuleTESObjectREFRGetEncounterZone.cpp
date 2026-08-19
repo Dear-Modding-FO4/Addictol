@@ -45,11 +45,6 @@ namespace Addictol
 		Module("TESObjectREFRGetEncounterZone", &bFixesTESObjectREFRGetEncounterZone)
 	{}
 
-	bool ModuleTESObjectREFRGetEncounterZone::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleTESObjectREFRGetEncounterZone::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation<uintptr_t> Target{ REL::ID{ 1413642, 2202627 } };
@@ -65,13 +60,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleTESObjectREFRGetEncounterZone::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleTESObjectREFRGetEncounterZone::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

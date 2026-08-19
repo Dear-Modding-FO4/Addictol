@@ -46,11 +46,6 @@ namespace Addictol
 		Module("CreateD3D and Swapchain", &bFixesCreateD3DAndSwapchain)
 	{}
 
-	bool ModuleCreateD3DAndSwapchain::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleCreateD3DAndSwapchain::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation(REL::ID{ 224250, 2277018, 4492363 }, REL::Offset{ 0x114, 0x114, 0x10B }).address();
@@ -64,13 +59,4 @@ namespace Addictol
 			reinterpret_cast<uintptr_t>(&createD3DAndSwapchainDetail::GetDisplayModeList)) != 0;
 	}
 
-	bool ModuleCreateD3DAndSwapchain::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCreateD3DAndSwapchain::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -28,10 +28,10 @@ namespace Addictol
 		[[nodiscard]] virtual std::string_view GetName() const noexcept { return name; }
 		[[nodiscard]] virtual const REX::TOML::Bool<>* GetOption() const noexcept { return option; }
 
-		[[nodiscard]] virtual bool DoQuery() const noexcept = 0;
+		[[nodiscard]] virtual bool DoQuery() const noexcept { return true; }
 		[[nodiscard]] virtual bool DoInstall(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
-		[[nodiscard]] virtual bool DoListener(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept = 0;
-		[[nodiscard]] virtual bool DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept = 0;
+		[[nodiscard]] virtual bool DoListener(F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept { return true; }
+		[[nodiscard]] virtual bool DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept { return true; }
 		[[nodiscard]] virtual bool HasListener(uint32_t a_msgType) noexcept;
 		[[nodiscard]] virtual bool HasPapyrusListener() noexcept;
 		[[nodiscard]] virtual bool HasProcessDefender() noexcept;

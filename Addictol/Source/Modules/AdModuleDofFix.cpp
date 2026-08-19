@@ -62,11 +62,6 @@ namespace Addictol
 		Module("DoF Fix", &bFixesDofFix)
 	{}
 
-	bool ModuleDofFix::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleDofFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		g_dofVTable = RE::VTABLE::ImageSpaceEffectDepthOfField[0].address();
@@ -91,13 +86,4 @@ namespace Addictol
 		return OriginalRenderEffect != nullptr;
 	}
 
-	bool ModuleDofFix::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleDofFix::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

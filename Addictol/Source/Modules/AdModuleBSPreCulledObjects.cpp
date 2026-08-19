@@ -474,11 +474,6 @@ namespace Addictol
 		Module("BSPreCulledObjects", &bPatchesBSPreCulledObjects)
 	{}
 
-	bool ModuleBSPreCulledObjects::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleBSPreCulledObjects::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		bsPreCulledObjectsDetail::WriteAddToCullingGroup();
@@ -489,13 +484,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleBSPreCulledObjects::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleBSPreCulledObjects::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

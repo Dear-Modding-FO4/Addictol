@@ -47,11 +47,6 @@ namespace Addictol
 		Module("Magic Keyword Crash", &bFixesMagicKeywordCrash)
 	{}
 
-	bool ModuleMagicKeywordCrash::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMagicKeywordCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation vtable{ RE::MagicItemFindKeywordFunctor::VTABLE[0] };
@@ -60,13 +55,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleMagicKeywordCrash::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMagicKeywordCrash::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

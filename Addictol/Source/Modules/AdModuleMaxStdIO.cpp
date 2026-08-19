@@ -14,11 +14,6 @@ namespace Addictol
 		Module("MaxStdIO")
 	{}
 
-	bool ModuleMaxStdIO::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMaxStdIO::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto handle = REX::W32::GetModuleHandleA(!RELEX::IsRuntimeOG() ? "api-ms-win-crt-runtime-l1-1-0.dll" : "msvcr110.dll");
@@ -58,13 +53,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleMaxStdIO::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMaxStdIO::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

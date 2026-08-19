@@ -50,8 +50,23 @@ namespace Addictol
 	uint32_t HandleManager::GetCount() noexcept
 	{
 		auto manager = HandleManager::singleton;
-		if (!manager || (manager->freeListHead == manager->freeListTail == (MAX_HANDLE_LIMIT - 1))) return 0;
-		return manager && (manager->freeListTail != (MAX_HANDLE_LIMIT - 1)) ? manager->freeListTail : 0;
+		if (!manager)
+			return 0;
+		static_assert(std::atomic_ref<uint32_t>::is_always_lock_free);
+		const auto count =
+			std::atomic_ref<uint32_t>(manager->freeListTail).load(std::memory_order_relaxed);
+		return count != MAX_HANDLE_LIMIT - 1 ? count : 0;
+	}
+
+	[[nodiscard]] static bool ReadReferenceHandleTelemetry(
+		ReferenceHandleMetricSource::Values& a_values) noexcept
+	{
+		if (!HandleManager::singleton)
+			return false;
+		const auto count = HandleManager::GetCount();
+		a_values = MetricDoubles(count,
+			ReferenceHandleUsagePercent(count, HandleManager::MAX_HANDLE_LIMIT));
+		return true;
 	}
 
 	void HandleManager::DebugInfo(const std::string_view& a_eventName) noexcept
@@ -81,13 +96,9 @@ namespace Addictol
 			,
 			{ F4SE::MessagingInterface::kPostLoadGame }
 #endif
-		)
+		),
+		ReferenceHandleMetricSource(kReferenceHandleMetricSchema, &ReadReferenceHandleTelemetry)
 	{}
-
-	bool ModuleReferenceHandleLimitWarning::DoQuery() const noexcept
-	{
-		return true;
-	}
 
 	bool ModuleReferenceHandleLimitWarning::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
@@ -142,8 +153,4 @@ namespace Addictol
 #endif
 	}
 
-	bool ModuleReferenceHandleLimitWarning::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

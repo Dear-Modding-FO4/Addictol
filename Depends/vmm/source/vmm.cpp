@@ -71,4 +71,5 @@ namespace voltek
 		if (!memory_manager::global_memory_manager) return 0;
 		return memory_manager::global_memory_manager->msize(ptr);
 	}
+
 }

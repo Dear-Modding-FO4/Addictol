@@ -114,13 +114,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleMagicEffectConditions::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMagicEffectConditions::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine *a_vm) noexcept
-	{
-		return true;
-	}
 }

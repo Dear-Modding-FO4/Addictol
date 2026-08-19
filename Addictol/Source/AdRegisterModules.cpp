@@ -50,7 +50,6 @@
 #include <Modules/AdModuleSaveAddedSoundCategories.h>
 #include <Modules/AdModuleCOMInit.h>
 #include <Modules/AdModulePapyrusGC.h>
-#include <Modules/AdModuleProfiler.h>
 #include <Modules/AdModuleCombatMusic.h>
 #include <Modules/AdModuleWorkbenchSound.h>
 #include <Modules/AdModuleActorCauseSaveBloat.h>
@@ -89,7 +88,7 @@
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
 #include <Modules/AdModulePlatformImgui.h>
-#include <Modules/AdModuleProfilerMenu.h>
+#include <Modules/AdModuleMenu.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -142,7 +141,6 @@ static auto sModuleStolenPowerArmorOwnership		= std::make_shared<Addictol::Modul
 static auto sModuleSaveAddedSoundCategories			= std::make_shared<Addictol::ModuleSaveAddedSoundCategories>();
 static auto sModuleCOMInit							= std::make_shared<Addictol::ModuleCOMInit>();
 static auto sModulePapyrusGC						= std::make_shared<Addictol::ModulePapyrusGC>();
-static auto sModuleProfiler							= std::make_shared<Addictol::ModuleProfiler>();
 static auto sModuleCombatMusic						= std::make_shared<Addictol::ModuleCombatMusic>();
 static auto sModuleWorkbenchSound					= std::make_shared<Addictol::ModuleWorkbenchSound>();
 static auto sModuleActorCauseSaveBloat				= std::make_shared<Addictol::ModuleActorCauseSaveBloat>();
@@ -181,7 +179,7 @@ static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJ
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 static auto sModulePlatformImgui					= std::make_shared<Addictol::ModulePlatformImgui>();
-static auto sModuleProfilerMenu						= std::make_shared<Addictol::ModuleProfilerMenu>();
+static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
 
 void AdRegisterPreloadModules()
 {
@@ -310,10 +308,6 @@ void AdRegisterModules()
 	modules.Register(sModuleRobCoPatcherCache,				kNewGame);
 	modules.Register(sModuleRobCoPatcherCache,				kGameLoaded);
 
-	// Profiler - registered at load stage, listener at GameDataReady for report generation
-	modules.Register(sModuleProfiler);
-	modules.Register(sModuleProfiler,						kGameDataReady);
-
-	// Profiler menu - registers its platform sinks during the load stage, before the hooks go in
-	modules.Register(sModuleProfilerMenu);
+	// Menu
+	modules.Register(sModuleMenu);
 }

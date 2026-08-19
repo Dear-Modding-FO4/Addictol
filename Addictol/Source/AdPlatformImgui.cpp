@@ -1,5 +1,5 @@
 #include <AdPlatformImgui.h>
-#include <AdAnimSubGraphRuntime.h>
+#include <AdTelemetryHub.h>
 #include <AdUtils.h>
 #include <RE/B/BSGraphics.h>
 #include <RE/C/ControlMap.h>
@@ -9,6 +9,7 @@
 
 #include <Windows.h>
 #include <d3d11.h>
+#include <dxgi1_4.h>
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_dx11.h>
@@ -67,6 +68,8 @@ namespace Addictol
 		static RE::BSGraphics::RendererData* s_rendererData{ nullptr };
 		static ID3D11Device* s_expectedDevice{ nullptr };
 		static ID3D11Device* s_device{ nullptr };
+		static std::atomic<IDXGIAdapter3*> s_videoMemoryAdapter{ nullptr };
+		static_assert(decltype(s_videoMemoryAdapter)::is_always_lock_free);
 		static ID3D11DeviceContext* s_immediateContext{ nullptr };
 		static std::atomic<bool> s_rendererInvalidLogged{ false };
 		static bool s_previousIgnoreKeyboardMouse{ false };
@@ -120,9 +123,34 @@ namespace Addictol
 				CallWindowProcA(previous, a_hwnd, a_msg, a_wparam, a_lparam);
 		}
 
+		[[nodiscard]] static ID3D11Device* LoadDevice() noexcept
+		{
+			return std::atomic_ref{ s_device }.load(std::memory_order_acquire);
+		}
+
+		static void StoreDevice(ID3D11Device* a_device) noexcept
+		{
+			std::atomic_ref{ s_device }.store(a_device, std::memory_order_release);
+		}
+
+		static void ReleaseVideoMemoryAdapter() noexcept
+		{
+			if (auto* adapter = s_videoMemoryAdapter.exchange(
+				nullptr, std::memory_order_acq_rel))
+				adapter->Release();
+		}
+
 		static void ReleaseDevice() noexcept
 		{
-			if (auto* device = std::exchange(s_device, nullptr))
+			ReleaseVideoMemoryAdapter();
+			if (auto* device = std::atomic_ref{ s_device }.exchange(
+				nullptr, std::memory_order_acq_rel))
+				device->Release();
+		}
+
+		static void ReleaseDeviceReference() noexcept
+		{
+			if (auto* device = LoadDevice())
 				device->Release();
 		}
 
@@ -148,6 +176,23 @@ namespace Addictol
 			if (dxgiDevice)
 				dxgiDevice->Release();
 			return valid;
+		}
+
+		[[nodiscard]] static IDXGIAdapter3* AcquireVideoMemoryAdapter(
+			ID3D11Device* a_device) noexcept
+		{
+			IDXGIDevice* dxgiDevice{ nullptr };
+			IDXGIAdapter* adapter{ nullptr };
+			IDXGIAdapter3* adapter3{ nullptr };
+			const auto valid =
+				SUCCEEDED(a_device->QueryInterface(IID_PPV_ARGS(&dxgiDevice))) &&
+				SUCCEEDED(dxgiDevice->GetParent(IID_PPV_ARGS(&adapter))) &&
+				SUCCEEDED(adapter->QueryInterface(IID_PPV_ARGS(&adapter3)));
+			if (adapter)
+				adapter->Release();
+			if (dxgiDevice)
+				dxgiDevice->Release();
+			return valid ? adapter3 : nullptr;
 		}
 
 		static void SetGameInputSuppressed(bool a_suppressed) noexcept
@@ -177,7 +222,7 @@ namespace Addictol
 			std::filesystem::create_directories(directory, ec);
 			if (ec)
 			{
-				REX::WARN("Profiler menu: \"{}\" could not be created; window geometry is not persisted."sv,
+				REX::WARN("Addictol menu: \"{}\" could not be created; window geometry is not persisted."sv,
 					directory.string());
 				return;
 			}
@@ -192,7 +237,8 @@ namespace Addictol
 		// Runs once on whichever thread the engine calls UIEndFrame from; a failure is permanent, never retried.
 		[[nodiscard]] static bool InitializeBackend() noexcept
 		{
-			if (!ValidateDxgiDevice(s_device))
+			auto* device = LoadDevice();
+			if (!device || !ValidateDxgiDevice(device))
 			{
 				ReleaseDevice();
 				REX::ERROR("Platform Imgui: the D3D11 device does not expose a valid DXGI parent chain; drawing stays disabled"sv);
@@ -224,7 +270,7 @@ namespace Addictol
 
 			// Upscalers can leave a proxy in RendererData::context, so ask the device for the real one.
 			ID3D11DeviceContext* immediate{ nullptr };
-			s_device->GetImmediateContext(&immediate);
+			device->GetImmediateContext(&immediate);
 			if (!immediate)
 			{
 				ImGui::DestroyContext(context);
@@ -243,7 +289,7 @@ namespace Addictol
 				return false;
 			}
 
-			if (!ImGui_ImplDX11_Init(s_device, immediate))
+			if (!ImGui_ImplDX11_Init(device, immediate))
 			{
 				ImGui_ImplWin32_Shutdown();
 				ReleaseImmediateContext();
@@ -265,7 +311,7 @@ namespace Addictol
 			}
 
 			// The platform keeps one context reference for explicit back-buffer binding.
-			ReleaseDevice();
+			ReleaseDeviceReference();
 			REX::INFO("Platform Imgui: ImGui initialized against the renderer window and device"sv);
 			return true;
 		}
@@ -325,6 +371,7 @@ namespace Addictol
 			else
 				return;
 
+			Telemetry::ObserveFrame();
 			if (!s_drawingEnabled.load(std::memory_order_acquire))
 				return;
 
@@ -338,6 +385,8 @@ namespace Addictol
 				reinterpret_cast<ID3D11Device*>(s_rendererData->device) != s_expectedDevice ||
 				!s_immediateContext)
 			{
+				StoreDevice(nullptr);
+				ReleaseVideoMemoryAdapter();
 				s_drawingEnabled.store(false, std::memory_order_release);
 				SetGameInputSuppressed(false);
 				s_backend.store(Backend::kFailed, std::memory_order_release);
@@ -390,7 +439,6 @@ namespace Addictol
 					return;
 			}
 
-			// TODO
 		}
 
 		static LRESULT CALLBACK HKWindowProc(HWND a_hwnd, UINT a_msg, WPARAM a_wparam, LPARAM a_lparam) noexcept
@@ -458,7 +506,7 @@ namespace Addictol
 		{
 			const auto& signature = UIEndFrameSignature(a_runtime);
 			if (!RELEX::Validate(a_target, signature) ||
-				!AnimSubGraphRuntime::ValidateUniqueSignature(a_target, signature))
+				!RELEX::ValidateUniqueSignature(a_target, signature))
 			{
 				REX::WARN("Platform Imgui: {} UIEndFrame id {} at {:X} failed exact unique-signature validation; installing nothing."sv,
 					Describe(a_runtime), a_id, a_target);
@@ -572,13 +620,13 @@ namespace Addictol
 			REL::ID{ 235166, 2704527, 2704527 }.address());
 		s_rendererData = rendererData;
 		s_window = reinterpret_cast<HWND>(rendererData->renderWindow[0].hwnd);
-		s_device = reinterpret_cast<ID3D11Device*>(rendererData->device);
-		s_expectedDevice = s_device;
-		if (!s_window || !s_device)
+		auto* device = reinterpret_cast<ID3D11Device*>(rendererData->device);
+		s_expectedDevice = device;
+		if (!s_window || !device)
 		{
 			REX::ERROR("Platform Imgui: the renderer exposes no window or device"sv);
 			s_window = nullptr;
-			s_device = nullptr;
+			StoreDevice(nullptr);
 			return false;
 		}
 
@@ -591,11 +639,14 @@ namespace Addictol
 		if (!SubclassWindow())
 		{
 			s_window = nullptr;
-			s_device = nullptr;
+			StoreDevice(nullptr);
 			return false;
 		}
 
-		s_device->AddRef();
+		device->AddRef();
+		StoreDevice(device);
+		s_videoMemoryAdapter.store(
+			AcquireVideoMemoryAdapter(device), std::memory_order_release);
 		s_windowReady.store(true, std::memory_order_release);
 		REX::INFO("Platform Imgui: renderer window subclassed; ImGui will initialize on first open"sv);
 		return true;
@@ -626,6 +677,23 @@ namespace Addictol
 
 		return IsInstalled(s_installState.load(std::memory_order_acquire)) &&
 			s_windowReady.load(std::memory_order_acquire);
+	}
+
+	bool PlatformImgui::QueryVideoMemory(uint64_t& a_used, uint64_t& a_budget) noexcept
+	{
+		using namespace platformImguiDetail;
+
+		auto* adapter = s_videoMemoryAdapter.load(std::memory_order_acquire);
+		if (!adapter)
+			return false;
+
+		DXGI_QUERY_VIDEO_MEMORY_INFO info{};
+		if (FAILED(adapter->QueryVideoMemoryInfo(
+			0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info)))
+			return false;
+		a_used = info.CurrentUsage;
+		a_budget = info.Budget;
+		return true;
 	}
 
 	ImguiPlatform::InstallState PlatformImgui::GetInstallState() noexcept

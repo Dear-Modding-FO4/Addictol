@@ -3,7 +3,6 @@
 #include <array>
 #include <stdint.h>
 #include <string_view>
-#include <AdProfilerAllocator.h>
 #include <REX/REX.h>
 
 // Not ready, not pulling, hanging for no reason!!!
@@ -101,143 +100,6 @@ namespace Addictol
 		[[nodiscard]] size_t aligned_msize(void* lpBlock, [[maybe_unused]] size_t nAlignment) const noexcept;
 	};
 
-	template<typename Heap>
-	class TracingHeap :
-		public REX::TSingleton<TracingHeap<Heap>>
-	{
-	public:
-		TracingHeap() noexcept :
-			m_heap(*Heap::GetSingleton())
-		{}
-		~TracingHeap() noexcept = default;
-
-		[[nodiscard]] void* malloc(size_t nSize) const noexcept
-		{
-			auto& heap = m_heap;
-			if (!ProfilerAllocator::ShouldRecord())
-				return heap.malloc(nSize);
-
-			ProfilerAllocator::SamplingScope scope;
-			auto result = heap.malloc(nSize);
-			ProfilerAllocator::RecordAllocation(result, nSize);
-			return result;
-		}
-
-		[[nodiscard]] void* aligned_malloc(size_t nSize, size_t nAlignment) const noexcept
-		{
-			auto& heap = m_heap;
-			if (!ProfilerAllocator::ShouldRecord())
-				return heap.aligned_malloc(nSize, nAlignment);
-
-			ProfilerAllocator::SamplingScope scope;
-			auto result = heap.aligned_malloc(nSize, nAlignment);
-			ProfilerAllocator::RecordAllocation(result, nSize);
-			return result;
-		}
-
-		[[nodiscard]] void* realloc(void* lpBlock, size_t nNewSize) const noexcept
-		{
-			auto& heap = m_heap;
-			if (!ProfilerAllocator::ShouldRecord())
-				return heap.realloc(lpBlock, nNewSize);
-
-			ProfilerAllocator::SamplingScope scope;
-			AllocatorBlockInfo oldInfo;
-			const auto hadOwnedBlock =
-				lpBlock && ProfilerAllocator::ReadBlockInfo(lpBlock, oldInfo);
-			auto result = heap.realloc(lpBlock, nNewSize);
-			AllocatorBlockInfo resultInfo;
-			bool hasResultInfo = false;
-			if (lpBlock && nNewSize && result)
-				hasResultInfo = ProfilerAllocator::ReadBlockInfo(result, resultInfo);
-			ProfilerAllocator::RecordReallocation(
-				lpBlock != nullptr,
-				hadOwnedBlock,
-				oldInfo,
-				result,
-				nNewSize,
-				hasResultInfo,
-				resultInfo);
-			return result;
-		}
-
-		[[nodiscard]] void* aligned_realloc(
-			void* lpBlock,
-			size_t nNewSize,
-			size_t nAlignment) const noexcept
-		{
-			auto& heap = m_heap;
-			if (!ProfilerAllocator::ShouldRecord())
-				return heap.aligned_realloc(lpBlock, nNewSize, nAlignment);
-
-			ProfilerAllocator::SamplingScope scope;
-			AllocatorBlockInfo oldInfo;
-			const auto hadOwnedBlock =
-				lpBlock && ProfilerAllocator::ReadBlockInfo(lpBlock, oldInfo);
-			auto result = heap.aligned_realloc(lpBlock, nNewSize, nAlignment);
-			AllocatorBlockInfo resultInfo;
-			bool hasResultInfo = false;
-			if (lpBlock && nNewSize && result)
-				hasResultInfo = ProfilerAllocator::ReadBlockInfo(result, resultInfo);
-			ProfilerAllocator::RecordReallocation(
-				lpBlock != nullptr,
-				hadOwnedBlock,
-				oldInfo,
-				result,
-				nNewSize,
-				hasResultInfo,
-				resultInfo);
-			return result;
-		}
-
-		void free(void* lpBlock) const noexcept
-		{
-			auto& heap = m_heap;
-			if (!lpBlock || !ProfilerAllocator::ShouldRecord())
-			{
-				heap.free(lpBlock);
-				return;
-			}
-
-			ProfilerAllocator::SamplingScope scope;
-			AllocatorBlockInfo info;
-			const auto measured = ProfilerAllocator::ReadBlockInfo(lpBlock, info);
-			heap.free(lpBlock);
-			if (measured)
-				ProfilerAllocator::RecordFree(info);
-		}
-
-		void aligned_free(void* lpBlock) const noexcept
-		{
-			auto& heap = m_heap;
-			if (!lpBlock || !ProfilerAllocator::ShouldRecord())
-			{
-				heap.aligned_free(lpBlock);
-				return;
-			}
-
-			ProfilerAllocator::SamplingScope scope;
-			AllocatorBlockInfo info;
-			const auto measured = ProfilerAllocator::ReadBlockInfo(lpBlock, info);
-			heap.aligned_free(lpBlock);
-			if (measured)
-				ProfilerAllocator::RecordFree(info);
-		}
-
-		[[nodiscard]] size_t msize(void* lpBlock) const noexcept
-		{
-			return m_heap.msize(lpBlock);
-		}
-
-		[[nodiscard]] size_t aligned_msize(void* lpBlock, size_t nAlignment) const noexcept
-		{
-			return m_heap.aligned_msize(lpBlock, nAlignment);
-		}
-
-	private:
-		Heap& m_heap;
-	};
-
 #if AD_USE_VISPER_AS_DEFAULT
 	using ProxyCurrentHeap = ProxyVisperHeap;
 #else
@@ -254,8 +116,6 @@ namespace Addictol
 		{
 		case HeapKind::Voltek:
 		default:
-			if (ProfilerAllocator::IsEnabled())
-				return a_fn.template operator()<TracingHeap<ProxyVoltekHeap>>();
 			return a_fn.template operator()<ProxyVoltekHeap>();
 		}
 	}

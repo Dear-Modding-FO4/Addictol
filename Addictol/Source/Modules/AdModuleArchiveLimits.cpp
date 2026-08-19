@@ -1209,11 +1209,6 @@ namespace Addictol
 		g_managerArchiveManager = std::make_unique<Index>();
 	}
 
-	bool ModuleArchiveLimits::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleArchiveLimits::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		Archive2::Hook_Init();
@@ -1222,16 +1217,6 @@ namespace Addictol
 		BSTextureIndex::Hook_Init();
 		BSTextureStreamer::Manager::Hook_Init();
 
-		return true;
-	}
-
-	bool ModuleArchiveLimits::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleArchiveLimits::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
 		return true;
 	}
 

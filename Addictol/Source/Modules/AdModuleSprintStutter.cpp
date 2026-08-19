@@ -9,11 +9,6 @@ namespace Addictol
 		Module("Sprint Stutter", &bFixesSprintStutter)
 	{}
 
-	bool ModuleSprintStutter::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleSprintStutter::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		static REL::Relocation<float*> CameraSnapThreshold{ REL::ID{ 61995, 2664490 } };
@@ -28,13 +23,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleSprintStutter::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleSprintStutter::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

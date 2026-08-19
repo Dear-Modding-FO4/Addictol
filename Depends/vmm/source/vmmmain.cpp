@@ -71,6 +71,26 @@ namespace voltek
 		typedef pool_t<block65536_t, page65536_t> pool65536_t;
 		typedef pool_t<block131072_t, page131072_t> pool131072_t;
 
+		template<typename Pool>
+		static void accumulate_pool_stats(void*& slot, scalable_pool_stats& out) noexcept
+		{
+			auto* pool = reinterpret_cast<Pool*>(
+				std::atomic_ref<void*>(slot).load(std::memory_order_acquire));
+			if (!pool)
+				return;
+			// Unlocked maintained counters may produce a marginally stale sample.
+			out.pool_count += !pool->empty();
+			out.page_capacity += pool->count();
+			out.pages_busy += pool->busy_count();
+		}
+
+		template<typename... Pools> static void accumulate_pool_stats(
+			void** pools, scalable_pool_stats& out) noexcept
+		{
+			size_t index = 0;
+			(accumulate_pool_stats<Pools>(pools[index++], out), ...);
+		}
+
 		// Проверка на допустимость памяти
 		// Только Windows: Если произошло исключение, то вернёт false, иначе true.
 		static bool is_valid_pointer(const void* ptr)
@@ -989,6 +1009,22 @@ namespace voltek
 			}
 #endif // !VMMDLL_EXPORTS
 		}
+	}
+
+	VOLTEK_MM_API void scalable_get_pool_stats(scalable_pool_stats* out)
+	{
+		if (!out)
+			return;
+		*out = {};
+		auto* manager = memory_manager::global_memory_manager;
+		if (!manager || !manager->pools)
+			return;
+		memory_manager::accumulate_pool_stats<
+			memory_manager::pool8_t, memory_manager::pool16_t, memory_manager::pool32_t,
+			memory_manager::pool64_t, memory_manager::pool128_t, memory_manager::pool256_t,
+			memory_manager::pool512_t, memory_manager::pool1024_t, memory_manager::pool4096_t,
+			memory_manager::pool8192_t, memory_manager::pool16384_t, memory_manager::pool32768_t,
+			memory_manager::pool65536_t, memory_manager::pool131072_t>(manager->pools, *out);
 	}
 }
 

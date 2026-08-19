@@ -114,11 +114,6 @@ namespace Addictol
 		Module("Power Grid Scrap", &bFixesPowerGridScrap)
 	{}
 
-	bool ModulePowerGridScrap::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModulePowerGridScrap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation(REL::VariantID{ 761346, 2201199 }).address();
@@ -134,13 +129,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModulePowerGridScrap::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModulePowerGridScrap::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

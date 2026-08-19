@@ -22,11 +22,6 @@ namespace Addictol
 		Module("Movement Planner", &bFixesMovementPlanner)
 	{}
 
-	bool ModuleMovementPlanner::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMovementPlanner::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		using namespace movementPlannerDetail;
@@ -35,13 +30,4 @@ namespace Addictol
 		return CanWarpOnPathFailure::func != 0;
 	}
 
-	bool ModuleMovementPlanner::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMovementPlanner::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -9,11 +9,6 @@ namespace Addictol
 		Module("Moon Rotation", &bFixesMoonRotation)
 	{}
 
-	bool ModuleMoonRotation::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMoonRotation::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation{ REL::ID{ 114988, 2208804 }, REL::Offset{ 0x1E2, 0x1F7 } }.address();
@@ -28,13 +23,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleMoonRotation::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMoonRotation::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

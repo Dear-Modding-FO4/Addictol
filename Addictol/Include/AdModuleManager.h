@@ -2,6 +2,8 @@
 
 #include <AdModule.h>
 #include <AdModuleDefender.h>
+#include <array>
+#include <atomic>
 #include <string_view>
 #include <map>
 
@@ -14,11 +16,11 @@ namespace Addictol
 		std::map<uint8_t, std::map<std::string_view, ModulePtr>> rl_modules{};
 		std::unique_ptr<ModuleDefender> m_defender{};
 
-		size_t m_disabled{ 0 };
-		size_t m_failedQuery{ 0 };
-		size_t m_installed{ 0 };
-		size_t m_failedInstall{ 0 };
-		size_t m_skipped{ 0 };
+		std::atomic<uint64_t> m_disabled{ 0 };
+		std::atomic<uint64_t> m_failedQuery{ 0 };
+		std::atomic<uint64_t> m_installed{ 0 };
+		std::atomic<uint64_t> m_failedInstall{ 0 };
+		std::atomic<uint64_t> m_skipped{ 0 };
 
 		ModuleManager(const ModuleManager&) = delete;
 		ModuleManager(ModuleManager&&) = delete;
@@ -63,6 +65,14 @@ namespace Addictol
 		virtual void QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept;
 		virtual void ListenerAllPapyrus(RE::BSScript::IVirtualMachine* a_vm) noexcept;
+		[[nodiscard]] std::array<uint64_t, 5> ModuleOutcomeCounts() const noexcept
+		{
+			return {
+				m_installed.load(std::memory_order_relaxed), m_disabled.load(std::memory_order_relaxed),
+				m_skipped.load(std::memory_order_relaxed), m_failedQuery.load(std::memory_order_relaxed),
+				m_failedInstall.load(std::memory_order_relaxed)
+			};
+		}
 		virtual void LogSummary() const noexcept;
 	};
 }

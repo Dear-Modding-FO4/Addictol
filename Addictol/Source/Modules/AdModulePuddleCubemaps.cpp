@@ -12,11 +12,6 @@ namespace Addictol
 		Module("Puddle Cubemaps", &bFixesPuddleCubemaps)
 	{}
 
-	bool ModulePuddleCubemaps::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModulePuddleCubemaps::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
@@ -51,13 +46,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModulePuddleCubemaps::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModulePuddleCubemaps::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine *a_vm) noexcept
-	{
-		return true;
-	}
 }

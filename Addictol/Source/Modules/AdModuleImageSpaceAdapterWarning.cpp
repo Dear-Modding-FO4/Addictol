@@ -57,11 +57,6 @@ namespace Addictol
 		Module("Image Space Adapter Warning", &bWarningsImageSpaceAdapter)
 	{}
 
-	bool ModuleImageSpaceAdapterWarning::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleImageSpaceAdapterWarning::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& trampoline = REL::GetTrampoline();
@@ -73,13 +68,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleImageSpaceAdapterWarning::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleImageSpaceAdapterWarning::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

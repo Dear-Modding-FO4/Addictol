@@ -220,6 +220,22 @@ namespace Addictol
 			return snapshot;
 		}
 
+		[[nodiscard]] static bool ReadTelemetry(
+			EscapeFreezeMetricSource::Values& a_values) noexcept
+		{
+			const auto runtime = g_runtime.load(std::memory_order_acquire);
+			if (!runtime)
+				return false;
+			const auto stats = CaptureCounters(*runtime);
+			a_values = MetricDoubles(
+				stats.sampledStallCandidates, stats.forcedOrphanReleases,
+				stats.abortedOrphanReleases, stats.rendererResumptionsWithoutIntervention,
+				stats.rendererResumptionsAfterForcedRelease, stats.healthySampleSequences,
+				stats.corruptCountObservations, stats.ownerAliveObservations,
+				stats.ownerUnknownObservations, stats.unresolvedCandidates);
+			return true;
+		}
+
 		[[nodiscard]] static bool HasAnomaly(const CounterSnapshot& a_stats) noexcept
 		{
 			return a_stats.sampledStallCandidates ||
@@ -491,13 +507,9 @@ namespace Addictol
 	}
 
 	ModuleEscapeFreeze::ModuleEscapeFreeze() :
-		Module("Escape Freeze", &bFixesEscapeFreeze)
+		Module("Escape Freeze", &bFixesEscapeFreeze),
+		EscapeFreezeMetricSource(kEscapeFreezeMetricSchema, &escapeFreezeDetail::ReadTelemetry)
 	{}
-
-	bool ModuleEscapeFreeze::DoQuery() const noexcept
-	{
-		return true;
-	}
 
 	bool ModuleEscapeFreeze::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
@@ -636,14 +648,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleEscapeFreeze::DoListener(
-		[[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleEscapeFreeze::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

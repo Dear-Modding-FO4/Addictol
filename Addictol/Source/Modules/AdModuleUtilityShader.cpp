@@ -142,11 +142,6 @@ namespace Addictol
 		Module("Utility Shader", &bFixesUtilityShader)
 	{}
 
-	bool ModuleUtilityShader::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleUtilityShader::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation Base{ REL::ID{ 768994, 2319078 } };
@@ -162,13 +157,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleUtilityShader::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleUtilityShader::DoPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

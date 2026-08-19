@@ -29,11 +29,6 @@ namespace Addictol
 		Module("Climate Load", &bClimateLoad)
 	{}
 
-	bool ModuleClimateLoadFix::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleClimateLoadFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg)
@@ -48,13 +43,4 @@ namespace Addictol
 		return Sky::LoadGame_orig != nullptr;
 	}
 
-	bool ModuleClimateLoadFix::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleClimateLoadFix::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

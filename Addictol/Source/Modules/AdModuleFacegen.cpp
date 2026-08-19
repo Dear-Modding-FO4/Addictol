@@ -295,11 +295,6 @@ namespace Addictol
 		Module("Facegen", &bPatchesFacegen)
 	{}
 
-	bool ModuleFacegen::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleFacegen::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (!a_msg)
@@ -311,16 +306,6 @@ namespace Addictol
 		}
 
 		return false;
-	}
-
-	bool ModuleFacegen::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleFacegen::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
 	}
 
 	bool ModuleFacegen::HasProcessDefender() noexcept

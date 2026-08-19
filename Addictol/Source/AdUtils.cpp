@@ -197,6 +197,35 @@ namespace RELEX
 		return !std::memcmp(reinterpret_cast<const void*>(a_target), a_expected.begin(), a_expected.size());
 	}
 
+	bool ValidateUniqueSignature(uintptr_t a_target, std::span<const uint8_t> a_signature) noexcept
+	{
+		if (a_signature.empty() ||
+			std::memcmp(reinterpret_cast<const void*>(a_target), a_signature.data(), a_signature.size()) != 0)
+			return false;
+
+		const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleA("Fallout4.exe"));
+		if (!base)
+			return false;
+		const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+		const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(base + dos->e_lfanew);
+		const auto* section = IMAGE_FIRST_SECTION(nt);
+		for (uint16_t index = 0; index < nt->FileHeader.NumberOfSections; ++index)
+		{
+			if (std::memcmp(section[index].Name, ".text", 5) != 0)
+				continue;
+			const auto* begin = reinterpret_cast<const uint8_t*>(base + section[index].VirtualAddress);
+			const auto size = static_cast<size_t>(section[index].Misc.VirtualSize);
+			size_t matches = 0;
+			for (size_t offset = 0; offset + a_signature.size() <= size; ++offset)
+			{
+				if (std::memcmp(begin + offset, a_signature.data(), a_signature.size()) == 0)
+					++matches;
+			}
+			return matches == 1;
+		}
+		return false;
+	}
+
 	uintptr_t TryDetourJump(uintptr_t a_target, uintptr_t a_function,
 		const std::initializer_list<uint8_t>& a_expected) noexcept
 	{

@@ -204,13 +204,13 @@ namespace Addictol
 			if (!g_fonts.body || !g_fonts.subtext)
 			{
 				loadedAllBundled = false;
-				REX::WARN("Profiler menu: Inter font roles failed to load from \"{}\""sv, interPath.string());
+				REX::WARN("Menu: Inter font roles failed to load from \"{}\""sv, interPath.string());
 			}
 		}
 		else
 		{
 			loadedAllBundled = false;
-			REX::WARN("Profiler menu: bundled font not found: {}\\Inter-Regular.ttf"sv, kFontRoot);
+			REX::WARN("Menu: bundled font not found: {}\\Inter-Regular.ttf"sv, kFontRoot);
 		}
 
 		const auto monoBoldPath = ResolveBundledFont("JetBrainsMono-Bold.ttf"sv);
@@ -220,13 +220,13 @@ namespace Addictol
 			if (!g_fonts.title)
 			{
 				loadedAllBundled = false;
-				REX::WARN("Profiler menu: JetBrains Mono title font failed to load from \"{}\""sv, monoBoldPath.string());
+				REX::WARN("Menu: JetBrains Mono title font failed to load from \"{}\""sv, monoBoldPath.string());
 			}
 		}
 		else
 		{
 			loadedAllBundled = false;
-			REX::WARN("Profiler menu: bundled font not found: {}\\JetBrainsMono-Bold.ttf"sv, kFontRoot);
+			REX::WARN("Menu: bundled font not found: {}\\JetBrainsMono-Bold.ttf"sv, kFontRoot);
 		}
 
 		const auto monoRegularPath = ResolveBundledFont("JetBrainsMono-Regular.ttf"sv);
@@ -236,13 +236,13 @@ namespace Addictol
 			if (!g_fonts.heading)
 			{
 				loadedAllBundled = false;
-				REX::WARN("Profiler menu: JetBrains Mono heading font failed to load from \"{}\""sv, monoRegularPath.string());
+				REX::WARN("Menu: JetBrains Mono heading font failed to load from \"{}\""sv, monoRegularPath.string());
 			}
 		}
 		else
 		{
 			loadedAllBundled = false;
-			REX::WARN("Profiler menu: bundled font not found: {}\\JetBrainsMono-Regular.ttf"sv, kFontRoot);
+			REX::WARN("Menu: bundled font not found: {}\\JetBrainsMono-Regular.ttf"sv, kFontRoot);
 		}
 
 		ImFont* fallback = nullptr;
@@ -262,7 +262,7 @@ namespace Addictol
 		if (loadedAllBundled)
 		{
 			REX::INFO(
-				"Profiler menu: font roles loaded at {:.2f}x: Inter body {:.0f}pt, subtext {:.0f}pt; JetBrains Mono title {:.0f}pt, heading {:.0f}pt"sv,
+				"Menu: font roles loaded at {:.2f}x: Inter body {:.0f}pt, subtext {:.0f}pt; JetBrains Mono title {:.0f}pt, heading {:.0f}pt"sv,
 				scale,
 				kBodyPointSize * scale,
 				kSubtextPointSize * scale,
@@ -271,7 +271,7 @@ namespace Addictol
 		}
 		else
 		{
-			REX::WARN("Profiler menu: the built-in ImGui font covers the missing roles"sv);
+			REX::WARN("Menu: the built-in ImGui font covers the missing roles"sv);
 		}
 		return loadedAllBundled;
 	}

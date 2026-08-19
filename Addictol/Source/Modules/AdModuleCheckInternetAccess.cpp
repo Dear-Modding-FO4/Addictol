@@ -106,11 +106,6 @@ namespace Addictol
 		Module("Check Inernet Access", &bFixesCheckInternetAccess)
 	{}
 
-	bool ModuleCheckInternetAccess::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleCheckInternetAccess::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		*(uintptr_t*)(&detail::bnet::HttpConnection::ConnectOrig) =
@@ -119,13 +114,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleCheckInternetAccess::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleCheckInternetAccess::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

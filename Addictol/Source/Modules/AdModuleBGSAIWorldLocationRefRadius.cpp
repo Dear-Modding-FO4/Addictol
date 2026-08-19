@@ -39,11 +39,6 @@ namespace Addictol
 		Module("BGSAIWorldLocationRefRadius", &bFixesBGSAIWorldLocationRefRadius)
 	{}
 
-	bool ModuleBGSAIWorldLocationRefRadius::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleBGSAIWorldLocationRefRadius::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto base = REL::Relocation{ REL::ID{ 964254, 2188379 } }.address();
@@ -57,13 +52,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleBGSAIWorldLocationRefRadius::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleBGSAIWorldLocationRefRadius::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -433,11 +433,6 @@ namespace Addictol
 		Module("Input Switch", &bPatchesInputSwitch, {}, true)
 	{}
 
-	bool ModuleInputSwitch::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleInputSwitch::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameLoaded)
@@ -459,11 +454,6 @@ namespace Addictol
 			inputSwitchDetail::InstallPipboyMenuStatePatches();
 		}
 
-		return true;
-	}
-
-	bool ModuleInputSwitch::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
 		return true;
 	}
 

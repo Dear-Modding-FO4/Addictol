@@ -1,7 +1,9 @@
 #include <Modules/AdModuleMemoryManager.h>
+#include <AdAllocatorPoolTelemetry.h>
 #include <AdAssert.h>
 #include <AdAllocator.h>
 #include <AdUtils.h>
+#include <Voltek.MemoryManager.h>
 #include <string.h>
 #include <stdio.h>
 #include <xbyak/xbyak.h>
@@ -460,17 +462,24 @@ namespace Addictol
 			}
 		}
 
+		m_active.store(
+			GetSelectedHeapKind() == HeapKind::Voltek,
+			std::memory_order_relaxed);
 		return true;
 	}
 
-	bool ModuleMemoryManager::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
+	std::span<const MetricDescriptor> ModuleMemoryManager::Schema() const noexcept
 	{
-		return true;
+		return AllocatorPoolTelemetry::Schema();
 	}
 
-	bool ModuleMemoryManager::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
+	void ModuleMemoryManager::Drain(std::span<MetricValue> a_out) noexcept
 	{
-		return true;
+		const auto active = m_active.load(std::memory_order_relaxed);
+		voltek::scalable_pool_stats stats{};
+		if (active)
+			voltek::scalable_get_pool_stats(&stats);
+		AllocatorPoolTelemetry::Populate(a_out, active, stats);
 	}
 
 	bool ModuleMemoryManager::HasProcessDefender() noexcept

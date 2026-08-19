@@ -29,13 +29,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleToggleGrassCommand::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleToggleGrassCommand::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

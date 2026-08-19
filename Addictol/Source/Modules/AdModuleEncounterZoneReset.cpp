@@ -52,11 +52,6 @@ namespace Addictol
 		Module("Encounter Zone Reset", &bFixesEncounterZoneReset)
 	{}
 
-	bool ModuleEncounterZoneReset::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleEncounterZoneReset::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& Cells = RE::CellAttachDetachEventSource::CellAttachDetachEventSourceSingleton::GetSingleton();
@@ -65,13 +60,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleEncounterZoneReset::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleEncounterZoneReset::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

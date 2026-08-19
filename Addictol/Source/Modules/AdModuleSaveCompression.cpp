@@ -35,11 +35,6 @@ namespace Addictol
 		Module("Save Compression", &bPatchesSaveCompression)
 	{}
 
-	bool ModuleSaveCompression::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleSaveCompression::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation{ REL::ID{ 104318, 2228204 } }.address();
@@ -60,13 +55,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleSaveCompression::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleSaveCompression::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

@@ -28,11 +28,6 @@ namespace Addictol
 		Module("Muzzle Flash Light", &bFixesMuzzleFlashLight)
 	{}
 
-	bool ModuleMuzzleFlashLight::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleMuzzleFlashLight::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::ID{ 976501, 2236921 }.address();
@@ -41,13 +36,4 @@ namespace Addictol
 		return OriginalUpdateLight != nullptr;
 	}
 
-	bool ModuleMuzzleFlashLight::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleMuzzleFlashLight::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

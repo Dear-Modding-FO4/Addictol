@@ -40,11 +40,6 @@ namespace Addictol
 		Module("Load Screen", &bPatchesLoadScreen)
 	{}
 
-	bool ModuleLoadScreen::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleLoadScreen::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg)
@@ -106,13 +101,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleLoadScreen::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleLoadScreen::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

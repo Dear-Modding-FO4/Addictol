@@ -36,11 +36,6 @@ namespace Addictol
 		Module("Downward Aiming", &bFixesDownwardAiming)
 	{}
 
-	bool ModuleDownwardAiming::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleDownwardAiming::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg) return false;
@@ -50,13 +45,4 @@ namespace Addictol
 			reinterpret_cast<uintptr_t>(&detail::Projectile::Move)) != 0;
 	}
 
-	bool ModuleDownwardAiming::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleDownwardAiming::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

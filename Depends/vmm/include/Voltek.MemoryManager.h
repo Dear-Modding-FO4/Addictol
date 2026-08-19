@@ -14,6 +14,13 @@ extern "C"
 
 namespace voltek
 {
+	struct scalable_pool_stats
+	{
+		size_t pool_count;
+		size_t page_capacity;
+		size_t pages_busy;
+	};
+
 	// Инициализация менеджера памяти.
 	VOLTEK_MM_API void scalable_memory_manager_initialize();
 	// Освобождение менеджера памяти.
@@ -49,6 +56,7 @@ namespace voltek
 	// Возвращает размер памяти выделенной под указатель.
 	// Вернёт 0 при ошибке, что значит, указатель на память не пренадлежит менеджеру.
 	VOLTEK_MM_API size_t scalable_msize(const void* ptr);
+	VOLTEK_MM_API void scalable_get_pool_stats(scalable_pool_stats* out);
 }
 
 #ifdef __cplusplus

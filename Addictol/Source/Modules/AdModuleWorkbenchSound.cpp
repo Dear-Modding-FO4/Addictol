@@ -126,11 +126,6 @@ namespace Addictol
 		Module("Workbench Sound", &bFixesWorkbenchSound, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
-	bool ModuleWorkbenchSound::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleWorkbenchSound::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
@@ -154,8 +149,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleWorkbenchSound::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

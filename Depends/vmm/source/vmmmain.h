@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Voltek.MemoryManager.h"
 #include "vbase.h"
 #include "vmmblock.h"
 #include "vsimplelock.h"
@@ -72,6 +73,7 @@ namespace voltek
 			block8_t zero_size_request_block{ 0 };
 			// Массив пулов.
 			void** pools{ nullptr };
+			friend void ::voltek::scalable_get_pool_stats(::voltek::scalable_pool_stats* out);
 			// Блокировщик для работы с множеством потоков.
 			//voltek::core::_internal::simple_lock lock;
 			// События для потока кеширования, чтобы можно выйти

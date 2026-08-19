@@ -1,6 +1,4 @@
 #include <AdConfigValidation.h>
-#include <AdProfilerAllocator.h>
-#include <AdProfilerCore.h>
 #include <REX/REX.h>
 #include <toml11/single_include/toml.hpp>
 #include <unordered_map>
@@ -10,9 +8,6 @@
 namespace Addictol
 {
 	using namespace std::literals;
-
-	// Options declared here so the dependency warning can read them before any module installs.
-	static REX::TOML::Bool<> bProfilerMenuEnabled{ "Profiler"sv, "bProfilerMenu"sv, false };
 
 	// Known config keys by section, derived from REX::TOML declarations across all modules.
 	// Update this when adding or removing a config key.
@@ -52,6 +47,9 @@ namespace Addictol
 		{ "Others"sv, {
 			"bRobCoPatcherCache"sv
 		}},
+		{ "Telemetry"sv, {
+			"bEnabled"sv, "uSampleMs"sv, "uFrameRecordMs"sv, "bCsv"sv
+		}},
 		{ "Additional"sv, {
 			"sAllocator"sv, "sZlibBackend"sv, "sLogLevel"sv, "sLogFlushLevel"sv,
 			"bDbgFacegenOutput"sv, "bUseNewRedistributable"sv,
@@ -61,54 +59,13 @@ namespace Addictol
 			"bFullPrecisionDecalsEffectShaders"sv, "nMaxPapyrusOpsPerFrame"sv,
 			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
 			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"sv,
-			"fLocalMapScaleFactor"sv, "nFrameHitchThresholdMs"sv
-		}},
-		{ "Profiler"sv, {
-			"bProfiler"sv, "bESPProfiler"sv, "bESPSubHooks"sv, "bDLLProfiler"sv,
-			"bModuleProfiler"sv, "bStartupTimeline"sv, "bMemoryTracking"sv,
-			"bBA2Timing"sv, "bCSVExport"sv, "bAnimSubGraphProfiler"sv,
-			"bAnimSubGraphSkipPreload"sv, "bFrameHitchProfiler"sv,
-			"bAllocatorProfiler"sv, "uAllocatorProfilerDrainFrames"sv,
-			"bProfilerMenu"sv, "sProfilerMenuToggleKey"sv, "uProfilerMenuRefreshMs"sv,
-			"bZlibTracking"sv
+			"fLocalMapScaleFactor"sv,
+			"bMenu"sv, "sMenuToggleKey"sv, "uMenuRefreshMs"sv
 		}}
 	};
 
-	static void WarnProfilerDependencies() noexcept
-	{
-		static bool checked = false;
-		if (checked)
-			return;
-		checked = true;
-
-		if (ProfilerCore::IsEnabledInConfig())
-			return;
-
-		std::string keys;
-		const auto addKey = [&](std::string_view a_key) {
-			if (!keys.empty())
-				keys += ", "sv;
-			keys += a_key;
-		};
-		if (ProfilerCore::IsAnimSubGraphEnabled())
-			addKey("bAnimSubGraphProfiler"sv);
-		if (ProfilerCore::IsFrameHitchEnabled())
-			addKey("bFrameHitchProfiler"sv);
-		if (ProfilerAllocator::IsEnabledInConfig())
-			addKey("bAllocatorProfiler"sv);
-		if (ProfilerCore::IsCSVExportEnabled())
-			addKey("bCSVExport"sv);
-		if (bProfilerMenuEnabled.GetValue())
-			addKey("bProfilerMenu"sv);
-
-		if (!keys.empty())
-			REX::WARN("Config: enabled profiler keys [{}] require bProfiler = true; they will be ignored."sv, keys);
-	}
-
 	void ValidateConfigKeys(const char* a_filePath) noexcept
 	{
-		WarnProfilerDependencies();
-
 		auto result = toml::try_parse(a_filePath);
 		if (!result.is_ok())
 			return;

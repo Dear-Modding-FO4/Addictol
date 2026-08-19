@@ -69,11 +69,6 @@ namespace Addictol
 		Module("Stolen Power Armor Ownership", &bFixesStolenPowerArmorOwnership, { F4SE::MessagingInterface::kPostLoadGame })
 	{}
 
-	bool ModuleStolenPowerArmorOwnership::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleStolenPowerArmorOwnership::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		return true;
@@ -87,8 +82,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleStolenPowerArmorOwnership::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }

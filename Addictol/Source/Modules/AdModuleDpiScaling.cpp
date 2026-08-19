@@ -62,11 +62,6 @@ namespace Addictol
 		Module("DPI Scaling", &bPatchesDpiScaling)
 	{}
 
-	bool ModuleDpiScaling::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleDpiScaling::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		std::string level = "";
@@ -86,13 +81,4 @@ namespace Addictol
 		return true;
 	}
 
-	bool ModuleDpiScaling::DoListener([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
-	{
-		return true;
-	}
-
-	bool ModuleDpiScaling::DoPapyrusListener([[maybe_unused]] RE::BSScript::IVirtualMachine* a_vm) noexcept
-	{
-		return true;
-	}
 }
