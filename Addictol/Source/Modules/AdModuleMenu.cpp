@@ -1,6 +1,6 @@
 #include <Modules/AdModuleMenu.h>
-#include <AdMenu.h>
-#include <AdUtils.h>
+#include <Menu/AdMenu.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

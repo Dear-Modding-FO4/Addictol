@@ -1,6 +1,6 @@
 #include <Modules/AdModuleSmallblockAllocator.h>
-#include <AdAllocator.h>
-#include <AdUtils.h>
+#include <Memory/AdAllocator.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

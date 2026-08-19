@@ -1,7 +1,7 @@
-#include "../Addictol/Include/AdTelemetryHub.h"
-#include "../Addictol/Include/AdAllocatorPoolTelemetry.h"
-#include "../Addictol/Include/AdZlibBackend.h"
-#include "../Addictol/Include/AdZlibTelemetry.h"
+#include "../Addictol/Include/Telemetry/AdTelemetryHub.h"
+#include "../Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h"
+#include "../Addictol/Include/Zlib/AdZlibBackend.h"
+#include "../Addictol/Include/Zlib/AdZlibTelemetry.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "Harness.h"
 

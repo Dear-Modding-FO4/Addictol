@@ -1,5 +1,5 @@
 #include <Modules/AdModulePackageAllocateLocation.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 #include <RE/B/BGSPrimitive.h>
 #include <RE/E/ExtraDataList.h>
 

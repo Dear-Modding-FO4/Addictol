@@ -1,6 +1,6 @@
 #include <Modules/AdModulePlatformImgui.h>
-#include <AdPlatformImgui.h>
-#include <AdUtils.h>
+#include <Platform/AdPlatformImgui.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

@@ -1,5 +1,5 @@
 #include <Modules/AdModuleStringPoolRelease.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSStringPool.h>
 

@@ -1,5 +1,5 @@
 #include <Modules/AdModuleLODDistance.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

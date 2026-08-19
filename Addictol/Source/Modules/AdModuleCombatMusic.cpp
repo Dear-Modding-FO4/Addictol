@@ -1,6 +1,6 @@
 #include <Modules/AdModuleCombatMusic.h>
-#include <AdUtils.h>
-#include <AdGameUtils.h>
+#include <Core/AdUtils.h>
+#include <Core/AdGameUtils.h>
 
 #include <RE/P/PlayerCharacter.h>
 #include <RE/T/TESDeathEvent.h>

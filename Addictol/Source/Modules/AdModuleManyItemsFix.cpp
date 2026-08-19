@@ -1,6 +1,6 @@
 #include <Modules/AdModuleManyItemsFix.h>
-#include <AdUtils.h>
-#include <AdAssert.h>
+#include <Core/AdUtils.h>
+#include <Core/AdAssert.h>
 
 #include <RE/T/TESObjectREFR.h>
 #include <RE/E/ExtraDataList.h>

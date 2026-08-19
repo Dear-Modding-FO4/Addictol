@@ -1,5 +1,5 @@
 #include <Modules/AdModuleMagicKeywordCrash.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/E/EffectItem.h>
 #include <RE/E/EffectSetting.h>

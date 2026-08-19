@@ -1,6 +1,6 @@
 #include <Modules/AdModuleWorkbenchSound.h>
-#include <AdUtils.h>
-#include <AdGameUtils.h>
+#include <Core/AdUtils.h>
+#include <Core/AdGameUtils.h>
 
 #include "RE/T/TESFormUtil.h"
 #include <RE/B/BGSActorCellEvent.h>

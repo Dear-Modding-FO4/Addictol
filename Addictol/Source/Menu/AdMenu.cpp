@@ -1,7 +1,7 @@
-#include <AdImguiTheme.h>
-#include <AdMenu.h>
-#include <AdPlatformImgui.h>
-#include <AdUtils.h>
+#include <Platform/AdImguiTheme.h>
+#include <Menu/AdMenu.h>
+#include <Platform/AdPlatformImgui.h>
+#include <Core/AdUtils.h>
 #include <Menu/AdMenuLogControl.h>
 
 #include <REX/REX.h>

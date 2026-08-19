@@ -1,7 +1,7 @@
 // #original: https://github.com/aers/EngineFixesSkyrim64/blob/master/src/fixes/climate_load.h
 
 #include <Modules/AdModuleClimateLoad.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSSaveLoadBuffer.h>
 #include <RE/S/Sky.h>

@@ -1,5 +1,5 @@
 #include <Modules/AdModuleTextureLoadCrash.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 #include <RE/N/NiTexture.h>
 #include <RE/B/BSResourceNiBinaryStream.h>
 #include <RE/B/BSGraphics.h>

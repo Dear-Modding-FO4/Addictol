@@ -1,62 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\Addictol\Source\AdAllocator.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Memory\AdAllocator.cpp">
+      <Filter>Source\Memory</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdAssert.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdAssert.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdMain.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdMain.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdMemoryTracer.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Memory\AdMemoryTracer.cpp">
+      <Filter>Source\Memory</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdModule.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdPlugin.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdPlugin.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdRegisterModules.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdRegisterModules.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdUtils.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdUtils.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdModuleManager.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdGameUtils.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdGameUtils.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdPCH.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdPCH.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdConfigValidation.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdConfigValidation.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdLogControl.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdTelemetryHub.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp">
+      <Filter>Source\Telemetry</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdTelemetryRuntime.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryRuntime.cpp">
+      <Filter>Source\Telemetry</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdProxyVoltekHeap.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Memory\AdProxyVoltekHeap.cpp">
+      <Filter>Source\Memory</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdVisperMemoryAllocator.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Memory\AdVisperMemoryAllocator.cpp">
+      <Filter>Source\Memory</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdProxyVisperHeap.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Memory\AdProxyVisperHeap.cpp">
+      <Filter>Source\Memory</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdModuleDefender.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Core\AdModuleDefender.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp">
       <Filter>Source\Modules\A</Filter>
@@ -319,17 +319,17 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp">
       <Filter>Source\Modules\W</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdZlibBackend.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Zlib\AdZlibBackend.cpp">
+      <Filter>Source\Zlib</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePlatformImgui.cpp">
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdPlatformImgui.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\AdImguiTheme.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="..\Addictol\Source\Platform\AdImguiTheme.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp">
       <Filter>Source\Menu</Filter>
@@ -349,65 +349,65 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Version\resource_version2.h" />
-    <ClInclude Include="..\Addictol\Include\AdUtils.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdUtils.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdAssert.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdAssert.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdMemoryTracer.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Memory\AdMemoryTracer.h">
+      <Filter>Include\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdModule.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdModule.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdPlugin.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdAllocator.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Memory\AdAllocator.h">
+      <Filter>Include\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdZlibInflate.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInflate.h">
+      <Filter>Include\Zlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdZlibBackend.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h">
+      <Filter>Include\Zlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdEscapeFreezeState.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h">
+      <Filter>Include\Modules\E</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdModuleManager.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdGameUtils.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdGameUtils.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdPCH.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdPCH.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdConfigValidation.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdConfigValidation.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdLogControl.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdTelemetry.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
+      <Filter>Include\Telemetry</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdAllocatorPoolTelemetry.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdAllocatorPoolTelemetry.h">
+      <Filter>Include\Telemetry</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdTelemetryHub.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetryHub.h">
+      <Filter>Include\Telemetry</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdZlibTelemetry.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibTelemetry.h">
+      <Filter>Include\Zlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdVisperMemoryAllocator.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Memory\AdVisperMemoryAllocator.h">
+      <Filter>Include\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdModuleDefender.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdModuleDefender.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h">
       <Filter>Include\Modules\A</Filter>
@@ -673,22 +673,22 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePlatformImgui.h">
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdPlatformImgui.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Platform\AdPlatformImgui.h">
+      <Filter>Include\Platform</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdRegistration.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h">
+      <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdImguiPlatformTargets.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h">
+      <Filter>Include\Platform</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdImguiTheme.h">
-      <Filter>Include</Filter>
+    <ClInclude Include="..\Addictol\Include\Platform\AdImguiTheme.h">
+      <Filter>Include\Platform</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdMenu.h">
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\AdMenuTargets.h">
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h">
@@ -721,6 +721,36 @@
     </Filter>
     <Filter Include="Include">
       <UniqueIdentifier>{a20d09e5-6c76-49f5-9b4e-0bc1df6b6b20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Core">
+      <UniqueIdentifier>{36abdbfa-cc74-4846-baa3-5ae01bc504be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Memory">
+      <UniqueIdentifier>{62cf36df-9933-4419-a1b8-f8fe3b3e1486}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Zlib">
+      <UniqueIdentifier>{a536877f-a989-43d4-a362-e9a9c0f69270}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Telemetry">
+      <UniqueIdentifier>{c3a962d0-b960-43e7-bada-1bf05841322c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{1b74d37d-a9cb-4aac-a11e-71d6e206a569}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Core">
+      <UniqueIdentifier>{1f45f9d0-a9ca-474a-8859-9e8b8706fcd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Memory">
+      <UniqueIdentifier>{39135848-b106-436e-bd7f-bb2031e743f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Zlib">
+      <UniqueIdentifier>{4bb2912e-70db-4b05-89b0-6e6f32a58997}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Telemetry">
+      <UniqueIdentifier>{b9ce6c9b-4700-4e5e-9b31-3e6f1a56d176}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Platform">
+      <UniqueIdentifier>{701656ae-d25b-450c-bbd6-1343dd34bdc4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Modules">
       <UniqueIdentifier>{7f9dc727-58b0-4894-9e00-e9eb155fc5f9}</UniqueIdentifier>

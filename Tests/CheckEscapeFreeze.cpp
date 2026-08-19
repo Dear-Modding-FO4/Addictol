@@ -1,4 +1,4 @@
-#include "../Addictol/Include/AdEscapeFreezeState.h"
+#include "../Addictol/Include/Modules/AdEscapeFreezeState.h"
 #include "Harness.h"
 
 #include <limits>

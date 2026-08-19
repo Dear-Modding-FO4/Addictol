@@ -1,7 +1,7 @@
 // Thanks doodlum for the idea & original mod: https://github.com/doodlum/skyrim-hd-local-map
 
 #include <Modules/AdModuleHighResLocalMaps.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSGraphics.h>
 

@@ -1,5 +1,5 @@
-#include <AdLogControl.h>
-#include <AdMenu.h>
+#include <Core/AdLogControl.h>
+#include <Menu/AdMenu.h>
 #include <Menu/AdMenuLogControl.h>
 #include <Menu/AdMenuWidgets.h>
 

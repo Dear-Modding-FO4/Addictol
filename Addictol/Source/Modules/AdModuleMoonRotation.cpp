@@ -1,5 +1,5 @@
 #include <Modules/AdModuleMoonRotation.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

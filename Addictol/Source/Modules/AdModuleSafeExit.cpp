@@ -1,6 +1,6 @@
 #include <Modules/AdModuleSafeExit.h>
-#include <AdTelemetryHub.h>
-#include <AdUtils.h>
+#include <Telemetry/AdTelemetryHub.h>
+#include <Core/AdUtils.h>
 
 #include <RE/M/Main.h>
 

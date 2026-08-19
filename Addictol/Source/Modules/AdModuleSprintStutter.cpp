@@ -1,5 +1,5 @@
 #include <Modules/AdModuleSprintStutter.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

@@ -1,7 +1,7 @@
 // port: https://github.com/aers/EngineFixesSkyrim64/blob/master/src/fixes/archery_downward_aiming.h
 
 #include <Modules/AdModuleDownwardAiming.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/N/NiPoint3.h>
 #include <RE/P/Projectile.h>

@@ -1,5 +1,5 @@
 #include <Modules/AdModuleFasterWorkshop.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSConstructibleObject.h>
 #include <RE/B/BGSDefaultObjectManager.h>

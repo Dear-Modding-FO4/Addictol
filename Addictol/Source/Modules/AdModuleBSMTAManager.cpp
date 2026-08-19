@@ -1,5 +1,5 @@
 #include <Modules/AdModuleBSMTAManager.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSMTAManager.h>
 #include <RE/B/BSShaderAccumulator.h>

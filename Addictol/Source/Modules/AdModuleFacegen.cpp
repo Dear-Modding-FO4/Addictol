@@ -1,6 +1,6 @@
 #include <Modules/AdModuleFacegen.h>
-#include <AdPlugin.h>
-#include <AdUtils.h>
+#include <Core/AdPlugin.h>
+#include <Core/AdUtils.h>
 #include <Shlwapi.h>
 
 // SimpleIni include windows.h

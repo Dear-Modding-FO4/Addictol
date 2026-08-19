@@ -1,5 +1,5 @@
 #include <Modules/AdModuleDuplicateAddonNodeIndex.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSAddonNode.h>
 #include <RE/C/ConsoleLog.h>

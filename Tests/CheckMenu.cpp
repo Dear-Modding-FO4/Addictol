@@ -1,4 +1,4 @@
-#include "../Addictol/Include/AdMenuTargets.h"
+#include "../Addictol/Include/Menu/AdMenuTargets.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "Harness.h"
 

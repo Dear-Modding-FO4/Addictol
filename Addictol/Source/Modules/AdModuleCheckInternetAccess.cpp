@@ -1,5 +1,5 @@
 #include <Modules/AdModuleCheckInternetAccess.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <windows.h>
 #include <winhttp.h>

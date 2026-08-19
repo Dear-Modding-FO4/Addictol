@@ -1,6 +1,6 @@
 #include <Modules/AdModuleReferenceHandleLimitWarning.h>
-#include <AdUtils.h>
-#include <AdGameUtils.h>
+#include <Core/AdUtils.h>
+#include <Core/AdGameUtils.h>
 
 #include <RE/C/ConsoleLog.h>
 #include <RE/B/BSSpinLock.h>

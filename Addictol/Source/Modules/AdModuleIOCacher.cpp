@@ -1,5 +1,5 @@
 #include <Modules/AdModuleIOCacher.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 namespace Addictol
 {

@@ -1,5 +1,5 @@
 #include <Modules/AdModuleCompanionStrayBullet.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/A/Actor.h>
 #include <RE/E/ENUM_FORM_ID.h>

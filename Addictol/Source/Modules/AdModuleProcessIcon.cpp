@@ -1,5 +1,5 @@
 #include <Modules/AdModuleProcessIcon.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <windows.h>
 

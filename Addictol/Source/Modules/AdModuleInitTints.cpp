@@ -1,5 +1,5 @@
 #include <Modules/AdModuleInitTints.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 #include <REL/REL.h>
 #include <RE/IDs.h>
 

@@ -1,5 +1,5 @@
 #include <Modules/AdModulePapyrusGC.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <cstring>
 

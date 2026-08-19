@@ -1,5 +1,5 @@
 #include <Modules/AdModuleHighResBloom.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <algorithm>
 #include <array>

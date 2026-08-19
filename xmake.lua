@@ -301,8 +301,8 @@ target("vmm-tests", function()
 
     -- add source files
     add_files("Tests/**.cpp")
-    add_files("Addictol/Source/AdLogControl.cpp")
-    add_files("Addictol/Source/AdTelemetryHub.cpp")
+    add_files("Addictol/Source/Core/AdLogControl.cpp")
+    add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
 
     -- add include directories
     add_includedirs("Tests", "Addictol/Include", "Depends", "Depends/spdlog/include", "Depends/vmm/source")
@@ -435,7 +435,7 @@ target(plugin_name, function()
     )
 
     -- set precompiled header
-    set_pcxxheader("Addictol/Include/AdPCH.h")
+    set_pcxxheader("Addictol/Include/Core/AdPCH.h")
 
     -- add linker flags
     add_shflags(

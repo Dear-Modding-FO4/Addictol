@@ -1,5 +1,5 @@
 #include <Modules/AdModuleAttachLightCrash.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BSContainer.h>
 #include <RE/R/ReferenceEffect.h>

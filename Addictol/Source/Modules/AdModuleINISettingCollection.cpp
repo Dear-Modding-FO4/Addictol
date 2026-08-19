@@ -1,5 +1,5 @@
 #include <Modules/AdModuleINISettingCollection.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/S/Setting.h>
 

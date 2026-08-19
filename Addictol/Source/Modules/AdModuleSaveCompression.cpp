@@ -1,7 +1,7 @@
 // # original idea (vibe source): https://github.com/1001Bits/Fast-Saving-Fallout/blob/main/src/SaveCompression.cpp
 
 #include <Modules/AdModuleSaveCompression.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 #include <libdeflate/libdeflate.h>
 
 namespace Addictol

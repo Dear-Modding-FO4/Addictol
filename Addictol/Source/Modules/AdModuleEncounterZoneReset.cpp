@@ -1,5 +1,5 @@
 #include <Modules/AdModuleEncounterZoneReset.h>
-#include <AdUtils.h>
+#include <Core/AdUtils.h>
 
 #include <RE/B/BGSEncounterZone.h>
 #include <RE/C/Calendar.h>

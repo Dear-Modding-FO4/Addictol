@@ -1,8 +1,8 @@
 #include <Modules/AdModuleMemoryManager.h>
-#include <AdAllocatorPoolTelemetry.h>
-#include <AdAssert.h>
-#include <AdAllocator.h>
-#include <AdUtils.h>
+#include <Telemetry/AdAllocatorPoolTelemetry.h>
+#include <Core/AdAssert.h>
+#include <Memory/AdAllocator.h>
+#include <Core/AdUtils.h>
 #include <Voltek.MemoryManager.h>
 #include <string.h>
 #include <stdio.h>

@@ -1,6 +1,6 @@
 #include <Modules/AdModuleStolenPowerArmorOwnership.h>
-#include <AdUtils.h>
-#include <AdGameUtils.h>
+#include <Core/AdUtils.h>
+#include <Core/AdGameUtils.h>
 
 #include <RE/T/TESFurnitureEvent.h>
 #include <RE/P/PlayerCharacter.h>
