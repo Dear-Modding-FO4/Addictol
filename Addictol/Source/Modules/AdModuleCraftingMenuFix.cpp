@@ -42,23 +42,25 @@ namespace Addictol
 
 		// GetKeywordByIndex(type=2, idx) is what the engine uses to resolve attach points.
 		// No id for it, but the pattern is unique across .text on every runtime we checked.
-		using GetKeywordByIndexFn = RE::BGSKeyword* (*)(std::uint32_t, std::uint32_t);
+		using GetKeywordByIndexFn = RE::BGSKeyword* (*)(uint32_t, uint32_t);
 		static GetKeywordByIndexFn s_keywordFn = nullptr;
 
-		// BSTArray<TESForm*> layout in TESDataHandler::formArrays (same on OG/NG/AE)
+		// Mirrors the layout of BSTArray<TESForm*> in TESDataHandler::formArrays. We don't
+		// use BSTArray itself because std::atomic_ref needs the raw, trivially-copyable
+		// data/size fields, which BSTArray keeps private. The layout is the same on OG/NG/AE.
 		struct FormArrayEntry
 		{
-			RE::TESForm** data;       // +0x00
-			std::uint32_t capacity;   // +0x08
-			std::uint32_t pad0C;      // +0x0C
-			std::uint32_t size;       // +0x10
-			std::uint32_t pad14;      // +0x14
+			RE::TESForm** data;  // +0x00
+			uint32_t capacity;   // +0x08
+			uint32_t pad0C;      // +0x0C
+			uint32_t size;       // +0x10
+			uint32_t pad14;      // +0x14
 		};
 		static_assert(sizeof(FormArrayEntry) == 0x18);
 
 		struct Candidate
 		{
-			std::uint32_t idx;   // original array index, keeps ordering stable
+			uint32_t idx;  // original array index, keeps ordering stable
 			RE::TESForm* form;
 		};
 
@@ -71,20 +73,24 @@ namespace Addictol
 		static std::mutex s_mutex;  // build + swap are serialized (BPML runs on worker threads too)
 		static std::unordered_map<const RE::BGSKeyword*, CandidateList> s_cobjByAP;
 		static std::unordered_map<const RE::BGSKeyword*, CandidateList> s_omodByAP;
-		static std::uint32_t s_cobjTotal = 0;
-		static std::uint32_t s_omodTotal = 0;
+		static uint32_t s_cobjTotal = 0;
+		static uint32_t s_omodTotal = 0;
 		static bool s_ready = false;
 
+		// BuildPossibleModList runs on worker threads, so each thread keeps its own swap state
+		// and scratch buffers. t_inSwap also breaks re-entrancy: if the original function calls
+		// back into the vtable slot on the same thread, the nested call skips the swap instead
+		// of deadlocking on the non-recursive s_mutex.
 		static thread_local bool t_inSwap;
 
 		struct SwapState
 		{
 			FormArrayEntry* cobjEntry = nullptr;
 			RE::TESForm** cobjOldData = nullptr;
-			std::uint32_t cobjOldSize = 0;
+			uint32_t cobjOldSize = 0;
 			FormArrayEntry* omodEntry = nullptr;
 			RE::TESForm** omodOldData = nullptr;
-			std::uint32_t omodOldSize = 0;
+			uint32_t omodOldSize = 0;
 		};
 		static thread_local SwapState t_swap;
 
@@ -94,24 +100,16 @@ namespace Addictol
 		static thread_local std::vector<RE::TESForm*> t_unionCobjForms;
 		static thread_local std::vector<RE::TESForm*> t_unionOmodForms;
 
-		// SEH helpers -- can't unwind C++ objects in __try, so these live in their own functions
+		// SEH helper -- on AE the slotObjects entries have been seen pointing at garbage, so
+		// probe the pointer before reading through it. __try can't unwind C++ objects, so this
+		// lives in its own function.
 		[[nodiscard]] static bool IsPointerReadable(const void* a_ptr) noexcept
 		{
 			if (!a_ptr) return false;
 			__try {
-				volatile auto v = *static_cast<const volatile std::uint8_t*>(a_ptr);
+				volatile auto v = *static_cast<const volatile uint8_t*>(a_ptr);
 				(void)v;
 				return true;
-			}
-			__except (EXCEPTION_EXECUTE_HANDLER) {
-				return false;
-			}
-		}
-
-		[[nodiscard]] static bool SafeCallComputeIdx(ComputeIdxFn a_fn, void* a1, void* a2, void* a3, void* a4, bool a5) noexcept
-		{
-			__try {
-				return a_fn(a1, a2, a3, a4, a5);
 			}
 			__except (EXCEPTION_EXECUTE_HANDLER) {
 				return false;
@@ -140,7 +138,7 @@ namespace Addictol
 			if (!s_computeIdxFn || !s_idxStaticData) return false;
 
 			auto self = reinterpret_cast<char*>(a_menu);
-			auto state = *reinterpret_cast<std::uint32_t*>(self + 0x510);
+			auto state = *reinterpret_cast<uint32_t*>(self + 0x510);
 			auto* ptr518 = *reinterpret_cast<void**>(self + 0x518);
 			auto* obj508 = *reinterpret_cast<void**>(self + 0x508);
 			bool isStateA = (state & 0x8F) == 0x0A;
@@ -149,54 +147,46 @@ namespace Addictol
 			// +0 field, +8 status (want &0x8F == 3), +16 idx
 			struct alignas(8)
 			{
-				std::uint64_t field0{};
-				std::uint32_t status{};
-				std::uint32_t pad{};
-				std::int32_t idx{};
-				std::uint32_t pad2{};
+				uint64_t field0{};
+				uint32_t status{};
+				uint32_t pad{};
+				int32_t idx{};
+				uint32_t pad2{};
 			} buf{};
 
-			if (!SafeCallComputeIdx(s_computeIdxFn, obj508, ptr518, s_idxStaticData, &buf, isStateA))
+			if (!s_computeIdxFn(obj508, ptr518, s_idxStaticData, &buf, isStateA))
 				return false;
 			if ((buf.status & 0x8F) != 3) return false;
 
 			// engine clamps negatives to 0 here (cmovns), do the same
-			*reinterpret_cast<std::int32_t*>(self + 0x460) = (buf.idx >= 0) ? buf.idx : 0;
+			*reinterpret_cast<int32_t*>(self + 0x460) = (buf.idx >= 0) ? buf.idx : 0;
 			return true;
 		}
 
 		// 8D 41 FF 83 F8 11 77 -- unique in .text on OG, NG and AE
 		[[nodiscard]] static GetKeywordByIndexFn ScanGetKeywordByIndex()
 		{
-			static constexpr std::uint8_t kSig[] = { 0x8D, 0x41, 0xFF, 0x83, 0xF8, 0x11, 0x77 };
-			const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
-			if (!base) return nullptr;
-			auto* dos = reinterpret_cast<IMAGE_DOS_HEADER*>(base);
-			if (dos->e_magic != IMAGE_DOS_SIGNATURE) return nullptr;
-			auto* nt = reinterpret_cast<IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
-			if (nt->Signature != IMAGE_NT_SIGNATURE) return nullptr;
-			auto* sec = IMAGE_FIRST_SECTION(nt);
-			for (std::uint32_t i = 0; i < nt->FileHeader.NumberOfSections; ++i, ++sec) {
-				if (std::memcmp(sec->Name, ".text", 6) != 0) continue;
-				const auto* begin = reinterpret_cast<const std::uint8_t*>(base + sec->VirtualAddress);
-				const auto* end = begin + sec->Misc.VirtualSize;
-				std::uintptr_t found = 0;
-				int matches = 0;
-				const auto* p = begin;
-				while (p < end &&
-					(p = reinterpret_cast<const std::uint8_t*>(std::memchr(p, kSig[0], end - p))) != nullptr) {
-					if (end - p >= static_cast<std::ptrdiff_t>(sizeof(kSig)) &&
-						std::memcmp(p, kSig, sizeof(kSig)) == 0) {
-						++matches;
-						found = base + sec->VirtualAddress + (p - begin);
-						if (matches > 1) break;
-					}
-					++p;
+			static constexpr uint8_t kSig[] = { 0x8D, 0x41, 0xFF, 0x83, 0xF8, 0x11, 0x77 };
+
+			const auto text = REX::FModule::GetExecutingModule().GetSection(".text");
+			const uint8_t* begin = text.GetPointer<const uint8_t>();
+			const size_t size = text.GetSize();
+			if (!begin || !size) return nullptr;
+
+			const uint8_t* found = nullptr;
+			int matches = 0;
+			const uint8_t* end = begin + size;
+			const uint8_t* p = begin;
+			while (p < end &&
+				   (p = static_cast<const uint8_t*>(std::memchr(p, kSig[0], static_cast<size_t>(end - p)))) != nullptr) {
+				if (static_cast<size_t>(end - p) >= sizeof(kSig) && std::memcmp(p, kSig, sizeof(kSig)) == 0) {
+					++matches;
+					found = p;
+					if (matches > 1) return nullptr;
 				}
-				if (matches != 1) return nullptr;
-				return reinterpret_cast<GetKeywordByIndexFn>(found);
+				++p;
 			}
-			return nullptr;
+			return matches == 1 ? reinterpret_cast<GetKeywordByIndexFn>(reinterpret_cast<uintptr_t>(found)) : nullptr;
 		}
 
 		// Build attach point -> {COBJ, OMOD} candidate lists.
@@ -220,30 +210,30 @@ namespace Addictol
 			s_cobjByAP.clear();
 			s_omodByAP.clear();
 
-			for (std::uint32_t i = 0; i < cobjEntry->size; ++i) {
+			for (uint32_t i = 0; i < cobjEntry->size; ++i) {
 				auto* form = cobjEntry->data[i];
 				if (!form) continue;
 				// skip deleted
-				if (*reinterpret_cast<const std::uint32_t*>(
+				if (*reinterpret_cast<const uint32_t*>(
 						reinterpret_cast<const char*>(form) + 0x10) & 0x20)
 					continue;
 				// created object must exist and be an OMOD
 				auto* created = *reinterpret_cast<RE::TESForm* const*>(
 					reinterpret_cast<const char*>(form) + 0x60);
 				if (!created) continue;
-				if (*reinterpret_cast<const std::uint8_t*>(
+				if (*reinterpret_cast<const uint8_t*>(
 						reinterpret_cast<const char*>(created) + 0x1A) != 0x90)
 					continue;
-				auto apIdx = *reinterpret_cast<const std::uint16_t*>(
+				auto apIdx = *reinterpret_cast<const uint16_t*>(
 					reinterpret_cast<const char*>(created) + 0xC0);
 				auto* kw = s_keywordFn(2, apIdx);
 				if (!kw) continue;
 				s_cobjByAP[kw].cands.push_back({ i, form });
 			}
-			for (std::uint32_t i = 0; i < omodEntry->size; ++i) {
+			for (uint32_t i = 0; i < omodEntry->size; ++i) {
 				auto* form = omodEntry->data[i];
 				if (!form) continue;
-				auto apIdx = *reinterpret_cast<const std::uint16_t*>(
+				auto apIdx = *reinterpret_cast<const uint16_t*>(
 					reinterpret_cast<const char*>(form) + 0xC0);
 				auto* kw = s_keywordFn(2, apIdx);
 				if (!kw) continue;
@@ -288,7 +278,7 @@ namespace Addictol
 		// Every reader in the engine reads size before data, so parking size at 0 while
 		// swapping the pointer means concurrent readers only ever see the old array,
 		// an empty one, or the new one -- never a mismatched pair.
-		static void StoreSize(FormArrayEntry* a_entry, std::uint32_t a_value)
+		static void StoreSize(FormArrayEntry* a_entry, uint32_t a_value)
 		{
 			std::atomic_ref(a_entry->size).store(a_value, std::memory_order_release);
 		}
@@ -297,8 +287,8 @@ namespace Addictol
 			std::atomic_ref(a_entry->data).store(a_value, std::memory_order_release);
 		}
 
-		static void SwapEngage(SwapState& a_state, RE::TESForm** a_cobjData, std::uint32_t a_cobjCount,
-			RE::TESForm** a_omodData, std::uint32_t a_omodCount)
+		static void SwapEngage(SwapState& a_state, RE::TESForm** a_cobjData, uint32_t a_cobjCount,
+			RE::TESForm** a_omodData, uint32_t a_omodCount)
 		{
 			StoreSize(a_state.cobjEntry, 0);
 			StoreSize(a_state.omodEntry, 0);
@@ -332,7 +322,7 @@ namespace Addictol
 
 			RE::TESForm** cobjData = nullptr;
 			RE::TESForm** omodData = nullptr;
-			std::uint32_t cobjCount = 0, omodCount = 0;
+			uint32_t cobjCount = 0, omodCount = 0;
 
 			if (a_ap) {
 				auto ci = s_cobjByAP.find(a_ap);
@@ -342,9 +332,9 @@ namespace Addictol
 				auto* of = MaterializeLocked(oi->second);
 				if (!cf || !of) return false;
 				cobjData = cf->data();
-				cobjCount = static_cast<std::uint32_t>(cf->size());
+				cobjCount = static_cast<uint32_t>(cf->size());
 				omodData = of->data();
-				omodCount = static_cast<std::uint32_t>(of->size());
+				omodCount = static_cast<uint32_t>(of->size());
 			} else {
 				MergeUnionLocked(s_cobjByAP, a_menu, t_unionCobj);
 				MergeUnionLocked(s_omodByAP, a_menu, t_unionOmod);
@@ -356,9 +346,9 @@ namespace Addictol
 				t_unionOmodForms.reserve(t_unionOmod.size());
 				for (const auto& c : t_unionOmod) t_unionOmodForms.push_back(c.form);
 				cobjData = t_unionCobjForms.data();
-				cobjCount = static_cast<std::uint32_t>(t_unionCobjForms.size());
+				cobjCount = static_cast<uint32_t>(t_unionCobjForms.size());
 				omodData = t_unionOmodForms.data();
-				omodCount = static_cast<std::uint32_t>(t_unionOmodForms.size());
+				omodCount = static_cast<uint32_t>(t_unionOmodForms.size());
 			}
 
 			// no point swapping if we're not actually shrinking anything
@@ -409,47 +399,47 @@ namespace Addictol
 			}
 		}
 
+		// BuildPossibleModList entry bytes; OG and NG/AE differ in their frame setup.
+		inline constexpr std::initializer_list<uint8_t> kBPMLPrologOG{
+			0x48, 0x8b, 0xc4, 0x48, 0x89, 0x50, 0x10, 0x55,
+			0x48, 0x8d, 0x68, 0xa1, 0x48, 0x81, 0xec, 0xf0, 0x00, 0x00, 0x00 };
+		inline constexpr std::initializer_list<uint8_t> kBPMLPrologNG{
+			0x4c, 0x8b, 0xdc, 0x49, 0x89, 0x53, 0x10, 0x55,
+			0x49, 0x8d, 0x6b, 0xa1, 0x48, 0x81, 0xec, 0xe0, 0x00, 0x00, 0x00 };
+
 		static bool Install()
 		{
-			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE::ExamineMenu[0] };
-			const auto* vtblPtr = reinterpret_cast<const std::uintptr_t*>(vtbl.address());
+			REL::Relocation<uintptr_t> vtbl{ RE::VTABLE::ExamineMenu[0] };
+			const auto* vtblPtr = reinterpret_cast<const uintptr_t*>(vtbl.address());
 			const auto bpmlAddr = vtblPtr[0x20];
 
 			// Make sure slot 0x20 really is BuildPossibleModList before we touch anything.
 			// If the address library resolved a wrong vtable (seen this happen on AE),
 			// patching it would corrupt some other class instead. Bail out and do nothing.
 			const bool isOG = RELEX::IsRuntimeOG();
-			static constexpr std::uint8_t kPrologNG[] = {
-				0x4c, 0x8b, 0xdc, 0x49, 0x89, 0x53, 0x10, 0x55,
-				0x49, 0x8d, 0x6b, 0xa1, 0x48, 0x81, 0xec, 0xe0, 0x00, 0x00, 0x00 };
-			static constexpr std::uint8_t kPrologOG[] = {
-				0x48, 0x8b, 0xc4, 0x48, 0x89, 0x50, 0x10, 0x55,
-				0x48, 0x8d, 0x68, 0xa1, 0x48, 0x81, 0xec, 0xf0, 0x00, 0x00, 0x00 };
-			const auto* expected = isOG ? kPrologOG : kPrologNG;
-			const auto* bytes = reinterpret_cast<const std::uint8_t*>(bpmlAddr);
-			if (std::memcmp(bytes, expected, sizeof(kPrologNG)) != 0) {
+			if (!RELEX::Validate(bpmlAddr, isOG ? kBPMLPrologOG : kBPMLPrologNG)) {
 				REX::ERROR("CraftingMenuFix: BuildPossibleModList prologue mismatch, hook skipped"sv);
 				return true;
 			}
 
 			// offsets of the "lea r8, static" and "call computeIdx" instructions inside BPML
-			const std::uintptr_t leaOff = isOG ? 0x90 : 0x7D;
-			const std::uintptr_t callOff = isOG ? 0xA6 : 0xA8;
+			const uintptr_t leaOff = isOG ? 0x90 : 0x7D;
+			const uintptr_t callOff = isOG ? 0xA6 : 0xA8;
 
 			// lea r8, [rip+...]  (4c 8d 05 XX XX XX XX)
 			{
-				const auto* p = reinterpret_cast<const std::uint8_t*>(bpmlAddr + leaOff);
+				const auto* p = reinterpret_cast<const uint8_t*>(bpmlAddr + leaOff);
 				if (p[0] == 0x4c && p[1] == 0x8d && p[2] == 0x05) {
-					auto rel = *reinterpret_cast<const std::int32_t*>(p + 3);
+					auto rel = *reinterpret_cast<const int32_t*>(p + 3);
 					s_idxStaticData = reinterpret_cast<void*>(bpmlAddr + leaOff + 7 + rel);
 				}
 			}
 
 			// call computeIdx  (e8 XX XX XX XX)
 			{
-				const auto* p = reinterpret_cast<const std::uint8_t*>(bpmlAddr + callOff);
+				const auto* p = reinterpret_cast<const uint8_t*>(bpmlAddr + callOff);
 				if (p[0] == 0xe8) {
-					auto rel = *reinterpret_cast<const std::int32_t*>(p + 1);
+					auto rel = *reinterpret_cast<const int32_t*>(p + 1);
 					s_computeIdxFn = reinterpret_cast<ComputeIdxFn>(bpmlAddr + callOff + 5 + rel);
 				}
 			}
@@ -460,7 +450,8 @@ namespace Addictol
 				REX::ERROR("CraftingMenuFix: GetKeywordByIndex not found, prefilter disabled"sv);
 			}
 
-			s_origBuildPossibleModList = vtbl.write_vfunc(0x20, &HookedBuildPossibleModList);
+			s_origBuildPossibleModList = RELEX::DetourVTable(vtbl.address(),
+				reinterpret_cast<uintptr_t>(&HookedBuildPossibleModList), 0x20);
 			REX::INFO("CraftingMenuFix: hook installed (prefilter {})"sv, s_keywordFn ? "on" : "off");
 			return true;
 		}
