@@ -7,6 +7,7 @@
 #undef ERROR
 #undef MAX_PATH
 
+#include <RE/B/BSTEvent.h>
 #include <RE/B/BSResource_Archive2_Index.h>
 #include <RE/N/NiTexture.h>
 
@@ -122,30 +123,143 @@ namespace Addictol
 		return FindArchiveIndex(id, StorageType::kTextures);
 	}
 
-	using Stream__Assign = void (*)(RE::BSTSmartPointer<RE::BSResource::Stream>&, RE::BSTSmartPointer<RE::BSResource::Stream>&);
-	inline static Stream__Assign Stream__Assign_Orig{ nullptr };
+	namespace Details
+	{
+		class RegisteredEvent;
+		class ClearRegistryEvent;
 
-	using BSTSmallIndexScatterTableUtil__NewTable = RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
-		RE::BSResource::Archive2::Index::NameIDAccess>::entry_type* (*)(uint32_t);
-	inline static BSTSmallIndexScatterTableUtil__NewTable BSTSmallIndexScatterTableUtil__NewTable_Orig{ nullptr };
+		template<typename TId = uint8_t, size_t NumEntries = 256>
+		class __declspec(novtable) TIndex :
+			public RE::BSTEventSink<RegisteredEvent>,    // 0000
+			public RE::BSTEventSink<ClearRegistryEvent>  // 0008
+		{
+		public:
+			static constexpr auto RTTI{ RE::RTTI::BSResource__Archive2__Index };
+			static constexpr auto VTABLE{ RE::VTABLE::BSResource__Archive2__Index };
 
-	using BSTSmallIndexScatterTableTraits__Insert = bool (*)(RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
-		RE::BSResource::Archive2::Index::NameIDAccess>&, uint32_t, RE::BSResource::ID*&);
-	inline static BSTSmallIndexScatterTableTraits__Insert BSTSmallIndexScatterTableTraits__Insert_Orig{ nullptr };
+			class Pager;
+			class NameIDAccess;
 
-	using BSTSmallIndexScatterTableTraits__Resize = void (*)(RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
-		RE::BSResource::Archive2::Index::NameIDAccess>&, RE::BSResource::ID*&);
-	inline static BSTSmallIndexScatterTableTraits__Resize BSTSmallIndexScatterTableTraits__Resize_Orig{ nullptr };
+			class Chunk
+			{
+			public:
+				// members
+				uint64_t dataFileOffset = 0;		// 00
+				uint32_t compressedSize = 0;		// 08
+				uint32_t uncompressedSize = 0;		// 0C
+			};
+			static_assert(sizeof(Chunk) == 0x10);
 
-	inline static RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
-		RE::BSResource::Archive2::Index::NameIDAccess>::entry_type* EndTable{ nullptr };
+			class Loose
+			{
+			public:
+				// members
+				RE::BSResource::Location*	location = nullptr;		// 00
+				RE::BSFixedString			nameText;				// 08
+			};
+			static_assert(sizeof(Loose) == 0x10);
+
+			class EntryHeader
+			{
+			public:
+				[[nodiscard]] bool IsChunk() const noexcept { return this->chunkOffsetOrType != 0; }
+				[[nodiscard]] bool IsLoose() const noexcept { return this->chunkOffsetOrType == 0; }
+
+				// members
+				RE::BSResource::ID	nameID;					// 00
+				TId					dataFileIndex = 0;		// 0C
+				uint8_t				chunkCount = 0;			// 0E
+				uint16_t			chunkOffsetOrType = 0;	// 0F
+			};
+
+			class Entry :
+				public EntryHeader  // 00
+			{
+			public:
+				~Entry()
+				{
+					if (this->IsLoose()) {
+						this->loose.~Loose();
+					}
+					else {
+						this->chunk.~Chunk();
+					}
+				}
+
+				// members
+				union
+				{
+					Chunk     chunk;
+					Loose     loose;
+					std::byte buffer[std::max(sizeof(Chunk), sizeof(Loose))] = {};
+				};  // 10
+				RE::BSFixedString stringName;  // 20
+			};
+
+			class CursorWithEntry :
+				public RE::BSBTreeFile::BPTree<Pager, RE::BSBTreeFile::PGFSEDL<Entry, RE::BSResource::ID, 4096>, 16>::Cursor  // 000
+			{
+			public:
+				// members
+				Entry e;	// 148
+			};
+
+			// members
+			RE::BSTSmallIndexScatterTable<RE::BSResource::ID, NameIDAccess>									nameTable;						// 0010
+			RE::BSTSmartPointer<RE::BSResource::Stream>														dataFiles[NumEntries];			// 0030
+			RE::BSTSmartPointer<RE::BSResource::AsyncStream>												asyncDataFiles[NumEntries];		// 0830
+			RE::BSResource::ID																				dataFileNameIDs[NumEntries];	// 1030
+			uint32_t																						dataFileCount;					// 1C30
+			RE::BSBTreeFile::BPTree<Pager, RE::BSBTreeFile::PGFSEDL<Entry, RE::BSResource::ID, 4096>, 16>	tr;								// 1C38
+			RE::BSReadWriteLock																				lock;							// 1C58
+		};
+
+		using Index256 = TIndex<>;
+		static_assert(sizeof(Index256) == 0x1C60);
+
+		using Index1024 = TIndex<uint16_t, 1024>;
+		static_assert(sizeof(Index1024) == 0x7060);
+
+		using Stream__Assign = void (*)(RE::BSTSmartPointer<RE::BSResource::Stream>&, RE::BSTSmartPointer<RE::BSResource::Stream>&);
+		inline static Stream__Assign Stream__Assign_Orig{ nullptr };
+
+		using BSTSmallIndexScatterTableUtil__NewTable_256 = RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index256::NameIDAccess>::entry_type* (*)(uint32_t);
+		inline static BSTSmallIndexScatterTableUtil__NewTable_256 BSTSmallIndexScatterTableUtil__NewTable_256_Orig{ nullptr };
+
+		using BSTSmallIndexScatterTableTraits__Insert_256 = bool (*)(RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index256::NameIDAccess>&, uint32_t, RE::BSResource::ID*&);
+		inline static BSTSmallIndexScatterTableTraits__Insert_256 BSTSmallIndexScatterTableTraits__Insert_256_Orig{ nullptr };
+
+		using BSTSmallIndexScatterTableTraits__Resize_256 = void (*)(RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index256::NameIDAccess>&, RE::BSResource::ID*&);
+		inline static BSTSmallIndexScatterTableTraits__Resize_256 BSTSmallIndexScatterTableTraits__Resize_256_Orig{ nullptr };
+
+		inline static RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index256::NameIDAccess>::entry_type* EndTable_256{ nullptr };
+
+		using BSTSmallIndexScatterTableUtil__NewTable_1024 = RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index1024::NameIDAccess>::entry_type* (*)(uint32_t);
+		inline static BSTSmallIndexScatterTableUtil__NewTable_1024 BSTSmallIndexScatterTableUtil__NewTable_1024_Orig{ nullptr };
+
+		using BSTSmallIndexScatterTableTraits__Insert_1024 = bool (*)(RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index1024::NameIDAccess>&, uint32_t, RE::BSResource::ID*&);
+		inline static BSTSmallIndexScatterTableTraits__Insert_1024 BSTSmallIndexScatterTableTraits__Insert_1024_Orig{ nullptr };
+
+		using BSTSmallIndexScatterTableTraits__Resize_1024 = void (*)(RE::BSTSmallIndexScatterTable<RE::BSResource::ID,
+			Index1024::NameIDAccess>&, RE::BSResource::ID*&);
+		inline static BSTSmallIndexScatterTableTraits__Resize_1024 BSTSmallIndexScatterTableTraits__Resize_1024_Orig{ nullptr };
+
+		inline static RE::BSTSmallIndexScatterTable<RE::BSResource::ID, Index1024::NameIDAccess>::entry_type* EndTable_1024{ nullptr };
+	}
 
 	namespace Archive2
 	{
-		static void AddDataFile(RE::BSResource::Archive2::Index& self, RE::BSTSmartPointer<RE::BSResource::Stream>& stream,
+		template<typename T>
+		static void AddDataFile(T& self, RE::BSTSmartPointer<RE::BSResource::Stream>& stream,
 			const RE::BSResource::ID& id, uint32_t index) noexcept
 		{
-			Stream__Assign_Orig(g_managerArchiveManager->dataFiles[index], stream);
+			Details::Stream__Assign_Orig(g_managerArchiveManager->dataFiles[index], stream);
 			stream->DoCreateAsync(g_managerArchiveManager->asyncDataFiles[index]);
 
 			if (self.dataFileCount != index)
@@ -156,38 +270,61 @@ namespace Addictol
 			g_managerArchiveManager->dataFileNameIDs[index] = id;
 			auto* p_id = g_managerArchiveManager->dataFileNameIDs;
 
-			if (self.nameTable.table == EndTable)
+			if constexpr (std::is_same_v<T, Details::Index256>)
 			{
-				// constant initialization check that XCell/CKPE is cut out
-				constexpr static auto MEMORY_INITIAZE_FLAG = 2;
+				if (self.nameTable.table == Details::EndTable_256)
+				{
+					// constant initialization check that XCell/CKPE is cut out
+					constexpr static auto MEMORY_INITIAZE_FLAG = 2;
 
-				self.nameTable.avail = MEMORY_INITIAZE_FLAG;
-				self.nameTable.table = BSTSmallIndexScatterTableUtil__NewTable_Orig(MEMORY_INITIAZE_FLAG);
+					self.nameTable.avail = MEMORY_INITIAZE_FLAG;
+					self.nameTable.table = Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig(MEMORY_INITIAZE_FLAG);
+				}
+				else
+				{
+					if (!Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig(self.nameTable, index, p_id))
+						Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig(self.nameTable, p_id);
+					else goto __ll_end;
+				}
+
+				Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig(self.nameTable, index, p_id);
 			}
-			else
+			else if constexpr (std::is_same_v<T, Details::Index1024>)
 			{
-				if (!BSTSmallIndexScatterTableTraits__Insert_Orig(self.nameTable, index, p_id))
-					BSTSmallIndexScatterTableTraits__Resize_Orig(self.nameTable, p_id);
-				else goto __ll_end;
-			}
+				if (self.nameTable.table == Details::EndTable_1024)
+				{
+					// constant initialization check that XCell/CKPE is cut out
+					constexpr static auto MEMORY_INITIAZE_FLAG = 2;
 
-			BSTSmallIndexScatterTableTraits__Insert_Orig(self.nameTable, index, p_id);
+					self.nameTable.avail = MEMORY_INITIAZE_FLAG;
+					self.nameTable.table = Details::BSTSmallIndexScatterTableUtil__NewTable_1024_Orig(MEMORY_INITIAZE_FLAG);
+				}
+				else
+				{
+					if (!Details::BSTSmallIndexScatterTableTraits__Insert_1024_Orig(self.nameTable, index, p_id))
+						Details::BSTSmallIndexScatterTableTraits__Resize_1024_Orig(self.nameTable, p_id);
+					else goto __ll_end;
+				}
+
+				Details::BSTSmallIndexScatterTableTraits__Insert_1024_Orig(self.nameTable, index, p_id);
+			}
 		__ll_end:
 			self.dataFileCount++;
 		}
 
 		static void Hook_Init()
 		{
-			*(uintptr_t*)&Stream__Assign_Orig = REL::ID{ 933944, 2192397 }.address();
-			*(uintptr_t*)&BSTSmallIndexScatterTableUtil__NewTable_Orig = REL::ID{ 908309, 2268030 }.address();
-			*(uintptr_t*)&BSTSmallIndexScatterTableTraits__Insert_Orig = REL::ID{ 1541972, 2269374 }.address();
-			*(uintptr_t*)&BSTSmallIndexScatterTableTraits__Resize_Orig = REL::ID{ 91377, 2269427 }.address();
-			*(uintptr_t*)&EndTable = REL::ID{ 916672, 2666314 }.address();
-
-			RELEX::DetourJump(REL::ID{ 270048, 2269366 }.address(), (uintptr_t)&AddDataFile);
+			*(uintptr_t*)&Details::Stream__Assign_Orig = REL::ID{ 933944, 2192397 }.address();
 
 			if (RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::k1kAvailableArchitecture))
 			{
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_1024_Orig = REL::ID{ 908309, 2268030 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_1024_Orig = REL::ID{ 1541972, 2269374 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_1024_Orig = REL::ID{ 91377, 2269427 }.address();
+				*(uintptr_t*)&Details::EndTable_1024 = REL::ID{ 916672, 2666314 }.address();
+
+				RELEX::DetourJump(REL::ID(2269366).address(), (uintptr_t)&AddDataFile<Details::Index1024>);
+
 				struct AddDataFromReaderPatch_AE : Xbyak::CodeGenerator
 				{
 					AddDataFromReaderPatch_AE(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
@@ -219,13 +356,20 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(2269367).address() + 0x155;
+				auto target = REL::ID(2269367).address() + 0x14F;
 				RELEX::XbyakJump<AddDataFromReaderPatch_AE>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
 			}
 			else if 
 				(RELEX::IsRuntimeNG() || 
 				(RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)))
 			{
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig = REL::ID{ 908309, 2268030 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig = REL::ID{ 1541972, 2269374 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig = REL::ID{ 91377, 2269427 }.address();
+				*(uintptr_t*)&Details::EndTable_256 = REL::ID{ 916672, 2666314 }.address();
+
+				RELEX::DetourJump(REL::ID(2269366).address(), (uintptr_t)&AddDataFile<Details::Index256>);
+
 				struct AddDataFromReaderPatch_NG : Xbyak::CodeGenerator
 				{
 					AddDataFromReaderPatch_NG(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
@@ -262,6 +406,13 @@ namespace Addictol
 			}
 			else
 			{
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig = REL::ID{ 908309, 2268030 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig = REL::ID{ 1541972, 2269374 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig = REL::ID{ 91377, 2269427 }.address();
+				*(uintptr_t*)&Details::EndTable_256 = REL::ID{ 916672, 2666314 }.address();
+
+				RELEX::DetourJump(REL::ID(270048).address(), (uintptr_t)&AddDataFile<Details::Index256>);
+
 				struct AddDataFromReaderPatch_OG : Xbyak::CodeGenerator
 				{
 					AddDataFromReaderPatch_OG(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
@@ -725,23 +876,9 @@ namespace Addictol
 	{
 		namespace Manager
 		{
-			class EntryHeaderOld
-			{
-			public:
-				[[nodiscard]] bool IsChunk() const noexcept { return this->chunkOffsetOrType != 0; }
-				[[nodiscard]] bool IsLoose() const noexcept { return this->chunkOffsetOrType == 0; }
-
-				// members
-				RE::BSResource::ID nameID;            // 00
-				std::uint8_t dataFileIndex = 0;       // 0C
-				std::uint8_t  chunkCount = 0;         // 0D
-				std::uint16_t chunkOffsetOrType = 0;  // 0E
-			};
-			static_assert(sizeof(EntryHeaderOld) == 0x10);
-
 			struct TextureRequest
 			{
-				RE::BSResource::Archive2::Index::EntryHeader header;
+				Details::Index1024::EntryHeader header;
 				char unk10[0x68];
 				RE::BSFixedString unk78;
 				char unk80[0x48];
@@ -753,7 +890,7 @@ namespace Addictol
 
 			struct TextureRequestOld
 			{
-				EntryHeaderOld header;
+				Details::Index256::EntryHeader header;
 				char unk10[0x68];
 				RE::BSFixedString unk78;
 				char unk80[0x48];
