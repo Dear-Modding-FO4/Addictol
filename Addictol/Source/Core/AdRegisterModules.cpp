@@ -87,6 +87,7 @@
 #include <Modules/AdModuleHUDMessageQueue.h>
 #include <Modules/AdModuleProcessIcon.h>
 #include <Modules/AdModuleWaterJetpackFix.h>
+#include <Modules/AdModuleCraftingMenuFix.h>
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
 #include <Modules/AdModulePlatformImgui.h>
@@ -180,6 +181,7 @@ static auto sModuleLoadOrder						= std::make_shared<Addictol::ModuleLoadOrder>(
 static auto sModuleHUDMessageQueue					= std::make_shared<Addictol::ModuleHUDMessageQueue>();
 static auto sModuleProcessIcon						= std::make_shared<Addictol::ModuleProcessIcon>();
 static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJetpackFix>();
+static auto sModuleCraftingMenuFix					= std::make_shared<Addictol::ModuleCraftingMenuFix>();
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 static auto sModulePlatformImgui					= std::make_shared<Addictol::ModulePlatformImgui>();
@@ -300,7 +302,8 @@ void AdRegisterModules()
 	modules.Register(sModuleFasterWorkshop,					kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
-	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
+	modules.Register(sModuleCompanionStrayBullet,		kGameDataReady);
+	modules.Register(sModuleCraftingMenuFix,			kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);

@@ -124,6 +124,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUtilityShader.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWaterJetpackFix.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCraftingMenuFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSound.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSwap.cpp" />
   </ItemGroup>
@@ -247,6 +248,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUtilityShader.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWaterJetpackFix.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCraftingMenuFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSound.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSwap.h" />
     <ClInclude Include="..\Version\resource_version2.h" />
