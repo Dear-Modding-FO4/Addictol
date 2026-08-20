@@ -35,9 +35,11 @@ namespace Addictol
 		skipped = true;
 		skipReason.assign(a_reason);
 
-		RE::ConsoleLog *log = RE::ConsoleLog::GetSingleton();
-		if (log)
-			log->Log("Addictol Module '{}': {}.", name, a_reason);
+		F4SE::GetTaskInterface()->AddTask([a_name = name, a_reason]()
+		{
+			if (auto* log = RE::ConsoleLog::GetSingleton())
+				log->Log("Addictol Module '{}': {}.", a_name, a_reason);
+		});
 	}
 
 	void Module::ClearSkip() const noexcept
