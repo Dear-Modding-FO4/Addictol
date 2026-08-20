@@ -13,7 +13,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("MoonRotationFix.dll"))
 		{
-			Skip("Standalone 'MoonRotationFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'MoonRotationFix.dll' is installed"sv);
 			return false;
 		}
 

@@ -38,7 +38,7 @@ namespace Addictol
 		F4SE::GetTaskInterface()->AddTask([a_name = name, a_reason]()
 		{
 			if (auto* log = RE::ConsoleLog::GetSingleton())
-				log->Log("Addictol Module '{}': {}.", a_name, a_reason);
+				log->Log("Addictol module '{}' skipped: {}.", a_name, a_reason);
 		});
 	}
 

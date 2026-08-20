@@ -217,7 +217,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("Interior-NavCut-Fix.dll"))
 		{
-			Skip("Standalone 'Interior-NavCut-Fix.dll' is installed, skipping module"sv);
+			Skip("standalone 'Interior-NavCut-Fix.dll' is installed"sv);
 			return false;
 		}
 

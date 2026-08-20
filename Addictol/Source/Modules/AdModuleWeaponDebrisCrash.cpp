@@ -13,7 +13,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("WeaponDebrisCrashFix.dll"))
 		{
-			Skip("Standalone 'WeaponDebrisCrashFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'WeaponDebrisCrashFix.dll' is installed"sv);
 			return false;
 		}
 

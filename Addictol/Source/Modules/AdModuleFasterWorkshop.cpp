@@ -341,19 +341,19 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("FasterWorkshopAE.dll"))
 		{
-			Skip("Standalone 'FasterWorkshopAE.dll' is installed, skipping module"sv);
+			Skip("standalone 'FasterWorkshopAE.dll' is installed"sv);
 			return false;
 		}
 
 		if (IsModDLLPresent("FasterWorkshopNG_F4SE.dll"))
 		{
-			Skip("Standalone 'FasterWorkshopNG_F4SE.dll' is installed, skipping module"sv);
+			Skip("standalone 'FasterWorkshopNG_F4SE.dll' is installed"sv);
 			return false;
 		}
 
 		if (IsModDLLPresent("faster_workshop.dll"))
 		{
-			Skip("Standalone 'faster_workshop.dll' is installed, skipping module"sv);
+			Skip("standalone 'faster_workshop.dll' is installed"sv);
 			return false;
 		}
 

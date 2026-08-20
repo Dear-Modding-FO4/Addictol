@@ -96,7 +96,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("WaterJetpackFix.dll"))
 		{
-			Skip("Standalone 'WaterJetpackFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'WaterJetpackFix.dll' is installed"sv);
 			return false;
 		}
 

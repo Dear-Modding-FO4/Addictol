@@ -227,7 +227,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("BakaMaxPapyrusOps.dll"))
 		{
-			Skip("Standalone 'BakaMaxPapyrusOps.dll' is installed, skipping module"sv);
+			Skip("standalone 'BakaMaxPapyrusOps.dll' is installed"sv);
 			return false;
 		}
 

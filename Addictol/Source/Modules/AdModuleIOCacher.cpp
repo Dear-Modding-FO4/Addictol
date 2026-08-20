@@ -13,7 +13,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("libdiskCacheEnabler.dll"))
 		{
-			Skip("Standalone 'libdiskCacheEnabler.dll' is installed, skipping module"sv);
+			Skip("standalone 'libdiskCacheEnabler.dll' is installed"sv);
 			return false;
 		}
 

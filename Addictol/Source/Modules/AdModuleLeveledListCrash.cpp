@@ -46,7 +46,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("GLXRM_InjectionBlocker.dll"))
 		{
-			Skip("Standalone 'GLXRM_InjectionBlocker.dll' is installed, skipping module"sv);
+			Skip("standalone 'GLXRM_InjectionBlocker.dll' is installed"sv);
 			return false;
 		}
 
