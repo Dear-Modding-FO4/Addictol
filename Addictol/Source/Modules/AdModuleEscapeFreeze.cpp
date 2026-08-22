@@ -515,13 +515,13 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("EscapeFreeze.dll"))
 		{
-			Skip("Standalone 'EscapeFreeze.dll' is installed, skipping module"sv);
+			Skip("standalone 'EscapeFreeze.dll' is installed"sv);
 			return false;
 		}
 
 		if (IsModDLLPresent("EscapeFreezeNG.dll"))
 		{
-			Skip("Standalone 'EscapeFreezeNG.dll' is installed, skipping module"sv);
+			Skip("standalone 'EscapeFreezeNG.dll' is installed"sv);
 			return false;
 		}
 

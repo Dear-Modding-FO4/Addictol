@@ -102,8 +102,8 @@ F4SE message types to deliver to `DoListener` after startup, and `a_papyrusListe
 
 ### Lifecycle
 
-`ModuleManager` drives four pure virtuals, so you must implement all four even when most just
-`return true`.
+`DoInstall` is the only pure virtual. The other three have default implementations that return
+`true`, so override them only when the module needs them.
 
 | Method | When | Return value |
 | --- | --- | --- |
@@ -177,11 +177,6 @@ namespace Addictol
 		Module("Unaligned Load", &bFixesUnalignedLoad)
 	{}
 
-	bool ModuleUnalignedLoad::DoQuery() const noexcept
-	{
-		return true;
-	}
-
 	bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		const auto target = REL::Relocation<uintptr_t>{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
@@ -198,8 +193,6 @@ namespace Addictol
 
 		return true;
 	}
-
-	// DoListener and DoPapyrusListener are unused here, so both just return true.
 }
 ```
 

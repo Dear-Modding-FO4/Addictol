@@ -1183,7 +1183,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("DecalFix.dll"))
 		{
-			Skip("Standalone 'DecalFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'DecalFix.dll' is installed"sv);
 			return false;
 		}
 

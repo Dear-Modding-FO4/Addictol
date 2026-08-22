@@ -75,7 +75,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("MGEFConditionFix.dll"))
 		{
-			Skip("Standalone 'MGEFConditionFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'MGEFConditionFix.dll' is installed"sv);
 			return false;
 		}
 

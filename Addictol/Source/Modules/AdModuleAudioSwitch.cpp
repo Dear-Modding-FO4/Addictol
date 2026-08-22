@@ -2014,7 +2014,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("AudioDeviceFollowFix.dll"))
 		{
-			Skip("Analog 'AudioDeviceFollowFix.dll' is installed, skipping module"sv);
+			Skip("equivalent mod 'AudioDeviceFollowFix.dll' is installed"sv);
 			return false;
 		}
 

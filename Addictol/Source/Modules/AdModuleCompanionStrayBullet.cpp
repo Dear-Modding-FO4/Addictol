@@ -202,7 +202,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("FollowerStrayBulletFix.dll"))
 		{
-			Skip("Standalone 'FollowerStrayBulletFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'FollowerStrayBulletFix.dll' is installed"sv);
 			return false;
 		}
 

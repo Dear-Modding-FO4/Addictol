@@ -13,7 +13,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("SprintStutteringFix.dll"))
 		{
-			Skip("Standalone 'SprintStutteringFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'SprintStutteringFix.dll' is installed"sv);
 			return false;
 		}
 

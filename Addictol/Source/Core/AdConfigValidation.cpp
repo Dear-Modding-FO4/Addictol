@@ -39,7 +39,7 @@ namespace Addictol
 			"bSprintStutter"sv, "bMoonRotation"sv, "bWeaponDebrisCrash"sv,
 			"bCrashRemoveRefFix"sv, "bClimateLoad"sv, "bMusicOverlap"sv, "bPuddleCubemaps"sv,
 			"bCompanionStrayBullet"sv, "bStringPoolRelease"sv, "bLoadOrder"sv, "bHUDMessageQueue"sv,
-			"bWaterJetpackFix"sv, "bAIProcess3DUpdateFlag"sv
+			"bWaterJetpackFix"sv, "bAIProcess3DUpdateFlag"sv, "bCraftingMenuFix"sv
 		}},
 		{ "Warnings"sv, {
 			"bImageSpaceAdapter"sv, "bDuplicateAddonNodeIndex"sv, "bReferenceHandleLimit"sv

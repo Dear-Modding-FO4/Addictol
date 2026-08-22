@@ -39,7 +39,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("FastSavingFallout.dll"))
 		{
-			Skip("Analog 'FastSavingFallout.dll' is installed, skipping module"sv);
+			Skip("equivalent mod 'FastSavingFallout.dll' is installed"sv);
 			return false;
 		}
 

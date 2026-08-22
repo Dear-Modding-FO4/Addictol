@@ -57,13 +57,13 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("AddFFFFFix.dll"))
 		{
-			Skip("Standalone 'AddFFFFFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'AddFFFFFix.dll' is installed"sv);
 			return false;
 		}
 
 		if (IsModDLLPresent("Drop7FFFPatch.dll"))
 		{
-			Skip("Standalone 'Drop7FFFPatch.dll' is installed, skipping module"sv);
+			Skip("standalone 'Drop7FFFPatch.dll' is installed"sv);
 			return false;
 		}
 

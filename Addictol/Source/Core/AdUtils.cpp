@@ -526,12 +526,21 @@ namespace Addictol
 		if (!moduleName)
 			return false;
 
-		auto hmod = REX::W32::GetModuleHandleA(moduleName);
-		auto dllPresent = std::filesystem::exists(std::format("{}Data\\F4SE\\Plugins\\{}", AdGetRuntimeDirectory(), moduleName));
+		if (REX::W32::GetModuleHandleA(moduleName))
+			return true;
 
-		if (!hmod && !dllPresent)
+		// later plugins are not loaded yet
+		char self[4096]{};
+		if (!REX::W32::GetModuleFileNameA(REX::W32::GetCurrentModule(), self, sizeof(self)))
 			return false;
 
-		return true;
+		const std::string_view path{ self };
+		const auto lastSlash = path.rfind('\\');
+		if (lastSlash == std::string_view::npos)
+			return false;
+
+		std::error_code error;
+		return std::filesystem::exists(
+			std::format("{}\\{}", path.substr(0, lastSlash), moduleName), error);
 	}
 }

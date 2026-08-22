@@ -176,7 +176,7 @@ namespace Addictol
 	{
 		if (IsModDLLPresent("GCBugFix.dll"))
 		{
-			Skip("Standalone 'GCBugFix.dll' is installed, skipping module"sv);
+			Skip("standalone 'GCBugFix.dll' is installed"sv);
 			return false;
 		}
 
