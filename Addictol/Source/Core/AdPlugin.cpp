@@ -191,7 +191,7 @@ namespace Addictol
 				trampoline.create(AD_TRAMPOLINE_SIZE);
 
 				// Load the Config
-				const auto config = REX::TOML::SettingStore::GetSingleton();
+				const auto config = REX::FTomlSettingStore::GetSingleton();
 				config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
 				config->Load();
 				LogControl::Install();
@@ -254,7 +254,7 @@ namespace Addictol
 			trampoline.create(AD_TRAMPOLINE_SIZE);
 
 			// Load the Config
-			const auto config = REX::TOML::SettingStore::GetSingleton();
+			const auto config = REX::FTomlSettingStore::GetSingleton();
 			config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
 			config->Load();
 			LogControl::Install();
