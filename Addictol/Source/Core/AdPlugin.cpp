@@ -89,6 +89,60 @@ namespace Addictol
 		return incompatibleMods;
 	}
 
+	static void AnalyzeF4SECriticalCompatibility() noexcept
+	{
+		if (bAdditionalIgnoreCompatibilityChecks.GetValue())
+			return;
+
+		// Incompatible F4SE Mods
+		std::string incompatibleMods;
+		const std::array<std::string_view, 7> incompatibleModDLLs
+		{
+			"x-cell-ae.dll"sv, "x-cell-ng2.dll"sv, "x-cell-og.dll"sv,	// X-Cell
+			"Buffout4AE.dll"sv, "MiniBuffAE.dll"sv, "Buffout4.dll"sv,	// Buffout 4
+			"MentatsF4SE.dll"sv											// Mentats
+		};
+
+		// Check the Mods
+		for (const auto modDLL : incompatibleModDLLs)
+		{
+			if (IsModDLLPresent(modDLL.data()))
+			{
+				incompatibleMods += "  - ";
+				incompatibleMods += modDLL;
+				incompatibleMods += '\n';
+			}
+		}
+
+		if (!incompatibleMods.empty())
+		{
+			std::string incompatibilityMessage = "Incompatible F4SE mods are installed, please disable Addictol or remove the following incompatible mods:\n\n";
+			incompatibilityMessage += incompatibleMods;
+			incompatibilityMessage += "\nCheck the mod page's description for more info, Addictol will now terminate itself.";
+
+			// Log
+			REX::CRITICAL("{}"sv, incompatibilityMessage);
+
+			while (1)
+			{
+				const auto result = MessageBoxA(nullptr, incompatibilityMessage.c_str(), "Addictol - Incompatible F4SE Mods", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
+				if (result == IDRETRY)
+					continue;
+
+				// For debugger
+				__debugbreak();
+				// For Wine
+				abort();
+				// AGAIN!!!
+				TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
+				// CTD
+				*((int*)0) = 0;
+
+				break;
+			}
+		}
+	}
+
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto plugin = Plugin::GetSingleton();
@@ -186,6 +240,9 @@ namespace Addictol
 				REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
 				REX::INFO("Game version: {}.{}.{}.{}"sv, game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
 
+				// Analyze F4SE Mods
+				AnalyzeF4SECriticalCompatibility();
+
 				// Get the Trampoline and Allocate
 				auto& trampoline = REL::GetTrampoline();
 				trampoline.create(AD_TRAMPOLINE_SIZE);
@@ -248,6 +305,9 @@ namespace Addictol
 			auto game_ver = a_preloadf4se->RuntimeVersion();
 			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
 			REX::INFO("Game version: {}.{}.{}.{}"sv, game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
+
+			// Analyze F4SE Mods
+			AnalyzeF4SECriticalCompatibility();
 
 			// Get the Trampoline and Allocate
 			auto& trampoline = REL::GetTrampoline();
