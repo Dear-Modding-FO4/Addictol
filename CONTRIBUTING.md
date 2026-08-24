@@ -53,8 +53,8 @@ time. By convention also add the header as `<ClInclude>`, and add both to
 Visual Studio's presentation, not the build.
 
 **You do not include the precompiled header.** `Addictol/Include/Core/AdPCH.h` is force included into
-every translation unit via `/FI`. Never add anything to it that the build regenerates (notably
-`resource_version2.h`), which would invalidate the PCH on every build.
+every translation unit via `/FI`. Never add anything to it whose content changes from build to build,
+which would invalidate the PCH on every build.
 
 `.Lib/` and `.LinkConf/` are gitignored build directories. Build the whole solution, not just the
 Addictol project, or the link step will not find the dependency libraries.
@@ -73,7 +73,7 @@ Addictol/Source/             mirrors the concern folders under Include
 Addictol/Source/Modules/     one .cpp per feature module (~80 of them)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
-Version/                     version resource and the build number script
+Version/                     version resource and the tracked version header
 .Build/F4SE/Plugins/         build output, the tracked shipped config, and shipped resources
 ```
 
@@ -83,6 +83,15 @@ APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored l
 
 Crash logging is not part of this plugin. It ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
+
+## Versioning
+
+`Version/resource_version2.h` is tracked and hand edited; it is the single source for the DLL's
+`FileVersion` and `ProductVersion`, the F4SE plugin version and the startup log line. Major and
+minor live in the file. The third field is `VERSION_BUILD`, which CI sets to the GitHub Actions run
+number via `-p:AddictolVersionBuild=<n>` and which defaults to 0 otherwise, so a local build always
+reports `1.6.0.0` and never writes to a tracked file. F4SE packs that field into 12 bits, so values
+outside `0..4095` fail the build.
 
 ## The module model
 

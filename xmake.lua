@@ -453,18 +453,4 @@ target(plugin_name, function()
         "/PDB:" .. xmake_plugin_pdb,
         { force = true }
     )
-
-    -- update version resources
-    before_build(function()
-        os.vrunv(
-            "powershell",
-            {
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                path.join(os.projectdir(), "Version", "scripts.ps1")
-            },
-            { curdir = path.join(os.projectdir(), "VC") }
-        )
-    end)
 end)
