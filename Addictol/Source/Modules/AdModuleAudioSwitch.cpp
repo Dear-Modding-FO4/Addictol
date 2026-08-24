@@ -28,6 +28,7 @@
 #include <RE/N/NiAVObject.h>
 #include <RE/B/BSAudioManager.h>
 #include <RE/B/BSTArray.h>
+#include <REX/TEnumSet.h>
 
 #pragma comment(lib, "xaudio2.lib")
 
@@ -1402,38 +1403,28 @@ namespace Addictol
 			public RE::BSAudioManager
 		{
 		public:
-			enum class State : uint32_t
-			{
-				ManagerInitialized = 1 << 0,
-				PlatformInitialized = 1 << 1,
-				PlatformInitFailed = 1 << 2,
-				CacheEnabled = 1 << 3,
-				ShuttingDown = 1 << 4,
-				RunDisabled = 1 << 5
-			};
-
-			[[nodiscard]] inline uint8_t HasStateFlag(State a_state) const noexcept
-			{ return (stateFlags & std::to_underlying(a_state)) != 0; }
-			inline void SetStateFlag(State a_state) noexcept { stateFlags |= std::to_underlying(a_state); }
-			inline void UnsetStateFlag(State a_state) noexcept { stateFlags &= ~std::to_underlying(a_state); }
+			[[nodiscard]] inline uint8_t HasStateFlag(RE::BSAudioManager::State a_state) const noexcept
+			{ return stateFlags.any(a_state); }
+			inline void SetStateFlag(RE::BSAudioManager::State a_state) noexcept { stateFlags.set(a_state); }
+			inline void UnsetStateFlag(RE::BSAudioManager::State a_state) noexcept { stateFlags.reset(a_state); }
 
 			inline void SetManagerInitialized(bool a_value) noexcept
-			{ a_value ? SetStateFlag(State::ManagerInitialized) : UnsetStateFlag(State::ManagerInitialized); }
+			{ a_value ? SetStateFlag(RE::BSAudioManager::State::ManagerInitialized) : UnsetStateFlag(RE::BSAudioManager::State::ManagerInitialized); }
 
 			inline void SetPlatformInitialized(bool a_value) noexcept
-			{ a_value ? SetStateFlag(State::PlatformInitialized) : UnsetStateFlag(State::PlatformInitialized); }
+			{ a_value ? SetStateFlag(RE::BSAudioManager::State::PlatformInitialized) : UnsetStateFlag(RE::BSAudioManager::State::PlatformInitialized); }
 
 			inline void SetPlatformInitFailed(bool a_value) noexcept
-			{ a_value ? SetStateFlag(State::PlatformInitFailed) : UnsetStateFlag(State::PlatformInitFailed); }
+			{ a_value ? SetStateFlag(RE::BSAudioManager::State::PlatformInitFailed) : UnsetStateFlag(RE::BSAudioManager::State::PlatformInitFailed); }
 
 			inline void SetCacheEnabled(bool a_value) noexcept
-			{ a_value ? SetStateFlag(State::CacheEnabled) : UnsetStateFlag(State::CacheEnabled); }
+			{ a_value ? SetStateFlag(RE::BSAudioManager::State::CacheEnabled) : UnsetStateFlag(RE::BSAudioManager::State::CacheEnabled); }
 
 			inline void SetShuttingDown(bool a_value) noexcept
-			{ a_value ? SetStateFlag(State::ShuttingDown) : UnsetStateFlag(State::ShuttingDown); }
+			{ a_value ? SetStateFlag(RE::BSAudioManager::State::ShuttingDown) : UnsetStateFlag(RE::BSAudioManager::State::ShuttingDown); }
 
 			inline void SetRunDisabled(bool a_value) noexcept
-			{ a_value ? SetStateFlag(State::RunDisabled) : UnsetStateFlag(State::RunDisabled); }
+			{ a_value ? SetStateFlag(RE::BSAudioManager::State::RunDisabled) : UnsetStateFlag(RE::BSAudioManager::State::RunDisabled); }
 
 			[[nodiscard]] static BSAudio* QPlatformInstance() noexcept
 			{
