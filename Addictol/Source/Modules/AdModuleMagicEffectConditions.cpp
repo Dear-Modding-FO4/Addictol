@@ -20,8 +20,11 @@ namespace Addictol
 
 		static float GetConditionUpdateInterval() noexcept
 		{
-			auto *settings = RE::GameSettingCollection::GetSingleton();
-			auto *setting = settings ? settings->GetSetting("fActiveEffectConditionUpdateInterval"sv) : nullptr;
+			static RE::Setting *const setting = []() noexcept -> RE::Setting * {
+				auto *settings = RE::GameSettingCollection::GetSingleton();
+				return settings ? settings->GetSetting("fActiveEffectConditionUpdateInterval"sv) : nullptr;
+			}();
+
 			if (!setting)
 				return 1.0f;
 
