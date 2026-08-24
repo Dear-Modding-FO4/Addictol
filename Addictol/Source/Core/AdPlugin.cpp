@@ -12,11 +12,13 @@
 #include <RE/T/TESDataHandler.h>
 #include <RE/T/TESFile.h>
 
-#include <Windows.h>
-#undef ERROR
-
 #define AD_LOGPLUGINHASHES 0
 //#define AD_DEBUGBREAK 1
+
+#if AD_DEBUGBREAK
+#	include <Windows.h>
+#	undef ERROR
+#endif
 
 extern void AdRegisterModules();
 extern void AdRegisterPreloadModules();
@@ -104,7 +106,7 @@ namespace Addictol
 		};
 
 		// Check the Mods
-		for (const auto modDLL : incompatibleModDLLs)
+		for (const auto& modDLL : incompatibleModDLLs)
 		{
 			if (IsModDLLPresent(modDLL.data()))
 			{
@@ -120,26 +122,8 @@ namespace Addictol
 			incompatibilityMessage += incompatibleMods;
 			incompatibilityMessage += "\nCheck the mod page's description for more info, Addictol will now terminate itself.";
 
-			// Log
-			REX::CRITICAL("{}"sv, incompatibilityMessage);
-
-			while (1)
-			{
-				const auto result = MessageBoxA(nullptr, incompatibilityMessage.c_str(), "Addictol - Incompatible F4SE Mods", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
-				if (result == IDRETRY)
-					continue;
-
-				// For debugger
-				__debugbreak();
-				// For Wine
-				abort();
-				// AGAIN!!!
-				TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
-				// CTD
-				*((int*)0) = 0;
-
-				break;
-			}
+			// CTD
+			REX::FAIL("{}"sv, incompatibilityMessage);
 		}
 	}
 
@@ -174,34 +158,9 @@ namespace Addictol
 						}
 
 						incompatibilityMessage += "\nCheck the mod page's description for more info, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
-
-						// Log
-						REX::CRITICAL("{}"sv, incompatibilityMessage);
-
-						// Message Box on a separate thread in order to not stall the rest of the mod
-						// This is in case the user decides to just Alt + Tab or something like that
-						std::thread([message = std::move(incompatibilityMessage)]
-						{
-							while (1)
-							{
-								const auto result = MessageBoxA(nullptr, message.c_str(), "Addictol - Incompatible Mods", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
-								if (result == IDRETRY)
-									continue;
-								else if (result == IDABORT)
-								{
-									// For debugger
-									__debugbreak();
-									// For Wine
-									abort();
-									// AGAIN!!!
-									TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
-									// CTD
-									*((int*)0) = 0;
-								}
-
-								break;
-							}
-						}).detach();
+						
+						// CTD
+						REX::FAIL("{}"sv, incompatibilityMessage);
 					}
 				}
 

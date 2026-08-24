@@ -1,6 +1,5 @@
 ﻿#include <Core/AdUtils.h>
 #include <Core/AdPlugin.h>
-#include <Windows.h>
 #include <string_view>
 
 // F4SE NP requirement
@@ -46,9 +45,7 @@ F4SE_PLUGIN_QUERY(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
 
     if (!std::filesystem::exists(std::format("{}Data\\F4SE\\Plugins\\version-1-10-163-0.bin", AdGetRuntimeDirectory())))
     {
-        MessageBoxA(nullptr, "" _PluginName ": disabled, address library needs to be updated", "Warnings", 
-            MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
-
+        REX::FAIL("" _PluginName ": disabled, address library needs to be updated", "Warnings");
         return false;
     }
     
