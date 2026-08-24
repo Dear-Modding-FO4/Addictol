@@ -4,7 +4,6 @@
 #include <Core/AdUtils.h>
 
 #include <comdef.h>
-#include <cstddef>
 #include <functional>
 #include <mmdeviceapi.h>
 #include <mmreg.h>
@@ -19,16 +18,15 @@
 #undef MAX_PATH
 #undef MEM_RELEASE
 
-#include <RE/B/BSFixedString.h>
 #include <RE/B/BSResource_ID.h>
-#include <RE/N/NiPoint3.h>
-#include <RE/B/BSSpinLock.h>
-#include <RE/B/BSTHashMap.h>
-#include <RE/N/NiPointer.h>
-#include <RE/N/NiAVObject.h>
 #include <RE/B/BSAudioManager.h>
+#include <RE/B/BSFixedString.h>
+#include <RE/B/BSSpinLock.h>
 #include <RE/B/BSTArray.h>
-#include <REX/TEnumSet.h>
+#include <RE/B/BSTHashMap.h>
+#include <RE/N/NiAVObject.h>
+#include <RE/N/NiPoint3.h>
+#include <RE/N/NiPointer.h>
 
 #pragma comment(lib, "xaudio2.lib")
 
