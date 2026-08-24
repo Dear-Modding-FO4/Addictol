@@ -723,12 +723,6 @@
     <ResourceCompile Include="..\Version\resource_version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Version\fomod_info.tmp" />
-    <None Include="..\Version\resource_version2.tmp" />
-    <None Include="..\Version\scripts.ps1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Version\build_version.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

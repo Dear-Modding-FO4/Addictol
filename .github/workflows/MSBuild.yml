@@ -30,36 +30,38 @@ jobs:
         $isRelease = ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -eq 'refs/heads/master') -or `
                      '${{ github.event_name }}' -eq 'workflow_dispatch'
 
-        $tmp = Get-Content -Path 'Version/resource_version2.tmp' -Raw
-        $major = [regex]::Match($tmp, 'VERSION_MAJOR\s+(\d+)').Groups[1].Value
-        $minor = [regex]::Match($tmp, 'VERSION_MINOR\s+(\d+)').Groups[1].Value
-        $y     = '${{ github.run_number }}'
+        $header = Get-Content -Path 'Version/resource_version2.h' -Raw
+        $majorMatch = [regex]::Match($header, '#define\s+VERSION_MAJOR\s+(\d+)')
+        $minorMatch = [regex]::Match($header, '#define\s+VERSION_MINOR\s+(\d+)')
+        if (-not $majorMatch.Success -or -not $minorMatch.Success) {
+          throw 'Could not read VERSION_MAJOR and VERSION_MINOR from resource_version2.h.'
+        }
+
+        $major = $majorMatch.Groups[1].Value
+        $minor = $minorMatch.Groups[1].Value
+        $build = if ($isRelease) { [int]'${{ github.run_number }}' } else { 0 }
+        if ($build -gt 4095) {
+          throw "GitHub run number $build exceeds F4SE's 4095 patch-version limit."
+        }
+
         $sha   = '${{ github.sha }}'.Substring(0, 8)
-        $version = "$major.$minor.$y"
+        $version = "$major.$minor.$build.0"
         $tag = "v$version"
 
         Write-Host "Computed version: $version (release=$isRelease, sha=$sha)"
 
         "version=$version"   >> $env:GITHUB_OUTPUT
+        "build=$build"       >> $env:GITHUB_OUTPUT
         "tag=$tag"           >> $env:GITHUB_OUTPUT
         "sha=$sha"           >> $env:GITHUB_OUTPUT
         "is_release=$($isRelease.ToString().ToLower())" >> $env:GITHUB_OUTPUT
-
-        # On release runs, bake y into the template so the DLL's file version matches the tag.
-        if ($isRelease) {
-          $tmp = $tmp -replace '(VERSION_REVISION\s+)\d+', "`${1}$y"
-          [IO.File]::WriteAllText(
-            (Resolve-Path 'Version/resource_version2.tmp'),
-            $tmp,
-            (New-Object System.Text.UTF8Encoding $false))
-        }
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v3
 
     - name: Build
       working-directory: ${{ github.workspace }}
-      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${{ env.SOLUTION_FILE_PATH }}
+      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:AddictolVersionBuild=${{ steps.ver.outputs.build }} ${{ env.SOLUTION_FILE_PATH }}
 
     - name: Bundle build output
       shell: pwsh

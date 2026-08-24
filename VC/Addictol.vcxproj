@@ -254,14 +254,6 @@
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Version\fomod_info.tmp" />
-    <None Include="..\Version\resource_version2.tmp" />
-    <None Include="..\Version\scripts.ps1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Version\build_version.txt" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -285,7 +277,9 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <AddictolVersionBuild Condition="'$(AddictolVersionBuild)' == ''">0</AddictolVersionBuild>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)..\.Build\F4SE\Plugins\</OutDir>
     <IntDir>$(SolutionDir)..\.LinkConf\$(ProjectName)\</IntDir>
@@ -297,7 +291,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_COMPILED_LIB;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;AD_TRACER=0;AD_TRAMPOLINE_SIZE=4096;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VERSION_BUILD=$(AddictolVersionBuild);NDEBUG;ADDICTOL_EXPORTS;_WINDOWS;_USRDLL;XBYAK_NO_OP_NAMES;COMMONLIB_OPTION_XBYAK;COMMONLIB_OPTION_INI;COMMONLIB_OPTION_TOML;SPDLOG_COMPILED_LIB;SPDLOG_USE_STD_FORMAT;SPDLOG_WCHAR_TO_UTF8_SUPPORT;FMT_UNICODE=0;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;SUPPORT_NG;SUPPORT_OG;COMMONLIB_RUNTIMECOUNT=3;VOLTEK_LIB_BUILD;AD_TRACER=0;AD_TRAMPOLINE_SIZE=4096;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Core\AdPCH.h</PrecompiledHeaderFile>
@@ -321,9 +315,9 @@
       <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PreBuildEvent>
-      <Command>powershell -ExecutionPolicy Bypass -File "$(SolutionDir)..\Version\scripts.ps1"</Command>
-    </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>VERSION_BUILD=$(AddictolVersionBuild);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
