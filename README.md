@@ -75,8 +75,8 @@ bUnalignedLoad = false
 ```
 
 Options are grouped into `[Patches]` (subsystem replacements), `[Fixes]` (bug and crash fixes),
-`[Warnings]` (diagnostics for problems in your load order), `[Others]` (patches for specific
-third-party mods) and `[Additional]` (tunables belonging to another option).
+`[Warnings]` (diagnostics for problems in your load order) and `[Additional]` (tunables belonging
+to another option).
 
 Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`, listing which modules loaded
 and any that disabled themselves. Check it first if something is not working.

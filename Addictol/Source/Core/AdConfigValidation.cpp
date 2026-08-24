@@ -44,9 +44,6 @@ namespace Addictol
 		{ "Warnings"sv, {
 			"bImageSpaceAdapter"sv, "bDuplicateAddonNodeIndex"sv, "bReferenceHandleLimit"sv
 		}},
-		{ "Others"sv, {
-			"bRobCoPatcherCache"sv
-		}},
 		{ "Telemetry"sv, {
 			"bEnabled"sv, "uSampleMs"sv, "uFrameRecordMs"sv, "bCsv"sv,
 			"bPluginTiming"sv, "bFormLoadTiming"sv
@@ -59,7 +56,7 @@ namespace Addictol
 			"bInteriorNavCutMultiThreading"sv, "bFullPrecisionDecalsMembrane"sv,
 			"bFullPrecisionDecalsEffectShaders"sv, "nMaxPapyrusOpsPerFrame"sv,
 			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
-			"bRobCoPatcherCacheValidate"sv, "bIgnoreCompatibilityChecks"sv,
+			"bIgnoreCompatibilityChecks"sv,
 			"fLocalMapScaleFactor"sv,
 			"bMenu"sv, "sMenuToggleKey"sv, "uMenuRefreshMs"sv
 		}}

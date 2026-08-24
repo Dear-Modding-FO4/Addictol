@@ -5,7 +5,6 @@
 #include <Modules/AdModulePackageAllocateLocation.h>
 #include <Modules/AdModuleLibDeflate.h>
 #include <Modules/AdModuleSaveCompression.h>
-#include <Modules/AdModuleRobCoPatcherCache.h>
 #include <Modules/AdModuleProfile.h>
 #include <Modules/AdModuleLoadScreen.h>
 #include <Modules/AdModuleAchievements.h>
@@ -99,7 +98,6 @@ static auto sModuleGreyMovie						= std::make_shared<Addictol::ModuleGreyMovie>(
 static auto sModulePackageAllocateLocation			= std::make_shared<Addictol::ModulePackageAllocateLocation>();
 static auto sModuleLibDeflate						= std::make_shared<Addictol::ModuleLibDeflate>();
 static auto sModuleSaveCompression					= std::make_shared<Addictol::ModuleSaveCompression>();
-static auto sModuleRobCoPatcherCache				= std::make_shared<Addictol::ModuleRobCoPatcherCache>();
 static auto sModuleProfile							= std::make_shared<Addictol::ModuleProfile>();
 static auto sModuleLoadScreen						= std::make_shared<Addictol::ModuleLoadScreen>();
 static auto sModuleAchievements						= std::make_shared<Addictol::ModuleAchievements>();
@@ -313,10 +311,6 @@ void AdRegisterModules()
 	modules.Register(sModulePlatformImgui,					kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
-	modules.Register(sModuleRobCoPatcherCache,				kPostLoad);
-	modules.Register(sModuleRobCoPatcherCache,				kNewGame);
-	modules.Register(sModuleRobCoPatcherCache,				kGameLoaded);
-
 	// Menu
 	modules.Register(sModuleMenu);
 }

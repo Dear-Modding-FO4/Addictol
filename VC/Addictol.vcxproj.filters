@@ -268,9 +268,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp">
       <Filter>Source\Modules\R</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRobCoPatcherCache.cpp">
-      <Filter>Source\Modules\R</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
@@ -629,9 +626,6 @@
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h">
-      <Filter>Include\Modules\R</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRobCoPatcherCache.h">
       <Filter>Include\Modules\R</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h">

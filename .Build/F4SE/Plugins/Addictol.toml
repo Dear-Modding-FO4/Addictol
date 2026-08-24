@@ -272,16 +272,6 @@ bDuplicateAddonNodeIndex = true
 # Terminate process if out of entries!
 bReferenceHandleLimit = true
 
-
-# Patches / Fixes for mods that are used by the DMFO4 team, but are tired of waiting for fixes from the authors of these mods.
-# We do not accept requests, we also fix only those versions that we use. Always turned off by default.
-# If it doesn't work for you, don't need to write about it, we're not interested.
-[Others]
-
-# Caches RobCo Patcher's "Plugin|FormID" lookups during its boot patching pass, greatly reducing startup time with large RobCo configs. Idle when RobCo Patcher is not installed.
-bRobCoPatcherCache = false
-
-
 [Telemetry]
 
 # Enables low-overhead sampled telemetry.
@@ -355,9 +345,6 @@ nQuitGameDelayMs = 1000
 
 # Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
 nBloomScale = 2
-
-# Diagnostic: re-resolves every cached RobCo lookup and disarms the cache on any mismatch (needs bRobCoPatcherCache).
-bRobCoPatcherCacheValidate = false
 
 # Ignore Mod Compatibility Checks.
 bIgnoreCompatibilityChecks = false

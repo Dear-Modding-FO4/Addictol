@@ -231,7 +231,6 @@ There is no type named `Float`, so floating point options use `F64<>`.
 | `[Patches]` | Replacing an engine subsystem for performance or capability. |
 | `[Fixes]` | Fixing a specific engine bug or crash. Most modules live here. |
 | `[Warnings]` | Detectors for problems in the user's load order. They exist to report, not to change gameplay. |
-| `[Others]` | Patches aimed at specific third party mods. Off by default and unsupported. |
 | `[Additional]` | Tunables belonging to a feature in another section. Cross reference the owner with `(needs bX)`. |
 
 Prefix keys by type: `b` boolean, `n` signed, `u` unsigned, `f` float. The C++ variable name
