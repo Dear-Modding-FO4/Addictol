@@ -123,7 +123,7 @@ namespace Addictol
 			incompatibilityMessage += "\nCheck the mod page's description for more info, Addictol will now terminate itself.";
 
 			// CTD
-			REX::FAIL("{}"sv, incompatibilityMessage);
+			REX::FAIL("\n\n{}"sv, incompatibilityMessage);
 		}
 	}
 
@@ -158,9 +158,9 @@ namespace Addictol
 						}
 
 						incompatibilityMessage += "\nCheck the mod page's description for more info, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
-						
+
 						// CTD
-						REX::FAIL("{}"sv, incompatibilityMessage);
+						REX::FAIL("\n\n{}"sv, incompatibilityMessage);
 					}
 				}
 
