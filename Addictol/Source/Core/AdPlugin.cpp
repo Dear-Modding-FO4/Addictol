@@ -98,11 +98,12 @@ namespace Addictol
 
 		// Incompatible F4SE Mods
 		std::string incompatibleMods;
-		const std::array<std::string_view, 7> incompatibleModDLLs
+		const std::array<std::string_view, 8> incompatibleModDLLs
 		{
 			"x-cell-ae.dll"sv, "x-cell-ng2.dll"sv, "x-cell-og.dll"sv,	// X-Cell
 			"Buffout4AE.dll"sv, "MiniBuffAE.dll"sv, "Buffout4.dll"sv,	// Buffout 4
-			"MentatsF4SE.dll"sv											// Mentats
+			"MentatsF4SE.dll"sv,										// Mentats
+			"HolyFramework.dll"sv										// Holy Framework
 		};
 
 		// Check the Mods
