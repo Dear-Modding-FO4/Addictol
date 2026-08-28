@@ -6,7 +6,7 @@ game builds, and a mistake does not produce a failed test; it produces a crash i
 
 Three things shape everything else:
 
-**One DLL, three runtimes.** OG 1.10.163, NG 1.10.984 and AE 1.11.221 are all supported from the
+**One DLL, three runtimes.** OG 1.10.163, NG 1.10.984 and AE 1.11.240 are all supported from the
 same binary. Every game address you add must resolve correctly on all three, or be explicitly gated
 to the runtimes where it is valid. An address that is right on NG and wrong on AE will silently
 patch unrelated code.
