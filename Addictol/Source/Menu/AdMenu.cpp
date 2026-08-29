@@ -120,7 +120,7 @@ namespace Addictol
 			s_lastDrawMs = QpcToMilliseconds(ReadQpc() - start, s_qpcFrequency);
 		}
 
-		void ToggleSink(uint32_t a_virtualKey) noexcept
+		[[nodiscard]] bool ToggleSink(uint32_t a_virtualKey) noexcept
 		{
 			const auto decision = DecideMenuToggle(
 				a_virtualKey,
@@ -128,7 +128,7 @@ namespace Addictol
 				DearModdingUI::IsMenuVisible(),
 				PlatformImgui::IsReady());
 			if (!decision.matched)
-				return;
+				return false;
 
 			const auto result = DearModdingUI::SetMenuVisible(decision.open);
 			if (result == DMUI_RESULT_OK && decision.open)
@@ -140,6 +140,7 @@ namespace Addictol
 				if (!s_backendFailureLogged.exchange(true, std::memory_order_acq_rel))
 					REX::ERROR("Menu: DearModdingUI cannot open, result {}."sv, result);
 			}
+			return true;
 		}
 	}
 
@@ -186,7 +187,8 @@ namespace Addictol
 			&DearModdingUI::HostFingerprint(),
 			&OnHostReady,
 			&OnHostUnavailable,
-			nullptr
+			nullptr,
+			DMUI_CLIENT_CAPABILITY_NONE
 		};
 		const auto registered = DearModdingUI::RegisterInternalClient(
 			&descriptor, &s_client);

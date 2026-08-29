@@ -2,8 +2,13 @@
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
 #include "Harness.h"
 
+#include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
+
+#include "../Addictol/Include/DearModdingUI/ImGuiFingerprint.h"
+
 #include <array>
-#include <cstring>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -24,21 +29,7 @@ namespace vmm_tests
 
 		[[nodiscard]] DMUI_ImGuiFingerprint Fingerprint() noexcept
 		{
-			DMUI_ImGuiFingerprint fingerprint{};
-			fingerprint.structSize = sizeof(fingerprint);
-			std::memcpy(
-				fingerprint.upstreamCommit,
-				DMUI_IMGUI_UPSTREAM_COMMIT,
-				sizeof(fingerprint.upstreamCommit));
-			fingerprint.imguiVersionNum = DMUI_IMGUI_VERSION_NUM;
-			fingerprint.flags = DMUI_IMGUI_FINGERPRINT_DOCKING;
-			fingerprint.sizeOfImGuiIO = 1;
-			fingerprint.sizeOfImGuiStyle = 2;
-			fingerprint.sizeOfImVec2 = 3;
-			fingerprint.sizeOfImVec4 = 4;
-			fingerprint.sizeOfImDrawVert = 5;
-			fingerprint.sizeOfImDrawIdx = 6;
-			return fingerprint;
+			return DMUI_MakeImGuiFingerprint();
 		}
 
 		void DMUI_CALL Ready(const DMUI_HostReadyInfo* a_info, void* a_userData) noexcept
@@ -62,6 +53,21 @@ namespace vmm_tests
 			++static_cast<CallbackState*>(a_userData)->draws;
 		}
 
+		void DMUI_CALL ThrowReady(const DMUI_HostReadyInfo*, void*)
+		{
+			throw std::runtime_error("ready");
+		}
+
+		void DMUI_CALL ThrowUnavailable(DMUI_UnavailableReason, void*)
+		{
+			throw std::runtime_error("unavailable");
+		}
+
+		void DMUI_CALL ThrowDraw(void*)
+		{
+			throw std::runtime_error("draw");
+		}
+
 		[[nodiscard]] DMUI_ClientDescriptor Client(
 			const char* a_id,
 			const char* a_name,
@@ -77,7 +83,8 @@ namespace vmm_tests
 				&a_fingerprint,
 				&Ready,
 				&Unavailable,
-				&a_state
+				&a_state,
+				DMUI_CLIENT_CAPABILITY_NONE
 			};
 		}
 
@@ -167,6 +174,13 @@ namespace vmm_tests
 					DMUI_RESULT_INVALID_DESCRIPTOR,
 				"null fingerprint was accepted");
 			client.expectedImGui = &fingerprint;
+			auto shortFingerprint = fingerprint;
+			shortFingerprint.structSize = sizeof(shortFingerprint) - 1;
+			client.expectedImGui = &shortFingerprint;
+			require(registry.RegisterClient(&client, &handle, ClientOrigin::kExternal) ==
+					DMUI_RESULT_STRUCT_TOO_SMALL,
+				"short fingerprint was accepted");
+			client.expectedImGui = &fingerprint;
 			client.onHostReady = nullptr;
 			require(registry.RegisterClient(&client, &handle, ClientOrigin::kExternal) ==
 					DMUI_RESULT_INVALID_DESCRIPTOR,
@@ -203,6 +217,17 @@ namespace vmm_tests
 
 		runner.test("client fingerprint comparison is byte exact", [] {
 			const auto fingerprint = Fingerprint();
+			require(fingerprint.structSize == sizeof(fingerprint), "fingerprint size is stale");
+			require(fingerprint.sizeOfImWchar == sizeof(ImWchar), "ImWchar size was omitted");
+			require(fingerprint.sizeOfImTextureID == sizeof(ImTextureID),
+				"ImTextureID size was omitted");
+			require(fingerprint.sizeOfImGuiContext == sizeof(ImGuiContext),
+				"ImGuiContext size was omitted");
+			require(fingerprint.offsetOfImDrawVertPos == offsetof(ImDrawVert, pos) &&
+					fingerprint.offsetOfImDrawVertUv == offsetof(ImDrawVert, uv) &&
+					fingerprint.offsetOfImDrawVertCol == offsetof(ImDrawVert, col),
+				"ImDrawVert layout was omitted");
+			require(fingerprint.layoutSignature != 0, "layout signature was not constructed");
 			Registry registry{ fingerprint };
 			CallbackState state;
 			DMUI_ClientHandle handle{};
@@ -225,6 +250,53 @@ namespace vmm_tests
 			require(registry.RegisterClient(&client, &handle, ClientOrigin::kExternal) ==
 					DMUI_RESULT_FINGERPRINT_MISMATCH,
 				"docking mismatch was accepted");
+			mismatch = fingerprint;
+			++mismatch.sizeOfImTextureID;
+			client.expectedImGui = &mismatch;
+			require(registry.RegisterClient(&client, &handle, ClientOrigin::kExternal) ==
+					DMUI_RESULT_FINGERPRINT_MISMATCH,
+				"texture ID mismatch was accepted");
+			mismatch = fingerprint;
+			++mismatch.offsetOfImDrawVertUv;
+			client.expectedImGui = &mismatch;
+			require(registry.RegisterClient(&client, &handle, ClientOrigin::kExternal) ==
+					DMUI_RESULT_FINGERPRINT_MISMATCH,
+				"draw vertex layout mismatch was accepted");
+			mismatch = fingerprint;
+			mismatch.layoutSignature ^= 1;
+			client.expectedImGui = &mismatch;
+			require(registry.RegisterClient(&client, &handle, ClientOrigin::kExternal) ==
+					DMUI_RESULT_FINGERPRINT_MISMATCH,
+				"layout signature mismatch was accepted");
+		});
+
+		runner.test("swapchain handoff requires a registered renderer replacement client", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto regular = AddClient(registry, "regular.mod", "Regular", fingerprint, state);
+			require(registry.ValidateSwapChainClient(regular) ==
+					DMUI_RESULT_CLIENT_CAPABILITY_REQUIRED,
+				"a regular client gained renderer replacement access");
+			require(registry.ValidateSwapChainClient(9999) == DMUI_RESULT_CLIENT_NOT_FOUND,
+				"an unknown client gained renderer replacement access");
+
+			auto renderer = Client("renderer.mod", "Renderer", fingerprint, state);
+			renderer.capabilities = DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT;
+			DMUI_ClientHandle rendererHandle{};
+			require(registry.RegisterClient(
+						&renderer, &rendererHandle, ClientOrigin::kExternal) == DMUI_RESULT_OK,
+				"renderer replacement client was rejected");
+			require(registry.ValidateSwapChainClient(rendererHandle) == DMUI_RESULT_OK,
+				"renderer replacement capability was not retained");
+
+			auto unknown = Client("unknown.mod", "Unknown", fingerprint, state);
+			unknown.capabilities = 0x80000000u;
+			DMUI_ClientHandle unknownHandle{};
+			require(registry.RegisterClient(
+						&unknown, &unknownHandle, ClientOrigin::kExternal) ==
+					DMUI_RESULT_INVALID_DESCRIPTOR,
+				"unknown client capabilities were accepted");
 		});
 
 		runner.test("duplicate client and page IDs are rejected in their scopes", [] {
@@ -441,6 +513,75 @@ namespace vmm_tests
 				"unavailable client received duplicate or mixed notifications");
 			require(unavailableState.reason == DMUI_UNAVAILABLE_BACKEND_FAILED,
 				"unavailable reason changed");
+		});
+
+		runner.test("throwing client callbacks are isolated by host guards", [] {
+			const auto fingerprint = Fingerprint();
+			const DMUI_HostReadyInfo info{
+				sizeof(DMUI_HostReadyInfo),
+				DMUI_API_VERSION_CURRENT,
+				reinterpret_cast<void*>(0x1234),
+				nullptr,
+				nullptr,
+				nullptr
+			};
+
+			CallbackState readyState;
+			Registry readyRegistry{ fingerprint };
+			auto readyClient = Client("throw-ready.mod", "Throw Ready", fingerprint, readyState);
+			readyClient.onHostReady = &ThrowReady;
+			DMUI_ClientHandle readyHandle{};
+			require(readyRegistry.RegisterClient(
+						&readyClient, &readyHandle, ClientOrigin::kExternal) == DMUI_RESULT_OK,
+				"throwing ready client was not registered");
+			const auto readyPage = AddPage(
+				readyRegistry,
+				readyHandle,
+				"settings",
+				"Settings",
+				"General",
+				0,
+				DMUI_PAGE_KIND_SETTINGS,
+				readyState);
+			require(readyRegistry.Freeze(), "throwing ready registry did not freeze");
+			readyRegistry.NotifyReady(info);
+			require(readyRegistry.PageFailed(readyPage),
+				"a client with a throwing ready callback remained drawable");
+
+			CallbackState drawState;
+			Registry drawRegistry{ fingerprint };
+			const auto drawClient = AddClient(
+				drawRegistry, "throw-draw.mod", "Throw Draw", fingerprint, drawState);
+			auto drawPageDescriptor = Page(
+				"settings", "Settings", "General", 0, DMUI_PAGE_KIND_SETTINGS, drawState);
+			drawPageDescriptor.draw = &ThrowDraw;
+			DMUI_PageHandle drawPage{};
+			require(drawRegistry.RegisterPage(
+						drawClient, &drawPageDescriptor, &drawPage) == DMUI_RESULT_OK,
+				"throwing draw page was not registered");
+			require(drawRegistry.InvokePage(drawPage) == DMUI_RESULT_CALLBACK_FAILED,
+				"a throwing page escaped its host guard");
+			require(drawRegistry.InvokePage(drawPage) == DMUI_RESULT_CALLBACK_FAILED,
+				"a faulted page was invoked again");
+
+			CallbackState unavailableState;
+			CallbackState healthyState;
+			Registry unavailableRegistry{ fingerprint };
+			auto unavailableClient = Client(
+				"throw-unavailable.mod", "Throw Unavailable", fingerprint, unavailableState);
+			unavailableClient.onHostUnavailable = &ThrowUnavailable;
+			DMUI_ClientHandle unavailableHandle{};
+			require(unavailableRegistry.RegisterClient(
+						&unavailableClient,
+						&unavailableHandle,
+						ClientOrigin::kExternal) == DMUI_RESULT_OK,
+				"throwing unavailable client was not registered");
+			(void)AddClient(
+				unavailableRegistry, "healthy.mod", "Healthy", fingerprint, healthyState);
+			require(unavailableRegistry.Freeze(), "unavailable registry did not freeze");
+			unavailableRegistry.NotifyUnavailable(DMUI_UNAVAILABLE_BACKEND_FAILED);
+			require(healthyState.unavailable == 1,
+				"a throwing unavailable callback blocked the next client");
 		});
 
 		runner.test("overlay frame demand is reference counted and never makes settings demand frames", [] {

@@ -1,9 +1,9 @@
 # DearModdingUI client API
 
-`API.h` is a vendorable C ABI for Dear-Modding F4SE user interfaces. Clients link their own copy of
-the pinned Dear ImGui sources and discover a host dynamically; they do not link against the host
-DLL or include Addictol, CommonLibF4, F4SE, Windows, D3D, TOML, or C++ library types through this
-contract.
+`API.h` is a vendorable C ABI for Dear-Modding F4SE user interfaces. `ImGuiFingerprint.h` is the
+optional C++ fingerprint builder. Clients link their own copy of the pinned Dear ImGui sources and
+discover a host dynamically; they do not link against the host DLL or include Addictol, CommonLibF4,
+F4SE, Windows, D3D, TOML, or C++ library types through the C contract.
 
 ## Discovery and registration
 
@@ -17,6 +17,7 @@ Client and page registration closes when the first valid active-swapchain `Prese
 initialization. Register every page immediately after the client. All descriptor strings are copied;
 callback and userdata pointers must remain valid for the process lifetime. IDs use ASCII letters,
 digits, `.`, `_`, and `-`. Client IDs are process-wide; page IDs are unique within their client.
+Set only documented `DMUI_ClientDescriptor::capabilities`; unknown bits reject the descriptor.
 
 Settings pages draw only inside the common modal menu. Overlay pages draw without input capture
 while their reference-counted frame demand is nonzero. Balance every successful `requestFrame` with
@@ -46,18 +47,49 @@ The Addictol host initializes on the first valid active-swapchain `Present` when
 accepted. Addictol's `bMenu` setting controls only registration of Addictol's own pages. External
 clients remain hosted when it is false and can open the common menu with the configured toggle.
 
+## Final swapchain handoff
+
+A client that replaces the renderer's swapchain declares
+`DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT` when registering. After it publishes the final native
+swapchain, it may call the optional `attachSwapChain(clientHandle, nativeSwapChain)` entry. Check
+`DMUI_HostAPI::structSize >= DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE` and that the pointer is non-null
+before calling it. On Windows/D3D11, `nativeSwapChain` is an `IDXGISwapChain*`; the public ABI keeps it
+opaque and exposes no D3D types.
+
+The host validates the client handle and capability, validates the swapchain's D3D11 device, immediate
+context, and output window, installs its final `Present`/`ResizeBuffers` dispatch, and retains its own
+COM references. Attachment is allowed while waiting for the first `Present` and after the host is
+ready. A ready retarget keeps the shared ImGui context and safely reinitializes the platform/renderer
+backends only if the render binding changed. An attachment racing backend initialization returns
+`DMUI_RESULT_RENDERER_BUSY`; an invalid or unhookable native object returns
+`DMUI_RESULT_SWAPCHAIN_REJECTED`. Regular clients receive
+`DMUI_RESULT_CLIENT_CAPABILITY_REQUIRED`.
+
+Discovery ignores unrelated swapchains while an attachment is active. Destruction of the active
+window or a definitive DXGI device loss retires the attachment, releases host-owned COM/resources,
+and permits the next discovered or explicit final swapchain to attach.
+
 ## ImGui compatibility and callbacks
 
-The host publishes the immutable upstream commit, `IMGUI_VERSION_NUM`, docking flag, and all six
-sizes used by `IMGUI_CHECKVERSION`. A client must build its expected fingerprint from its own ImGui
-headers. Registration rejects any field mismatch before storing callbacks.
+The host publishes the immutable upstream commit, `IMGUI_VERSION_NUM`, explicit compile-configuration
+flags, size and alignment fields for shared public/internal types, `ImDrawVert` member offsets, and a
+deterministic layout signature. The signature is built from `sizeof`, `alignof`, and `offsetof`
+expressions over public draw, font, IO, style, platform, context, and recovery structures. It is never
+a copied magic value. A client must build its expected fingerprint from the exact headers and
+configuration used to compile its own ImGui sources. Registration rejects any field mismatch before
+storing callbacks.
+
+Include the pinned `imgui.h` and `imgui_internal.h`, then vendored `ImGuiFingerprint.h`, and call
+`DMUI_MakeImGuiFingerprint()`. The builder derives custom `ImTextureID`, `ImDrawIdx`, callback,
+`ImDrawVert`, `ImWchar`, color packing, docking, obsolete API, test-engine, CRC, FreeType, debug-tool,
+math-operator, and vector-extension flags directly from the active preprocessor configuration.
 
 `onHostReady`, `onHostUnavailable`, and page draw callbacks run on the render thread. The context and
 allocator functions exist only in `DMUI_HostReadyInfo`; clients must not poll for a context. In the
 ready callback, set the client's statically linked ImGui globals:
 
 ```cpp
-void DMUI_CALL Ready(const DMUI_HostReadyInfo* info, void*) noexcept
+void DMUI_CALL Ready(const DMUI_HostReadyInfo* info, void*)
 {
 	ImGui::SetCurrentContext(static_cast<ImGuiContext*>(info->imguiContext));
 	ImGui::SetAllocatorFunctions(
@@ -65,8 +97,10 @@ void DMUI_CALL Ready(const DMUI_HostReadyInfo* info, void*) noexcept
 }
 ```
 
-The host catches C++ exceptions and Windows structured exceptions around client callbacks, disables
-a faulting page, recovers the pinned ImGui stack state, and keeps a stable error entry in navigation.
+Client callback typedefs are intentionally not `noexcept`, so a C++ exception reaches the host guard
+instead of terminating the process. Host API entry points and allocator callbacks remain `noexcept`.
+The host catches C++ exceptions and Windows structured exceptions around client callbacks, disables a
+faulting page, recovers the pinned ImGui stack state, and keeps a stable error entry in navigation.
 Shared-context drawing cannot provide process isolation, so callbacks must still balance every ImGui
 stack operation.
 
@@ -77,20 +111,8 @@ process lifetime; v1 does not support runtime migration, unload, unregister, or 
 ## Minimal registration
 
 ```cpp
-DMUI_ImGuiFingerprint fingerprint{};
-fingerprint.structSize = sizeof(fingerprint);
-std::memcpy(
-	fingerprint.upstreamCommit,
-	DMUI_IMGUI_UPSTREAM_COMMIT,
-	sizeof(fingerprint.upstreamCommit));
-fingerprint.imguiVersionNum = IMGUI_VERSION_NUM;
-fingerprint.flags = DMUI_IMGUI_FINGERPRINT_DOCKING;
-fingerprint.sizeOfImGuiIO = sizeof(ImGuiIO);
-fingerprint.sizeOfImGuiStyle = sizeof(ImGuiStyle);
-fingerprint.sizeOfImVec2 = sizeof(ImVec2);
-fingerprint.sizeOfImVec4 = sizeof(ImVec4);
-fingerprint.sizeOfImDrawVert = sizeof(ImDrawVert);
-fingerprint.sizeOfImDrawIdx = sizeof(ImDrawIdx);
+// Include imgui.h and imgui_internal.h before the fingerprint builder.
+const auto fingerprint = DMUI_MakeImGuiFingerprint();
 
 const auto getHost = reinterpret_cast<decltype(&DMUI_GetHostAPI)>(
 	GetProcAddress(hostModule, "DMUI_GetHostAPI"));
@@ -110,7 +132,8 @@ DMUI_ClientDescriptor client{
 	&fingerprint,
 	&Ready,
 	&Unavailable,
-	nullptr
+	nullptr,
+	DMUI_CLIENT_CAPABILITY_NONE
 };
 DMUI_ClientHandle clientHandle{};
 if (api->registerClient(&client, &clientHandle) != DMUI_RESULT_OK)
@@ -135,5 +158,18 @@ if (api->registerPage(clientHandle, &page, &pageHandle) != DMUI_RESULT_OK)
 {
 	StartStandalone();
 	return;
+}
+```
+
+A renderer-replacing client sets `client.capabilities` to
+`DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT`, stores the returned API table and client handle, then
+hands off its final published proxy:
+
+```cpp
+if (api->structSize < DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE ||
+	!api->attachSwapChain ||
+	api->attachSwapChain(clientHandle, finalSwapChain) != DMUI_RESULT_OK)
+{
+	ReportHandoffFailure();
 }
 ```

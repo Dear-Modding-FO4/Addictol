@@ -193,12 +193,16 @@ namespace Addictol::DearModdingUI
 			return DMUI_RESULT_FINGERPRINT_MISMATCH;
 		if (!a_descriptor->onHostReady || !a_descriptor->onHostUnavailable)
 			return DMUI_RESULT_INVALID_DESCRIPTOR;
+		if ((a_descriptor->capabilities &
+				~DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT) != 0)
+			return DMUI_RESULT_INVALID_DESCRIPTOR;
 
 		try
 		{
 			RegisteredClient client{};
 			client.origin = a_origin;
 			client.version = a_descriptor->version;
+			client.capabilities = a_descriptor->capabilities;
 			client.onHostReady = a_descriptor->onHostReady;
 			client.onHostUnavailable = a_descriptor->onHostUnavailable;
 			client.userData = a_descriptor->userData;
@@ -434,6 +438,17 @@ namespace Addictol::DearModdingUI
 		return page->kind == a_kind ? DMUI_RESULT_OK : DMUI_RESULT_INVALID_PAGE_KIND;
 	}
 
+	DMUI_Result Registry::ValidateSwapChainClient(DMUI_ClientHandle a_client) const noexcept
+	{
+		const std::scoped_lock lock{ m_mutex };
+		const auto* client = FindClient(a_client);
+		if (!client)
+			return DMUI_RESULT_CLIENT_NOT_FOUND;
+		return (client->capabilities & DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT) != 0 ?
+			DMUI_RESULT_OK :
+			DMUI_RESULT_CLIENT_CAPABILITY_REQUIRED;
+	}
+
 	DMUI_Result Registry::InvokePage(DMUI_PageHandle a_page) noexcept
 	{
 		DMUI_PageDrawCallback callback{ nullptr };
@@ -574,7 +589,39 @@ namespace Addictol::DearModdingUI
 			a_left.sizeOfImVec2 == a_right.sizeOfImVec2 &&
 			a_left.sizeOfImVec4 == a_right.sizeOfImVec4 &&
 			a_left.sizeOfImDrawVert == a_right.sizeOfImDrawVert &&
-			a_left.sizeOfImDrawIdx == a_right.sizeOfImDrawIdx;
+			a_left.sizeOfImDrawIdx == a_right.sizeOfImDrawIdx &&
+			a_left.alignOfImGuiIO == a_right.alignOfImGuiIO &&
+			a_left.alignOfImGuiStyle == a_right.alignOfImGuiStyle &&
+			a_left.alignOfImVec2 == a_right.alignOfImVec2 &&
+			a_left.alignOfImVec4 == a_right.alignOfImVec4 &&
+			a_left.alignOfImDrawVert == a_right.alignOfImDrawVert &&
+			a_left.alignOfImDrawIdx == a_right.alignOfImDrawIdx &&
+			a_left.sizeOfImWchar == a_right.sizeOfImWchar &&
+			a_left.alignOfImWchar == a_right.alignOfImWchar &&
+			a_left.sizeOfImTextureID == a_right.sizeOfImTextureID &&
+			a_left.alignOfImTextureID == a_right.alignOfImTextureID &&
+			a_left.sizeOfImGuiID == a_right.sizeOfImGuiID &&
+			a_left.alignOfImGuiID == a_right.alignOfImGuiID &&
+			a_left.sizeOfImFont == a_right.sizeOfImFont &&
+			a_left.alignOfImFont == a_right.alignOfImFont &&
+			a_left.sizeOfImFontConfig == a_right.sizeOfImFontConfig &&
+			a_left.alignOfImFontConfig == a_right.alignOfImFontConfig &&
+			a_left.sizeOfImFontGlyph == a_right.sizeOfImFontGlyph &&
+			a_left.alignOfImFontGlyph == a_right.alignOfImFontGlyph &&
+			a_left.sizeOfImGuiContext == a_right.sizeOfImGuiContext &&
+			a_left.alignOfImGuiContext == a_right.alignOfImGuiContext &&
+			a_left.sizeOfImGuiErrorRecoveryState == a_right.sizeOfImGuiErrorRecoveryState &&
+			a_left.alignOfImGuiErrorRecoveryState == a_right.alignOfImGuiErrorRecoveryState &&
+			a_left.sizeOfImGuiNextWindowData == a_right.sizeOfImGuiNextWindowData &&
+			a_left.alignOfImGuiNextWindowData == a_right.alignOfImGuiNextWindowData &&
+			a_left.sizeOfImGuiNextItemData == a_right.sizeOfImGuiNextItemData &&
+			a_left.alignOfImGuiNextItemData == a_right.alignOfImGuiNextItemData &&
+			a_left.sizeOfImGuiPopupData == a_right.sizeOfImGuiPopupData &&
+			a_left.alignOfImGuiPopupData == a_right.alignOfImGuiPopupData &&
+			a_left.offsetOfImDrawVertPos == a_right.offsetOfImDrawVertPos &&
+			a_left.offsetOfImDrawVertUv == a_right.offsetOfImDrawVertUv &&
+			a_left.offsetOfImDrawVertCol == a_right.offsetOfImDrawVertCol &&
+			a_left.layoutSignature == a_right.layoutSignature;
 	}
 
 	RegisteredClient* Registry::FindClient(DMUI_ClientHandle a_client) noexcept

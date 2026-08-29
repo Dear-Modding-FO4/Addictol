@@ -32,6 +32,20 @@
 #define DMUI_IMGUI_UPSTREAM_COMMIT "9acdfbf46810c0c74ab281ce04122c4149ae8bd1"
 #define DMUI_IMGUI_VERSION_NUM 19291u
 #define DMUI_IMGUI_FINGERPRINT_DOCKING 0x00000001u
+#define DMUI_IMGUI_FINGERPRINT_WCHAR32 0x00000002u
+#define DMUI_IMGUI_FINGERPRINT_CUSTOM_TEXTURE_ID 0x00000004u
+#define DMUI_IMGUI_FINGERPRINT_CUSTOM_DRAW_VERT 0x00000008u
+#define DMUI_IMGUI_FINGERPRINT_BGRA_PACKED_COLOR 0x00000010u
+#define DMUI_IMGUI_FINGERPRINT_OBSOLETE_DISABLED 0x00000020u
+#define DMUI_IMGUI_FINGERPRINT_TEST_ENGINE 0x00000040u
+#define DMUI_IMGUI_FINGERPRINT_LEGACY_CRC32 0x00000080u
+#define DMUI_IMGUI_FINGERPRINT_FREETYPE 0x00000100u
+#define DMUI_IMGUI_FINGERPRINT_MATH_OPERATORS 0x00000200u
+#define DMUI_IMGUI_FINGERPRINT_DEBUG_TOOLS_DISABLED 0x00000400u
+#define DMUI_IMGUI_FINGERPRINT_CUSTOM_DRAW_IDX 0x00000800u
+#define DMUI_IMGUI_FINGERPRINT_CUSTOM_DRAW_CALLBACK 0x00001000u
+#define DMUI_IMGUI_FINGERPRINT_VEC2_EXTRA 0x00002000u
+#define DMUI_IMGUI_FINGERPRINT_VEC4_EXTRA 0x00004000u
 
 typedef uint32_t DMUI_Result;
 
@@ -54,6 +68,9 @@ typedef uint32_t DMUI_Result;
 #define DMUI_RESULT_INVALID_PAGE_KIND 16u
 #define DMUI_RESULT_NO_FRAME_DEMAND 17u
 #define DMUI_RESULT_CALLBACK_FAILED 18u
+#define DMUI_RESULT_CLIENT_CAPABILITY_REQUIRED 19u
+#define DMUI_RESULT_SWAPCHAIN_REJECTED 20u
+#define DMUI_RESULT_RENDERER_BUSY 21u
 
 typedef uint32_t DMUI_HostState;
 
@@ -73,6 +90,11 @@ typedef uint32_t DMUI_PageKind;
 
 #define DMUI_PAGE_KIND_SETTINGS 1u
 #define DMUI_PAGE_KIND_OVERLAY 2u
+
+typedef uint32_t DMUI_ClientCapabilities;
+
+#define DMUI_CLIENT_CAPABILITY_NONE 0u
+#define DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT 0x00000001u
 
 typedef uint64_t DMUI_ClientHandle;
 typedef uint64_t DMUI_PageHandle;
@@ -96,6 +118,38 @@ typedef struct DMUI_ImGuiFingerprint
 	uint32_t sizeOfImVec4;
 	uint32_t sizeOfImDrawVert;
 	uint32_t sizeOfImDrawIdx;
+	uint32_t alignOfImGuiIO;
+	uint32_t alignOfImGuiStyle;
+	uint32_t alignOfImVec2;
+	uint32_t alignOfImVec4;
+	uint32_t alignOfImDrawVert;
+	uint32_t alignOfImDrawIdx;
+	uint32_t sizeOfImWchar;
+	uint32_t alignOfImWchar;
+	uint32_t sizeOfImTextureID;
+	uint32_t alignOfImTextureID;
+	uint32_t sizeOfImGuiID;
+	uint32_t alignOfImGuiID;
+	uint32_t sizeOfImFont;
+	uint32_t alignOfImFont;
+	uint32_t sizeOfImFontConfig;
+	uint32_t alignOfImFontConfig;
+	uint32_t sizeOfImFontGlyph;
+	uint32_t alignOfImFontGlyph;
+	uint32_t sizeOfImGuiContext;
+	uint32_t alignOfImGuiContext;
+	uint32_t sizeOfImGuiErrorRecoveryState;
+	uint32_t alignOfImGuiErrorRecoveryState;
+	uint32_t sizeOfImGuiNextWindowData;
+	uint32_t alignOfImGuiNextWindowData;
+	uint32_t sizeOfImGuiNextItemData;
+	uint32_t alignOfImGuiNextItemData;
+	uint32_t sizeOfImGuiPopupData;
+	uint32_t alignOfImGuiPopupData;
+	uint32_t offsetOfImDrawVertPos;
+	uint32_t offsetOfImDrawVertUv;
+	uint32_t offsetOfImDrawVertCol;
+	uint64_t layoutSignature;
 } DMUI_ImGuiFingerprint;
 
 typedef void* (DMUI_CALL *DMUI_ImGuiAllocFn)(size_t size, void* userData) DMUI_NOEXCEPT;
@@ -113,11 +167,11 @@ typedef struct DMUI_HostReadyInfo
 
 typedef void (DMUI_CALL *DMUI_HostReadyCallback)(
 	const DMUI_HostReadyInfo* info,
-	void* userData) DMUI_NOEXCEPT;
+	void* userData);
 typedef void (DMUI_CALL *DMUI_HostUnavailableCallback)(
 	DMUI_UnavailableReason reason,
-	void* userData) DMUI_NOEXCEPT;
-typedef void (DMUI_CALL *DMUI_PageDrawCallback)(void* userData) DMUI_NOEXCEPT;
+	void* userData);
+typedef void (DMUI_CALL *DMUI_PageDrawCallback)(void* userData);
 
 typedef struct DMUI_ClientDescriptor
 {
@@ -130,6 +184,7 @@ typedef struct DMUI_ClientDescriptor
 	DMUI_HostReadyCallback onHostReady;
 	DMUI_HostUnavailableCallback onHostUnavailable;
 	void* userData;
+	DMUI_ClientCapabilities capabilities;
 } DMUI_ClientDescriptor;
 
 typedef struct DMUI_PageDescriptor
@@ -176,6 +231,9 @@ typedef DMUI_Result (DMUI_CALL *DMUI_IsMenuVisibleFn)(
 typedef DMUI_Result (DMUI_CALL *DMUI_SelectPageFn)(
 	DMUI_ClientHandle client,
 	DMUI_PageHandle page) DMUI_NOEXCEPT;
+typedef DMUI_Result (DMUI_CALL *DMUI_AttachSwapChainFn)(
+	DMUI_ClientHandle client,
+	void* nativeSwapChain) DMUI_NOEXCEPT;
 
 typedef struct DMUI_HostAPI
 {
@@ -189,7 +247,11 @@ typedef struct DMUI_HostAPI
 	DMUI_ReleaseFrameFn releaseFrame;
 	DMUI_IsMenuVisibleFn isMenuVisible;
 	DMUI_SelectPageFn selectPage;
+	DMUI_AttachSwapChainFn attachSwapChain;
 } DMUI_HostAPI;
+
+#define DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE \
+	((uint32_t)(offsetof(DMUI_HostAPI, attachSwapChain) + sizeof(DMUI_AttachSwapChainFn)))
 
 #if defined(_MSC_VER)
 #pragma pack(pop)

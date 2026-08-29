@@ -24,6 +24,7 @@ namespace Addictol::DearModdingUI
 		std::string id;
 		std::string displayName;
 		uint32_t version{ 0 };
+		DMUI_ClientCapabilities capabilities{ DMUI_CLIENT_CAPABILITY_NONE };
 		DMUI_HostReadyCallback onHostReady{ nullptr };
 		DMUI_HostUnavailableCallback onHostUnavailable{ nullptr };
 		void* userData{ nullptr };
@@ -84,6 +85,8 @@ namespace Addictol::DearModdingUI
 			DMUI_ClientHandle a_client,
 			DMUI_PageHandle a_page,
 			DMUI_PageKind a_kind) const noexcept;
+		[[nodiscard]] DMUI_Result ValidateSwapChainClient(
+			DMUI_ClientHandle a_client) const noexcept;
 		[[nodiscard]] DMUI_Result InvokePage(DMUI_PageHandle a_page) noexcept;
 		[[nodiscard]] bool PageFailed(DMUI_PageHandle a_page) const noexcept;
 		void MarkPageFailed(DMUI_PageHandle a_page) noexcept;

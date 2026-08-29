@@ -40,8 +40,15 @@ namespace Addictol
 		static_assert(kKeyboardMessageFirst == WM_KEYFIRST && kKeyboardMessageLast == WM_KEYLAST);
 		static_assert(kMouseMessageFirst == WM_MOUSEFIRST && kMouseMessageLast == WM_MOUSELAST);
 		static_assert(kKeyDownMessage == WM_KEYDOWN);
+		static_assert(kKeyUpMessage == WM_KEYUP);
+		static_assert(kSysKeyDownMessage == WM_SYSKEYDOWN);
+		static_assert(kSysKeyUpMessage == WM_SYSKEYUP);
 		static_assert(kPresentTestFlag == DXGI_PRESENT_TEST);
 		static_assert(kWindowNcDestroyMessage == WM_NCDESTROY);
+		static_assert(kDxgiErrorDeviceRemoved == static_cast<uint32_t>(DXGI_ERROR_DEVICE_REMOVED));
+		static_assert(kDxgiErrorDeviceHung == static_cast<uint32_t>(DXGI_ERROR_DEVICE_HUNG));
+		static_assert(kDxgiErrorDeviceReset == static_cast<uint32_t>(DXGI_ERROR_DEVICE_RESET));
+		static_assert(kDxgiErrorDriverInternal == static_cast<uint32_t>(DXGI_ERROR_DRIVER_INTERNAL_ERROR));
 
 		using TD3D11Create = HRESULT(WINAPI*)(
 			IDXGIAdapter*, D3D_DRIVER_TYPE, HMODULE, UINT,
@@ -120,13 +127,14 @@ namespace Addictol
 		static std::atomic<bool> s_drawingEnabled{ false };
 		static std::atomic<bool> s_windowReady{ false };
 		static std::atomic<bool> s_gameLoaded{ false };
-		static std::atomic<bool> s_backendResetPending{ false };
 		static std::atomic<Backend> s_backend{ Backend::kUninitialized };
+		static std::array<std::atomic<bool>, 256> s_consumedToggleKeys{};
 		static std::atomic<bool> s_missingPresentOriginalLogged{ false };
 		static std::atomic<bool> s_missingResizeOriginalLogged{ false };
 		static std::string s_iniPath;
 
 		static Attachment s_attachment{};
+		static AttachmentLifecycle s_attachmentLifecycle{ AttachmentLifecycle::kVacant };
 		static ID3D11Texture2D* s_backBuffer{ nullptr };
 		static ID3D11RenderTargetView* s_backBufferView{ nullptr };
 		static BackBufferIdentity s_backBufferIdentity{};
@@ -147,6 +155,7 @@ namespace Addictol
 			UINT a_flags) noexcept;
 		static LRESULT CALLBACK HKWindowProc(HWND a_window, UINT a_message, WPARAM a_wparam, LPARAM a_lparam) noexcept;
 		static void CloseSinkRegistration() noexcept;
+		static void ShutdownBackend() noexcept;
 
 		static BOOL CALLBACK InitializeContextLock(
 			[[maybe_unused]] PINIT_ONCE a_once,
@@ -215,6 +224,33 @@ namespace Addictol
 			s_backBufferView = nullptr;
 			s_backBuffer = nullptr;
 			s_backBufferIdentity = {};
+		}
+
+		static void ClearConsumedToggleKeys() noexcept
+		{
+			for (auto& consumed : s_consumedToggleKeys)
+				consumed.store(false, std::memory_order_release);
+		}
+
+		static void RetireActiveAttachmentLocked(
+			IDXGISwapChain* a_swapChain,
+			HWND a_window) noexcept
+		{
+			if ((a_swapChain && s_attachment.swapChain != a_swapChain) ||
+				(a_window && s_attachment.window != a_window))
+				return;
+
+			s_drawingEnabled.store(false, std::memory_order_release);
+			SetGameInputSuppressed(false);
+			ReleaseBackBuffer();
+			s_backBufferFailureLogged = false;
+			ShutdownBackend();
+			s_activeSwapChain.store(nullptr, std::memory_order_release);
+			s_activeWindow.store(nullptr, std::memory_order_release);
+			s_windowReady.store(false, std::memory_order_release);
+			ReleaseAttachment(s_attachment);
+			s_attachmentLifecycle = AttachmentLifecycle::kRetired;
+			ClearConsumedToggleKeys();
 		}
 
 		[[nodiscard]] static IDXGIAdapter3* AcquireVideoMemoryAdapter(ID3D11Device* a_device) noexcept
@@ -404,17 +440,25 @@ namespace Addictol
 			return true;
 		}
 
-		[[nodiscard]] static bool InstallSwapChainHooks(IDXGISwapChain* a_swapChain) noexcept
+		[[nodiscard]] static bool InstallSwapChainHooks(
+			IDXGISwapChain* a_swapChain,
+			AttachmentLifecycle a_lifecycle) noexcept
 		{
+			auto** vtable = *reinterpret_cast<void***>(a_swapChain);
 			if (auto* associated = FindAssociatedSwapChainHook(a_swapChain))
 			{
 				auto** capturedVtable = associated->vtable.load(std::memory_order_acquire);
-				const auto resizeReady = PatchResizeBuffers(*associated, capturedVtable);
-				const auto presentReady = PatchPresent(*associated, capturedVtable);
-				return resizeReady && presentReady;
+				if (ReusesHookAssociation(
+						a_lifecycle,
+						reinterpret_cast<uintptr_t>(vtable),
+						reinterpret_cast<uintptr_t>(capturedVtable)))
+				{
+					const auto resizeReady = PatchResizeBuffers(*associated, capturedVtable);
+					const auto presentReady = PatchPresent(*associated, capturedVtable);
+					return resizeReady && presentReady;
+				}
 			}
 
-			auto** vtable = *reinterpret_cast<void***>(a_swapChain);
 			auto* record = FindSwapChainHook(vtable);
 			if (!record)
 			{
@@ -477,16 +521,9 @@ namespace Addictol
 			a_record.unicode.store(false, std::memory_order_release);
 			a_record.claimed.store(false, std::memory_order_release);
 
-			expectedWindow = a_window;
-			if (!s_activeWindow.compare_exchange_strong(
-					expectedWindow, nullptr, std::memory_order_acq_rel))
+			if (s_activeWindow.load(std::memory_order_acquire) != a_window)
 				return;
-
-			s_windowReady.store(false, std::memory_order_release);
-			s_drawingEnabled.store(false, std::memory_order_release);
-			if (s_backend.load(std::memory_order_acquire) != Backend::kUninitialized)
-				s_backendResetPending.store(true, std::memory_order_release);
-			SetGameInputSuppressed(false);
+			RetireActiveAttachmentLocked(nullptr, a_window);
 		}
 
 		static LRESULT CallPreviousWindowProc(
@@ -593,11 +630,8 @@ namespace Addictol
 			a_io.IniSavingRate = 10.0f;
 		}
 
-		static void ResetBackend() noexcept
+		static void ShutdownBackend() noexcept
 		{
-			if (!s_backendResetPending.exchange(false, std::memory_order_acq_rel))
-				return;
-
 			if (s_backend.load(std::memory_order_acquire) == Backend::kReady)
 			{
 				DearModdingUI::BackgroundBlur::ResetDeviceResources();
@@ -672,7 +706,6 @@ namespace Addictol
 
 		[[nodiscard]] static bool BackendReady() noexcept
 		{
-			ResetBackend();
 			switch (s_backend.load(std::memory_order_acquire))
 			{
 			case Backend::kReady:
@@ -876,7 +909,6 @@ namespace Addictol
 				const ContextLock lock;
 				if (a_swapChain == s_attachment.swapChain)
 				{
-					ResetBackend();
 					const auto activeWindow = s_activeWindow.load(std::memory_order_acquire);
 					if (activeWindow &&
 						activeWindow == s_attachment.window &&
@@ -898,6 +930,11 @@ namespace Addictol
 			const auto result = original(a_swapChain, a_syncInterval, a_flags);
 			if (active && ObservesDisplayedFrame(a_flags, result == S_OK))
 				Telemetry::ObserveFrame();
+			if (active && IsDefinitiveSwapChainLoss(static_cast<uint32_t>(result)))
+			{
+				const ContextLock lock;
+				RetireActiveAttachmentLocked(a_swapChain, nullptr);
+			}
 			return result;
 		}
 
@@ -921,13 +958,21 @@ namespace Addictol
 			}
 
 			if (original)
-				return original(
+			{
+				const auto result = original(
 					a_swapChain,
 					a_bufferCount,
 					a_width,
 					a_height,
 					a_format,
 					a_flags);
+				if (IsDefinitiveSwapChainLoss(static_cast<uint32_t>(result)))
+				{
+					const ContextLock lock;
+					RetireActiveAttachmentLocked(a_swapChain, nullptr);
+				}
+				return result;
+			}
 			if (!s_missingResizeOriginalLogged.exchange(true, std::memory_order_acq_rel))
 				REX::ERROR("Platform Imgui: ResizeBuffers hook has no previous target"sv);
 			return DXGI_ERROR_INVALID_CALL;
@@ -960,15 +1005,39 @@ namespace Addictol
 				bool& value;
 			};
 
-			if (DispatchesToggleSinks(a_message, static_cast<uint64_t>(a_lparam)))
+			const auto keyIndex = static_cast<size_t>(a_wparam);
+			const auto trackableKey = keyIndex < s_consumedToggleKeys.size();
+			const auto pressConsumed = trackableKey &&
+				s_consumedToggleKeys[keyIndex].load(std::memory_order_acquire);
+			const auto toggleDecision = DecideToggleMessage(
+				a_message,
+				static_cast<uint64_t>(a_lparam),
+				pressConsumed);
+			if (toggleDecision == ToggleMessageDecision::kConsume)
+				return 0;
+			if (toggleDecision == ToggleMessageDecision::kConsumeAndRelease)
 			{
+				s_consumedToggleKeys[keyIndex].store(false, std::memory_order_release);
+				return 0;
+			}
+			if (toggleDecision == ToggleMessageDecision::kDispatch)
+			{
+				bool consumed{ false };
 				for (size_t index = 0, count = s_toggleSinks.Size(); index < count; ++index)
-					s_toggleSinks.At(index)(static_cast<uint32_t>(a_wparam));
+				{
+					if (s_toggleSinks.At(index)(static_cast<uint32_t>(a_wparam)))
+						consumed = true;
+				}
+				if (consumed)
+				{
+					if (trackableKey)
+						s_consumedToggleKeys[keyIndex].store(true, std::memory_order_release);
+					return 0;
+				}
 			}
 
 			if (!s_drawingEnabled.load(std::memory_order_acquire) ||
-				s_backend.load(std::memory_order_acquire) != Backend::kReady ||
-				s_backendResetPending.load(std::memory_order_acquire))
+				s_backend.load(std::memory_order_acquire) != Backend::kReady)
 				return CallPreviousWindowProc(a_window, a_message, a_wparam, a_lparam);
 
 			LRESULT handled{ 0 };
@@ -980,7 +1049,6 @@ namespace Addictol
 						a_window == s_activeWindow.load(std::memory_order_acquire),
 						s_drawingEnabled.load(std::memory_order_acquire),
 						s_backend.load(std::memory_order_acquire) == Backend::kReady,
-						s_backendResetPending.load(std::memory_order_acquire),
 						ImGui::GetCurrentContext() != nullptr))
 				{
 					auto& io = ImGui::GetIO();
@@ -1015,7 +1083,11 @@ namespace Addictol
 			const ContextLock lock;
 			const auto currentIdentity = s_attachment.Identity();
 			const auto candidateIdentity = candidate.Identity();
-			const auto decision = DecideAttachment(currentIdentity, candidateIdentity, a_source);
+			const auto decision = DecideAttachment(
+				currentIdentity,
+				candidateIdentity,
+				a_source,
+				s_attachmentLifecycle);
 			if (decision == AttachmentDecision::kReject)
 			{
 				ReleaseAttachment(candidate);
@@ -1028,7 +1100,7 @@ namespace Addictol
 				ReleaseAttachment(candidate);
 				return sameSwapChain || a_source == AttachmentSource::kDiscovery;
 			}
-			if (!InstallSwapChainHooks(candidate.swapChain))
+			if (!InstallSwapChainHooks(candidate.swapChain, s_attachmentLifecycle))
 			{
 				ReleaseAttachment(candidate);
 				return false;
@@ -1041,13 +1113,14 @@ namespace Addictol
 			const auto windowAlreadyHooked = FindWindowHook(candidate.window) != nullptr;
 			ReleaseBackBuffer();
 			s_backBufferFailureLogged = false;
+			if (resetBackend)
+				ShutdownBackend();
 			auto previous = s_attachment;
 			s_attachment = candidate;
 			candidate = {};
+			s_attachmentLifecycle = AttachmentLifecycle::kActive;
 			s_activeWindow.store(s_attachment.window, std::memory_order_release);
 			s_windowReady.store(windowAlreadyHooked, std::memory_order_release);
-			if (resetBackend)
-				s_backendResetPending.store(true, std::memory_order_release);
 			s_activeSwapChain.store(s_attachment.swapChain, std::memory_order_release);
 			ReleaseAttachment(previous);
 
@@ -1188,8 +1261,8 @@ namespace Addictol
 		const ContextLock lock;
 		if (!s_attachment.swapChain)
 		{
-			REX::ERROR("Platform Imgui: no game swapchain was captured before kGameLoaded"sv);
-			return false;
+			REX::INFO("Platform Imgui: waiting for a discovered or explicit final swapchain"sv);
+			return true;
 		}
 		if (!SubclassWindow(s_attachment.window))
 			return false;

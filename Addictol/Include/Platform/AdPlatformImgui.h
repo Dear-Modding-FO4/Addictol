@@ -9,7 +9,7 @@ struct IDXGISwapChain;
 namespace Addictol
 {
 	using PlatformImguiDrawSink = void (*)() noexcept;
-	using PlatformImguiToggleSink = void (*)(uint32_t a_virtualKey) noexcept;
+	using PlatformImguiToggleSink = bool (*)(uint32_t a_virtualKey) noexcept;
 	using PlatformImguiSetupSink = void (*)(void* a_window) noexcept;
 
 	// The IAT, vtable, and window hooks stay installed because process-exit teardown order is unsafe.
@@ -17,7 +17,7 @@ namespace Addictol
 	{
 		// Sinks are permanent and must register from a load-stage module install.
 		[[nodiscard]] bool RegisterDrawSink(std::string_view a_name, PlatformImguiDrawSink a_sink) noexcept;
-		// Toggle sinks are global and receive fresh key presses even while ImGui captures keyboard input.
+		// A toggle sink returns true to consume that press, its repeats, and its matching release.
 		[[nodiscard]] bool RegisterToggleSink(std::string_view a_name, PlatformImguiToggleSink a_sink) noexcept;
 		// Setup sinks configure the fresh context on the render thread, before any backend or font upload.
 		[[nodiscard]] bool RegisterSetupSink(std::string_view a_name, PlatformImguiSetupSink a_sink) noexcept;

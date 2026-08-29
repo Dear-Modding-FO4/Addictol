@@ -1,14 +1,16 @@
 #define DMUI_HOST_EXPORTS
 #include <DearModdingUI/Host.h>
 #include <DearModdingUI/ImGuiRecovery.h>
+#include <Platform/AdPlatformImgui.h>
 
 #include <REX/REX.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
+#include <DearModdingUI/ImGuiFingerprint.h>
+
 #include <atomic>
-#include <cstring>
 #include <limits>
 #include <mutex>
 
@@ -261,6 +263,30 @@ namespace Addictol::DearModdingUI
 			return DMUI_RESULT_OK;
 		}
 
+		[[nodiscard]] DMUI_Result DMUI_CALL ApiAttachSwapChainCpp(
+			DMUI_ClientHandle a_client,
+			void* a_nativeSwapChain) noexcept
+		{
+			if (a_client == DMUI_INVALID_CLIENT_HANDLE || !a_nativeSwapChain)
+				return DMUI_RESULT_INVALID_ARGUMENT;
+
+			auto& service = GetService();
+			const auto state = service.state.load(std::memory_order_acquire);
+			if (state == DMUI_HOST_STATE_INITIALIZING)
+				return DMUI_RESULT_RENDERER_BUSY;
+			if (state != DMUI_HOST_STATE_WAITING_FOR_PRESENT &&
+				state != DMUI_HOST_STATE_READY)
+				return StateResult(state);
+
+			const auto clientResult = service.registry.ValidateSwapChainClient(a_client);
+			if (clientResult != DMUI_RESULT_OK)
+				return clientResult;
+			return PlatformImgui::AttachSwapChain(
+					   static_cast<IDXGISwapChain*>(a_nativeSwapChain)) ?
+				DMUI_RESULT_OK :
+				DMUI_RESULT_SWAPCHAIN_REJECTED;
+		}
+
 		template <class Function>
 		[[nodiscard]] DMUI_Result GuardApiCall(Function&& a_function) noexcept
 		{
@@ -337,27 +363,20 @@ namespace Addictol::DearModdingUI
 				return ApiSelectPageCpp(a_client, a_page);
 			});
 		}
+
+		[[nodiscard]] DMUI_Result DMUI_CALL ApiAttachSwapChain(
+			DMUI_ClientHandle a_client,
+			void* a_nativeSwapChain) noexcept
+		{
+			return GuardApiCall([&]() noexcept {
+				return ApiAttachSwapChainCpp(a_client, a_nativeSwapChain);
+			});
+		}
 	}
 
 	const DMUI_ImGuiFingerprint& HostFingerprint() noexcept
 	{
-		static const DMUI_ImGuiFingerprint fingerprint = [] {
-			DMUI_ImGuiFingerprint result{};
-			result.structSize = sizeof(result);
-			std::memcpy(
-				result.upstreamCommit,
-				DMUI_IMGUI_UPSTREAM_COMMIT,
-				sizeof(result.upstreamCommit));
-			result.imguiVersionNum = IMGUI_VERSION_NUM;
-			result.flags = DMUI_IMGUI_FINGERPRINT_DOCKING;
-			result.sizeOfImGuiIO = sizeof(ImGuiIO);
-			result.sizeOfImGuiStyle = sizeof(ImGuiStyle);
-			result.sizeOfImVec2 = sizeof(ImVec2);
-			result.sizeOfImVec4 = sizeof(ImVec4);
-			result.sizeOfImDrawVert = sizeof(ImDrawVert);
-			result.sizeOfImDrawIdx = sizeof(ImDrawIdx);
-			return result;
-		}();
+		static const DMUI_ImGuiFingerprint fingerprint = DMUI_MakeImGuiFingerprint();
 		return fingerprint;
 	}
 
@@ -373,7 +392,8 @@ namespace Addictol::DearModdingUI
 			&ApiRequestFrame,
 			&ApiReleaseFrame,
 			&ApiIsMenuVisible,
-			&ApiSelectPage
+			&ApiSelectPage,
+			&ApiAttachSwapChain
 		};
 		return api;
 	}

@@ -9,10 +9,10 @@ namespace
 
 	void draw_sink_a() noexcept {}
 	void draw_sink_b() noexcept {}
-	void key_sink(uint32_t) noexcept {}
+	bool key_sink(uint32_t) noexcept { return false; }
 
 	using DrawSink = void (*)() noexcept;
-	using KeySink = void (*)(uint32_t) noexcept;
+	using KeySink = bool (*)(uint32_t) noexcept;
 }
 
 namespace vmm_tests
@@ -33,29 +33,83 @@ namespace vmm_tests
 			constexpr AttachmentIdentity invalid{ 5, 2, 0, 4 };
 
 			require(
-				DecideAttachment(empty, game, AttachmentSource::kDiscovery) ==
+				DecideAttachment(
+					empty,
+					game,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kVacant) ==
 					AttachmentDecision::kAttach,
 				"the first discovered swapchain must attach");
 			require(
-				DecideAttachment(game, sameGame, AttachmentSource::kExplicit) ==
+				DecideAttachment(
+					game,
+					sameGame,
+					AttachmentSource::kExplicit,
+					AttachmentLifecycle::kActive) ==
 					AttachmentDecision::kKeepCurrent,
 				"reattaching the same swapchain must be idempotent");
 			require(
-				DecideAttachment(game, reboundGame, AttachmentSource::kDiscovery) ==
+				DecideAttachment(
+					game,
+					reboundGame,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kActive) ==
 					AttachmentDecision::kAttach,
 				"a captured swapchain with a changed binding must refresh its attachment");
 			require(
-				DecideAttachment(game, other, AttachmentSource::kDiscovery) ==
+				DecideAttachment(
+					game,
+					other,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kActive) ==
 					AttachmentDecision::kKeepCurrent,
-				"later discovery must not select an unrelated swapchain");
+				"an active attachment must keep an unrelated discovery");
 			require(
-				DecideAttachment(game, other, AttachmentSource::kExplicit) ==
+				DecideAttachment(
+					game,
+					other,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kRetired) ==
+					AttachmentDecision::kAttach,
+				"a retired attachment must accept a discovered replacement");
+			require(
+				DecideAttachment(
+					game,
+					sameGame,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kRetired) ==
+					AttachmentDecision::kAttach,
+				"a retired address reused by a new swapchain must attach");
+			require(
+				DecideAttachment(
+					game,
+					other,
+					AttachmentSource::kExplicit,
+					AttachmentLifecycle::kActive) ==
 					AttachmentDecision::kAttach,
 				"an explicit final swapchain must replace discovery");
 			require(
-				DecideAttachment(game, invalid, AttachmentSource::kExplicit) ==
+				DecideAttachment(
+					game,
+					invalid,
+					AttachmentSource::kExplicit,
+					AttachmentLifecycle::kActive) ==
 					AttachmentDecision::kReject,
 				"incomplete render bindings must be rejected");
+		});
+
+		runner.test("definitive DXGI failures retire the active attachment", [] {
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDeviceRemoved),
+				"device removal must retire the attachment");
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDeviceHung),
+				"a device hang must retire the attachment");
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDeviceReset),
+				"a device reset must retire the attachment");
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDriverInternal),
+				"an internal driver failure must retire the attachment");
+			require(!IsDefinitiveSwapChainLoss(0), "success must keep the attachment");
+			require(!IsDefinitiveSwapChainLoss(0x887A0001u),
+				"a transient invalid call must keep the attachment");
 		});
 
 		runner.test("backend reset follows render binding rather than swapchain identity", [] {
@@ -88,6 +142,15 @@ namespace vmm_tests
 			require(
 				MatchHookDispatch(2, 20, 1, 10) == HookDispatchMatch::kNone,
 				"an unrelated instance and vtable must not borrow another predecessor");
+			require(
+				ReusesHookAssociation(AttachmentLifecycle::kActive, 20, 10),
+				"an active proxy must retain its predecessor after shadow-vtable retargeting");
+			require(
+				ReusesHookAssociation(AttachmentLifecycle::kRetired, 10, 10),
+				"a reused address on the same patched vtable must retain its predecessor");
+			require(
+				!ReusesHookAssociation(AttachmentLifecycle::kRetired, 20, 10),
+				"a reused address with a new vtable must establish a new predecessor");
 		});
 
 		runner.test("frame telemetry observes only displayed presents", [] {
@@ -207,22 +270,19 @@ namespace vmm_tests
 
 		runner.test("window input requires live state under the context lock", [] {
 			require(
-				HandlesWindowMessage(true, true, true, false, true),
+				HandlesWindowMessage(true, true, true, true),
 				"a live backend may handle active-window input");
 			require(
-				!HandlesWindowMessage(false, true, true, false, true),
+				!HandlesWindowMessage(false, true, true, true),
 				"an inactive window must only forward input");
 			require(
-				!HandlesWindowMessage(true, false, true, false, true),
+				!HandlesWindowMessage(true, false, true, true),
 				"an idle renderer must only forward input");
 			require(
-				!HandlesWindowMessage(true, true, false, false, true),
+				!HandlesWindowMessage(true, true, false, true),
 				"an unavailable backend must only forward input");
 			require(
-				!HandlesWindowMessage(true, true, true, true, true),
-				"a pending backend reset must only forward input");
-			require(
-				!HandlesWindowMessage(true, true, true, false, false),
+				!HandlesWindowMessage(true, true, true, false),
 				"a destroyed ImGui context must only forward input");
 		});
 
@@ -248,6 +308,31 @@ namespace vmm_tests
 			require(!DispatchesToggleSinks(0x0105, 0x0001), "WM_SYSKEYUP does not dispatch");
 			require(ClassifyMessage(0x0104) == MessageClass::kKeyboard,
 				"WM_SYSKEYDOWN is keyboard traffic and follows the capture state");
+
+			require(
+				DecideToggleMessage(kKeyDownMessage, 1, false) ==
+					ToggleMessageDecision::kDispatch,
+				"a fresh keydown must ask toggle sinks");
+			require(
+				DecideToggleMessage(kKeyDownMessage, kKeyRepeatBit | 1, true) ==
+					ToggleMessageDecision::kConsume,
+				"a consumed press must also consume repeats");
+			require(
+				DecideToggleMessage(kKeyDownMessage, kKeyRepeatBit | 1, false) ==
+					ToggleMessageDecision::kForward,
+				"an unrelated repeat must reach the game");
+			require(
+				DecideToggleMessage(kKeyUpMessage, 1, true) ==
+					ToggleMessageDecision::kConsumeAndRelease,
+				"a consumed press must consume and release its key-up");
+			require(
+				DecideToggleMessage(kSysKeyUpMessage, 1, true) ==
+					ToggleMessageDecision::kConsumeAndRelease,
+				"a consumed system press must consume its system key-up");
+			require(
+				DecideToggleMessage(kKeyUpMessage, 1, false) ==
+					ToggleMessageDecision::kForward,
+				"an unrelated key-up must reach the game");
 		});
 	}
 }

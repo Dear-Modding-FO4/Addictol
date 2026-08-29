@@ -150,6 +150,7 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiFingerprint.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h" />

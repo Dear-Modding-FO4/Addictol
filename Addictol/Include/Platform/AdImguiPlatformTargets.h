@@ -39,24 +39,59 @@ namespace Addictol::ImguiPlatform
 		kAttach
 	};
 
+	enum class AttachmentLifecycle : uint32_t
+	{
+		kVacant,
+		kActive,
+		kRetired
+	};
+
 	[[nodiscard]] constexpr AttachmentDecision DecideAttachment(
 		const AttachmentIdentity& a_current,
 		const AttachmentIdentity& a_candidate,
-		AttachmentSource a_source) noexcept
+		AttachmentSource a_source,
+		AttachmentLifecycle a_lifecycle) noexcept
 	{
 		if (!a_candidate.Valid())
 			return AttachmentDecision::kReject;
+		if (a_lifecycle == AttachmentLifecycle::kRetired)
+			return AttachmentDecision::kAttach;
 		if (a_current.swapChain == a_candidate.swapChain &&
 			a_current.device == a_candidate.device &&
 			a_current.context == a_candidate.context &&
 			a_current.window == a_candidate.window &&
-			a_current.swapChain)
+			a_lifecycle == AttachmentLifecycle::kActive)
 			return AttachmentDecision::kKeepCurrent;
-		if (a_current.swapChain == a_candidate.swapChain && a_current.swapChain)
+		if (a_current.swapChain == a_candidate.swapChain &&
+			a_lifecycle == AttachmentLifecycle::kActive)
 			return AttachmentDecision::kAttach;
-		if (!a_current.Valid() || a_source == AttachmentSource::kExplicit)
+		if (a_lifecycle != AttachmentLifecycle::kActive ||
+			!a_current.Valid() ||
+			a_source == AttachmentSource::kExplicit)
 			return AttachmentDecision::kAttach;
 		return AttachmentDecision::kKeepCurrent;
+	}
+
+	inline constexpr uint32_t kDxgiErrorDeviceRemoved = 0x887A0005u;
+	inline constexpr uint32_t kDxgiErrorDeviceHung = 0x887A0006u;
+	inline constexpr uint32_t kDxgiErrorDeviceReset = 0x887A0007u;
+	inline constexpr uint32_t kDxgiErrorDriverInternal = 0x887A0020u;
+
+	[[nodiscard]] constexpr bool IsDefinitiveSwapChainLoss(uint32_t a_result) noexcept
+	{
+		return a_result == kDxgiErrorDeviceRemoved ||
+			a_result == kDxgiErrorDeviceHung ||
+			a_result == kDxgiErrorDeviceReset ||
+			a_result == kDxgiErrorDriverInternal;
+	}
+
+	[[nodiscard]] constexpr bool ReusesHookAssociation(
+		AttachmentLifecycle a_lifecycle,
+		uintptr_t a_liveVtable,
+		uintptr_t a_associatedVtable) noexcept
+	{
+		return a_lifecycle != AttachmentLifecycle::kRetired ||
+			(a_liveVtable && a_liveVtable == a_associatedVtable);
 	}
 
 	enum class HookDispatchMatch : uint32_t
@@ -292,7 +327,9 @@ namespace Addictol::ImguiPlatform
 	inline constexpr uint32_t kMouseMessageFirst = 0x0200;
 	inline constexpr uint32_t kMouseMessageLast = 0x020E;
 	inline constexpr uint32_t kKeyDownMessage = 0x0100;
+	inline constexpr uint32_t kKeyUpMessage = 0x0101;
 	inline constexpr uint32_t kSysKeyDownMessage = 0x0104;
+	inline constexpr uint32_t kSysKeyUpMessage = 0x0105;
 	inline constexpr uint64_t kKeyRepeatBit = uint64_t{ 1 } << 30;
 
 	[[nodiscard]] constexpr MessageClass ClassifyMessage(uint32_t a_message) noexcept
@@ -332,17 +369,42 @@ namespace Addictol::ImguiPlatform
 		return (a_message == kKeyDownMessage || a_message == kSysKeyDownMessage) && !IsKeyRepeat(a_lparam);
 	}
 
+	enum class ToggleMessageDecision : uint32_t
+	{
+		kForward,
+		kDispatch,
+		kConsume,
+		kConsumeAndRelease
+	};
+
+	[[nodiscard]] constexpr ToggleMessageDecision DecideToggleMessage(
+		uint32_t a_message,
+		uint64_t a_lparam,
+		bool a_pressConsumed) noexcept
+	{
+		if (a_message == kKeyDownMessage || a_message == kSysKeyDownMessage)
+		{
+			if (!IsKeyRepeat(a_lparam))
+				return ToggleMessageDecision::kDispatch;
+			return a_pressConsumed ?
+				ToggleMessageDecision::kConsume :
+				ToggleMessageDecision::kForward;
+		}
+		if ((a_message == kKeyUpMessage || a_message == kSysKeyUpMessage) &&
+			a_pressConsumed)
+			return ToggleMessageDecision::kConsumeAndRelease;
+		return ToggleMessageDecision::kForward;
+	}
+
 	[[nodiscard]] constexpr bool HandlesWindowMessage(
 		bool a_activeWindow,
 		bool a_drawingRequested,
 		bool a_backendReady,
-		bool a_backendResetPending,
 		bool a_hasContext) noexcept
 	{
 		return a_activeWindow &&
 			a_drawingRequested &&
 			a_backendReady &&
-			!a_backendResetPending &&
 			a_hasContext;
 	}
 
