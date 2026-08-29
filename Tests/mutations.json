@@ -8,6 +8,14 @@
     "message": "categories were not grouped"
   },
   {
+    "name": "DearModdingUI client selection clears search",
+    "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
+    "find": "a_state.search.clear();\r\n\t\treturn true;",
+    "replace": "a_state.search = a_state.search;\r\n\t\treturn true;",
+    "check": "client dropdown selection handles zero one and many clients",
+    "message": "single-client selection did not clear search"
+  },
+  {
     "name": "DearModdingUI freeze closes registration",
     "target": "Addictol/Source/DearModdingUI/Registry.cpp",
     "find": "if (!m_open)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",

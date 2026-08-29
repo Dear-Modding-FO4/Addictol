@@ -54,6 +54,10 @@ Data/F4SE/Plugins/Addictol_FacegenExceptions.ini
 Data/F4SE/Plugins/Addictol_SNCT.ini
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-Regular.ttf
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-SemiBold.ttf
+Data/F4SE/Plugins/DearModdingUI/Icons/LICENSE
+Data/F4SE/Plugins/DearModdingUI/Icons/Actions/**/*.png
+Data/F4SE/Plugins/DearModdingUI/Icons/Categories/**/*.png
+Data/F4SE/Plugins/DearModdingUI/Icons/Clients/*.png
 Data/F4SE/Plugins/DearModdingUI/Shaders/BackgroundBlur*.hlsl
 Data/Scripts/Addictol.pex
 Data/Scripts/XCELL.pex
@@ -88,7 +92,9 @@ and any that disabled themselves. Check it first if something is not working.
 not recognize the name. `uMenuRefreshMs` sets how often the open page copies fresh data, clamped to
 100-2000 ms.
 
-The Dear Modding window selects a registered mod first, then shows its categorized settings pages.
+The Evil Modding window selects a registered mod from a dropdown, then shows its categorized settings
+pages. Client and category icons resolve by convention from the shared `DearModdingUI\Icons` folder;
+missing icons fall back to text without reserving empty space.
 Addictol telemetry pages retain their configured order and Log Control remains last.
 Its default style, typography, scaling, search, navigation, header, footer, blur, and cursor
 match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's neutral mod registry.
@@ -133,4 +139,5 @@ Community Shaders (`src/Menu/FeatureListRenderer.*`, `Menu.*`, `ThemeManager.*`,
 `CursorLoader.*`, `BackgroundBlur.*`, `src/Utils/UI.*`, and `ImGuiRecovery.h`), which is GPL-3.0.
 Its Gaussian blur credits Unrimp by Christian Ofenberg under MIT. The bundled Jost fonts under
 `Data\F4SE\Plugins\DearModdingUI\Fonts` ship under the SIL Open Font License; their license text sits
-next to them.
+next to them. Shared menu icons under `Data\F4SE\Plugins\DearModdingUI\Icons` come from Phosphor Icons
+under MIT; their license text sits at the icon root.

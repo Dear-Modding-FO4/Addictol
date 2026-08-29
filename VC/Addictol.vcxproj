@@ -26,6 +26,7 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\IconLoader.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Shell.cpp" />
@@ -152,6 +153,8 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconLoader.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconPaths.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiFingerprint.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h" />
@@ -276,6 +279,26 @@
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-Regular.ttf" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-SemiBold.ttf" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\LICENSE" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\clear-cache.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\restore-settings.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\Monochrome\clear-cache.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\Monochrome\restore-settings.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\compatibility.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\dev-tools.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\diagnostics.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\lighting.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\misc.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\performance.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\post-process.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\postprocess.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\compatibility.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\dev-tools.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\lighting.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\misc.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\performance.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\post-process.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingaddictol.png" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurDownsample.hlsl" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurHorizontal.hlsl" />
@@ -339,7 +362,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;Ole32.lib;Windowscodecs.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ResourceCompile>

@@ -352,6 +352,8 @@ target(plugin_name, function()
         "dxgi",
         "d3d11",
         "d3dcompiler",
+        "Ole32",
+        "Windowscodecs",
         "ws2_32",
         "version",
         "Dbghelp",

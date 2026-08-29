@@ -1,4 +1,5 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
+#include "../Addictol/Include/DearModdingUI/IconPaths.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
 #include "Harness.h"
@@ -439,6 +440,118 @@ namespace vmm_tests
 				"invalid selection did not fall back to the first page");
 		});
 
+		runner.test("icon names and paths resolve by the shared convention", [] {
+			const std::filesystem::path root{ "Data/F4SE/Plugins/DearModdingUI/Icons" };
+			require(SlugifyIconName("Post Process") == "post-process",
+				"spaces were not collapsed");
+			require(SlugifyIconName("Mixed___CASE Name") == "mixed-case-name",
+				"underscores or mixed case changed");
+			require(SlugifyIconName("A.B/C-D!") == "abcd",
+				"punctuation was not dropped");
+			require(SlugifyIconName("").empty() && SlugifyIconName("!@#$").empty(),
+				"empty icon names produced a slug");
+
+			const auto category = BuildIconPath(root, IconKind::kCategory, "Post Process");
+			const auto punctuated =
+				BuildIconPath(root, IconKind::kCategory, "Post-process");
+			const auto client = BuildIconPath(
+				root, IconKind::kClient, "dear-modding.addictol");
+			require(category == root / "Categories" / "post-process.png",
+				"category icon path changed");
+			require(punctuated == root / "Categories" / "postprocess.png",
+				"punctuated category icon path changed");
+			require(client == root / "Clients" / "dearmoddingaddictol.png",
+				"client icon path changed");
+			require(!BuildIconPath(root, IconKind::kCategory, "..."),
+				"empty category slug produced a path");
+
+			const auto resolved = ResolveIconPath(
+				root,
+				IconKind::kCategory,
+				"Post Process",
+				[&](const auto& a_path) { return a_path == *category; });
+			const auto missing = ResolveIconPath(
+				root,
+				IconKind::kCategory,
+				"No Matching File",
+				[](const auto&) { return false; });
+			require(resolved == category, "existing icon did not resolve");
+			require(!missing, "missing icon resolved to a blank resource");
+		});
+
+		runner.test("client dropdown selection handles zero one and many clients", [] {
+			ClientSelectionState selection{
+				DMUI_INVALID_CLIENT_HANDLE,
+				DMUI_INVALID_PAGE_HANDLE,
+				"unchanged"
+			};
+			const NavigationModel empty;
+			require(!SelectClient(empty, 1, selection),
+				"zero-client selection unexpectedly changed");
+			require(selection.search == "unchanged",
+				"zero-client selection cleared the search");
+
+			NavigationModel single;
+			single.clients.push_back({
+				1,
+				"single.mod",
+				"Single",
+				DMUI_MAKE_VERSION(1, 0),
+				{ NavigationCategory{
+					"General",
+					{ NavigationPage{
+						10,
+						1,
+						"only",
+						"Only",
+						"General",
+						{},
+						0 } } } }
+			});
+			require(SelectClient(single, 1, selection),
+				"single client could not be selected");
+			require(selection.activeClient == 1 && selection.activePage == 10,
+				"single client did not select its first page");
+			require(selection.search.empty(),
+				"single-client selection did not clear search");
+			selection.search = "keep";
+			require(!SelectClient(single, 1, selection) && selection.search == "keep",
+				"reselecting the active client changed state");
+
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState callback;
+			const auto zulu = AddClient(
+				registry, "z.external", "Zulu", fingerprint, callback);
+			const auto alpha = AddClient(
+				registry,
+				"alpha.host",
+				"Alpha",
+				fingerprint,
+				callback,
+				ClientOrigin::kHost);
+			const auto zuluPage = AddPage(
+				registry, zulu, "settings", "Settings", "General", 0,
+				DMUI_PAGE_KIND_SETTINGS, callback);
+			const auto alphaPage = AddPage(
+				registry, alpha, "settings", "Settings", "General", 0,
+				DMUI_PAGE_KIND_SETTINGS, callback);
+			require(registry.Freeze(), "many-client registry did not freeze");
+			const auto& many = registry.Navigation();
+			require(many.clients.size() == 2 &&
+					many.clients[0].handle == alpha &&
+					many.clients[1].handle == zulu,
+				"client dropdown order was not deterministic");
+
+			selection = { alpha, alphaPage, "pages" };
+			require(SelectClient(many, zulu, selection),
+				"many-client selection did not change");
+			require(selection.activeClient == zulu &&
+					selection.activePage == zuluPage &&
+					selection.search.empty(),
+				"selection change did not reset page and search");
+		});
+
 		runner.test("one-page navigation and failed-page presentation remain stable", [] {
 			const auto fingerprint = Fingerprint();
 			Registry registry{ fingerprint };
@@ -662,6 +775,24 @@ namespace vmm_tests
 						cursor.hotspotY == 0.0f,
 					"default cursor image metadata changed");
 			}
+		});
+
+		runner.test("absent icons reserve no navigation layout space", [] {
+			const auto absent = DecideInlineIconLayout(false, 80.0f, 20.0f, 20.0f, 4.0f);
+			require(!absent.drawIcon &&
+					absent.iconSize == 0.0f &&
+					absent.textOffset == 0.0f &&
+					absent.contentWidth == 80.0f &&
+					absent.contentHeight == 20.0f,
+				"absent icon left a blank layout box");
+
+			const auto present = DecideInlineIconLayout(true, 80.0f, 18.0f, 20.0f, 4.0f);
+			require(present.drawIcon &&
+					present.iconSize == 20.0f &&
+					present.textOffset == 24.0f &&
+					present.contentWidth == 104.0f &&
+					present.contentHeight == 20.0f,
+				"present icon layout did not align to the font");
 		});
 
 		runner.test("cursor ownership follows modal visibility", [] {

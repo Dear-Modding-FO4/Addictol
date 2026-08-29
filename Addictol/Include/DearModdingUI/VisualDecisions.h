@@ -55,4 +55,33 @@ namespace Addictol::DearModdingUI
 			CursorOwnershipTransition::kAcquire :
 			CursorOwnershipTransition::kRelease;
 	}
+
+	struct InlineIconLayout
+	{
+		bool drawIcon{ false };
+		float iconSize{ 0.0f };
+		float textOffset{ 0.0f };
+		float contentWidth{ 0.0f };
+		float contentHeight{ 0.0f };
+	};
+
+	[[nodiscard]] constexpr InlineIconLayout DecideInlineIconLayout(
+		bool a_hasIcon,
+		float a_textWidth,
+		float a_textHeight,
+		float a_fontSize,
+		float a_spacing) noexcept
+	{
+		const auto textWidth = a_textWidth > 0.0f ? a_textWidth : 0.0f;
+		const auto textHeight = a_textHeight > 0.0f ? a_textHeight : 0.0f;
+		const auto iconSize = a_hasIcon && a_fontSize > 0.0f ? a_fontSize : 0.0f;
+		const auto spacing = iconSize > 0.0f && a_spacing > 0.0f ? a_spacing : 0.0f;
+		return {
+			iconSize > 0.0f,
+			iconSize,
+			iconSize + spacing,
+			textWidth + iconSize + spacing,
+			textHeight > iconSize ? textHeight : iconSize
+		};
+	}
 }

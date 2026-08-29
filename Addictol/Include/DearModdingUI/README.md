@@ -26,7 +26,7 @@ demand never suppresses input.
 
 ## Shared menu
 
-The Dear Modding window owns all navigation chrome. Its mod selector is built from registered client
+The Evil Modding window owns all navigation chrome. Its mod dropdown is built from registered client
 display names; the sidebar then groups that client's settings pages by category and orders pages by
 `sortKey`, display name, and ID. Overlay pages never appear there. `selectPage` switches both the
 active mod and page, opens the window, and falls back deterministically if the previous selection is
@@ -40,9 +40,11 @@ Client pages inherit the active theme and may use their own balanced child regio
 The host ports Community Shaders' current default palette, style dimensions, Jost Body, Title,
 Heading, Subheading, and Subtext roles, resolution scaling, search and navigation treatments,
 rounded title-bar highlights, footer, docking, and background blur around the neutral registry.
-Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts and blur shaders load only from
-that neutral root. Missing fonts fall back by role to ImGui's built-in font; missing or invalid blur
-shaders disable blur without disabling the menu or the C ABI host.
+Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts, icons, and blur shaders load
+only from that neutral root. Client icons use `Icons\Clients\<client-id-slug>.png`; category icons use
+`Icons\Categories\<category-slug>.png`. Slugs use lowercase ASCII, collapse spaces and underscores to
+single hyphens, and drop other non-alphanumeric characters. Missing assets fall back without
+disabling the menu or the C ABI host.
 
 The modal host normally drives a bounded virtual cursor from raw mouse motion. While a Fallout cursor
 menu is open, it maps the engine's client-pixel position into the attached backbuffer, synchronizes the

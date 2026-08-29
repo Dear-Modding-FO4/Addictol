@@ -3,7 +3,9 @@
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/BackgroundBlur.h>
 #include <DearModdingUI/Host.h>
+#include <DearModdingUI/IconLoader.h>
 #include <DearModdingUI/Theme.h>
+#include <DearModdingUI/VisualDecisions.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -14,6 +16,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <cstdint>
 #include <map>
 #include <numbers>
 #include <string>
@@ -23,11 +26,8 @@ namespace Addictol::DearModdingUI
 {
 	namespace
 	{
-		struct ShellState
+		struct ShellState : ClientSelectionState
 		{
-			DMUI_ClientHandle activeClient{ DMUI_INVALID_CLIENT_HANDLE };
-			DMUI_PageHandle activePage{ DMUI_INVALID_PAGE_HANDLE };
-			std::string search;
 			std::map<std::string, bool> categoryExpansion;
 		};
 
@@ -35,17 +35,6 @@ namespace Addictol::DearModdingUI
 		{
 			static ShellState state;
 			return state;
-		}
-
-		[[nodiscard]] DMUI_PageHandle FirstPage(
-			const NavigationClient& a_client) noexcept
-		{
-			for (const auto& category : a_client.categories)
-			{
-				if (!category.pages.empty())
-					return category.pages.front().handle;
-			}
-			return DMUI_INVALID_PAGE_HANDLE;
 		}
 
 		[[nodiscard]] std::string Lower(std::string_view a_value)
@@ -70,13 +59,67 @@ namespace Addictol::DearModdingUI
 				Lower(a_page.summary).contains(search);
 		}
 
-		void SelectClient(
-			ShellState& a_state,
-			const NavigationClient& a_client) noexcept
+		void DrawIcon(
+			ImDrawList* a_drawList,
+			ID3D11ShaderResourceView* a_texture,
+			const ImVec2& a_position,
+			float a_size,
+			ImU32 a_color) noexcept
 		{
-			a_state.activeClient = a_client.handle;
-			a_state.activePage = FirstPage(a_client);
-			a_state.search.clear();
+			if (!a_texture || a_size <= 0.0f)
+				return;
+			a_drawList->AddImage(
+				ImTextureRef{ static_cast<ImTextureID>(
+					reinterpret_cast<uintptr_t>(a_texture)) },
+				a_position,
+				{ a_position.x + a_size, a_position.y + a_size },
+				{},
+				{ 1.0f, 1.0f },
+				a_color);
+		}
+
+		void DrawIconText(
+			const ImVec2& a_position,
+			float a_height,
+			ID3D11ShaderResourceView* a_texture,
+			const char* a_text,
+			ImU32 a_color,
+			const ImVec4* a_clip = nullptr) noexcept
+		{
+			const auto textSize = ImGui::CalcTextSize(a_text);
+			const auto layout = DecideInlineIconLayout(
+				a_texture != nullptr,
+				textSize.x,
+				textSize.y,
+				ImGui::GetFontSize(),
+				ImGui::GetStyle().ItemSpacing.x);
+			const auto contentY =
+				a_position.y + ((std::max)(a_height, layout.contentHeight) -
+					layout.contentHeight) * 0.5f;
+			if (layout.drawIcon)
+			{
+				DrawIcon(
+					ImGui::GetWindowDrawList(),
+					a_texture,
+					{
+						a_position.x,
+						contentY + (layout.contentHeight - layout.iconSize) * 0.5f
+					},
+					layout.iconSize,
+					a_color);
+			}
+			ImGui::GetWindowDrawList()->AddText(
+				ImGui::GetFont(),
+				ImGui::GetFontSize(),
+				{
+					a_position.x + layout.textOffset,
+					contentY + (layout.contentHeight - textSize.y) * 0.5f
+				},
+				a_color,
+				a_text,
+				nullptr,
+				0.0f,
+				a_clip);
 		}
 
 		[[nodiscard]] float GetPillRounding(
@@ -242,7 +285,7 @@ namespace Addictol::DearModdingUI
 			{
 				const Theme::FontGuard font{ Theme::FontRole::kTitle };
 				ImGui::SetWindowFontScale(textScale);
-				textWidth = ImGui::CalcTextSize("Dear Modding").x;
+				textWidth = ImGui::CalcTextSize("Evil Modding").x;
 				ImGui::SetWindowFontScale(1.0f);
 			}
 			const auto offset = GetCenterOffsetForContent(textWidth);
@@ -252,7 +295,7 @@ namespace Addictol::DearModdingUI
 			ImGui::SetWindowFontScale(textScale);
 			{
 				const Theme::FontGuard font{ Theme::FontRole::kTitle };
-				ImGui::TextUnformatted("Dear Modding");
+				ImGui::TextUnformatted("Evil Modding");
 			}
 			ImGui::SetWindowFontScale(1.0f);
 			ImGui::SeparatorEx(
@@ -311,15 +354,22 @@ namespace Addictol::DearModdingUI
 			const auto position = ImGui::GetCursorScreenPos();
 			const auto availableWidth = ImGui::GetContentRegionAvail().x;
 			const auto textSize = ImGui::CalcTextSize(text);
+			auto* texture = IconLoader::Get(IconKind::kCategory, a_name);
+			const auto layout = DecideInlineIconLayout(
+				texture != nullptr,
+				textSize.x,
+				textSize.y,
+				ImGui::GetFontSize(),
+				ImGui::GetStyle().ItemSpacing.x);
 			const auto lineY = position.y + textSize.y * 0.5f;
 			const auto lineLength =
-				(availableWidth - textSize.x - 20.0f) * 0.5f;
+				(availableWidth - layout.contentWidth - 20.0f) * 0.5f;
 
 			ImGui::PushID(a_key);
 			ImGui::SetCursorScreenPos(position);
 			const auto clicked = ImGui::InvisibleButton(
 				"##CategoryHeader",
-				{ availableWidth, textSize.y + 4.0f });
+				{ availableWidth, layout.contentHeight + 4.0f });
 			const auto hovered = ImGui::IsItemHovered();
 
 			auto color = Theme::kFullPalette[ImGuiCol_Text];
@@ -337,7 +387,7 @@ namespace Addictol::DearModdingUI
 					packed);
 			}
 			const auto rightLineStart =
-				position.x + lineLength + 10.0f + textSize.x + 10.0f;
+				position.x + lineLength + 10.0f + layout.contentWidth + 10.0f;
 			if (rightLineStart < position.x + availableWidth)
 			{
 				drawList->AddLine(
@@ -345,16 +395,18 @@ namespace Addictol::DearModdingUI
 					{ position.x + availableWidth, lineY },
 					packed);
 			}
-			drawList->AddText(
+			DrawIconText(
 				{ position.x + lineLength + 10.0f, position.y + 2.0f },
-				packed,
-				text);
+				layout.contentHeight,
+				texture,
+				text,
+				packed);
 			if (clicked)
 				a_expanded = !a_expanded;
 			ImGui::PopID();
 
 			ImGui::SetCursorScreenPos(
-				{ position.x, position.y + textSize.y + 8.0f });
+				{ position.x, position.y + layout.contentHeight + 8.0f });
 			ImGui::Dummy({ availableWidth, 0.0f });
 		}
 
@@ -455,16 +507,87 @@ namespace Addictol::DearModdingUI
 		{
 			DrawSectionHeader(
 				"Mods", Theme::kFullPalette[ImGuiCol_Text]);
-			for (const auto& client : a_model.clients)
+			const Theme::FontGuard font{ Theme::FontRole::kSubheading };
+			const auto* active = a_model.FindClient(a_state.activeClient);
+			const char* previewText =
+				active ? active->displayName.c_str() : "No mods registered";
+			auto* previewTexture = active ?
+				IconLoader::Get(IconKind::kClient, active->id) :
+				nullptr;
+
+			ImGui::SetNextItemWidth(-FLT_MIN);
+			const auto open = ImGui::BeginCombo(
+				"##DearModdingClientSelector",
+				"",
+				ImGuiComboFlags_CustomPreview);
+			if (open)
 			{
-				const Theme::FontGuard font{ Theme::FontRole::kSubheading };
-				const auto label =
-					" " + client.displayName + " ###DearModdingClient/" + client.id;
-				if (ImGui::Selectable(
-						label.c_str(),
-						client.handle == a_state.activeClient,
-						ImGuiSelectableFlags_SpanAllColumns))
-					SelectClient(a_state, client);
+				for (const auto& client : a_model.clients)
+				{
+					auto* texture =
+						IconLoader::Get(IconKind::kClient, client.id);
+					const auto textSize =
+						ImGui::CalcTextSize(client.displayName.c_str());
+					const auto layout = DecideInlineIconLayout(
+						texture != nullptr,
+						textSize.x,
+						textSize.y,
+						ImGui::GetFontSize(),
+						ImGui::GetStyle().ItemSpacing.x);
+					const auto rowHeight =
+						layout.contentHeight +
+						ImGui::GetStyle().FramePadding.y * 2.0f;
+					const auto selected =
+						client.handle == a_state.activeClient;
+					const auto label =
+						"###DearModdingClient/" + client.id;
+					if (ImGui::Selectable(
+							label.c_str(),
+							selected,
+							ImGuiSelectableFlags_None,
+							{ 0.0f, rowHeight }))
+						(void)SelectClient(a_model, client.handle, a_state);
+					const auto itemMin = ImGui::GetItemRectMin();
+					const auto itemMax = ImGui::GetItemRectMax();
+					const ImVec4 clip{
+						itemMin.x,
+						itemMin.y,
+						itemMax.x,
+						itemMax.y
+					};
+					DrawIconText(
+						{
+							itemMin.x + ImGui::GetStyle().FramePadding.x,
+							itemMin.y
+						},
+						rowHeight,
+						texture,
+						client.displayName.c_str(),
+						ImGui::GetColorU32(ImGuiCol_Text),
+						&clip);
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			if (ImGui::BeginComboPreview())
+			{
+				const auto position = ImGui::GetCursorScreenPos();
+				const auto textSize = ImGui::CalcTextSize(previewText);
+				const auto layout = DecideInlineIconLayout(
+					previewTexture != nullptr,
+					textSize.x,
+					textSize.y,
+					ImGui::GetFontSize(),
+					ImGui::GetStyle().ItemSpacing.x);
+				DrawIconText(
+					position,
+					layout.contentHeight,
+					previewTexture,
+					previewText,
+					ImGui::GetColorU32(ImGuiCol_Text));
+				ImGui::Dummy({ layout.contentWidth, layout.contentHeight });
+				ImGui::EndComboPreview();
 			}
 		}
 
@@ -646,7 +769,7 @@ namespace Addictol::DearModdingUI
 			const NavigationModel& a_model,
 			const ShellState& a_state) noexcept
 		{
-			ImGui::BulletText("Host: Dear Modding");
+			ImGui::BulletText("Host: Evil Modding");
 			if (const auto* client =
 					a_model.FindClient(a_state.activeClient))
 			{
@@ -709,7 +832,7 @@ namespace Addictol::DearModdingUI
 			windowFlags |= ImGuiWindowFlags_NoTitleBar;
 
 		const auto visible = BeginWithRoundedClose(
-			"Dear Modding###DearModdingUI.Host",
+			"Evil Modding###DearModdingUI.Host",
 			&open,
 			windowFlags);
 		wasDocked = ImGui::IsWindowDocked();

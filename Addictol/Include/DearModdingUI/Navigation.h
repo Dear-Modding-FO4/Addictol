@@ -47,6 +47,13 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] DMUI_PageHandle FirstPage() const noexcept;
 	};
 
+	struct ClientSelectionState
+	{
+		DMUI_ClientHandle activeClient{ DMUI_INVALID_CLIENT_HANDLE };
+		DMUI_PageHandle activePage{ DMUI_INVALID_PAGE_HANDLE };
+		std::string search;
+	};
+
 	enum class PagePresentation : uint32_t
 	{
 		kEmpty,
@@ -61,6 +68,10 @@ namespace Addictol::DearModdingUI
 		const NavigationModel& a_model,
 		DMUI_PageHandle a_requested,
 		DMUI_PageHandle a_current) noexcept;
+	[[nodiscard]] bool SelectClient(
+		const NavigationModel& a_model,
+		DMUI_ClientHandle a_client,
+		ClientSelectionState& a_state) noexcept;
 	[[nodiscard]] PagePresentation DecidePagePresentation(
 		const NavigationPage* a_page,
 		bool a_callbackFailed) noexcept;

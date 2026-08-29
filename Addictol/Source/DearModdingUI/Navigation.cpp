@@ -143,6 +143,29 @@ namespace Addictol::DearModdingUI
 		return a_model.FirstPage();
 	}
 
+	bool SelectClient(
+		const NavigationModel& a_model,
+		DMUI_ClientHandle a_client,
+		ClientSelectionState& a_state) noexcept
+	{
+		const auto* client = a_model.FindClient(a_client);
+		if (!client || a_state.activeClient == a_client)
+			return false;
+
+		a_state.activeClient = a_client;
+		a_state.activePage = DMUI_INVALID_PAGE_HANDLE;
+		for (const auto& category : client->categories)
+		{
+			if (!category.pages.empty())
+			{
+				a_state.activePage = category.pages.front().handle;
+				break;
+			}
+		}
+		a_state.search.clear();
+		return true;
+	}
+
 	PagePresentation DecidePagePresentation(
 		const NavigationPage* a_page,
 		bool a_callbackFailed) noexcept
