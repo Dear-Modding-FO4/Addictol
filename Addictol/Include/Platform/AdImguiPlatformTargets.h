@@ -86,6 +86,25 @@ namespace Addictol::ImguiPlatform
 		return a_presentSucceeded && (a_presentFlags & kPresentTestFlag) == 0;
 	}
 
+	[[nodiscard]] constexpr bool ShouldInitializeHost(
+		bool a_hasClients,
+		bool a_windowReady) noexcept
+	{
+		return a_hasClients && a_windowReady;
+	}
+
+	[[nodiscard]] constexpr bool ShouldRenderHostFrame(
+		bool a_modalVisible,
+		bool a_overlayDemanded) noexcept
+	{
+		return a_modalVisible || a_overlayDemanded;
+	}
+
+	[[nodiscard]] constexpr bool ShouldSuppressGameInput(bool a_modalVisible) noexcept
+	{
+		return a_modalVisible;
+	}
+
 	[[nodiscard]] constexpr bool RequiresBackendReset(
 		const AttachmentIdentity& a_current,
 		const AttachmentIdentity& a_candidate,

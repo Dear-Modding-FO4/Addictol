@@ -335,7 +335,7 @@ namespace Addictol
 
 	}
 
-	void DrawMenuTelemetryPanel(const void* a_context) noexcept
+	void DrawMenuTelemetryPanel(void* a_context) noexcept
 	{
 		const auto& panel = *static_cast<const TelemetryPanelDefinition*>(a_context);
 		RefreshCache();

@@ -84,10 +84,14 @@ namespace Addictol
 			for (const auto& panel : kTelemetryPanels)
 			{
 				const auto registered = Menu::RegisterPanel({
-					panel.name,
+					panel.id,
+					panel.name.data(),
+					"Diagnostics",
+					panel.description.data(),
+					panel.sortKey,
 					&DrawMenuTelemetryPanel,
 					&bTelemetryEnabled,
-					&panel
+					const_cast<TelemetryPanelDefinition*>(&panel)
 				});
 				panelsRegistered = registered && panelsRegistered;
 			}

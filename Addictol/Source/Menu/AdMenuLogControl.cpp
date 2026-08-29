@@ -98,7 +98,7 @@ namespace Addictol
 		}
 	}
 
-	void DrawMenuLogControlPanel(const void*) noexcept
+	void DrawMenuLogControlPanel(void*) noexcept
 	{
 		Refresh();
 

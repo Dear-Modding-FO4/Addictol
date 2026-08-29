@@ -1,4 +1,5 @@
 #include <Platform/AdPlatformImgui.h>
+#include <DearModdingUI/Host.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Core/AdUtils.h>
 #include <RE/C/ControlMap.h>
@@ -143,6 +144,7 @@ namespace Addictol
 			DXGI_FORMAT a_format,
 			UINT a_flags) noexcept;
 		static LRESULT CALLBACK HKWindowProc(HWND a_window, UINT a_message, WPARAM a_wparam, LPARAM a_lparam) noexcept;
+		static void CloseSinkRegistration() noexcept;
 
 		static BOOL CALLBACK InitializeContextLock(
 			[[maybe_unused]] PINIT_ONCE a_once,
@@ -597,7 +599,6 @@ namespace Addictol
 			{
 				ImGui_ImplDX11_Shutdown();
 				ImGui_ImplWin32_Shutdown();
-				ImGui::DestroyContext();
 			}
 			s_backend.store(Backend::kUninitialized, std::memory_order_release);
 		}
@@ -613,25 +614,31 @@ namespace Addictol
 				return false;
 			}
 
-			auto* context = ImGui::CreateContext();
-			if (!context)
+			auto* context = ImGui::GetCurrentContext();
+			const auto createdContext = context == nullptr;
+			if (createdContext)
 			{
-				REX::ERROR("Platform Imgui: ImGui::CreateContext() failed"sv);
-				return false;
+				context = ImGui::CreateContext();
+				if (!context)
+				{
+					REX::ERROR("Platform Imgui: ImGui::CreateContext() failed"sv);
+					return false;
+				}
+
+				auto& io = ImGui::GetIO();
+				io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
+				io.IniFilename = nullptr;
+				io.MouseDrawCursor = false;
+				ConfigureIniPath(io);
+
+				for (size_t index = 0, count = s_setupSinks.Size(); index < count; ++index)
+					s_setupSinks.At(index)(s_attachment.window);
 			}
-
-			auto& io = ImGui::GetIO();
-			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
-			io.IniFilename = nullptr;
-			io.MouseDrawCursor = false;
-			ConfigureIniPath(io);
-
-			for (size_t index = 0, count = s_setupSinks.Size(); index < count; ++index)
-				s_setupSinks.At(index)(s_attachment.window);
 
 			if (!ImGui_ImplWin32_Init(s_attachment.window))
 			{
-				ImGui::DestroyContext(context);
+				if (createdContext)
+					ImGui::DestroyContext(context);
 				REX::ERROR("Platform Imgui: ImGui_ImplWin32_Init() failed"sv);
 				return false;
 			}
@@ -639,7 +646,8 @@ namespace Addictol
 			if (!ImGui_ImplDX11_Init(s_attachment.device, s_attachment.context))
 			{
 				ImGui_ImplWin32_Shutdown();
-				ImGui::DestroyContext(context);
+				if (createdContext)
+					ImGui::DestroyContext(context);
 				REX::ERROR("Platform Imgui: ImGui_ImplDX11_Init() failed"sv);
 				return false;
 			}
@@ -648,7 +656,8 @@ namespace Addictol
 			{
 				ImGui_ImplDX11_Shutdown();
 				ImGui_ImplWin32_Shutdown();
-				ImGui::DestroyContext(context);
+				if (createdContext)
+					ImGui::DestroyContext(context);
 				REX::ERROR("Platform Imgui: D3D11 device-object creation failed"sv);
 				return false;
 			}
@@ -670,13 +679,26 @@ namespace Addictol
 				break;
 			}
 
+			const auto firstInitialization = ImGui::GetCurrentContext() == nullptr;
+			if (firstInitialization)
+			{
+				if (!DearModdingUI::BeginBackendInitialization())
+					return false;
+				CloseSinkRegistration();
+			}
 			const auto ready = InitializeBackend();
 			s_backend.store(ready ? Backend::kReady : Backend::kFailed, std::memory_order_release);
 			if (!ready)
 			{
 				s_drawingEnabled.store(false, std::memory_order_release);
 				SetGameInputSuppressed(false);
+				if (firstInitialization)
+					DearModdingUI::FailBackendInitialization();
+				else
+					DearModdingUI::SetBackendUnavailable(DMUI_UNAVAILABLE_BACKEND_FAILED);
 			}
+			else if (firstInitialization)
+				DearModdingUI::CompleteBackendInitialization(ImGui::GetCurrentContext());
 			return ready;
 		}
 
@@ -793,10 +815,17 @@ namespace Addictol
 
 		static void DrawFrame(IDXGISwapChain* a_swapChain) noexcept
 		{
-			if (!s_drawingEnabled.load(std::memory_order_acquire))
+			if (!ShouldInitializeHost(
+					DearModdingUI::HasClients(),
+					s_windowReady.load(std::memory_order_acquire)) ||
+				!BackendReady())
 				return;
-			if (!s_windowReady.load(std::memory_order_acquire) ||
-				!BackendReady() ||
+
+			const auto modalVisible = DearModdingUI::IsMenuVisible();
+			s_drawingEnabled.store(modalVisible, std::memory_order_release);
+			SetGameInputSuppressed(ShouldSuppressGameInput(modalVisible));
+			const auto overlayDemanded = DearModdingUI::NeedsFrame() && !modalVisible;
+			if (!ShouldRenderHostFrame(modalVisible, overlayDemanded) ||
 				!EnsureBackBuffer(a_swapChain))
 				return;
 
@@ -843,6 +872,7 @@ namespace Addictol
 						{
 							s_drawingEnabled.store(false, std::memory_order_release);
 							SetGameInputSuppressed(false);
+							DearModdingUI::FailBackendInitialization();
 						}
 					}
 					if ((a_flags & DXGI_PRESENT_TEST) == 0)
@@ -1117,6 +1147,7 @@ namespace Addictol
 			CloseSinkRegistration();
 			s_installState.store(InstallState::kRejected, std::memory_order_release);
 			REX::ERROR("Platform Imgui: D3D11CreateDeviceAndSwapChain was not found in the IAT"sv);
+			DearModdingUI::SetBackendUnavailable(DMUI_UNAVAILABLE_BACKEND_FAILED);
 			return false;
 		}
 
@@ -1148,7 +1179,7 @@ namespace Addictol
 		if (!SubclassWindow(s_attachment.window))
 			return false;
 
-		REX::INFO("Platform Imgui: active swapchain window subclassed; ImGui will initialize on first open"sv);
+		REX::INFO("Platform Imgui: active swapchain window subclassed; ImGui will initialize on Present"sv);
 		return true;
 	}
 
@@ -1167,7 +1198,7 @@ namespace Addictol
 			IsInstalled(s_installState.load(std::memory_order_acquire)) &&
 			s_activeSwapChain.load(std::memory_order_acquire) != nullptr &&
 			s_windowReady.load(std::memory_order_acquire) &&
-			s_backend.load(std::memory_order_acquire) != Backend::kFailed;
+			s_backend.load(std::memory_order_acquire) == Backend::kReady;
 		s_drawingEnabled.store(enable, std::memory_order_release);
 		SetGameInputSuppressed(enable);
 	}
@@ -1182,7 +1213,8 @@ namespace Addictol
 		using namespace platformImguiDetail;
 		return IsInstalled(s_installState.load(std::memory_order_acquire)) &&
 			s_activeSwapChain.load(std::memory_order_acquire) != nullptr &&
-			s_windowReady.load(std::memory_order_acquire);
+			s_windowReady.load(std::memory_order_acquire) &&
+			s_backend.load(std::memory_order_acquire) == Backend::kReady;
 	}
 
 	bool PlatformImgui::QueryVideoMemory(uint64_t& a_used, uint64_t& a_budget) noexcept
@@ -1212,30 +1244,4 @@ namespace Addictol
 		const ContextLock lock;
 		return s_iniPath;
 	}
-}
-
-F4SE_EXPORT void* ADPlugin_ImGui_GetContext() noexcept
-{
-	return ImGui::GetCurrentContext();
-}
-
-F4SE_EXPORT bool ADPlugin_ImGui_RegisterDrawSink(
-	const char* a_name,
-	Addictol::PlatformImguiDrawSink a_sink) noexcept
-{
-	return Addictol::PlatformImgui::RegisterDrawSink(a_name, a_sink);
-}
-
-F4SE_EXPORT bool ADPlugin_ImGui_RegisterToggleSink(
-	const char* a_name,
-	Addictol::PlatformImguiToggleSink a_sink) noexcept
-{
-	return Addictol::PlatformImgui::RegisterToggleSink(a_name, a_sink);
-}
-
-F4SE_EXPORT bool ADPlugin_ImGui_RegisterSetupSink(
-	const char* a_name,
-	Addictol::PlatformImguiSetupSink a_sink) noexcept
-{
-	return Addictol::PlatformImgui::RegisterSetupSink(a_name, a_sink);
 }

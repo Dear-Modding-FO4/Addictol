@@ -40,6 +40,12 @@
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
@@ -397,6 +403,15 @@
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
       <Filter>Include\Telemetry</Filter>
     </ClInclude>
@@ -723,6 +738,9 @@
     <ResourceCompile Include="..\Version\resource_version.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Addictol\Include\DearModdingUI\README.md">
+      <Filter>Include\DearModdingUI</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -746,6 +764,9 @@
     <Filter Include="Source\Platform">
       <UniqueIdentifier>{1b74d37d-a9cb-4aac-a11e-71d6e206a569}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\DearModdingUI">
+      <UniqueIdentifier>{8fb2b351-2c67-4fb8-bd43-e896d9cba36d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Include\Core">
       <UniqueIdentifier>{1f45f9d0-a9ca-474a-8859-9e8b8706fcd5}</UniqueIdentifier>
     </Filter>
@@ -760,6 +781,9 @@
     </Filter>
     <Filter Include="Include\Platform">
       <UniqueIdentifier>{701656ae-d25b-450c-bbd6-1343dd34bdc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\DearModdingUI">
+      <UniqueIdentifier>{228cbdc6-78e1-45fc-9b73-8ba0f0f9c660}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Modules">
       <UniqueIdentifier>{7f9dc727-58b0-4894-9e00-e9eb155fc5f9}</UniqueIdentifier>

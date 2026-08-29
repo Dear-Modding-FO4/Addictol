@@ -1,10 +1,12 @@
 #include <Platform/AdImguiTheme.h>
+#include <DearModdingUI/Host.h>
 #include <Menu/AdMenu.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Core/AdUtils.h>
 #include <Menu/AdMenuLogControl.h>
 
 #include <REX/REX.h>
+#include <resource_version2.h>
 
 #include <Windows.h>
 
@@ -12,6 +14,7 @@
 #include <imgui/backends/imgui_impl_win32.h>
 
 #include <atomic>
+#include <mutex>
 
 #undef ERROR
 
@@ -24,15 +27,13 @@ namespace Addictol
 	{
 		inline constexpr ImVec2 kWindowSize{ 1100.0f, 700.0f };
 
-		static MenuPanelTable<REX::TOML::Bool<>> s_panels{};
 		static std::atomic<bool> s_requested{ false };
-		static std::atomic<bool> s_open{ false };
 		static std::atomic<uint64_t> s_openGeneration{ 0 };
 		static std::atomic<uint32_t> s_toggleKey{ kMenuDefaultToggleKey };
 		static std::atomic<uint32_t> s_refreshMs{ kMenuMinRefreshMs };
 		static std::atomic<bool> s_backendFailureLogged{ false };
+		static DMUI_ClientHandle s_client{ DMUI_INVALID_CLIENT_HANDLE };
 
-		// render thread only
 		static uint64_t s_qpcFrequency{ 0 };
 		static double s_lastDrawMs{ 0.0 };
 		static float s_dpiScale{ 1.0f };
@@ -40,6 +41,36 @@ namespace Addictol
 		static ImVec2 s_lastWindowSize{};
 		static bool s_geometryObserved{ false };
 		static bool s_geometryDirty{ false };
+
+		void Configure() noexcept
+		{
+			static std::once_flag once;
+			std::call_once(once, [] {
+				const auto configured = sAdditionalMenuToggleKey.GetValue();
+				const auto parsed = ParseMenuToggleKey(configured);
+				if (!parsed.recognized)
+				{
+					REX::WARN(
+						"Menu: sMenuToggleKey \"{}\" is not one of F1-F12, Home, End, Insert, or Delete; falling back to F11."sv,
+						configured);
+				}
+				s_toggleKey.store(parsed.virtualKey, std::memory_order_relaxed);
+
+				const auto refreshMs = ClampMenuRefreshMs(uAdditionalMenuRefreshMs.GetValue());
+				if (refreshMs != uAdditionalMenuRefreshMs.GetValue())
+				{
+					REX::WARN("Menu: uMenuRefreshMs {} is outside {}-{} ms; using {} ms."sv,
+						uAdditionalMenuRefreshMs.GetValue(),
+						kMenuMinRefreshMs,
+						kMenuMaxRefreshMs,
+						refreshMs);
+				}
+				s_refreshMs.store(refreshMs, std::memory_order_relaxed);
+				REX::INFO("Menu: common toggle key {} with a {} ms refresh."sv,
+					MenuToggleKeyName(parsed.virtualKey),
+					refreshMs);
+			});
+		}
 
 		[[nodiscard]] uint64_t ReadQpc() noexcept
 		{
@@ -67,6 +98,27 @@ namespace Addictol
 			REX::INFO("Menu: ImGui configured at {:.2f}x DPI scale"sv, s_dpiScale);
 		}
 
+		void DMUI_CALL OnHostReady(
+			const DMUI_HostReadyInfo* a_info,
+			[[maybe_unused]] void* a_userData) noexcept
+		{
+			if (!a_info || a_info->structSize < sizeof(DMUI_HostReadyInfo))
+				return;
+			ImGui::SetCurrentContext(static_cast<ImGuiContext*>(a_info->imguiContext));
+			ImGui::SetAllocatorFunctions(
+				a_info->imguiAlloc,
+				a_info->imguiFree,
+				a_info->imguiAllocatorUserData);
+			REX::INFO("Menu: DearModdingUI host is ready"sv);
+		}
+
+		void DMUI_CALL OnHostUnavailable(
+			DMUI_UnavailableReason a_reason,
+			[[maybe_unused]] void* a_userData) noexcept
+		{
+			REX::ERROR("Menu: DearModdingUI host unavailable, reason {}"sv, a_reason);
+		}
+
 		void SaveWindowGeometry() noexcept
 		{
 			const auto iniPath = PlatformImgui::GetConfigurePath();
@@ -84,7 +136,7 @@ namespace Addictol
 			ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_FirstUseEver);
 
 			auto open = true;
-			const auto visible = ImGui::Begin("Addictol", &open);
+			const auto visible = ImGui::Begin("Dear Modding UI", &open);
 			const auto position = ImGui::GetWindowPos();
 			const auto size = ImGui::GetWindowSize();
 			const auto geometryChanged = s_geometryObserved &&
@@ -98,10 +150,23 @@ namespace Addictol
 
 			if (visible && ImGui::BeginTabBar("addictol_menu_tabs", ImGuiTabBarFlags_None))
 			{
-				DrawPanels(
-					s_panels,
-					[](const char* a_name) noexcept { return ImGui::BeginTabItem(a_name); },
-					[]() noexcept { ImGui::EndTabItem(); });
+				const auto selected = DearModdingUI::SelectedPage();
+				for (const auto& page : DearModdingUI::OrderedPages())
+				{
+					if (page.kind != DMUI_PAGE_KIND_SETTINGS ||
+						page.callbackFailed)
+						continue;
+					const auto flags = page.handle == selected ?
+						ImGuiTabItemFlags_SetSelected :
+						ImGuiTabItemFlags_None;
+					if (ImGui::BeginTabItem(page.imguiLabel.c_str(), nullptr, flags))
+					{
+						DearModdingUI::DrawPage(page.handle);
+						ImGui::EndTabItem();
+					}
+					if (page.handle == selected)
+						DearModdingUI::ClearPageSelection(page.handle);
+				}
 				ImGui::EndTabBar();
 			}
 			ImGui::End();
@@ -113,7 +178,7 @@ namespace Addictol
 			}
 			if (!open)
 			{
-				s_open.store(false, std::memory_order_release);
+				(void)DearModdingUI::SetMenuVisible(false);
 				SaveWindowGeometry();
 				PlatformImgui::SetDrawingEnabled(false);
 			}
@@ -121,35 +186,32 @@ namespace Addictol
 
 		void DrawSink() noexcept
 		{
-			if (!s_open.load(std::memory_order_acquire))
-				return;
-
 			const auto start = ReadQpc();
-			DrawWindow();
+			DearModdingUI::DrawDemandedOverlays();
+			if (DearModdingUI::IsMenuVisible())
+				DrawWindow();
 			s_lastDrawMs = QpcToMilliseconds(ReadQpc() - start, s_qpcFrequency);
 		}
 
-		// window thread; platform serializes access
 		void ToggleSink(uint32_t a_virtualKey) noexcept
 		{
 			const auto decision = DecideMenuToggle(
 				a_virtualKey,
 				s_toggleKey.load(std::memory_order_relaxed),
-				s_open.load(std::memory_order_acquire),
-				PlatformImgui::IsDrawingEnabled());
+				DearModdingUI::IsMenuVisible(),
+				PlatformImgui::IsReady());
 			if (!decision.matched)
 				return;
 
-			if (decision.open)
+			const auto result = DearModdingUI::SetMenuVisible(decision.open);
+			if (result == DMUI_RESULT_OK && decision.open)
 				s_openGeneration.fetch_add(1, std::memory_order_acq_rel);
-			s_open.store(decision.open, std::memory_order_release);
-			PlatformImgui::SetDrawingEnabled(decision.open);
+			PlatformImgui::SetDrawingEnabled(result == DMUI_RESULT_OK && decision.open);
 
-			if (decision.open && !PlatformImgui::IsDrawingEnabled())
+			if (decision.open && result != DMUI_RESULT_OK)
 			{
-				s_open.store(false, std::memory_order_release);
 				if (!s_backendFailureLogged.exchange(true, std::memory_order_acq_rel))
-					REX::ERROR("Menu: ImGui is not drawable; the menu cannot open."sv);
+					REX::ERROR("Menu: DearModdingUI cannot open, result {}."sv, result);
 			}
 		}
 	}
@@ -160,41 +222,56 @@ namespace Addictol
 	{
 		using namespace menuDetail;
 
-		const auto result = s_panels.Add(a_panel.name, a_panel.draw, a_panel.gate, a_panel.context);
-		if (result != Registration::kAccepted)
-			REX::WARN("Menu: panel \"{}\" rejected, {}."sv, a_panel.name, Describe(result));
-		return result == Registration::kAccepted;
+		if (!s_requested.load(std::memory_order_acquire) ||
+			(a_panel.gate && !a_panel.gate->GetValue()))
+			return true;
+		const DMUI_PageDescriptor descriptor{
+			sizeof(DMUI_PageDescriptor),
+			a_panel.id,
+			a_panel.name,
+			a_panel.category,
+			a_panel.summary,
+			a_panel.sortKey,
+			DMUI_PAGE_KIND_SETTINGS,
+			a_panel.draw,
+			a_panel.context
+		};
+		DMUI_PageHandle page{ DMUI_INVALID_PAGE_HANDLE };
+		const auto result = DearModdingUI::HostAPI().registerPage(
+			s_client, &descriptor, &page);
+		if (result != DMUI_RESULT_OK)
+			REX::WARN("Menu: page \"{}\" rejected, result {}."sv, a_panel.name, result);
+		return result == DMUI_RESULT_OK;
 	}
 
 	bool Menu::Install() noexcept
 	{
 		using namespace menuDetail;
 
-		const auto configured = sAdditionalMenuToggleKey.GetValue();
-		const auto parsed = ParseMenuToggleKey(configured);
-		if (!parsed.recognized)
-		{
-			REX::WARN(
-				"Menu: sMenuToggleKey \"{}\" is not one of F1-F12, Home, End, Insert, or Delete; falling back to F11."sv,
-				configured);
-		}
-		s_toggleKey.store(parsed.virtualKey, std::memory_order_relaxed);
+		Configure();
 
-		const auto refreshMs = ClampMenuRefreshMs(uAdditionalMenuRefreshMs.GetValue());
-		if (refreshMs != uAdditionalMenuRefreshMs.GetValue())
+		const DMUI_ClientDescriptor descriptor{
+			sizeof(DMUI_ClientDescriptor),
+			DMUI_API_VERSION_CURRENT,
+			"dear-modding.addictol",
+			"Addictol",
+			DMUI_MAKE_VERSION(VERSION_MAJOR, VERSION_MINOR),
+			&DearModdingUI::HostFingerprint(),
+			&OnHostReady,
+			&OnHostUnavailable,
+			nullptr
+		};
+		const auto registered = DearModdingUI::RegisterInternalClient(
+			&descriptor, &s_client);
+		if (registered != DMUI_RESULT_OK)
 		{
-			REX::WARN("Menu: uMenuRefreshMs {} is outside {}-{} ms; using {} ms."sv,
-				uAdditionalMenuRefreshMs.GetValue(),
-				kMenuMinRefreshMs,
-				kMenuMaxRefreshMs,
-				refreshMs);
+			REX::ERROR("Menu: Addictol DearModdingUI client registration failed, result {}."sv,
+				registered);
+			return false;
 		}
-		s_refreshMs.store(refreshMs, std::memory_order_relaxed);
 		s_requested.store(true, std::memory_order_release);
 
-		REX::INFO("Menu: toggle key {} with a {} ms refresh; the menu starts closed."sv,
-			MenuToggleKeyName(parsed.virtualKey),
-			refreshMs);
+		REX::INFO("Menu: Addictol pages enabled; the common menu starts closed."sv);
 		return true;
 	}
 
@@ -202,22 +279,27 @@ namespace Addictol
 	{
 		using namespace menuDetail;
 
-		const auto result = FinalizeMenuPanels(
-			s_panels,
-			kMenuLogControlPanelName,
-			&DrawMenuLogControlPanel,
-			s_requested.load(std::memory_order_acquire),
-			[]() noexcept {
-				if (!PlatformImgui::RegisterSetupSink("Menu"sv, &SetupSink) ||
-					!PlatformImgui::RegisterDrawSink("Menu"sv, &DrawSink) ||
-					!PlatformImgui::RegisterToggleSink("Menu"sv, &ToggleSink))
-					REX::ERROR("Menu: the ImGui platform refused a required sink; the window cannot open."sv);
-			});
+		Configure();
+		if (s_requested.load(std::memory_order_acquire) &&
+			!RegisterPanel({
+				"log-control",
+				kMenuLogControlPanelName.data(),
+				"Diagnostics",
+				"Runtime logging levels and output statistics.",
+				1000,
+				&DrawMenuLogControlPanel,
+				nullptr,
+				nullptr
+			}))
+			REX::ERROR("Menu: Log Control page could not be registered."sv);
 
-		if (result != Registration::kAccepted)
-			REX::ERROR(
-				"Menu: Log Control panel could not be registered; the menu will not install ({})."sv,
-				Describe(result));
+		if (!PlatformImgui::RegisterSetupSink("DearModdingUI"sv, &SetupSink) ||
+			!PlatformImgui::RegisterDrawSink("DearModdingUI"sv, &DrawSink) ||
+			!PlatformImgui::RegisterToggleSink("DearModdingUI"sv, &ToggleSink))
+		{
+			REX::ERROR("Menu: the ImGui platform refused DearModdingUI host sinks."sv);
+			DearModdingUI::DeferBackendUnavailable(DMUI_UNAVAILABLE_BACKEND_FAILED);
+		}
 	}
 
 	uint32_t Menu::RefreshMs() noexcept

@@ -68,6 +68,7 @@ Addictol/Include/Zlib/       compression backend and helpers
 Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
 Addictol/Include/Platform/   ImGui platform integration
+Addictol/Include/DearModdingUI/ vendorable UI API and internal host registry
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
 Addictol/Source/Modules/     one .cpp per feature module (~80 of them)
@@ -83,6 +84,9 @@ APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored l
 
 Crash logging is not part of this plugin. It ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
+
+The neutral cross-DLL UI contract and client lifecycle are documented in
+[`Addictol/Include/DearModdingUI/README.md`](Addictol/Include/DearModdingUI/README.md).
 
 ## Versioning
 

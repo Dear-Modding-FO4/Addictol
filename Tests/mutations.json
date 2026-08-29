@@ -1,11 +1,11 @@
 [
   {
-    "name": "menu requires log control before platform registration",
-    "target": "Addictol/Include/Menu/AdMenuTargets.h",
-    "find": "if (a_menuRequested && result == Registration::kAccepted)",
-    "replace": "if (a_menuRequested)",
-    "check": "a menu that cannot register log control asks for no platform sinks",
-    "message": "a menu without log control asked the platform for sinks"
+    "name": "DearModdingUI freeze closes registration",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "if (!m_open)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",
+    "replace": "if (false)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",
+    "check": "registry freeze rejects late clients and pages",
+    "message": "late client was accepted"
   },
   {
     "name": "public warning level name",
@@ -197,7 +197,7 @@
     "find": "if (!a_value.valid)",
     "replace": "if (a_value.valid)",
     "check": "invalid telemetry values stay visually distinct",
-    "message": "invalid telemetry value did not render as a placeholder"
+    "message": "invalid telemetry value became valid"
   },
   {
     "name": "plugin timing series name stays public",

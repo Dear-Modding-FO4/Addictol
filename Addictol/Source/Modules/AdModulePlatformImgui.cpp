@@ -5,7 +5,7 @@
 namespace Addictol
 {
 	ModulePlatformImgui::ModulePlatformImgui() :
-		Module("Platform Imgui")
+		Module("DearModdingUI Platform")
 	{}
 
 	bool ModulePlatformImgui::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

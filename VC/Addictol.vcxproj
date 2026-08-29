@@ -23,6 +23,8 @@
     <ClCompile Include="..\Addictol\Source\Memory\AdMemoryTracer.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp" />
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Platform\AdImguiTheme.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
@@ -142,6 +144,9 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\Platform\AdPlatformImgui.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h" />
     <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
@@ -253,6 +258,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Addictol\Include\DearModdingUI\README.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

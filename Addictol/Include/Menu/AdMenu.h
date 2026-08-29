@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Menu/AdMenuTargets.h"
+#include <DearModdingUI/API.h>
+#include <Menu/AdMenuTargets.h>
 
 #include <REX/REX.h>
 
@@ -13,13 +14,16 @@ namespace Addictol::Menu
 
 	struct Panel
 	{
-		std::string_view name;
+		const char* id;
+		const char* name;
+		const char* category;
+		const char* summary;
+		int32_t sortKey;
 		PanelDraw draw;
-		const REX::TOML::Bool<>* gate;   // nullptr = always shown
-		const void* context;
+		const REX::TOML::Bool<>* gate;
+		void* context;
 	};
 
-	// register from a load-stage install
 	[[nodiscard]] bool RegisterPanel(const Panel& a_panel) noexcept;
 
 	[[nodiscard]] bool Install() noexcept;
@@ -29,6 +33,5 @@ namespace Addictol::Menu
 	[[nodiscard]] uint32_t RefreshMs() noexcept;
 	[[nodiscard]] std::string_view ToggleKeyName() noexcept;
 	[[nodiscard]] double LastDrawMs() noexcept;
-	// bumped on open so panels drop transient state
 	[[nodiscard]] uint64_t OpenGeneration() noexcept;
 }

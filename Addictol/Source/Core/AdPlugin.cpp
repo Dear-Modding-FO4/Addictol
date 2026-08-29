@@ -2,6 +2,7 @@
 #include <Core/AdUtils.h>
 #include <Core/AdConfigValidation.h>
 #include <Core/AdLogControl.h>
+#include <DearModdingUI/Host.h>
 #include <Menu/AdMenu.h>
 #include <Zlib/AdZlibBackend.h>
 #include <Platform/AdPlatformImgui.h>
@@ -218,6 +219,8 @@ namespace Addictol
 				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
 			}
+
+			DearModdingUI::Initialize();
 
 			// Register all modules
 			AdRegisterModules();

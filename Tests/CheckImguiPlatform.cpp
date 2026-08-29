@@ -97,6 +97,19 @@ namespace vmm_tests
 			require(!ObservesDisplayedFrame(kPresentTestFlag, false), "a failed test Present displays no frame");
 		});
 
+		runner.test("host initializes eagerly while overlays never suppress game input", [] {
+			require(ShouldInitializeHost(true, true),
+				"accepted clients did not initialize on an active Present");
+			require(!ShouldInitializeHost(false, true),
+				"an empty registry initialized the renderer");
+			require(ShouldRenderHostFrame(false, true),
+				"overlay demand did not produce a frame");
+			require(!ShouldSuppressGameInput(false),
+				"overlay-only drawing suppressed game input");
+			require(ShouldSuppressGameInput(true),
+				"a modal menu did not suppress game input");
+		});
+
 		runner.test("backbuffer state recreates on identity size and view changes", [] {
 			constexpr BackBufferIdentity empty{};
 			constexpr BackBufferIdentity first{ 1, 1920, 1080 };
