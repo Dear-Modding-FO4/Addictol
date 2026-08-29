@@ -19,6 +19,7 @@ namespace Addictol::DearModdingUI
 	[[nodiscard]] bool HasSettingsPages() noexcept;
 	[[nodiscard]] bool IsMenuVisible() noexcept;
 	[[nodiscard]] DMUI_Result SetMenuVisible(bool a_visible) noexcept;
+	void CloseMenu() noexcept;
 	[[nodiscard]] DMUI_PageHandle SelectedPage() noexcept;
 	void ClearPageSelection(DMUI_PageHandle a_page) noexcept;
 	[[nodiscard]] bool DrawPage(DMUI_PageHandle a_page) noexcept;

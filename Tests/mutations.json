@@ -24,6 +24,14 @@
     "message": "late client was accepted"
   },
   {
+    "name": "DearModdingUI carrier opens only for modal frames",
+    "target": "Addictol/Include/DearModdingUI/CarrierMenu.h",
+    "find": "const auto nextOpen = a_event == Event::kOpen;",
+    "replace": "const auto nextOpen = false;",
+    "check": "carrier menu open and close messages remain balanced",
+    "message": "the first modal open did not show the carrier"
+  },
+  {
     "name": "public warning level name",
     "target": "Addictol/Source/Core/AdLogControl.cpp",
     "find": "LevelEntry{ Level::kWarn, \"warn\", spdlog::level::warn }",

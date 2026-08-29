@@ -1,4 +1,5 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
+#include "../Addictol/Include/DearModdingUI/CarrierMenu.h"
 #include "../Addictol/Include/DearModdingUI/IconPaths.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
@@ -796,14 +797,14 @@ namespace vmm_tests
 		});
 
 		runner.test("cursor ownership follows modal visibility", [] {
-			const auto overlay = DecideCursorPresentation(false, false);
+			const auto overlay = DecideCursorPresentation(false);
 			require(!overlay.captureInput &&
 					!overlay.hideOperatingSystemCursor &&
 					!overlay.drawSoftwareCursor &&
 					!overlay.drawCustomCursor,
 				"overlay-only drawing acquired a cursor");
 
-			const auto modal = DecideCursorPresentation(true, false);
+			const auto modal = DecideCursorPresentation(true);
 			require(modal.captureInput &&
 					modal.hideOperatingSystemCursor &&
 					modal.drawSoftwareCursor &&
@@ -813,20 +814,7 @@ namespace vmm_tests
 				static_cast<uint32_t>(modal.drawSoftwareCursor) +
 						static_cast<uint32_t>(modal.drawCustomCursor) ==
 					1,
-				"the virtual branch did not present exactly one cursor");
-
-			const auto shared = DecideCursorPresentation(true, true);
-			require(shared.captureInput &&
-					shared.hideOperatingSystemCursor &&
-					!shared.drawSoftwareCursor &&
-					!shared.drawCustomCursor,
-				"a visible Fallout cursor was duplicated by ImGui");
-			require(
-				1 +
-						static_cast<uint32_t>(shared.drawSoftwareCursor) +
-						static_cast<uint32_t>(shared.drawCustomCursor) ==
-					1,
-				"the engine branch did not present exactly one cursor");
+				"the modal host did not present exactly one cursor");
 
 			require(DecideCursorTransition(false, true) ==
 					CursorOwnershipTransition::kAcquire,
@@ -840,6 +828,62 @@ namespace vmm_tests
 			require(DecideCursorTransition(false, false) ==
 					CursorOwnershipTransition::kNone,
 				"steady overlay state changed ownership");
+		});
+
+		runner.test("carrier menu open and close messages remain balanced", [] {
+			CarrierMenu::State state{};
+			require(
+				CarrierMenu::Transition(state, CarrierMenu::Event::kOpen) ==
+					CarrierMenu::Action::kShow,
+				"the first modal open did not show the carrier");
+			require(
+				CarrierMenu::Transition(state, CarrierMenu::Event::kOpen) ==
+					CarrierMenu::Action::kNone,
+				"a repeated modal frame showed the carrier twice");
+			require(
+				CarrierMenu::Transition(state, CarrierMenu::Event::kClose) ==
+					CarrierMenu::Action::kHide,
+				"the modal close did not hide the carrier");
+			require(
+				CarrierMenu::Transition(state, CarrierMenu::Event::kClose) ==
+					CarrierMenu::Action::kNone,
+				"a repeated close hid the carrier twice");
+			require(!state.open, "the balanced sequence retained cursor ownership");
+		});
+
+		runner.test("carrier menu cleanup paths hide exactly one open entry", [] {
+			constexpr std::array cleanupEvents{
+				CarrierMenu::Event::kShutdown,
+				CarrierMenu::Event::kBackendFailure,
+				CarrierMenu::Event::kRetarget,
+				CarrierMenu::Event::kGameTransition,
+				CarrierMenu::Event::kOverlayOnly
+			};
+			for (const auto event : cleanupEvents)
+			{
+				CarrierMenu::State state{};
+				require(
+					CarrierMenu::Transition(state, CarrierMenu::Event::kOpen) ==
+						CarrierMenu::Action::kShow,
+					"a cleanup scenario did not establish an open carrier");
+				require(
+					CarrierMenu::Transition(state, event) ==
+						CarrierMenu::Action::kHide,
+					"a cleanup scenario did not balance its show");
+				require(
+					CarrierMenu::Transition(state, event) ==
+						CarrierMenu::Action::kNone,
+					"a cleanup scenario queued a second hide");
+				require(!state.open, "a cleanup scenario retained cursor ownership");
+			}
+
+			CarrierMenu::State overlay{};
+			require(
+				CarrierMenu::Transition(
+					overlay,
+					CarrierMenu::Event::kOverlayOnly) ==
+					CarrierMenu::Action::kNone,
+				"an overlay-only frame opened or hid a carrier");
 		});
 
 		runner.test("registry freeze rejects late clients and pages", [] {

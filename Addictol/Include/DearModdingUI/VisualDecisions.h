@@ -25,15 +25,14 @@ namespace Addictol::DearModdingUI
 	};
 
 	[[nodiscard]] constexpr CursorPresentation DecideCursorPresentation(
-		bool a_modalVisible,
-		bool a_engineCursorVisible) noexcept
+		bool a_modalVisible) noexcept
 	{
 		if (!a_modalVisible)
 			return {};
 		return {
 			true,
 			true,
-			!a_engineCursorVisible,
+			true,
 			false
 		};
 	}

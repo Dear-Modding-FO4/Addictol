@@ -2,6 +2,7 @@
 #include <Core/AdUtils.h>
 #include <Core/AdConfigValidation.h>
 #include <Core/AdLogControl.h>
+#include <DearModdingUI/CarrierMenu.h>
 #include <DearModdingUI/Host.h>
 #include <Menu/AdMenu.h>
 #include <Zlib/AdZlibBackend.h>
@@ -130,6 +131,22 @@ namespace Addictol
 
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		if (!a_msg)
+			return;
+		switch (a_msg->type)
+		{
+		case F4SE::MessagingInterface::kPreLoadGame:
+		case F4SE::MessagingInterface::kNewGame:
+		case F4SE::MessagingInterface::kGameLoaded:
+		case F4SE::MessagingInterface::kGameDataReady:
+			PlatformImgui::HandleGameTransition();
+			break;
+		default:
+			break;
+		}
+		if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
+			(void)DearModdingUI::CarrierMenu::Register();
+
 		auto plugin = Plugin::GetSingleton();
 		if (!plugin->IsInstall())
 		{

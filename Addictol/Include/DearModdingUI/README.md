@@ -46,11 +46,11 @@ only from that neutral root. Client icons use `Icons\Clients\<client-id-slug>.pn
 single hyphens, and drop other non-alphanumeric characters. Missing assets fall back without
 disabling the menu or the C ABI host.
 
-The modal host normally drives a bounded virtual cursor from raw mouse motion. While a Fallout cursor
-menu is open, it maps the engine's client-pixel position into the attached backbuffer, synchronizes the
-virtual position to it, and leaves the Fallout cursor as the single visible pointer. It resumes the ImGui
-software cursor from that synchronized position when the Fallout menu closes and releases Win32 cursor
-ownership when the modal host closes. Overlay-only frames do not draw a cursor or capture input.
+The modal host opens a registered, hidden Fallout 4 carrier menu so absolute client coordinates remain
+valid, then maps them into the attached backbuffer. The carrier movie and operating-system cursor stay
+hidden while ImGui draws the only visible pointer. Closing the modal host releases Win32 cursor
+ownership and removes the carrier from the menu stack. Overlay-only frames do not draw a cursor,
+capture input, or open the carrier.
 
 The Addictol host initializes on the first valid active-swapchain `Present` whenever any client was
 accepted. Addictol's `bMenu` setting controls only registration of Addictol's own pages. External

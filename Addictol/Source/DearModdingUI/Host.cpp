@@ -525,6 +525,11 @@ namespace Addictol::DearModdingUI
 		return DMUI_RESULT_OK;
 	}
 
+	void CloseMenu() noexcept
+	{
+		GetService().menuVisible.store(false, std::memory_order_release);
+	}
+
 	DMUI_PageHandle SelectedPage() noexcept
 	{
 		return GetService().selectedPage.load(std::memory_order_acquire);

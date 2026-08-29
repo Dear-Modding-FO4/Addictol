@@ -101,12 +101,12 @@ match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's
 
 The menu always starts closed. The ImGui host installs its hook for external F4SE plugins regardless
 of `bMenu`; a disabled menu registers no setup, draw, or toggle sinks. Window geometry is kept in
-`Data\F4SE\Plugins\DearModdingUI\imgui.ini`; the open state is not persisted. During gameplay, the modal
-menu drives a bounded virtual cursor from raw mouse motion. While a Fallout cursor menu is open, it
-follows the mapped engine cursor and leaves that cursor as the single visible pointer. The virtual
-position stays synchronized for a seamless handoff when the Fallout menu closes. Normal game cursor
-handling is restored on close, and overlay-only frames never capture or draw a cursor. Missing fonts or
-blur shaders fall back to a usable unblurred menu.
+`Data\F4SE\Plugins\DearModdingUI\imgui.ini`; the open state is not persisted. The modal host opens a
+registered, hidden Fallout 4 menu so the engine releases its gameplay cursor confinement, then maps
+absolute client coordinates into the active backbuffer. ImGui draws the only visible pointer while the
+operating-system cursor and carrier movie remain hidden. Normal game cursor handling is restored on
+close, and overlay-only frames never take cursor ownership or draw a cursor. Missing fonts or blur
+shaders fall back to a usable unblurred menu.
 
 Log Control changes the record and flush levels for the current session and shows the live output
 rate. The record level decides which lines are kept; the flush level forces a synchronous disk

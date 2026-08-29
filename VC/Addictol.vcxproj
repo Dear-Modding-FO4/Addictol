@@ -24,6 +24,7 @@
     <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\CarrierMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\IconLoader.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\CarrierMenu.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\IconLoader.h" />

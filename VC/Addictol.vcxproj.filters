@@ -49,6 +49,9 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\CarrierMenu.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
@@ -422,6 +425,9 @@
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\CarrierMenu.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h">

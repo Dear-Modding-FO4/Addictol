@@ -32,6 +32,7 @@ namespace Addictol
 		[[nodiscard]] bool AttachSwapChain(IDXGISwapChain* a_swapChain) noexcept;
 
 		void SetDrawingEnabled(bool a_enabled) noexcept;
+		void HandleGameTransition() noexcept;
 
 		[[nodiscard]] bool IsDrawingEnabled() noexcept;
 		[[nodiscard]] bool IsReady() noexcept;
