@@ -302,6 +302,7 @@ target("vmm-tests", function()
     -- add source files
     add_files("Tests/**.cpp")
     add_files("Addictol/Source/Core/AdLogControl.cpp")
+    add_files("Addictol/Source/DearModdingUI/Navigation.cpp")
     add_files("Addictol/Source/DearModdingUI/Registry.cpp")
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
 
@@ -365,6 +366,7 @@ target(plugin_name, function()
     add_files("Addictol/Source/**.cpp")
     add_files("Version/resource_version.rc")
     add_headerfiles("Addictol/Include/**.h")
+    add_extrafiles(".Build/F4SE/Plugins/DearModdingUI/**")
 
     -- add include directories
     add_includedirs(

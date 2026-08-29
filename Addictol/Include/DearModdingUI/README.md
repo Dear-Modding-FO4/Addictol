@@ -23,6 +23,25 @@ while their reference-counted frame demand is nonzero. Balance every successful 
 `releaseFrame`. The common toggle controls modal visibility and game-input suppression; overlay
 demand never suppresses input.
 
+## Shared menu
+
+The Dear Modding window owns all navigation chrome. Its mod selector is built from registered client
+display names; the sidebar then groups that client's settings pages by category and orders pages by
+`sortKey`, display name, and ID. Overlay pages never appear there. `selectPage` switches both the
+active mod and page, opens the window, and falls back deterministically if the previous selection is
+not available.
+
+Clients receive a clean scrolling content region below the host-owned page title, category, and
+summary. Draw regular ImGui controls there. Do not begin independent top-level windows, draw over
+the sidebar/header, change the host style or fonts, or retain pointers into host navigation data.
+Client pages inherit the active theme and may use their own balanced child regions and popups.
+
+The host supplies the Jost and JetBrains Mono font roles, the default Community Shaders-derived
+palette, responsive DPI/resolution scaling, docking for the single host window, and background blur.
+Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts and blur shaders are loaded only
+from that neutral root. Missing fonts fall back by role to ImGui's built-in font; missing or invalid
+blur shaders disable blur without disabling the menu or the C ABI host.
+
 The Addictol host initializes on the first valid active-swapchain `Present` whenever any client was
 accepted. Addictol's `bMenu` setting controls only registration of Addictol's own pages. External
 clients remain hosted when it is false and can open the common menu with the configured toggle.
@@ -47,8 +66,9 @@ void DMUI_CALL Ready(const DMUI_HostReadyInfo* info, void*) noexcept
 ```
 
 The host catches C++ exceptions and Windows structured exceptions around client callbacks, disables
-a faulting page, and attempts to recover ImGui stack state. Shared-context drawing cannot provide
-process isolation, so callbacks must still balance every ImGui stack operation.
+a faulting page, recovers the pinned ImGui stack state, and keeps a stable error entry in navigation.
+Shared-context drawing cannot provide process isolation, so callbacks must still balance every ImGui
+stack operation.
 
 If initialization fails, each accepted client receives `onHostUnavailable` with an explicit reason
 and may start its standalone fallback. A client that receives `onHostReady` must stay hosted for the

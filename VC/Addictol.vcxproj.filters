@@ -43,7 +43,19 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Shell.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Theme.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp">
@@ -340,9 +352,6 @@
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp">
       <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Platform\AdImguiTheme.cpp">
-      <Filter>Source\Platform</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
@@ -406,10 +415,28 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Shell.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Theme.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
@@ -712,9 +739,6 @@
     <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h">
       <Filter>Include\Platform</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Platform\AdImguiTheme.h">
-      <Filter>Include\Platform</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
@@ -740,6 +764,33 @@
   <ItemGroup>
     <None Include="..\Addictol\Include\DearModdingUI\README.md">
       <Filter>Include\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-Regular.ttf">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-SemiBold.ttf">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\JetBrainsMono\JetBrainsMono-Regular.ttf">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\JetBrainsMono\OFL.txt">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurDownsample.hlsl">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurHorizontal.hlsl">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurVertical.hlsl">
+      <Filter>Resources\DearModdingUI</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -784,6 +835,9 @@
     </Filter>
     <Filter Include="Include\DearModdingUI">
       <UniqueIdentifier>{228cbdc6-78e1-45fc-9b73-8ba0f0f9c660}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\DearModdingUI">
+      <UniqueIdentifier>{67a0d57b-089b-470c-8d7e-8f4578796134}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Modules">
       <UniqueIdentifier>{7f9dc727-58b0-4894-9e00-e9eb155fc5f9}</UniqueIdentifier>

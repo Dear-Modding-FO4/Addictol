@@ -316,6 +316,7 @@ namespace Addictol::DearModdingUI
 						a_right.displayName,
 						a_right.id);
 			});
+			m_navigation = BuildNavigationModel(m_clients, m_pages);
 			m_open = false;
 			return true;
 		}
@@ -363,13 +364,18 @@ namespace Addictol::DearModdingUI
 	{
 		const std::scoped_lock lock{ m_mutex };
 		return std::ranges::any_of(m_pages, [](const auto& a_page) {
-			return a_page.kind == DMUI_PAGE_KIND_SETTINGS && !a_page.callbackFailed;
+			return a_page.kind == DMUI_PAGE_KIND_SETTINGS;
 		});
 	}
 
 	const std::vector<RegisteredPage>& Registry::OrderedPages() const noexcept
 	{
 		return m_pages;
+	}
+
+	const NavigationModel& Registry::Navigation() const noexcept
+	{
+		return m_navigation;
 	}
 
 	DMUI_Result Registry::RequestFrame(
@@ -457,6 +463,13 @@ namespace Addictol::DearModdingUI
 		const std::scoped_lock lock{ m_mutex };
 		const auto* page = FindPage(a_page);
 		return !page || page->callbackFailed;
+	}
+
+	void Registry::MarkPageFailed(DMUI_PageHandle a_page) noexcept
+	{
+		const std::scoped_lock lock{ m_mutex };
+		if (auto* page = FindPage(a_page))
+			page->callbackFailed = true;
 	}
 
 	void Registry::NotifyReady(const DMUI_HostReadyInfo& a_info) noexcept

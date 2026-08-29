@@ -1,5 +1,7 @@
 #include <Platform/AdPlatformImgui.h>
+#include <DearModdingUI/BackgroundBlur.h>
 #include <DearModdingUI/Host.h>
+#include <DearModdingUI/Theme.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Core/AdUtils.h>
 #include <RE/C/ControlMap.h>
@@ -205,6 +207,7 @@ namespace Addictol
 
 		static void ReleaseBackBuffer() noexcept
 		{
+			DearModdingUI::BackgroundBlur::InvalidateBackBuffer();
 			if (s_backBufferView)
 				s_backBufferView->Release();
 			if (s_backBuffer)
@@ -575,12 +578,12 @@ namespace Addictol
 		{
 			std::error_code error;
 			const std::filesystem::path directory{
-				AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\Addictol"
+				AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\DearModdingUI"
 			};
 			std::filesystem::create_directories(directory, error);
 			if (error)
 			{
-				REX::WARN("Addictol menu: \"{}\" could not be created; window geometry is not persisted."sv,
+				REX::WARN("DearModdingUI: \"{}\" could not be created; window geometry is not persisted."sv,
 					directory.string());
 				return;
 			}
@@ -597,6 +600,7 @@ namespace Addictol
 
 			if (s_backend.load(std::memory_order_acquire) == Backend::kReady)
 			{
+				DearModdingUI::BackgroundBlur::ResetDeviceResources();
 				ImGui_ImplDX11_Shutdown();
 				ImGui_ImplWin32_Shutdown();
 			}
@@ -828,6 +832,9 @@ namespace Addictol
 			if (!ShouldRenderHostFrame(modalVisible, overlayDemanded) ||
 				!EnsureBackBuffer(a_swapChain))
 				return;
+			if (!DearModdingUI::Theme::PrepareFrame(s_backBufferIdentity.height))
+				return;
+			DearModdingUI::BackgroundBlur::BeginFrame();
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
@@ -837,6 +844,14 @@ namespace Addictol
 			ImGui::Render();
 
 			const PipelineState previousState{ s_attachment.context };
+			if (modalVisible)
+			{
+				DearModdingUI::BackgroundBlur::Render(
+					s_attachment.device,
+					s_attachment.context,
+					s_backBuffer,
+					s_backBufferView);
+			}
 			s_attachment.context->OMSetRenderTargets(1, &s_backBufferView, nullptr);
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		}

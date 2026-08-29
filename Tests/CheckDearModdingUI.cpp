@@ -1,4 +1,5 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
+#include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
 #include "Harness.h"
 
 #include <array>
@@ -298,6 +299,94 @@ namespace vmm_tests
 			require(pages[1].id == "sorted", "sort-key ordering changed");
 			require(pages[2].id == "second", "host page ordering changed");
 			require(pages[3].id == "late", "host pages did not precede external pages");
+		});
+
+		runner.test("navigation groups clients categories and settings pages deterministically", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto bravo = AddClient(registry, "bravo.mod", "Bravo", fingerprint, state);
+			const auto alpha = AddClient(
+				registry, "alpha.host", "Alpha", fingerprint, state, ClientOrigin::kHost);
+			const auto alphaLate = AddPage(registry, alpha, "late", "Late", "General", 20,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			const auto alphaEarly = AddPage(registry, alpha, "early", "Early", "General", -10,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			(void)AddPage(registry, alpha, "advanced", "Advanced", "Advanced", 0,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			const auto overlay = AddPage(registry, alpha, "overlay", "Overlay", "HUD", 0,
+				DMUI_PAGE_KIND_OVERLAY, state);
+			(void)AddPage(registry, bravo, "settings", "Settings", "General", 0,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			require(registry.Freeze(), "registry did not freeze");
+
+			const auto& navigation = registry.Navigation();
+			require(navigation.clients.size() == 2, "settings clients were not grouped");
+			require(navigation.clients[0].id == "alpha.host", "client order changed");
+			require(navigation.clients[0].categories.size() == 2, "categories were not grouped");
+			require(navigation.clients[0].categories[0].displayName == "Advanced",
+				"category order changed");
+			require(navigation.clients[0].categories[1].pages[0].handle == alphaEarly,
+				"page sort key was ignored");
+			require(navigation.clients[0].categories[1].pages[1].handle == alphaLate,
+				"page sort order changed");
+			require(navigation.FindPage(alphaEarly) != nullptr, "settings page was not indexed");
+			require(navigation.FindPage(overlay) == nullptr,
+				"overlay page entered settings navigation");
+		});
+
+		runner.test("navigation selection honors requests then keeps a stable fallback", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(registry, "selection.mod", "Selection", fingerprint, state);
+			const auto first = AddPage(registry, client, "first", "First", "General", 0,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			const auto second = AddPage(registry, client, "second", "Second", "General", 10,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			const auto overlay = AddPage(registry, client, "overlay", "Overlay", "HUD", 0,
+				DMUI_PAGE_KIND_OVERLAY, state);
+			require(registry.Freeze(), "registry did not freeze");
+			const auto& navigation = registry.Navigation();
+			require(ResolvePageSelection(navigation, second, first) == second,
+				"requested page was not selected");
+			require(ResolvePageSelection(navigation, overlay, second) == second,
+				"overlay request replaced the stable selection");
+			require(ResolvePageSelection(navigation, 9999, 9998) == first,
+				"invalid selection did not fall back to the first page");
+		});
+
+		runner.test("one-page navigation and failed-page presentation remain stable", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(registry, "single.mod", "Single", fingerprint, state);
+			const auto page = AddPage(registry, client, "only", "Only", "General", 0,
+				DMUI_PAGE_KIND_SETTINGS, state);
+			require(registry.Freeze(), "registry did not freeze");
+			const auto& navigation = registry.Navigation();
+			require(navigation.clients.size() == 1, "single client was omitted");
+			require(navigation.clients[0].categories.size() == 1, "single category was omitted");
+			require(navigation.FirstPage() == page, "single page was not the fallback");
+			require(DecidePagePresentation(navigation.FindPage(page), false) ==
+					PagePresentation::kContent,
+				"healthy page did not present content");
+			require(DecidePagePresentation(navigation.FindPage(page), true) ==
+					PagePresentation::kFailure,
+				"failed page did not present a stable error");
+			registry.MarkPageFailed(page);
+			require(registry.PageFailed(page), "failed page state was not retained");
+			require(registry.HasSettingsPages(), "failed page removed the host's settings shell");
+			require(DecidePagePresentation(nullptr, false) == PagePresentation::kEmpty,
+				"missing page did not present an empty state");
+		});
+
+		runner.test("visual scale resolves DPI and resolution with safe bounds", [] {
+			require(ResolveUiScale(1.0f, 1080) == 1.0f, "1080p scale changed");
+			require(ResolveUiScale(1.5f, 1080) == 1.5f, "DPI scale was ignored");
+			require(ResolveUiScale(1.0f, 2160) == 2.0f, "4K scale was ignored");
+			require(ResolveUiScale(0.0f, 0) == 1.0f, "invalid inputs did not fall back");
+			require(ResolveUiScale(4.0f, 4320) == 2.5f, "scale maximum was not enforced");
 		});
 
 		runner.test("registry freeze rejects late clients and pages", [] {

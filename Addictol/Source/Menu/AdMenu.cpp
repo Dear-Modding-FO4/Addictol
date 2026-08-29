@@ -1,5 +1,6 @@
-#include <Platform/AdImguiTheme.h>
+#include <DearModdingUI/Theme.h>
 #include <DearModdingUI/Host.h>
+#include <DearModdingUI/Shell.h>
 #include <Menu/AdMenu.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Core/AdUtils.h>
@@ -11,7 +12,6 @@
 #include <Windows.h>
 
 #include <imgui/imgui.h>
-#include <imgui/backends/imgui_impl_win32.h>
 
 #include <atomic>
 #include <mutex>
@@ -25,8 +25,6 @@ namespace Addictol
 
 	namespace menuDetail
 	{
-		inline constexpr ImVec2 kWindowSize{ 1100.0f, 700.0f };
-
 		static std::atomic<bool> s_requested{ false };
 		static std::atomic<uint64_t> s_openGeneration{ 0 };
 		static std::atomic<uint32_t> s_toggleKey{ kMenuDefaultToggleKey };
@@ -36,11 +34,6 @@ namespace Addictol
 
 		static uint64_t s_qpcFrequency{ 0 };
 		static double s_lastDrawMs{ 0.0 };
-		static float s_dpiScale{ 1.0f };
-		static ImVec2 s_lastWindowPosition{};
-		static ImVec2 s_lastWindowSize{};
-		static bool s_geometryObserved{ false };
-		static bool s_geometryDirty{ false };
 
 		void Configure() noexcept
 		{
@@ -91,11 +84,8 @@ namespace Addictol
 		{
 			auto& io = ImGui::GetIO();
 			s_qpcFrequency = ReadQpcFrequency();
-			s_dpiScale = a_window ? ImGui_ImplWin32_GetDpiScaleForHwnd(a_window) : 1.0f;
-			if (s_dpiScale <= 0.0f)
-				s_dpiScale = 1.0f;
-			Theme::Apply(io, ImGui::GetStyle(), s_dpiScale);
-			REX::INFO("Menu: ImGui configured at {:.2f}x DPI scale"sv, s_dpiScale);
+			DearModdingUI::Theme::Initialize(a_window);
+			REX::INFO("Menu: DearModdingUI visuals configured"sv);
 		}
 
 		void DMUI_CALL OnHostReady(
@@ -119,77 +109,14 @@ namespace Addictol
 			REX::ERROR("Menu: DearModdingUI host unavailable, reason {}"sv, a_reason);
 		}
 
-		void SaveWindowGeometry() noexcept
-		{
-			const auto iniPath = PlatformImgui::GetConfigurePath();
-			if (!ImGui::GetCurrentContext() || iniPath.empty())
-				return;
-
-			ImGui::SaveIniSettingsToDisk(iniPath.c_str());
-		}
-
-		void DrawWindow() noexcept
-		{
-			ImGui::SetNextWindowSize(
-				ImVec2(kWindowSize.x * s_dpiScale, kWindowSize.y * s_dpiScale),
-				ImGuiCond_FirstUseEver);
-			ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_FirstUseEver);
-
-			auto open = true;
-			const auto visible = ImGui::Begin("Dear Modding UI", &open);
-			const auto position = ImGui::GetWindowPos();
-			const auto size = ImGui::GetWindowSize();
-			const auto geometryChanged = s_geometryObserved &&
-				(position.x != s_lastWindowPosition.x || position.y != s_lastWindowPosition.y ||
-					size.x != s_lastWindowSize.x || size.y != s_lastWindowSize.y);
-			if (geometryChanged)
-				s_geometryDirty = true;
-			s_geometryObserved = true;
-			s_lastWindowPosition = position;
-			s_lastWindowSize = size;
-
-			if (visible && ImGui::BeginTabBar("addictol_menu_tabs", ImGuiTabBarFlags_None))
-			{
-				const auto selected = DearModdingUI::SelectedPage();
-				for (const auto& page : DearModdingUI::OrderedPages())
-				{
-					if (page.kind != DMUI_PAGE_KIND_SETTINGS ||
-						page.callbackFailed)
-						continue;
-					const auto flags = page.handle == selected ?
-						ImGuiTabItemFlags_SetSelected :
-						ImGuiTabItemFlags_None;
-					if (ImGui::BeginTabItem(page.imguiLabel.c_str(), nullptr, flags))
-					{
-						DearModdingUI::DrawPage(page.handle);
-						ImGui::EndTabItem();
-					}
-					if (page.handle == selected)
-						DearModdingUI::ClearPageSelection(page.handle);
-				}
-				ImGui::EndTabBar();
-			}
-			ImGui::End();
-
-			if (s_geometryDirty && !geometryChanged && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-			{
-				SaveWindowGeometry();
-				s_geometryDirty = false;
-			}
-			if (!open)
-			{
-				(void)DearModdingUI::SetMenuVisible(false);
-				SaveWindowGeometry();
-				PlatformImgui::SetDrawingEnabled(false);
-			}
-		}
-
 		void DrawSink() noexcept
 		{
 			const auto start = ReadQpc();
 			DearModdingUI::DrawDemandedOverlays();
 			if (DearModdingUI::IsMenuVisible())
-				DrawWindow();
+				DearModdingUI::DrawShell();
+			if (!DearModdingUI::IsMenuVisible())
+				PlatformImgui::SetDrawingEnabled(false);
 			s_lastDrawMs = QpcToMilliseconds(ReadQpc() - start, s_qpcFrequency);
 		}
 

@@ -1,5 +1,6 @@
 #define DMUI_HOST_EXPORTS
 #include <DearModdingUI/Host.h>
+#include <DearModdingUI/ImGuiRecovery.h>
 
 #include <REX/REX.h>
 
@@ -518,19 +519,31 @@ namespace Addictol::DearModdingUI
 			std::memory_order_acq_rel);
 	}
 
-	void DrawPage(DMUI_PageHandle a_page) noexcept
+	bool DrawPage(DMUI_PageHandle a_page) noexcept
 	{
 		auto& service = GetService();
-		ImGuiErrorRecoveryState recovery{};
-		ImGui::ErrorRecoveryStoreState(&recovery);
+		auto recovery = ImGuiRecoverySnapshot::Capture();
+		if (!recovery)
+		{
+			service.registry.MarkPageFailed(a_page);
+			REX::ERROR("DearModdingUI: page callback {} could not be isolated and was disabled"sv,
+				a_page);
+			return false;
+		}
 		const auto result = service.registry.InvokePage(a_page);
-		ImGui::ErrorRecoveryTryToRecoverState(&recovery);
 		if (result == DMUI_RESULT_CALLBACK_FAILED)
 		{
+			recovery->RecoverFailure();
 			REX::ERROR("DearModdingUI: page callback {} failed and was disabled"sv, a_page);
-			if (!service.registry.HasSettingsPages())
-				service.menuVisible.store(false, std::memory_order_release);
+			return false;
 		}
+		recovery->RecoverAfterCallback();
+		return result == DMUI_RESULT_OK;
+	}
+
+	bool PageFailed(DMUI_PageHandle a_page) noexcept
+	{
+		return GetService().registry.PageFailed(a_page);
 	}
 
 	void DrawDemandedOverlays() noexcept
@@ -540,13 +553,18 @@ namespace Addictol::DearModdingUI
 		{
 			if (page.kind == DMUI_PAGE_KIND_OVERLAY &&
 				registry.IsFrameDemanded(page.handle))
-				DrawPage(page.handle);
+				(void)DrawPage(page.handle);
 		}
 	}
 
 	const std::vector<RegisteredPage>& OrderedPages() noexcept
 	{
 		return GetService().registry.OrderedPages();
+	}
+
+	const NavigationModel& Navigation() noexcept
+	{
+		return GetService().registry.Navigation();
 	}
 
 	DMUI_Result RegisterInternalClient(

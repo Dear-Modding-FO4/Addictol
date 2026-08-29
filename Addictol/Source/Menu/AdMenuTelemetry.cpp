@@ -1,4 +1,4 @@
-#include <Platform/AdImguiTheme.h>
+#include <DearModdingUI/Theme.h>
 #include <Menu/AdMenu.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Menu/AdMenuTelemetry.h>
@@ -140,7 +140,7 @@ namespace Addictol
 			{
 				const auto color = display.fraction >= 0.9f ? Theme::colors::kError :
 					display.fraction >= 0.75f ? Theme::colors::kWarning :
-					Theme::colors::kAccentMedium;
+					Theme::colors::kAccentMuted;
 				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
 				ImGui::ProgressBar(display.fraction, ImVec2(-FLT_MIN, 0.0f), "");
 				ImGui::PopStyleColor();

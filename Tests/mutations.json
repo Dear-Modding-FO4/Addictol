@@ -1,5 +1,13 @@
 [
   {
+    "name": "DearModdingUI navigation filters overlay pages",
+    "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
+    "find": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_SETTINGS)\r\n\t\t\t\t\torderedPages.push_back(&page);",
+    "replace": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_OVERLAY)\r\n\t\t\t\t\torderedPages.push_back(&page);",
+    "check": "navigation groups clients categories and settings pages deterministically",
+    "message": "categories were not grouped"
+  },
+  {
     "name": "DearModdingUI freeze closes registration",
     "target": "Addictol/Source/DearModdingUI/Registry.cpp",
     "find": "if (!m_open)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",

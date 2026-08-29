@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DearModdingUI/API.h>
+#include <DearModdingUI/Navigation.h>
 
 #include <cstdint>
 #include <mutex>
@@ -71,6 +72,7 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] size_t DemandedOverlayCount() const noexcept;
 		[[nodiscard]] bool HasSettingsPages() const noexcept;
 		[[nodiscard]] const std::vector<RegisteredPage>& OrderedPages() const noexcept;
+		[[nodiscard]] const NavigationModel& Navigation() const noexcept;
 		[[nodiscard]] DMUI_Result RequestFrame(
 			DMUI_ClientHandle a_client,
 			DMUI_PageHandle a_page) noexcept;
@@ -84,6 +86,7 @@ namespace Addictol::DearModdingUI
 			DMUI_PageKind a_kind) const noexcept;
 		[[nodiscard]] DMUI_Result InvokePage(DMUI_PageHandle a_page) noexcept;
 		[[nodiscard]] bool PageFailed(DMUI_PageHandle a_page) const noexcept;
+		void MarkPageFailed(DMUI_PageHandle a_page) noexcept;
 		void NotifyReady(const DMUI_HostReadyInfo& a_info) noexcept;
 		void NotifyUnavailable(DMUI_UnavailableReason a_reason) noexcept;
 
@@ -113,6 +116,7 @@ namespace Addictol::DearModdingUI
 		mutable std::mutex m_mutex;
 		std::vector<RegisteredClient> m_clients;
 		std::vector<RegisteredPage> m_pages;
+		NavigationModel m_navigation;
 		DMUI_ClientHandle m_nextClient{ 1 };
 		DMUI_PageHandle m_nextPage{ 1 };
 		Notification m_notification{ Notification::kNone };

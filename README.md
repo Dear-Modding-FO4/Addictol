@@ -52,9 +52,10 @@ Data/F4SE/Plugins/Addictol.dll
 Data/F4SE/Plugins/Addictol.toml
 Data/F4SE/Plugins/Addictol_FacegenExceptions.ini
 Data/F4SE/Plugins/Addictol_SNCT.ini
-Data/F4SE/Plugins/Addictol/Fonts/Inter-Regular.ttf
-Data/F4SE/Plugins/Addictol/Fonts/JetBrainsMono-Regular.ttf
-Data/F4SE/Plugins/Addictol/Fonts/JetBrainsMono-Bold.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-Regular.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-SemiBold.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/JetBrainsMono/JetBrainsMono-Regular.ttf
+Data/F4SE/Plugins/DearModdingUI/Shaders/BackgroundBlur*.hlsl
 Data/Scripts/Addictol.pex
 Data/Scripts/XCELL.pex
 ```
@@ -85,14 +86,16 @@ and any that disabled themselves. Check it first if something is not working.
 
 `[Additional] bMenu` adds an in-game diagnostics window drawn over the game.
 `sMenuToggleKey` accepts F1-F12, Home, End, Insert, and Delete, and falls back to F11 when it does
-not recognize the name. `uMenuRefreshMs` sets how often the open tab copies fresh data, clamped to
+not recognize the name. `uMenuRefreshMs` sets how often the open page copies fresh data, clamped to
 100-2000 ms.
 
-Tabs appear in module name order and Log Control is always last.
+The Dear Modding window selects a registered mod first, then shows its categorized settings pages.
+Addictol telemetry pages retain their configured order and Log Control remains last.
 
 The menu always starts closed. The ImGui host installs its hook for external F4SE plugins regardless
 of `bMenu`; a disabled menu registers no setup, draw, or toggle sinks. Window geometry is kept in
-`Data\F4SE\Plugins\Addictol\imgui.ini`; the open state is not persisted.
+`Data\F4SE\Plugins\DearModdingUI\imgui.ini`; the open state is not persisted. Missing optional fonts
+or blur shaders fall back to a usable unblurred menu.
 
 Log Control changes the record and flush levels for the current session and shows the live output
 rate. The record level decides which lines are kept; the flush level forces a synchronous disk
@@ -120,7 +123,8 @@ handling game addresses across the three runtimes, and what a pull request needs
 
 GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPTIONS).
 
-The menu theme is adapted from Fallout 4 Community Shaders (`src/Menu/Theme.h` and
-`src/Menu/Theme.cpp`), which is GPL-3.0. The bundled Inter and JetBrains Mono fonts in
-`Data\F4SE\Plugins\Addictol\Fonts` ship under the SIL Open Font License; their license texts sit
-next to them.
+The shared menu shell, theme, font roles, and blur are adapted from Fallout 4 Community Shaders
+(`src/Menu/FeatureListRenderer.*`, `ThemeManager.*`, `Fonts.*`, `BackgroundBlur.*`, and
+`ImGuiRecovery.h`), which is GPL-3.0. Its Gaussian blur credits Unrimp by Christian Ofenberg under
+MIT. The bundled Jost and JetBrains Mono fonts under `Data\F4SE\Plugins\DearModdingUI\Fonts` ship
+under the SIL Open Font License; their license texts sit next to them.

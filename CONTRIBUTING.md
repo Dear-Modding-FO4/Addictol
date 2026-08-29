@@ -68,14 +68,14 @@ Addictol/Include/Zlib/       compression backend and helpers
 Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
 Addictol/Include/Platform/   ImGui platform integration
-Addictol/Include/DearModdingUI/ vendorable UI API and internal host registry
+Addictol/Include/DearModdingUI/ vendorable UI API and neutral host shell
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
 Addictol/Source/Modules/     one .cpp per feature module (~80 of them)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header
-.Build/F4SE/Plugins/         build output, the tracked shipped config, and shipped resources
+.Build/F4SE/Plugins/         build output, tracked config, and neutral DearModdingUI resources
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`
