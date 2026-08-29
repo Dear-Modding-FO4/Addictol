@@ -5,6 +5,8 @@
 #include <d3d11.h>
 #include <dxgi.h>
 
+#include <atomic>
+
 namespace Addictol
 {
 	static REX::TOML::Bool<> bFixesAltTabFullscreen{"Fixes"sv, "bAltTabFullscreen"sv, true};
@@ -15,7 +17,8 @@ namespace Addictol
 		const DXGI_SWAP_CHAIN_DESC *, IDXGISwapChain **,
 		ID3D11Device **, D3D_FEATURE_LEVEL *, ID3D11DeviceContext **);
 
-	static TD3D11CreateDeviceAndSwapChain OriginalCreate = nullptr;
+	static std::atomic<TD3D11CreateDeviceAndSwapChain> OriginalCreate{ nullptr };
+	static std::atomic<bool> OriginalCreateInstalling{ false };
 
 	static HRESULT WINAPI Hook_D3D11Create(
 		IDXGIAdapter *a_adapter,
@@ -45,11 +48,17 @@ namespace Addictol
 					  reinterpret_cast<void *>(a_desc->OutputWindow));
 		}
 
-		return OriginalCreate
-				   ? OriginalCreate(a_adapter, a_driverType, a_software, a_flags, a_featureLevels,
-									a_numFeatureLevels, a_sdkVersion, descToUse, a_outSwapChain, a_outDevice,
-									a_outFeatureLevel, a_outContext)
-				   : E_FAIL;
+		auto original = OriginalCreate.load(std::memory_order_acquire);
+		while (!original && OriginalCreateInstalling.load(std::memory_order_acquire))
+		{
+			SwitchToThread();
+			original = OriginalCreate.load(std::memory_order_acquire);
+		}
+		return original ?
+			original(a_adapter, a_driverType, a_software, a_flags, a_featureLevels,
+				a_numFeatureLevels, a_sdkVersion, descToUse, a_outSwapChain, a_outDevice,
+				a_outFeatureLevel, a_outContext) :
+			E_FAIL;
 	}
 
 	ModuleAltTabFullscreen::ModuleAltTabFullscreen() : Module("Alt-Tab Fullscreen", &bFixesAltTabFullscreen)
@@ -58,17 +67,21 @@ namespace Addictol
 
 	bool ModuleAltTabFullscreen::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message *a_msg) noexcept
 	{
-		OriginalCreate = reinterpret_cast<TD3D11CreateDeviceAndSwapChain>(RELEX::DetourIAT(
+		OriginalCreateInstalling.store(true, std::memory_order_release);
+		const auto original = reinterpret_cast<TD3D11CreateDeviceAndSwapChain>(RELEX::DetourIAT(
 			"d3d11.dll",
 			"D3D11CreateDeviceAndSwapChain",
 			reinterpret_cast<uintptr_t>(&Hook_D3D11Create)));
 
-		if (!OriginalCreate)
+		if (!original)
 		{
+			OriginalCreateInstalling.store(false, std::memory_order_release);
 			REX::WARN("Alt-Tab Fullscreen: D3D11CreateDeviceAndSwapChain not found in IAT."sv);
 			return false;
 		}
 
+		OriginalCreate.store(original, std::memory_order_release);
+		OriginalCreateInstalling.store(false, std::memory_order_release);
 		return true;
 	}
 

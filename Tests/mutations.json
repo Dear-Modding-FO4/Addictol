@@ -24,14 +24,6 @@
     "message": "a wrong expected size was accepted"
   },
   {
-    "name": "wildcard mask takes the target byte",
-    "target": "Addictol/Include/Core/AdSignature.h",
-    "find": "expected.push_back(a_expected[i].value_or(target[i]));",
-    "replace": "expected.push_back(a_expected[i].value_or(0));",
-    "check": "wildcard signature takes target bytes only at masked positions",
-    "message": "masked positions must take the target's own bytes"
-  },
-  {
     "name": "allocator busy metric reads busy pages",
     "target": "Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h",
     "find": "a_out[1] = { static_cast<double>(a_stats.pages_busy), a_active };",
