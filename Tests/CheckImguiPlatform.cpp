@@ -1,6 +1,7 @@
 #include "../Addictol/Include/Platform/AdImguiPlatformTargets.h"
 #include "Harness.h"
 
+#include <limits>
 #include <string>
 
 namespace
@@ -198,6 +199,62 @@ namespace vmm_tests
 			require(
 				DecideBackBuffer(first, invalid, true) == BackBufferDecision::kSkip,
 				"an invalid backbuffer must skip rendering");
+		});
+
+		runner.test("mouse coordinates map from the client into the backbuffer", [] {
+			constexpr MousePosition equal{ 123.75f, 456.25f };
+			constexpr auto equalMapped =
+				MapClientToBackBuffer(equal, 1920, 1080, 1920, 1080);
+			require(equalMapped.x == equal.x && equalMapped.y == equal.y,
+				"equal dimensions changed mouse coordinates");
+
+			constexpr auto uniform =
+				MapClientToBackBuffer({ 480.0f, 270.0f }, 960, 540, 1920, 1080);
+			require(uniform.x == 960.0f && uniform.y == 540.0f,
+				"uniform scaling did not match the backbuffer");
+
+			constexpr auto nonUniform =
+				MapClientToBackBuffer({ 400.0f, 300.0f }, 800, 600, 2560, 1080);
+			require(nonUniform.x == 1280.0f && nonUniform.y == 540.0f,
+				"independent axis scaling changed");
+
+			constexpr MousePosition position{ 400.0f, 300.0f };
+			constexpr auto zeroClientWidth =
+				MapClientToBackBuffer(position, 0, 600, 2560, 1080);
+			constexpr auto zeroClientHeight =
+				MapClientToBackBuffer(position, 800, 0, 2560, 1080);
+			constexpr auto zeroBackBufferWidth =
+				MapClientToBackBuffer(position, 800, 600, 0, 1080);
+			constexpr auto zeroBackBufferHeight =
+				MapClientToBackBuffer(position, 800, 600, 2560, 0);
+			require(
+				zeroClientWidth.x == position.x && zeroClientWidth.y == position.y &&
+					zeroClientHeight.x == position.x && zeroClientHeight.y == position.y &&
+					zeroBackBufferWidth.x == position.x && zeroBackBufferWidth.y == position.y &&
+					zeroBackBufferHeight.x == position.x && zeroBackBufferHeight.y == position.y,
+				"degenerate dimensions changed mouse coordinates");
+
+			constexpr auto unavailable =
+				-(std::numeric_limits<float>::max)();
+			constexpr auto sentinel =
+				MapClientToBackBuffer({ unavailable, unavailable }, 800, 600, 2560, 1080);
+			require(sentinel.x == unavailable && sentinel.y == unavailable,
+				"the unavailable mouse sentinel was scaled");
+
+			constexpr MousePosition leftOutside{ -1.0f, 300.0f };
+			constexpr MousePosition rightOutside{ 800.0f, 300.0f };
+			constexpr MousePosition belowOutside{ 400.0f, 601.0f };
+			constexpr auto leftMapped =
+				MapClientToBackBuffer(leftOutside, 800, 600, 2560, 1080);
+			constexpr auto rightMapped =
+				MapClientToBackBuffer(rightOutside, 800, 600, 2560, 1080);
+			constexpr auto belowMapped =
+				MapClientToBackBuffer(belowOutside, 800, 600, 2560, 1080);
+			require(
+				leftMapped.x == leftOutside.x && leftMapped.y == leftOutside.y &&
+					rightMapped.x == rightOutside.x && rightMapped.y == rightOutside.y &&
+					belowMapped.x == belowOutside.x && belowMapped.y == belowOutside.y,
+				"out-of-window mouse coordinates were scaled into the viewport");
 		});
 
 		runner.test("install state permits one IAT attempt", [] {

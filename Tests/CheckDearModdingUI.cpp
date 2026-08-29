@@ -664,38 +664,20 @@ namespace vmm_tests
 			}
 		});
 
-		runner.test("cursor ownership follows modal visibility and safe fallback", [] {
-			const auto overlay =
-				DecideCursorPresentation(false, true, false, false, false);
+		runner.test("cursor ownership follows modal visibility", [] {
+			const auto overlay = DecideCursorPresentation(false);
 			require(!overlay.captureInput &&
 					!overlay.hideOperatingSystemCursor &&
 					!overlay.drawSoftwareCursor &&
 					!overlay.drawCustomCursor,
 				"overlay-only drawing acquired a cursor");
 
-			const auto fallback =
-				DecideCursorPresentation(true, false, false, true, false);
-			require(fallback.captureInput &&
-					fallback.hideOperatingSystemCursor &&
-					fallback.drawSoftwareCursor &&
-					!fallback.drawCustomCursor,
-				"missing custom cursor did not use the visible fallback");
-
-			const auto custom =
-				DecideCursorPresentation(true, false, false, true, true);
-			require(custom.captureInput &&
-					custom.hideOperatingSystemCursor &&
-					!custom.drawSoftwareCursor &&
-					custom.drawCustomCursor,
-				"loaded custom cursor was double drawn");
-
-			const auto native =
-				DecideCursorPresentation(true, false, true, false, false);
-			require(native.captureInput &&
-					native.hideOperatingSystemCursor &&
-					!native.drawSoftwareCursor &&
-					!native.drawCustomCursor,
-				"Fallout cursor was double drawn");
+			const auto modal = DecideCursorPresentation(true);
+			require(modal.captureInput &&
+					modal.hideOperatingSystemCursor &&
+					modal.drawSoftwareCursor &&
+					!modal.drawCustomCursor,
+				"modal drawing did not own exactly one software cursor");
 
 			require(DecideCursorTransition(false, true) ==
 					CursorOwnershipTransition::kAcquire,
@@ -706,6 +688,9 @@ namespace vmm_tests
 			require(DecideCursorTransition(true, true) ==
 					CursorOwnershipTransition::kNone,
 				"steady modal state retriggered ownership");
+			require(DecideCursorTransition(false, false) ==
+					CursorOwnershipTransition::kNone,
+				"steady overlay state changed ownership");
 		});
 
 		runner.test("registry freeze rejects late clients and pages", [] {

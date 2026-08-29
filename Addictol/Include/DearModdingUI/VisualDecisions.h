@@ -25,23 +25,15 @@ namespace Addictol::DearModdingUI
 	};
 
 	[[nodiscard]] constexpr CursorPresentation DecideCursorPresentation(
-		bool a_modalVisible,
-		[[maybe_unused]] bool a_overlayDemanded,
-		bool a_nativeGameCursorVisible,
-		bool a_customCursorEnabled,
-		bool a_activeCustomCursorLoaded) noexcept
+		bool a_modalVisible) noexcept
 	{
 		if (!a_modalVisible)
 			return {};
-		const auto custom =
-			!a_nativeGameCursorVisible &&
-			a_customCursorEnabled &&
-			a_activeCustomCursorLoaded;
 		return {
 			true,
 			true,
-			!a_nativeGameCursorVisible && !custom,
-			custom
+			true,
+			false
 		};
 	}
 

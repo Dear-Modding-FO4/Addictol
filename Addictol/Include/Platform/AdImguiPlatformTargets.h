@@ -163,6 +163,39 @@ namespace Addictol::ImguiPlatform
 		}
 	};
 
+	struct MousePosition
+	{
+		float x{ 0.0f };
+		float y{ 0.0f };
+	};
+
+	[[nodiscard]] constexpr MousePosition MapClientToBackBuffer(
+		MousePosition a_position,
+		uint32_t a_clientWidth,
+		uint32_t a_clientHeight,
+		uint32_t a_backBufferWidth,
+		uint32_t a_backBufferHeight) noexcept
+	{
+		if (!a_clientWidth ||
+			!a_clientHeight ||
+			!a_backBufferWidth ||
+			!a_backBufferHeight ||
+			(a_clientWidth == a_backBufferWidth &&
+				a_clientHeight == a_backBufferHeight) ||
+			!(a_position.x >= 0.0f &&
+				a_position.y >= 0.0f &&
+				a_position.x < static_cast<float>(a_clientWidth) &&
+				a_position.y < static_cast<float>(a_clientHeight)))
+			return a_position;
+
+		return {
+			a_position.x * static_cast<float>(a_backBufferWidth) /
+				static_cast<float>(a_clientWidth),
+			a_position.y * static_cast<float>(a_backBufferHeight) /
+				static_cast<float>(a_clientHeight)
+		};
+	}
+
 	enum class BackBufferDecision : uint32_t
 	{
 		kSkip,

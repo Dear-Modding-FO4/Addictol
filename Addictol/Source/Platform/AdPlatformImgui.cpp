@@ -18,6 +18,7 @@
 #include <array>
 #include <atomic>
 #include <filesystem>
+#include <limits>
 #include <string_view>
 #include <utility>
 
@@ -140,6 +141,7 @@ namespace Addictol
 		static ID3D11RenderTargetView* s_backBufferView{ nullptr };
 		static BackBufferIdentity s_backBufferIdentity{};
 		static bool s_backBufferFailureLogged{ false };
+		static bool s_coordinateSpaceLogged{ false };
 		static bool s_previousIgnoreKeyboardMouse{ false };
 		static bool s_inputSuppressed{ false };
 
@@ -231,6 +233,91 @@ namespace Addictol
 		{
 			for (auto& consumed : s_consumedToggleKeys)
 				consumed.store(false, std::memory_order_release);
+		}
+
+		struct ClientSize
+		{
+			uint32_t width{ 0 };
+			uint32_t height{ 0 };
+		};
+
+		[[nodiscard]] static ClientSize ReadClientSize(HWND a_window) noexcept
+		{
+			RECT client{};
+			if (!GetClientRect(a_window, &client) ||
+				client.right <= client.left ||
+				client.bottom <= client.top)
+				return {};
+			return {
+				static_cast<uint32_t>(client.right - client.left),
+				static_cast<uint32_t>(client.bottom - client.top)
+			};
+		}
+
+		[[nodiscard]] static MousePosition ReadClientMousePosition(HWND a_window) noexcept
+		{
+			POINT position{};
+			if (!GetCursorPos(&position) ||
+				!ScreenToClient(a_window, &position))
+			{
+				constexpr auto unavailable =
+					-(std::numeric_limits<float>::max)();
+				return { unavailable, unavailable };
+			}
+			return {
+				static_cast<float>(position.x),
+				static_cast<float>(position.y)
+			};
+		}
+
+		static void ApplyBackBufferCoordinateSpace() noexcept
+		{
+			auto& io = ImGui::GetIO();
+			const auto client = ReadClientSize(s_attachment.window);
+			// Read client coordinates afresh so a backbuffer-space position is never scaled twice.
+			const auto mouse = MapClientToBackBuffer(
+				ReadClientMousePosition(s_attachment.window),
+				client.width,
+				client.height,
+				s_backBufferIdentity.width,
+				s_backBufferIdentity.height);
+			io.DisplaySize = {
+				static_cast<float>(s_backBufferIdentity.width),
+				static_cast<float>(s_backBufferIdentity.height)
+			};
+			io.AddMousePosEvent(mouse.x, mouse.y);
+			if ((client.width != s_backBufferIdentity.width ||
+					client.height != s_backBufferIdentity.height) &&
+				!std::exchange(s_coordinateSpaceLogged, true))
+			{
+				REX::INFO("Platform Imgui: client {}x{} differs from backbuffer {}x{}; input is mapped to the backbuffer"sv,
+					client.width,
+					client.height,
+					s_backBufferIdentity.width,
+					s_backBufferIdentity.height);
+			}
+		}
+
+		[[nodiscard]] static LPARAM MapMouseMoveToBackBuffer(
+			HWND a_window,
+			LPARAM a_lparam) noexcept
+		{
+			const auto client = ReadClientSize(a_window);
+			const MousePosition position{
+				static_cast<float>(static_cast<int16_t>(LOWORD(a_lparam))),
+				static_cast<float>(static_cast<int16_t>(HIWORD(a_lparam)))
+			};
+			const auto mapped = MapClientToBackBuffer(
+				position,
+				client.width,
+				client.height,
+				s_backBufferIdentity.width,
+				s_backBufferIdentity.height);
+			if (mapped.x == position.x && mapped.y == position.y)
+				return a_lparam;
+			return MAKELPARAM(
+				static_cast<int16_t>(mapped.x),
+				static_cast<int16_t>(mapped.y));
 		}
 
 		static void RetireActiveAttachmentLocked(
@@ -864,8 +951,7 @@ namespace Addictol
 			const auto overlayDemanded = DearModdingUI::NeedsFrame() && !modalVisible;
 			s_drawingEnabled.store(modalVisible, std::memory_order_release);
 			SetGameInputSuppressed(ShouldSuppressGameInput(modalVisible));
-			DearModdingUI::CursorLoader::PrepareFrame(
-				modalVisible, overlayDemanded);
+			DearModdingUI::CursorLoader::PrepareFrame(modalVisible);
 			if (!ShouldRenderHostFrame(modalVisible, overlayDemanded) ||
 				!EnsureBackBuffer(a_swapChain))
 				return;
@@ -875,6 +961,7 @@ namespace Addictol
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
+			ApplyBackBufferCoordinateSpace();
 			ImGui::NewFrame();
 			for (size_t index = 0, count = s_drawSinks.Size(); index < count; ++index)
 				s_drawSinks.At(index)();
@@ -1062,8 +1149,12 @@ namespace Addictol
 					auto& io = ImGui::GetIO();
 					{
 						const ReentryGuard reentry{ reentered };
+						const auto backendLparam =
+							a_message == WM_MOUSEMOVE ?
+							MapMouseMoveToBackBuffer(a_window, a_lparam) :
+							a_lparam;
 						handled = ImGui_ImplWin32_WndProcHandlerEx(
-							a_window, a_message, a_wparam, a_lparam, io);
+							a_window, a_message, a_wparam, backendLparam, io);
 					}
 					swallow = SwallowsMessage(
 						ClassifyMessage(a_message),
@@ -1298,7 +1389,7 @@ namespace Addictol
 		s_drawingEnabled.store(enable, std::memory_order_release);
 		SetGameInputSuppressed(enable);
 		if (ImGui::GetCurrentContext())
-			DearModdingUI::CursorLoader::PrepareFrame(enable, false);
+			DearModdingUI::CursorLoader::PrepareFrame(enable);
 	}
 
 	bool PlatformImgui::IsDrawingEnabled() noexcept

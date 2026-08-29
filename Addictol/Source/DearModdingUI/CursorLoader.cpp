@@ -1,11 +1,7 @@
 // Ported from Fallout 4 Community Shaders src/Menu/CursorLoader.*, GPL-3.0.
 
 #include <DearModdingUI/CursorLoader.h>
-#include <DearModdingUI/ThemeDefaults.h>
 #include <DearModdingUI/VisualDecisions.h>
-
-#include <RE/C/CursorMenu.h>
-#include <RE/U/UI.h>
 
 #include <Windows.h>
 
@@ -37,21 +33,10 @@ namespace Addictol::DearModdingUI::CursorLoader
 		g_owned = false;
 	}
 
-	void PrepareFrame(bool a_modalVisible, bool a_overlayDemanded) noexcept
+	void PrepareFrame(bool a_modalVisible) noexcept
 	{
-		const auto* ui = RE::UI::GetSingleton();
-		const auto nativeCursorVisible =
-			ui && ui->GetMenuOpen<RE::CursorMenu>();
-		const auto cursor = DecideCursorPresentation(
-			a_modalVisible,
-			a_overlayDemanded,
-			nativeCursorVisible,
-			Theme::kCursorDefaults.useCustomCursor,
-			false);
+		const auto cursor = DecideCursorPresentation(a_modalVisible);
 		ImGui::GetIO().MouseDrawCursor = cursor.drawSoftwareCursor;
-		if (cursor.hideOperatingSystemCursor &&
-			!cursor.drawSoftwareCursor)
-			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
 		switch (DecideCursorTransition(g_owned, cursor.hideOperatingSystemCursor))
 		{
