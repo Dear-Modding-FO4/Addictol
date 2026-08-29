@@ -44,7 +44,7 @@ namespace Addictol
 
 	void MenuUi::Mono(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().monospace };
+		const ScopedFont font{ Theme::GetFonts().body };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 
@@ -85,7 +85,7 @@ namespace Addictol
 
 	void MenuUi::MonoCell(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().monospace };
+		const ScopedFont font{ Theme::GetFonts().body };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 

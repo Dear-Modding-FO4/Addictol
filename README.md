@@ -54,7 +54,6 @@ Data/F4SE/Plugins/Addictol_FacegenExceptions.ini
 Data/F4SE/Plugins/Addictol_SNCT.ini
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-Regular.ttf
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-SemiBold.ttf
-Data/F4SE/Plugins/DearModdingUI/Fonts/JetBrainsMono/JetBrainsMono-Regular.ttf
 Data/F4SE/Plugins/DearModdingUI/Shaders/BackgroundBlur*.hlsl
 Data/Scripts/Addictol.pex
 Data/Scripts/XCELL.pex
@@ -91,11 +90,15 @@ not recognize the name. `uMenuRefreshMs` sets how often the open page copies fre
 
 The Dear Modding window selects a registered mod first, then shows its categorized settings pages.
 Addictol telemetry pages retain their configured order and Log Control remains last.
+Its default style, typography, scaling, search, navigation, header, footer, blur, and software cursor
+match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's neutral mod registry.
 
 The menu always starts closed. The ImGui host installs its hook for external F4SE plugins regardless
 of `bMenu`; a disabled menu registers no setup, draw, or toggle sinks. Window geometry is kept in
-`Data\F4SE\Plugins\DearModdingUI\imgui.ini`; the open state is not persisted. Missing optional fonts
-or blur shaders fall back to a usable unblurred menu.
+`Data\F4SE\Plugins\DearModdingUI\imgui.ini`; the open state is not persisted. The modal menu draws one
+software cursor unless Fallout already has its native menu cursor open, and restores normal game
+cursor handling when it closes; overlay-only frames never capture or draw a cursor. Missing fonts or
+blur shaders fall back to a usable unblurred menu.
 
 Log Control changes the record and flush levels for the current session and shows the live output
 rate. The record level decides which lines are kept; the flush level forces a synchronous disk
@@ -123,8 +126,9 @@ handling game addresses across the three runtimes, and what a pull request needs
 
 GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPTIONS).
 
-The shared menu shell, theme, font roles, and blur are adapted from Fallout 4 Community Shaders
-(`src/Menu/FeatureListRenderer.*`, `ThemeManager.*`, `Fonts.*`, `BackgroundBlur.*`, and
-`ImGuiRecovery.h`), which is GPL-3.0. Its Gaussian blur credits Unrimp by Christian Ofenberg under
-MIT. The bundled Jost and JetBrains Mono fonts under `Data\F4SE\Plugins\DearModdingUI\Fonts` ship
-under the SIL Open Font License; their license texts sit next to them.
+The shared menu shell, theme, font roles, cursor behavior, and blur are ported from Fallout 4
+Community Shaders (`src/Menu/FeatureListRenderer.*`, `Menu.*`, `ThemeManager.*`, `Fonts.*`,
+`CursorLoader.*`, `BackgroundBlur.*`, `src/Utils/UI.*`, and `ImGuiRecovery.h`), which is GPL-3.0.
+Its Gaussian blur credits Unrimp by Christian Ofenberg under MIT. The bundled Jost fonts under
+`Data\F4SE\Plugins\DearModdingUI\Fonts` ship under the SIL Open Font License; their license text sits
+next to them.

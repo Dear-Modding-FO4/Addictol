@@ -46,6 +46,9 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
@@ -418,6 +421,9 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
@@ -437,6 +443,9 @@
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Theme.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\ThemeDefaults.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h">
@@ -775,12 +784,6 @@
       <Filter>Resources\DearModdingUI</Filter>
     </None>
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\JetBrainsMono\JetBrainsMono-Regular.ttf">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\JetBrainsMono\OFL.txt">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl">

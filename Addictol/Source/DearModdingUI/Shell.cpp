@@ -1,4 +1,4 @@
-// Sidebar composition adapted from Fallout 4 Community Shaders FeatureListRenderer.*, GPL-3.0.
+// Ported from Fallout 4 Community Shaders FeatureListRenderer.*, Menu.*, and Utils/UI.*, GPL-3.0.
 
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/BackgroundBlur.h>
@@ -9,9 +9,13 @@
 #include <imgui/imgui_internal.h>
 
 #include <algorithm>
-#include <array>
 #include <cctype>
+#include <cfloat>
+#include <cmath>
 #include <cstdio>
+#include <cstring>
+#include <map>
+#include <numbers>
 #include <string>
 #include <string_view>
 
@@ -23,21 +27,14 @@ namespace Addictol::DearModdingUI
 		{
 			DMUI_ClientHandle activeClient{ DMUI_INVALID_CLIENT_HANDLE };
 			DMUI_PageHandle activePage{ DMUI_INVALID_PAGE_HANDLE };
-			std::array<char, 96> search{};
+			std::string search;
+			std::map<std::string, bool> categoryExpansion;
 		};
 
 		[[nodiscard]] ShellState& State() noexcept
 		{
 			static ShellState state;
 			return state;
-		}
-
-		[[nodiscard]] size_t PageCount(const NavigationClient& a_client) noexcept
-		{
-			size_t count = 0;
-			for (const auto& category : a_client.categories)
-				count += category.pages.size();
-			return count;
 		}
 
 		[[nodiscard]] DMUI_PageHandle FirstPage(
@@ -68,86 +65,464 @@ namespace Addictol::DearModdingUI
 				return true;
 			const auto search = Lower(a_search);
 			return Lower(a_page.displayName).contains(search) ||
+				Lower(a_page.id).contains(search) ||
 				Lower(a_page.category).contains(search) ||
 				Lower(a_page.summary).contains(search);
 		}
 
-		void SelectClient(ShellState& a_state, const NavigationClient& a_client) noexcept
+		void SelectClient(
+			ShellState& a_state,
+			const NavigationClient& a_client) noexcept
 		{
 			a_state.activeClient = a_client.handle;
 			a_state.activePage = FirstPage(a_client);
-			a_state.search.front() = '\0';
+			a_state.search.clear();
 		}
 
-		void DrawBrandHeader(const NavigationModel& a_model) noexcept
+		[[nodiscard]] float GetPillRounding(
+			const ImVec2& a_min,
+			const ImVec2& a_max) noexcept
 		{
-			const auto scale = Theme::Scale();
-			const auto start = ImGui::GetCursorScreenPos();
+			return ImMin(a_max.x - a_min.x, a_max.y - a_min.y) * 0.5f;
+		}
+
+		[[nodiscard]] bool DrawRoundedButtonHighlight(
+			const ImVec2& a_min,
+			const ImVec2& a_max,
+			bool a_hovered,
+			bool a_active,
+			ImDrawList* a_drawList) noexcept
+		{
+			if (!a_hovered && !a_active)
+				return false;
+			const auto rounding = ImMin(
+				ImMax(ImGui::GetStyle().FrameRounding, 0.0f),
+				GetPillRounding(a_min, a_max));
+			a_drawList->AddRectFilled(
+				a_min,
+				a_max,
+				ImGui::GetColorU32(
+					a_active ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered),
+				rounding);
+			return true;
+		}
+
+		inline constexpr float kTitleBarButtonPadding{ 2.0f };
+		inline constexpr float kCloseCrossDiagonalScale{
+			0.5f / std::numbers::sqrt2_v<float>
+		};
+		inline constexpr float kCloseCrossInset{ 1.0f };
+		inline constexpr ImVec4 kTransparentButtonChrome{ 0, 0, 0, 0 };
+
+		[[nodiscard]] ImRect TitleBarButtonRect(
+			const ImVec2& a_origin,
+			float a_fontSize) noexcept
+		{
+			const auto full = a_fontSize + kTitleBarButtonPadding * 2.0f;
+			return { a_origin, { a_origin.x + full, a_origin.y + full } };
+		}
+
+		[[nodiscard]] ImVec2 RightTitleBarButtonOrigin(
+			ImGuiWindow* a_window,
+			float a_fontSize,
+			float a_offset = 0.0f) noexcept
+		{
+			const auto& style = ImGui::GetStyle();
+			return {
+				a_window->Rect().Max.x -
+					a_window->WindowBorderSize -
+					style.FramePadding.x -
+					a_fontSize -
+					a_offset -
+					kTitleBarButtonPadding,
+				a_window->Rect().Min.y +
+					style.FramePadding.y -
+					kTitleBarButtonPadding
+			};
+		}
+
+		[[nodiscard]] bool IsTitleBarButtonHovered(
+			ImGuiWindow* a_window,
+			const ImRect& a_bounds) noexcept
+		{
+			auto& context = *ImGui::GetCurrentContext();
+			return context.HoveredWindow == a_window &&
+				ImGui::IsMouseHoveringRect(
+					a_bounds.Min, a_bounds.Max, false);
+		}
+
+		class NativeTitleBarButtonHighlightGuard
+		{
+		public:
+			NativeTitleBarButtonHighlightGuard() noexcept
 			{
-				const Theme::FontGuard title{ Theme::FontRole::kTitle };
+				ImGui::PushStyleColor(
+					ImGuiCol_ButtonHovered, kTransparentButtonChrome);
+				ImGui::PushStyleColor(
+					ImGuiCol_ButtonActive, kTransparentButtonChrome);
+			}
+
+			~NativeTitleBarButtonHighlightGuard() noexcept
+			{
+				ImGui::PopStyleColor(2);
+			}
+
+			NativeTitleBarButtonHighlightGuard(
+				const NativeTitleBarButtonHighlightGuard&) = delete;
+			NativeTitleBarButtonHighlightGuard& operator=(
+				const NativeTitleBarButtonHighlightGuard&) = delete;
+		};
+
+		void DrawRoundedCloseHighlight(ImGuiWindow* a_window) noexcept
+		{
+			if (!a_window ||
+				(a_window->Flags & ImGuiWindowFlags_NoTitleBar))
+				return;
+
+			const auto size = ImGui::GetFontSize();
+			const auto position = RightTitleBarButtonOrigin(a_window, size);
+			const auto bounds = TitleBarButtonRect(position, size);
+			const auto hovered = IsTitleBarButtonHovered(a_window, bounds);
+			const auto held = hovered &&
+				ImGui::IsMouseDown(ImGuiMouseButton_Left);
+
+			a_window->DrawList->PushClipRect(
+				a_window->Rect().Min, a_window->Rect().Max);
+			if (DrawRoundedButtonHighlight(
+					bounds.Min,
+					bounds.Max,
+					hovered,
+					held,
+					a_window->DrawList))
+			{
+				const auto center = bounds.GetCenter();
+				const auto diagonal =
+					size * kCloseCrossDiagonalScale - kCloseCrossInset;
+				const auto color = ImGui::GetColorU32(ImGuiCol_Text);
+				a_window->DrawList->AddLine(
+					{ center.x - diagonal, center.y - diagonal },
+					{ center.x + diagonal, center.y + diagonal },
+					color);
+				a_window->DrawList->AddLine(
+					{ center.x + diagonal, center.y - diagonal },
+					{ center.x - diagonal, center.y + diagonal },
+					color);
+			}
+			a_window->DrawList->PopClipRect();
+		}
+
+		[[nodiscard]] bool BeginWithRoundedClose(
+			const char* a_name,
+			bool* a_open,
+			ImGuiWindowFlags a_flags) noexcept
+		{
+			bool visible = false;
+			{
+				const NativeTitleBarButtonHighlightGuard guard;
+				visible = ImGui::Begin(a_name, a_open, a_flags);
+			}
+			DrawRoundedCloseHighlight(ImGui::GetCurrentWindowRead());
+			return visible;
+		}
+
+		[[nodiscard]] float GetCenterOffsetForContent(
+			float a_contentWidth) noexcept
+		{
+			const auto fullWidth = ImGui::GetWindowWidth();
+			const auto padding = ImGui::GetStyle().WindowPadding.x;
+			const auto available = fullWidth - padding * 2.0f;
+			const auto center = (available - a_contentWidth) * 0.5f;
+			return (std::max)(0.0f, padding + center - ImGui::GetCursorPosX());
+		}
+
+		void DrawHeader() noexcept
+		{
+			const auto textScale = Theme::kHeaderFallbackTextScale;
+			float textWidth = 0.0f;
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kTitle };
+				ImGui::SetWindowFontScale(textScale);
+				textWidth = ImGui::CalcTextSize("Dear Modding").x;
+				ImGui::SetWindowFontScale(1.0f);
+			}
+			const auto offset = GetCenterOffsetForContent(textWidth);
+			if (offset > 0.0f)
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+
+			ImGui::SetWindowFontScale(textScale);
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kTitle };
 				ImGui::TextUnformatted("Dear Modding");
 			}
-			const auto titleEnd = ImGui::GetItemRectMax();
-			const auto textColor = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-			const auto detail = std::to_string(a_model.clients.size()) +
-				(a_model.clients.size() == 1 ? " mod" : " mods");
-			const auto detailSize = ImGui::CalcTextSize(detail.c_str());
-			ImGui::GetWindowDrawList()->AddText(
-				{ ImGui::GetWindowContentRegionMax().x + ImGui::GetWindowPos().x - detailSize.x,
-					start.y + (titleEnd.y - start.y - detailSize.y) * 0.5f },
-				textColor,
-				detail.c_str());
-			const auto lineY = titleEnd.y + 6.0f * scale;
-			auto* drawList = ImGui::GetWindowDrawList();
-			drawList->AddRectFilled(
-				{ start.x, lineY },
-				{ start.x + 72.0f * scale, lineY + 3.0f * scale },
-				ImGui::GetColorU32(Theme::colors::kAccent),
-				2.0f * scale);
-			drawList->AddRectFilled(
-				{ start.x + 78.0f * scale, lineY + scale },
-				{ ImGui::GetWindowContentRegionMax().x + ImGui::GetWindowPos().x,
-					lineY + 2.0f * scale },
-				ImGui::GetColorU32(ImGuiCol_Separator));
-			ImGui::Dummy({ 0.0f, 14.0f * scale });
+			ImGui::SetWindowFontScale(1.0f);
+			ImGui::SeparatorEx(
+				ImGuiSeparatorFlags_Horizontal,
+				Theme::kSeparatorThickness);
+			ImGui::Spacing();
 		}
 
-		void DrawClientSelector(
+		void DrawSectionHeader(
+			const char* a_text,
+			const ImVec4& a_color) noexcept
+		{
+			auto* drawList = ImGui::GetWindowDrawList();
+			const auto position = ImGui::GetCursorScreenPos();
+			const auto availableWidth = ImGui::GetContentRegionAvail().x;
+			const auto textSize = ImGui::CalcTextSize(a_text);
+			const auto lineY = position.y + textSize.y * 0.5f;
+			const auto lineLength =
+				(availableWidth - textSize.x - 20.0f) * 0.5f;
+			const auto color = ImGui::GetColorU32(a_color);
+
+			if (lineLength > 0.0f)
+			{
+				drawList->AddLine(
+					{ position.x, lineY },
+					{ position.x + lineLength, lineY },
+					color);
+			}
+			const auto rightLineStart =
+				position.x + lineLength + 10.0f + textSize.x + 10.0f;
+			if (rightLineStart < position.x + availableWidth)
+			{
+				drawList->AddLine(
+					{ rightLineStart, lineY },
+					{ position.x + availableWidth, lineY },
+					color);
+			}
+			drawList->AddText(
+				{ position.x + lineLength + 10.0f, position.y + 2.0f },
+				color,
+				a_text);
+			ImGui::SetCursorScreenPos(
+				{ position.x, position.y + textSize.y + 8.0f });
+			ImGui::Dummy({ availableWidth, 0.0f });
+		}
+
+		void DrawCategoryHeader(
+			const char* a_key,
+			const char* a_name,
+			bool& a_expanded,
+			size_t a_count) noexcept
+		{
+			char text[256]{};
+			std::snprintf(text, sizeof(text), "%s (%zu)", a_name, a_count);
+			auto* drawList = ImGui::GetWindowDrawList();
+			const auto position = ImGui::GetCursorScreenPos();
+			const auto availableWidth = ImGui::GetContentRegionAvail().x;
+			const auto textSize = ImGui::CalcTextSize(text);
+			const auto lineY = position.y + textSize.y * 0.5f;
+			const auto lineLength =
+				(availableWidth - textSize.x - 20.0f) * 0.5f;
+
+			ImGui::PushID(a_key);
+			ImGui::SetCursorScreenPos(position);
+			const auto clicked = ImGui::InvisibleButton(
+				"##CategoryHeader",
+				{ availableWidth, textSize.y + 4.0f });
+			const auto hovered = ImGui::IsItemHovered();
+
+			auto color = Theme::kFullPalette[ImGuiCol_Text];
+			if (!a_expanded)
+				color.w *= Theme::kFeatureHeadingDefaults.minimizedFactor;
+			if (hovered)
+				color.w *= 0.8f;
+			const auto packed = ImGui::GetColorU32(color);
+
+			if (lineLength > 0.0f)
+			{
+				drawList->AddLine(
+					{ position.x, lineY },
+					{ position.x + lineLength, lineY },
+					packed);
+			}
+			const auto rightLineStart =
+				position.x + lineLength + 10.0f + textSize.x + 10.0f;
+			if (rightLineStart < position.x + availableWidth)
+			{
+				drawList->AddLine(
+					{ rightLineStart, lineY },
+					{ position.x + availableWidth, lineY },
+					packed);
+			}
+			drawList->AddText(
+				{ position.x + lineLength + 10.0f, position.y + 2.0f },
+				packed,
+				text);
+			if (clicked)
+				a_expanded = !a_expanded;
+			ImGui::PopID();
+
+			ImGui::SetCursorScreenPos(
+				{ position.x, position.y + textSize.y + 8.0f });
+			ImGui::Dummy({ availableWidth, 0.0f });
+		}
+
+		void DrawSearchIcon(
+			const ImVec2& a_position,
+			float a_size,
+			float a_alpha) noexcept
+		{
+			auto* drawList = ImGui::GetWindowDrawList();
+			const ImVec2 center{
+				a_position.x + a_size * 0.46f,
+				a_position.y + a_size * 0.5f
+			};
+			const auto radius = a_size * 0.3f;
+			auto color = Theme::kFullPalette[ImGuiCol_Text];
+			color.w *= a_alpha;
+			const auto packed = ImGui::GetColorU32(color);
+			drawList->AddCircle(
+				center,
+				radius,
+				packed,
+				12,
+				a_size * Theme::kSearchIconStrokeRatio);
+			const ImVec2 handleStart{
+				center.x + radius * 0.81f,
+				center.y + radius * 0.81f
+			};
+			const ImVec2 handleEnd{
+				handleStart.x + a_size * 0.29f,
+				handleStart.y + a_size * 0.29f
+			};
+			drawList->AddLine(
+				handleStart,
+				handleEnd,
+				packed,
+				a_size * Theme::kSearchIconHandleStrokeRatio);
+		}
+
+		void DrawPageSearch(std::string& a_search) noexcept
+		{
+			ImGui::PushID("PageSearchBar");
+			const auto scale = Theme::SearchScale();
+			const auto iconSize = Theme::kSearchIconSize * scale;
+			const auto iconSpace =
+				iconSize + Theme::kSearchInputPaddingExtra * scale;
+			const auto cursor = ImGui::GetCursorScreenPos();
+			const auto availableWidth = ImGui::GetContentRegionAvail().x;
+			const auto frameHeight = ImGui::GetFrameHeight();
+
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4());
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4());
+			ImGui::PushStyleColor(
+				ImGuiCol_FrameBgActive,
+				ImVec4(0.3f, 0.3f, 0.3f, 0.9f));
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4());
+			ImGui::PushStyleColor(
+				ImGuiCol_Text,
+				Theme::kFullPalette[ImGuiCol_Text]);
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+			ImGui::PushStyleVar(
+				ImGuiStyleVar_FramePadding,
+				ImVec2(
+					iconSpace,
+					Theme::kSearchInputFramePaddingY * scale));
+			ImGui::SetNextItemWidth(availableWidth);
+
+			char buffer[256]{};
+			strncpy_s(buffer, a_search.c_str(), sizeof(buffer) - 1);
+			if (ImGui::InputTextWithHint(
+					"##page_search",
+					"Search Pages...",
+					buffer,
+					sizeof(buffer)))
+				a_search = buffer;
+
+			DrawSearchIcon(
+				{
+					cursor.x + Theme::kSearchIconOffsetX * scale,
+					cursor.y + (frameHeight - iconSize) * 0.5f
+				},
+				iconSize,
+				Theme::kSearchIconAlpha);
+			ImGui::PopStyleVar(2);
+			ImGui::PopStyleColor(5);
+			ImGui::PopID();
+		}
+
+		[[nodiscard]] std::string CategoryKey(
+			const NavigationClient& a_client,
+			const NavigationCategory& a_category)
+		{
+			return a_client.id + "/" + a_category.displayName;
+		}
+
+		void DrawClientList(
 			const NavigationModel& a_model,
 			ShellState& a_state) noexcept
 		{
-			const auto* active = a_model.FindClient(a_state.activeClient);
-			if (!active)
-				return;
-			ImGui::TextDisabled("Installed mods");
-			if (a_model.clients.size() == 1)
+			DrawSectionHeader(
+				"Mods", Theme::kFullPalette[ImGuiCol_Text]);
+			for (const auto& client : a_model.clients)
 			{
-				const Theme::FontGuard heading{ Theme::FontRole::kHeading };
-				ImGui::TextUnformatted(active->displayName.c_str());
+				const Theme::FontGuard font{ Theme::FontRole::kSubheading };
+				const auto label =
+					" " + client.displayName + " ###DearModdingClient/" + client.id;
+				if (ImGui::Selectable(
+						label.c_str(),
+						client.handle == a_state.activeClient,
+						ImGuiSelectableFlags_SpanAllColumns))
+					SelectClient(a_state, client);
 			}
-			else
+		}
+
+		void DrawPageList(
+			const NavigationClient& a_client,
+			ShellState& a_state) noexcept
+		{
+			DrawSectionHeader(
+				"Pages", Theme::kFullPalette[ImGuiCol_Text]);
+			DrawPageSearch(a_state.search);
+
+			for (const auto& category : a_client.categories)
 			{
-				ImGui::SetNextItemWidth(-1.0f);
-				if (ImGui::BeginCombo("##DearModdingClient", active->displayName.c_str()))
+				const auto hasMatch = std::ranges::any_of(
+					category.pages,
+					[&](const auto& a_page) {
+						return Matches(a_page, a_state.search);
+					});
+				if (!hasMatch)
+					continue;
+
+				const auto key = CategoryKey(a_client, category);
+				auto state =
+					a_state.categoryExpansion.try_emplace(key, true).first;
 				{
-					for (const auto& client : a_model.clients)
-					{
-						const auto selected = client.handle == active->handle;
-						if (ImGui::Selectable(client.displayName.c_str(), selected))
-							SelectClient(a_state, client);
-						if (selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndCombo();
+					const Theme::FontGuard font{ Theme::FontRole::kHeading };
+					DrawCategoryHeader(
+						key.c_str(),
+						category.displayName.c_str(),
+						state->second,
+						category.pages.size());
 				}
-			}
-			const auto major = active->version >> 16;
-			const auto minor = active->version & 0xFFFFu;
-			char version[32]{};
-			std::snprintf(version, sizeof(version), "Version %u.%u", major, minor);
-			{
-				const Theme::FontGuard subtext{ Theme::FontRole::kSubtext };
-				ImGui::TextColored(Theme::colors::kMuted, "%s", version);
+				if (!state->second)
+					continue;
+
+				for (const auto& page : category.pages)
+				{
+					if (!Matches(page, a_state.search))
+						continue;
+					const auto failed = PageFailed(page.handle);
+					const auto selected = page.handle == a_state.activePage;
+					const auto label =
+						" " + page.displayName + " ###DearModdingPage/" + page.id;
+					const Theme::FontGuard font{ Theme::FontRole::kSubheading };
+					if (failed)
+					{
+						ImGui::PushStyleColor(
+							ImGuiCol_Text,
+							Theme::kStatusPaletteDefaults.error);
+					}
+					if (ImGui::Selectable(
+							label.c_str(),
+							selected,
+							ImGuiSelectableFlags_SpanAllColumns))
+						a_state.activePage = page.handle;
+					if (failed)
+						ImGui::PopStyleColor();
+				}
 			}
 		}
 
@@ -155,79 +530,29 @@ namespace Addictol::DearModdingUI
 			const NavigationModel& a_model,
 			ShellState& a_state) noexcept
 		{
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::colors::kSidebar);
-			if (!ImGui::BeginChild("##DearModdingNavigation", {}, ImGuiChildFlags_None))
+			ImGui::TableNextColumn();
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4());
+			if (ImGui::BeginListBox(
+					"##DearModdingMenusList",
+					{ -FLT_MIN, -FLT_MIN }))
 			{
-				ImGui::EndChild();
-				ImGui::PopStyleColor();
-				return;
+				DrawClientList(a_model, a_state);
+				if (const auto* client =
+						a_model.FindClient(a_state.activeClient))
+					DrawPageList(*client, a_state);
+				ImGui::EndListBox();
 			}
-
-			DrawClientSelector(a_model, a_state);
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-
-			const auto* client = a_model.FindClient(a_state.activeClient);
-			if (client && PageCount(*client) > 8)
-			{
-				ImGui::SetNextItemWidth(-1.0f);
-				ImGui::InputTextWithHint(
-					"##DearModdingSearch",
-					"Search settings",
-					a_state.search.data(),
-					a_state.search.size());
-				ImGui::Spacing();
-			}
-
-			if (client)
-			{
-				for (const auto& category : client->categories)
-				{
-					const auto hasMatch = std::ranges::any_of(category.pages, [&](const auto& a_page) {
-						return Matches(a_page, a_state.search.data());
-					});
-					if (!hasMatch)
-						continue;
-					ImGui::Spacing();
-					{
-						const Theme::FontGuard subtext{ Theme::FontRole::kSubtext };
-						ImGui::TextColored(Theme::colors::kMuted, "%s", category.displayName.c_str());
-					}
-					for (const auto& page : category.pages)
-					{
-						if (!Matches(page, a_state.search.data()))
-							continue;
-						const auto failed = PageFailed(page.handle);
-						const auto selected = page.handle == a_state.activePage;
-						const auto label = (failed ? "!  " : "") +
-							page.displayName +
-							"###DearModdingPage/" +
-							page.id;
-						if (failed)
-							ImGui::PushStyleColor(ImGuiCol_Text, Theme::colors::kError);
-						if (ImGui::Selectable(
-								label.c_str(),
-								selected,
-								ImGuiSelectableFlags_None,
-								{ 0.0f, ImGui::GetFrameHeight() * 1.15f }))
-							a_state.activePage = page.handle;
-						if (failed)
-							ImGui::PopStyleColor();
-					}
-				}
-			}
-
-			ImGui::EndChild();
+			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();
 		}
 
 		void DrawFailure(const NavigationPage& a_page) noexcept
 		{
 			{
-				const Theme::FontGuard heading{ Theme::FontRole::kHeading };
+				const Theme::FontGuard font{ Theme::FontRole::kHeading };
 				ImGui::TextColored(
-					Theme::colors::kError,
+					Theme::kStatusPaletteDefaults.error,
 					"%s could not be displayed",
 					a_page.displayName.c_str());
 			}
@@ -237,64 +562,102 @@ namespace Addictol::DearModdingUI
 				"Other pages remain available.");
 		}
 
-		void DrawContent(const NavigationModel& a_model, ShellState& a_state) noexcept
+		void DrawPageHeader(const NavigationPage& a_page) noexcept
 		{
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::colors::kContent);
-			if (!ImGui::BeginChild("##DearModdingContent", {}, ImGuiChildFlags_None))
+			const auto start = ImGui::GetCursorScreenPos();
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kTitle };
+				ImGui::SetWindowFontScale(Theme::kFeatureTitleScale);
+				ImGui::TextUnformatted(a_page.displayName.c_str());
+				ImGui::SetWindowFontScale(1.0f);
+			}
+			const auto titleHeight =
+				ImGui::GetItemRectMax().y - start.y;
+
+			if (!a_page.summary.empty())
+			{
+				ImGui::SetCursorScreenPos({
+					start.x,
+					start.y +
+						titleHeight +
+						ImGui::GetStyle().ItemSpacing.y * 0.25f
+				});
+				auto color = Theme::kFullPalette[ImGuiCol_Text];
+				color.w *= Theme::kVersionTextOpacity;
+				const Theme::FontGuard font{ Theme::FontRole::kSubtext };
+				ImGui::PushStyleColor(ImGuiCol_Text, color);
+				ImGui::TextWrapped("%s", a_page.summary.c_str());
+				ImGui::PopStyleColor();
+			}
+			ImGui::Spacing();
+			ImGui::SeparatorEx(
+				ImGuiSeparatorFlags_Horizontal,
+				Theme::kSeparatorThickness);
+			ImGui::Spacing();
+		}
+
+		void DrawContent(
+			const NavigationModel& a_model,
+			ShellState& a_state) noexcept
+		{
+			ImGui::TableNextColumn();
+			if (!ImGui::BeginChild(
+					"##DearModdingPageFrame",
+					{},
+					ImGuiChildFlags_Borders))
 			{
 				ImGui::EndChild();
-				ImGui::PopStyleColor();
 				return;
 			}
 
 			const auto* page = a_model.FindPage(a_state.activePage);
 			if (!page)
 			{
-				ImGui::TextDisabled("No settings pages are available.");
+				ImGui::TextDisabled("Please select a page from the left.");
 				ImGui::EndChild();
-				ImGui::PopStyleColor();
 				return;
 			}
 
-			{
-				const Theme::FontGuard title{ Theme::FontRole::kTitle };
-				ImGui::TextUnformatted(page->displayName.c_str());
-			}
-			const auto* client = a_model.FindClientForPage(page->handle);
-			const auto context = client ?
-				client->displayName + "  /  " + page->category :
-				page->category;
-			{
-				const Theme::FontGuard subtext{ Theme::FontRole::kSubtext };
-				ImGui::TextColored(Theme::colors::kMuted, "%s", context.c_str());
-				if (!page->summary.empty())
-				{
-					ImGui::Spacing();
-					ImGui::TextWrapped("%s", page->summary.c_str());
-				}
-			}
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-
-			const auto presentation = DecidePagePresentation(page, PageFailed(page->handle));
+			DrawPageHeader(*page);
+			const auto presentation =
+				DecidePagePresentation(page, PageFailed(page->handle));
 			if (presentation == PagePresentation::kFailure)
+			{
 				DrawFailure(*page);
+			}
 			else if (presentation == PagePresentation::kContent)
 			{
 				ImGui::PushID(static_cast<int>(page->handle));
 				if (!DrawPage(page->handle))
 				{
 					ImGui::Spacing();
-					ImGui::Separator();
+					ImGui::SeparatorEx(
+						ImGuiSeparatorFlags_Horizontal,
+						Theme::kSeparatorThickness);
 					ImGui::Spacing();
 					DrawFailure(*page);
 				}
 				ImGui::PopID();
 			}
-
 			ImGui::EndChild();
-			ImGui::PopStyleColor();
+		}
+
+		void DrawFooter(
+			const NavigationModel& a_model,
+			const ShellState& a_state) noexcept
+		{
+			ImGui::BulletText("Host: Dear Modding");
+			if (const auto* client =
+					a_model.FindClient(a_state.activeClient))
+			{
+				ImGui::SameLine();
+				ImGui::BulletText("Mod: %s", client->displayName.c_str());
+				ImGui::SameLine();
+				ImGui::BulletText(
+					"Version: %u.%u",
+					client->version >> 16,
+					client->version & 0xFFFFu);
+			}
 		}
 
 		void SaveLayout() noexcept
@@ -307,52 +670,54 @@ namespace Addictol::DearModdingUI
 
 	void DrawShell() noexcept
 	{
+		Theme::ApplyStyle();
 		const auto& model = Navigation();
 		auto& state = State();
 		const auto requested = SelectedPage();
-		state.activePage = ResolvePageSelection(model, requested, state.activePage);
+		state.activePage =
+			ResolvePageSelection(model, requested, state.activePage);
 		if (requested != DMUI_INVALID_PAGE_HANDLE)
 			ClearPageSelection(requested);
-		if (const auto* client = model.FindClientForPage(state.activePage))
+		if (const auto* client =
+				model.FindClientForPage(state.activePage))
 			state.activeClient = client->handle;
 
-		const auto scale = Theme::Scale();
 		const auto* viewport = ImGui::GetMainViewport();
 		ImGui::DockSpaceOverViewport(
 			0,
 			viewport,
 			ImGuiDockNodeFlags_PassthruCentralNode);
-		const auto maximumSize = ImVec2(
-			(std::max)(320.0f, viewport->WorkSize.x * 0.96f),
-			(std::max)(280.0f, viewport->WorkSize.y * 0.96f));
-		const auto minimumSize = ImVec2(
-			(std::min)(680.0f * scale, maximumSize.x),
-			(std::min)(460.0f * scale, maximumSize.y));
-		const auto defaultSize = ImVec2(
-			std::clamp(
-				viewport->WorkSize.x * 0.82f,
-				minimumSize.x,
-				(std::min)(1240.0f * scale, maximumSize.x)),
-			std::clamp(
-				viewport->WorkSize.y * 0.80f,
-				minimumSize.y,
-				(std::min)(860.0f * scale, maximumSize.y)));
-		ImGui::SetNextWindowSize(defaultSize, ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_FirstUseEver, { 0.5f, 0.5f });
-		ImGui::SetNextWindowSizeConstraints(minimumSize, maximumSize);
+		ImGui::SetNextWindowPos(
+			{ viewport->Size.x * 0.5f, viewport->Size.y * 0.5f },
+			ImGuiCond_FirstUseEver,
+			{ 0.5f, 0.5f });
+		ImGui::SetNextWindowSize(
+			{ viewport->Size.x * 0.8f, viewport->Size.y * 0.8f },
+			ImGuiCond_FirstUseEver);
+
 		ImGuiWindowClass windowClass{};
 		windowClass.ClassId = ImHashStr("DearModdingUI.Host");
 		windowClass.DockingAllowUnclassed = true;
 		ImGui::SetNextWindowClass(&windowClass);
 
 		auto open = true;
-		const auto visible = ImGui::Begin(
+		auto windowFlags =
+			ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoScrollbar;
+		static bool wasDocked = false;
+		if (!wasDocked)
+			windowFlags |= ImGuiWindowFlags_NoTitleBar;
+
+		const auto visible = BeginWithRoundedClose(
 			"Dear Modding###DearModdingUI.Host",
 			&open,
-			ImGuiWindowFlags_None);
+			windowFlags);
+		wasDocked = ImGui::IsWindowDocked();
+
 		const auto position = ImGui::GetWindowPos();
 		const auto size = ImGui::GetWindowSize();
-		const auto framebufferScale = ImGui::GetIO().DisplayFramebufferScale;
+		const auto framebufferScale =
+			ImGui::GetIO().DisplayFramebufferScale;
 		BackgroundBlur::SetHostWindow(
 			(position.x - viewport->Pos.x) * framebufferScale.x,
 			(position.y - viewport->Pos.y) * framebufferScale.y,
@@ -363,28 +728,40 @@ namespace Addictol::DearModdingUI
 
 		if (visible)
 		{
-			DrawBrandHeader(model);
+			DrawHeader();
+			const auto footerHeight =
+				ImGui::GetFrameHeightWithSpacing() +
+				ImGui::GetStyle().ItemSpacing.y * 3.0f +
+				Theme::kSeparatorThickness;
+			ImGui::BeginChild(
+				"Dear Modding Menus Table",
+				{ 0.0f, -footerHeight });
 			if (ImGui::BeginTable(
-					"##DearModdingLayout",
+					"Dear Modding Menus Table",
 					2,
-					ImGuiTableFlags_Resizable |
-						ImGuiTableFlags_SizingStretchProp |
-						ImGuiTableFlags_BordersInnerV))
+					ImGuiTableFlags_SizingStretchProp |
+						ImGuiTableFlags_Resizable))
 			{
 				ImGui::TableSetupColumn(
-					"Navigation",
-					ImGuiTableColumnFlags_WidthStretch,
-					2.6f);
+					"##DearModdingList",
+					ImGuiTableColumnFlags_None,
+					2.0f);
 				ImGui::TableSetupColumn(
-					"Settings",
-					ImGuiTableColumnFlags_WidthStretch,
-					7.4f);
-				ImGui::TableNextColumn();
+					"##DearModdingPage",
+					ImGuiTableColumnFlags_None,
+					8.0f);
 				DrawNavigation(model, state);
-				ImGui::TableNextColumn();
 				DrawContent(model, state);
 				ImGui::EndTable();
 			}
+			ImGui::EndChild();
+
+			ImGui::Spacing();
+			ImGui::SeparatorEx(
+				ImGuiSeparatorFlags_Horizontal,
+				Theme::kSeparatorThickness);
+			ImGui::Spacing();
+			DrawFooter(model, state);
 		}
 		ImGui::End();
 

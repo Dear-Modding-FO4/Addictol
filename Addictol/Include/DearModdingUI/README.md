@@ -37,11 +37,17 @@ summary. Draw regular ImGui controls there. Do not begin independent top-level w
 the sidebar/header, change the host style or fonts, or retain pointers into host navigation data.
 Client pages inherit the active theme and may use their own balanced child regions and popups.
 
-The host supplies the Jost and JetBrains Mono font roles, the default Community Shaders-derived
-palette, responsive DPI/resolution scaling, docking for the single host window, and background blur.
-Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts and blur shaders are loaded only
-from that neutral root. Missing fonts fall back by role to ImGui's built-in font; missing or invalid
-blur shaders disable blur without disabling the menu or the C ABI host.
+The host ports Community Shaders' current default palette, style dimensions, Jost Body, Title,
+Heading, Subheading, and Subtext roles, resolution scaling, search and navigation treatments,
+rounded title-bar highlights, footer, docking, and background blur around the neutral registry.
+Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts and blur shaders load only from
+that neutral root. Missing fonts fall back by role to ImGui's built-in font; missing or invalid blur
+shaders disable blur without disabling the menu or the C ABI host.
+
+The modal host uses Community Shaders' default ImGui software cursor path, defers to Fallout when its
+native menu cursor is already open, and suppresses the Win32 cursor while modal. It releases cursor
+ownership through the game window procedure when closed. Overlay-only frames do not draw a cursor or
+capture input.
 
 The Addictol host initializes on the first valid active-swapchain `Present` whenever any client was
 accepted. Addictol's `bMenu` setting controls only registration of Addictol's own pages. External

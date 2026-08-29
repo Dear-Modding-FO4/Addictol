@@ -1,4 +1,5 @@
 #include <DearModdingUI/Theme.h>
+#include <DearModdingUI/CursorLoader.h>
 #include <DearModdingUI/Host.h>
 #include <DearModdingUI/Shell.h>
 #include <Menu/AdMenu.h>
@@ -85,6 +86,7 @@ namespace Addictol
 			auto& io = ImGui::GetIO();
 			s_qpcFrequency = ReadQpcFrequency();
 			DearModdingUI::Theme::Initialize(a_window);
+			DearModdingUI::CursorLoader::Initialize(a_window);
 			REX::INFO("Menu: DearModdingUI visuals configured"sv);
 		}
 

@@ -294,7 +294,7 @@ target("vmm-tests", function()
     set_dependir(project_dir(".LinkConf/xmake/vmm-tests/deps"))
 
     -- add dependencies
-    add_deps("vmm", "spdlog-vendored")
+    add_deps("vmm", "spdlog-vendored", "imgui")
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })

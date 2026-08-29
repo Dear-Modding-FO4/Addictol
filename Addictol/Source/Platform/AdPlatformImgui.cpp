@@ -1,5 +1,6 @@
 #include <Platform/AdPlatformImgui.h>
 #include <DearModdingUI/BackgroundBlur.h>
+#include <DearModdingUI/CursorLoader.h>
 #include <DearModdingUI/Host.h>
 #include <DearModdingUI/Theme.h>
 #include <Telemetry/AdTelemetryHub.h>
@@ -634,6 +635,7 @@ namespace Addictol
 		{
 			if (s_backend.load(std::memory_order_acquire) == Backend::kReady)
 			{
+				DearModdingUI::CursorLoader::Shutdown();
 				DearModdingUI::BackgroundBlur::ResetDeviceResources();
 				ImGui_ImplDX11_Shutdown();
 				ImGui_ImplWin32_Shutdown();
@@ -859,9 +861,11 @@ namespace Addictol
 				return;
 
 			const auto modalVisible = DearModdingUI::IsMenuVisible();
+			const auto overlayDemanded = DearModdingUI::NeedsFrame() && !modalVisible;
 			s_drawingEnabled.store(modalVisible, std::memory_order_release);
 			SetGameInputSuppressed(ShouldSuppressGameInput(modalVisible));
-			const auto overlayDemanded = DearModdingUI::NeedsFrame() && !modalVisible;
+			DearModdingUI::CursorLoader::PrepareFrame(
+				modalVisible, overlayDemanded);
 			if (!ShouldRenderHostFrame(modalVisible, overlayDemanded) ||
 				!EnsureBackBuffer(a_swapChain))
 				return;
@@ -1035,6 +1039,10 @@ namespace Addictol
 					return 0;
 				}
 			}
+
+			if (DearModdingUI::CursorLoader::HandleWindowMessage(
+					a_message, static_cast<uint64_t>(a_lparam)))
+				return 1;
 
 			if (!s_drawingEnabled.load(std::memory_order_acquire) ||
 				s_backend.load(std::memory_order_acquire) != Backend::kReady)
@@ -1289,6 +1297,8 @@ namespace Addictol
 			s_backend.load(std::memory_order_acquire) == Backend::kReady;
 		s_drawingEnabled.store(enable, std::memory_order_release);
 		SetGameInputSuppressed(enable);
+		if (ImGui::GetCurrentContext())
+			DearModdingUI::CursorLoader::PrepareFrame(enable, false);
 	}
 
 	bool PlatformImgui::IsDrawingEnabled() noexcept

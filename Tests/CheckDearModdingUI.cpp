@@ -1,4 +1,5 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
+#include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
 #include "Harness.h"
 
@@ -30,6 +31,16 @@ namespace vmm_tests
 		[[nodiscard]] DMUI_ImGuiFingerprint Fingerprint() noexcept
 		{
 			return DMUI_MakeImGuiFingerprint();
+		}
+
+		[[nodiscard]] bool SameColor(
+			const ImVec4& a_left,
+			const ImVec4& a_right) noexcept
+		{
+			return a_left.x == a_right.x &&
+				a_left.y == a_right.y &&
+				a_left.z == a_right.z &&
+				a_left.w == a_right.w;
 		}
 
 		void DMUI_CALL Ready(const DMUI_HostReadyInfo* a_info, void* a_userData) noexcept
@@ -453,12 +464,248 @@ namespace vmm_tests
 				"missing page did not present an empty state");
 		});
 
-		runner.test("visual scale resolves DPI and resolution with safe bounds", [] {
-			require(ResolveUiScale(1.0f, 1080) == 1.0f, "1080p scale changed");
-			require(ResolveUiScale(1.5f, 1080) == 1.5f, "DPI scale was ignored");
-			require(ResolveUiScale(1.0f, 2160) == 2.0f, "4K scale was ignored");
-			require(ResolveUiScale(0.0f, 0) == 1.0f, "invalid inputs did not fall back");
-			require(ResolveUiScale(4.0f, 4320) == 2.5f, "scale maximum was not enforced");
+		runner.test("Community Shaders style scalars are independently pinned", [] {
+			const auto& style = Theme::kStyleDefaults;
+			require(style.windowBorderSize == 2.0f, "window border changed");
+			require(style.childBorderSize == 0.0f, "child border changed");
+			require(style.frameBorderSize == 1.0f, "frame border changed");
+			require(style.windowPadding.x == 8.0f && style.windowPadding.y == 8.0f,
+				"window padding changed");
+			require(style.windowRounding == 12.0f, "window rounding changed");
+			require(style.indentSpacing == 8.0f, "indent spacing changed");
+			require(style.framePadding.x == 8.0f && style.framePadding.y == 4.0f,
+				"frame padding changed");
+			require(style.cellPadding.x == 8.0f && style.cellPadding.y == 2.0f,
+				"cell padding changed");
+			require(style.itemSpacing.x == 4.0f && style.itemSpacing.y == 8.0f,
+				"item spacing changed");
+			require(style.frameRounding == 4.0f, "frame rounding changed");
+			require(style.tabRounding == 4.0f, "tab rounding changed");
+			require(style.scrollbarRounding == 9.0f, "scrollbar rounding changed");
+			require(style.scrollbarSize == 12.0f, "scrollbar size changed");
+			require(style.grabRounding == 3.0f, "grab rounding changed");
+			require(style.grabMinSize == 12.0f, "grab size changed");
+			require(Theme::kScrollbarOpacityDefaults.background == 0.0f &&
+					Theme::kScrollbarOpacityDefaults.thumb == 0.5f &&
+					Theme::kScrollbarOpacityDefaults.thumbHovered == 0.75f &&
+					Theme::kScrollbarOpacityDefaults.thumbActive == 0.9f,
+				"scrollbar opacity changed");
+			require(Theme::kTooltipHoverDelay == 0.1f, "tooltip delay changed");
+			require(Theme::kFeatureHeadingDefaults.titleScale == 1.5f &&
+					Theme::kFeatureHeadingDefaults.minimizedFactor == 0.7f,
+				"feature heading defaults changed");
+			require(SameColor(
+						Theme::kStatusPaletteDefaults.disable,
+						{ 0.5f, 0.5f, 0.5f, 1.0f }) &&
+					SameColor(
+						Theme::kStatusPaletteDefaults.error,
+						{ 1.0f, 0.4f, 0.4f, 1.0f }) &&
+					SameColor(
+						Theme::kStatusPaletteDefaults.warning,
+						{ 1.0f, 0.6f, 0.2f, 1.0f }) &&
+					SameColor(
+						Theme::kStatusPaletteDefaults.restartNeeded,
+						{ 0.4f, 1.0f, 0.4f, 1.0f }) &&
+					SameColor(
+						Theme::kStatusPaletteDefaults.currentHotkey,
+						{ 1.0f, 1.0f, 0.0f, 1.0f }) &&
+					SameColor(
+						Theme::kStatusPaletteDefaults.success,
+						{ 0.0f, 1.0f, 0.0f, 1.0f }) &&
+					SameColor(
+						Theme::kStatusPaletteDefaults.info,
+						{ 0.2f, 1.0f, 0.328f, 1.0f }),
+				"status palette changed");
+
+			const auto applied = Theme::MakeBaseStyle();
+			require(applied.WindowBorderSize == style.windowBorderSize &&
+					applied.ChildBorderSize == style.childBorderSize &&
+					applied.FrameBorderSize == style.frameBorderSize &&
+					applied.WindowPadding.x == style.windowPadding.x &&
+					applied.WindowPadding.y == style.windowPadding.y &&
+					applied.WindowRounding == style.windowRounding &&
+					applied.IndentSpacing == style.indentSpacing &&
+					applied.FramePadding.x == style.framePadding.x &&
+					applied.FramePadding.y == style.framePadding.y &&
+					applied.CellPadding.x == style.cellPadding.x &&
+					applied.CellPadding.y == style.cellPadding.y &&
+					applied.ItemSpacing.x == style.itemSpacing.x &&
+					applied.ItemSpacing.y == style.itemSpacing.y &&
+					applied.FrameRounding == style.frameRounding &&
+					applied.TabRounding == style.tabRounding &&
+					applied.ScrollbarRounding == style.scrollbarRounding &&
+					applied.ScrollbarSize == style.scrollbarSize &&
+					applied.GrabRounding == style.grabRounding &&
+					applied.GrabMinSize == style.grabMinSize,
+				"base style application diverged from pinned scalars");
+		});
+
+		runner.test("Community Shaders full palette is independently pinned", [] {
+			const std::array<ImVec4, ImGuiCol_COUNT> expected{
+				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+				ImVec4(1.0f, 1.0f, 1.0f, 0.3f),
+				ImVec4(0.03f, 0.03f, 0.03f, 0.55f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+				ImVec4(0.05f, 0.05f, 0.1f, 0.85f),
+				ImVec4(0.5f, 0.5f, 0.5f, 0.8f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+				ImVec4(0.4f, 0.4f, 0.4f, 0.7f),
+				ImVec4(0.26f, 0.26f, 0.26f, 0.4f),
+				ImVec4(0.4f, 0.4f, 0.4f, 0.45f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.83f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.87f),
+				ImVec4(0.2f, 0.2f, 0.3f, 0.9f),
+				ImVec4(0.02f, 0.02f, 0.03f, 0.9f),
+				ImVec4(0.2f, 0.22f, 0.27f, 0.9f),
+				ImVec4(0.28f, 0.28f, 0.28f, 1.0f),
+				ImVec4(0.42f, 0.42f, 0.42f, 1.0f),
+				ImVec4(0.56f, 0.56f, 0.56f, 1.0f),
+				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+				ImVec4(0.31f, 0.31f, 0.31f, 0.5f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 1.0f),
+				ImVec4(0.45f, 1.0f, 0.55f, 1.0f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.39f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.2f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.59f),
+				ImVec4(0.06f, 0.98f, 0.2072f, 0.39f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.2f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.59f),
+				ImVec4(0.5f, 0.5f, 0.5f, 0.6f),
+				ImVec4(0.7f, 0.6f, 0.6f, 1.0f),
+				ImVec4(0.9f, 0.7f, 0.7f, 1.0f),
+				ImVec4(0.6f, 0.6f, 0.6f, 0.8f),
+				ImVec4(0.6f, 0.6f, 0.6f, 0.1f),
+				ImVec4(0.6f, 0.6f, 0.6f, 0.1f),
+				ImVec4(0.9f, 0.9f, 0.9f, 1.0f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.31f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.8f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 1.0f),
+				ImVec4(0.38f, 0.83f, 0.452f, 1.0f),
+				ImVec4(0.15f, 0.15f, 0.15f, 0.97f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 1.0f),
+				ImVec4(0.5f, 0.5f, 0.5f, 0.0f),
+				ImVec4(0.7f, 0.6f, 0.6f, 0.5f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+				ImVec4(0.9f, 0.7f, 0.0f, 1.0f),
+				ImVec4(0.9f, 0.7f, 0.0f, 1.0f),
+				ImVec4(0.9f, 0.7f, 0.0f, 1.0f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.4f),
+				ImVec4(0.26f, 0.26f, 0.26f, 1.0f),
+				ImVec4(0.19f, 0.19f, 0.19f, 1.0f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+				ImVec4(1.0f, 1.0f, 1.0f, 0.06f),
+				ImVec4(0.38f, 0.83f, 0.452f, 1.0f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 0.35f),
+				ImVec4(0.7f, 0.7f, 0.7f, 0.65f),
+				ImVec4(0.8f, 0.5f, 0.5f, 1.0f),
+				ImVec4(0.0f, 0.0f, 0.0f, 0.0f),
+				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+				ImVec4(0.26f, 0.98f, 0.3752f, 1.0f),
+				ImVec4(0.3f, 0.3f, 0.3f, 0.56f),
+				ImVec4(0.2f, 0.2f, 0.2f, 0.35f),
+				ImVec4(0.2f, 0.2f, 0.2f, 0.35f)
+			};
+			require(expected.size() == Theme::kFullPalette.size(),
+				"palette size changed");
+			for (size_t index = 0; index < expected.size(); ++index)
+			{
+				require(SameColor(expected[index], Theme::kFullPalette[index]),
+					"palette entry changed");
+			}
+			const auto effective = Theme::MakeEffectivePalette();
+			require(effective[ImGuiCol_ScrollbarBg].w == 0.0f &&
+					effective[ImGuiCol_ScrollbarGrab].w == 0.5f &&
+					effective[ImGuiCol_ScrollbarGrabHovered].w == 0.75f &&
+					effective[ImGuiCol_ScrollbarGrabActive].w == 0.9f,
+				"effective scrollbar opacity changed");
+		});
+
+		runner.test("Community Shaders font roles and scaling stay exact", [] {
+			require(Theme::kFontRoleDefaults.size() == 5, "font role count changed");
+			require(Theme::kFontRoleDefaults[0].family == "Jost" &&
+					Theme::kFontRoleDefaults[0].style == "Regular" &&
+					Theme::kFontRoleDefaults[0].file == "Jost\\Jost-Regular.ttf" &&
+					Theme::kFontRoleDefaults[0].sizeScale == 1.0f,
+				"body role changed");
+			require(Theme::kFontRoleDefaults[1].family == "Jost" &&
+					Theme::kFontRoleDefaults[1].style == "SemiBold" &&
+					Theme::kFontRoleDefaults[1].file == "Jost\\Jost-SemiBold.ttf" &&
+					Theme::kFontRoleDefaults[1].sizeScale == 1.3f,
+				"title role changed");
+			require(Theme::kFontRoleDefaults[2].sizeScale == 1.0f &&
+					Theme::kFontRoleDefaults[3].sizeScale == 1.0f &&
+					Theme::kFontRoleDefaults[4].sizeScale == 0.9f,
+				"secondary font roles changed");
+			require(Theme::ResolveFontSize(1080) == 21.0f, "1080p font changed");
+			require(Theme::ResolveRoleFontSize(Theme::FontRole::kTitle, 1080) == 27.0f,
+				"title point scale changed");
+			require(Theme::ResolveRoleFontSize(Theme::FontRole::kSubtext, 1080) == 19.0f,
+				"subtext point scale changed");
+			require(Theme::ResolveFontSize(720) == 16.0f, "minimum font size changed");
+			require(Theme::ResolveFontSize(2160) == 42.0f, "4K font size changed");
+			require(Theme::ResolveFontSize(8640) == 108.0f, "maximum font size changed");
+			require(ResolveUiScale(1.0f, 1080) == 1.0f, "1080p UI scale changed");
+			require(ResolveUiScale(2.0f, 1080) == 1.0f, "DPI altered CS scaling");
+			require(ResolveUiScale(1.0f, 2160) == 2.0f, "4K UI scale changed");
+			require(Theme::ResolveStyleScale(21.0f, 0.0f) == 1.0f,
+				"default global scale changed");
+			require(Theme::ResolveStyleScale(21.0f, 1.0f) == 2.0f,
+				"exponential global scale changed");
+			require(!Theme::kCursorDefaults.useCustomCursor &&
+					Theme::kCursorDefaults.scale == 1.0f,
+				"default cursor metadata changed");
+			for (const auto& cursor : Theme::kCursorDefaults.types)
+			{
+				require(cursor.file.empty() &&
+						cursor.hotspotX == 0.0f &&
+						cursor.hotspotY == 0.0f,
+					"default cursor image metadata changed");
+			}
+		});
+
+		runner.test("cursor ownership follows modal visibility and safe fallback", [] {
+			const auto overlay =
+				DecideCursorPresentation(false, true, false, false, false);
+			require(!overlay.captureInput &&
+					!overlay.hideOperatingSystemCursor &&
+					!overlay.drawSoftwareCursor &&
+					!overlay.drawCustomCursor,
+				"overlay-only drawing acquired a cursor");
+
+			const auto fallback =
+				DecideCursorPresentation(true, false, false, true, false);
+			require(fallback.captureInput &&
+					fallback.hideOperatingSystemCursor &&
+					fallback.drawSoftwareCursor &&
+					!fallback.drawCustomCursor,
+				"missing custom cursor did not use the visible fallback");
+
+			const auto custom =
+				DecideCursorPresentation(true, false, false, true, true);
+			require(custom.captureInput &&
+					custom.hideOperatingSystemCursor &&
+					!custom.drawSoftwareCursor &&
+					custom.drawCustomCursor,
+				"loaded custom cursor was double drawn");
+
+			const auto native =
+				DecideCursorPresentation(true, false, true, false, false);
+			require(native.captureInput &&
+					native.hideOperatingSystemCursor &&
+					!native.drawSoftwareCursor &&
+					!native.drawCustomCursor,
+				"Fallout cursor was double drawn");
+
+			require(DecideCursorTransition(false, true) ==
+					CursorOwnershipTransition::kAcquire,
+				"menu open did not acquire cursor ownership");
+			require(DecideCursorTransition(true, false) ==
+					CursorOwnershipTransition::kRelease,
+				"menu close did not release cursor ownership");
+			require(DecideCursorTransition(true, true) ==
+					CursorOwnershipTransition::kNone,
+				"steady modal state retriggered ownership");
 		});
 
 		runner.test("registry freeze rejects late clients and pages", [] {
