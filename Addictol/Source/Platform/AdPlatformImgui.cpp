@@ -6,6 +6,7 @@
 #include <Telemetry/AdTelemetryHub.h>
 #include <Core/AdUtils.h>
 #include <RE/C/ControlMap.h>
+#include <RE/M/MenuCursor.h>
 
 #include <Windows.h>
 #include <d3d11.h>
@@ -45,11 +46,8 @@ namespace Addictol
 		static_assert(kKeyUpMessage == WM_KEYUP);
 		static_assert(kSysKeyDownMessage == WM_SYSKEYDOWN);
 		static_assert(kSysKeyUpMessage == WM_SYSKEYUP);
-		static_assert(kRawMouseMoveAbsolute == MOUSE_MOVE_ABSOLUTE);
-		static_assert(kRawMouseVirtualDesktop == MOUSE_VIRTUAL_DESKTOP);
 		static_assert(kPresentTestFlag == DXGI_PRESENT_TEST);
 		static_assert(kWindowNcDestroyMessage == WM_NCDESTROY);
-		static_assert(kNcMouseMoveMessage == WM_NCMOUSEMOVE);
 		static_assert(kDxgiErrorDeviceRemoved == static_cast<uint32_t>(DXGI_ERROR_DEVICE_REMOVED));
 		static_assert(kDxgiErrorDeviceHung == static_cast<uint32_t>(DXGI_ERROR_DEVICE_HUNG));
 		static_assert(kDxgiErrorDeviceReset == static_cast<uint32_t>(DXGI_ERROR_DEVICE_RESET));
@@ -145,12 +143,10 @@ namespace Addictol
 		static BackBufferIdentity s_backBufferIdentity{};
 		static bool s_backBufferFailureLogged{ false };
 		static bool s_coordinateSpaceLogged{ false };
-		static VirtualCursorState s_virtualCursor{};
-		static uint64_t s_virtualCursorOpenedAt{ 0 };
-		static bool s_rawInputFallbackLogged{ false };
+		static std::atomic<RE::MenuCursor*> s_registeredMenuCursor{ nullptr };
+		static bool s_menuCursorUnavailableLogged{ false };
 		static bool s_previousIgnoreKeyboardMouse{ false };
 		static bool s_inputSuppressed{ false };
-		static constexpr uint64_t kRawInputFallbackLogDelayMs = 500;
 
 		static INIT_ONCE s_contextLockOnce = INIT_ONCE_STATIC_INIT;
 		static CRITICAL_SECTION s_contextLock{};
@@ -277,12 +273,77 @@ namespace Addictol
 			};
 		}
 
-		static void ApplyBackBufferCoordinateSpace(bool a_modalVisible) noexcept
+		[[nodiscard]] static RE::MenuCursor* UpdateEngineCursorRegistration(
+			bool a_modalVisible) noexcept
+		{
+			auto* registered =
+				s_registeredMenuCursor.load(std::memory_order_acquire);
+			auto* candidate =
+				a_modalVisible && !registered ?
+				RE::MenuCursor::GetSingleton() :
+				nullptr;
+			switch (DecideEngineCursorRegistrationTransition(
+				registered != nullptr,
+				a_modalVisible,
+				candidate != nullptr))
+			{
+			case EngineCursorRegistrationTransition::kAcquire:
+				candidate->RegisterCursor();
+				s_registeredMenuCursor.store(candidate, std::memory_order_release);
+				registered = candidate;
+				break;
+			case EngineCursorRegistrationTransition::kRelease:
+				registered =
+					s_registeredMenuCursor.exchange(nullptr, std::memory_order_acq_rel);
+				if (registered)
+					registered->UnregisterCursor();
+				registered = nullptr;
+				break;
+			default:
+				break;
+			}
+			if (a_modalVisible &&
+				!registered &&
+				!std::exchange(s_menuCursorUnavailableLogged, true))
+			{
+				REX::ERROR("Platform Imgui: the engine menu cursor singleton is unavailable"sv);
+			}
+			return registered;
+		}
+
+		struct MenuCursorSnapshot
+		{
+			MousePosition position{};
+			uint32_t registeredCursorCount{ 0 };
+			bool available{ false };
+		};
+
+		[[nodiscard]] static MenuCursorSnapshot ReadMenuCursor(
+			RE::MenuCursor* a_registered) noexcept
+		{
+			if (!a_registered)
+				return {};
+			auto* singleton = RE::MenuCursor::GetSingleton();
+			if (!singleton || singleton != a_registered)
+				return {};
+			return {
+				{
+					static_cast<float>(singleton->cursorPosX),
+					static_cast<float>(singleton->cursorPosY)
+				},
+				singleton->registeredCursors,
+				singleton->registeredCursors != 0
+			};
+		}
+
+		static void ApplyBackBufferCoordinateSpace(
+			const MenuCursorSnapshot& a_menuCursor) noexcept
 		{
 			auto& io = ImGui::GetIO();
 			const auto client = ReadClientSize(s_attachment.window);
-			// Read client coordinates afresh so a backbuffer-space position is never scaled twice.
-			const auto absoluteMouse = MapClientToBackBuffer(
+			const auto mouse = ResolveMenuCursorPosition(
+				a_menuCursor.available,
+				a_menuCursor.position,
 				ReadClientMousePosition(s_attachment.window),
 				client.width,
 				client.height,
@@ -292,46 +353,7 @@ namespace Addictol
 				static_cast<float>(s_backBufferIdentity.width),
 				static_cast<float>(s_backBufferIdentity.height)
 			};
-
-			auto mouse = absoluteMouse;
-			if (a_modalVisible)
-			{
-				if (!s_virtualCursor.active)
-				{
-					OpenVirtualCursor(
-						s_virtualCursor,
-						absoluteMouse,
-						s_backBufferIdentity.width,
-						s_backBufferIdentity.height);
-					s_virtualCursorOpenedAt = GetTickCount64();
-				}
-
-				const auto virtualMouse = ConsumeVirtualCursorMotion(
-					s_virtualCursor,
-					s_backBufferIdentity.width,
-					s_backBufferIdentity.height);
-				if (DecideModalCursorSource(s_virtualCursor.rawInputObserved) ==
-					ModalCursorSource::kRawMotion)
-				{
-					mouse = virtualMouse;
-				}
-				else
-				{
-					mouse = FollowAbsoluteCursorFallback(
-						s_virtualCursor,
-						absoluteMouse,
-						s_backBufferIdentity.width,
-						s_backBufferIdentity.height);
-					if (!s_rawInputFallbackLogged &&
-						GetTickCount64() - s_virtualCursorOpenedAt >=
-							kRawInputFallbackLogDelayMs)
-					{
-						s_rawInputFallbackLogged = true;
-						REX::WARN("Platform Imgui: raw mouse input is unavailable; using absolute client cursor fallback"sv);
-					}
-				}
-			}
-			io.AddMousePosEvent(mouse.x, mouse.y);
+			io.AddMousePosEvent(mouse.position.x, mouse.position.y);
 			if ((client.width != s_backBufferIdentity.width ||
 					client.height != s_backBufferIdentity.height) &&
 				!std::exchange(s_coordinateSpaceLogged, true))
@@ -364,48 +386,6 @@ namespace Addictol
 			return MAKELPARAM(
 				static_cast<int16_t>(mapped.x),
 				static_cast<int16_t>(mapped.y));
-		}
-
-		static void AccumulateRawMouseInput(LPARAM a_lparam) noexcept
-		{
-			RAWINPUT input{};
-			UINT size = sizeof(input);
-			const auto read = GetRawInputData(
-				reinterpret_cast<HRAWINPUT>(a_lparam),
-				RID_INPUT,
-				&input,
-				&size,
-				sizeof(RAWINPUTHEADER));
-			if (read == static_cast<UINT>(-1) ||
-				read < sizeof(RAWINPUTHEADER) ||
-				input.header.dwType != RIM_TYPEMOUSE ||
-				read < offsetof(RAWINPUT, data) + sizeof(RAWMOUSE))
-				return;
-
-			const auto flags = input.data.mouse.usFlags;
-			uint32_t desktopWidth{ 0 };
-			uint32_t desktopHeight{ 0 };
-			if ((flags & MOUSE_MOVE_ABSOLUTE) != 0)
-			{
-				const auto virtualDesktop = (flags & MOUSE_VIRTUAL_DESKTOP) != 0;
-				const auto width = GetSystemMetrics(
-					virtualDesktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
-				const auto height = GetSystemMetrics(
-					virtualDesktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
-				if (width > 0 && height > 0)
-				{
-					desktopWidth = static_cast<uint32_t>(width);
-					desktopHeight = static_cast<uint32_t>(height);
-				}
-			}
-
-			AccumulateRawMouseReport(
-				s_virtualCursor,
-				flags,
-				input.data.mouse.lLastX,
-				input.data.mouse.lLastY,
-				desktopWidth,
-				desktopHeight);
 		}
 
 		static void RetireActiveAttachmentLocked(
@@ -808,8 +788,7 @@ namespace Addictol
 
 		static void ShutdownBackend() noexcept
 		{
-			CloseVirtualCursor(s_virtualCursor);
-			s_virtualCursorOpenedAt = 0;
+			(void)UpdateEngineCursorRegistration(false);
 			if (s_backend.load(std::memory_order_acquire) == Backend::kReady)
 			{
 				DearModdingUI::CursorLoader::Shutdown();
@@ -1035,18 +1014,24 @@ namespace Addictol
 					DearModdingUI::HasClients(),
 					s_windowReady.load(std::memory_order_acquire)) ||
 				!BackendReady())
+			{
+				(void)UpdateEngineCursorRegistration(false);
 				return;
+			}
 
 			const auto modalVisible = DearModdingUI::IsMenuVisible();
 			const auto overlayDemanded = DearModdingUI::NeedsFrame() && !modalVisible;
 			s_drawingEnabled.store(modalVisible, std::memory_order_release);
-			if (!modalVisible && s_virtualCursor.active)
-			{
-				CloseVirtualCursor(s_virtualCursor);
-				s_virtualCursorOpenedAt = 0;
-			}
+			// Present acquires and samples; serialized teardown may release from another lifecycle thread.
+			auto* registeredMenuCursor =
+				UpdateEngineCursorRegistration(modalVisible);
+			const auto menuCursor = ReadMenuCursor(registeredMenuCursor);
 			SetGameInputSuppressed(ShouldSuppressGameInput(modalVisible));
-			DearModdingUI::CursorLoader::PrepareFrame(modalVisible);
+			DearModdingUI::CursorLoader::PrepareFrame(
+				modalVisible,
+				EngineDrawsMenuCursor(
+					registeredMenuCursor != nullptr,
+					menuCursor.registeredCursorCount));
 			if (!ShouldRenderHostFrame(modalVisible, overlayDemanded) ||
 				!EnsureBackBuffer(a_swapChain))
 				return;
@@ -1056,7 +1041,7 @@ namespace Addictol
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
-			ApplyBackBufferCoordinateSpace(modalVisible);
+			ApplyBackBufferCoordinateSpace(menuCursor);
 			ImGui::NewFrame();
 			for (size_t index = 0, count = s_drawSinks.Size(); index < count; ++index)
 				s_drawSinks.At(index)();
@@ -1105,6 +1090,7 @@ namespace Addictol
 						{
 							s_drawingEnabled.store(false, std::memory_order_release);
 							SetGameInputSuppressed(false);
+							(void)UpdateEngineCursorRegistration(false);
 							DearModdingUI::FailBackendInitialization();
 						}
 					}
@@ -1235,28 +1221,21 @@ namespace Addictol
 			bool swallow{ false };
 			{
 				const ContextLock lock;
-				const auto modalVisible =
-					s_drawingEnabled.load(std::memory_order_acquire);
 				if (HandlesWindowMessage(
 						a_window == s_activeWindow.load(std::memory_order_acquire),
-						modalVisible,
+						s_drawingEnabled.load(std::memory_order_acquire),
 						s_backend.load(std::memory_order_acquire) == Backend::kReady,
 						ImGui::GetCurrentContext() != nullptr))
 				{
 					auto& io = ImGui::GetIO();
-					if (a_message == WM_INPUT)
-						AccumulateRawMouseInput(a_lparam);
 					{
 						const ReentryGuard reentry{ reentered };
-						if (SendsAbsolutePositionToBackend(a_message, modalVisible))
-						{
-							const auto backendLparam =
-								a_message == WM_MOUSEMOVE ?
-								MapMouseMoveToBackBuffer(a_window, a_lparam) :
-								a_lparam;
-							handled = ImGui_ImplWin32_WndProcHandlerEx(
-								a_window, a_message, a_wparam, backendLparam, io);
-						}
+						const auto backendLparam =
+							a_message == WM_MOUSEMOVE ?
+							MapMouseMoveToBackBuffer(a_window, a_lparam) :
+							a_lparam;
+						handled = ImGui_ImplWin32_WndProcHandlerEx(
+							a_window, a_message, a_wparam, backendLparam, io);
 					}
 					swallow = SwallowsMessage(
 						ClassifyMessage(a_message),
@@ -1312,6 +1291,7 @@ namespace Addictol
 				candidateIdentity,
 				s_backend.load(std::memory_order_acquire) != Backend::kUninitialized);
 			const auto windowAlreadyHooked = FindWindowHook(candidate.window) != nullptr;
+			(void)UpdateEngineCursorRegistration(false);
 			ReleaseBackBuffer();
 			s_backBufferFailureLogged = false;
 			if (resetBackend)
@@ -1490,8 +1470,10 @@ namespace Addictol
 			s_backend.load(std::memory_order_acquire) == Backend::kReady;
 		s_drawingEnabled.store(enable, std::memory_order_release);
 		SetGameInputSuppressed(enable);
+		if (!enable)
+			(void)UpdateEngineCursorRegistration(false);
 		if (ImGui::GetCurrentContext())
-			DearModdingUI::CursorLoader::PrepareFrame(enable);
+			DearModdingUI::CursorLoader::PrepareFrame(enable, false);
 	}
 
 	bool PlatformImgui::IsDrawingEnabled() noexcept

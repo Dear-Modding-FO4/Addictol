@@ -665,19 +665,26 @@ namespace vmm_tests
 		});
 
 		runner.test("cursor ownership follows modal visibility", [] {
-			const auto overlay = DecideCursorPresentation(false);
+			const auto overlay = DecideCursorPresentation(false, false);
 			require(!overlay.captureInput &&
 					!overlay.hideOperatingSystemCursor &&
 					!overlay.drawSoftwareCursor &&
 					!overlay.drawCustomCursor,
 				"overlay-only drawing acquired a cursor");
 
-			const auto modal = DecideCursorPresentation(true);
+			const auto modal = DecideCursorPresentation(true, false);
 			require(modal.captureInput &&
 					modal.hideOperatingSystemCursor &&
 					modal.drawSoftwareCursor &&
 					!modal.drawCustomCursor,
 				"modal drawing did not own exactly one software cursor");
+
+			const auto shared = DecideCursorPresentation(true, true);
+			require(shared.captureInput &&
+					shared.hideOperatingSystemCursor &&
+					!shared.drawSoftwareCursor &&
+					!shared.drawCustomCursor,
+				"a visible Fallout cursor was duplicated by ImGui");
 
 			require(DecideCursorTransition(false, true) ==
 					CursorOwnershipTransition::kAcquire,

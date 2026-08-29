@@ -33,9 +33,13 @@ namespace Addictol::DearModdingUI::CursorLoader
 		g_owned = false;
 	}
 
-	void PrepareFrame(bool a_modalVisible) noexcept
+	void PrepareFrame(
+		bool a_modalVisible,
+		bool a_engineCursorVisible) noexcept
 	{
-		const auto cursor = DecideCursorPresentation(a_modalVisible);
+		const auto cursor = DecideCursorPresentation(
+			a_modalVisible,
+			a_engineCursorVisible);
 		ImGui::GetIO().MouseDrawCursor = cursor.drawSoftwareCursor;
 
 		switch (DecideCursorTransition(g_owned, cursor.hideOperatingSystemCursor))
