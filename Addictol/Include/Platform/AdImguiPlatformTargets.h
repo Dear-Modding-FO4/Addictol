@@ -169,6 +169,209 @@ namespace Addictol::ImguiPlatform
 		float y{ 0.0f };
 	};
 
+	struct MouseDelta
+	{
+		int64_t x{ 0 };
+		int64_t y{ 0 };
+	};
+
+	inline constexpr uint16_t kRawMouseMoveAbsolute = 0x0001;
+	inline constexpr uint16_t kRawMouseVirtualDesktop = 0x0002;
+	inline constexpr int32_t kRawMouseAbsoluteMaximum = 65535;
+
+	struct RawMouseReportState
+	{
+		bool hasAbsolutePosition{ false };
+		int32_t absoluteX{ 0 };
+		int32_t absoluteY{ 0 };
+	};
+
+	struct VirtualCursorState
+	{
+		MousePosition position{};
+		MouseDelta accumulated{};
+		RawMouseReportState rawReport{};
+		bool active{ false };
+		bool rawInputObserved{ false };
+	};
+
+	enum class ModalCursorSource : uint32_t
+	{
+		kRawMotion,
+		kAbsoluteFallback
+	};
+
+	[[nodiscard]] constexpr bool IsInsideDisplay(
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		return a_width &&
+			a_height &&
+			a_position.x >= 0.0f &&
+			a_position.y >= 0.0f &&
+			a_position.x < static_cast<float>(a_width) &&
+			a_position.y < static_cast<float>(a_height);
+	}
+
+	[[nodiscard]] constexpr MousePosition SeedVirtualCursor(
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		if (IsInsideDisplay(a_position, a_width, a_height))
+			return a_position;
+		return {
+			static_cast<float>(a_width) * 0.5f,
+			static_cast<float>(a_height) * 0.5f
+		};
+	}
+
+	[[nodiscard]] constexpr float ClampCursorCoordinate(
+		float a_value,
+		uint32_t a_extent) noexcept
+	{
+		if (!a_extent || a_value <= 0.0f)
+			return 0.0f;
+		const auto maximum = static_cast<float>(a_extent - 1);
+		return a_value >= maximum ? maximum : a_value;
+	}
+
+	[[nodiscard]] constexpr MousePosition IntegrateVirtualCursor(
+		MousePosition a_position,
+		MouseDelta a_delta,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		return {
+			ClampCursorCoordinate(
+				a_position.x + static_cast<float>(a_delta.x),
+				a_width),
+			ClampCursorCoordinate(
+				a_position.y + static_cast<float>(a_delta.y),
+				a_height)
+		};
+	}
+
+	[[nodiscard]] constexpr int32_t ScaleRawAbsoluteCoordinate(
+		int32_t a_coordinate,
+		uint32_t a_extent) noexcept
+	{
+		const auto normalized =
+			a_coordinate <= 0 ?
+			int64_t{ 0 } :
+			a_coordinate >= kRawMouseAbsoluteMaximum ?
+			int64_t{ kRawMouseAbsoluteMaximum } :
+			static_cast<int64_t>(a_coordinate);
+		return static_cast<int32_t>(
+			(normalized * static_cast<int64_t>(a_extent) +
+				kRawMouseAbsoluteMaximum / 2) /
+			kRawMouseAbsoluteMaximum);
+	}
+
+	[[nodiscard]] constexpr MouseDelta DecodeRawMouseReport(
+		uint16_t a_flags,
+		int32_t a_lastX,
+		int32_t a_lastY,
+		uint32_t a_desktopWidth,
+		uint32_t a_desktopHeight,
+		RawMouseReportState& a_state) noexcept
+	{
+		if ((a_flags & kRawMouseMoveAbsolute) == 0)
+			return { a_lastX, a_lastY };
+
+		if (!a_desktopWidth || !a_desktopHeight)
+		{
+			a_state = {};
+			return {};
+		}
+
+		const auto x = ScaleRawAbsoluteCoordinate(a_lastX, a_desktopWidth);
+		const auto y = ScaleRawAbsoluteCoordinate(a_lastY, a_desktopHeight);
+		if (!a_state.hasAbsolutePosition)
+		{
+			a_state = { true, x, y };
+			return {};
+		}
+
+		const MouseDelta delta{
+			static_cast<int64_t>(x) - a_state.absoluteX,
+			static_cast<int64_t>(y) - a_state.absoluteY
+		};
+		a_state = { true, x, y };
+		return delta;
+	}
+
+	constexpr void OpenVirtualCursor(
+		VirtualCursorState& a_state,
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state = {};
+		a_state.position = SeedVirtualCursor(a_position, a_width, a_height);
+		a_state.active = true;
+	}
+
+	constexpr void CloseVirtualCursor(VirtualCursorState& a_state) noexcept
+	{
+		a_state = {};
+	}
+
+	constexpr void AccumulateRawMouseReport(
+		VirtualCursorState& a_state,
+		uint16_t a_flags,
+		int32_t a_lastX,
+		int32_t a_lastY,
+		uint32_t a_desktopWidth,
+		uint32_t a_desktopHeight) noexcept
+	{
+		if (!a_state.active)
+			return;
+		const auto delta = DecodeRawMouseReport(
+			a_flags,
+			a_lastX,
+			a_lastY,
+			a_desktopWidth,
+			a_desktopHeight,
+			a_state.rawReport);
+		a_state.accumulated.x += delta.x;
+		a_state.accumulated.y += delta.y;
+		a_state.rawInputObserved = true;
+	}
+
+	[[nodiscard]] constexpr MousePosition ConsumeVirtualCursorMotion(
+		VirtualCursorState& a_state,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state.position = IntegrateVirtualCursor(
+			a_state.position,
+			a_state.accumulated,
+			a_width,
+			a_height);
+		a_state.accumulated = {};
+		return a_state.position;
+	}
+
+	[[nodiscard]] constexpr MousePosition FollowAbsoluteCursorFallback(
+		VirtualCursorState& a_state,
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state.position = SeedVirtualCursor(a_position, a_width, a_height);
+		return a_state.position;
+	}
+
+	[[nodiscard]] constexpr ModalCursorSource DecideModalCursorSource(
+		bool a_rawInputObserved) noexcept
+	{
+		return a_rawInputObserved ?
+			ModalCursorSource::kRawMotion :
+			ModalCursorSource::kAbsoluteFallback;
+	}
+
 	[[nodiscard]] constexpr MousePosition MapClientToBackBuffer(
 		MousePosition a_position,
 		uint32_t a_clientWidth,
@@ -359,11 +562,21 @@ namespace Addictol::ImguiPlatform
 	inline constexpr uint32_t kKeyboardMessageLast = 0x0109;
 	inline constexpr uint32_t kMouseMessageFirst = 0x0200;
 	inline constexpr uint32_t kMouseMessageLast = 0x020E;
+	inline constexpr uint32_t kNcMouseMoveMessage = 0x00A0;
 	inline constexpr uint32_t kKeyDownMessage = 0x0100;
 	inline constexpr uint32_t kKeyUpMessage = 0x0101;
 	inline constexpr uint32_t kSysKeyDownMessage = 0x0104;
 	inline constexpr uint32_t kSysKeyUpMessage = 0x0105;
 	inline constexpr uint64_t kKeyRepeatBit = uint64_t{ 1 } << 30;
+
+	[[nodiscard]] constexpr bool SendsAbsolutePositionToBackend(
+		uint32_t a_message,
+		bool a_modalVisible) noexcept
+	{
+		return !a_modalVisible ||
+			(a_message != kMouseMessageFirst &&
+				a_message != kNcMouseMoveMessage);
+	}
 
 	[[nodiscard]] constexpr MessageClass ClassifyMessage(uint32_t a_message) noexcept
 	{

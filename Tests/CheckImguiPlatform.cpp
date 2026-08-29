@@ -257,6 +257,146 @@ namespace vmm_tests
 				"out-of-window mouse coordinates were scaled into the viewport");
 		});
 
+		runner.test("virtual cursor motion integrates and clamps to every display edge", [] {
+			constexpr MousePosition position{ 50.0f, 40.0f };
+			constexpr auto stable =
+				IntegrateVirtualCursor(position, {}, 100, 80);
+			require(stable.x == 50.0f && stable.y == 40.0f,
+				"zero raw motion changed the virtual cursor");
+
+			constexpr auto negative =
+				IntegrateVirtualCursor(position, { -12, -17 }, 100, 80);
+			require(negative.x == 38.0f && negative.y == 23.0f,
+				"negative raw motion did not integrate one pixel per count");
+
+			constexpr auto left =
+				IntegrateVirtualCursor(position, { -1000, 0 }, 100, 80);
+			constexpr auto right =
+				IntegrateVirtualCursor(position, { 1000, 0 }, 100, 80);
+			constexpr auto top =
+				IntegrateVirtualCursor(position, { 0, -1000 }, 100, 80);
+			constexpr auto bottom =
+				IntegrateVirtualCursor(position, { 0, 1000 }, 100, 80);
+			require(left.x == 0.0f && left.y == position.y,
+				"a large negative delta crossed the left edge");
+			require(right.x == 99.0f && right.y == position.y,
+				"a large positive delta crossed the right edge");
+			require(top.x == position.x && top.y == 0.0f,
+				"a large negative delta crossed the top edge");
+			require(bottom.x == position.x && bottom.y == 79.0f,
+				"a large positive delta crossed the bottom edge");
+		});
+
+		runner.test("virtual cursor opening seeds once and resets pending raw motion", [] {
+			constexpr auto inBounds =
+				SeedVirtualCursor({ 321.0f, 123.0f }, 1920, 1080);
+			constexpr auto leftOutside =
+				SeedVirtualCursor({ -1.0f, 123.0f }, 1920, 1080);
+			constexpr auto rightOutside =
+				SeedVirtualCursor({ 1920.0f, 123.0f }, 1920, 1080);
+			constexpr auto belowOutside =
+				SeedVirtualCursor({ 321.0f, 1080.0f }, 1920, 1080);
+			require(inBounds.x == 321.0f && inBounds.y == 123.0f,
+				"an in-bounds client cursor did not seed the virtual position");
+			require(
+				leftOutside.x == 960.0f && leftOutside.y == 540.0f &&
+					rightOutside.x == 960.0f && rightOutside.y == 540.0f &&
+					belowOutside.x == 960.0f && belowOutside.y == 540.0f,
+				"an out-of-bounds client cursor did not seed at display center");
+
+			VirtualCursorState state{};
+			state.position = { 10.0f, 20.0f };
+			state.accumulated = { 99, -45 };
+			state.rawReport = { true, 500, 600 };
+			state.active = true;
+			state.rawInputObserved = true;
+			OpenVirtualCursor(state, { 300.0f, 200.0f }, 1920, 1080);
+			require(state.active, "opening did not activate virtual cursor ownership");
+			require(state.position.x == 300.0f && state.position.y == 200.0f,
+				"opening did not seed from the current client cursor");
+			require(state.accumulated.x == 0 && state.accumulated.y == 0,
+				"opening retained stale accumulated motion");
+			require(!state.rawReport.hasAbsolutePosition && !state.rawInputObserved,
+				"opening retained stale raw report state");
+		});
+
+		runner.test("raw mouse reports distinguish relative deltas from absolute positions", [] {
+			VirtualCursorState relative{};
+			OpenVirtualCursor(relative, { 100.0f, 100.0f }, 4000, 3000);
+			AccumulateRawMouseReport(relative, 0, 14, -9, 1920, 1080);
+			require(relative.rawInputObserved, "a relative raw report was not observed");
+			require(relative.accumulated.x == 14 && relative.accumulated.y == -9,
+				"a relative raw report was not accumulated directly");
+			const auto relativePosition =
+				ConsumeVirtualCursorMotion(relative, 4000, 3000);
+			require(relativePosition.x == 114.0f && relativePosition.y == 91.0f,
+				"relative raw motion did not integrate into the virtual cursor");
+			require(relative.accumulated.x == 0 && relative.accumulated.y == 0,
+				"consuming raw motion did not reset the accumulator");
+
+			VirtualCursorState absolute{};
+			OpenVirtualCursor(absolute, { 100.0f, 100.0f }, 4000, 3000);
+			AccumulateRawMouseReport(
+				absolute,
+				kRawMouseMoveAbsolute | kRawMouseVirtualDesktop,
+				32768,
+				32768,
+				1920,
+				1080);
+			require(absolute.rawInputObserved, "an absolute raw report was not observed");
+			require(absolute.accumulated.x == 0 && absolute.accumulated.y == 0,
+				"the first absolute report jumped from an unknown origin");
+			AccumulateRawMouseReport(
+				absolute,
+				kRawMouseMoveAbsolute | kRawMouseVirtualDesktop,
+				65535,
+				65535,
+				1920,
+				1080);
+			require(absolute.accumulated.x == 960 && absolute.accumulated.y == 540,
+				"absolute raw positions were not converted into desktop-pixel deltas");
+			const auto absolutePosition =
+				ConsumeVirtualCursorMotion(absolute, 4000, 3000);
+			require(absolutePosition.x == 1060.0f && absolutePosition.y == 640.0f,
+				"absolute raw deltas did not integrate one desktop pixel per count");
+
+			AccumulateRawMouseReport(
+				absolute,
+				kRawMouseMoveAbsolute,
+				0,
+				0,
+				1920,
+				1080);
+			const auto negativeAbsolute =
+				ConsumeVirtualCursorMotion(absolute, 4000, 3000);
+			require(negativeAbsolute.x == 0.0f && negativeAbsolute.y == 0.0f,
+				"a decreasing absolute report did not produce a clamped negative delta");
+		});
+
+		runner.test("modal cursor falls back only until raw input is observed", [] {
+			require(
+				DecideModalCursorSource(false) == ModalCursorSource::kAbsoluteFallback,
+				"a modal session without raw reports did not retain absolute fallback");
+			require(
+				DecideModalCursorSource(true) == ModalCursorSource::kRawMotion,
+				"an observed raw report did not select virtual cursor motion");
+			require(!SendsAbsolutePositionToBackend(kMouseMessageFirst, true),
+				"a modal WM_MOUSEMOVE still reached the Win32 backend");
+			require(!SendsAbsolutePositionToBackend(kNcMouseMoveMessage, true),
+				"a modal WM_NCMOUSEMOVE still reached the Win32 backend");
+			require(SendsAbsolutePositionToBackend(kMouseMessageFirst + 1, true),
+				"a modal mouse button was suppressed with absolute motion");
+			require(SendsAbsolutePositionToBackend(kMouseMessageFirst, false),
+				"non-modal mouse movement was suppressed");
+
+			VirtualCursorState state{};
+			OpenVirtualCursor(state, { 100.0f, 100.0f }, 1920, 1080);
+			const auto fallback =
+				FollowAbsoluteCursorFallback(state, { 250.0f, 175.0f }, 1920, 1080);
+			require(fallback.x == 250.0f && fallback.y == 175.0f,
+				"absolute fallback did not follow the current client cursor");
+		});
+
 		runner.test("install state permits one IAT attempt", [] {
 			require(AllowsInstallAttempt(InstallState::kNotAttempted), "the first attempt must be allowed");
 			require(!AllowsInstallAttempt(InstallState::kRejected), "an unavailable IAT is never retried");
