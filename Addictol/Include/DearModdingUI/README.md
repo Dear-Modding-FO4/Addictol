@@ -44,10 +44,11 @@ Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts and blur s
 that neutral root. Missing fonts fall back by role to ImGui's built-in font; missing or invalid blur
 shaders disable blur without disabling the menu or the C ABI host.
 
-The modal host registers with Fallout 4's menu cursor and maps its client-pixel position into the
-attached backbuffer. It uses Community Shaders' ImGui software cursor only when no Fallout cursor menu
-is already drawing one, and releases both engine and Win32 cursor ownership when closed. Overlay-only
-frames do not draw a cursor or capture input.
+The modal host normally drives a bounded virtual cursor from raw mouse motion. While a Fallout cursor
+menu is open, it maps the engine's client-pixel position into the attached backbuffer, synchronizes the
+virtual position to it, and leaves the Fallout cursor as the single visible pointer. It resumes the ImGui
+software cursor from that synchronized position when the Fallout menu closes and releases Win32 cursor
+ownership when the modal host closes. Overlay-only frames do not draw a cursor or capture input.
 
 The Addictol host initializes on the first valid active-swapchain `Present` whenever any client was
 accepted. Addictol's `bMenu` setting controls only registration of Addictol's own pages. External

@@ -678,6 +678,11 @@ namespace vmm_tests
 					modal.drawSoftwareCursor &&
 					!modal.drawCustomCursor,
 				"modal drawing did not own exactly one software cursor");
+			require(
+				static_cast<uint32_t>(modal.drawSoftwareCursor) +
+						static_cast<uint32_t>(modal.drawCustomCursor) ==
+					1,
+				"the virtual branch did not present exactly one cursor");
 
 			const auto shared = DecideCursorPresentation(true, true);
 			require(shared.captureInput &&
@@ -685,6 +690,12 @@ namespace vmm_tests
 					!shared.drawSoftwareCursor &&
 					!shared.drawCustomCursor,
 				"a visible Fallout cursor was duplicated by ImGui");
+			require(
+				1 +
+						static_cast<uint32_t>(shared.drawSoftwareCursor) +
+						static_cast<uint32_t>(shared.drawCustomCursor) ==
+					1,
+				"the engine branch did not present exactly one cursor");
 
 			require(DecideCursorTransition(false, true) ==
 					CursorOwnershipTransition::kAcquire,

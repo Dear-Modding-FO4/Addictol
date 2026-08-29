@@ -169,6 +169,47 @@ namespace Addictol::ImguiPlatform
 		float y{ 0.0f };
 	};
 
+	struct MouseDelta
+	{
+		int64_t x{ 0 };
+		int64_t y{ 0 };
+	};
+
+	inline constexpr uint16_t kRawMouseMoveAbsolute = 0x0001;
+	inline constexpr uint16_t kRawMouseVirtualDesktop = 0x0002;
+	inline constexpr int32_t kRawMouseAbsoluteMaximum = 65535;
+
+	struct RawMouseReportState
+	{
+		bool hasAbsolutePosition{ false };
+		int32_t absoluteX{ 0 };
+		int32_t absoluteY{ 0 };
+	};
+
+	struct VirtualCursorState
+	{
+		MousePosition position{};
+		MouseDelta accumulated{};
+		RawMouseReportState rawReport{};
+		bool active{ false };
+		bool rawInputObserved{ false };
+		bool synchronizedFromEngine{ false };
+	};
+
+	enum class ModalCursorSource : uint32_t
+	{
+		kInactive,
+		kVirtual,
+		kEngine
+	};
+
+	enum class VirtualCursorPositionSource : uint32_t
+	{
+		kRawMotion,
+		kSynchronizedEngine,
+		kAbsoluteFallback
+	};
+
 	[[nodiscard]] constexpr bool IsInsideDisplay(
 		MousePosition a_position,
 		uint32_t a_width,
@@ -180,6 +221,210 @@ namespace Addictol::ImguiPlatform
 			a_position.y >= 0.0f &&
 			a_position.x < static_cast<float>(a_width) &&
 			a_position.y < static_cast<float>(a_height);
+	}
+
+	[[nodiscard]] constexpr MousePosition SeedVirtualCursor(
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		if (IsInsideDisplay(a_position, a_width, a_height))
+			return a_position;
+		return {
+			static_cast<float>(a_width) * 0.5f,
+			static_cast<float>(a_height) * 0.5f
+		};
+	}
+
+	[[nodiscard]] constexpr float ClampCursorCoordinate(
+		float a_value,
+		uint32_t a_extent) noexcept
+	{
+		if (!a_extent || a_value <= 0.0f)
+			return 0.0f;
+		const auto maximum = static_cast<float>(a_extent - 1);
+		return a_value >= maximum ? maximum : a_value;
+	}
+
+	[[nodiscard]] constexpr MousePosition IntegrateVirtualCursor(
+		MousePosition a_position,
+		MouseDelta a_delta,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		return {
+			ClampCursorCoordinate(
+				a_position.x + static_cast<float>(a_delta.x),
+				a_width),
+			ClampCursorCoordinate(
+				a_position.y + static_cast<float>(a_delta.y),
+				a_height)
+		};
+	}
+
+	[[nodiscard]] constexpr int32_t ScaleRawAbsoluteCoordinate(
+		int32_t a_coordinate,
+		uint32_t a_extent) noexcept
+	{
+		const auto normalized =
+			a_coordinate <= 0 ?
+			int64_t{ 0 } :
+			a_coordinate >= kRawMouseAbsoluteMaximum ?
+			int64_t{ kRawMouseAbsoluteMaximum } :
+			static_cast<int64_t>(a_coordinate);
+		return static_cast<int32_t>(
+			(normalized * static_cast<int64_t>(a_extent) +
+				kRawMouseAbsoluteMaximum / 2) /
+			kRawMouseAbsoluteMaximum);
+	}
+
+	[[nodiscard]] constexpr MouseDelta DecodeRawMouseReport(
+		uint16_t a_flags,
+		int32_t a_lastX,
+		int32_t a_lastY,
+		uint32_t a_desktopWidth,
+		uint32_t a_desktopHeight,
+		RawMouseReportState& a_state) noexcept
+	{
+		if ((a_flags & kRawMouseMoveAbsolute) == 0)
+			return { a_lastX, a_lastY };
+
+		if (!a_desktopWidth || !a_desktopHeight)
+		{
+			a_state = {};
+			return {};
+		}
+
+		const auto x = ScaleRawAbsoluteCoordinate(a_lastX, a_desktopWidth);
+		const auto y = ScaleRawAbsoluteCoordinate(a_lastY, a_desktopHeight);
+		if (!a_state.hasAbsolutePosition)
+		{
+			a_state = { true, x, y };
+			return {};
+		}
+
+		const MouseDelta delta{
+			static_cast<int64_t>(x) - a_state.absoluteX,
+			static_cast<int64_t>(y) - a_state.absoluteY
+		};
+		a_state = { true, x, y };
+		return delta;
+	}
+
+	constexpr void ResetVirtualCursorMotion(VirtualCursorState& a_state) noexcept
+	{
+		a_state.accumulated = {};
+		a_state.rawReport = {};
+	}
+
+	constexpr void OpenVirtualCursor(
+		VirtualCursorState& a_state,
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state = {};
+		a_state.position = SeedVirtualCursor(a_position, a_width, a_height);
+		a_state.active = true;
+	}
+
+	constexpr void CloseVirtualCursor(VirtualCursorState& a_state) noexcept
+	{
+		a_state = {};
+	}
+
+	constexpr void AccumulateRawMouseReport(
+		VirtualCursorState& a_state,
+		uint16_t a_flags,
+		int32_t a_lastX,
+		int32_t a_lastY,
+		uint32_t a_desktopWidth,
+		uint32_t a_desktopHeight) noexcept
+	{
+		if (!a_state.active)
+			return;
+		const auto delta = DecodeRawMouseReport(
+			a_flags,
+			a_lastX,
+			a_lastY,
+			a_desktopWidth,
+			a_desktopHeight,
+			a_state.rawReport);
+		a_state.accumulated.x += delta.x;
+		a_state.accumulated.y += delta.y;
+		a_state.rawInputObserved = true;
+		a_state.synchronizedFromEngine = false;
+	}
+
+	[[nodiscard]] constexpr MousePosition ConsumeVirtualCursorMotion(
+		VirtualCursorState& a_state,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state.position = IntegrateVirtualCursor(
+			a_state.position,
+			a_state.accumulated,
+			a_width,
+			a_height);
+		a_state.accumulated = {};
+		return a_state.position;
+	}
+
+	[[nodiscard]] constexpr MousePosition FollowAbsoluteCursorFallback(
+		VirtualCursorState& a_state,
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state.position = SeedVirtualCursor(a_position, a_width, a_height);
+		a_state.synchronizedFromEngine = false;
+		return a_state.position;
+	}
+
+	[[nodiscard]] constexpr MousePosition SynchronizeVirtualCursor(
+		VirtualCursorState& a_state,
+		MousePosition a_position,
+		uint32_t a_width,
+		uint32_t a_height) noexcept
+	{
+		a_state.position = SeedVirtualCursor(a_position, a_width, a_height);
+		ResetVirtualCursorMotion(a_state);
+		a_state.synchronizedFromEngine = true;
+		return a_state.position;
+	}
+
+	constexpr void TransitionModalCursorSource(
+		VirtualCursorState& a_state,
+		ModalCursorSource& a_current,
+		ModalCursorSource a_next) noexcept
+	{
+		if (a_current == a_next)
+			return;
+		ResetVirtualCursorMotion(a_state);
+		a_current = a_next;
+	}
+
+	[[nodiscard]] constexpr ModalCursorSource DecideModalCursorSource(
+		bool a_modalVisible,
+		bool a_gameCursorMenuOpen) noexcept
+	{
+		if (!a_modalVisible)
+			return ModalCursorSource::kInactive;
+		return a_gameCursorMenuOpen ?
+			ModalCursorSource::kEngine :
+			ModalCursorSource::kVirtual;
+	}
+
+	[[nodiscard]] constexpr VirtualCursorPositionSource
+		DecideVirtualCursorPositionSource(
+			bool a_rawInputObserved,
+			bool a_synchronizedFromEngine) noexcept
+	{
+		if (a_rawInputObserved)
+			return VirtualCursorPositionSource::kRawMotion;
+		return a_synchronizedFromEngine ?
+			VirtualCursorPositionSource::kSynchronizedEngine :
+			VirtualCursorPositionSource::kAbsoluteFallback;
 	}
 
 	[[nodiscard]] constexpr MousePosition MapClientToBackBuffer(
@@ -209,19 +454,19 @@ namespace Addictol::ImguiPlatform
 		};
 	}
 
-	enum class MenuCursorPositionSource : uint32_t
+	enum class EngineCursorPositionSource : uint32_t
 	{
 		kEngine,
 		kAbsoluteFallback
 	};
 
-	struct MenuCursorPosition
+	struct EngineCursorPosition
 	{
 		MousePosition position{};
-		MenuCursorPositionSource source{ MenuCursorPositionSource::kAbsoluteFallback };
+		EngineCursorPositionSource source{ EngineCursorPositionSource::kAbsoluteFallback };
 	};
 
-	[[nodiscard]] constexpr MenuCursorPosition ResolveMenuCursorPosition(
+	[[nodiscard]] constexpr EngineCursorPosition ResolveEngineCursorPosition(
 		bool a_enginePositionAvailable,
 		MousePosition a_engineClientPosition,
 		MousePosition a_absoluteClientPosition,
@@ -247,38 +492,9 @@ namespace Addictol::ImguiPlatform
 				a_backBufferWidth,
 				a_backBufferHeight),
 			useEnginePosition ?
-				MenuCursorPositionSource::kEngine :
-				MenuCursorPositionSource::kAbsoluteFallback
+				EngineCursorPositionSource::kEngine :
+				EngineCursorPositionSource::kAbsoluteFallback
 		};
-	}
-
-	enum class EngineCursorRegistrationTransition : uint32_t
-	{
-		kNone,
-		kAcquire,
-		kRelease
-	};
-
-	[[nodiscard]] constexpr EngineCursorRegistrationTransition
-		DecideEngineCursorRegistrationTransition(
-			bool a_registrationHeld,
-			bool a_modalVisible,
-			bool a_engineCursorAvailable) noexcept
-	{
-		if (a_registrationHeld)
-			return a_modalVisible ?
-				EngineCursorRegistrationTransition::kNone :
-				EngineCursorRegistrationTransition::kRelease;
-		return a_modalVisible && a_engineCursorAvailable ?
-			EngineCursorRegistrationTransition::kAcquire :
-			EngineCursorRegistrationTransition::kNone;
-	}
-
-	[[nodiscard]] constexpr bool EngineDrawsMenuCursor(
-		bool a_registrationHeld,
-		uint32_t a_registeredCursorCount) noexcept
-	{
-		return a_registrationHeld && a_registeredCursorCount > 1;
 	}
 
 	enum class BackBufferDecision : uint32_t
@@ -444,11 +660,21 @@ namespace Addictol::ImguiPlatform
 	inline constexpr uint32_t kKeyboardMessageLast = 0x0109;
 	inline constexpr uint32_t kMouseMessageFirst = 0x0200;
 	inline constexpr uint32_t kMouseMessageLast = 0x020E;
+	inline constexpr uint32_t kNcMouseMoveMessage = 0x00A0;
 	inline constexpr uint32_t kKeyDownMessage = 0x0100;
 	inline constexpr uint32_t kKeyUpMessage = 0x0101;
 	inline constexpr uint32_t kSysKeyDownMessage = 0x0104;
 	inline constexpr uint32_t kSysKeyUpMessage = 0x0105;
 	inline constexpr uint64_t kKeyRepeatBit = uint64_t{ 1 } << 30;
+
+	[[nodiscard]] constexpr bool SendsAbsolutePositionToBackend(
+		uint32_t a_message,
+		bool a_modalVisible) noexcept
+	{
+		return !a_modalVisible ||
+			(a_message != kMouseMessageFirst &&
+				a_message != kNcMouseMoveMessage);
+	}
 
 	[[nodiscard]] constexpr MessageClass ClassifyMessage(uint32_t a_message) noexcept
 	{
