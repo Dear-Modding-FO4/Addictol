@@ -17,9 +17,17 @@
 
 #include <array>
 #include <atomic>
+#include <string_view>
 #include <utility>
 
 #undef ERROR
+
+#ifndef IMGUI_HAS_DOCK
+#error "Addictol requires Dear ImGui docking support"
+#endif
+
+static_assert(IMGUI_VERSION_NUM == 19291);
+static_assert(std::string_view{ IMGUI_VERSION } == "1.92.9b");
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandlerEx(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, ImGuiIO& io);
 
@@ -254,7 +262,7 @@ namespace Addictol
 			}
 
 			auto& io = ImGui::GetIO();
-			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
 			// Setup sinks own any persisted geometry path, so nothing is written until one asks for it.
 			io.IniFilename = nullptr;
 			// Frames only run while drawing is enabled, so the drawn cursor follows that state.
