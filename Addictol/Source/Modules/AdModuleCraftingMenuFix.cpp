@@ -325,6 +325,17 @@ namespace Addictol
 		Module("Crafting Menu Fix", &bFixesCraftingMenuFix)
 	{}
 
+	bool ModuleCraftingMenuFix::DoQuery() const noexcept
+	{
+		if (IsModDLLPresent("CraftingMenuFix.dll"))
+		{
+			Skip("standalone 'CraftingMenuFix.dll' is installed"sv);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ModuleCraftingMenuFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		if (a_msg && a_msg->type == F4SE::MessagingInterface::kGameDataReady)
