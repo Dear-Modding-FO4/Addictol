@@ -206,10 +206,10 @@ namespace Addictol
 			sizeof(DMUI_PageDescriptor),
 			"home",
 			"Home",
-			nullptr,
+			"Addictol",
 			"Overview, live module status, project links, and FAQ.",
 			0,
-			DMUI_PAGE_KIND_HOME,
+			DMUI_PAGE_KIND_SETTINGS,
 			&DrawHomePage,
 			nullptr
 		};

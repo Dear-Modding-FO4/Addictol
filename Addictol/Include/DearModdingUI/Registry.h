@@ -30,8 +30,6 @@ namespace Addictol::DearModdingUI
 		void* userData{ nullptr };
 		bool notified{ false };
 		bool callbackFailed{ false };
-		bool duplicateHomeLogged{ false };
-		bool duplicateHomeWarningPending{ false };
 	};
 
 	struct RegisteredPage
@@ -52,7 +50,6 @@ namespace Addictol::DearModdingUI
 		void* userData{ nullptr };
 		uint32_t frameDemand{ 0 };
 		bool callbackFailed{ false };
-		bool synthesized{ false };
 	};
 
 	class Registry
@@ -93,8 +90,6 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] DMUI_Result InvokePage(DMUI_PageHandle a_page) noexcept;
 		[[nodiscard]] bool PageFailed(DMUI_PageHandle a_page) const noexcept;
 		void MarkPageFailed(DMUI_PageHandle a_page) noexcept;
-		[[nodiscard]] bool ConsumeDuplicateHomeWarning(
-			DMUI_ClientHandle a_client) noexcept;
 		void NotifyReady(const DMUI_HostReadyInfo& a_info) noexcept;
 		void NotifyUnavailable(DMUI_UnavailableReason a_reason) noexcept;
 
@@ -119,7 +114,6 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] bool OwnsPage(
 			DMUI_ClientHandle a_client,
 			DMUI_PageHandle a_page) const noexcept;
-		[[nodiscard]] bool SynthesizeHomePages();
 
 		DMUI_ImGuiFingerprint m_fingerprint{};
 		mutable std::mutex m_mutex;

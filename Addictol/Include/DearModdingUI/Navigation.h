@@ -3,7 +3,6 @@
 #include <DearModdingUI/API.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -21,8 +20,6 @@ namespace Addictol::DearModdingUI
 		std::string category;
 		std::string summary;
 		int32_t sortKey{ 0 };
-		DMUI_PageKind kind{ DMUI_PAGE_KIND_SETTINGS };
-		bool synthesized{ false };
 	};
 
 	struct NavigationCategory
@@ -38,8 +35,6 @@ namespace Addictol::DearModdingUI
 		std::string displayName;
 		uint32_t version{ 0 };
 		std::vector<NavigationCategory> categories;
-		std::optional<NavigationPage> home;
-		size_t registeredPageCount{ 0 };
 	};
 
 	struct NavigationModel

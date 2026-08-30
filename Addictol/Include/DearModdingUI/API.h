@@ -90,7 +90,6 @@ typedef uint32_t DMUI_PageKind;
 
 #define DMUI_PAGE_KIND_SETTINGS 1u
 #define DMUI_PAGE_KIND_OVERLAY 2u
-#define DMUI_PAGE_KIND_HOME 3u
 
 typedef uint32_t DMUI_ClientCapabilities;
 

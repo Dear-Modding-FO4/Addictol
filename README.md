@@ -92,18 +92,18 @@ and any that disabled themselves. Check it first if something is not working.
 not recognize the name. `uMenuRefreshMs` sets how often the open page copies fresh data, clamped to
 100-2000 ms.
 
-The Evil Modding window selects a registered mod from a dropdown, opens that mod's Home page, then
-shows its categorized settings pages. Mods without a custom Home page receive an overview with their
-version, registered category and page counts, and failed-page count. Client and category names select
-glyphs from the shared Phosphor icon font in code; a category named after its owning mod inherits the
-client glyph, and missing icon fonts fall back to text without reserving empty space.
+The Evil Modding window selects a registered mod from a dropdown, then shows its categorized settings
+pages. Each mod supplies its own pages. Client and category names select glyphs from the shared
+Phosphor icon font in code; a category named after its owning mod inherits the client glyph, and
+missing icon fonts fall back to text without reserving empty space.
 The title-bar gear opens host-only interface settings and never appears in the mod dropdown. Colored
 or monochrome icon tint and background blur are editable there; the configured toggle key and refresh
 interval plus the resolved typography size and UI scale are read-only. Editable values persist through
 `[Additional] bMenuMonochromeIcons` and `bMenuBackgroundBlur`.
 Addictol telemetry pages retain their configured order and Log Control remains last.
-Addictol's Home page shows the game runtime and live module outcomes, provides its documented project
-link, and answers the supported-runtime, configuration, and menu-toggle questions.
+Addictol's first page is an ordinary settings page named Home in the Addictol category. It shows the
+game runtime and live module outcomes, provides its documented project link, and answers the
+supported-runtime, configuration, and menu-toggle questions.
 Its default style, typography, scaling, search, navigation, header, footer, blur, and cursor
 match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's neutral mod registry.
 

@@ -20,7 +20,6 @@ static_assert(std::is_nothrow_invocable_v<
 	void*>);
 static_assert(DMUI_PAGE_KIND_SETTINGS == 1u);
 static_assert(DMUI_PAGE_KIND_OVERLAY == 2u);
-static_assert(DMUI_PAGE_KIND_HOME == 3u);
 
 #if UINTPTR_MAX == UINT64_MAX
 static_assert(sizeof(DMUI_ImGuiFingerprint) == 216);

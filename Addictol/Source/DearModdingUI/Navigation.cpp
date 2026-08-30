@@ -20,8 +20,6 @@ namespace Addictol::DearModdingUI
 	{
 		for (const auto& client : clients)
 		{
-			if (client.home && client.home->handle == a_page)
-				return &client;
 			for (const auto& category : client.categories)
 			{
 				if (std::ranges::any_of(category.pages, [&](const auto& a_entry) {
@@ -37,8 +35,6 @@ namespace Addictol::DearModdingUI
 	{
 		for (const auto& client : clients)
 		{
-			if (client.home && client.home->handle == a_page)
-				return &*client.home;
 			for (const auto& category : client.categories)
 			{
 				const auto found = std::ranges::find_if(category.pages, [&](const auto& a_entry) {
@@ -55,8 +51,6 @@ namespace Addictol::DearModdingUI
 	{
 		for (const auto& client : clients)
 		{
-			if (client.home)
-				return client.home->handle;
 			for (const auto& category : client.categories)
 			{
 				if (!category.pages.empty())
@@ -76,8 +70,7 @@ namespace Addictol::DearModdingUI
 		{
 			if (std::ranges::any_of(a_pages, [&](const auto& a_page) {
 					return a_page.client == client.handle &&
-						(a_page.kind == DMUI_PAGE_KIND_HOME ||
-							a_page.kind == DMUI_PAGE_KIND_SETTINGS);
+						a_page.kind == DMUI_PAGE_KIND_SETTINGS;
 				}))
 				orderedClients.push_back(&client);
 		}
@@ -95,35 +88,23 @@ namespace Addictol::DearModdingUI
 				client->id,
 				client->displayName,
 				client->version,
-				{},
-				std::nullopt,
-				0
+				{}
 			};
-			navigationClient.registeredPageCount =
-				static_cast<size_t>(std::ranges::count_if(
-					a_pages,
-					[&](const auto& a_page) {
-						return a_page.client == client->handle &&
-							!a_page.synthesized;
-					}));
 
 			std::vector<const RegisteredPage*> orderedPages;
 			for (const auto& page : a_pages)
 			{
 				if (page.client == client->handle &&
-					(page.kind == DMUI_PAGE_KIND_HOME ||
-						page.kind == DMUI_PAGE_KIND_SETTINGS))
+					page.kind == DMUI_PAGE_KIND_SETTINGS)
 					orderedPages.push_back(&page);
 			}
 			std::ranges::sort(orderedPages, [](const auto* a_left, const auto* a_right) {
-				return std::tuple(
-					a_left->kind == DMUI_PAGE_KIND_HOME ? 0 : 1,
+				return std::tie(
 					a_left->category,
 					a_left->sortKey,
 					a_left->displayName,
 					a_left->id) <
-					std::tuple(
-						a_right->kind == DMUI_PAGE_KIND_HOME ? 0 : 1,
+					std::tie(
 						a_right->category,
 						a_right->sortKey,
 						a_right->displayName,
@@ -132,26 +113,18 @@ namespace Addictol::DearModdingUI
 
 			for (const auto* page : orderedPages)
 			{
-				const NavigationPage navigationPage{
+				if (navigationClient.categories.empty() ||
+					navigationClient.categories.back().displayName != page->category)
+					navigationClient.categories.push_back({ page->category, {} });
+				navigationClient.categories.back().pages.push_back({
 					page->handle,
 					page->client,
 					page->id,
 					page->displayName,
 					page->category,
 					page->summary,
-					page->sortKey,
-					page->kind,
-					page->synthesized
-				};
-				if (page->kind == DMUI_PAGE_KIND_HOME)
-				{
-					navigationClient.home = navigationPage;
-					continue;
-				}
-				if (navigationClient.categories.empty() ||
-					navigationClient.categories.back().displayName != page->category)
-					navigationClient.categories.push_back({ page->category, {} });
-				navigationClient.categories.back().pages.push_back(navigationPage);
+					page->sortKey
+				});
 			}
 			model.clients.push_back(std::move(navigationClient));
 		}
@@ -180,13 +153,10 @@ namespace Addictol::DearModdingUI
 			return false;
 
 		a_state.activeClient = a_client;
-		a_state.activePage = client->home ?
-			client->home->handle :
-			DMUI_INVALID_PAGE_HANDLE;
+		a_state.activePage = DMUI_INVALID_PAGE_HANDLE;
 		for (const auto& category : client->categories)
 		{
-			if (a_state.activePage == DMUI_INVALID_PAGE_HANDLE &&
-				!category.pages.empty())
+			if (!category.pages.empty())
 			{
 				a_state.activePage = category.pages.front().handle;
 				break;
