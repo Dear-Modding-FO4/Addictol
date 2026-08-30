@@ -496,11 +496,11 @@
     "message": "status message length changed reserved footer geometry"
   },
   {
-    "name": "footer text keeps its optical offset",
+    "name": "chrome row text keeps its capital ink offset",
     "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
-    "find": "return boxOffset + (-a_descent) * scale * 0.5f;",
+    "find": "return origin.y;",
     "replace": "return boxOffset;",
-    "check": "font metrics provide stable optical text offset",
-    "message": "font optical offset did not account for descenders"
+    "check": "capital ink provides stable optical text offset",
+    "message": "capital ink did not center between box heuristics"
   }
 ]

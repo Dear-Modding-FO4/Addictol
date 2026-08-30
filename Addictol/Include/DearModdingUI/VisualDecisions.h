@@ -129,18 +129,25 @@ namespace Addictol::DearModdingUI
 	[[nodiscard]] constexpr float OpticalTextOffsetY(
 		float a_rowHeight,
 		float a_fontSize,
-		float a_ascent,
-		float a_descent) noexcept
+		float a_referenceMinY,
+		float a_referenceMaxY,
+		float a_scale) noexcept
 	{
 		const auto boxOffset = CenterOffsetY(a_rowHeight, a_fontSize);
-		const auto metricsHeight = a_ascent - a_descent;
-		if (a_fontSize <= 0.0f ||
-			a_ascent <= 0.0f ||
-			a_descent >= 0.0f ||
-			metricsHeight <= 0.0f)
+		if (a_rowHeight <= 0.0f ||
+			a_fontSize <= 0.0f ||
+			a_referenceMaxY <= a_referenceMinY ||
+			a_scale <= 0.0f)
 			return boxOffset;
-		const auto scale = a_fontSize / metricsHeight;
-		return boxOffset + (-a_descent) * scale * 0.5f;
+		const auto origin = ResolveCenteredGlyphOrigin(
+			0.0f,
+			a_rowHeight * 0.5f,
+			0.0f,
+			a_referenceMinY,
+			0.0f,
+			a_referenceMaxY,
+			a_scale);
+		return origin.y;
 	}
 
 	[[nodiscard]] constexpr float FooterRowAdjustmentY(

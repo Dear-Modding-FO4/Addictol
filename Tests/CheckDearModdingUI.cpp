@@ -584,21 +584,52 @@ namespace vmm_tests
 					"row content did not center vertically");
 		});
 
-		runner.test("font metrics provide stable optical text offset", [] {
+		runner.test("capital ink provides stable optical text offset", [] {
+			constexpr std::string_view versionLabel{ "Version: 1.6" };
+			constexpr std::string_view modLabel{ "Mod: Addictol" };
+			constexpr float rowHeight{ 40.0f };
+			constexpr float fontSize{ 20.0f };
+			constexpr float ascent{ 16.0f };
+			constexpr float referenceMinY{ 2.0f };
+			constexpr float referenceMaxY{ 16.0f };
 			const auto versionOffset =
-				OpticalTextOffsetY(40.0f, 20.0f, 16.0f, -4.0f);
+				OpticalTextOffsetY(
+					rowHeight,
+					fontSize,
+					referenceMinY,
+					referenceMaxY,
+					1.0f);
 			const auto modOffset =
-				OpticalTextOffsetY(40.0f, 20.0f, 16.0f, -4.0f);
+				OpticalTextOffsetY(
+					rowHeight,
+					fontSize,
+					referenceMinY,
+					referenceMaxY,
+					1.0f);
+			const auto boxOffset = CenterOffsetY(rowHeight, fontSize);
+			const auto ascentBoxOffset =
+				rowHeight * 0.5f - ascent * 0.5f;
 			require(
-					versionOffset == 12.0f &&
-						modOffset == versionOffset,
-					"font optical offset did not account for descenders");
+					versionLabel != modLabel &&
+						versionOffset == 11.0f &&
+						modOffset == versionOffset &&
+						versionOffset > boxOffset &&
+						versionOffset < ascentBoxOffset,
+					"capital ink did not center between box heuristics");
 			require(
-					OpticalTextOffsetY(40.0f, 20.0f, 0.0f, 0.0f) ==
-							CenterOffsetY(40.0f, 20.0f) &&
-						OpticalTextOffsetY(40.0f, 20.0f, -1.0f, 1.0f) ==
-							CenterOffsetY(40.0f, 20.0f),
-					"invalid font metrics did not use box centering");
+					OpticalTextOffsetY(
+						rowHeight,
+						fontSize,
+						0.0f,
+						0.0f,
+						1.0f) == boxOffset &&
+						OpticalTextOffsetY(
+							rowHeight,
+							fontSize,
+							referenceMinY,
+							referenceMaxY,
+							0.0f) == boxOffset,
+					"missing reference font data did not use box centering");
 		});
 
 		runner.test("footer band keeps symmetric row padding", [] {

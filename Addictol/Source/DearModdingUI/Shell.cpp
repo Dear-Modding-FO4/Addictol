@@ -146,13 +146,20 @@ namespace Addictol::DearModdingUI
 			auto* font = ImGui::GetFont();
 			if (!font || a_fontSize <= 0.0f)
 				return CenterOffsetY(a_rowHeight, a_fontSize);
-			if (auto* baked = font->GetFontBaked(a_fontSize))
+			if (auto* baked = font->GetFontBaked(a_fontSize);
+				baked && baked->Size > 0.0f)
 			{
-				return OpticalTextOffsetY(
-					a_rowHeight,
-					a_fontSize,
-					baked->Ascent,
-					baked->Descent);
+				if (const auto* reference =
+						baked->FindGlyphNoFallback(
+							static_cast<ImWchar>('H')))
+				{
+					return OpticalTextOffsetY(
+						a_rowHeight,
+						a_fontSize,
+						reference->Y0,
+						reference->Y1,
+						a_fontSize / baked->Size);
+				}
 			}
 			return CenterOffsetY(a_rowHeight, a_fontSize);
 		}
