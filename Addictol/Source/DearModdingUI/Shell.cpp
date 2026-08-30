@@ -276,52 +276,6 @@ namespace Addictol::DearModdingUI
 			a_window->DrawList->PopClipRect();
 		}
 
-		[[nodiscard]] bool DrawHostSettingsButton(
-			ImGuiWindow* a_window) noexcept
-		{
-			if (!a_window ||
-				(a_window->Flags & ImGuiWindowFlags_NoTitleBar))
-				return false;
-
-			const auto size = ImGui::GetFontSize();
-			const auto offset = TitleBarButtonExtent(
-				size, kTitleBarButtonPadding);
-			const auto position = RightTitleBarButtonOrigin(
-				a_window, size, offset);
-			const auto bounds = TitleBarButtonRect(position, size);
-			const auto hovered = IsTitleBarButtonHovered(a_window, bounds);
-			bool behaviorHovered = false;
-			bool held = false;
-			const auto pressed = ImGui::ButtonBehavior(
-				bounds,
-				a_window->GetID("##DearModdingUI.HostSettingsButton"),
-				&behaviorHovered,
-				&held,
-				ImGuiButtonFlags_NoNavFocus);
-
-			a_window->DrawList->PushClipRect(
-				a_window->Rect().Min, a_window->Rect().Max);
-			(void)DrawRoundedButtonHighlight(
-				bounds.Min,
-				bounds.Max,
-				hovered && behaviorHovered,
-				held,
-				a_window->DrawList);
-			const auto center = bounds.GetCenter();
-			DrawIcon(
-				a_window->DrawList,
-				PhosphorGlyph::kGear,
-				{ center.x - size * 0.5f, center.y - size * 0.5f },
-				size,
-				ImGui::GetColorU32(ImGuiCol_Text),
-				nullptr);
-			a_window->DrawList->PopClipRect();
-
-			if (hovered && behaviorHovered)
-				ImGui::SetTooltip("Interface settings");
-			return pressed;
-		}
-
 		[[nodiscard]] bool BeginWithRoundedTitleBarButtons(
 			const char* a_name,
 			bool* a_open,
@@ -334,11 +288,6 @@ namespace Addictol::DearModdingUI
 			}
 			auto* window = ImGui::GetCurrentWindowRead();
 			DrawRoundedCloseHighlight(window);
-			if (DrawHostSettingsButton(window))
-			{
-				HostSettings::RequestPanelOpen(true);
-				ImGui::OpenPopup(kHostSettingsPopup);
-			}
 			return visible;
 		}
 
@@ -352,6 +301,46 @@ namespace Addictol::DearModdingUI
 			return (std::max)(0.0f, padding + center - ImGui::GetCursorPosX());
 		}
 
+		[[nodiscard]] bool DrawHeaderSettingsButton(float a_rowTop) noexcept
+		{
+			auto* window = ImGui::GetCurrentWindow();
+			if (!window)
+				return false;
+
+			const auto size = ImGui::GetFontSize();
+			const auto extent = TitleBarButtonExtent(
+				size, kTitleBarButtonPadding);
+			const auto& style = ImGui::GetStyle();
+			const ImVec2 origin{
+				window->Pos.x + window->Size.x -
+					style.WindowPadding.x - extent,
+				a_rowTop
+			};
+			const auto bounds = TitleBarButtonRect(origin, size);
+			bool hovered = false;
+			bool held = false;
+			const auto pressed = ImGui::ButtonBehavior(
+				bounds,
+				window->GetID("##DearModdingUI.HostSettingsButton"),
+				&hovered,
+				&held,
+				ImGuiButtonFlags_NoNavFocus);
+
+			(void)DrawRoundedButtonHighlight(
+				bounds.Min, bounds.Max, hovered, held, window->DrawList);
+			const auto center = bounds.GetCenter();
+			DrawIcon(
+				window->DrawList,
+				PhosphorGlyph::kGear,
+				{ center.x - size * 0.5f, center.y - size * 0.5f },
+				size,
+				ImGui::GetColorU32(ImGuiCol_Text),
+				nullptr);
+			if (hovered)
+				ImGui::SetTooltip("Interface settings");
+			return pressed;
+		}
+
 		void DrawHeader() noexcept
 		{
 			const auto textScale = Theme::kHeaderFallbackTextScale;
@@ -362,6 +351,7 @@ namespace Addictol::DearModdingUI
 				textWidth = ImGui::CalcTextSize("Evil Modding").x;
 				ImGui::SetWindowFontScale(1.0f);
 			}
+			const auto rowTop = ImGui::GetCursorScreenPos().y;
 			const auto offset = GetCenterOffsetForContent(textWidth);
 			if (offset > 0.0f)
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
@@ -372,6 +362,18 @@ namespace Addictol::DearModdingUI
 				ImGui::TextUnformatted("Evil Modding");
 			}
 			ImGui::SetWindowFontScale(1.0f);
+
+			// The host window hides its title bar unless docked, so the gear lives on the header row.
+			const auto titleHeight = ImGui::GetItemRectSize().y;
+			const auto buttonExtent = TitleBarButtonExtent(
+				ImGui::GetFontSize(), kTitleBarButtonPadding);
+			if (DrawHeaderSettingsButton(
+					rowTop + (titleHeight - buttonExtent) * 0.5f))
+			{
+				HostSettings::RequestPanelOpen(true);
+				ImGui::OpenPopup(kHostSettingsPopup);
+			}
+
 			ImGui::SeparatorEx(
 				ImGuiSeparatorFlags_Horizontal,
 				Theme::kSeparatorThickness);
