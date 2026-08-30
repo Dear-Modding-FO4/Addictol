@@ -4,6 +4,7 @@
 #include <DearModdingUI/Shell.h>
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuHome.h>
+#include <Menu/AdMenuModules.h>
 #include <Menu/AdMenuSettings.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Core/AdUtils.h>
@@ -296,6 +297,19 @@ namespace Addictol
 		using namespace menuDetail;
 
 		Configure();
+		if (s_requested.load(std::memory_order_acquire) &&
+			!RegisterPanel({
+				"modules",
+				"Modules",
+				"Addictol",
+				"Individual install, disable, skip, and failure outcomes for every module.",
+				200,
+				&DrawModulesPage,
+				nullptr,
+				nullptr
+			}))
+			REX::ERROR("Menu: Modules page could not be registered."sv);
+
 		if (s_requested.load(std::memory_order_acquire) &&
 			!RegisterPanel({
 				"log-control",

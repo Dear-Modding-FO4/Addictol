@@ -5,6 +5,7 @@
 #include <imgui/imgui.h>
 
 #include <cstddef>
+#include <string>
 
 namespace Addictol::DearModdingUI
 {
@@ -21,6 +22,10 @@ namespace Addictol::DearModdingUI
 		const char* a_fallbackLabel,
 		const char* a_tooltip,
 		bool a_enabled) noexcept;
+	void DrawSearchInput(
+		const char* a_id,
+		const char* a_hint,
+		std::string& a_search) noexcept;
 	void DrawSectionHeader(const char* a_text, char32_t a_glyph = 0) noexcept;
 	void DrawCollapsingSectionHeader(
 		const char* a_key,

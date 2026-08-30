@@ -598,51 +598,7 @@ namespace Addictol::DearModdingUI
 
 		void DrawPageSearch(std::string& a_search) noexcept
 		{
-			ImGui::PushID("PageSearchBar");
-			const auto scale = Theme::SearchScale();
-			const auto iconSize = Theme::kSearchIconSize * scale;
-			const auto iconSpace =
-				iconSize + Theme::kSearchInputPaddingExtra * scale;
-			const auto cursor = ImGui::GetCursorScreenPos();
-			const auto availableWidth = ImGui::GetContentRegionAvail().x;
-			const auto frameHeight = ImGui::GetFrameHeight();
-
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4());
-			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4());
-			ImGui::PushStyleColor(
-				ImGuiCol_FrameBgActive,
-				ImVec4(0.3f, 0.3f, 0.3f, 0.9f));
-			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4());
-			ImGui::PushStyleColor(
-				ImGuiCol_Text,
-				Theme::kFullPalette[ImGuiCol_Text]);
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
-			ImGui::PushStyleVar(
-				ImGuiStyleVar_FramePadding,
-				ImVec2(
-					iconSpace,
-					Theme::kSearchInputFramePaddingY * scale));
-			ImGui::SetNextItemWidth(availableWidth);
-
-			char buffer[256]{};
-			strncpy_s(buffer, a_search.c_str(), sizeof(buffer) - 1);
-			if (ImGui::InputTextWithHint(
-					"##page_search",
-					"Search Pages...",
-					buffer,
-					sizeof(buffer)))
-				a_search = buffer;
-
-			DrawSearchIcon(
-				{
-					cursor.x + Theme::kSearchIconOffsetX * scale,
-					cursor.y + (frameHeight - iconSize) * 0.5f
-				},
-				iconSize,
-				Theme::kSearchIconAlpha);
-			ImGui::PopStyleVar(2);
-			ImGui::PopStyleColor(5);
-			ImGui::PopID();
+			DrawSearchInput("PageSearchBar", "Search Pages...", a_search);
 		}
 
 		[[nodiscard]] std::string CategoryKey(
@@ -1407,6 +1363,58 @@ namespace Addictol::DearModdingUI
 		return TitleBarButtonExtent(
 			ImGui::GetFontSize(),
 			kTitleBarButtonPadding);
+	}
+
+	void DrawSearchInput(
+		const char* a_id,
+		const char* a_hint,
+		std::string& a_search) noexcept
+	{
+		ImGui::PushID(a_id);
+		const auto scale = Theme::SearchScale();
+		const auto iconSize = Theme::kSearchIconSize * scale;
+		const auto iconSpace =
+			iconSize + Theme::kSearchInputPaddingExtra * scale;
+		const auto cursor = ImGui::GetCursorScreenPos();
+		const auto availableWidth = ImGui::GetContentRegionAvail().x;
+		const auto frameHeight = ImGui::GetFrameHeight();
+
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4());
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4());
+		ImGui::PushStyleColor(
+			ImGuiCol_FrameBgActive,
+			ImVec4(0.3f, 0.3f, 0.3f, 0.9f));
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4());
+		ImGui::PushStyleColor(
+			ImGuiCol_Text,
+			Theme::kFullPalette[ImGuiCol_Text]);
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleVar(
+			ImGuiStyleVar_FramePadding,
+			ImVec2(
+				iconSpace,
+				Theme::kSearchInputFramePaddingY * scale));
+		ImGui::SetNextItemWidth(availableWidth);
+
+		char buffer[256]{};
+		strncpy_s(buffer, a_search.c_str(), sizeof(buffer) - 1);
+		if (ImGui::InputTextWithHint(
+				"##search",
+				a_hint,
+				buffer,
+				sizeof(buffer)))
+			a_search = buffer;
+
+		DrawSearchIcon(
+			{
+				cursor.x + Theme::kSearchIconOffsetX * scale,
+				cursor.y + (frameHeight - iconSize) * 0.5f
+			},
+			iconSize,
+			Theme::kSearchIconAlpha);
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(5);
+		ImGui::PopID();
 	}
 
 	float SettingsActionButtonWidth(

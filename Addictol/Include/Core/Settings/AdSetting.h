@@ -54,6 +54,8 @@ namespace Addictol
 
 	class SettingEntry
 	{
+		friend class SettingRegistry;
+
 	public:
 		[[nodiscard]] std::string_view Section() const noexcept { return m_section; }
 		[[nodiscard]] std::string_view Key() const noexcept { return m_key; }
@@ -116,6 +118,8 @@ namespace Addictol
 		[[nodiscard]] const SettingEntry* Find(
 			std::string_view a_section,
 			std::string_view a_key) const noexcept;
+		[[nodiscard]] const SettingEntry* Find(
+			const REX::TOML::Bool<>* a_setting) const noexcept;
 		[[nodiscard]] bool ContainsSection(std::string_view a_section) const noexcept;
 
 	private:

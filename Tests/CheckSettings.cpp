@@ -3,6 +3,7 @@
 #include <Core/AdConfigValidation.h>
 #include <Core/Settings/AdSetting.h>
 #include <Core/Settings/AdSettingPersistence.h>
+#include <Core/Settings/AdSettings.h>
 #include <Core/Settings/AdSettingsModel.h>
 
 #include <toml11/single_include/toml.hpp>
@@ -157,6 +158,17 @@ namespace vmm_tests
 				};
 				require(previous < current, "registry enumeration is not sorted");
 			}
+		});
+
+		runner.test("setting registry resolves module gate pointers", [] {
+			const auto* setting =
+				Addictol::SettingRegistry::GetSingleton().Find(
+					&Addictol::bAdditionalMenu);
+			require(setting != nullptr, "module gate pointer was not registered");
+			require(
+				setting->Section() == "Additional" &&
+					setting->Key() == "bMenu",
+				"module gate pointer resolved to the wrong key");
 		});
 
 		runner.test("config validation follows the setting registry", [] {

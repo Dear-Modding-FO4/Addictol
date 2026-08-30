@@ -115,6 +115,19 @@ namespace Addictol
 		return *position;
 	}
 
+	const SettingEntry* SettingRegistry::Find(
+		const REX::TOML::Bool<>* a_setting) const noexcept
+	{
+		if (!a_setting)
+			return nullptr;
+		const auto position = std::ranges::find_if(
+			m_settings,
+			[a_setting](const SettingEntry* a_entry) {
+				return a_entry->m_setting == a_setting;
+			});
+		return position != m_settings.end() ? *position : nullptr;
+	}
+
 	bool SettingRegistry::ContainsSection(std::string_view a_section) const noexcept
 	{
 		const auto position = std::ranges::lower_bound(

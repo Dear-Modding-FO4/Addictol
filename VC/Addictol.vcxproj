@@ -46,6 +46,7 @@
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuModules.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuLogControl.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuModules.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h" />
@@ -198,6 +200,7 @@
     <ClInclude Include="..\Addictol\Include\Core\AdGameUtils.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdMemoryTracer.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModule.h" />
+    <ClInclude Include="..\Addictol\Include\Core\AdModuleOutcome.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h" />

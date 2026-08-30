@@ -129,6 +129,8 @@ per-setting reset, and Reset all operate on a draft. Apply writes only non-defau
 `AddictolCustom.toml` through an atomic replacement and never modifies the shipped `Addictol.toml`;
 unknown custom keys are preserved. Most settings take effect on the next launch, while the few
 immediate settings are labeled. Menu appearance remains owned by the gear panel.
+The Modules page follows Settings and lists every registration outcome with module-name search,
+outcome filtering, skip reasons, and the configuration key for disabled modules.
 Its default style, typography, scaling, search, navigation, header, footer, blur, and cursor
 match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's neutral mod registry.
 

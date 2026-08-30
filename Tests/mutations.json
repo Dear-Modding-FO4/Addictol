@@ -510,5 +510,37 @@
     "replace": "return 0.0f;",
     "check": "header title aligns with the footer bullet run",
     "message": "header title inset did not match the bullet ink edge"
+  },
+  {
+    "name": "module skipped outcomes remain warnings",
+    "target": "Addictol/Include/Menu/AdMenuModules.h",
+    "find": "return { \"Skipped\", ModuleOutcomeSeverity::kWarning };",
+    "replace": "return { \"Skipped\", ModuleOutcomeSeverity::kError };",
+    "check": "module outcomes classify into actionable severities",
+    "message": "skipped outcome was not a warning"
+  },
+  {
+    "name": "module outcome filter rejects other outcomes",
+    "target": "Addictol/Include/Menu/AdMenuModules.h",
+    "find": "if (a_filter != ModuleOutcomeFilter::kAll && a_outcome != selected)",
+    "replace": "if (false)",
+    "check": "module search and outcome filters combine deterministically",
+    "message": "outcome filter accepted another outcome"
+  },
+  {
+    "name": "module outcome transitions remove the previous tally",
+    "target": "Addictol/Include/Core/AdModuleOutcome.h",
+    "find": "update(a_current, false);",
+    "replace": "update(a_current, true);",
+    "check": "per-module outcome tally equals ModuleOutcomeCounts",
+    "message": "per-module outcomes disagreed with ModuleOutcomeCounts"
+  },
+  {
+    "name": "module outcome tally keeps install failures distinct",
+    "target": "Addictol/Include/Core/AdModuleOutcome.h",
+    "find": "++tally[4];",
+    "replace": "++tally[3];",
+    "check": "per-module outcome tally equals ModuleOutcomeCounts",
+    "message": "per-module outcomes disagreed with ModuleOutcomeCounts"
   }
 ]

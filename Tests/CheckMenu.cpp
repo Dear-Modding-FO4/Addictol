@@ -1,4 +1,5 @@
 #include "../Addictol/Include/Menu/AdMenuTargets.h"
+#include "../Addictol/Include/Menu/AdMenuModules.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "Harness.h"
 
@@ -10,6 +11,7 @@ namespace vmm_tests
 	namespace
 	{
 		using namespace Addictol;
+		using namespace Addictol::Menu;
 
 		struct ExpectedToggleKey
 		{
@@ -21,6 +23,11 @@ namespace vmm_tests
 		{
 			LogControl::Level level;
 			std::string_view name;
+		};
+
+		struct OutcomeStatus
+		{
+			ModuleOutcome outcome;
 		};
 
 		inline constexpr std::initializer_list<ExpectedToggleKey> kExpectedToggleKeys{
@@ -144,6 +151,104 @@ namespace vmm_tests
 			require(decision.matched && !decision.open, "toggle did not close the menu");
 			decision = DecideMenuToggle(toggle, toggle, true, false);
 			require(decision.matched && decision.open, "backend loss changed the requested state");
+		});
+
+		runner.test("module outcomes classify into actionable severities", [] {
+			require(
+				ClassifyModuleOutcome(ModuleOutcome::kPending).severity ==
+					ModuleOutcomeSeverity::kInfo,
+				"pending outcome severity changed");
+			require(
+				ClassifyModuleOutcome(ModuleOutcome::kInstalled).severity ==
+					ModuleOutcomeSeverity::kNormal,
+				"installed outcome was not normal");
+			require(
+				ClassifyModuleOutcome(ModuleOutcome::kDisabled).severity ==
+					ModuleOutcomeSeverity::kDisabled,
+				"disabled outcome severity changed");
+			require(
+				ClassifyModuleOutcome(ModuleOutcome::kSkipped).severity ==
+					ModuleOutcomeSeverity::kWarning,
+				"skipped outcome was not a warning");
+			require(
+				ClassifyModuleOutcome(ModuleOutcome::kFailedQuery).severity ==
+					ModuleOutcomeSeverity::kError,
+				"failed query was not an error");
+			require(
+				ClassifyModuleOutcome(ModuleOutcome::kFailedInstall).severity ==
+					ModuleOutcomeSeverity::kError,
+				"failed install was not an error");
+		});
+
+		runner.test("module search and outcome filters combine deterministically", [] {
+			require(
+				MatchesModuleStatus(
+					"Weapon Debris Crash",
+					ModuleOutcome::kInstalled,
+					"deBRis",
+					ModuleOutcomeFilter::kAll),
+				"case-insensitive module search did not match");
+			require(
+				!MatchesModuleStatus(
+					"Weapon Debris Crash",
+					ModuleOutcome::kInstalled,
+					"allocator",
+					ModuleOutcomeFilter::kAll),
+				"no-match module search was accepted");
+			require(
+				MatchesModuleStatus(
+					"Scaleform Allocator",
+					ModuleOutcome::kDisabled,
+					"scale",
+					ModuleOutcomeFilter::kDisabled),
+				"combined module search and filter did not match");
+			require(
+				!MatchesModuleStatus(
+					"Scaleform Allocator",
+					ModuleOutcome::kDisabled,
+					"",
+					ModuleOutcomeFilter::kInstalled),
+				"outcome filter accepted another outcome");
+		});
+
+		runner.test("per-module outcome tally equals ModuleOutcomeCounts", [] {
+			std::array statuses{
+				OutcomeStatus{ ModuleOutcome::kPending },
+				OutcomeStatus{ ModuleOutcome::kPending },
+				OutcomeStatus{ ModuleOutcome::kPending },
+				OutcomeStatus{ ModuleOutcome::kPending },
+				OutcomeStatus{ ModuleOutcome::kPending },
+				OutcomeStatus{ ModuleOutcome::kPending }
+			};
+			ModuleOutcomeTally moduleOutcomeCounts{};
+			RecordModuleOutcome(
+				statuses[0].outcome,
+				moduleOutcomeCounts,
+				ModuleOutcome::kInstalled);
+			RecordModuleOutcome(
+				statuses[1].outcome,
+				moduleOutcomeCounts,
+				ModuleOutcome::kDisabled);
+			RecordModuleOutcome(
+				statuses[2].outcome,
+				moduleOutcomeCounts,
+				ModuleOutcome::kSkipped);
+			RecordModuleOutcome(
+				statuses[3].outcome,
+				moduleOutcomeCounts,
+				ModuleOutcome::kFailedInstall);
+			RecordModuleOutcome(
+				statuses[4].outcome,
+				moduleOutcomeCounts,
+				ModuleOutcome::kInstalled);
+			RecordModuleOutcome(
+				statuses[0].outcome,
+				moduleOutcomeCounts,
+				ModuleOutcome::kFailedQuery);
+
+			require(
+				TallyModuleOutcomes(statuses) == moduleOutcomeCounts,
+				"per-module outcomes disagreed with ModuleOutcomeCounts");
 		});
 
 		runner.test("telemetry page definitions have stable identities and order", [] {
