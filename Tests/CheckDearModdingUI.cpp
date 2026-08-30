@@ -16,7 +16,6 @@
 #include "../Addictol/Include/DearModdingUI/ImGuiFingerprint.h"
 
 #include <array>
-#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -411,12 +410,12 @@ namespace vmm_tests
 					"unknown status severity was not rejected");
 		});
 
-		runner.test("wide footer centers measured status text", [] {
+		runner.test("wide footer places measured status after metadata", [] {
 			const auto layout = ResolveFooterStatusLayout(
 				20.0f,
 				1200.0f,
 				32.0f,
-				480.0f,
+				300.0f,
 				180.0f,
 				28.0f,
 				8.0f,
@@ -426,15 +425,12 @@ namespace vmm_tests
 				true,
 				false);
 			require(
-					layout.statusMinX == 520.0f &&
-						layout.statusMaxX == 700.0f &&
-						(layout.statusMinX + layout.statusMaxX) * 0.5f ==
-							610.0f,
-					"status text was not centered on the footer");
+					layout.statusMinX == 308.0f &&
+						layout.statusMaxX == 488.0f,
+					"status text did not follow the metadata");
 			require(
-					layout.statusBandMinX == 370.0f &&
-						layout.statusBandMaxX == 850.0f &&
-						layout.metadataMaxX == 362.0f &&
+					layout.metadataMinX == 20.0f &&
+						layout.metadataMaxX == 1160.0f &&
 						layout.settingsMinX == 1168.0f &&
 						layout.footerHeight == 69.0f,
 					"wide footer regions were not separated");
@@ -445,7 +441,7 @@ namespace vmm_tests
 				20.0f,
 				320.0f,
 				40.0f,
-				300.0f,
+				180.0f,
 				300.0f,
 				28.0f,
 				8.0f,
@@ -453,17 +449,16 @@ namespace vmm_tests
 				8.0f,
 				1.0f,
 				true,
-				false);
+				true);
 			require(
-					layout.statusBandMinX == 68.0f &&
-						layout.statusBandMaxX == 272.0f &&
-						layout.statusMinX == 104.0f &&
+					layout.metadataMaxX == 272.0f &&
+						layout.statusMinX == 188.0f &&
 						layout.statusMaxX == 236.0f &&
-						layout.metadataMaxX == 60.0f,
+						layout.dismissMinX == 244.0f &&
+						layout.dismissMaxX == 272.0f,
 					"narrow status did not fill its clamped span");
 			require(
-					layout.metadataMaxX <= layout.statusMinX &&
-						layout.statusMaxX + 8.0f <= layout.dismissMinX &&
+					layout.statusMaxX + 8.0f == layout.dismissMinX &&
 						layout.dismissMaxX < layout.settingsMinX,
 					"narrow status overlapped footer controls");
 		});
@@ -473,7 +468,7 @@ namespace vmm_tests
 				0.0f,
 				600.0f,
 				40.0f,
-				300.0f,
+				200.0f,
 				160.0f,
 				28.0f,
 				8.0f,
@@ -483,65 +478,23 @@ namespace vmm_tests
 				true,
 				true);
 			require(
-					layout.statusBandMinX == 150.0f &&
-						layout.statusBandMaxX == 450.0f &&
-						layout.statusMinX == 220.0f &&
-						layout.statusMaxX == 380.0f &&
-						layout.dismissMinX == 422.0f &&
-						layout.dismissMaxX == layout.statusBandMaxX,
+					layout.statusMinX == 208.0f &&
+						layout.statusMaxX == 368.0f &&
+						layout.dismissMinX == 524.0f &&
+						layout.dismissMaxX == 552.0f,
 					"persistent status geometry changed");
 			require(
 					layout.statusMaxX + 8.0f <= layout.dismissMinX &&
-						layout.dismissMaxX < layout.settingsMinX,
+						layout.dismissMaxX + 8.0f == layout.settingsMinX,
 					"persistent footer controls overlapped");
 		});
 
-		runner.test("persistent footer centers long status text", [] {
-			const auto transient = ResolveFooterStatusLayout(
-				0.0f,
-				600.0f,
-				40.0f,
-				300.0f,
-				280.0f,
-				28.0f,
-				8.0f,
-				40.0f,
-				8.0f,
-				1.0f,
-				true,
-				false);
-			const auto persistent = ResolveFooterStatusLayout(
-				0.0f,
-				600.0f,
-				40.0f,
-				300.0f,
-				280.0f,
-				28.0f,
-				8.0f,
-				40.0f,
-				8.0f,
-				1.0f,
-				true,
-				true);
-			const auto persistentCenter =
-				(persistent.statusMinX + persistent.statusMaxX) * 0.5f;
-			require(
-					std::abs(persistentCenter - 300.0f) < 0.001f,
-					"persistent status text drifted from the footer center");
-			require(
-					transient.statusMinX == persistent.statusMinX &&
-						transient.statusMaxX == persistent.statusMaxX &&
-						persistent.statusMinX == 186.0f &&
-						persistent.statusMaxX == 414.0f,
-					"dismiss state changed the reserved status text area");
-		});
-
-		runner.test("footer reserves identical status geometry while idle", [] {
+		runner.test("footer metadata geometry stays fixed while idle", [] {
 			const auto idle = ResolveFooterStatusLayout(
 				20.0f,
 				1200.0f,
 				32.0f,
-				480.0f,
+				300.0f,
 				0.0f,
 				28.0f,
 				8.0f,
@@ -554,7 +507,7 @@ namespace vmm_tests
 				20.0f,
 				1200.0f,
 				32.0f,
-				480.0f,
+				300.0f,
 				180.0f,
 				28.0f,
 				8.0f,
@@ -565,22 +518,22 @@ namespace vmm_tests
 				false);
 			require(
 					idle.metadataMaxX == active.metadataMaxX &&
-						idle.statusBandMinX == active.statusBandMinX &&
-						idle.statusBandMaxX == active.statusBandMaxX,
+						idle.metadataMinX == active.metadataMinX &&
+						idle.statusMinX == active.statusMinX,
 					"status presence changed reserved footer geometry");
 			require(
-					idle.metadataMaxX == 362.0f &&
-						idle.statusBandMinX == 370.0f &&
-						idle.statusBandMaxX == 850.0f,
-					"idle footer lost its fixed status reservation");
+					idle.metadataMinX == 20.0f &&
+						idle.metadataMaxX == 1160.0f &&
+						idle.statusMinX == 308.0f,
+					"idle footer changed metadata geometry");
 		});
 
-		runner.test("footer status reservation ignores message length", [] {
+		runner.test("footer metadata geometry ignores status length", [] {
 			const auto shortStatus = ResolveFooterStatusLayout(
 				20.0f,
 				1200.0f,
 				32.0f,
-				480.0f,
+				300.0f,
 				80.0f,
 				28.0f,
 				8.0f,
@@ -593,7 +546,7 @@ namespace vmm_tests
 				20.0f,
 				1200.0f,
 				32.0f,
-				480.0f,
+				300.0f,
 				800.0f,
 				28.0f,
 				8.0f,
@@ -604,17 +557,24 @@ namespace vmm_tests
 				false);
 			require(
 					shortStatus.metadataMaxX == longStatus.metadataMaxX &&
-						shortStatus.statusBandMinX ==
-							longStatus.statusBandMinX &&
-						shortStatus.statusBandMaxX ==
-							longStatus.statusBandMaxX,
+						shortStatus.metadataMinX ==
+							longStatus.metadataMinX &&
+						shortStatus.statusMinX == longStatus.statusMinX,
 					"status message length changed reserved footer geometry");
 			require(
-					shortStatus.statusMinX == 570.0f &&
-						shortStatus.statusMaxX == 650.0f &&
-						longStatus.statusMinX == 406.0f &&
-						longStatus.statusMaxX == 814.0f,
-					"status text did not fit within the fixed band");
+					shortStatus.statusMinX == 308.0f &&
+						shortStatus.statusMaxX == 388.0f &&
+						longStatus.statusMinX == 308.0f &&
+						longStatus.statusMaxX == 1108.0f,
+					"status text did not fit after the metadata");
+		});
+
+		runner.test("row content centers vertically without negative offset", [] {
+			require(
+					CenterOffsetY(40.0f, 20.0f) == 10.0f &&
+						CenterOffsetY(20.0f, 40.0f) == 0.0f &&
+						CenterOffsetY(-10.0f, 20.0f) == 0.0f,
+					"row content did not center vertically");
 		});
 
 		runner.test("client descriptors reject null size and callback failures", [] {

@@ -451,11 +451,15 @@ namespace Addictol::DearModdingUI
 				textSize = ImGui::CalcTextSize(breadcrumb.c_str());
 				const auto rowHeight =
 					(std::max)(textSize.y, a_drawClose ? buttonExtent : 0.0f);
+				const ImVec2 titlePosition{
+					start.x,
+					start.y + CenterOffsetY(rowHeight, textSize.y)
+				};
 				if (titleMaxX > start.x)
 				{
 					ImGui::RenderTextEllipsis(
 						ImGui::GetWindowDrawList(),
-						start,
+						titlePosition,
 						{ titleMaxX, start.y + rowHeight },
 						titleMaxX,
 						breadcrumb.c_str(),
@@ -477,7 +481,7 @@ namespace Addictol::DearModdingUI
 					"##DearModdingUI.HostCloseButton",
 					{
 						buttonLayout.controlMinX,
-						start.y + (rowHeight - buttonExtent) * 0.5f
+						start.y + CenterOffsetY(rowHeight, buttonExtent)
 					},
 					{ buttonWidth, buttonExtent },
 					hasCloseGlyph ? PhosphorGlyph::kX : char32_t{},
@@ -1164,11 +1168,49 @@ namespace Addictol::DearModdingUI
 			const auto statusTextSize = status ?
 				ImGui::CalcTextSize(status->attributedText.c_str()) :
 				ImVec2{};
+			const auto metadataLayout = ResolveFooterStatusLayout(
+				start.x,
+				contentMaxX,
+				buttonWidth,
+				start.x,
+				statusTextSize.x,
+				dismissWidth,
+				ImGui::GetStyle().ItemSpacing.x,
+				rowHeight,
+				ImGui::GetStyle().ItemSpacing.y,
+				Theme::kSeparatorThickness,
+				status.has_value(),
+				persistent);
+			ImGui::PushClipRect(
+				start,
+				{ metadataLayout.metadataMaxX, start.y + rowHeight },
+				true);
+			ImGui::SetCursorScreenPos({
+				start.x,
+				start.y + CenterOffsetY(
+					rowHeight,
+					ImGui::GetTextLineHeight())
+			});
+			ImGui::BulletText("Host: Evil Modding");
+			auto metadataRight = ImGui::GetItemRectMax().x;
+			if (const auto* client =
+					a_model.FindClient(a_state.activeClient))
+			{
+				ImGui::SameLine();
+				ImGui::BulletText("Mod: %s", client->displayName.c_str());
+				ImGui::SameLine();
+				ImGui::BulletText(
+					"Version: %u.%u",
+					client->version >> 16,
+					client->version & 0xFFFFu);
+				metadataRight = ImGui::GetItemRectMax().x;
+			}
+			ImGui::PopClipRect();
 			auto layout = ResolveFooterStatusLayout(
 				start.x,
 				contentMaxX,
 				buttonWidth,
-				ImGui::GetFontSize() * 28.0f,
+				metadataRight,
 				statusTextSize.x,
 				dismissWidth,
 				ImGui::GetStyle().ItemSpacing.x,
@@ -1201,7 +1243,7 @@ namespace Addictol::DearModdingUI
 						start.x,
 						contentMaxX,
 						buttonWidth,
-						ImGui::GetFontSize() * 28.0f,
+						metadataRight,
 						visibleTextSize.x,
 						dismissWidth,
 						ImGui::GetStyle().ItemSpacing.x,
@@ -1214,23 +1256,6 @@ namespace Addictol::DearModdingUI
 				catch (...)
 				{}
 			}
-			ImGui::PushClipRect(
-				start,
-				{ layout.metadataMaxX, start.y + layout.rowHeight },
-				true);
-			ImGui::BulletText("Host: Evil Modding");
-			if (const auto* client =
-					a_model.FindClient(a_state.activeClient))
-			{
-				ImGui::SameLine();
-				ImGui::BulletText("Mod: %s", client->displayName.c_str());
-				ImGui::SameLine();
-				ImGui::BulletText(
-					"Version: %u.%u",
-					client->version >> 16,
-					client->version & 0xFFFFu);
-			}
-			ImGui::PopClipRect();
 			const auto statusWidth = layout.statusMaxX - layout.statusMinX;
 			if (statusWidth > 0.0f)
 			{
@@ -1253,8 +1278,9 @@ namespace Addictol::DearModdingUI
 						ImGui::GetFontSize(),
 						{
 							layout.statusMinX,
-							start.y +
-								(layout.rowHeight - visibleTextSize.y) * 0.5f
+							start.y + CenterOffsetY(
+								layout.rowHeight,
+								visibleTextSize.y)
 						},
 						ImGui::ColorConvertFloat4ToU32(
 							status->severity ==
@@ -1286,8 +1312,9 @@ namespace Addictol::DearModdingUI
 						"##DearModdingUI.StatusDismissButton",
 						{
 							layout.dismissMinX,
-							start.y +
-								(layout.rowHeight - dismissButtonExtent) * 0.5f
+							start.y + CenterOffsetY(
+								layout.rowHeight,
+								dismissButtonExtent)
 						},
 						{ actualDismissWidth, dismissButtonExtent },
 						hasDismissGlyph ? PhosphorGlyph::kX : char32_t{},
@@ -1303,8 +1330,9 @@ namespace Addictol::DearModdingUI
 					"##DearModdingUI.HostSettingsButton",
 					{
 						layout.settingsMinX,
-						start.y +
-							(layout.rowHeight - settingsButtonExtent) * 0.5f
+						start.y + CenterOffsetY(
+							layout.rowHeight,
+							settingsButtonExtent)
 					},
 					{ buttonWidth, settingsButtonExtent },
 					hasGearGlyph ? PhosphorGlyph::kGear : char32_t{},

@@ -114,6 +114,18 @@ namespace Addictol::DearModdingUI
 		};
 	}
 
+	[[nodiscard]] constexpr float CenterOffsetY(
+		float a_rowHeight,
+		float a_contentHeight) noexcept
+	{
+		const auto rowHeight = a_rowHeight > 0.0f ? a_rowHeight : 0.0f;
+		const auto contentHeight =
+			a_contentHeight > 0.0f ? a_contentHeight : 0.0f;
+		return (std::max)(
+			(rowHeight - contentHeight) * 0.5f,
+			0.0f);
+	}
+
 	[[nodiscard]] inline std::string BuildHostBreadcrumb(
 		std::string_view a_hostName,
 		std::string_view a_clientName)
@@ -173,8 +185,6 @@ namespace Addictol::DearModdingUI
 	{
 		float metadataMinX{ 0.0f };
 		float metadataMaxX{ 0.0f };
-		float statusBandMinX{ 0.0f };
-		float statusBandMaxX{ 0.0f };
 		float statusMinX{ 0.0f };
 		float statusMaxX{ 0.0f };
 		float dismissMinX{ 0.0f };
@@ -206,15 +216,15 @@ namespace Addictol::DearModdingUI
 		float a_contentMinX,
 		float a_contentMaxX,
 		float a_settingsWidth,
-		float a_desiredStatusWidth,
+		float a_metadataMaxX,
 		float a_statusTextWidth,
 		float a_dismissWidth,
 		float a_horizontalSpacing,
 		float a_rowHeight,
 		float a_verticalSpacing,
 		float a_separatorThickness,
-		[[maybe_unused]] bool a_hasStatus,
-		[[maybe_unused]] bool a_persistentStatus) noexcept
+		bool a_hasStatus,
+		bool a_persistentStatus) noexcept
 	{
 		const auto trailing = ResolveTrailingControlLayout(
 			a_contentMinX,
@@ -225,53 +235,36 @@ namespace Addictol::DearModdingUI
 		const auto spacing = a_horizontalSpacing > 0.0f ?
 			a_horizontalSpacing :
 			0.0f;
-		const auto contentCenter =
-			(a_contentMinX + trailing.controlMaxX) * 0.5f;
-		const auto leftHalfWidth = contentCenter - a_contentMinX;
-		const auto rightHalfWidth = trailing.adjacentMaxX - contentCenter;
-		const auto availableBandWidth = (std::max)(
-			0.0f,
-			(std::min)(leftHalfWidth, rightHalfWidth) * 2.0f);
-		const auto desiredStatusWidth = a_desiredStatusWidth > 0.0f ?
-			a_desiredStatusWidth :
-			0.0f;
-		const auto statusBandBasis = desiredStatusWidth;
-		const auto statusBandWidth = (std::min)(
-			statusBandBasis,
-			availableBandWidth);
-		const auto statusBandMin = contentCenter - statusBandWidth * 0.5f;
-		const auto statusBandMax = contentCenter + statusBandWidth * 0.5f;
-		const auto metadataMax = (std::max)(
-			a_contentMinX,
-			statusBandMin - spacing);
+		const auto metadataLimit = trailing.adjacentMaxX;
+		const auto metadataMax = metadataLimit;
+		const auto metadataRight = (std::min)(
+			(std::max)(a_metadataMaxX, a_contentMinX),
+			metadataMax);
+		const auto statusMin = (std::min)(
+			metadataRight + spacing,
+			metadataMax);
+		const auto availableAfterMetadata = metadataMax - statusMin;
 		const auto dismissWidth = (std::min)(
-			a_dismissWidth > 0.0f ? a_dismissWidth : 0.0f,
-			statusBandWidth);
-		const auto dismissMax = statusBandMax;
+			a_hasStatus && a_persistentStatus && a_dismissWidth > 0.0f ?
+				a_dismissWidth :
+				0.0f,
+			availableAfterMetadata);
+		const auto dismissMax = metadataMax;
 		const auto dismissMin = dismissMax - dismissWidth;
-		const auto dismissAllowance = (std::min)(
-			dismissWidth + spacing,
-			statusBandWidth * 0.5f);
-		const auto statusAreaMin = statusBandMin + dismissAllowance;
-		const auto statusAreaMax = statusBandMax - dismissAllowance;
-		const auto availableStatusWidth = statusAreaMax - statusAreaMin;
-		const auto desiredTextWidth = a_statusTextWidth > 0.0f ?
+		const auto statusLimit = dismissWidth > 0.0f ?
+			(std::max)(statusMin, dismissMin - spacing) :
+			dismissMin;
+		const auto availableStatusWidth = statusLimit - statusMin;
+		const auto desiredTextWidth = a_hasStatus && a_statusTextWidth > 0.0f ?
 			a_statusTextWidth :
 			0.0f;
 		const auto statusWidth = (std::min)(
 			desiredTextWidth,
 			availableStatusWidth);
-		const auto centeredStatusMin = contentCenter - statusWidth * 0.5f;
-		const auto latestStatusMin = statusAreaMax - statusWidth;
-		const auto statusMin = (std::min)(
-			(std::max)(centeredStatusMin, statusAreaMin),
-			latestStatusMin);
 		const auto statusMax = statusMin + statusWidth;
 		return {
 			a_contentMinX,
 			metadataMax,
-			statusBandMin,
-			statusBandMax,
 			statusMin,
 			statusMax,
 			dismissMin,

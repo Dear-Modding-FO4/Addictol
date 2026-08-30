@@ -480,27 +480,27 @@
     "message": "unaccepted status client was not rejected"
   },
   {
-    "name": "idle footer keeps the status reservation",
+    "name": "footer metadata clip ignores status presence",
     "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
-    "find": "const auto statusBandWidth = (std::min)(\r\n\t\t\tstatusBandBasis,\r\n\t\t\tavailableBandWidth);",
-    "replace": "const auto statusBandWidth = a_hasStatus ?\r\n\t\t\t(std::min)(statusBandBasis, availableBandWidth) :\r\n\t\t\t0.0f;",
-    "check": "footer reserves identical status geometry while idle",
+    "find": "const auto metadataMax = metadataLimit;",
+    "replace": "const auto metadataMax = a_hasStatus ?\r\n\t\t\tmetadataLimit :\r\n\t\t\ttrailing.controlMaxX;",
+    "check": "footer metadata geometry stays fixed while idle",
     "message": "status presence changed reserved footer geometry"
   },
   {
-    "name": "footer reservation ignores status text width",
+    "name": "footer metadata clip ignores status text width",
     "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
-    "find": "const auto statusBandBasis = desiredStatusWidth;",
-    "replace": "const auto statusBandBasis = a_statusTextWidth > 0.0f ?\r\n\t\t\ta_statusTextWidth :\r\n\t\t\t0.0f;",
-    "check": "footer status reservation ignores message length",
+    "find": "const auto metadataLimit = trailing.adjacentMaxX;",
+    "replace": "const auto metadataLimit = (std::max)(\r\n\t\t\ta_contentMinX,\r\n\t\t\ttrailing.adjacentMaxX - a_statusTextWidth);",
+    "check": "footer metadata geometry ignores status length",
     "message": "status message length changed reserved footer geometry"
   },
   {
-    "name": "footer dismiss allowance stays symmetric",
+    "name": "footer row content stays vertically centered",
     "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
-    "find": "const auto statusAreaMin = statusBandMin + dismissAllowance;\r\n\t\tconst auto statusAreaMax = statusBandMax - dismissAllowance;",
-    "replace": "const auto statusAreaMin = statusBandMin;\r\n\t\tconst auto statusAreaMax = statusBandMax - dismissAllowance;",
-    "check": "persistent footer centers long status text",
-    "message": "persistent status text drifted from the footer center"
+    "find": "return (std::max)(\r\n\t\t\t(rowHeight - contentHeight) * 0.5f,\r\n\t\t\t0.0f);",
+    "replace": "return 0.0f;",
+    "check": "row content centers vertically without negative offset",
+    "message": "row content did not center vertically"
   }
 ]
