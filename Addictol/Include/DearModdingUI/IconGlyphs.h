@@ -23,6 +23,7 @@ namespace Addictol::DearModdingUI
 		inline constexpr char32_t kArchive{ 0xE00C };
 		inline constexpr char32_t kAppWindow{ 0xE5DA };
 		inline constexpr char32_t kDotsThreeCircle{ 0xE200 };
+		inline constexpr char32_t kGear{ 0xE270 };
 		inline constexpr char32_t kSun{ 0xE472 };
 		inline constexpr char32_t kPuzzlePiece{ 0xE596 };
 		inline constexpr char32_t kGauge{ 0xE628 };

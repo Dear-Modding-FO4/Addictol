@@ -48,9 +48,12 @@ Heading, Subheading, and Subtext roles, resolution scaling, search and navigatio
 rounded title-bar highlights, footer, docking, and background blur around the neutral registry.
 Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts, icons, and blur shaders load
 only from that neutral root. Client IDs and category names select Phosphor glyphs from an in-code
-table after lowercase slug normalization. Icons use the accent tint by default; changing
-`Theme::kIconDefaults.colorMode` to `kMonochrome` selects the theme text tint. A missing icon font
-falls back to text-only labels without disabling the menu or the C ABI host.
+table after lowercase slug normalization. Icons use the accent tint by default. The title-bar gear
+opens host-only interface settings for colored or monochrome icons and background blur without adding
+an entry to the mod dropdown. The same popup reports the configured toggle key and refresh interval
+alongside the resolved typography size and UI scale. Editable values use Addictol's `[Additional]`
+TOML settings. A missing icon font falls back to text-only labels without disabling the menu or the
+C ABI host.
 When a normalized category name equals its client's normalized display name or full client ID, the
 category inherits that client's glyph.
 

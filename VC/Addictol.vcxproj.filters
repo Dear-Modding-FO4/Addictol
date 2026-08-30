@@ -43,6 +43,9 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettings.cpp">
+      <Filter>Source\DearModdingUI</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
@@ -434,6 +437,9 @@
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettings.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h">

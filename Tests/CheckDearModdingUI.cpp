@@ -1,5 +1,6 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
 #include "../Addictol/Include/DearModdingUI/CarrierMenu.h"
+#include "../Addictol/Include/DearModdingUI/HostSettings.h"
 #include "../Addictol/Include/DearModdingUI/IconGlyphs.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
@@ -547,6 +548,8 @@ namespace vmm_tests
 		});
 
 		runner.test("icon names resolve to deterministic Phosphor glyphs", [] {
+			require(PhosphorGlyph::kGear == 0xE270,
+				"host settings gear glyph changed");
 			require(SlugifyIconName("Post Process") == "post-process",
 				"spaces were not collapsed");
 			require(SlugifyIconName("Mixed___CASE Name") == "mixed-case-name",
@@ -650,6 +653,107 @@ namespace vmm_tests
 							text),
 						text),
 				"monochrome icons did not use the text tint");
+			require(SameColor(
+							Theme::ResolveIconTint(
+								DecodeHostInterfaceSettings({ false, true }).iconColorMode,
+								accent,
+								text),
+							accent) &&
+					SameColor(
+							Theme::ResolveIconTint(
+								DecodeHostInterfaceSettings({ true, true }).iconColorMode,
+								accent,
+								text),
+							text),
+				"persisted icon mode did not select its runtime tint");
+		});
+
+		runner.test("host title bar buttons stay adjacent without overlap", [] {
+			struct Case
+			{
+				float fontSize;
+				float framePadding;
+			};
+			constexpr std::array cases{
+				Case{ 16.0f, 6.0f },
+				Case{ 21.0f, 8.0f },
+				Case{ 42.0f, 16.0f },
+				Case{ 84.0f, 32.0f }
+			};
+			for (const auto& test : cases)
+			{
+				const auto pair = ResolveTitleBarButtonPair(
+					1920.0f,
+					2.0f,
+					test.framePadding,
+					test.fontSize,
+					2.0f);
+				const auto extent = TitleBarButtonExtent(test.fontSize, 2.0f);
+				require(pair.settingsMaxX == pair.closeMinX,
+					"settings and close buttons were not adjacent");
+				require(pair.settingsMaxX <= pair.closeMinX,
+					"settings and close buttons overlapped");
+				require(
+					pair.settingsMaxX - pair.settingsMinX == extent &&
+							pair.closeMaxX - pair.closeMinX == extent,
+					"title bar button extents diverged");
+			}
+		});
+
+		runner.test("host settings panel follows menu visibility", [] {
+			auto open = DecideHostSettingsPanelOpen(
+				false,
+				false,
+				HostSettingsPanelEvent::kOpenRequested);
+			require(!open, "settings opened while the menu was closed");
+
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kOpenRequested);
+			require(open, "settings did not open from the visible menu");
+			require(DecideHostSettingsPanelOpen(
+							open,
+							true,
+							HostSettingsPanelEvent::kNone),
+				"settings did not remain open");
+
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kDismissed);
+			require(!open, "settings did not dismiss");
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kOpenRequested);
+			open = DecideHostSettingsPanelOpen(
+				open,
+				false,
+				HostSettingsPanelEvent::kMenuClosed);
+			require(!open, "settings remained open after the menu closed");
+			require(!DecideHostSettingsPanelOpen(
+							open,
+							true,
+							HostSettingsPanelEvent::kNone),
+				"settings reopened with the menu");
+		});
+
+		runner.test("host settings persistence round trips every stored value", [] {
+			for (const auto monochrome : { false, true })
+			{
+				for (const auto blur : { false, true })
+				{
+					const PersistedHostInterfaceSettings persisted{
+							monochrome,
+							blur
+					};
+					require(
+							EncodeHostInterfaceSettings(
+								DecodeHostInterfaceSettings(persisted)) == persisted,
+							"stored host settings did not round trip");
+				}
+			}
 		});
 
 		runner.test("client dropdown selection handles zero one and many clients", [] {

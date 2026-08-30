@@ -1,9 +1,11 @@
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/BackgroundBlur.h>
 #include <DearModdingUI/Host.h>
+#include <DearModdingUI/HostSettings.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <DearModdingUI/Theme.h>
 #include <DearModdingUI/VisualDecisions.h>
+#include <Menu/AdMenu.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -172,6 +174,9 @@ namespace Addictol::DearModdingUI
 		};
 		inline constexpr float kCloseCrossInset{ 1.0f };
 		inline constexpr ImVec4 kTransparentButtonChrome{ 0, 0, 0, 0 };
+		inline constexpr char kHostSettingsPopup[]{
+			"##DearModdingUI.HostSettings"
+		};
 
 		[[nodiscard]] ImRect TitleBarButtonRect(
 			const ImVec2& a_origin,
@@ -188,12 +193,13 @@ namespace Addictol::DearModdingUI
 		{
 			const auto& style = ImGui::GetStyle();
 			return {
-				a_window->Rect().Max.x -
-					a_window->WindowBorderSize -
-					style.FramePadding.x -
-					a_fontSize -
-					a_offset -
-					kTitleBarButtonPadding,
+				RightTitleBarButtonOriginX(
+					a_window->Rect().Max.x,
+					a_window->WindowBorderSize,
+					style.FramePadding.x,
+					a_fontSize,
+					a_offset,
+					kTitleBarButtonPadding),
 				a_window->Rect().Min.y +
 					style.FramePadding.y -
 					kTitleBarButtonPadding
@@ -270,7 +276,53 @@ namespace Addictol::DearModdingUI
 			a_window->DrawList->PopClipRect();
 		}
 
-		[[nodiscard]] bool BeginWithRoundedClose(
+		[[nodiscard]] bool DrawHostSettingsButton(
+			ImGuiWindow* a_window) noexcept
+		{
+			if (!a_window ||
+				(a_window->Flags & ImGuiWindowFlags_NoTitleBar))
+				return false;
+
+			const auto size = ImGui::GetFontSize();
+			const auto offset = TitleBarButtonExtent(
+				size, kTitleBarButtonPadding);
+			const auto position = RightTitleBarButtonOrigin(
+				a_window, size, offset);
+			const auto bounds = TitleBarButtonRect(position, size);
+			const auto hovered = IsTitleBarButtonHovered(a_window, bounds);
+			bool behaviorHovered = false;
+			bool held = false;
+			const auto pressed = ImGui::ButtonBehavior(
+				bounds,
+				a_window->GetID("##DearModdingUI.HostSettingsButton"),
+				&behaviorHovered,
+				&held,
+				ImGuiButtonFlags_NoNavFocus);
+
+			a_window->DrawList->PushClipRect(
+				a_window->Rect().Min, a_window->Rect().Max);
+			(void)DrawRoundedButtonHighlight(
+				bounds.Min,
+				bounds.Max,
+				hovered && behaviorHovered,
+				held,
+				a_window->DrawList);
+			const auto center = bounds.GetCenter();
+			DrawIcon(
+				a_window->DrawList,
+				PhosphorGlyph::kGear,
+				{ center.x - size * 0.5f, center.y - size * 0.5f },
+				size,
+				ImGui::GetColorU32(ImGuiCol_Text),
+				nullptr);
+			a_window->DrawList->PopClipRect();
+
+			if (hovered && behaviorHovered)
+				ImGui::SetTooltip("Interface settings");
+			return pressed;
+		}
+
+		[[nodiscard]] bool BeginWithRoundedTitleBarButtons(
 			const char* a_name,
 			bool* a_open,
 			ImGuiWindowFlags a_flags) noexcept
@@ -280,7 +332,13 @@ namespace Addictol::DearModdingUI
 				const NativeTitleBarButtonHighlightGuard guard;
 				visible = ImGui::Begin(a_name, a_open, a_flags);
 			}
-			DrawRoundedCloseHighlight(ImGui::GetCurrentWindowRead());
+			auto* window = ImGui::GetCurrentWindowRead();
+			DrawRoundedCloseHighlight(window);
+			if (DrawHostSettingsButton(window))
+			{
+				HostSettings::RequestPanelOpen(true);
+				ImGui::OpenPopup(kHostSettingsPopup);
+			}
 			return visible;
 		}
 
@@ -863,6 +921,148 @@ namespace Addictol::DearModdingUI
 			}
 		}
 
+		void DrawReadOnlyHostFact(
+			const char* a_label,
+			const char* a_value,
+			const char* a_source) noexcept
+		{
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kHeading };
+				ImGui::TextUnformatted(a_label);
+			}
+			ImGui::SameLine();
+			ImGui::TextUnformatted(a_value);
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kSubtext };
+				ImGui::TextDisabled("%s", a_source);
+			}
+			ImGui::Spacing();
+		}
+
+		void DrawHostSettingsPopup() noexcept
+		{
+			const auto requested = HostSettings::IsPanelOpen();
+			const auto popupOpen = ImGui::IsPopupOpen(kHostSettingsPopup);
+			if (!requested && !popupOpen)
+				return;
+			if (requested && !popupOpen)
+			{
+				HostSettings::DismissPanel();
+				return;
+			}
+
+			const auto* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(
+				viewport->GetCenter(),
+				ImGuiCond_Appearing,
+				{ 0.5f, 0.5f });
+			ImGui::SetNextWindowSizeConstraints(
+				{ ImGui::GetFontSize() * 24.0f, 0.0f },
+				{ viewport->WorkSize.x * 0.6f, FLT_MAX });
+			if (!ImGui::BeginPopup(
+					kHostSettingsPopup,
+					ImGuiWindowFlags_AlwaysAutoResize |
+						ImGuiWindowFlags_NoSavedSettings))
+			{
+				if (requested)
+					HostSettings::DismissPanel();
+				return;
+			}
+
+			if (!requested)
+			{
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+				return;
+			}
+
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kTitle };
+				ImGui::SetWindowFontScale(Theme::kFeatureTitleScale);
+				ImGui::TextUnformatted("Interface Settings");
+				ImGui::SetWindowFontScale(1.0f);
+			}
+			ImGui::TextDisabled(
+				"Host-owned options apply immediately and are saved with Addictol.");
+			ImGui::Spacing();
+			DrawSectionHeader("Appearance");
+
+			auto settings = HostSettings::Current();
+			auto changed = false;
+			auto iconMode =
+				settings.iconColorMode == Theme::IconColorMode::kMonochrome ? 1 : 0;
+			constexpr const char* iconModes[]{ "Colored", "Monochrome" };
+			if (ImGui::Combo(
+					"Icon color mode",
+					&iconMode,
+					iconModes,
+					static_cast<int>(std::size(iconModes))))
+			{
+				settings.iconColorMode = iconMode == 1 ?
+					Theme::IconColorMode::kMonochrome :
+					Theme::IconColorMode::kColored;
+				changed = true;
+			}
+			changed |= ImGui::Checkbox(
+				"Background blur", &settings.backgroundBlur);
+			if (changed)
+				HostSettings::Apply(settings);
+
+			ImGui::Spacing();
+			DrawSectionHeader("Read-only host facts");
+			ImGui::TextDisabled(
+				"Menu timing and key bindings are configured outside the game.");
+			ImGui::Spacing();
+
+			char toggleKey[32]{};
+			const auto key = Menu::ToggleKeyName();
+			std::snprintf(
+				toggleKey,
+				sizeof(toggleKey),
+				"%.*s",
+				static_cast<int>(key.size()),
+				key.data());
+			DrawReadOnlyHostFact(
+				"Menu toggle key",
+				toggleKey,
+				"Override [Additional] sMenuToggleKey in Data/F4SE/Plugins/AddictolCustom.toml.");
+
+			char refresh[32]{};
+			std::snprintf(
+				refresh,
+				sizeof(refresh),
+				"%u ms",
+				Menu::RefreshMs());
+			DrawReadOnlyHostFact(
+				"Menu refresh interval",
+				refresh,
+				"Override [Additional] uMenuRefreshMs in Data/F4SE/Plugins/AddictolCustom.toml.");
+
+			const auto* body = Theme::GetFonts().body;
+			char typography[32]{};
+			std::snprintf(
+				typography,
+				sizeof(typography),
+				"%.0f px",
+				body ? body->LegacySize : ImGui::GetFontSize());
+			DrawReadOnlyHostFact(
+				"Resolved typography size",
+				typography,
+				"Resolved by DearModdingUI from the current backbuffer height.");
+
+			char scale[32]{};
+			std::snprintf(
+				scale,
+				sizeof(scale),
+				"%.2fx",
+				Theme::Scale());
+			DrawReadOnlyHostFact(
+				"Resolved UI scale",
+				scale,
+				"Resolved by DearModdingUI from the current backbuffer height.");
+			ImGui::EndPopup();
+		}
+
 		void SaveLayout() noexcept
 		{
 			const auto& io = ImGui::GetIO();
@@ -948,7 +1148,7 @@ namespace Addictol::DearModdingUI
 		if (!wasDocked)
 			windowFlags |= ImGuiWindowFlags_NoTitleBar;
 
-		const auto visible = BeginWithRoundedClose(
+		const auto visible = BeginWithRoundedTitleBarButtons(
 			"Evil Modding###DearModdingUI.Host",
 			&open,
 			windowFlags);
@@ -1003,6 +1203,7 @@ namespace Addictol::DearModdingUI
 			ImGui::Spacing();
 			DrawFooter(model, state);
 		}
+		DrawHostSettingsPopup();
 		ImGui::End();
 
 		if (!open)

@@ -361,3 +361,9 @@ sMenuToggleKey = "F11"
 
 # How often the open tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000 (needs bMenu).
 uMenuRefreshMs = 250
+
+# Uses the theme text color for menu icons instead of colored accents (needs bMenu).
+bMenuMonochromeIcons = false
+
+# Blurs the game behind the menu window (needs bMenu).
+bMenuBackgroundBlur = true

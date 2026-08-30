@@ -1,6 +1,7 @@
 // Gaussian blur after Unrimp by Christian Ofenberg, MIT.
 
 #include <DearModdingUI/BackgroundBlur.h>
+#include <DearModdingUI/HostSettings.h>
 #include <Core/AdUtils.h>
 
 #include <REX/REX.h>
@@ -777,7 +778,8 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 		ID3D11Texture2D* a_backBuffer,
 		ID3D11RenderTargetView* a_backBufferView) noexcept
 	{
-		if (!g_region.valid ||
+		if (!HostSettings::Current().backgroundBlur ||
+			!g_region.valid ||
 			!a_device ||
 			!a_context ||
 			!a_backBuffer ||

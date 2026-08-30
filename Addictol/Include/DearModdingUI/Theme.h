@@ -45,13 +45,7 @@ namespace Addictol::DearModdingUI::Theme
 	[[nodiscard]] const Fonts& GetFonts() noexcept;
 	[[nodiscard]] float Scale() noexcept;
 	[[nodiscard]] float SearchScale() noexcept;
-	[[nodiscard]] inline ImVec4 IconTint() noexcept
-	{
-		return ResolveIconTint(
-			kIconDefaults.colorMode,
-			colors::kAccent,
-			kFullPalette[ImGuiCol_Text]);
-	}
+	[[nodiscard]] ImVec4 IconTint() noexcept;
 }
 
 namespace Addictol

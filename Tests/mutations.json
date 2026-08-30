@@ -350,5 +350,29 @@
     "replace": "m_counters[a_index - 1].fetch_add(0, std::memory_order_relaxed);",
     "check": "burst series source owns shared telemetry plumbing",
     "message": "burst series counters changed"
+  },
+  {
+    "name": "host title bar reserves one settings button extent",
+    "target": "Addictol/Include/DearModdingUI/HostSettings.h",
+    "find": "a_offset -",
+    "replace": "0.0f -",
+    "check": "host title bar buttons stay adjacent without overlap",
+    "message": "settings and close buttons were not adjacent"
+  },
+  {
+    "name": "host settings require visible menu",
+    "target": "Addictol/Include/DearModdingUI/HostSettings.h",
+    "find": "if (!a_menuVisible ||",
+    "replace": "if (false ||",
+    "check": "host settings panel follows menu visibility",
+    "message": "settings opened while the menu was closed"
+  },
+  {
+    "name": "host icon setting preserves monochrome value",
+    "target": "Addictol/Include/DearModdingUI/HostSettings.h",
+    "find": "a_settings.iconColorMode == Theme::IconColorMode::kMonochrome,",
+    "replace": "a_settings.iconColorMode != Theme::IconColorMode::kMonochrome,",
+    "check": "host settings persistence round trips every stored value",
+    "message": "stored host settings did not round trip"
   }
 ]

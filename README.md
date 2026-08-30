@@ -97,6 +97,10 @@ shows its categorized settings pages. Mods without a custom Home page receive an
 version, registered category and page counts, and failed-page count. Client and category names select
 glyphs from the shared Phosphor icon font in code; a category named after its owning mod inherits the
 client glyph, and missing icon fonts fall back to text without reserving empty space.
+The title-bar gear opens host-only interface settings and never appears in the mod dropdown. Colored
+or monochrome icon tint and background blur are editable there; the configured toggle key and refresh
+interval plus the resolved typography size and UI scale are read-only. Editable values persist through
+`[Additional] bMenuMonochromeIcons` and `bMenuBackgroundBlur`.
 Addictol telemetry pages retain their configured order and Log Control remains last.
 Addictol's Home page shows the game runtime and live module outcomes, provides its documented project
 link, and answers the supported-runtime, configuration, and menu-toggle questions.

@@ -1,4 +1,5 @@
 #include <DearModdingUI/Theme.h>
+#include <DearModdingUI/HostSettings.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <Core/AdUtils.h>
 
@@ -308,6 +309,14 @@ namespace Addictol::DearModdingUI::Theme
 		return g_fonts.body ?
 			g_fonts.body->LegacySize / kSearchBaselineFontSize :
 			kBaselineFontSize / kSearchBaselineFontSize;
+	}
+
+	ImVec4 IconTint() noexcept
+	{
+		return ResolveIconTint(
+			HostSettings::Current().iconColorMode,
+			colors::kAccent,
+			kFullPalette[ImGuiCol_Text]);
 	}
 
 	FontGuard::FontGuard(FontRole a_role) noexcept

@@ -58,7 +58,8 @@ namespace Addictol
 			"bIgnorePreInstallBias"sv, "nQuitGameDelayMs"sv, "nBloomScale"sv,
 			"bIgnoreCompatibilityChecks"sv,
 			"fLocalMapScaleFactor"sv,
-			"bMenu"sv, "sMenuToggleKey"sv, "uMenuRefreshMs"sv
+			"bMenu"sv, "sMenuToggleKey"sv, "uMenuRefreshMs"sv,
+			"bMenuMonochromeIcons"sv, "bMenuBackgroundBlur"sv
 		}}
 	};
 

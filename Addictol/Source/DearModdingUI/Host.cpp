@@ -1,5 +1,6 @@
 #define DMUI_HOST_EXPORTS
 #include <DearModdingUI/Host.h>
+#include <DearModdingUI/HostSettings.h>
 #include <DearModdingUI/ImGuiRecovery.h>
 #include <Platform/AdPlatformImgui.h>
 
@@ -53,6 +54,12 @@ namespace Addictol::DearModdingUI
 		{
 			static Service service;
 			return service;
+		}
+
+		void SetMenuVisibleState(Service& a_service, bool a_visible) noexcept
+		{
+			a_service.menuVisible.store(a_visible, std::memory_order_release);
+			HostSettings::NotifyMenuVisible(a_visible);
 		}
 
 		[[nodiscard]] DMUI_Result StateResult(DMUI_HostState a_state) noexcept
@@ -273,7 +280,7 @@ namespace Addictol::DearModdingUI
 			if (valid != DMUI_RESULT_OK)
 				return valid;
 			service.selectedPage.store(a_page, std::memory_order_release);
-			service.menuVisible.store(true, std::memory_order_release);
+			SetMenuVisibleState(service, true);
 			return DMUI_RESULT_OK;
 		}
 
@@ -430,7 +437,7 @@ namespace Addictol::DearModdingUI
 			return;
 		service.unavailableReason.store(a_reason, std::memory_order_release);
 		service.state.store(DMUI_HOST_STATE_UNAVAILABLE, std::memory_order_release);
-		service.menuVisible.store(false, std::memory_order_release);
+		SetMenuVisibleState(service, false);
 	}
 
 	void DeferBackendUnavailable(DMUI_UnavailableReason a_reason) noexcept
@@ -499,7 +506,7 @@ namespace Addictol::DearModdingUI
 		service.unavailableReason.store(
 			DMUI_UNAVAILABLE_BACKEND_FAILED,
 			std::memory_order_release);
-		service.menuVisible.store(false, std::memory_order_release);
+		SetMenuVisibleState(service, false);
 		if (service.registry.IsOpen())
 			(void)service.registry.Freeze();
 		service.registry.NotifyUnavailable(DMUI_UNAVAILABLE_BACKEND_FAILED);
@@ -535,13 +542,13 @@ namespace Addictol::DearModdingUI
 			return StateResult(state);
 		if (a_visible && !service.registry.HasSettingsPages())
 			return DMUI_RESULT_PAGE_NOT_FOUND;
-		service.menuVisible.store(a_visible, std::memory_order_release);
+		SetMenuVisibleState(service, a_visible);
 		return DMUI_RESULT_OK;
 	}
 
 	void CloseMenu() noexcept
 	{
-		GetService().menuVisible.store(false, std::memory_order_release);
+		SetMenuVisibleState(GetService(), false);
 	}
 
 	DMUI_PageHandle SelectedPage() noexcept
