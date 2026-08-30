@@ -345,6 +345,8 @@ namespace Addictol::DearModdingUI
 			if (hovered && a_tooltip)
 				ImGui::SetTooltip("%s", a_tooltip);
 			ImGui::SetCursorScreenPos(restore);
+			// A restored cursor must be followed by an item or ImGui reports an unbounded SetCursorPos.
+			ImGui::Dummy({ 0.0f, 0.0f });
 			return pressed;
 		}
 
