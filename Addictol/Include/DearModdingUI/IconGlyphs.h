@@ -20,6 +20,8 @@ namespace Addictol::DearModdingUI
 
 		// Generated from @phosphor-icons/web 2.1.2 Fill selection.json.
 		inline constexpr char32_t kQuestion{ 0xE3E8 };
+		inline constexpr char32_t kArchive{ 0xE00C };
+		inline constexpr char32_t kAppWindow{ 0xE5DA };
 		inline constexpr char32_t kDotsThreeCircle{ 0xE200 };
 		inline constexpr char32_t kSun{ 0xE472 };
 		inline constexpr char32_t kPuzzlePiece{ 0xE596 };
@@ -40,9 +42,12 @@ namespace Addictol::DearModdingUI
 		IconGlyphMapping{ "diagnostics", PhosphorGlyph::kTerminalWindow },
 		IconGlyphMapping{ "lighting", PhosphorGlyph::kSun },
 		IconGlyphMapping{ "misc", PhosphorGlyph::kDotsThreeCircle },
+		IconGlyphMapping{ "other", PhosphorGlyph::kDotsThreeCircle },
+		IconGlyphMapping{ "overlay", PhosphorGlyph::kAppWindow },
 		IconGlyphMapping{ "performance", PhosphorGlyph::kGauge },
 		IconGlyphMapping{ "post-process", PhosphorGlyph::kMagicWand },
-		IconGlyphMapping{ "postprocess", PhosphorGlyph::kMagicWand }
+		IconGlyphMapping{ "postprocess", PhosphorGlyph::kMagicWand },
+		IconGlyphMapping{ "unloaded", PhosphorGlyph::kArchive }
 	};
 
 	inline constexpr std::array kClientGlyphs{
@@ -81,6 +86,26 @@ namespace Addictol::DearModdingUI
 		return slug;
 	}
 
+	[[nodiscard]] inline std::string NormalizeIconOwnerName(std::string_view a_name)
+	{
+		std::string normalized;
+		normalized.reserve(a_name.size());
+		for (const auto value : a_name)
+		{
+			const auto character = static_cast<unsigned char>(value);
+			if ((character >= 'a' && character <= 'z') ||
+				(character >= '0' && character <= '9'))
+			{
+				normalized.push_back(static_cast<char>(character));
+			}
+			else if (character >= 'A' && character <= 'Z')
+			{
+				normalized.push_back(static_cast<char>(character - 'A' + 'a'));
+			}
+		}
+		return normalized;
+	}
+
 	template <std::size_t Size>
 	[[nodiscard]] inline char32_t FindIconGlyph(
 		const std::array<IconGlyphMapping, Size>& a_mappings,
@@ -104,6 +129,26 @@ namespace Addictol::DearModdingUI
 			return a_kind == IconKind::kCategory ?
 				FindIconGlyph(kCategoryGlyphs, a_name) :
 				FindIconGlyph(kClientGlyphs, a_name);
+		}
+		catch (...)
+		{
+			return static_cast<char32_t>(PhosphorGlyph::kQuestion);
+		}
+	}
+
+	[[nodiscard]] inline char32_t ResolveCategoryIconGlyph(
+		std::string_view a_category,
+		std::string_view a_clientDisplayName,
+		std::string_view a_clientId) noexcept
+	{
+		try
+		{
+			const auto category = NormalizeIconOwnerName(a_category);
+			if (!category.empty() &&
+				(category == NormalizeIconOwnerName(a_clientDisplayName) ||
+					category == NormalizeIconOwnerName(a_clientId)))
+				return FindIconGlyph(kClientGlyphs, a_clientId);
+			return FindIconGlyph(kCategoryGlyphs, a_category);
 		}
 		catch (...)
 		{

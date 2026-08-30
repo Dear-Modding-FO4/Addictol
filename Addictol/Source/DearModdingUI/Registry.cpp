@@ -167,6 +167,9 @@ namespace Addictol::DearModdingUI
 			return InvokeDrawCpp(a_callback, a_userData);
 #endif
 		}
+
+		void DMUI_CALL DrawSynthesizedHome(void*) noexcept
+		{}
 	}
 
 	Registry::Registry(DMUI_ImGuiFingerprint a_fingerprint) :
@@ -246,7 +249,8 @@ namespace Addictol::DearModdingUI
 		if (!a_descriptor->draw)
 			return DMUI_RESULT_INVALID_DESCRIPTOR;
 		if (a_descriptor->kind != DMUI_PAGE_KIND_SETTINGS &&
-			a_descriptor->kind != DMUI_PAGE_KIND_OVERLAY)
+			a_descriptor->kind != DMUI_PAGE_KIND_OVERLAY &&
+			a_descriptor->kind != DMUI_PAGE_KIND_HOME)
 			return DMUI_RESULT_INVALID_PAGE_KIND;
 
 		try
@@ -257,22 +261,37 @@ namespace Addictol::DearModdingUI
 			page.kind = a_descriptor->kind;
 			page.draw = a_descriptor->draw;
 			page.userData = a_descriptor->userData;
+			const auto categoryOptional =
+				a_descriptor->kind == DMUI_PAGE_KIND_HOME;
 			if (!ReadString(a_descriptor->id, kIdCapacity, false, page.id) ||
 				!ReadString(a_descriptor->displayName, kDisplayNameCapacity, false, page.displayName) ||
-				!ReadString(a_descriptor->category, kCategoryCapacity, false, page.category) ||
+				!ReadString(a_descriptor->category, kCategoryCapacity, categoryOptional, page.category) ||
 				!ReadString(a_descriptor->summary, kSummaryCapacity, true, page.summary) ||
 				!ValidId(page.id) ||
 				!ValidText(page.displayName, false) ||
-				!ValidText(page.category, false) ||
+				!ValidText(page.category, categoryOptional) ||
 				!ValidText(page.summary, true))
 				return DMUI_RESULT_INVALID_DESCRIPTOR;
 
 			const std::scoped_lock lock{ m_mutex };
 			if (!m_open)
 				return DMUI_RESULT_REGISTRATION_CLOSED;
-			const auto* client = FindClient(a_client);
+			auto* client = FindClient(a_client);
 			if (!client)
 				return DMUI_RESULT_CLIENT_NOT_FOUND;
+			if (page.kind == DMUI_PAGE_KIND_HOME &&
+				std::ranges::any_of(m_pages, [&](const auto& a_existing) {
+					return a_existing.client == a_client &&
+						a_existing.kind == DMUI_PAGE_KIND_HOME;
+				}))
+			{
+				if (!client->duplicateHomeLogged)
+				{
+					client->duplicateHomeLogged = true;
+					client->duplicateHomeWarningPending = true;
+				}
+				return DMUI_RESULT_DUPLICATE_PAGE_ID;
+			}
 			if (std::ranges::any_of(m_pages, [&](const auto& a_existing) {
 					return a_existing.client == a_client && a_existing.id == page.id;
 				}))
@@ -302,19 +321,23 @@ namespace Addictol::DearModdingUI
 			const std::scoped_lock lock{ m_mutex };
 			if (!m_open)
 				return false;
+			if (!SynthesizeHomePages())
+				return false;
 			std::ranges::sort(m_pages, [](const auto& a_left, const auto& a_right) {
-				return std::tie(
+				return std::tuple(
 					a_left.clientOrigin,
 					a_left.clientDisplayName,
 					a_left.clientId,
+					a_left.kind == DMUI_PAGE_KIND_HOME ? 0 : 1,
 					a_left.category,
 					a_left.sortKey,
 					a_left.displayName,
 					a_left.id) <
-					std::tie(
+					std::tuple(
 						a_right.clientOrigin,
 						a_right.clientDisplayName,
 						a_right.clientId,
+						a_right.kind == DMUI_PAGE_KIND_HOME ? 0 : 1,
 						a_right.category,
 						a_right.sortKey,
 						a_right.displayName,
@@ -368,7 +391,8 @@ namespace Addictol::DearModdingUI
 	{
 		const std::scoped_lock lock{ m_mutex };
 		return std::ranges::any_of(m_pages, [](const auto& a_page) {
-			return a_page.kind == DMUI_PAGE_KIND_SETTINGS;
+			return a_page.kind == DMUI_PAGE_KIND_HOME ||
+				a_page.kind == DMUI_PAGE_KIND_SETTINGS;
 		});
 	}
 
@@ -487,6 +511,17 @@ namespace Addictol::DearModdingUI
 			page->callbackFailed = true;
 	}
 
+	bool Registry::ConsumeDuplicateHomeWarning(
+		DMUI_ClientHandle a_client) noexcept
+	{
+		const std::scoped_lock lock{ m_mutex };
+		auto* client = FindClient(a_client);
+		if (!client || !client->duplicateHomeWarningPending)
+			return false;
+		client->duplicateHomeWarningPending = false;
+		return true;
+	}
+
 	void Registry::NotifyReady(const DMUI_HostReadyInfo& a_info) noexcept
 	{
 		{
@@ -521,7 +556,7 @@ namespace Addictol::DearModdingUI
 					client->callbackFailed = true;
 				for (auto& page : m_pages)
 				{
-					if (page.client == handle)
+					if (page.client == handle && !page.synthesized)
 						page.callbackFailed = true;
 				}
 			}
@@ -654,6 +689,46 @@ namespace Addictol::DearModdingUI
 			return a_existing.handle == a_page;
 		});
 		return found != m_pages.end() ? &*found : nullptr;
+	}
+
+	bool Registry::SynthesizeHomePages()
+	{
+		std::vector<RegisteredPage> homes;
+		homes.reserve(m_clients.size());
+		auto nextPage = m_nextPage;
+		for (const auto& client : m_clients)
+		{
+			const auto hasHome = std::ranges::any_of(m_pages, [&](const auto& a_page) {
+				return a_page.client == client.handle &&
+					a_page.kind == DMUI_PAGE_KIND_HOME;
+			});
+			if (hasHome)
+				continue;
+			if (nextPage == DMUI_INVALID_PAGE_HANDLE)
+				return false;
+
+			RegisteredPage page{};
+			page.handle = nextPage++;
+			page.client = client.handle;
+			page.clientId = client.id;
+			page.clientDisplayName = client.displayName;
+			page.clientOrigin = client.origin;
+			page.id = "#dearmoddingui-home";
+			page.displayName = "Home";
+			page.summary = "Overview, version, and registered page status.";
+			page.imguiLabel =
+				page.displayName + "###" + page.clientId + "/" + page.id;
+			page.kind = DMUI_PAGE_KIND_HOME;
+			page.draw = &DrawSynthesizedHome;
+			page.synthesized = true;
+			homes.push_back(std::move(page));
+		}
+
+		m_pages.reserve(m_pages.size() + homes.size());
+		for (auto& home : homes)
+			m_pages.push_back(std::move(home));
+		m_nextPage = nextPage;
+		return true;
 	}
 
 	bool Registry::OwnsPage(

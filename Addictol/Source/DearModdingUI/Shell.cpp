@@ -320,46 +320,9 @@ namespace Addictol::DearModdingUI
 			ImGui::Spacing();
 		}
 
-		void DrawSectionHeader(
-			const char* a_text,
-			const ImVec4& a_color) noexcept
-		{
-			auto* drawList = ImGui::GetWindowDrawList();
-			const auto position = ImGui::GetCursorScreenPos();
-			const auto availableWidth = ImGui::GetContentRegionAvail().x;
-			const auto textSize = ImGui::CalcTextSize(a_text);
-			const auto lineY = position.y + textSize.y * 0.5f;
-			const auto lineLength =
-				(availableWidth - textSize.x - 20.0f) * 0.5f;
-			const auto color = ImGui::GetColorU32(a_color);
-
-			if (lineLength > 0.0f)
-			{
-				drawList->AddLine(
-					{ position.x, lineY },
-					{ position.x + lineLength, lineY },
-					color);
-			}
-			const auto rightLineStart =
-				position.x + lineLength + 10.0f + textSize.x + 10.0f;
-			if (rightLineStart < position.x + availableWidth)
-			{
-				drawList->AddLine(
-					{ rightLineStart, lineY },
-					{ position.x + availableWidth, lineY },
-					color);
-			}
-			drawList->AddText(
-				{ position.x + lineLength + 10.0f, position.y + 2.0f },
-				color,
-				a_text);
-			ImGui::SetCursorScreenPos(
-				{ position.x, position.y + textSize.y + 8.0f });
-			ImGui::Dummy({ availableWidth, 0.0f });
-		}
-
 		void DrawCategoryHeader(
 			const char* a_key,
+			const NavigationClient& a_client,
 			const char* a_name,
 			bool& a_expanded,
 			size_t a_count) noexcept
@@ -370,7 +333,10 @@ namespace Addictol::DearModdingUI
 			const auto position = ImGui::GetCursorScreenPos();
 			const auto availableWidth = ImGui::GetContentRegionAvail().x;
 			const auto textSize = ImGui::CalcTextSize(text);
-			const auto glyph = ResolveIconGlyph(IconKind::kCategory, a_name);
+			const auto glyph = ResolveCategoryIconGlyph(
+				a_name,
+				a_client.displayName,
+				a_client.id);
 			const auto layout = DecideInlineIconLayout(
 				HasIconGlyph(glyph),
 				textSize.x,
@@ -521,8 +487,7 @@ namespace Addictol::DearModdingUI
 			const NavigationModel& a_model,
 			ShellState& a_state) noexcept
 		{
-			DrawSectionHeader(
-				"Mods", Theme::kFullPalette[ImGuiCol_Text]);
+			DrawSectionHeader("Mods");
 			const Theme::FontGuard font{ Theme::FontRole::kSubheading };
 			const auto* active = a_model.FindClient(a_state.activeClient);
 			const char* previewText =
@@ -607,13 +572,63 @@ namespace Addictol::DearModdingUI
 			}
 		}
 
+		void DrawHomePageEntry(
+			const NavigationClient& a_client,
+			ShellState& a_state) noexcept
+		{
+			if (!a_client.home || !Matches(*a_client.home, a_state.search))
+				return;
+
+			const auto& page = *a_client.home;
+			const auto failed = PageFailed(page.handle);
+			const auto glyph = ResolveIconGlyph(IconKind::kClient, a_client.id);
+			const Theme::FontGuard font{ Theme::FontRole::kHeading };
+			const auto textSize = ImGui::CalcTextSize(page.displayName.c_str());
+			const auto layout = DecideInlineIconLayout(
+				HasIconGlyph(glyph),
+				textSize.x,
+				textSize.y,
+				ImGui::GetFontSize(),
+				ImGui::GetStyle().ItemSpacing.x);
+			const auto rowHeight =
+				layout.contentHeight + ImGui::GetStyle().FramePadding.y * 2.0f;
+			const auto selected = page.handle == a_state.activePage;
+			const auto label =
+				"###DearModdingHome/" + a_client.id + "/" + page.id;
+			if (ImGui::Selectable(
+					label.c_str(),
+					selected,
+					ImGuiSelectableFlags_SpanAllColumns,
+					{ 0.0f, rowHeight }))
+				a_state.activePage = page.handle;
+
+			const auto itemMin = ImGui::GetItemRectMin();
+			const auto itemMax = ImGui::GetItemRectMax();
+			const ImVec4 clip{ itemMin.x, itemMin.y, itemMax.x, itemMax.y };
+			const auto color = ImGui::GetColorU32(
+				failed ?
+					Theme::kStatusPaletteDefaults.error :
+					Theme::kFullPalette[ImGuiCol_Text]);
+			DrawIconText(
+				{
+					itemMin.x + ImGui::GetStyle().FramePadding.x,
+					itemMin.y
+				},
+				rowHeight,
+				glyph,
+				page.displayName.c_str(),
+				color,
+				&clip);
+			ImGui::Spacing();
+		}
+
 		void DrawPageList(
 			const NavigationClient& a_client,
 			ShellState& a_state) noexcept
 		{
-			DrawSectionHeader(
-				"Pages", Theme::kFullPalette[ImGuiCol_Text]);
+			DrawSectionHeader("Pages");
 			DrawPageSearch(a_state.search);
+			DrawHomePageEntry(a_client, a_state);
 
 			for (const auto& category : a_client.categories)
 			{
@@ -632,6 +647,7 @@ namespace Addictol::DearModdingUI
 					const Theme::FontGuard font{ Theme::FontRole::kHeading };
 					DrawCategoryHeader(
 						key.c_str(),
+						a_client,
 						category.displayName.c_str(),
 						state->second,
 						category.pages.size());
@@ -701,6 +717,48 @@ namespace Addictol::DearModdingUI
 				"Other pages remain available.");
 		}
 
+		void DrawSynthesizedHome(const NavigationClient& a_client) noexcept
+		{
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kTitle };
+				ImGui::Text("Welcome to %s", a_client.displayName.c_str());
+			}
+			ImGui::Spacing();
+			{
+				const Theme::FontGuard font{ Theme::FontRole::kSubtext };
+				ImGui::TextWrapped(
+					"%s is registered with Evil Modding. "
+					"Use the pages on the left to view the controls and information it provides.",
+					a_client.displayName.c_str());
+			}
+			ImGui::Spacing();
+
+			DrawSectionHeader("Status");
+			size_t failedCount = 0;
+			for (const auto& page : OrderedPages())
+			{
+				if (page.client == a_client.handle &&
+					!page.synthesized &&
+					PageFailed(page.handle))
+					++failedCount;
+			}
+
+			ImGui::Text(
+				"Version: %u.%u",
+				a_client.version >> 16,
+				a_client.version & 0xFFFFu);
+			ImGui::Text(
+				"Registered content: %zu categories, %zu pages",
+				a_client.categories.size(),
+				a_client.registeredPageCount);
+			ImGui::TextColored(
+				failedCount == 0 ?
+					Theme::kStatusPaletteDefaults.success :
+					Theme::kStatusPaletteDefaults.error,
+				"Unavailable pages: %zu",
+				failedCount);
+		}
+
 		void DrawPageHeader(const NavigationPage& a_page) noexcept
 		{
 			const auto start = ImGui::GetCursorScreenPos();
@@ -767,7 +825,13 @@ namespace Addictol::DearModdingUI
 			else if (presentation == PagePresentation::kContent)
 			{
 				ImGui::PushID(static_cast<int>(page->handle));
-				if (!DrawPage(page->handle))
+				if (page->synthesized)
+				{
+					if (const auto* client =
+							a_model.FindClientForPage(page->handle))
+						DrawSynthesizedHome(*client);
+				}
+				else if (!DrawPage(page->handle))
 				{
 					ImGui::Spacing();
 					ImGui::SeparatorEx(
@@ -805,6 +869,43 @@ namespace Addictol::DearModdingUI
 			if (io.IniFilename)
 				ImGui::SaveIniSettingsToDisk(io.IniFilename);
 		}
+	}
+
+	void DrawSectionHeader(const char* a_text) noexcept
+	{
+		auto* drawList = ImGui::GetWindowDrawList();
+		const auto position = ImGui::GetCursorScreenPos();
+		const auto availableWidth = ImGui::GetContentRegionAvail().x;
+		const auto textSize = ImGui::CalcTextSize(a_text);
+		const auto lineY = position.y + textSize.y * 0.5f;
+		const auto lineLength =
+			(availableWidth - textSize.x - 20.0f) * 0.5f;
+		const auto color = ImGui::GetColorU32(
+			Theme::kFullPalette[ImGuiCol_Text]);
+
+		if (lineLength > 0.0f)
+		{
+			drawList->AddLine(
+				{ position.x, lineY },
+				{ position.x + lineLength, lineY },
+				color);
+		}
+		const auto rightLineStart =
+			position.x + lineLength + 10.0f + textSize.x + 10.0f;
+		if (rightLineStart < position.x + availableWidth)
+		{
+			drawList->AddLine(
+				{ rightLineStart, lineY },
+				{ position.x + availableWidth, lineY },
+				color);
+		}
+		drawList->AddText(
+			{ position.x + lineLength + 10.0f, position.y + 2.0f },
+			color,
+			a_text);
+		ImGui::SetCursorScreenPos(
+			{ position.x, position.y + textSize.y + 8.0f });
+		ImGui::Dummy({ availableWidth, 0.0f });
 	}
 
 	void DrawShell() noexcept

@@ -2,10 +2,42 @@
   {
     "name": "DearModdingUI navigation filters overlay pages",
     "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
-    "find": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_SETTINGS)\r\n\t\t\t\t\torderedPages.push_back(&page);",
-    "replace": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_OVERLAY)\r\n\t\t\t\t\torderedPages.push_back(&page);",
+    "find": "if (page.client == client->handle &&\r\n\t\t\t\t\t(page.kind == DMUI_PAGE_KIND_HOME ||\r\n\t\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_SETTINGS))\r\n\t\t\t\t\torderedPages.push_back(&page);",
+    "replace": "if (page.client == client->handle &&\r\n\t\t\t\t\t(page.kind == DMUI_PAGE_KIND_HOME ||\r\n\t\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_OVERLAY))\r\n\t\t\t\t\torderedPages.push_back(&page);",
     "check": "navigation groups clients categories and settings pages deterministically",
     "message": "categories were not grouped"
+  },
+  {
+    "name": "DearModdingUI client selection defaults to home",
+    "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
+    "find": "a_state.activePage = client->home ?\r\n\t\t\tclient->home->handle :\r\n\t\t\tDMUI_INVALID_PAGE_HANDLE;",
+    "replace": "a_state.activePage = DMUI_INVALID_PAGE_HANDLE;",
+    "check": "home pages lead navigation and become the client default",
+    "message": "client selection did not default to home"
+  },
+  {
+    "name": "DearModdingUI freeze synthesizes missing homes",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "if (!SynthesizeHomePages())\r\n\t\t\t\treturn false;",
+    "replace": "if (false)\r\n\t\t\t\treturn false;",
+    "check": "clients without home pages receive a synthesized landing page",
+    "message": "client without settings was omitted"
+  },
+  {
+    "name": "DearModdingUI rejects a second client home",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "if (page.kind == DMUI_PAGE_KIND_HOME &&\r\n\t\t\t\tstd::ranges::any_of(m_pages, [&](const auto& a_existing) {\r\n\t\t\t\t\treturn a_existing.client == a_client &&\r\n\t\t\t\t\t\ta_existing.kind == DMUI_PAGE_KIND_HOME;\r\n\t\t\t\t}))",
+    "replace": "if (false)",
+    "check": "clients can register only one home page",
+    "message": "second home page was accepted"
+  },
+  {
+    "name": "DearModdingUI client-named categories inherit client glyphs",
+    "target": "Addictol/Include/DearModdingUI/IconGlyphs.h",
+    "find": "if (!category.empty() &&\r\n\t\t\t\t(category == NormalizeIconOwnerName(a_clientDisplayName) ||\r\n\t\t\t\t\tcategory == NormalizeIconOwnerName(a_clientId)))",
+    "replace": "if (false)",
+    "check": "icon names resolve to deterministic Phosphor glyphs",
+    "message": "registered client-named categories did not inherit client glyphs"
   },
   {
     "name": "DearModdingUI client selection clears search",
@@ -21,7 +53,7 @@
     "find": "return PhosphorGlyph::kQuestion;",
     "replace": "return PhosphorGlyph::kSun;",
     "check": "icon names resolve to deterministic Phosphor glyphs",
-    "message": "unknown icon names did not use the fallback"
+    "message": "non-matching categories were affected by client naming"
   },
   {
     "name": "DearModdingUI icon modes select their theme tints",

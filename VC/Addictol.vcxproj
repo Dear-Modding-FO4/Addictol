@@ -33,6 +33,7 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Theme.cpp" />
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuLogControl.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuTelemetry.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h" />
     <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuWidgets.h" />

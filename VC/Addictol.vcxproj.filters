@@ -361,6 +361,9 @@
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
@@ -761,6 +764,9 @@
       <Filter>Include\Platform</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h">
+      <Filter>Include\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h">

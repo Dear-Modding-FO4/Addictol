@@ -3,6 +3,7 @@
 #include <DearModdingUI/Host.h>
 #include <DearModdingUI/Shell.h>
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuHome.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Core/AdUtils.h>
 #include <Menu/AdMenuLogControl.h>
@@ -198,6 +199,28 @@ namespace Addictol
 		{
 			REX::ERROR("Menu: Addictol DearModdingUI client registration failed, result {}."sv,
 				registered);
+			return false;
+		}
+
+		const DMUI_PageDescriptor home{
+			sizeof(DMUI_PageDescriptor),
+			"home",
+			"Home",
+			nullptr,
+			"Overview, live module status, project links, and FAQ.",
+			0,
+			DMUI_PAGE_KIND_HOME,
+			&DrawHomePage,
+			nullptr
+		};
+		DMUI_PageHandle homePage{ DMUI_INVALID_PAGE_HANDLE };
+		const auto homeResult = DearModdingUI::HostAPI().registerPage(
+			s_client, &home, &homePage);
+		if (homeResult != DMUI_RESULT_OK)
+		{
+			REX::ERROR(
+				"Menu: Addictol home page registration failed, result {}."sv,
+				homeResult);
 			return false;
 		}
 		s_requested.store(true, std::memory_order_release);

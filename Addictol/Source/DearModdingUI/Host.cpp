@@ -170,7 +170,16 @@ namespace Addictol::DearModdingUI
 				return DMUI_RESULT_REGISTRATION_CLOSED;
 			if (state != DMUI_HOST_STATE_WAITING_FOR_PRESENT)
 				return StateResult(state);
-			return service.registry.RegisterPage(a_client, a_descriptor, a_page);
+			const auto result =
+				service.registry.RegisterPage(a_client, a_descriptor, a_page);
+			if (result == DMUI_RESULT_DUPLICATE_PAGE_ID &&
+				service.registry.ConsumeDuplicateHomeWarning(a_client))
+			{
+				REX::WARN(
+					"DearModdingUI: client {} attempted to register more than one home page"sv,
+					a_client);
+			}
+			return result;
 		}
 
 		[[nodiscard]] DMUI_Result DMUI_CALL ApiQueryStateCpp(
@@ -254,8 +263,13 @@ namespace Addictol::DearModdingUI
 			const auto state = service.state.load(std::memory_order_acquire);
 			if (state != DMUI_HOST_STATE_READY)
 				return StateResult(state);
-			const auto valid = service.registry.ValidatePage(
+			auto valid = service.registry.ValidatePage(
 				a_client, a_page, DMUI_PAGE_KIND_SETTINGS);
+			if (valid == DMUI_RESULT_INVALID_PAGE_KIND)
+			{
+				valid = service.registry.ValidatePage(
+					a_client, a_page, DMUI_PAGE_KIND_HOME);
+			}
 			if (valid != DMUI_RESULT_OK)
 				return valid;
 			service.selectedPage.store(a_page, std::memory_order_release);

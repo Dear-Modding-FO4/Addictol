@@ -4,6 +4,8 @@
 optional C++ fingerprint builder. Clients link their own copy of the pinned Dear ImGui sources and
 discover a host dynamically; they do not link against the host DLL or include Addictol, CommonLibF4,
 F4SE, Windows, D3D, TOML, or C++ library types through the C contract.
+Vendors should copy the current `API.h` as a unit. The additive `DMUI_PAGE_KIND_HOME` constant in
+the current 1.0 header changes neither an existing constant value nor any structure layout.
 
 ## Discovery and registration
 
@@ -19,18 +21,22 @@ callback and userdata pointers must remain valid for the process lifetime. IDs u
 digits, `.`, `_`, and `-`. Client IDs are process-wide; page IDs are unique within their client.
 Set only documented `DMUI_ClientDescriptor::capabilities`; unknown bits reject the descriptor.
 
-Settings pages draw only inside the common modal menu. Overlay pages draw without input capture
-while their reference-counted frame demand is nonzero. Balance every successful `requestFrame` with
-`releaseFrame`. The common toggle controls modal visibility and game-input suppression; overlay
-demand never suppresses input.
+Home and settings pages draw only inside the common modal menu. Each client may register at most one
+home page; a second returns `DMUI_RESULT_DUPLICATE_PAGE_ID`. A home descriptor may leave `category`
+null because home is not grouped into a category. Overlay pages draw without input capture while
+their reference-counted frame demand is nonzero. Balance every successful `requestFrame` with
+`releaseFrame`. Home and settings pages reject frame demand. The common toggle controls modal
+visibility and game-input suppression; overlay demand never suppresses input.
 
 ## Shared menu
 
 The Evil Modding window owns all navigation chrome. Its mod dropdown is built from registered client
-display names; the sidebar then groups that client's settings pages by category and orders pages by
-`sortKey`, display name, and ID. Overlay pages never appear there. `selectPage` switches both the
-active mod and page, opens the window, and falls back deterministically if the previous selection is
-not available.
+display names. A client's home page appears first as its landing page, followed by settings pages
+grouped by category and ordered by `sortKey`, display name, and ID. Switching mods selects home.
+When a client registers no home page, the host adds one showing its display name, version, category
+and page counts, and the current failed-page count. Overlay pages never appear there. `selectPage`
+accepts home and settings pages, switches both the active mod and page, opens the window, and falls
+back deterministically if the previous selection is not available.
 
 Clients receive a clean scrolling content region below the host-owned page title, category, and
 summary. Draw regular ImGui controls there. Do not begin independent top-level windows, draw over
@@ -45,6 +51,8 @@ only from that neutral root. Client IDs and category names select Phosphor glyph
 table after lowercase slug normalization. Icons use the accent tint by default; changing
 `Theme::kIconDefaults.colorMode` to `kMonochrome` selects the theme text tint. A missing icon font
 falls back to text-only labels without disabling the menu or the C ABI host.
+When a normalized category name equals its client's normalized display name or full client ID, the
+category inherits that client's glyph.
 
 The modal host opens a registered, hidden Fallout 4 carrier menu so absolute client coordinates remain
 valid, then maps them into the attached backbuffer. The carrier movie and operating-system cursor stay
@@ -169,6 +177,9 @@ if (api->registerPage(clientHandle, &page, &pageHandle) != DMUI_RESULT_OK)
 	return;
 }
 ```
+
+Use `DMUI_PAGE_KIND_HOME` with a null category for a custom landing page. Omitting it asks the host
+to synthesize the default landing page during registration freeze.
 
 A renderer-replacing client sets `client.capabilities` to
 `DMUI_CLIENT_CAPABILITY_RENDERER_REPLACEMENT`, stores the returned API table and client handle, then

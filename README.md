@@ -92,10 +92,14 @@ and any that disabled themselves. Check it first if something is not working.
 not recognize the name. `uMenuRefreshMs` sets how often the open page copies fresh data, clamped to
 100-2000 ms.
 
-The Evil Modding window selects a registered mod from a dropdown, then shows its categorized settings
-pages. Client and category names select glyphs from the shared Phosphor icon font in code; missing
-icon fonts fall back to text without reserving empty space.
+The Evil Modding window selects a registered mod from a dropdown, opens that mod's Home page, then
+shows its categorized settings pages. Mods without a custom Home page receive an overview with their
+version, registered category and page counts, and failed-page count. Client and category names select
+glyphs from the shared Phosphor icon font in code; a category named after its owning mod inherits the
+client glyph, and missing icon fonts fall back to text without reserving empty space.
 Addictol telemetry pages retain their configured order and Log Control remains last.
+Addictol's Home page shows the game runtime and live module outcomes, provides its documented project
+link, and answers the supported-runtime, configuration, and menu-toggle questions.
 Its default style, typography, scaling, search, navigation, header, footer, blur, and cursor
 match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's neutral mod registry.
 

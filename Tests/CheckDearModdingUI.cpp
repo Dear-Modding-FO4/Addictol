@@ -335,6 +335,102 @@ namespace vmm_tests
 				"same page ID in another client was rejected");
 		});
 
+		runner.test("clients can register only one home page", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(
+				registry, "home.mod", "Home Mod", fingerprint, state);
+			auto home = Page(
+				"home", "Home", nullptr, 100, DMUI_PAGE_KIND_HOME, state);
+			DMUI_PageHandle homeHandle{};
+			require(registry.RegisterPage(client, &home, &homeHandle) == DMUI_RESULT_OK,
+				"first home page was rejected");
+			require(homeHandle != DMUI_INVALID_PAGE_HANDLE,
+				"first home page received no handle");
+
+			auto second = Page(
+				"landing", "Landing", nullptr, -100, DMUI_PAGE_KIND_HOME, state);
+			DMUI_PageHandle secondHandle{ 9999 };
+			require(registry.RegisterPage(client, &second, &secondHandle) ==
+					DMUI_RESULT_DUPLICATE_PAGE_ID,
+				"second home page was accepted");
+			require(secondHandle == DMUI_INVALID_PAGE_HANDLE,
+				"rejected home page retained a handle");
+			require(registry.ConsumeDuplicateHomeWarning(client) &&
+					!registry.ConsumeDuplicateHomeWarning(client),
+				"second home page warning was not emitted exactly once");
+		});
+
+		runner.test("home pages lead navigation and become the client default", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(
+				registry, "landing.mod", "Landing Mod", fingerprint, state);
+			const auto settings = AddPage(
+				registry,
+				client,
+				"settings",
+				"Settings",
+				"General",
+				-1000,
+				DMUI_PAGE_KIND_SETTINGS,
+				state);
+			const auto home = AddPage(
+				registry,
+				client,
+				"home",
+				"Home",
+				nullptr,
+				1000,
+				DMUI_PAGE_KIND_HOME,
+				state);
+			require(registry.Freeze(), "home registry did not freeze");
+			require(registry.OrderedPages().front().handle == home,
+				"home page did not precede category pages");
+
+			const auto& navigation = registry.Navigation();
+			require(navigation.clients.size() == 1 &&
+					navigation.clients[0].home &&
+					navigation.clients[0].home->handle == home,
+				"home page was grouped into a category");
+			require(navigation.clients[0].categories.size() == 1 &&
+					navigation.clients[0].categories[0].pages[0].handle == settings,
+				"settings category changed around the home page");
+
+			ClientSelectionState selection{};
+			require(SelectClient(navigation, client, selection),
+				"client with home could not be selected");
+			require(selection.activePage == home,
+				"client selection did not default to home");
+		});
+
+		runner.test("clients without home pages receive a synthesized landing page", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(
+				registry, "automatic.mod", "Automatic", fingerprint, state);
+			require(registry.Freeze(), "empty client registry did not freeze");
+
+			const auto& navigation = registry.Navigation();
+			require(navigation.clients.size() == 1 &&
+					navigation.clients[0].handle == client,
+				"client without settings was omitted");
+			require(navigation.clients[0].home &&
+					navigation.clients[0].home->synthesized &&
+					navigation.clients[0].home->displayName == "Home",
+				"default home page was not synthesized");
+			require(navigation.clients[0].categories.empty(),
+				"synthesized home created a fake category");
+			require(navigation.clients[0].registeredPageCount == 0,
+				"synthesized home counted itself as client content");
+			require(registry.PageCount() == 1 &&
+					registry.HasSettingsPages(),
+				"synthesized home did not create usable modal navigation");
+		});
+
 		runner.test("registration copies strings and grows beyond the old capacity", [] {
 			const auto fingerprint = Fingerprint();
 			Registry registry{ fingerprint };
@@ -356,7 +452,7 @@ namespace vmm_tests
 					static_cast<int32_t>(index), DMUI_PAGE_KIND_SETTINGS, state);
 			}
 			require(registry.Freeze(), "registry did not freeze");
-			require(registry.PageCount() == 32, "dynamic registry retained a fixed capacity");
+			require(registry.PageCount() == 33, "dynamic registry retained a fixed capacity");
 			require(registry.OrderedPages().front().clientId == "copy.mod",
 				"client ID was not copied");
 			require(registry.OrderedPages().front().clientDisplayName == "Copy",
@@ -380,10 +476,16 @@ namespace vmm_tests
 				DMUI_PAGE_KIND_SETTINGS, state);
 			require(registry.Freeze(), "registry did not freeze");
 			const auto& pages = registry.OrderedPages();
-			require(pages[0].id == "first", "category ordering changed");
-			require(pages[1].id == "sorted", "sort-key ordering changed");
-			require(pages[2].id == "second", "host page ordering changed");
-			require(pages[3].id == "late", "host pages did not precede external pages");
+			require(pages[0].kind == DMUI_PAGE_KIND_HOME &&
+					pages[0].client == alpha,
+				"host home page was not ordered first");
+			require(pages[1].id == "first", "category ordering changed");
+			require(pages[2].id == "sorted", "sort-key ordering changed");
+			require(pages[3].id == "second", "host page ordering changed");
+			require(pages[4].kind == DMUI_PAGE_KIND_HOME &&
+					pages[4].client == zulu,
+				"external home page was not ordered first");
+			require(pages[5].id == "late", "host pages did not precede external pages");
 		});
 
 		runner.test("navigation groups clients categories and settings pages deterministically", [] {
@@ -437,8 +539,11 @@ namespace vmm_tests
 				"requested page was not selected");
 			require(ResolvePageSelection(navigation, overlay, second) == second,
 				"overlay request replaced the stable selection");
-			require(ResolvePageSelection(navigation, 9999, 9998) == first,
-				"invalid selection did not fall back to the first page");
+			require(navigation.clients[0].home.has_value(),
+				"client did not receive a synthesized home page");
+			require(ResolvePageSelection(navigation, 9999, 9998) ==
+					navigation.clients[0].home->handle,
+				"invalid selection did not fall back to the home page");
 		});
 
 		runner.test("icon names resolve to deterministic Phosphor glyphs", [] {
@@ -469,6 +574,13 @@ namespace vmm_tests
 					ResolveIconGlyph(IconKind::kCategory, "Diagnostics") ==
 					PhosphorGlyph::kTerminalWindow,
 				"known utility categories changed glyphs");
+			require(ResolveIconGlyph(IconKind::kCategory, "Unloaded") ==
+					PhosphorGlyph::kArchive &&
+					ResolveIconGlyph(IconKind::kCategory, "Other") ==
+					PhosphorGlyph::kDotsThreeCircle &&
+					ResolveIconGlyph(IconKind::kCategory, "Overlay") ==
+					PhosphorGlyph::kAppWindow,
+				"host categories did not resolve to dedicated glyphs");
 			require(ResolveIconGlyph(
 						IconKind::kClient,
 						"dear-modding.addictol") ==
@@ -478,6 +590,40 @@ namespace vmm_tests
 						"dear-modding.community-shaders") ==
 					PhosphorGlyph::kSun,
 				"known clients changed glyphs");
+			require(ResolveCategoryIconGlyph(
+						"Community Shaders",
+						"Community Shaders",
+						"dearmodding.community-shaders") ==
+					PhosphorGlyph::kSun &&
+					ResolveCategoryIconGlyph(
+						"Addictol",
+						"Addictol",
+						"dear-modding.addictol") ==
+					PhosphorGlyph::kPuzzlePiece,
+				"registered client-named categories did not inherit client glyphs");
+			require(ResolveCategoryIconGlyph(
+						"Dear.Modding-Addictol",
+						"Different Name",
+						"dear-modding.addictol") ==
+					PhosphorGlyph::kPuzzlePiece,
+				"client ID matching did not use the client glyph lookup");
+			require(ResolveCategoryIconGlyph(
+						"COMMUNITY--SHADERS!",
+						"Community Shaders",
+						"dearmodding.community-shaders") ==
+					PhosphorGlyph::kSun,
+				"client-named category normalization changed");
+			require(ResolveCategoryIconGlyph(
+						"Lighting",
+						"Community Shaders",
+						"dearmodding.community-shaders") ==
+					PhosphorGlyph::kSun &&
+					ResolveCategoryIconGlyph(
+						"Unknown",
+						"Community Shaders",
+						"dearmodding.community-shaders") ==
+					PhosphorGlyph::kQuestion,
+				"non-matching categories were affected by client naming");
 			require(ResolveIconGlyph(IconKind::kCategory, "Unknown") ==
 					PhosphorGlyph::kQuestion &&
 					ResolveIconGlyph(IconKind::kClient, "") ==
@@ -574,9 +720,11 @@ namespace vmm_tests
 			require(SelectClient(many, zulu, selection),
 				"many-client selection did not change");
 			require(selection.activeClient == zulu &&
-					selection.activePage == zuluPage &&
+					selection.activePage == many.FindClient(zulu)->home->handle &&
 					selection.search.empty(),
-				"selection change did not reset page and search");
+				"selection change did not select home and reset search");
+			require(selection.activePage != zuluPage,
+				"selection change chose a category page before home");
 		});
 
 		runner.test("one-page navigation and failed-page presentation remain stable", [] {
@@ -590,7 +738,11 @@ namespace vmm_tests
 			const auto& navigation = registry.Navigation();
 			require(navigation.clients.size() == 1, "single client was omitted");
 			require(navigation.clients[0].categories.size() == 1, "single category was omitted");
-			require(navigation.FirstPage() == page, "single page was not the fallback");
+			require(navigation.clients[0].home.has_value() &&
+					navigation.clients[0].home->synthesized,
+				"single-page client did not receive a synthesized home");
+			require(navigation.FirstPage() == navigation.clients[0].home->handle,
+				"synthesized home was not the fallback");
 			require(DecidePagePresentation(navigation.FindPage(page), false) ==
 					PagePresentation::kContent,
 				"healthy page did not present content");
@@ -998,22 +1150,26 @@ namespace vmm_tests
 			readyRegistry.NotifyReady(info);
 			require(readyRegistry.PageFailed(readyPage),
 				"a client with a throwing ready callback remained drawable");
+			require(readyRegistry.Navigation().clients[0].home &&
+					!readyRegistry.PageFailed(
+						readyRegistry.Navigation().clients[0].home->handle),
+				"host-owned landing page was quarantined with client callbacks");
 
 			CallbackState drawState;
 			Registry drawRegistry{ fingerprint };
 			const auto drawClient = AddClient(
 				drawRegistry, "throw-draw.mod", "Throw Draw", fingerprint, drawState);
 			auto drawPageDescriptor = Page(
-				"settings", "Settings", "General", 0, DMUI_PAGE_KIND_SETTINGS, drawState);
+				"home", "Home", nullptr, 0, DMUI_PAGE_KIND_HOME, drawState);
 			drawPageDescriptor.draw = &ThrowDraw;
 			DMUI_PageHandle drawPage{};
 			require(drawRegistry.RegisterPage(
 						drawClient, &drawPageDescriptor, &drawPage) == DMUI_RESULT_OK,
 				"throwing draw page was not registered");
 			require(drawRegistry.InvokePage(drawPage) == DMUI_RESULT_CALLBACK_FAILED,
-				"a throwing page escaped its host guard");
+				"a throwing home page escaped its host guard");
 			require(drawRegistry.InvokePage(drawPage) == DMUI_RESULT_CALLBACK_FAILED,
-				"a faulted page was invoked again");
+				"a faulted home page was invoked again");
 
 			CallbackState unavailableState;
 			CallbackState healthyState;
@@ -1042,10 +1198,16 @@ namespace vmm_tests
 			const auto client = AddClient(registry, "frames.mod", "Frames", fingerprint, state);
 			const auto settings = AddPage(registry, client, "settings", "Settings", "General", 0,
 				DMUI_PAGE_KIND_SETTINGS, state);
+			const auto home = AddPage(registry, client, "home", "Home", nullptr, 0,
+				DMUI_PAGE_KIND_HOME, state);
 			const auto overlay = AddPage(registry, client, "overlay", "Overlay", "HUD", 0,
 				DMUI_PAGE_KIND_OVERLAY, state);
 			require(registry.RequestFrame(client, settings) == DMUI_RESULT_INVALID_PAGE_KIND,
 				"settings page requested overlay frames");
+			require(registry.RequestFrame(client, home) == DMUI_RESULT_INVALID_PAGE_KIND &&
+					registry.ReleaseFrame(client, home) == DMUI_RESULT_INVALID_PAGE_KIND &&
+					!registry.IsFrameDemanded(home),
+				"home page participated in overlay frame demand");
 			require(registry.RequestFrame(client, overlay) == DMUI_RESULT_OK,
 				"first overlay request failed");
 			require(registry.RequestFrame(client, overlay) == DMUI_RESULT_OK,
