@@ -3,6 +3,8 @@
 #include <REX/REX.h>
 
 #include <atomic>
+#include <mutex>
+#include <optional>
 
 namespace Addictol::DearModdingUI::HostSettings
 {
@@ -34,18 +36,26 @@ namespace Addictol::DearModdingUI::HostSettings
 			std::string{ kDefaultBodyFontFamily }
 		};
 		std::atomic<bool> g_panelOpen{ false };
+		std::atomic<uint64_t> g_panelRevision{ 0 };
+		std::mutex g_previewMutex;
+		std::optional<HostInterfacePreviewSettings> g_preview;
 
 		void StorePanelEvent(
 			bool a_menuVisible,
 			HostSettingsPanelEvent a_event) noexcept
 		{
 			const auto current = g_panelOpen.load(std::memory_order_acquire);
-			g_panelOpen.store(
-				DecideHostSettingsPanelOpen(
-					current,
-					a_menuVisible,
-					a_event),
-				std::memory_order_release);
+			const auto next = DecideHostSettingsPanelOpen(
+				current,
+				a_menuVisible,
+				a_event);
+			const std::scoped_lock lock{ g_previewMutex };
+			if (current && !next)
+			{
+				g_preview.reset();
+				g_panelRevision.fetch_add(1, std::memory_order_release);
+			}
+			g_panelOpen.store(next, std::memory_order_release);
 		}
 	}
 
@@ -60,6 +70,16 @@ namespace Addictol::DearModdingUI::HostSettings
 			fAdditionalMenuUiScale.GetValue(),
 			sAdditionalMenuBodyFontFamily.GetValue()
 		});
+	}
+
+	HostInterfacePreviewSettings EffectivePreview() noexcept
+	{
+		{
+			const std::scoped_lock lock{ g_previewMutex };
+			if (g_preview)
+				return *g_preview;
+		}
+		return PreviewHostInterfaceSettings(Current());
 	}
 
 	void Apply(HostInterfaceSettings a_settings) noexcept
@@ -89,9 +109,16 @@ namespace Addictol::DearModdingUI::HostSettings
 		}
 	}
 
-	void Reset() noexcept
+	void SetPreview(
+		HostInterfacePreviewSettings a_settings,
+		uint64_t a_panelRevision) noexcept
 	{
-		Apply(DefaultHostInterfaceSettings());
+		const std::scoped_lock lock{ g_previewMutex };
+		if (!g_panelOpen.load(std::memory_order_acquire) ||
+			g_panelRevision.load(std::memory_order_acquire) !=
+				a_panelRevision)
+			return;
+		g_preview = a_settings;
 	}
 
 	void NotifyMenuVisible(bool a_visible) noexcept
@@ -123,5 +150,10 @@ namespace Addictol::DearModdingUI::HostSettings
 	bool IsPanelOpen() noexcept
 	{
 		return g_panelOpen.load(std::memory_order_acquire);
+	}
+
+	uint64_t PanelRevision() noexcept
+	{
+		return g_panelRevision.load(std::memory_order_acquire);
 	}
 }

@@ -43,6 +43,18 @@ namespace Addictol::DearModdingUI
 			const HostInterfaceSettings&) const noexcept = default;
 	};
 
+	struct HostInterfacePreviewSettings
+	{
+		Theme::IconColorMode iconColorMode{ Theme::IconColorMode::kColored };
+		HostAccentColor accentColor{};
+		float windowBackgroundOpacity{ kDefaultWindowBackgroundOpacity };
+		bool backgroundBlur{ true };
+		float backgroundBlurStrength{ kDefaultBackgroundBlurStrength };
+
+		[[nodiscard]] bool operator==(
+			const HostInterfacePreviewSettings&) const noexcept = default;
+	};
+
 	struct PersistedHostInterfaceSettings
 	{
 		bool monochromeIcons{ false };
@@ -223,6 +235,18 @@ namespace Addictol::DearModdingUI
 		return {};
 	}
 
+	[[nodiscard]] constexpr HostInterfacePreviewSettings PreviewHostInterfaceSettings(
+		const HostInterfaceSettings& a_settings) noexcept
+	{
+		return {
+			a_settings.iconColorMode,
+			a_settings.accentColor,
+			a_settings.windowBackgroundOpacity,
+			a_settings.backgroundBlur,
+			a_settings.backgroundBlurStrength
+		};
+	}
+
 	enum class HostSettingsPanelEvent : uint32_t
 	{
 		kNone,
@@ -275,12 +299,16 @@ namespace Addictol::DearModdingUI
 	namespace HostSettings
 	{
 		[[nodiscard]] HostInterfaceSettings Current() noexcept;
+		[[nodiscard]] HostInterfacePreviewSettings EffectivePreview() noexcept;
 		void Apply(HostInterfaceSettings a_settings) noexcept;
-		void Reset() noexcept;
+		void SetPreview(
+			HostInterfacePreviewSettings a_settings,
+			uint64_t a_panelRevision) noexcept;
 		void NotifyMenuVisible(bool a_visible) noexcept;
 		void TogglePanel(bool a_menuVisible) noexcept;
 		void NotifyModSelected() noexcept;
 		void DismissPanel() noexcept;
 		[[nodiscard]] bool IsPanelOpen() noexcept;
+		[[nodiscard]] uint64_t PanelRevision() noexcept;
 	}
 }

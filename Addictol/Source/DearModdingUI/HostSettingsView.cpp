@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <cstdint>
 #include <string_view>
-#include <utility>
 
 namespace Addictol::DearModdingUI
 {
@@ -56,6 +56,8 @@ namespace Addictol::DearModdingUI
 				{ 0xCC, 0x79, 0xA7 }
 			}
 		};
+		HostSettingsDraftState g_settingsDraft;
+		uint64_t g_observedPanelRevision{ 0 };
 
 		[[nodiscard]] float ControlWidth() noexcept
 		{
@@ -71,10 +73,39 @@ namespace Addictol::DearModdingUI
 			ImGui::Spacing();
 		}
 
-		void ApplySettings(HostInterfaceSettings a_settings) noexcept
+		void PreviewDraft() noexcept
 		{
-			HostSettings::Apply(std::move(a_settings));
+			HostSettings::SetPreview(
+				PreviewHostInterfaceSettings(g_settingsDraft.draft),
+				g_observedPanelRevision);
 			Theme::ApplyStyle();
+		}
+
+		void EnsureDraft() noexcept
+		{
+			const auto revision = HostSettings::PanelRevision();
+			if (g_settingsDraft.active &&
+				g_observedPanelRevision == revision)
+				return;
+
+			if (g_settingsDraft.active)
+				LeaveHostSettingsDraft(g_settingsDraft);
+			g_settingsDraft = BeginHostSettingsDraft(
+				HostSettings::Current());
+			g_observedPanelRevision = revision;
+			PreviewDraft();
+		}
+
+		void ApplyDraft() noexcept
+		{
+			auto commit = ApplyHostSettingsDraft(g_settingsDraft);
+			if (!commit.settings)
+				return;
+
+			HostSettings::Apply(*commit.settings);
+			g_settingsDraft = BeginHostSettingsDraft(
+				HostSettings::Current());
+			PreviewDraft();
 		}
 
 		void DrawAccentPresets(
@@ -108,7 +139,7 @@ namespace Addictol::DearModdingUI
 		void DrawAppearance() noexcept
 		{
 			DrawSectionHeader("Appearance");
-			auto settings = HostSettings::Current();
+			auto& settings = g_settingsDraft.draft;
 			auto changed = false;
 
 			ImGui::TextUnformatted("Accent color");
@@ -184,75 +215,125 @@ namespace Addictol::DearModdingUI
 				"Adjusts the per-frame blur sample spread without reallocating graphics resources.");
 
 			if (changed)
-				ApplySettings(std::move(settings));
+				PreviewDraft();
 		}
 
 		void DrawReadability() noexcept
 		{
 			DrawSectionHeader("Readability");
-			auto settings = HostSettings::Current();
-			auto changed = false;
+			auto& settings = g_settingsDraft.draft;
 
 			ImGui::SetNextItemWidth(ControlWidth());
-			if (ImGui::SliderFloat(
-					"UI scale",
-					&settings.uiScale,
-					Theme::kMinUserScale,
-					Theme::kMaxUserScale,
-					"%.2fx",
-					ImGuiSliderFlags_AlwaysClamp))
-				changed = true;
+			ImGui::SliderFloat(
+				"UI scale (requires Apply)",
+				&settings.uiScale,
+				Theme::kMinUserScale,
+				Theme::kMaxUserScale,
+				"%.2fx",
+				ImGuiSliderFlags_AlwaysClamp);
 			DrawHelp(
-				"Multiplies resolution-derived sizing; fonts rebuild safely before the next frame.");
+				"Multiplies resolution-derived sizing; Apply rebuilds typography once before the next frame.");
+			if (settings.uiScale != g_settingsDraft.committed.uiScale)
+			{
+				ImGui::TextColored(
+					Theme::colors::kWarning,
+					"Pending UI scale: %.2fx",
+					settings.uiScale);
+				ImGui::Spacing();
+			}
 
 			const auto& families = Theme::AvailableBodyFontFamilies();
 			const auto resolvedFamily =
 				Theme::ResolveBodyFontFamily(settings.bodyFontFamily);
 			ImGui::SetNextItemWidth(ControlWidth());
 			if (ImGui::BeginCombo(
-					"Body font family",
+					"Body font family (requires Apply)",
 					resolvedFamily.data()))
 			{
 				for (const auto& family : families)
 				{
 					const auto selected = family == resolvedFamily;
 					if (ImGui::Selectable(family.c_str(), selected))
-					{
 						settings.bodyFontFamily = family;
-						changed = true;
-					}
 					if (selected)
 						ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
 			DrawHelp(
-				"Lists font-family folders in Data/F4SE/Plugins/DearModdingUI/Fonts; a missing family falls back to Jost.");
+				"Lists font-family folders in Data/F4SE/Plugins/DearModdingUI/Fonts; Apply rebuilds the selected family once.");
+			if (settings.bodyFontFamily !=
+				g_settingsDraft.committed.bodyFontFamily)
+			{
+				ImGui::TextColored(
+					Theme::colors::kWarning,
+					"Pending body font: %s",
+					settings.bodyFontFamily.c_str());
+				ImGui::Spacing();
+			}
 			const auto effectiveFamily = Theme::EffectiveBodyFontFamily();
 			ImGui::TextDisabled(
-				"Effective this frame: %.*s",
+				"Applied this frame: %.*s",
 				static_cast<int>(effectiveFamily.size()),
 				effectiveFamily.data());
 			ImGui::Spacing();
-
-			if (changed)
-				ApplySettings(std::move(settings));
 		}
 
-		void DrawReset() noexcept
+		void DrawDraftStatus() noexcept
+		{
+			if (!HostSettingsDraftDiffers(g_settingsDraft))
+			{
+				ImGui::TextDisabled("No unapplied interface changes.");
+				ImGui::Spacing();
+				return;
+			}
+
+			ImGui::TextColored(
+				Theme::colors::kWarning,
+				"Unapplied interface changes");
+			if (HostSettingsDraftRequiresAtlasRebuild(
+					g_settingsDraft.committed,
+					g_settingsDraft.draft))
+			{
+				ImGui::TextWrapped(
+					"Apply will save these settings and rebuild typography once.");
+			}
+			else
+			{
+				ImGui::TextWrapped(
+					"Appearance is previewed locally. Apply to save it.");
+			}
+			ImGui::Spacing();
+		}
+
+		void DrawBehaviorAndReset() noexcept
 		{
 			DrawSectionHeader("Behavior and reset");
 			ImGui::TextWrapped(
-				"Interface changes apply immediately and persist in "
-				"Data/F4SE/Plugins/AddictolCustom.toml.");
+				"Apply persists the complete draft once to "
+				"Data/F4SE/Plugins/AddictolCustom.toml. Revert or leaving this view discards it.");
+			ImGui::Spacing();
+
+			const auto changed =
+				HostSettingsDraftDiffers(g_settingsDraft);
+			ImGui::BeginDisabled(!changed);
+			if (ImGui::Button("Apply"))
+				ApplyDraft();
+			ImGui::SameLine();
+			if (ImGui::Button("Revert"))
+			{
+				RevertHostSettingsDraft(g_settingsDraft);
+				PreviewDraft();
+			}
+			ImGui::EndDisabled();
 			ImGui::Spacing();
 			if (ImGui::Button("Reset all interface settings"))
 			{
-				HostSettings::Reset();
-				Theme::ApplyStyle();
+				ResetHostSettingsDraft(g_settingsDraft);
+				PreviewDraft();
 			}
 			DrawHelp(
-				"Restores the shipped accent, icon mode, opacity, blur, scale, and Jost body font.");
+				"Loads shipped defaults into the draft. Use Apply to save them.");
 		}
 
 		void DrawReadOnlyHostFact(
@@ -310,7 +391,7 @@ namespace Addictol::DearModdingUI
 			DrawReadOnlyHostFact(
 				"Resolved typography size",
 				typography,
-				"Derived from the backbuffer height and the editable UI scale at a frame boundary.");
+				"Derived from the backbuffer height and the applied UI scale at a frame boundary.");
 
 			char scale[32]{};
 			std::snprintf(
@@ -327,11 +408,13 @@ namespace Addictol::DearModdingUI
 
 	void DrawHostSettingsControls() noexcept
 	{
+		EnsureDraft();
+		DrawDraftStatus();
 		DrawAppearance();
 		ImGui::Spacing();
 		DrawReadability();
 		ImGui::Spacing();
-		DrawReset();
+		DrawBehaviorAndReset();
 		ImGui::Spacing();
 		DrawReadOnlyFacts();
 	}

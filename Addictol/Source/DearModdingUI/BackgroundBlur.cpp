@@ -778,7 +778,7 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 		ID3D11Texture2D* a_backBuffer,
 		ID3D11RenderTargetView* a_backBufferView) noexcept
 	{
-		const auto settings = HostSettings::Current();
+		const auto settings = HostSettings::EffectivePreview();
 		if (!settings.backgroundBlur ||
 			!g_region.valid ||
 			!a_device ||

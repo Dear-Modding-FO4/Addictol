@@ -281,7 +281,8 @@ namespace Addictol::DearModdingUI::Theme
 	{
 		ImVec4 Accent() noexcept
 		{
-			return HostAccentToImVec4(HostSettings::Current().accentColor);
+			return HostAccentToImVec4(
+				HostSettings::EffectivePreview().accentColor);
 		}
 
 		ImVec4 AccentMuted() noexcept
@@ -319,7 +320,7 @@ namespace Addictol::DearModdingUI::Theme
 		style.HoverDelayNormal = kTooltipHoverDelay;
 		style.FontScaleMain = std::exp2(kDefaultGlobalScale);
 
-		const auto settings = HostSettings::Current();
+		const auto settings = HostSettings::EffectivePreview();
 		const auto palette = MakeEffectivePalette(
 			HostAccentToImVec4(settings.accentColor),
 			settings.windowBackgroundOpacity);
@@ -434,7 +435,7 @@ namespace Addictol::DearModdingUI::Theme
 
 	ImVec4 IconTint() noexcept
 	{
-		const auto settings = HostSettings::Current();
+		const auto settings = HostSettings::EffectivePreview();
 		return ResolveIconTint(
 			settings.iconColorMode,
 			HostAccentToImVec4(settings.accentColor),

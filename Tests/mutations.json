@@ -374,5 +374,21 @@
     "replace": "if (false)",
     "check": "page action row reserves space only for registered actions",
     "message": "client with no actions reserved title-row space"
+  },
+  {
+    "name": "unchanged host settings drafts do not commit",
+    "target": "Addictol/Include/DearModdingUI/HostSettingsView.h",
+    "find": "if (!HostSettingsDraftDiffers(a_state))",
+    "replace": "if (false)",
+    "check": "host settings draft applies all fields once",
+    "message": "unchanged settings draft produced a commit"
+  },
+  {
+    "name": "host settings atlas changes use disjunction",
+    "target": "Addictol/Include/DearModdingUI/HostSettingsView.h",
+    "find": "return a_draft.uiScale != a_committed.uiScale ||\r\n\t\t\ta_draft.bodyFontFamily != a_committed.bodyFontFamily;",
+    "replace": "return a_draft.uiScale != a_committed.uiScale &&\r\n\t\t\ta_draft.bodyFontFamily != a_committed.bodyFontFamily;",
+    "check": "host settings atlas rebuild predicate is exact",
+    "message": "UI scale change did not request an atlas rebuild"
   }
 ]

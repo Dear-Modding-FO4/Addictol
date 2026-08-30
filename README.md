@@ -106,11 +106,13 @@ The footer gear toggles a host-owned Interface Settings view in the normal scrol
 never adds an entry to the mod dropdown. Its title-row close button, the footer gear, Escape, or
 selecting a mod returns to the active mod page. The view provides a full accent picker with
 color-vision-friendly presets, colored or monochrome icon tint, window opacity, background blur and
-strength, accessibility UI scale, and a body-font family selector. Accent changes retint the palette
-and Phosphor glyphs immediately. Font families are discovered from subfolders under
-`Data/F4SE/Plugins/DearModdingUI/Fonts`; missing or invalid families fall back to Jost. Atkinson
-Hyperlegible is included for low-vision readability. The configured toggle key and refresh interval,
-resolved typography size, and effective UI scale remain visible as read-only facts.
+strength, accessibility UI scale, and a body-font family selector. Appearance options preview without
+writing the configuration; Apply persists the complete draft once, while Revert or leaving the view
+discards it. UI scale and body-font changes remain pending until Apply, then rebuild the font atlas
+once. Font families are discovered from subfolders under `Data/F4SE/Plugins/DearModdingUI/Fonts`;
+missing or invalid families fall back to Jost. Atkinson Hyperlegible is included for low-vision
+readability. The configured toggle key and refresh interval, resolved typography size, and effective
+UI scale remain visible as read-only facts.
 
 Editable interface values persist through `[Additional] bMenuMonochromeIcons`, `sMenuAccentColor`,
 `fMenuWindowOpacity`, `bMenuBackgroundBlur`, `fMenuBackgroundBlurStrength`, `fMenuUiScale`, and

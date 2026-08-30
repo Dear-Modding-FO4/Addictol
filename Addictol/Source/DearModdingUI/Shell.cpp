@@ -636,6 +636,7 @@ namespace Addictol::DearModdingUI
 							{ 0.0f, rowHeight }))
 					{
 						HostSettings::NotifyModSelected();
+						Theme::ApplyStyle();
 						(void)SelectClient(a_model, client.handle, a_state);
 					}
 					const auto itemMin = ImGui::GetItemRectMin();
@@ -998,7 +999,7 @@ namespace Addictol::DearModdingUI
 						IconColor(ImGui::GetColorU32(ImGuiCol_Text)) :
 						ImGui::GetColorU32(ImGuiCol_Text));
 				ImGui::TextDisabled(
-					"Host-owned accessibility and appearance options apply immediately.");
+					"Preview appearance changes, then Apply to save the complete draft.");
 				ImGui::Spacing();
 				ImGui::SeparatorEx(
 					ImGuiSeparatorFlags_Horizontal,
@@ -1149,10 +1150,10 @@ namespace Addictol::DearModdingUI
 
 	void DrawShell() noexcept
 	{
-		Theme::ApplyStyle();
 		if (HostSettings::IsPanelOpen() &&
 			ImGui::IsKeyPressed(ImGuiKey_Escape, false))
 			HostSettings::DismissPanel();
+		Theme::ApplyStyle();
 		const auto& model = Navigation();
 		auto& state = State();
 		const auto requested = SelectedPage();

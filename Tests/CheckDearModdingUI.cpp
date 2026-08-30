@@ -2,6 +2,7 @@
 #include "../Addictol/Include/DearModdingUI/CarrierMenu.h"
 #include "../Addictol/Include/DearModdingUI/FontCatalog.h"
 #include "../Addictol/Include/DearModdingUI/HostSettings.h"
+#include "../Addictol/Include/DearModdingUI/HostSettingsView.h"
 #include "../Addictol/Include/DearModdingUI/IconGlyphs.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
@@ -940,6 +941,119 @@ namespace vmm_tests
 							true,
 							HostSettingsPanelEvent::kNone),
 				"settings reopened with the menu");
+		});
+
+		runner.test("host settings draft detects unapplied changes", [] {
+			const auto committed = DefaultHostInterfaceSettings();
+			auto state = BeginHostSettingsDraft(committed);
+			require(state.active, "settings draft did not activate");
+			require(!HostSettingsDraftDiffers(state),
+				"unchanged settings draft was marked dirty");
+
+			state.draft.accentColor = { 0x00, 0x72, 0xB2 };
+			require(HostSettingsDraftDiffers(state),
+				"changed settings draft was not marked dirty");
+			require(state.committed == committed,
+				"editing the draft changed committed settings");
+		});
+
+		runner.test("host settings preview excludes typography", [] {
+			const auto committed = DefaultHostInterfaceSettings();
+			auto draft = committed;
+			draft.uiScale = 1.50f;
+			draft.bodyFontFamily = "Atkinson Hyperlegible";
+			require(PreviewHostInterfaceSettings(draft) ==
+					PreviewHostInterfaceSettings(committed),
+				"typography settings leaked into the live preview");
+
+			draft.accentColor = { 0x00, 0x72, 0xB2 };
+			require(PreviewHostInterfaceSettings(draft) !=
+					PreviewHostInterfaceSettings(committed),
+				"appearance change was omitted from the live preview");
+		});
+
+		runner.test("host settings draft applies all fields once", [] {
+			auto state = BeginHostSettingsDraft(
+				DefaultHostInterfaceSettings());
+			const auto unchanged = ApplyHostSettingsDraft(state);
+			require(!unchanged.settings,
+				"unchanged settings draft produced a commit");
+
+			const HostInterfaceSettings changed{
+				Theme::IconColorMode::kMonochrome,
+				{ 0xD5, 0x5E, 0x00 },
+				0.80f,
+				false,
+				0.75f,
+				1.75f,
+				"Atkinson Hyperlegible"
+			};
+			state.draft = changed;
+			const auto applied = ApplyHostSettingsDraft(state);
+			require(applied.settings && *applied.settings == changed,
+				"settings draft did not commit every changed field");
+			require(state.committed == changed &&
+					!HostSettingsDraftDiffers(state),
+				"applied settings draft remained dirty");
+
+			const auto repeated = ApplyHostSettingsDraft(state);
+			require(!repeated.settings,
+				"applied settings draft committed more than once");
+		});
+
+		runner.test("host settings draft reverts leaves and resets", [] {
+			const HostInterfaceSettings committed{
+				Theme::IconColorMode::kMonochrome,
+				{ 0x00, 0x72, 0xB2 },
+				0.80f,
+				false,
+				0.75f,
+				1.50f,
+				"Atkinson Hyperlegible"
+			};
+			auto state = BeginHostSettingsDraft(committed);
+			state.draft = DefaultHostInterfaceSettings();
+			RevertHostSettingsDraft(state);
+			require(state.draft == committed &&
+					!HostSettingsDraftDiffers(state),
+				"revert did not restore committed preview fields");
+
+			state.draft.accentColor = { 0xE6, 0x9F, 0x00 };
+			LeaveHostSettingsDraft(state);
+			require(!state.active && state.draft == committed,
+				"leaving settings did not discard the draft");
+
+			state = BeginHostSettingsDraft(committed);
+			ResetHostSettingsDraft(state);
+			require(state.draft == DefaultHostInterfaceSettings(),
+				"reset did not populate shipped defaults");
+			require(state.committed == committed &&
+					HostSettingsDraftDiffers(state),
+				"reset committed instead of updating the draft");
+		});
+
+		runner.test("host settings atlas rebuild predicate is exact", [] {
+			const auto committed = DefaultHostInterfaceSettings();
+			auto draft = committed;
+			require(!HostSettingsDraftRequiresAtlasRebuild(
+						 committed, draft),
+				"unchanged settings requested an atlas rebuild");
+
+			draft.uiScale = 1.25f;
+			require(HostSettingsDraftRequiresAtlasRebuild(
+						committed, draft),
+				"UI scale change did not request an atlas rebuild");
+
+			draft = committed;
+			draft.bodyFontFamily = "Atkinson Hyperlegible";
+			require(HostSettingsDraftRequiresAtlasRebuild(
+						committed, draft),
+				"font family change did not request an atlas rebuild");
+
+			draft.uiScale = 1.25f;
+			require(HostSettingsDraftRequiresAtlasRebuild(
+						committed, draft),
+				"combined typography changes did not request an atlas rebuild");
 		});
 
 		runner.test("host settings persistence round trips every stored value", [] {
