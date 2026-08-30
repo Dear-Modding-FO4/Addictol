@@ -4,6 +4,7 @@
 #include <DearModdingUI/Shell.h>
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuHome.h>
+#include <Menu/AdMenuSettings.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Core/AdUtils.h>
 #include <Menu/AdMenuLogControl.h>
@@ -114,9 +115,12 @@ namespace Addictol
 		void DrawSink() noexcept
 		{
 			const auto start = ReadQpc();
+			Menu::BeginSettingsPageFrame();
 			DearModdingUI::DrawDemandedOverlays();
 			if (DearModdingUI::IsMenuVisible())
 				DearModdingUI::DrawShell();
+			Menu::EndSettingsPageFrame(
+				DearModdingUI::IsMenuVisible());
 			if (!DearModdingUI::IsMenuVisible())
 				PlatformImgui::SetDrawingEnabled(false);
 			s_lastDrawMs = QpcToMilliseconds(ReadQpc() - start, s_qpcFrequency);
@@ -133,6 +137,8 @@ namespace Addictol
 				return false;
 
 			const auto result = DearModdingUI::SetMenuVisible(decision.open);
+			if (result == DMUI_RESULT_OK && !decision.open)
+				Menu::CloseSettingsPage();
 			if (result == DMUI_RESULT_OK && decision.open)
 				s_openGeneration.fetch_add(1, std::memory_order_acq_rel);
 			PlatformImgui::SetDrawingEnabled(result == DMUI_RESULT_OK && decision.open);
@@ -241,6 +247,28 @@ namespace Addictol
 			REX::ERROR(
 				"Menu: Addictol home page registration failed, result {}."sv,
 				homeResult);
+			return false;
+		}
+
+		const DMUI_PageDescriptor settings{
+			sizeof(DMUI_PageDescriptor),
+			"settings",
+			"Settings",
+			"Addictol",
+			"Configure Addictol fixes, performance, visuals, gameplay, and diagnostics.",
+			100,
+			DMUI_PAGE_KIND_SETTINGS,
+			&DrawSettingsPage,
+			nullptr
+		};
+		DMUI_PageHandle settingsPage{ DMUI_INVALID_PAGE_HANDLE };
+		const auto settingsResult = DearModdingUI::HostAPI().registerPage(
+			s_client, &settings, &settingsPage);
+		if (settingsResult != DMUI_RESULT_OK)
+		{
+			REX::ERROR(
+				"Menu: Addictol settings page registration failed, result {}."sv,
+				settingsResult);
 			return false;
 		}
 		s_requested.store(true, std::memory_order_release);

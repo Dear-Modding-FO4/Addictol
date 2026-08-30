@@ -26,6 +26,11 @@ namespace Addictol::DearModdingUI
 		inline constexpr char32_t kClipboardText{ 0xE198 };
 		inline constexpr char32_t kDotsThreeCircle{ 0xE200 };
 		inline constexpr char32_t kGear{ 0xE270 };
+		inline constexpr char32_t kGameController{ 0xE26E };
+		inline constexpr char32_t kMonitor{ 0xE32E };
+		inline constexpr char32_t kPalette{ 0xE6C8 };
+		inline constexpr char32_t kShieldCheck{ 0xE40C };
+		inline constexpr char32_t kSpeakerHigh{ 0xE44A };
 		inline constexpr char32_t kSun{ 0xE472 };
 		inline constexpr char32_t kTrash{ 0xE4A6 };
 		inline constexpr char32_t kX{ 0xE4F6 };
@@ -47,6 +52,9 @@ namespace Addictol::DearModdingUI
 		IconGlyphMapping{ "compatibility", PhosphorGlyph::kPuzzlePiece },
 		IconGlyphMapping{ "dev-tools", PhosphorGlyph::kTerminalWindow },
 		IconGlyphMapping{ "diagnostics", PhosphorGlyph::kTerminalWindow },
+		IconGlyphMapping{ "audio", PhosphorGlyph::kSpeakerHigh },
+		IconGlyphMapping{ "gameplay", PhosphorGlyph::kGameController },
+		IconGlyphMapping{ "interface", PhosphorGlyph::kMonitor },
 		IconGlyphMapping{ "lighting", PhosphorGlyph::kSun },
 		IconGlyphMapping{ "misc", PhosphorGlyph::kDotsThreeCircle },
 		IconGlyphMapping{ "other", PhosphorGlyph::kDotsThreeCircle },
@@ -54,6 +62,8 @@ namespace Addictol::DearModdingUI
 		IconGlyphMapping{ "performance", PhosphorGlyph::kGauge },
 		IconGlyphMapping{ "post-process", PhosphorGlyph::kMagicWand },
 		IconGlyphMapping{ "postprocess", PhosphorGlyph::kMagicWand },
+		IconGlyphMapping{ "stability", PhosphorGlyph::kShieldCheck },
+		IconGlyphMapping{ "visuals", PhosphorGlyph::kPalette },
 		IconGlyphMapping{ "unloaded", PhosphorGlyph::kArchive }
 	};
 

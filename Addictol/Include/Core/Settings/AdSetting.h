@@ -32,6 +32,18 @@ namespace Addictol
 		kNextLaunch
 	};
 
+	enum class SettingDisplayCategory : uint8_t
+	{
+		kStability,
+		kPerformance,
+		kVisuals,
+		kAudio,
+		kGameplay,
+		kInterface,
+		kDiagnostics,
+		kCount
+	};
+
 	struct SettingNumericRange
 	{
 		std::optional<double> minimum;
@@ -45,6 +57,11 @@ namespace Addictol
 	public:
 		[[nodiscard]] std::string_view Section() const noexcept { return m_section; }
 		[[nodiscard]] std::string_view Key() const noexcept { return m_key; }
+		[[nodiscard]] std::string_view DisplayName() const noexcept { return m_displayName; }
+		[[nodiscard]] SettingDisplayCategory DisplayCategory() const noexcept
+		{
+			return m_displayCategory;
+		}
 		[[nodiscard]] SettingValueType Type() const noexcept { return m_type; }
 		[[nodiscard]] SettingValue DefaultValue() const;
 		[[nodiscard]] SettingValue Value() const;
@@ -66,6 +83,7 @@ namespace Addictol
 		SettingEntry(
 			std::string_view a_section,
 			std::string_view a_key,
+			SettingDisplayCategory a_displayCategory,
 			SettingValueType a_type,
 			std::string_view a_description,
 			SettingApplyTiming a_applyTiming,
@@ -77,6 +95,8 @@ namespace Addictol
 
 		std::string m_section;
 		std::string m_key;
+		std::string m_displayName;
+		SettingDisplayCategory m_displayCategory;
 		SettingValueType m_type;
 		std::string m_description;
 		SettingApplyTiming m_applyTiming;
@@ -203,6 +223,7 @@ namespace Addictol
 		TomlSetting(
 			std::string_view a_section,
 			std::string_view a_key,
+			SettingDisplayCategory a_displayCategory,
 			T a_default,
 			std::string_view a_description,
 			SettingApplyTiming a_applyTiming,
@@ -212,6 +233,7 @@ namespace Addictol
 			SettingRegistry::GetSingleton().Register({
 				a_section,
 				a_key,
+				a_displayCategory,
 				ValueType(),
 				a_description,
 				a_applyTiming,

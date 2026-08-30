@@ -705,6 +705,18 @@ namespace vmm_tests
 					ResolveIconGlyph(IconKind::kCategory, "Overlay") ==
 					PhosphorGlyph::kAppWindow,
 				"host categories did not resolve to dedicated glyphs");
+			require(
+				ResolveIconGlyph(IconKind::kCategory, "Stability") ==
+						PhosphorGlyph::kShieldCheck &&
+					ResolveIconGlyph(IconKind::kCategory, "Visuals") ==
+						PhosphorGlyph::kPalette &&
+					ResolveIconGlyph(IconKind::kCategory, "Audio") ==
+						PhosphorGlyph::kSpeakerHigh &&
+					ResolveIconGlyph(IconKind::kCategory, "Gameplay") ==
+						PhosphorGlyph::kGameController &&
+					ResolveIconGlyph(IconKind::kCategory, "Interface") ==
+						PhosphorGlyph::kMonitor,
+				"settings categories did not resolve to dedicated glyphs");
 			require(ResolveIconGlyph(
 						IconKind::kClient,
 						"dear-modding.addictol") ==

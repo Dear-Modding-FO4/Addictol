@@ -1,10 +1,14 @@
 #include <DearModdingUI/HostSettings.h>
 
+#include <Core/Settings/AdSettingPersistence.h>
+
 #include <REX/REX.h>
 
+#include <algorithm>
 #include <atomic>
 #include <mutex>
 #include <optional>
+#include <utility>
 
 namespace Addictol::DearModdingUI::HostSettings
 {
@@ -73,22 +77,32 @@ namespace Addictol::DearModdingUI::HostSettings
 			return;
 
 		const auto persisted = EncodeHostInterfaceSettings(a_settings);
-		bAdditionalMenuMonochromeIcons.SetValue(persisted.monochromeIcons);
-		sAdditionalMenuAccentColor.SetValue(persisted.accentColor);
-		fAdditionalMenuWindowOpacity.SetValue(
-			persisted.windowBackgroundOpacity);
-		bAdditionalMenuBackgroundBlur.SetValue(persisted.backgroundBlur);
-		fAdditionalMenuBackgroundBlurStrength.SetValue(
-			persisted.backgroundBlurStrength);
-		fAdditionalMenuUiScale.SetValue(persisted.uiScale);
-		sAdditionalMenuBodyFontFamily.SetValue(persisted.bodyFontFamily);
-		try
+		auto settings = SettingsRepository::GetSingleton().Snapshot();
+		const auto set = [&](std::string_view a_key, SettingValue a_value) {
+			const auto* entry =
+				SettingRegistry::GetSingleton().Find("Additional", a_key);
+			const auto position = std::ranges::find(
+				settings,
+				entry,
+				&SettingValueSnapshot::setting);
+			if (position != settings.end())
+				position->value = std::move(a_value);
+		};
+		set("bMenuMonochromeIcons", persisted.monochromeIcons);
+		set("sMenuAccentColor", persisted.accentColor);
+		set("fMenuWindowOpacity",
+			static_cast<double>(persisted.windowBackgroundOpacity));
+		set("bMenuBackgroundBlur", persisted.backgroundBlur);
+		set("fMenuBackgroundBlurStrength",
+			static_cast<double>(persisted.backgroundBlurStrength));
+		set("fMenuUiScale", static_cast<double>(persisted.uiScale));
+		set("sMenuBodyFontFamily", persisted.bodyFontFamily);
+		const auto result = SettingsRepository::GetSingleton().Apply(settings);
+		if (!result.success)
 		{
-			REX::FTomlSettingStore::GetSingleton()->Save();
-		}
-		catch (...)
-		{
-			REX::WARN("DearModdingUI: interface settings could not be persisted"sv);
+			REX::WARN(
+				"DearModdingUI: interface settings could not be persisted: {}"sv,
+				result.error);
 		}
 	}
 

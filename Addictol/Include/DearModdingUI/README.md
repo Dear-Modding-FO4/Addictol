@@ -51,10 +51,12 @@ active client page or adding an entry to the mod dropdown. The view closes from 
 the gear, Escape, or a mod selection. It exposes an accent picker with color-vision-friendly presets,
 colored or monochrome icon tint, host-window opacity, background blur and safe per-frame strength,
 accessibility UI scale, and body-font family. It also reports the configured toggle key and refresh
-interval alongside the resolved typography size and effective UI scale as read-only facts. Appearance
-options preview from a local draft; Apply persists all editable values once, while Revert or leaving
-the view discards the draft. UI scale and body-font changes rebuild the atlas only after Apply.
-Editable values use Addictol's `[Additional]` TOML settings.
+interval alongside the resolved typography size and effective UI scale as read-only facts. Addictol's
+menu enablement, toggle key, and refresh interval remain read-only here and point to Addictol's
+Settings page. Appearance options preview from a local draft; Apply persists all editable values once
+through Addictol's custom-file writer, while Revert or leaving the view discards the draft. UI scale
+and body-font changes rebuild the atlas only after Apply. Editable values use Addictol's
+`[Additional]` TOML settings.
 
 Body-font families are enumerated from subfolders of
 `Data\F4SE\Plugins\DearModdingUI\Fonts`; the selected regular face is rebuilt only between frames.

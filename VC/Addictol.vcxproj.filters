@@ -49,6 +49,12 @@
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdSetting.cpp">
       <Filter>Source\Core\Settings</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSettingPersistence.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSettingsModel.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdTelemetrySettings.cpp">
       <Filter>Source\Core\Settings</Filter>
     </ClCompile>
@@ -391,6 +397,9 @@
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
@@ -448,7 +457,13 @@
     <ClInclude Include="..\Addictol\Include\Core\Settings\AdSetting.h">
       <Filter>Include\Core\Settings</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingPersistence.h">
+      <Filter>Include\Core\Settings</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettings.h">
+      <Filter>Include\Core\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingsModel.h">
       <Filter>Include\Core\Settings</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h">
@@ -809,6 +824,9 @@
       <Filter>Include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h">
+      <Filter>Include\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h">

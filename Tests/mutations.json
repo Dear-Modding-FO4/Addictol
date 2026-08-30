@@ -414,5 +414,45 @@
     "replace": "close.controlMinX,\r\n\t\t\ta_actionButtonWidthSum,",
     "check": "host settings title actions keep fixed non-overlapping geometry",
     "message": "settings title controls overlapped"
+  },
+  {
+    "name": "custom settings omit default values",
+    "target": "Addictol/Source/Core/Settings/AdSettingPersistence.cpp",
+    "find": "if (item.value == item.setting->DefaultValue())\r\n\t\t\t\t\tcontinue;",
+    "replace": "if (false)\r\n\t\t\t\t\tcontinue;",
+    "check": "settings override output keeps only non-default owned values",
+    "message": "default-valued setting was written"
+  },
+  {
+    "name": "custom settings remove replaced owned keys",
+    "target": "Addictol/Source/Core/Settings/AdSettingPersistence.cpp",
+    "find": "if (!RemoveOwnedSettings(output, a_settings, a_error))\r\n\t\t\t\treturn false;",
+    "replace": "if (false)\r\n\t\t\t\treturn false;",
+    "check": "settings override output preserves unknown existing keys",
+    "message": "default owned key was retained"
+  },
+  {
+    "name": "settings draft dirty detection compares committed values",
+    "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
+    "find": "return a_entry.draft != a_entry.committed;",
+    "replace": "return a_entry.draft == a_entry.committed;",
+    "check": "settings draft applies each changed field once",
+    "message": "new draft was dirty"
+  },
+  {
+    "name": "settings modified predicate compares defaults",
+    "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
+    "find": "return a_value != a_setting.DefaultValue();",
+    "replace": "return a_value == a_setting.DefaultValue();",
+    "check": "settings reset predicate and control selection follow metadata",
+    "message": "default value exposed reset"
+  },
+  {
+    "name": "settings numeric controls honor ranges",
+    "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
+    "find": "if (!a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
+    "replace": "if (a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
+    "check": "settings reset predicate and control selection follow metadata",
+    "message": "fully bounded number did not select a slider"
   }
 ]

@@ -112,7 +112,8 @@ discards it. UI scale and body-font changes remain pending until Apply, then reb
 once. Font families are discovered from subfolders under `Data/F4SE/Plugins/DearModdingUI/Fonts`;
 missing or invalid families fall back to Jost. Atkinson Hyperlegible is included for low-vision
 readability. The configured toggle key and refresh interval, resolved typography size, and effective
-UI scale remain visible as read-only facts.
+UI scale remain visible as read-only facts. Menu enablement, toggle key, and refresh interval point to
+Addictol's Settings page and remain read-only in the gear panel.
 
 Editable interface values persist through `[Additional] bMenuMonochromeIcons`, `sMenuAccentColor`,
 `fMenuWindowOpacity`, `bMenuBackgroundBlur`, `fMenuBackgroundBlurStrength`, `fMenuUiScale`, and
@@ -122,6 +123,12 @@ Addictol telemetry pages retain their configured order and Log Control remains l
 Addictol's first page is an ordinary settings page named Home in the Addictol category. It shows the
 game runtime and live module outcomes, provides its documented project link, and answers the
 supported-runtime, configuration, and menu-toggle questions.
+The Settings page follows Home and groups Addictol options into collapsible Stability, Performance,
+Visuals, Audio, Gameplay, Interface, and Diagnostics sections. Search, modified-only filtering,
+per-setting reset, and Reset all operate on a draft. Apply writes only non-default overrides to
+`AddictolCustom.toml` through an atomic replacement and never modifies the shipped `Addictol.toml`;
+unknown custom keys are preserved. Most settings take effect on the next launch, while the few
+immediate settings are labeled. Menu appearance remains owned by the gear panel.
 Its default style, typography, scaling, search, navigation, header, footer, blur, and cursor
 match the current Fallout 4 Community Shaders menu while keeping DearModdingUI's neutral mod registry.
 

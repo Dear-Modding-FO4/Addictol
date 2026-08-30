@@ -16,6 +16,8 @@
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdFixSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdPatchSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdSetting.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSettingPersistence.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSettingsModel.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdTelemetrySettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdWarningSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp" />
@@ -43,6 +45,7 @@
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuLogControl.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuTelemetry.cpp" />
@@ -149,7 +152,9 @@
     <ClInclude Include="..\Addictol\Include\Core\AdPCH.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdConfigValidation.h" />
     <ClInclude Include="..\Addictol\Include\Core\Settings\AdSetting.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingPersistence.h" />
     <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettings.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingsModel.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdLoadTiming.h" />
@@ -181,6 +186,7 @@
     <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuWidgets.h" />

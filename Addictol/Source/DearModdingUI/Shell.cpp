@@ -460,69 +460,16 @@ namespace Addictol::DearModdingUI
 			bool& a_expanded,
 			size_t a_count) noexcept
 		{
-			char text[256]{};
-			std::snprintf(text, sizeof(text), "%s (%zu)", a_name, a_count);
-			auto* drawList = ImGui::GetWindowDrawList();
-			const auto position = ImGui::GetCursorScreenPos();
-			const auto availableWidth = ImGui::GetContentRegionAvail().x;
-			const auto textSize = ImGui::CalcTextSize(text);
 			const auto glyph = ResolveCategoryIconGlyph(
 				a_name,
 				a_client.displayName,
 				a_client.id);
-			const auto layout = DecideInlineIconLayout(
-				HasIconGlyph(glyph),
-				textSize.x,
-				textSize.y,
-				ImGui::GetFontSize(),
-				ImGui::GetStyle().ItemSpacing.x);
-			const auto lineY = position.y + textSize.y * 0.5f;
-			const auto lineLength =
-				(availableWidth - layout.contentWidth - 20.0f) * 0.5f;
-
-			ImGui::PushID(a_key);
-			ImGui::SetCursorScreenPos(position);
-			const auto clicked = ImGui::InvisibleButton(
-				"##CategoryHeader",
-				{ availableWidth, layout.contentHeight + 4.0f });
-			const auto hovered = ImGui::IsItemHovered();
-
-			auto color = Theme::kFullPalette[ImGuiCol_Text];
-			if (!a_expanded)
-				color.w *= Theme::kFeatureHeadingDefaults.minimizedFactor;
-			if (hovered)
-				color.w *= 0.8f;
-			const auto packed = ImGui::GetColorU32(color);
-
-			if (lineLength > 0.0f)
-			{
-				drawList->AddLine(
-					{ position.x, lineY },
-					{ position.x + lineLength, lineY },
-					packed);
-			}
-			const auto rightLineStart =
-				position.x + lineLength + 10.0f + layout.contentWidth + 10.0f;
-			if (rightLineStart < position.x + availableWidth)
-			{
-				drawList->AddLine(
-					{ rightLineStart, lineY },
-					{ position.x + availableWidth, lineY },
-					packed);
-			}
-			DrawIconText(
-				{ position.x + lineLength + 10.0f, position.y + 2.0f },
-				layout.contentHeight,
+			DrawCollapsingSectionHeader(
+				a_key,
+				a_name,
 				glyph,
-				text,
-				packed);
-			if (clicked)
-				a_expanded = !a_expanded;
-			ImGui::PopID();
-
-			ImGui::SetCursorScreenPos(
-				{ position.x, position.y + layout.contentHeight + 8.0f });
-			ImGui::Dummy({ availableWidth, 0.0f });
+				a_expanded,
+				a_count);
 		}
 
 		void DrawSearchIcon(
@@ -1193,6 +1140,74 @@ namespace Addictol::DearModdingUI
 			if (io.IniFilename)
 				ImGui::SaveIniSettingsToDisk(io.IniFilename);
 		}
+	}
+
+	void DrawCollapsingSectionHeader(
+		const char* a_key,
+		const char* a_text,
+		char32_t a_glyph,
+		bool& a_expanded,
+		size_t a_count) noexcept
+	{
+		char text[256]{};
+		std::snprintf(text, sizeof(text), "%s (%zu)", a_text, a_count);
+		auto* drawList = ImGui::GetWindowDrawList();
+		const auto position = ImGui::GetCursorScreenPos();
+		const auto availableWidth = ImGui::GetContentRegionAvail().x;
+		const auto textSize = ImGui::CalcTextSize(text);
+		const auto layout = DecideInlineIconLayout(
+			HasIconGlyph(a_glyph),
+			textSize.x,
+			textSize.y,
+			ImGui::GetFontSize(),
+			ImGui::GetStyle().ItemSpacing.x);
+		const auto lineY = position.y + textSize.y * 0.5f;
+		const auto lineLength =
+			(availableWidth - layout.contentWidth - 20.0f) * 0.5f;
+
+		ImGui::PushID(a_key);
+		ImGui::SetCursorScreenPos(position);
+		const auto clicked = ImGui::InvisibleButton(
+			"##CollapsingSectionHeader",
+			{ availableWidth, layout.contentHeight + 4.0f });
+		const auto hovered = ImGui::IsItemHovered();
+
+		auto color = Theme::kFullPalette[ImGuiCol_Text];
+		if (!a_expanded)
+			color.w *= Theme::kFeatureHeadingDefaults.minimizedFactor;
+		if (hovered)
+			color.w *= 0.8f;
+		const auto packed = ImGui::GetColorU32(color);
+
+		if (lineLength > 0.0f)
+		{
+			drawList->AddLine(
+				{ position.x, lineY },
+				{ position.x + lineLength, lineY },
+				packed);
+		}
+		const auto rightLineStart =
+			position.x + lineLength + 10.0f + layout.contentWidth + 10.0f;
+		if (rightLineStart < position.x + availableWidth)
+		{
+			drawList->AddLine(
+				{ rightLineStart, lineY },
+				{ position.x + availableWidth, lineY },
+				packed);
+		}
+		DrawIconText(
+			{ position.x + lineLength + 10.0f, position.y + 2.0f },
+			layout.contentHeight,
+			a_glyph,
+			text,
+			packed);
+		if (clicked)
+			a_expanded = !a_expanded;
+		ImGui::PopID();
+
+		ImGui::SetCursorScreenPos(
+			{ position.x, position.y + layout.contentHeight + 8.0f });
+		ImGui::Dummy({ availableWidth, 0.0f });
 	}
 
 	void DrawSectionHeader(const char* a_text, char32_t a_glyph) noexcept

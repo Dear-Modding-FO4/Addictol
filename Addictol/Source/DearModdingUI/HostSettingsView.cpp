@@ -1,5 +1,6 @@
 #include <DearModdingUI/HostSettingsView.h>
 
+#include <Core/Settings/AdSettings.h>
 #include <DearModdingUI/HostSettings.h>
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/Theme.h>
@@ -279,8 +280,13 @@ namespace Addictol::DearModdingUI
 		{
 			DrawSectionHeader("Host facts (read-only)");
 			ImGui::TextDisabled(
-				"These values are informational here. Their configuration sources are listed below.");
+				"These Addictol-owned values are read-only here. Edit them on Addictol > Settings.");
 			ImGui::Spacing();
+
+			DrawReadOnlyHostFact(
+				"Menu enabled",
+				bAdditionalMenu.GetValue() ? "Yes" : "No",
+				"Edit Addictol > Settings > Interface. Takes effect on the next launch.");
 
 			char toggleKey[32]{};
 			const auto key = Menu::ToggleKeyName();
@@ -293,7 +299,7 @@ namespace Addictol::DearModdingUI
 			DrawReadOnlyHostFact(
 				"Menu toggle key",
 				toggleKey,
-				"Configure [Additional] sMenuToggleKey in Data/F4SE/Plugins/AddictolCustom.toml.");
+				"Edit Addictol > Settings > Interface. Takes effect on the next launch.");
 
 			char refresh[32]{};
 			std::snprintf(
@@ -304,7 +310,7 @@ namespace Addictol::DearModdingUI
 			DrawReadOnlyHostFact(
 				"Menu refresh interval",
 				refresh,
-				"Configure [Additional] uMenuRefreshMs in Data/F4SE/Plugins/AddictolCustom.toml.");
+				"Edit Addictol > Settings > Interface. Takes effect on the next launch.");
 
 			const auto* body = Theme::GetFonts().body;
 			char typography[32]{};
