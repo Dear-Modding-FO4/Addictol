@@ -1,4 +1,4 @@
-// Adapted from Fallout 4 Community Shaders BackgroundBlur.cpp, GPL-3.0; Gaussian blur after Unrimp by Christian Ofenberg, MIT.
+// Gaussian blur after Unrimp by Christian Ofenberg, MIT.
 
 #include <DearModdingUI/BackgroundBlur.h>
 #include <Core/AdUtils.h>

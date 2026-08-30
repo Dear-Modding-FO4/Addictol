@@ -1,5 +1,3 @@
-// Ported from Fallout 4 Community Shaders src/Menu/CursorLoader.*, GPL-3.0.
-
 #include <DearModdingUI/CursorLoader.h>
 #include <DearModdingUI/VisualDecisions.h>
 

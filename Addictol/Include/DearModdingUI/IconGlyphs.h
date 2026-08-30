@@ -1,0 +1,113 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+#include <string>
+#include <string_view>
+
+namespace Addictol::DearModdingUI
+{
+	enum class IconKind : uint32_t
+	{
+		kCategory,
+		kClient
+	};
+
+	namespace PhosphorGlyph
+	{
+		inline constexpr char32_t kFirstPrivateUse{ 0xE000 };
+		inline constexpr char32_t kLastPrivateUse{ 0xEE82 };
+
+		// Generated from @phosphor-icons/web 2.1.2 Fill selection.json.
+		inline constexpr char32_t kQuestion{ 0xE3E8 };
+		inline constexpr char32_t kDotsThreeCircle{ 0xE200 };
+		inline constexpr char32_t kSun{ 0xE472 };
+		inline constexpr char32_t kPuzzlePiece{ 0xE596 };
+		inline constexpr char32_t kGauge{ 0xE628 };
+		inline constexpr char32_t kMagicWand{ 0xE6B6 };
+		inline constexpr char32_t kTerminalWindow{ 0xEAE8 };
+	}
+
+	struct IconGlyphMapping
+	{
+		std::string_view slug;
+		char32_t glyph;
+	};
+
+	inline constexpr std::array kCategoryGlyphs{
+		IconGlyphMapping{ "compatibility", PhosphorGlyph::kPuzzlePiece },
+		IconGlyphMapping{ "dev-tools", PhosphorGlyph::kTerminalWindow },
+		IconGlyphMapping{ "diagnostics", PhosphorGlyph::kTerminalWindow },
+		IconGlyphMapping{ "lighting", PhosphorGlyph::kSun },
+		IconGlyphMapping{ "misc", PhosphorGlyph::kDotsThreeCircle },
+		IconGlyphMapping{ "performance", PhosphorGlyph::kGauge },
+		IconGlyphMapping{ "post-process", PhosphorGlyph::kMagicWand },
+		IconGlyphMapping{ "postprocess", PhosphorGlyph::kMagicWand }
+	};
+
+	inline constexpr std::array kClientGlyphs{
+		IconGlyphMapping{ "dearmoddingaddictol", PhosphorGlyph::kPuzzlePiece },
+		IconGlyphMapping{ "dearmoddingcommunityshaders", PhosphorGlyph::kSun }
+	};
+
+	[[nodiscard]] inline std::string SlugifyIconName(std::string_view a_name)
+	{
+		std::string slug;
+		slug.reserve(a_name.size());
+		bool separatorPending = false;
+		for (const auto value : a_name)
+		{
+			const auto character = static_cast<unsigned char>(value);
+			if ((character >= 'a' && character <= 'z') ||
+				(character >= '0' && character <= '9'))
+			{
+				if (separatorPending && !slug.empty())
+					slug.push_back('-');
+				slug.push_back(static_cast<char>(character));
+				separatorPending = false;
+			}
+			else if (character >= 'A' && character <= 'Z')
+			{
+				if (separatorPending && !slug.empty())
+					slug.push_back('-');
+				slug.push_back(static_cast<char>(character - 'A' + 'a'));
+				separatorPending = false;
+			}
+			else if (character == ' ' || character == '_')
+			{
+				separatorPending = !slug.empty();
+			}
+		}
+		return slug;
+	}
+
+	template <std::size_t Size>
+	[[nodiscard]] inline char32_t FindIconGlyph(
+		const std::array<IconGlyphMapping, Size>& a_mappings,
+		std::string_view a_name)
+	{
+		const auto slug = SlugifyIconName(a_name);
+		for (const auto& mapping : a_mappings)
+		{
+			if (mapping.slug == slug)
+				return mapping.glyph;
+		}
+		return PhosphorGlyph::kQuestion;
+	}
+
+	[[nodiscard]] inline char32_t ResolveIconGlyph(
+		IconKind a_kind,
+		std::string_view a_name) noexcept
+	{
+		try
+		{
+			return a_kind == IconKind::kCategory ?
+				FindIconGlyph(kCategoryGlyphs, a_name) :
+				FindIconGlyph(kClientGlyphs, a_name);
+		}
+		catch (...)
+		{
+			return static_cast<char32_t>(PhosphorGlyph::kQuestion);
+		}
+	}
+}

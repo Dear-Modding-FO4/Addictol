@@ -16,6 +16,22 @@
     "message": "single-client selection did not clear search"
   },
   {
+    "name": "DearModdingUI unknown icons use the fallback glyph",
+    "target": "Addictol/Include/DearModdingUI/IconGlyphs.h",
+    "find": "return PhosphorGlyph::kQuestion;",
+    "replace": "return PhosphorGlyph::kSun;",
+    "check": "icon names resolve to deterministic Phosphor glyphs",
+    "message": "unknown icon names did not use the fallback"
+  },
+  {
+    "name": "DearModdingUI icon modes select their theme tints",
+    "target": "Addictol/Include/DearModdingUI/ThemeDefaults.h",
+    "find": "return a_mode == IconColorMode::kColored ? a_accent : a_text;",
+    "replace": "return a_mode == IconColorMode::kColored ? a_text : a_accent;",
+    "check": "theme icon tint selects colored and monochrome modes",
+    "message": "colored icons did not use the accent tint"
+  },
+  {
     "name": "DearModdingUI freeze closes registration",
     "target": "Addictol/Source/DearModdingUI/Registry.cpp",
     "find": "if (!m_open)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",

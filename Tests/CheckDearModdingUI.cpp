@@ -1,6 +1,6 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
 #include "../Addictol/Include/DearModdingUI/CarrierMenu.h"
-#include "../Addictol/Include/DearModdingUI/IconPaths.h"
+#include "../Addictol/Include/DearModdingUI/IconGlyphs.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
 #include "Harness.h"
@@ -441,8 +441,7 @@ namespace vmm_tests
 				"invalid selection did not fall back to the first page");
 		});
 
-		runner.test("icon names and paths resolve by the shared convention", [] {
-			const std::filesystem::path root{ "Data/F4SE/Plugins/DearModdingUI/Icons" };
+		runner.test("icon names resolve to deterministic Phosphor glyphs", [] {
 			require(SlugifyIconName("Post Process") == "post-process",
 				"spaces were not collapsed");
 			require(SlugifyIconName("Mixed___CASE Name") == "mixed-case-name",
@@ -452,32 +451,59 @@ namespace vmm_tests
 			require(SlugifyIconName("").empty() && SlugifyIconName("!@#$").empty(),
 				"empty icon names produced a slug");
 
-			const auto category = BuildIconPath(root, IconKind::kCategory, "Post Process");
-			const auto punctuated =
-				BuildIconPath(root, IconKind::kCategory, "Post-process");
-			const auto client = BuildIconPath(
-				root, IconKind::kClient, "dear-modding.addictol");
-			require(category == root / "Categories" / "post-process.png",
-				"category icon path changed");
-			require(punctuated == root / "Categories" / "postprocess.png",
-				"punctuated category icon path changed");
-			require(client == root / "Clients" / "dearmoddingaddictol.png",
-				"client icon path changed");
-			require(!BuildIconPath(root, IconKind::kCategory, "..."),
-				"empty category slug produced a path");
+			require(ResolveIconGlyph(IconKind::kCategory, "Lighting") ==
+					PhosphorGlyph::kSun &&
+					ResolveIconGlyph(IconKind::kCategory, "PERFORMANCE") ==
+					PhosphorGlyph::kGauge &&
+					ResolveIconGlyph(IconKind::kCategory, "Post Process") ==
+					PhosphorGlyph::kMagicWand &&
+					ResolveIconGlyph(IconKind::kCategory, "Post-process") ==
+					PhosphorGlyph::kMagicWand,
+				"known rendering categories changed glyphs");
+			require(ResolveIconGlyph(IconKind::kCategory, "Compatibility") ==
+					PhosphorGlyph::kPuzzlePiece &&
+					ResolveIconGlyph(IconKind::kCategory, "Dev Tools") ==
+					PhosphorGlyph::kTerminalWindow &&
+					ResolveIconGlyph(IconKind::kCategory, "Misc") ==
+					PhosphorGlyph::kDotsThreeCircle &&
+					ResolveIconGlyph(IconKind::kCategory, "Diagnostics") ==
+					PhosphorGlyph::kTerminalWindow,
+				"known utility categories changed glyphs");
+			require(ResolveIconGlyph(
+						IconKind::kClient,
+						"dear-modding.addictol") ==
+					PhosphorGlyph::kPuzzlePiece &&
+					ResolveIconGlyph(
+						IconKind::kClient,
+						"dear-modding.community-shaders") ==
+					PhosphorGlyph::kSun,
+				"known clients changed glyphs");
+			require(ResolveIconGlyph(IconKind::kCategory, "Unknown") ==
+					PhosphorGlyph::kQuestion &&
+					ResolveIconGlyph(IconKind::kClient, "") ==
+					PhosphorGlyph::kQuestion,
+				"unknown icon names did not use the fallback");
+		});
 
-			const auto resolved = ResolveIconPath(
-				root,
-				IconKind::kCategory,
-				"Post Process",
-				[&](const auto& a_path) { return a_path == *category; });
-			const auto missing = ResolveIconPath(
-				root,
-				IconKind::kCategory,
-				"No Matching File",
-				[](const auto&) { return false; });
-			require(resolved == category, "existing icon did not resolve");
-			require(!missing, "missing icon resolved to a blank resource");
+		runner.test("theme icon tint selects colored and monochrome modes", [] {
+			const ImVec4 accent{ 0.26f, 0.98f, 0.3752f, 1.0f };
+			const ImVec4 text{ 1.0f, 1.0f, 1.0f, 1.0f };
+			require(Theme::kIconDefaults.colorMode == Theme::IconColorMode::kColored,
+				"default icon mode is not colored");
+			require(SameColor(
+						Theme::ResolveIconTint(
+							Theme::IconColorMode::kColored,
+							accent,
+							text),
+						accent),
+				"colored icons did not use the accent tint");
+			require(SameColor(
+						Theme::ResolveIconTint(
+							Theme::IconColorMode::kMonochrome,
+							accent,
+							text),
+						text),
+				"monochrome icons did not use the text tint");
 		});
 
 		runner.test("client dropdown selection handles zero one and many clients", [] {
@@ -578,7 +604,7 @@ namespace vmm_tests
 				"missing page did not present an empty state");
 		});
 
-		runner.test("Community Shaders style scalars are independently pinned", [] {
+		runner.test("theme style scalars are independently pinned", [] {
 			const auto& style = Theme::kStyleDefaults;
 			require(style.windowBorderSize == 2.0f, "window border changed");
 			require(style.childBorderSize == 0.0f, "child border changed");
@@ -654,7 +680,7 @@ namespace vmm_tests
 				"base style application diverged from pinned scalars");
 		});
 
-		runner.test("Community Shaders full palette is independently pinned", [] {
+		runner.test("theme full palette is independently pinned", [] {
 			const std::array<ImVec4, ImGuiCol_COUNT> expected{
 				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
 				ImVec4(1.0f, 1.0f, 1.0f, 0.3f),
@@ -735,7 +761,7 @@ namespace vmm_tests
 				"effective scrollbar opacity changed");
 		});
 
-		runner.test("Community Shaders font roles and scaling stay exact", [] {
+		runner.test("theme font roles and scaling stay exact", [] {
 			require(Theme::kFontRoleDefaults.size() == 5, "font role count changed");
 			require(Theme::kFontRoleDefaults[0].family == "Jost" &&
 					Theme::kFontRoleDefaults[0].style == "Regular" &&
@@ -760,7 +786,7 @@ namespace vmm_tests
 			require(Theme::ResolveFontSize(2160) == 42.0f, "4K font size changed");
 			require(Theme::ResolveFontSize(8640) == 108.0f, "maximum font size changed");
 			require(ResolveUiScale(1.0f, 1080) == 1.0f, "1080p UI scale changed");
-			require(ResolveUiScale(2.0f, 1080) == 1.0f, "DPI altered CS scaling");
+			require(ResolveUiScale(2.0f, 1080) == 1.0f, "DPI altered theme scaling");
 			require(ResolveUiScale(1.0f, 2160) == 2.0f, "4K UI scale changed");
 			require(Theme::ResolveStyleScale(21.0f, 0.0f) == 1.0f,
 				"default global scale changed");

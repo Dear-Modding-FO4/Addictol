@@ -1,7 +1,5 @@
 #pragma once
 
-// Adapted from Fallout 4 Community Shaders src/Menu/ImGuiRecovery.h, GPL-3.0.
-
 #include <cstring>
 #include <new>
 #include <optional>

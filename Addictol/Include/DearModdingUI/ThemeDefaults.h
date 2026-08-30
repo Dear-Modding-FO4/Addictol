@@ -1,7 +1,5 @@
 #pragma once
 
-// Ported from Fallout 4 Community Shaders src/Menu/ThemeManager.* and Menu.h, GPL-3.0.
-
 #include <imgui/imgui.h>
 
 #include <algorithm>
@@ -21,6 +19,18 @@ namespace Addictol::DearModdingUI::Theme
 	inline constexpr float kMaxFontSize{ 108.0f };
 	inline constexpr float kDefaultFontSize{ 27.0f };
 	inline constexpr float kDefaultGlobalScale{ 0.0f };
+
+	enum class IconColorMode : uint32_t
+	{
+		kColored,
+		kMonochrome
+	};
+
+	struct IconDefaults
+	{
+		IconColorMode colorMode{ IconColorMode::kColored };
+		float baselineOffsetRatio{ 4.0f / 21.0f };
+	};
 
 	inline constexpr float kHeaderBaseTextScale{ 1.7f };
 	inline constexpr float kHeaderFallbackTextScale{ 1.5f };
@@ -124,6 +134,7 @@ namespace Addictol::DearModdingUI::Theme
 	};
 
 	inline constexpr StyleDefaults kStyleDefaults{};
+	inline constexpr IconDefaults kIconDefaults{};
 	inline constexpr ScrollbarOpacityDefaults kScrollbarOpacityDefaults{};
 	inline constexpr StatusPaletteDefaults kStatusPaletteDefaults{};
 	inline constexpr FeatureHeadingDefaults kFeatureHeadingDefaults{};
@@ -210,6 +221,14 @@ namespace Addictol::DearModdingUI::Theme
 		palette[ImGuiCol_ScrollbarGrabActive].w =
 			kScrollbarOpacityDefaults.thumbActive;
 		return palette;
+	}
+
+	[[nodiscard]] constexpr ImVec4 ResolveIconTint(
+		IconColorMode a_mode,
+		const ImVec4& a_accent,
+		const ImVec4& a_text) noexcept
+	{
+		return a_mode == IconColorMode::kColored ? a_accent : a_text;
 	}
 
 	[[nodiscard]] inline ImGuiStyle MakeBaseStyle() noexcept

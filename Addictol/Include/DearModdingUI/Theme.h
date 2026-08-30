@@ -1,7 +1,5 @@
 #pragma once
 
-// Ported from Fallout 4 Community Shaders src/Menu/ThemeManager.* and Fonts.*, GPL-3.0.
-
 #include <DearModdingUI/ThemeDefaults.h>
 
 #include <cstdint>
@@ -47,6 +45,13 @@ namespace Addictol::DearModdingUI::Theme
 	[[nodiscard]] const Fonts& GetFonts() noexcept;
 	[[nodiscard]] float Scale() noexcept;
 	[[nodiscard]] float SearchScale() noexcept;
+	[[nodiscard]] inline ImVec4 IconTint() noexcept
+	{
+		return ResolveIconTint(
+			kIconDefaults.colorMode,
+			colors::kAccent,
+			kFullPalette[ImGuiCol_Text]);
+	}
 }
 
 namespace Addictol

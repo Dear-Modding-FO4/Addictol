@@ -1,9 +1,7 @@
-// Ported from Fallout 4 Community Shaders FeatureListRenderer.*, Menu.*, and Utils/UI.*, GPL-3.0.
-
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/BackgroundBlur.h>
 #include <DearModdingUI/Host.h>
-#include <DearModdingUI/IconLoader.h>
+#include <DearModdingUI/IconGlyphs.h>
 #include <DearModdingUI/Theme.h>
 #include <DearModdingUI/VisualDecisions.h>
 
@@ -59,36 +57,53 @@ namespace Addictol::DearModdingUI
 				Lower(a_page.summary).contains(search);
 		}
 
+		[[nodiscard]] bool HasIconGlyph(char32_t a_glyph) noexcept
+		{
+			if (!a_glyph)
+				return false;
+			auto* font = ImGui::GetFont();
+			return font &&
+				font->IsGlyphInFont(static_cast<ImWchar>(a_glyph));
+		}
+
+		[[nodiscard]] ImU32 IconColor(ImU32 a_textColor) noexcept
+		{
+			auto tint = Theme::IconTint();
+			tint.w *= ImGui::ColorConvertU32ToFloat4(a_textColor).w;
+			return ImGui::ColorConvertFloat4ToU32(tint);
+		}
+
 		void DrawIcon(
 			ImDrawList* a_drawList,
-			ID3D11ShaderResourceView* a_texture,
+			char32_t a_glyph,
 			const ImVec2& a_position,
 			float a_size,
-			ImU32 a_color) noexcept
+			ImU32 a_color,
+			const ImVec4* a_clip) noexcept
 		{
-			if (!a_texture || a_size <= 0.0f)
+			auto* font = ImGui::GetFont();
+			if (!font || !HasIconGlyph(a_glyph) || a_size <= 0.0f)
 				return;
-			a_drawList->AddImage(
-				ImTextureRef{ static_cast<ImTextureID>(
-					reinterpret_cast<uintptr_t>(a_texture)) },
+			font->RenderChar(
+				a_drawList,
+				a_size,
 				a_position,
-				{ a_position.x + a_size, a_position.y + a_size },
-				{},
-				{ 1.0f, 1.0f },
-				a_color);
+				a_color,
+				static_cast<ImWchar>(a_glyph),
+				a_clip);
 		}
 
 		void DrawIconText(
 			const ImVec2& a_position,
 			float a_height,
-			ID3D11ShaderResourceView* a_texture,
+			char32_t a_glyph,
 			const char* a_text,
 			ImU32 a_color,
 			const ImVec4* a_clip = nullptr) noexcept
 		{
 			const auto textSize = ImGui::CalcTextSize(a_text);
 			const auto layout = DecideInlineIconLayout(
-				a_texture != nullptr,
+				HasIconGlyph(a_glyph),
 				textSize.x,
 				textSize.y,
 				ImGui::GetFontSize(),
@@ -100,13 +115,14 @@ namespace Addictol::DearModdingUI
 			{
 				DrawIcon(
 					ImGui::GetWindowDrawList(),
-					a_texture,
+					a_glyph,
 					{
 						a_position.x,
-						contentY + (layout.contentHeight - layout.iconSize) * 0.5f
+						contentY
 					},
 					layout.iconSize,
-					a_color);
+					IconColor(a_color),
+					a_clip);
 			}
 			ImGui::GetWindowDrawList()->AddText(
 				ImGui::GetFont(),
@@ -354,9 +370,9 @@ namespace Addictol::DearModdingUI
 			const auto position = ImGui::GetCursorScreenPos();
 			const auto availableWidth = ImGui::GetContentRegionAvail().x;
 			const auto textSize = ImGui::CalcTextSize(text);
-			auto* texture = IconLoader::Get(IconKind::kCategory, a_name);
+			const auto glyph = ResolveIconGlyph(IconKind::kCategory, a_name);
 			const auto layout = DecideInlineIconLayout(
-				texture != nullptr,
+				HasIconGlyph(glyph),
 				textSize.x,
 				textSize.y,
 				ImGui::GetFontSize(),
@@ -398,7 +414,7 @@ namespace Addictol::DearModdingUI
 			DrawIconText(
 				{ position.x + lineLength + 10.0f, position.y + 2.0f },
 				layout.contentHeight,
-				texture,
+				glyph,
 				text,
 				packed);
 			if (clicked)
@@ -511,9 +527,9 @@ namespace Addictol::DearModdingUI
 			const auto* active = a_model.FindClient(a_state.activeClient);
 			const char* previewText =
 				active ? active->displayName.c_str() : "No mods registered";
-			auto* previewTexture = active ?
-				IconLoader::Get(IconKind::kClient, active->id) :
-				nullptr;
+			const auto previewGlyph = active ?
+				ResolveIconGlyph(IconKind::kClient, active->id) :
+				char32_t{};
 
 			ImGui::SetNextItemWidth(-FLT_MIN);
 			const auto open = ImGui::BeginCombo(
@@ -524,12 +540,12 @@ namespace Addictol::DearModdingUI
 			{
 				for (const auto& client : a_model.clients)
 				{
-					auto* texture =
-						IconLoader::Get(IconKind::kClient, client.id);
+					const auto glyph =
+						ResolveIconGlyph(IconKind::kClient, client.id);
 					const auto textSize =
 						ImGui::CalcTextSize(client.displayName.c_str());
 					const auto layout = DecideInlineIconLayout(
-						texture != nullptr,
+						HasIconGlyph(glyph),
 						textSize.x,
 						textSize.y,
 						ImGui::GetFontSize(),
@@ -561,7 +577,7 @@ namespace Addictol::DearModdingUI
 							itemMin.y
 						},
 						rowHeight,
-						texture,
+						glyph,
 						client.displayName.c_str(),
 						ImGui::GetColorU32(ImGuiCol_Text),
 						&clip);
@@ -575,7 +591,7 @@ namespace Addictol::DearModdingUI
 				const auto position = ImGui::GetCursorScreenPos();
 				const auto textSize = ImGui::CalcTextSize(previewText);
 				const auto layout = DecideInlineIconLayout(
-					previewTexture != nullptr,
+					active && HasIconGlyph(previewGlyph),
 					textSize.x,
 					textSize.y,
 					ImGui::GetFontSize(),
@@ -583,7 +599,7 @@ namespace Addictol::DearModdingUI
 				DrawIconText(
 					position,
 					layout.contentHeight,
-					previewTexture,
+					previewGlyph,
 					previewText,
 					ImGui::GetColorU32(ImGuiCol_Text));
 				ImGui::Dummy({ layout.contentWidth, layout.contentHeight });

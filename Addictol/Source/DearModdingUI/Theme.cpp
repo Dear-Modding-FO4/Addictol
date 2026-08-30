@@ -1,6 +1,5 @@
-// Ported from Fallout 4 Community Shaders src/Menu/ThemeManager.* and Fonts.*, GPL-3.0.
-
 #include <DearModdingUI/Theme.h>
+#include <DearModdingUI/IconGlyphs.h>
 #include <Core/AdUtils.h>
 
 #include <REX/REX.h>
@@ -23,6 +22,20 @@ namespace Addictol::DearModdingUI::Theme
 	{
 		inline constexpr std::string_view kFontRoot{
 			"Data\\F4SE\\Plugins\\DearModdingUI\\Fonts"
+		};
+		inline constexpr std::string_view kIconFontFile{
+			"Phosphor\\Phosphor-Fill.ttf"
+		};
+		inline constexpr ImWchar kIconGlyphRanges[]{
+			static_cast<ImWchar>(PhosphorGlyph::kFirstPrivateUse),
+			static_cast<ImWchar>(PhosphorGlyph::kLastPrivateUse),
+			0
+		};
+
+		struct FontLoadResult
+		{
+			bool roles{ false };
+			bool icons{ false };
 		};
 
 		struct LoadedFont
@@ -62,6 +75,33 @@ namespace Addictol::DearModdingUI::Theme
 			return a_atlas.AddFontFromFileTTF(file.c_str(), a_size, &config);
 		}
 
+		[[nodiscard]] bool MergeIconFont(
+			ImFontAtlas& a_atlas,
+			ImFont* a_destination,
+			float a_size) noexcept
+		{
+			if (!a_destination)
+				return false;
+			const auto path = AssetPath(kIconFontFile);
+			std::error_code error;
+			if (!std::filesystem::exists(path, error))
+				return false;
+
+			ImFontConfig config{};
+			config.MergeMode = true;
+			config.PixelSnapH = true;
+			config.GlyphOffset.y = a_size * kIconDefaults.baselineOffsetRatio;
+			config.GlyphMinAdvanceX = a_size;
+			config.GlyphMaxAdvanceX = a_size;
+			config.DstFont = a_destination;
+			const auto file = path.string();
+			return a_atlas.AddFontFromFileTTF(
+				file.c_str(),
+				a_size,
+				&config,
+				kIconGlyphRanges) != nullptr;
+		}
+
 		[[nodiscard]] ImFont* LoadRoleFont(
 			ImFontAtlas& a_atlas,
 			FontRole a_role,
@@ -81,7 +121,7 @@ namespace Addictol::DearModdingUI::Theme
 			return AddFont(a_atlas, role.file, size);
 		}
 
-		[[nodiscard]] bool LoadFonts(
+		[[nodiscard]] FontLoadResult LoadFonts(
 			ImGuiIO& a_io,
 			uint32_t a_backBufferHeight) noexcept
 		{
@@ -124,7 +164,10 @@ namespace Addictol::DearModdingUI::Theme
 			if (!g_fonts.subtext)
 				g_fonts.subtext = g_fonts.body;
 			a_io.FontDefault = g_fonts.body;
-			return allBundled;
+			return {
+				allBundled,
+				MergeIconFont(atlas, g_fonts.body, g_fonts.body->LegacySize)
+			};
 		}
 
 		[[nodiscard]] ImFont* FontForRole(FontRole a_role) noexcept
@@ -196,9 +239,11 @@ namespace Addictol::DearModdingUI::Theme
 		auto& io = ImGui::GetIO();
 		io.ConfigDockingWithShift = true;
 		io.ConfigInputTrickleEventQueue = false;
-		const auto bundled = LoadFonts(io, static_cast<uint32_t>(kDefaultScreenHeight));
-		if (!bundled)
-			REX::WARN("DearModdingUI: Community Shaders font roles are incomplete; using safe fallbacks"sv);
+		const auto loaded = LoadFonts(io, static_cast<uint32_t>(kDefaultScreenHeight));
+		if (!loaded.roles)
+			REX::WARN("DearModdingUI: bundled font roles are incomplete; using safe fallbacks"sv);
+		if (!loaded.icons)
+			REX::WARN("DearModdingUI: Phosphor icon font is unavailable; using text-only labels"sv);
 		if (!io.Fonts->Build() && !BuildEmergencyAtlas(io))
 			REX::ERROR("DearModdingUI: no usable font atlas could be prepared"sv);
 		g_baseFontSize = ResolveFontSize(static_cast<uint32_t>(kDefaultScreenHeight));
@@ -222,7 +267,7 @@ namespace Addictol::DearModdingUI::Theme
 		auto& io = ImGui::GetIO();
 		ImGui_ImplDX11_InvalidateDeviceObjects();
 		io.Fonts->Clear();
-		const auto bundled = LoadFonts(io, a_backBufferHeight);
+		const auto loaded = LoadFonts(io, a_backBufferHeight);
 		const auto built = io.Fonts->Build() && ImGui_ImplDX11_CreateDeviceObjects();
 		if (!built)
 		{
@@ -237,10 +282,12 @@ namespace Addictol::DearModdingUI::Theme
 
 		g_baseFontSize = desiredFontSize;
 		ApplyStyle();
-		REX::INFO("DearModdingUI: Community Shaders typography resolved to {:.0f}px at {}p"sv,
+		REX::INFO("DearModdingUI: typography resolved to {:.0f}px at {}p"sv,
 			desiredFontSize, a_backBufferHeight);
-		if (!bundled)
+		if (!loaded.roles)
 			REX::WARN("DearModdingUI: scaled atlas uses fallback font roles"sv);
+		if (!loaded.icons)
+			REX::WARN("DearModdingUI: scaled atlas uses text-only labels"sv);
 		return true;
 	}
 

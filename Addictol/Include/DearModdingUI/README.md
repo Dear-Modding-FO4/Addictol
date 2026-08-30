@@ -41,10 +41,10 @@ The host ports Community Shaders' current default palette, style dimensions, Jos
 Heading, Subheading, and Subtext roles, resolution scaling, search and navigation treatments,
 rounded title-bar highlights, footer, docking, and background blur around the neutral registry.
 Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts, icons, and blur shaders load
-only from that neutral root. Client icons use `Icons\Clients\<client-id-slug>.png`; category icons use
-`Icons\Categories\<category-slug>.png`. Slugs use lowercase ASCII, collapse spaces and underscores to
-single hyphens, and drop other non-alphanumeric characters. Missing assets fall back without
-disabling the menu or the C ABI host.
+only from that neutral root. Client IDs and category names select Phosphor glyphs from an in-code
+table after lowercase slug normalization. Icons use the accent tint by default; changing
+`Theme::kIconDefaults.colorMode` to `kMonochrome` selects the theme text tint. A missing icon font
+falls back to text-only labels without disabling the menu or the C ABI host.
 
 The modal host opens a registered, hidden Fallout 4 carrier menu so absolute client coordinates remain
 valid, then maps them into the attached backbuffer. The carrier movie and operating-system cursor stay

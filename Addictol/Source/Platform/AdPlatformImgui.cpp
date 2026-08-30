@@ -3,7 +3,6 @@
 #include <DearModdingUI/CarrierMenu.h>
 #include <DearModdingUI/CursorLoader.h>
 #include <DearModdingUI/Host.h>
-#include <DearModdingUI/IconLoader.h>
 #include <DearModdingUI/Theme.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Core/AdUtils.h>
@@ -736,7 +735,6 @@ namespace Addictol
 		static void ShutdownBackend() noexcept
 		{
 			CloseModalState(DearModdingUI::CarrierMenu::Event::kShutdown);
-			DearModdingUI::IconLoader::Shutdown();
 			if (s_backend.load(std::memory_order_acquire) == Backend::kReady)
 			{
 				DearModdingUI::CursorLoader::Shutdown();
@@ -806,7 +804,6 @@ namespace Addictol
 				return false;
 			}
 
-			DearModdingUI::IconLoader::SetDevice(s_attachment.device);
 			REX::INFO("Platform Imgui: ImGui initialized on the active swapchain"sv);
 			return true;
 		}

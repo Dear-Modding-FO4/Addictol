@@ -1,4 +1,4 @@
-// Adapted from Fallout 4 Community Shaders, GPL-3.0; separable Gaussian blur after Unrimp by Christian Ofenberg, MIT.
+// Separable Gaussian blur after Unrimp by Christian Ofenberg, MIT.
 
 cbuffer BlurBuffer : register(b0)
 {

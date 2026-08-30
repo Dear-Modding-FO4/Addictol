@@ -1,7 +1,5 @@
 #pragma once
 
-// Adapted from Fallout 4 Community Shaders src/Menu/BackgroundBlur.*, GPL-3.0.
-
 #include <cstdint>
 
 struct ID3D11Device;

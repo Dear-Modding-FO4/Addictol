@@ -43,9 +43,6 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\IconLoader.cpp">
-      <Filter>Source\DearModdingUI</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp">
       <Filter>Source\DearModdingUI</Filter>
     </ClCompile>
@@ -436,10 +433,7 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconLoader.h">
-      <Filter>Include\DearModdingUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconPaths.h">
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiFingerprint.h">
@@ -801,67 +795,13 @@
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\LICENSE">
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\LICENSE">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\clear-cache.png">
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\Phosphor-Fill.ttf">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\restore-settings.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\Monochrome\clear-cache.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Actions\Monochrome\restore-settings.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\compatibility.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\dev-tools.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\diagnostics.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\lighting.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\misc.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\performance.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\post-process.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\postprocess.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\compatibility.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\dev-tools.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\lighting.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\misc.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\performance.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\post-process.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingaddictol.png">
-      <Filter>Resources\DearModdingUI</Filter>
-    </None>
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingcommunityshaders.png">
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\UPSTREAM.md">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl">

@@ -1,7 +1,5 @@
 #pragma once
 
-// Ported from Fallout 4 Community Shaders src/Menu/CursorLoader.*, GPL-3.0.
-
 #include <cstdint>
 
 namespace Addictol::DearModdingUI::CursorLoader
