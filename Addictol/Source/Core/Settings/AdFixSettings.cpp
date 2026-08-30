@@ -260,7 +260,7 @@ namespace Addictol
 	BoolSetting bFixesManyItems{
 		"Fixes"sv,
 		"bManyItems"sv,
-		SettingDisplayCategory::kGameplay,
+		SettingDisplayCategory::kStability,
 		true,
 		"Fixes drop items (now can drops more than 32.767, but generation stacks), similar with Drop7FFFPatch mods, supported 32-bit for containers."sv,
 		SettingApplyTiming::kNextLaunch
@@ -503,7 +503,7 @@ namespace Addictol
 	BoolSetting bFixesLoadOrder{
 		"Fixes"sv,
 		"bLoadOrder"sv,
-		SettingDisplayCategory::kInterface,
+		SettingDisplayCategory::kStability,
 		true,
 		"Fixes multiple AE Load Order issues when the Creations Platform is enabled. Including Plugins getting disabled, moved around, and inability to toggle certain Plugins in-game."sv,
 		SettingApplyTiming::kNextLaunch
