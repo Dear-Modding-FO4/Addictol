@@ -1,4 +1,4 @@
-#include "../Addictol/Include/DearModdingUI/API.h"
+#include <DearModdingUI/API.h>
 
 #include <type_traits>
 

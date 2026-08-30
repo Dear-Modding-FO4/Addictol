@@ -316,6 +316,7 @@ target("vmm-tests", function()
         "Tests",
         "Addictol/Include",
         "Depends",
+        "Depends/commonlibf4/include",
         "Depends/commonlibf4/lib/commonlib-shared/include",
         "Depends/spdlog/include",
         "Depends/vmm/source"
