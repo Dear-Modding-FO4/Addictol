@@ -126,6 +126,36 @@ namespace Addictol::DearModdingUI
 			0.0f);
 	}
 
+	[[nodiscard]] constexpr float OpticalTextOffsetY(
+		float a_rowHeight,
+		float a_fontSize,
+		float a_ascent,
+		float a_descent) noexcept
+	{
+		const auto boxOffset = CenterOffsetY(a_rowHeight, a_fontSize);
+		const auto metricsHeight = a_ascent - a_descent;
+		if (a_fontSize <= 0.0f ||
+			a_ascent <= 0.0f ||
+			a_descent >= 0.0f ||
+			metricsHeight <= 0.0f)
+			return boxOffset;
+		const auto scale = a_fontSize / metricsHeight;
+		return boxOffset + (-a_descent) * scale * 0.5f;
+	}
+
+	[[nodiscard]] constexpr float FooterRowAdjustmentY(
+		float a_verticalSpacing,
+		float a_windowPadding) noexcept
+	{
+		const auto verticalSpacing = a_verticalSpacing > 0.0f ?
+			a_verticalSpacing :
+			0.0f;
+		const auto windowPadding = a_windowPadding > 0.0f ?
+			a_windowPadding :
+			0.0f;
+		return windowPadding - verticalSpacing;
+	}
+
 	[[nodiscard]] inline std::string BuildHostBreadcrumb(
 		std::string_view a_hostName,
 		std::string_view a_clientName)
@@ -200,16 +230,23 @@ namespace Addictol::DearModdingUI
 	[[nodiscard]] constexpr float ReservedFooterHeight(
 		float a_rowHeight,
 		float a_verticalSpacing,
+		float a_windowPadding,
 		float a_separatorThickness) noexcept
 	{
 		const auto rowHeight = a_rowHeight > 0.0f ? a_rowHeight : 0.0f;
 		const auto verticalSpacing = a_verticalSpacing > 0.0f ?
 			a_verticalSpacing :
 			0.0f;
+		const auto windowPadding = a_windowPadding > 0.0f ?
+			a_windowPadding :
+			0.0f;
 		const auto separator = a_separatorThickness > 0.0f ?
 			a_separatorThickness :
 			0.0f;
-		return rowHeight + verticalSpacing * 4.0f + separator;
+		return rowHeight +
+			verticalSpacing * 2.0f +
+			windowPadding +
+			separator;
 	}
 
 	[[nodiscard]] constexpr FooterStatusLayout ResolveFooterStatusLayout(
@@ -222,6 +259,7 @@ namespace Addictol::DearModdingUI
 		float a_horizontalSpacing,
 		float a_rowHeight,
 		float a_verticalSpacing,
+		float a_windowPadding,
 		float a_separatorThickness,
 		bool a_hasStatus,
 		bool a_persistentStatus) noexcept
@@ -275,6 +313,7 @@ namespace Addictol::DearModdingUI
 			ReservedFooterHeight(
 				rowHeight,
 				a_verticalSpacing,
+				a_windowPadding,
 				a_separatorThickness)
 		};
 	}

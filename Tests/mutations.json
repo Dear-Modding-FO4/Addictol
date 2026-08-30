@@ -496,11 +496,11 @@
     "message": "status message length changed reserved footer geometry"
   },
   {
-    "name": "footer row content stays vertically centered",
+    "name": "footer text keeps its optical offset",
     "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
-    "find": "return (std::max)(\r\n\t\t\t(rowHeight - contentHeight) * 0.5f,\r\n\t\t\t0.0f);",
-    "replace": "return 0.0f;",
-    "check": "row content centers vertically without negative offset",
-    "message": "row content did not center vertically"
+    "find": "return boxOffset + (-a_descent) * scale * 0.5f;",
+    "replace": "return boxOffset;",
+    "check": "font metrics provide stable optical text offset",
+    "message": "font optical offset did not account for descenders"
   }
 ]

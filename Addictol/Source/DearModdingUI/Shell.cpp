@@ -139,6 +139,24 @@ namespace Addictol::DearModdingUI
 				a_clip);
 		}
 
+		[[nodiscard]] float CurrentFontOpticalTextOffsetY(
+			float a_rowHeight,
+			float a_fontSize) noexcept
+		{
+			auto* font = ImGui::GetFont();
+			if (!font || a_fontSize <= 0.0f)
+				return CenterOffsetY(a_rowHeight, a_fontSize);
+			if (auto* baked = font->GetFontBaked(a_fontSize))
+			{
+				return OpticalTextOffsetY(
+					a_rowHeight,
+					a_fontSize,
+					baked->Ascent,
+					baked->Descent);
+			}
+			return CenterOffsetY(a_rowHeight, a_fontSize);
+		}
+
 		void DrawIconText(
 			const ImVec2& a_position,
 			float a_height,
@@ -381,14 +399,20 @@ namespace Addictol::DearModdingUI
 			else if (a_text)
 			{
 				const auto textSize = ImGui::CalcTextSize(a_text);
+				const ImVec2 textOrigin{
+					bounds.Min.x,
+					bounds.Min.y + CurrentFontOpticalTextOffsetY(
+						a_size.y,
+						ImGui::GetFontSize())
+				};
 				ImGui::PushStyleColor(ImGuiCol_Text, a_color);
 				ImGui::RenderTextClipped(
-					bounds.Min,
+					textOrigin,
 					bounds.Max,
 					a_text,
 					nullptr,
 					&textSize,
-					{ 0.5f, 0.5f },
+					{ 0.5f, 0.0f },
 					&bounds);
 				ImGui::PopStyleColor();
 			}
@@ -445,15 +469,20 @@ namespace Addictol::DearModdingUI
 				buttonLayout.adjacentMaxX :
 				contentMaxX;
 			ImVec2 textSize{};
+			float rowHeight{ 0.0f };
 			{
 				const Theme::FontGuard font{ Theme::FontRole::kTitle };
 				ImGui::SetWindowFontScale(textScale);
 				textSize = ImGui::CalcTextSize(breadcrumb.c_str());
-				const auto rowHeight =
-					(std::max)(textSize.y, a_drawClose ? buttonExtent : 0.0f);
+				rowHeight = (std::max)(
+					textSize.y,
+					a_drawClose ? buttonExtent : 0.0f);
+				const auto titleFontSize = ImGui::GetFontSize();
 				const ImVec2 titlePosition{
 					start.x,
-					start.y + CenterOffsetY(rowHeight, textSize.y)
+					start.y + CurrentFontOpticalTextOffsetY(
+						rowHeight,
+						titleFontSize)
 				};
 				if (titleMaxX > start.x)
 				{
@@ -475,8 +504,6 @@ namespace Addictol::DearModdingUI
 			auto closePressed = false;
 			if (a_drawClose)
 			{
-				const auto rowHeight =
-					(std::max)(textSize.y, buttonExtent);
 				closePressed = DrawCompactChromeButton(
 					"##DearModdingUI.HostCloseButton",
 					{
@@ -494,6 +521,10 @@ namespace Addictol::DearModdingUI
 					iconSize);
 			}
 
+			ImGui::SetCursorScreenPos({
+				start.x,
+				start.y + rowHeight + ImGui::GetStyle().ItemSpacing.y
+			});
 			ImGui::SeparatorEx(
 				ImGuiSeparatorFlags_Horizontal,
 				Theme::kSeparatorThickness);
@@ -1178,6 +1209,7 @@ namespace Addictol::DearModdingUI
 				ImGui::GetStyle().ItemSpacing.x,
 				rowHeight,
 				ImGui::GetStyle().ItemSpacing.y,
+				ImGui::GetStyle().WindowPadding.y,
 				Theme::kSeparatorThickness,
 				status.has_value(),
 				persistent);
@@ -1187,9 +1219,9 @@ namespace Addictol::DearModdingUI
 				true);
 			ImGui::SetCursorScreenPos({
 				start.x,
-				start.y + CenterOffsetY(
+				start.y + CurrentFontOpticalTextOffsetY(
 					rowHeight,
-					ImGui::GetTextLineHeight())
+					ImGui::GetFontSize())
 			});
 			ImGui::BulletText("Host: Evil Modding");
 			auto metadataRight = ImGui::GetItemRectMax().x;
@@ -1216,6 +1248,7 @@ namespace Addictol::DearModdingUI
 				ImGui::GetStyle().ItemSpacing.x,
 				rowHeight,
 				ImGui::GetStyle().ItemSpacing.y,
+				ImGui::GetStyle().WindowPadding.y,
 				Theme::kSeparatorThickness,
 				status.has_value(),
 				persistent);
@@ -1249,6 +1282,7 @@ namespace Addictol::DearModdingUI
 						ImGui::GetStyle().ItemSpacing.x,
 						rowHeight,
 						ImGui::GetStyle().ItemSpacing.y,
+						ImGui::GetStyle().WindowPadding.y,
 						Theme::kSeparatorThickness,
 						true,
 						persistent);
@@ -1278,9 +1312,9 @@ namespace Addictol::DearModdingUI
 						ImGui::GetFontSize(),
 						{
 							layout.statusMinX,
-							start.y + CenterOffsetY(
+							start.y + CurrentFontOpticalTextOffsetY(
 								layout.rowHeight,
-								visibleTextSize.y)
+								ImGui::GetFontSize())
 						},
 						ImGui::ColorConvertFloat4ToU32(
 							status->severity ==
@@ -1599,6 +1633,7 @@ namespace Addictol::DearModdingUI
 						ImGui::GetFrameHeight(),
 						footerButtonExtent),
 					ImGui::GetStyle().ItemSpacing.y,
+					ImGui::GetStyle().WindowPadding.y,
 					Theme::kSeparatorThickness);
 			ImGui::BeginChild(
 				"Dear Modding Menus Table",
@@ -1627,7 +1662,13 @@ namespace Addictol::DearModdingUI
 			ImGui::SeparatorEx(
 				ImGuiSeparatorFlags_Horizontal,
 				Theme::kSeparatorThickness);
-			ImGui::Spacing();
+			const auto footerPosition = ImGui::GetCursorScreenPos();
+			ImGui::SetCursorScreenPos({
+				footerPosition.x,
+				footerPosition.y + FooterRowAdjustmentY(
+					ImGui::GetStyle().ItemSpacing.y,
+					ImGui::GetStyle().WindowPadding.y)
+			});
 			DrawFooter(model, state);
 		}
 		ImGui::End();

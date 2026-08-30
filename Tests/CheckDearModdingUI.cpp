@@ -421,6 +421,7 @@ namespace vmm_tests
 				8.0f,
 				36.0f,
 				8.0f,
+				8.0f,
 				1.0f,
 				true,
 				false);
@@ -432,7 +433,7 @@ namespace vmm_tests
 					layout.metadataMinX == 20.0f &&
 						layout.metadataMaxX == 1160.0f &&
 						layout.settingsMinX == 1168.0f &&
-						layout.footerHeight == 69.0f,
+						layout.footerHeight == 61.0f,
 					"wide footer regions were not separated");
 		});
 
@@ -446,6 +447,7 @@ namespace vmm_tests
 				28.0f,
 				8.0f,
 				40.0f,
+				8.0f,
 				8.0f,
 				1.0f,
 				true,
@@ -474,6 +476,7 @@ namespace vmm_tests
 				8.0f,
 				40.0f,
 				8.0f,
+				8.0f,
 				1.0f,
 				true,
 				true);
@@ -500,6 +503,7 @@ namespace vmm_tests
 				8.0f,
 				36.0f,
 				8.0f,
+				8.0f,
 				1.0f,
 				false,
 				false);
@@ -512,6 +516,7 @@ namespace vmm_tests
 				28.0f,
 				8.0f,
 				36.0f,
+				8.0f,
 				8.0f,
 				1.0f,
 				true,
@@ -539,6 +544,7 @@ namespace vmm_tests
 				8.0f,
 				36.0f,
 				8.0f,
+				8.0f,
 				1.0f,
 				true,
 				false);
@@ -551,6 +557,7 @@ namespace vmm_tests
 				28.0f,
 				8.0f,
 				36.0f,
+				8.0f,
 				8.0f,
 				1.0f,
 				true,
@@ -575,6 +582,48 @@ namespace vmm_tests
 						CenterOffsetY(20.0f, 40.0f) == 0.0f &&
 						CenterOffsetY(-10.0f, 20.0f) == 0.0f,
 					"row content did not center vertically");
+		});
+
+		runner.test("font metrics provide stable optical text offset", [] {
+			const auto versionOffset =
+				OpticalTextOffsetY(40.0f, 20.0f, 16.0f, -4.0f);
+			const auto modOffset =
+				OpticalTextOffsetY(40.0f, 20.0f, 16.0f, -4.0f);
+			require(
+					versionOffset == 12.0f &&
+						modOffset == versionOffset,
+					"font optical offset did not account for descenders");
+			require(
+					OpticalTextOffsetY(40.0f, 20.0f, 0.0f, 0.0f) ==
+							CenterOffsetY(40.0f, 20.0f) &&
+						OpticalTextOffsetY(40.0f, 20.0f, -1.0f, 1.0f) ==
+							CenterOffsetY(40.0f, 20.0f),
+					"invalid font metrics did not use box centering");
+		});
+
+		runner.test("footer band keeps symmetric row padding", [] {
+			constexpr float verticalSpacing{ 8.0f };
+			constexpr float windowPadding{ 10.0f };
+			constexpr float separatorThickness{ 3.0f };
+			constexpr float rowHeight{ 40.0f };
+			const auto adjustment = FooterRowAdjustmentY(
+				verticalSpacing,
+				windowPadding);
+			const auto separatorBottom =
+				verticalSpacing * 2.0f + separatorThickness;
+			const auto rowTop =
+				verticalSpacing * 3.0f +
+				separatorThickness +
+				adjustment;
+			const auto footerHeight = ReservedFooterHeight(
+				rowHeight,
+				verticalSpacing,
+				windowPadding,
+				separatorThickness);
+			require(
+					rowTop - separatorBottom == windowPadding &&
+						footerHeight == rowTop + rowHeight,
+					"footer row padding was asymmetric");
 		});
 
 		runner.test("client descriptors reject null size and callback failures", [] {
@@ -1275,7 +1324,7 @@ namespace vmm_tests
 				const auto footer = ResolveTrailingControlLayout(
 					36.0f, 1264.0f, extent, spacing);
 				require(
-						iconSize == fontSize * 1.35f &&
+						iconSize == fontSize * 1.5f &&
 							extent > TitleBarButtonExtent(fontSize, padding),
 						"host chrome did not use its larger icon scale");
 				require(

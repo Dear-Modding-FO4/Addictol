@@ -280,7 +280,7 @@ namespace Addictol::DearModdingUI
 		return fontSize + padding * 2.0f;
 	}
 
-	inline constexpr float kHostChromeIconScale{ 1.35f };
+	inline constexpr float kHostChromeIconScale{ 1.5f };
 
 	[[nodiscard]] constexpr float HostChromeIconSize(
 		float a_fontSize) noexcept
