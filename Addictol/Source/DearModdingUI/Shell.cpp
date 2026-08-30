@@ -354,28 +354,12 @@ namespace Addictol::DearModdingUI
 
 		struct HostSettingsTitleButton
 		{
-			HostSettingsTitleAction action;
+			SettingsAction action;
 			const char* id;
 			const char* label;
 			const char* tooltip;
 			float width;
 		};
-
-		[[nodiscard]] bool HostSettingsTitleActionEnabled(
-			HostSettingsTitleAction a_action,
-			const HostSettingsTitleActionAvailability& a_availability) noexcept
-		{
-			switch (a_action)
-			{
-			case HostSettingsTitleAction::kApply:
-				return a_availability.apply;
-			case HostSettingsTitleAction::kRevert:
-				return a_availability.revert;
-			case HostSettingsTitleAction::kReset:
-				return a_availability.reset;
-			}
-			return false;
-		}
 
 		[[nodiscard]] bool DrawHeader(
 			const NavigationModel& a_model,
@@ -930,39 +914,51 @@ namespace Addictol::DearModdingUI
 					ImGui::CalcTextSize(fallbackLabel).x,
 					buttonExtent,
 					ImGui::GetStyle().FramePadding.x);
-				const auto textButtonWidth = [&](const char* a_label) {
-					return ActionButtonWidth(
-						false,
-						ImGui::CalcTextSize(a_label).x,
-						buttonExtent,
-						ImGui::GetStyle().FramePadding.x);
-				};
 				const std::array actions{
 					HostSettingsTitleButton{
-						HostSettingsTitleAction::kReset,
+						SettingsAction::kReset,
 						"##DearModdingUI.HostSettingsResetButton",
 						"Reset",
-						"Loads shipped defaults into the draft. Use Apply to save them.",
-						textButtonWidth("Reset") },
+						"Reset loads shipped interface defaults into the draft. "
+						"Use Apply to save them.",
+						SettingsActionButtonWidth(
+							SettingsAction::kReset,
+							"Reset",
+							buttonExtent) },
 					HostSettingsTitleButton{
-						HostSettingsTitleAction::kRevert,
+						SettingsAction::kRevert,
 						"##DearModdingUI.HostSettingsRevertButton",
 						"Revert",
-						"Revert or leaving this view discards the draft and "
-						"restores committed settings.",
-						textButtonWidth("Revert") },
+						"Revert discards pending interface edits and restores "
+						"saved settings.",
+						SettingsActionButtonWidth(
+							SettingsAction::kRevert,
+							"Revert",
+							buttonExtent) },
 					HostSettingsTitleButton{
-						HostSettingsTitleAction::kApply,
+						SettingsAction::kApply,
 						"##DearModdingUI.HostSettingsApplyButton",
 						"Apply",
-						"Appearance is previewed locally. Apply persists the "
-						"complete draft once to Data/F4SE/Plugins/"
-						"AddictolCustom.toml; typography rebuilds once if needed.",
-						textButtonWidth("Apply") }
+						"Apply saves interface settings to AddictolCustom.toml. "
+						"Appearance previews update immediately; typography "
+						"rebuilds once if needed.",
+						SettingsActionButtonWidth(
+							SettingsAction::kApply,
+							"Apply",
+							buttonExtent) }
 				};
-				float actionButtonWidthSum = 0.0f;
-				for (const auto& action : actions)
-					actionButtonWidthSum += action.width;
+				const auto dirty =
+					HostSettingsTitleActionEnabled(SettingsAction::kApply);
+				const std::array actionWidths{
+					actions[0].width,
+					actions[1].width,
+					actions[2].width
+				};
+				const auto actionButtonWidthSum =
+					ResolveSettingsActionButtonWidthSum(
+						actionWidths,
+						dirty,
+						dirty ? 1u : 0u);
 				const auto spacing = ImGui::GetStyle().ItemSpacing.x;
 				const auto layout = ResolveHostSettingsTitleRowLayout(
 					start.x,
@@ -1000,24 +996,20 @@ namespace Addictol::DearModdingUI
 				auto actionX = layout.actionsMinX;
 				for (const auto& action : actions)
 				{
-					const auto availability =
-						GetHostSettingsTitleActionAvailability();
-					const auto enabled = HostSettingsTitleActionEnabled(
-						action.action, availability);
-					ImGui::BeginDisabled(!enabled);
-					const auto pressed = DrawCompactChromeButton(
+					const auto enabled =
+						SettingsActionEnabled(action.action, dirty);
+					const auto pressed = DrawSettingsActionButton(
 						action.id,
 						{
 							actionX,
 							start.y + (rowHeight - buttonExtent) * 0.5f
 						},
 						{ action.width, buttonExtent },
-						char32_t{},
+						action.action,
 						action.label,
 						action.tooltip,
-						ImGui::GetColorU32(ImGuiCol_Text));
-					ImGui::EndDisabled();
-					if (pressed && enabled)
+						enabled);
+					if (pressed)
 						InvokeHostSettingsTitleAction(action.action);
 					actionX += action.width + spacing;
 				}
@@ -1260,6 +1252,55 @@ namespace Addictol::DearModdingUI
 			if (io.IniFilename)
 				ImGui::SaveIniSettingsToDisk(io.IniFilename);
 		}
+	}
+
+	float SettingsActionButtonExtent() noexcept
+	{
+		return TitleBarButtonExtent(
+			ImGui::GetFontSize(),
+			kTitleBarButtonPadding);
+	}
+
+	float SettingsActionButtonWidth(
+		SettingsAction a_action,
+		const char* a_fallbackLabel,
+		float a_buttonExtent) noexcept
+	{
+		const auto presentation = ResolveSettingsActionButtonPresentation(
+			a_action,
+			HasIconGlyph(SettingsActionGlyph(a_action)));
+		return ActionButtonWidth(
+			!presentation.useTextFallback,
+			a_fallbackLabel ? ImGui::CalcTextSize(a_fallbackLabel).x : 0.0f,
+			a_buttonExtent,
+			ImGui::GetStyle().FramePadding.x);
+	}
+
+	bool DrawSettingsActionButton(
+		const char* a_id,
+		const ImVec2& a_origin,
+		const ImVec2& a_size,
+		SettingsAction a_action,
+		const char* a_fallbackLabel,
+		const char* a_tooltip,
+		bool a_enabled) noexcept
+	{
+		const auto presentation = ResolveSettingsActionButtonPresentation(
+			a_action,
+			HasIconGlyph(SettingsActionGlyph(a_action)));
+		ImGui::BeginDisabled(!a_enabled);
+		const auto pressed = DrawCompactChromeButton(
+			a_id,
+			a_origin,
+			a_size,
+			presentation.glyph,
+			presentation.useTextFallback ? a_fallbackLabel : nullptr,
+			a_tooltip,
+			presentation.useTextFallback ?
+				ImGui::GetColorU32(ImGuiCol_Text) :
+				IconColor(ImGui::GetColorU32(ImGuiCol_Text)));
+		ImGui::EndDisabled();
+		return pressed && a_enabled;
 	}
 
 	void DrawCollapsingSectionHeader(

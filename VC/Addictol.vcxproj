@@ -180,6 +180,7 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\SettingsActions.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Shell.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Status.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Theme.h" />

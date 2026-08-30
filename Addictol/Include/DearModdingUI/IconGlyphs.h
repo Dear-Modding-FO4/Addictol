@@ -23,8 +23,10 @@ namespace Addictol::DearModdingUI
 		inline constexpr char32_t kArchive{ 0xE00C };
 		inline constexpr char32_t kAppWindow{ 0xE5DA };
 		inline constexpr char32_t kArrowCounterClockwise{ 0xE038 };
+		inline constexpr char32_t kArrowsClockwise{ 0xE094 };
 		inline constexpr char32_t kClipboardText{ 0xE198 };
 		inline constexpr char32_t kDotsThreeCircle{ 0xE200 };
+		inline constexpr char32_t kFloppyDisk{ 0xE248 };
 		inline constexpr char32_t kGear{ 0xE270 };
 		inline constexpr char32_t kGameController{ 0xE26E };
 		inline constexpr char32_t kMonitor{ 0xE32E };
@@ -75,11 +77,15 @@ namespace Addictol::DearModdingUI
 	inline constexpr std::array kActionGlyphs{
 		IconGlyphMapping{ "arrowcounterclockwise", PhosphorGlyph::kArrowCounterClockwise },
 		IconGlyphMapping{ "arrow-counter-clockwise", PhosphorGlyph::kArrowCounterClockwise },
+		IconGlyphMapping{ "arrowsclockwise", PhosphorGlyph::kArrowsClockwise },
+		IconGlyphMapping{ "arrows-clockwise", PhosphorGlyph::kArrowsClockwise },
 		IconGlyphMapping{ "clearcache", PhosphorGlyph::kTrash },
 		IconGlyphMapping{ "clear-cache", PhosphorGlyph::kTrash },
 		IconGlyphMapping{ "clipboard", PhosphorGlyph::kClipboardText },
 		IconGlyphMapping{ "clipboardtext", PhosphorGlyph::kClipboardText },
 		IconGlyphMapping{ "clipboard-text", PhosphorGlyph::kClipboardText },
+		IconGlyphMapping{ "floppydisk", PhosphorGlyph::kFloppyDisk },
+		IconGlyphMapping{ "floppy-disk", PhosphorGlyph::kFloppyDisk },
 		IconGlyphMapping{ "restoresettings", PhosphorGlyph::kArrowCounterClockwise },
 		IconGlyphMapping{ "restore-settings", PhosphorGlyph::kArrowCounterClockwise },
 		IconGlyphMapping{ "trash", PhosphorGlyph::kTrash }

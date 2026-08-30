@@ -5,6 +5,7 @@
 #include "../Addictol/Include/DearModdingUI/HostSettings.h"
 #include "../Addictol/Include/DearModdingUI/HostSettingsView.h"
 #include "../Addictol/Include/DearModdingUI/IconGlyphs.h"
+#include "../Addictol/Include/DearModdingUI/SettingsActions.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
 #include "../Addictol/Include/DearModdingUI/VisualDecisions.h"
 #include "Harness.h"
@@ -903,6 +904,11 @@ namespace vmm_tests
 				"host settings gear glyph changed");
 			require(PhosphorGlyph::kX == 0xE4F6,
 				"host close glyph changed");
+			require(
+				PhosphorGlyph::kArrowCounterClockwise == 0xE038 &&
+					PhosphorGlyph::kArrowsClockwise == 0xE094 &&
+					PhosphorGlyph::kFloppyDisk == 0xE248,
+				"settings action glyph codepoints changed");
 			require(SlugifyIconName("Post Process") == "post-process",
 				"spaces were not collapsed");
 			require(SlugifyIconName("Mixed___CASE Name") == "mixed-case-name",
@@ -1002,11 +1008,50 @@ namespace vmm_tests
 							PhosphorGlyph::kClipboardText &&
 						ResolveActionIconGlyph("Clear Cache") ==
 							PhosphorGlyph::kTrash &&
+						ResolveActionIconGlyph("arrows-clockwise") ==
+							PhosphorGlyph::kArrowsClockwise &&
+						ResolveActionIconGlyph("floppy_disk") ==
+							PhosphorGlyph::kFloppyDisk &&
 						ResolveActionIconGlyph("restore_settings") ==
 							PhosphorGlyph::kArrowCounterClockwise,
 					"known action icon names changed glyphs");
 			require(ResolveActionIconGlyph("unknown") == char32_t{},
 				"unknown action icon name did not request text fallback");
+		});
+
+		runner.test("settings actions map to deterministic glyphs", [] {
+			require(
+				kSettingsActionOrder ==
+					std::array{
+						SettingsAction::kReset,
+						SettingsAction::kRevert,
+						SettingsAction::kApply },
+				"settings action order changed");
+			require(
+				SettingsActionGlyph(SettingsAction::kReset) ==
+						PhosphorGlyph::kArrowsClockwise &&
+					SettingsActionGlyph(SettingsAction::kRevert) ==
+						PhosphorGlyph::kArrowCounterClockwise &&
+					SettingsActionGlyph(SettingsAction::kApply) ==
+						PhosphorGlyph::kFloppyDisk,
+				"settings actions changed glyphs");
+		});
+
+		runner.test("settings action buttons fall back when font glyphs are absent", [] {
+			for (const auto action : kSettingsActionOrder)
+			{
+				const auto glyph = SettingsActionGlyph(action);
+				const auto icon =
+					ResolveSettingsActionButtonPresentation(action, true);
+				const auto fallback =
+					ResolveSettingsActionButtonPresentation(action, false);
+				require(
+					icon.glyph == glyph &&
+						!icon.useTextFallback &&
+						fallback.glyph == char32_t{} &&
+						fallback.useTextFallback,
+					"missing settings glyph did not select text fallback");
+			}
 		});
 
 		runner.test("theme icon tint selects colored and monochrome modes", [] {
@@ -1130,7 +1175,7 @@ namespace vmm_tests
 				"page title overlapped client actions");
 		});
 
-		runner.test("host settings title actions keep fixed non-overlapping geometry", [] {
+		runner.test("settings action rows keep fixed non-overlapping geometry", [] {
 			struct Case
 			{
 				float fontSize;
@@ -1144,7 +1189,6 @@ namespace vmm_tests
 			};
 			for (const auto& test : cases)
 			{
-				const auto scale = test.fontSize * test.uiScale / 16.0f;
 				const auto fontSize = test.fontSize * test.uiScale;
 				const auto buttonPadding = 2.0f * test.uiScale;
 				const auto framePadding = 8.0f * test.uiScale;
@@ -1152,28 +1196,41 @@ namespace vmm_tests
 				const auto buttonExtent = TitleBarButtonExtent(
 					fontSize, buttonPadding);
 				const std::array widths{
-					ActionButtonWidth(
-						false, 40.0f * scale, buttonExtent, framePadding),
-					ActionButtonWidth(
-						false, 46.0f * scale, buttonExtent, framePadding),
-					ActionButtonWidth(
-						false, 38.0f * scale, buttonExtent, framePadding)
+					ActionButtonWidth(true, 0.0f, buttonExtent, framePadding),
+					ActionButtonWidth(true, 0.0f, buttonExtent, framePadding),
+					ActionButtonWidth(true, 0.0f, buttonExtent, framePadding)
 				};
-				const auto widthSum =
-					widths[0] + widths[1] + widths[2];
+				const auto cleanWidthSum =
+					ResolveSettingsActionButtonWidthSum(widths, false, 0);
+				const auto dirtyWidthSum =
+					ResolveSettingsActionButtonWidthSum(widths, true, 7);
+				require(cleanWidthSum == dirtyWidthSum,
+					"draft state or pending count changed action-row extent");
 				const auto clean = ResolveHostSettingsTitleRowLayout(
 					100.0f,
 					1900.0f,
-					widthSum,
+					cleanWidthSum,
 					widths.size(),
 					buttonExtent,
 					spacing);
 				const auto dirty = ResolveHostSettingsTitleRowLayout(
 					100.0f,
 					1900.0f,
-					widthSum,
+					dirtyWidthSum,
 					widths.size(),
 					buttonExtent,
+					spacing);
+				const auto cleanPage = ResolvePageActionRowLayout(
+					100.0f,
+					1900.0f,
+					cleanWidthSum,
+					widths.size(),
+					spacing);
+				const auto dirtyPage = ResolvePageActionRowLayout(
+					100.0f,
+					1900.0f,
+					dirtyWidthSum,
+					widths.size(),
 					spacing);
 				const auto priorClose = ResolveTrailingControlLayout(
 					100.0f, 1900.0f, buttonExtent, spacing);
@@ -1198,18 +1255,24 @@ namespace vmm_tests
 						clean.actionsMinX == dirty.actionsMinX &&
 						clean.closeMinX == dirty.closeMinX,
 					"dirty state changed settings title geometry");
+				require(
+					cleanPage.reservedWidth == dirtyPage.reservedWidth &&
+						cleanPage.actionsMinX == dirtyPage.actionsMinX,
+					"pending count changed Addictol settings action geometry");
 			}
 		});
 
-		runner.test("host settings title action availability follows dirty state", [] {
-			const auto clean =
-				ResolveHostSettingsTitleActionAvailability(false);
-			require(!clean.apply && !clean.revert && clean.reset,
+		runner.test("settings action availability follows dirty state", [] {
+			require(
+				!SettingsActionEnabled(SettingsAction::kApply, false) &&
+					!SettingsActionEnabled(SettingsAction::kRevert, false) &&
+					SettingsActionEnabled(SettingsAction::kReset, false),
 				"clean settings exposed the wrong title actions");
 
-			const auto dirty =
-				ResolveHostSettingsTitleActionAvailability(true);
-			require(dirty.apply && dirty.revert && dirty.reset,
+			require(
+				SettingsActionEnabled(SettingsAction::kApply, true) &&
+					SettingsActionEnabled(SettingsAction::kRevert, true) &&
+					SettingsActionEnabled(SettingsAction::kReset, true),
 				"dirty settings exposed the wrong title actions");
 		});
 

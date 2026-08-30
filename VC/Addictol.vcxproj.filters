@@ -511,6 +511,9 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\SettingsActions.h">
+      <Filter>Include\DearModdingUI</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Shell.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>

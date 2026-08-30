@@ -2,6 +2,7 @@
 
 #include <DearModdingUI/ThemeDefaults.h>
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -225,6 +226,21 @@ namespace Addictol::DearModdingUI
 		const auto textWidth = a_textWidth > 0.0f ? a_textWidth : 0.0f;
 		const auto padding = a_horizontalPadding > 0.0f ? a_horizontalPadding : 0.0f;
 		return textWidth + padding * 2.0f;
+	}
+
+	template <std::size_t Size>
+	[[nodiscard]] constexpr float ResolveSettingsActionButtonWidthSum(
+		const std::array<float, Size>& a_widths,
+		[[maybe_unused]] bool a_dirty,
+		[[maybe_unused]] size_t a_pendingCount) noexcept
+	{
+		float sum = 0.0f;
+		for (const auto width : a_widths)
+		{
+			if (width > 0.0f)
+				sum += width;
+		}
+		return sum;
 	}
 
 	struct PageActionRowLayout

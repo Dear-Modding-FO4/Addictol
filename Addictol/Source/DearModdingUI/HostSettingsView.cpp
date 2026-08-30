@@ -342,28 +342,28 @@ namespace Addictol::DearModdingUI
 		}
 	}
 
-	HostSettingsTitleActionAvailability
-		GetHostSettingsTitleActionAvailability() noexcept
+	bool HostSettingsTitleActionEnabled(SettingsAction a_action) noexcept
 	{
 		EnsureDraft();
-		return ResolveHostSettingsTitleActionAvailability(
+		return SettingsActionEnabled(
+			a_action,
 			HostSettingsDraftDiffers(g_settingsDraft));
 	}
 
 	void InvokeHostSettingsTitleAction(
-		HostSettingsTitleAction a_action) noexcept
+		SettingsAction a_action) noexcept
 	{
 		EnsureDraft();
 		switch (a_action)
 		{
-		case HostSettingsTitleAction::kApply:
+		case SettingsAction::kApply:
 			ApplyDraft();
 			break;
-		case HostSettingsTitleAction::kRevert:
+		case SettingsAction::kRevert:
 			RevertHostSettingsDraft(g_settingsDraft);
 			PreviewDraft();
 			break;
-		case HostSettingsTitleAction::kReset:
+		case SettingsAction::kReset:
 			ResetHostSettingsDraft(g_settingsDraft);
 			PreviewDraft();
 			break;

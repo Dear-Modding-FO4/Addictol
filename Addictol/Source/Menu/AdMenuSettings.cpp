@@ -2,8 +2,10 @@
 
 #include <Core/Settings/AdSettingsModel.h>
 #include <DearModdingUI/IconGlyphs.h>
+#include <DearModdingUI/SettingsActions.h>
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/Theme.h>
+#include <DearModdingUI/VisualDecisions.h>
 #include <Menu/AdMenu.h>
 
 #include <REX/REX.h>
@@ -70,6 +72,29 @@ namespace Addictol::Menu
 		{
 			if (g_draft.active)
 				LeaveSettingsDraft(g_draft);
+		}
+
+		void ApplyDraft()
+		{
+			const auto commit = PrepareSettingsDraftApply(g_draft);
+			const auto result =
+				SettingsRepository::GetSingleton().Apply(commit.values);
+			if (result.success)
+			{
+				CompleteSettingsDraftApply(g_draft, commit);
+				Menu::ReportStatus(
+					DMUI_STATUS_SEVERITY_SUCCESS,
+					"Settings saved.");
+			}
+			else
+			{
+				Menu::ReportStatus(
+					DMUI_STATUS_SEVERITY_ERROR,
+					result.error.c_str());
+				REX::WARN(
+					"Settings: AddictolCustom.toml could not be saved: {}"sv,
+					result.error);
+			}
 		}
 
 		[[nodiscard]] bool DrawControl(SettingDraftEntry& a_entry)
@@ -374,58 +399,107 @@ namespace Addictol::Menu
 		void DrawActions()
 		{
 			const auto pending = SettingsDraftPendingCount(g_draft);
+			const auto dirty = pending != 0;
 			char applyLabel[32]{};
 			std::snprintf(
 				applyLabel,
 				sizeof(applyLabel),
 				"Apply (%zu)",
 				pending);
-			const auto applyWidth =
-				ImGui::CalcTextSize("Apply (121)").x +
-				ImGui::GetStyle().FramePadding.x * 2.0f;
-			const auto revertWidth =
-				ImGui::CalcTextSize("Revert").x +
-				ImGui::GetStyle().FramePadding.x * 2.0f;
-			const auto resetWidth =
-				ImGui::CalcTextSize("Reset all").x +
-				ImGui::GetStyle().FramePadding.x * 2.0f;
+			char applyTooltip[128]{};
+			std::snprintf(
+				applyTooltip,
+				sizeof(applyTooltip),
+				"Apply saves %zu pending %s to AddictolCustom.toml.",
+				pending,
+				pending == 1 ? "change" : "changes");
 
-			ImGui::BeginDisabled(pending == 0);
-			if (ImGui::Button(applyLabel, { applyWidth, 0.0f }))
+			struct ActionButton
 			{
-				const auto commit = PrepareSettingsDraftApply(g_draft);
-				const auto result =
-					SettingsRepository::GetSingleton().Apply(commit.values);
-				if (result.success)
-				{
-					CompleteSettingsDraftApply(g_draft, commit);
-					Menu::ReportStatus(
-						DMUI_STATUS_SEVERITY_SUCCESS,
-						"Settings saved.");
-				}
-				else
-				{
-					Menu::ReportStatus(
-						DMUI_STATUS_SEVERITY_ERROR,
-						result.error.c_str());
-					REX::WARN(
-						"Settings: AddictolCustom.toml could not be saved: {}"sv,
-						result.error);
-				}
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Revert", { revertWidth, 0.0f }))
-				RevertSettingsDraft(g_draft);
-			ImGui::EndDisabled();
-			ImGui::SameLine();
-			if (ImGui::Button("Reset all", { resetWidth, 0.0f }))
-				ResetSettingsDraftToDefaults(g_draft);
-			if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+				DearModdingUI::SettingsAction action;
+				const char* id;
+				const char* fallbackLabel;
+				const char* widthLabel;
+				const char* tooltip;
+			};
+			const std::array actions{
+				ActionButton{
+					DearModdingUI::SettingsAction::kReset,
+					"##AddictolSettingsResetButton",
+					"Reset all",
+					"Reset all",
+					"Reset loads every Addictol setting's shipped default into "
+					"the draft. Use Apply to save them." },
+				ActionButton{
+					DearModdingUI::SettingsAction::kRevert,
+					"##AddictolSettingsRevertButton",
+					"Revert",
+					"Revert",
+					"Revert discards pending edits and restores saved settings." },
+				ActionButton{
+					DearModdingUI::SettingsAction::kApply,
+					"##AddictolSettingsApplyButton",
+					applyLabel,
+					"Apply (121)",
+					applyTooltip }
+			};
+			const auto buttonExtent =
+				DearModdingUI::SettingsActionButtonExtent();
+			std::array<float, actions.size()> widths{};
+			for (size_t index = 0; index < actions.size(); ++index)
 			{
-				ImGui::SetTooltip(
-					"Load every Addictol page setting's shipped default into the draft. "
-					"Use Apply to save them.");
+				widths[index] = DearModdingUI::SettingsActionButtonWidth(
+					actions[index].action,
+					actions[index].widthLabel,
+					buttonExtent);
 			}
+			const auto widthSum =
+				DearModdingUI::ResolveSettingsActionButtonWidthSum(
+					widths,
+					dirty,
+					pending);
+			const auto start = ImGui::GetCursorScreenPos();
+			const auto available =
+				(std::max)(ImGui::GetContentRegionAvail().x, 0.0f);
+			const auto spacing = ImGui::GetStyle().ItemSpacing.x;
+			const auto layout = DearModdingUI::ResolvePageActionRowLayout(
+				start.x,
+				start.x + available,
+				widthSum,
+				actions.size(),
+				spacing);
+			auto actionX = layout.actionsMinX;
+			for (size_t index = 0; index < actions.size(); ++index)
+			{
+				const auto& action = actions[index];
+				const auto pressed = DearModdingUI::DrawSettingsActionButton(
+					action.id,
+					{ actionX, start.y },
+					{ widths[index], buttonExtent },
+					action.action,
+					action.fallbackLabel,
+					action.tooltip,
+					DearModdingUI::SettingsActionEnabled(
+						action.action,
+						dirty));
+				if (pressed)
+				{
+					switch (action.action)
+					{
+					case DearModdingUI::SettingsAction::kReset:
+						ResetSettingsDraftToDefaults(g_draft);
+						break;
+					case DearModdingUI::SettingsAction::kRevert:
+						RevertSettingsDraft(g_draft);
+						break;
+					case DearModdingUI::SettingsAction::kApply:
+						ApplyDraft();
+						break;
+					}
+				}
+				actionX += widths[index] + spacing;
+			}
+			ImGui::Dummy({ available, buttonExtent });
 		}
 
 		void DrawFilters()
