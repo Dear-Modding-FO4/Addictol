@@ -620,7 +620,7 @@ namespace Addictol::DearModdingUI
 			const NavigationModel& a_model,
 			ShellState& a_state) noexcept
 		{
-			DrawSectionHeader("Mods");
+			DrawSectionHeader("Mods", PhosphorGlyph::kSquaresFour);
 			const Theme::FontGuard font{ Theme::FontRole::kSubheading };
 			const auto* active = a_model.FindClient(a_state.activeClient);
 			const char* previewText =
@@ -713,7 +713,7 @@ namespace Addictol::DearModdingUI
 			const NavigationClient& a_client,
 			ShellState& a_state) noexcept
 		{
-			DrawSectionHeader("Pages");
+			DrawSectionHeader("Pages", PhosphorGlyph::kFiles);
 			DrawPageSearch(a_state.search);
 
 			for (const auto& category : a_client.categories)
@@ -1195,15 +1195,21 @@ namespace Addictol::DearModdingUI
 		}
 	}
 
-	void DrawSectionHeader(const char* a_text) noexcept
+	void DrawSectionHeader(const char* a_text, char32_t a_glyph) noexcept
 	{
 		auto* drawList = ImGui::GetWindowDrawList();
 		const auto position = ImGui::GetCursorScreenPos();
 		const auto availableWidth = ImGui::GetContentRegionAvail().x;
 		const auto textSize = ImGui::CalcTextSize(a_text);
-		const auto lineY = position.y + textSize.y * 0.5f;
+		const auto layout = DecideInlineIconLayout(
+			HasIconGlyph(a_glyph),
+			textSize.x,
+			textSize.y,
+			ImGui::GetFontSize(),
+			ImGui::GetStyle().ItemSpacing.x);
+		const auto lineY = position.y + layout.contentHeight * 0.5f;
 		const auto lineLength =
-			(availableWidth - textSize.x - 20.0f) * 0.5f;
+			(availableWidth - layout.contentWidth - 20.0f) * 0.5f;
 		const auto color = ImGui::GetColorU32(
 			Theme::kFullPalette[ImGuiCol_Text]);
 
@@ -1215,7 +1221,7 @@ namespace Addictol::DearModdingUI
 				color);
 		}
 		const auto rightLineStart =
-			position.x + lineLength + 10.0f + textSize.x + 10.0f;
+			position.x + lineLength + 10.0f + layout.contentWidth + 10.0f;
 		if (rightLineStart < position.x + availableWidth)
 		{
 			drawList->AddLine(
@@ -1223,12 +1229,14 @@ namespace Addictol::DearModdingUI
 				{ position.x + availableWidth, lineY },
 				color);
 		}
-		drawList->AddText(
+		DrawIconText(
 			{ position.x + lineLength + 10.0f, position.y + 2.0f },
-			color,
-			a_text);
+			layout.contentHeight,
+			a_glyph,
+			a_text,
+			color);
 		ImGui::SetCursorScreenPos(
-			{ position.x, position.y + textSize.y + 8.0f });
+			{ position.x, position.y + layout.contentHeight + 8.0f });
 		ImGui::Dummy({ availableWidth, 0.0f });
 	}
 

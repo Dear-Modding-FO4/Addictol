@@ -33,6 +33,8 @@ namespace Addictol::DearModdingUI
 		inline constexpr char32_t kGauge{ 0xE628 };
 		inline constexpr char32_t kMagicWand{ 0xE6B6 };
 		inline constexpr char32_t kTerminalWindow{ 0xEAE8 };
+		inline constexpr char32_t kSquaresFour{ 0xE464 };
+		inline constexpr char32_t kFiles{ 0xE710 };
 	}
 
 	struct IconGlyphMapping
