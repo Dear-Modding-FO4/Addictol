@@ -482,9 +482,25 @@
   {
     "name": "idle footer keeps the status reservation",
     "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
-    "find": "const auto statusWidth = (std::min)(desired, available * 0.5f);",
-    "replace": "const auto statusWidth = a_hasStatus ?\r\n\t\t\t(std::min)(desired, available * 0.5f) :\r\n\t\t\t0.0f;",
+    "find": "const auto statusBandWidth = (std::min)(\r\n\t\t\tstatusBandBasis,\r\n\t\t\tavailableBandWidth);",
+    "replace": "const auto statusBandWidth = a_hasStatus ?\r\n\t\t\t(std::min)(statusBandBasis, availableBandWidth) :\r\n\t\t\t0.0f;",
     "check": "footer reserves identical status geometry while idle",
     "message": "status presence changed reserved footer geometry"
+  },
+  {
+    "name": "footer reservation ignores status text width",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "const auto statusBandBasis = desiredStatusWidth;",
+    "replace": "const auto statusBandBasis = a_statusTextWidth > 0.0f ?\r\n\t\t\ta_statusTextWidth :\r\n\t\t\t0.0f;",
+    "check": "footer status reservation ignores message length",
+    "message": "status message length changed reserved footer geometry"
+  },
+  {
+    "name": "footer dismiss allowance stays symmetric",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "const auto statusAreaMin = statusBandMin + dismissAllowance;\r\n\t\tconst auto statusAreaMax = statusBandMax - dismissAllowance;",
+    "replace": "const auto statusAreaMin = statusBandMin;\r\n\t\tconst auto statusAreaMax = statusBandMax - dismissAllowance;",
+    "check": "persistent footer centers long status text",
+    "message": "persistent status text drifted from the footer center"
   }
 ]

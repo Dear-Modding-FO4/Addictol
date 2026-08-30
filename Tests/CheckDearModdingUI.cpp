@@ -16,6 +16,7 @@
 #include "../Addictol/Include/DearModdingUI/ImGuiFingerprint.h"
 
 #include <array>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -410,33 +411,210 @@ namespace vmm_tests
 					"unknown status severity was not rejected");
 		});
 
+		runner.test("wide footer centers measured status text", [] {
+			const auto layout = ResolveFooterStatusLayout(
+				20.0f,
+				1200.0f,
+				32.0f,
+				480.0f,
+				180.0f,
+				28.0f,
+				8.0f,
+				36.0f,
+				8.0f,
+				1.0f,
+				true,
+				false);
+			require(
+					layout.statusMinX == 520.0f &&
+						layout.statusMaxX == 700.0f &&
+						(layout.statusMinX + layout.statusMaxX) * 0.5f ==
+							610.0f,
+					"status text was not centered on the footer");
+			require(
+					layout.statusBandMinX == 370.0f &&
+						layout.statusBandMaxX == 850.0f &&
+						layout.metadataMaxX == 362.0f &&
+						layout.settingsMinX == 1168.0f &&
+						layout.footerHeight == 69.0f,
+					"wide footer regions were not separated");
+		});
+
+		runner.test("narrow footer clamps status without overlap", [] {
+			const auto layout = ResolveFooterStatusLayout(
+				20.0f,
+				320.0f,
+				40.0f,
+				300.0f,
+				300.0f,
+				28.0f,
+				8.0f,
+				40.0f,
+				8.0f,
+				1.0f,
+				true,
+				false);
+			require(
+					layout.statusBandMinX == 68.0f &&
+						layout.statusBandMaxX == 272.0f &&
+						layout.statusMinX == 104.0f &&
+						layout.statusMaxX == 236.0f &&
+						layout.metadataMaxX == 60.0f,
+					"narrow status did not fill its clamped span");
+			require(
+					layout.metadataMaxX <= layout.statusMinX &&
+						layout.statusMaxX + 8.0f <= layout.dismissMinX &&
+						layout.dismissMaxX < layout.settingsMinX,
+					"narrow status overlapped footer controls");
+		});
+
+		runner.test("persistent footer status reserves dismiss control", [] {
+			const auto layout = ResolveFooterStatusLayout(
+				0.0f,
+				600.0f,
+				40.0f,
+				300.0f,
+				160.0f,
+				28.0f,
+				8.0f,
+				40.0f,
+				8.0f,
+				1.0f,
+				true,
+				true);
+			require(
+					layout.statusBandMinX == 150.0f &&
+						layout.statusBandMaxX == 450.0f &&
+						layout.statusMinX == 220.0f &&
+						layout.statusMaxX == 380.0f &&
+						layout.dismissMinX == 422.0f &&
+						layout.dismissMaxX == layout.statusBandMaxX,
+					"persistent status geometry changed");
+			require(
+					layout.statusMaxX + 8.0f <= layout.dismissMinX &&
+						layout.dismissMaxX < layout.settingsMinX,
+					"persistent footer controls overlapped");
+		});
+
+		runner.test("persistent footer centers long status text", [] {
+			const auto transient = ResolveFooterStatusLayout(
+				0.0f,
+				600.0f,
+				40.0f,
+				300.0f,
+				280.0f,
+				28.0f,
+				8.0f,
+				40.0f,
+				8.0f,
+				1.0f,
+				true,
+				false);
+			const auto persistent = ResolveFooterStatusLayout(
+				0.0f,
+				600.0f,
+				40.0f,
+				300.0f,
+				280.0f,
+				28.0f,
+				8.0f,
+				40.0f,
+				8.0f,
+				1.0f,
+				true,
+				true);
+			const auto persistentCenter =
+				(persistent.statusMinX + persistent.statusMaxX) * 0.5f;
+			require(
+					std::abs(persistentCenter - 300.0f) < 0.001f,
+					"persistent status text drifted from the footer center");
+			require(
+					transient.statusMinX == persistent.statusMinX &&
+						transient.statusMaxX == persistent.statusMaxX &&
+						persistent.statusMinX == 186.0f &&
+						persistent.statusMaxX == 414.0f,
+					"dismiss state changed the reserved status text area");
+		});
+
 		runner.test("footer reserves identical status geometry while idle", [] {
 			const auto idle = ResolveFooterStatusLayout(
 				20.0f,
 				1200.0f,
-				28.0f,
-				480.0f,
-				8.0f,
 				32.0f,
+				480.0f,
+				0.0f,
+				28.0f,
+				8.0f,
+				36.0f,
 				8.0f,
 				1.0f,
+				false,
 				false);
 			const auto active = ResolveFooterStatusLayout(
 				20.0f,
 				1200.0f,
-				28.0f,
-				480.0f,
-				8.0f,
 				32.0f,
+				480.0f,
+				180.0f,
+				28.0f,
+				8.0f,
+				36.0f,
 				8.0f,
 				1.0f,
-				true);
-			require(idle == active, "status presence changed reserved footer geometry");
+				true,
+				false);
 			require(
-					idle.statusMaxX > idle.statusMinX &&
-						idle.rowHeight == 32.0f &&
-						idle.footerHeight == 65.0f,
-					"footer status area was not reserved");
+					idle.metadataMaxX == active.metadataMaxX &&
+						idle.statusBandMinX == active.statusBandMinX &&
+						idle.statusBandMaxX == active.statusBandMaxX,
+					"status presence changed reserved footer geometry");
+			require(
+					idle.metadataMaxX == 362.0f &&
+						idle.statusBandMinX == 370.0f &&
+						idle.statusBandMaxX == 850.0f,
+					"idle footer lost its fixed status reservation");
+		});
+
+		runner.test("footer status reservation ignores message length", [] {
+			const auto shortStatus = ResolveFooterStatusLayout(
+				20.0f,
+				1200.0f,
+				32.0f,
+				480.0f,
+				80.0f,
+				28.0f,
+				8.0f,
+				36.0f,
+				8.0f,
+				1.0f,
+				true,
+				false);
+			const auto longStatus = ResolveFooterStatusLayout(
+				20.0f,
+				1200.0f,
+				32.0f,
+				480.0f,
+				800.0f,
+				28.0f,
+				8.0f,
+				36.0f,
+				8.0f,
+				1.0f,
+				true,
+				false);
+			require(
+					shortStatus.metadataMaxX == longStatus.metadataMaxX &&
+						shortStatus.statusBandMinX ==
+							longStatus.statusBandMinX &&
+						shortStatus.statusBandMaxX ==
+							longStatus.statusBandMaxX,
+					"status message length changed reserved footer geometry");
+			require(
+					shortStatus.statusMinX == 570.0f &&
+						shortStatus.statusMaxX == 650.0f &&
+						longStatus.statusMinX == 406.0f &&
+						longStatus.statusMaxX == 814.0f,
+					"status text did not fit within the fixed band");
 		});
 
 		runner.test("client descriptors reject null size and callback failures", [] {
@@ -1130,11 +1308,16 @@ namespace vmm_tests
 				const auto fontSize = test.fontSize * test.uiScale;
 				const auto padding = 2.0f * test.uiScale;
 				const auto spacing = 8.0f * test.uiScale;
-				const auto extent = TitleBarButtonExtent(fontSize, padding);
+				const auto iconSize = HostChromeIconSize(fontSize);
+				const auto extent = HostChromeButtonExtent(fontSize, padding);
 				const auto header = ResolveTrailingControlLayout(
 					24.0f, 1896.0f, extent, spacing);
 				const auto footer = ResolveTrailingControlLayout(
 					36.0f, 1264.0f, extent, spacing);
+				require(
+						iconSize == fontSize * 1.35f &&
+							extent > TitleBarButtonExtent(fontSize, padding),
+						"host chrome did not use its larger icon scale");
 				require(
 						header.controlMaxX == 1896.0f &&
 							header.controlMinX == 1896.0f - extent &&
@@ -1897,6 +2080,25 @@ namespace vmm_tests
 					present.contentWidth == 104.0f &&
 					present.contentHeight == 20.0f,
 				"present icon layout did not align to the font");
+		});
+
+		runner.test("glyph origin centers asymmetric ink bounds", [] {
+			const auto origin = ResolveCenteredGlyphOrigin(
+				100.0f,
+				80.0f,
+				2.0f,
+				4.0f,
+				14.0f,
+				18.0f,
+				1.5f);
+			require(
+				origin.x == 88.0f &&
+					origin.y == 63.5f &&
+					origin.x + (2.0f + 14.0f) * 1.5f * 0.5f ==
+						100.0f &&
+					origin.y + (4.0f + 18.0f) * 1.5f * 0.5f ==
+						80.0f,
+				"glyph ink bounds were not centered");
 		});
 
 		runner.test("cursor ownership follows modal visibility", [] {

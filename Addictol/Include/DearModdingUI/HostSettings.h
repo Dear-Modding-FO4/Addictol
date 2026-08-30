@@ -280,6 +280,24 @@ namespace Addictol::DearModdingUI
 		return fontSize + padding * 2.0f;
 	}
 
+	inline constexpr float kHostChromeIconScale{ 1.35f };
+
+	[[nodiscard]] constexpr float HostChromeIconSize(
+		float a_fontSize) noexcept
+	{
+		return (a_fontSize > 0.0f ? a_fontSize : 0.0f) *
+			kHostChromeIconScale;
+	}
+
+	[[nodiscard]] constexpr float HostChromeButtonExtent(
+		float a_fontSize,
+		float a_buttonPadding) noexcept
+	{
+		return TitleBarButtonExtent(
+			HostChromeIconSize(a_fontSize),
+			a_buttonPadding);
+	}
+
 	[[nodiscard]] constexpr float RightTitleBarButtonOriginX(
 		float a_windowMaxX,
 		float a_windowBorder,
