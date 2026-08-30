@@ -274,7 +274,8 @@ namespace Addictol
 				existing.assign(
 					std::istreambuf_iterator<char>{ file },
 					std::istreambuf_iterator<char>{});
-				if (!file.eof())
+				// istreambuf_iterator bypasses stream state, so only a hard error is meaningful.
+				if (file.bad())
 				{
 					a_error = "could not read the complete custom settings file";
 					return false;

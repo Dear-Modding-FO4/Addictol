@@ -184,7 +184,7 @@ namespace Addictol
 		"Additional"sv,
 		"bMenu"sv,
 		SettingDisplayCategory::kInterface,
-		false,
+		true,
 		"In-game diagnostics window drawn over the game. Tabs appear in module name order; Log Control is always last and is always available."sv,
 		SettingApplyTiming::kNextLaunch
 	};

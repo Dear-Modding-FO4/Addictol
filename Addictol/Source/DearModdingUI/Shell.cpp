@@ -707,7 +707,10 @@ namespace Addictol::DearModdingUI
 							label.c_str(),
 							selected,
 							ImGuiSelectableFlags_SpanAllColumns))
+					{
+						HostSettings::NotifyModSelected();
 						a_state.activePage = page.handle;
+					}
 					if (failed)
 						ImGui::PopStyleColor();
 				}

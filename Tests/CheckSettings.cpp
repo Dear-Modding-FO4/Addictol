@@ -79,6 +79,12 @@ namespace
 		return *setting;
 	}
 
+	// Derived so flipping a shipped default cannot silently invalidate these fixtures.
+	[[nodiscard]] bool MenuDefault()
+	{
+		return std::get<bool>(Setting("Additional", "bMenu").DefaultValue());
+	}
+
 	[[nodiscard]] std::filesystem::path TemporarySettingsDirectory()
 	{
 		const auto unique =
@@ -236,7 +242,7 @@ namespace vmm_tests
 			const auto& achievements = Setting("Patches", "bAchievements");
 			const auto& bloom = Setting("Patches", "bHighResBloom");
 			const std::array values{
-				Addictol::SettingValueSnapshot{ &menu, true },
+				Addictol::SettingValueSnapshot{ &menu, !MenuDefault() },
 				Addictol::SettingValueSnapshot{ &achievements, false },
 				Addictol::SettingValueSnapshot{ &bloom, bloom.DefaultValue() }
 			};
@@ -253,7 +259,8 @@ namespace vmm_tests
 			require(parsed.is_ok(), "override TOML could not be parsed");
 			const auto& root = parsed.unwrap();
 			require(
-				toml::find<bool>(root, "Additional", "bMenu"),
+				toml::find(root, "Additional").contains("bMenu") &&
+					toml::find<bool>(root, "Additional", "bMenu") == !MenuDefault(),
 				"non-default boolean was not written");
 			require(
 				!toml::find<bool>(root, "Patches", "bAchievements"),
@@ -271,7 +278,7 @@ namespace vmm_tests
 			const auto& string = Setting("Additional", "sMenuToggleKey");
 			const std::string quoted{ "F\"11\\path\nnext" };
 			const std::array values{
-				Addictol::SettingValueSnapshot{ &boolean, true },
+				Addictol::SettingValueSnapshot{ &boolean, !MenuDefault() },
 				Addictol::SettingValueSnapshot{ &floating, 2.25 },
 				Addictol::SettingValueSnapshot{ &signedInteger, int64_t{ 1234 } },
 				Addictol::SettingValueSnapshot{ &unsignedInteger, uint64_t{ 777 } },
@@ -290,7 +297,7 @@ namespace vmm_tests
 			require(parsed.is_ok(), "typed override TOML could not be parsed");
 			const auto& root = parsed.unwrap();
 			require(
-				toml::find<bool>(root, "Additional", "bMenu"),
+				toml::find<bool>(root, "Additional", "bMenu") == !MenuDefault(),
 				"boolean did not round trip");
 			require(
 				toml::find<double>(
@@ -377,6 +384,32 @@ namespace vmm_tests
 			require(
 				std::filesystem::exists(custom),
 				"custom override file was not created");
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("settings writer updates a valid existing custom document", [] {
+			const auto directory = TemporarySettingsDirectory();
+			std::filesystem::create_directories(directory);
+			const auto custom = directory / "AddictolCustom.toml";
+			{
+				std::ofstream file{ custom, std::ios::binary };
+				file << "[Additional]\nbMenu = true\nzUnowned = 7\n";
+			}
+			const auto& menu = Setting("Additional", "bMenu");
+			const std::array values{
+				Addictol::SettingValueSnapshot{ &menu, !MenuDefault() }
+			};
+			std::string error;
+			require(
+				Addictol::WriteSettingsOverrideFile(custom, values, error),
+				"existing custom document could not be rewritten: " + error);
+			const auto root = toml::parse_str(ReadText(custom));
+			require(
+				toml::find<bool>(root, "Additional", "bMenu") == !MenuDefault(),
+				"existing custom document lost its override");
+			require(
+				toml::find<int64_t>(root, "Additional", "zUnowned") == 7,
+				"existing custom document lost an unowned key");
 			std::filesystem::remove_all(directory);
 		});
 
@@ -518,7 +551,7 @@ namespace vmm_tests
 					filter),
 				"modified-only included a default value");
 			require(
-				Addictol::MatchesSettingFilter(menu, true, filter),
+				Addictol::MatchesSettingFilter(menu, !MenuDefault(), filter),
 				"modified-only excluded a changed value");
 		});
 
@@ -534,7 +567,7 @@ namespace vmm_tests
 				!Addictol::IsSettingModified(menu, menu.DefaultValue()),
 				"default value exposed reset");
 			require(
-				Addictol::IsSettingModified(menu, true),
+				Addictol::IsSettingModified(menu, !MenuDefault()),
 				"changed value did not expose reset");
 			require(
 				Addictol::SelectSettingControl(menu) ==

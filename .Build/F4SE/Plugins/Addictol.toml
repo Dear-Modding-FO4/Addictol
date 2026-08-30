@@ -354,7 +354,7 @@ fLocalMapScaleFactor = 1.5
 
 # In-game diagnostics window drawn over the game.
 # Tabs appear in module name order; Log Control is always last and is always available.
-bMenu = false
+bMenu = true
 
 # Key that opens and closes the menu: F1-F12, Home, End, Insert, or Delete (needs bMenu).
 sMenuToggleKey = "F11"
