@@ -2,10 +2,31 @@
 
 #include <DearModdingUI/HostSettings.h>
 
+#include <cstdint>
 #include <optional>
 
 namespace Addictol::DearModdingUI
 {
+	enum class HostSettingsTitleAction : uint32_t
+	{
+		kApply,
+		kRevert,
+		kReset
+	};
+
+	struct HostSettingsTitleActionAvailability
+	{
+		bool apply{ false };
+		bool revert{ false };
+		bool reset{ true };
+	};
+
+	[[nodiscard]] constexpr HostSettingsTitleActionAvailability
+		ResolveHostSettingsTitleActionAvailability(bool a_dirty) noexcept
+	{
+		return { a_dirty, a_dirty, true };
+	}
+
 	struct HostSettingsDraftState
 	{
 		HostInterfaceSettings committed;
@@ -69,5 +90,9 @@ namespace Addictol::DearModdingUI
 		a_state.active = false;
 	}
 
+	[[nodiscard]] HostSettingsTitleActionAvailability
+		GetHostSettingsTitleActionAvailability() noexcept;
+	void InvokeHostSettingsTitleAction(
+		HostSettingsTitleAction a_action) noexcept;
 	void DrawHostSettingsControls() noexcept;
 }

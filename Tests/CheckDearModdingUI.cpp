@@ -886,6 +886,89 @@ namespace vmm_tests
 				"page title overlapped client actions");
 		});
 
+		runner.test("host settings title actions keep fixed non-overlapping geometry", [] {
+			struct Case
+			{
+				float fontSize;
+				float uiScale;
+			};
+			constexpr std::array cases{
+				Case{ 16.0f, 1.0f },
+				Case{ 18.0f, 1.25f },
+				Case{ 21.0f, 1.5f },
+				Case{ 28.0f, 2.0f }
+			};
+			for (const auto& test : cases)
+			{
+				const auto scale = test.fontSize * test.uiScale / 16.0f;
+				const auto fontSize = test.fontSize * test.uiScale;
+				const auto buttonPadding = 2.0f * test.uiScale;
+				const auto framePadding = 8.0f * test.uiScale;
+				const auto spacing = 4.0f * test.uiScale;
+				const auto buttonExtent = TitleBarButtonExtent(
+					fontSize, buttonPadding);
+				const std::array widths{
+					ActionButtonWidth(
+						false, 40.0f * scale, buttonExtent, framePadding),
+					ActionButtonWidth(
+						false, 46.0f * scale, buttonExtent, framePadding),
+					ActionButtonWidth(
+						false, 38.0f * scale, buttonExtent, framePadding)
+				};
+				const auto widthSum =
+					widths[0] + widths[1] + widths[2];
+				const auto clean = ResolveHostSettingsTitleRowLayout(
+					100.0f,
+					1900.0f,
+					widthSum,
+					widths.size(),
+					buttonExtent,
+					spacing);
+				const auto dirty = ResolveHostSettingsTitleRowLayout(
+					100.0f,
+					1900.0f,
+					widthSum,
+					widths.size(),
+					buttonExtent,
+					spacing);
+				const auto priorClose = ResolveTrailingControlLayout(
+					100.0f, 1900.0f, buttonExtent, spacing);
+				require(
+					clean.titleMaxX <= clean.actionsMinX &&
+						clean.actionsMaxX + spacing == clean.closeMinX &&
+						clean.closeMinX == priorClose.controlMinX &&
+						clean.closeMaxX == priorClose.controlMaxX,
+					"settings title controls overlapped");
+
+				auto position = clean.actionsMinX;
+				for (const auto width : widths)
+				{
+					require(position + width <= clean.actionsMaxX,
+						"settings action exceeded its reserved strip");
+					position += width + spacing;
+				}
+				require(position - spacing == clean.actionsMaxX,
+					"settings action spacing changed");
+				require(
+					clean.reservedWidth == dirty.reservedWidth &&
+						clean.actionsMinX == dirty.actionsMinX &&
+						clean.closeMinX == dirty.closeMinX,
+					"dirty state changed settings title geometry");
+			}
+		});
+
+		runner.test("host settings title action availability follows dirty state", [] {
+			const auto clean =
+				ResolveHostSettingsTitleActionAvailability(false);
+			require(!clean.apply && !clean.revert && clean.reset,
+				"clean settings exposed the wrong title actions");
+
+			const auto dirty =
+				ResolveHostSettingsTitleActionAvailability(true);
+			require(dirty.apply && dirty.revert && dirty.reset,
+				"dirty settings exposed the wrong title actions");
+		});
+
 		runner.test("host settings panel follows menu visibility", [] {
 			auto open = DecideHostSettingsPanelOpen(
 				false,

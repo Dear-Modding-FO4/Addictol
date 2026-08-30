@@ -11,6 +11,7 @@
 #include <imgui/imgui_internal.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cfloat>
 #include <cmath>
@@ -349,6 +350,31 @@ namespace Addictol::DearModdingUI
 			// A restored cursor must be followed by an item or ImGui reports an unbounded SetCursorPos.
 			ImGui::Dummy({ 0.0f, 0.0f });
 			return pressed;
+		}
+
+		struct HostSettingsTitleButton
+		{
+			HostSettingsTitleAction action;
+			const char* id;
+			const char* label;
+			const char* tooltip;
+			float width;
+		};
+
+		[[nodiscard]] bool HostSettingsTitleActionEnabled(
+			HostSettingsTitleAction a_action,
+			const HostSettingsTitleActionAvailability& a_availability) noexcept
+		{
+			switch (a_action)
+			{
+			case HostSettingsTitleAction::kApply:
+				return a_availability.apply;
+			case HostSettingsTitleAction::kRevert:
+				return a_availability.revert;
+			case HostSettingsTitleAction::kReset:
+				return a_availability.reset;
+			}
+			return false;
 		}
 
 		[[nodiscard]] bool DrawHeader(
@@ -949,16 +975,52 @@ namespace Addictol::DearModdingUI
 					ImGui::GetFontSize(), kTitleBarButtonPadding);
 				const auto hasCloseGlyph = HasIconGlyph(PhosphorGlyph::kX);
 				constexpr const char* fallbackLabel{ "Back" };
-				const auto buttonWidth = ActionButtonWidth(
+				const auto closeButtonWidth = ActionButtonWidth(
 					hasCloseGlyph,
 					ImGui::CalcTextSize(fallbackLabel).x,
 					buttonExtent,
 					ImGui::GetStyle().FramePadding.x);
-				const auto layout = ResolveTrailingControlLayout(
+				const auto textButtonWidth = [&](const char* a_label) {
+					return ActionButtonWidth(
+						false,
+						ImGui::CalcTextSize(a_label).x,
+						buttonExtent,
+						ImGui::GetStyle().FramePadding.x);
+				};
+				const std::array actions{
+					HostSettingsTitleButton{
+						HostSettingsTitleAction::kReset,
+						"##DearModdingUI.HostSettingsResetButton",
+						"Reset",
+						"Loads shipped defaults into the draft. Use Apply to save them.",
+						textButtonWidth("Reset") },
+					HostSettingsTitleButton{
+						HostSettingsTitleAction::kRevert,
+						"##DearModdingUI.HostSettingsRevertButton",
+						"Revert",
+						"Revert or leaving this view discards the draft and "
+						"restores committed settings.",
+						textButtonWidth("Revert") },
+					HostSettingsTitleButton{
+						HostSettingsTitleAction::kApply,
+						"##DearModdingUI.HostSettingsApplyButton",
+						"Apply",
+						"Appearance is previewed locally. Apply persists the "
+						"complete draft once to Data/F4SE/Plugins/"
+						"AddictolCustom.toml; typography rebuilds once if needed.",
+						textButtonWidth("Apply") }
+				};
+				float actionButtonWidthSum = 0.0f;
+				for (const auto& action : actions)
+					actionButtonWidthSum += action.width;
+				const auto spacing = ImGui::GetStyle().ItemSpacing.x;
+				const auto layout = ResolveHostSettingsTitleRowLayout(
 					start.x,
 					contentMaxX,
-					buttonWidth,
-					ImGui::GetStyle().ItemSpacing.x);
+					actionButtonWidthSum,
+					actions.size(),
+					closeButtonWidth,
+					spacing);
 				ImVec2 titleSize{};
 				{
 					const Theme::FontGuard font{ Theme::FontRole::kTitle };
@@ -966,13 +1028,13 @@ namespace Addictol::DearModdingUI
 					titleSize = ImGui::CalcTextSize("Interface Settings");
 					const auto rowHeight =
 						(std::max)(titleSize.y, buttonExtent);
-					if (layout.adjacentMaxX > start.x)
+					if (layout.titleMaxX > start.x)
 					{
 						ImGui::RenderTextEllipsis(
 							ImGui::GetWindowDrawList(),
 							start,
-							{ layout.adjacentMaxX, start.y + rowHeight },
-							layout.adjacentMaxX,
+							{ layout.titleMaxX, start.y + rowHeight },
+							layout.titleMaxX,
 							"Interface Settings",
 							nullptr,
 							&titleSize);
@@ -985,21 +1047,43 @@ namespace Addictol::DearModdingUI
 				}
 				const auto rowHeight =
 					(std::max)(titleSize.y, buttonExtent);
+				auto actionX = layout.actionsMinX;
+				for (const auto& action : actions)
+				{
+					const auto availability =
+						GetHostSettingsTitleActionAvailability();
+					const auto enabled = HostSettingsTitleActionEnabled(
+						action.action, availability);
+					ImGui::BeginDisabled(!enabled);
+					const auto pressed = DrawCompactChromeButton(
+						action.id,
+						{
+							actionX,
+							start.y + (rowHeight - buttonExtent) * 0.5f
+						},
+						{ action.width, buttonExtent },
+						char32_t{},
+						action.label,
+						action.tooltip,
+						ImGui::GetColorU32(ImGuiCol_Text));
+					ImGui::EndDisabled();
+					if (pressed && enabled)
+						InvokeHostSettingsTitleAction(action.action);
+					actionX += action.width + spacing;
+				}
 				const auto dismiss = DrawCompactChromeButton(
 					"##DearModdingUI.HostSettingsBackButton",
 					{
-						layout.controlMinX,
+						layout.closeMinX,
 						start.y + (rowHeight - buttonExtent) * 0.5f
 					},
-					{ buttonWidth, buttonExtent },
+					{ closeButtonWidth, buttonExtent },
 					hasCloseGlyph ? PhosphorGlyph::kX : char32_t{},
 					hasCloseGlyph ? nullptr : fallbackLabel,
 					"Back to the current mod page",
 					hasCloseGlyph ?
 						IconColor(ImGui::GetColorU32(ImGuiCol_Text)) :
 						ImGui::GetColorU32(ImGuiCol_Text));
-				ImGui::TextDisabled(
-					"Preview appearance changes, then Apply to save the complete draft.");
 				ImGui::Spacing();
 				ImGui::SeparatorEx(
 					ImGuiSeparatorFlags_Horizontal,

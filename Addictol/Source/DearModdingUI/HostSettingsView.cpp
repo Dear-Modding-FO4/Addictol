@@ -233,15 +233,6 @@ namespace Addictol::DearModdingUI
 				ImGuiSliderFlags_AlwaysClamp);
 			DrawHelp(
 				"Multiplies resolution-derived sizing; Apply rebuilds typography once before the next frame.");
-			if (settings.uiScale != g_settingsDraft.committed.uiScale)
-			{
-				ImGui::TextColored(
-					Theme::colors::kWarning,
-					"Pending UI scale: %.2fx",
-					settings.uiScale);
-				ImGui::Spacing();
-			}
-
 			const auto& families = Theme::AvailableBodyFontFamilies();
 			const auto resolvedFamily =
 				Theme::ResolveBodyFontFamily(settings.bodyFontFamily);
@@ -262,78 +253,12 @@ namespace Addictol::DearModdingUI
 			}
 			DrawHelp(
 				"Lists font-family folders in Data/F4SE/Plugins/DearModdingUI/Fonts; Apply rebuilds the selected family once.");
-			if (settings.bodyFontFamily !=
-				g_settingsDraft.committed.bodyFontFamily)
-			{
-				ImGui::TextColored(
-					Theme::colors::kWarning,
-					"Pending body font: %s",
-					settings.bodyFontFamily.c_str());
-				ImGui::Spacing();
-			}
 			const auto effectiveFamily = Theme::EffectiveBodyFontFamily();
 			ImGui::TextDisabled(
 				"Applied this frame: %.*s",
 				static_cast<int>(effectiveFamily.size()),
 				effectiveFamily.data());
 			ImGui::Spacing();
-		}
-
-		void DrawDraftStatus() noexcept
-		{
-			if (!HostSettingsDraftDiffers(g_settingsDraft))
-			{
-				ImGui::TextDisabled("No unapplied interface changes.");
-				ImGui::Spacing();
-				return;
-			}
-
-			ImGui::TextColored(
-				Theme::colors::kWarning,
-				"Unapplied interface changes");
-			if (HostSettingsDraftRequiresAtlasRebuild(
-					g_settingsDraft.committed,
-					g_settingsDraft.draft))
-			{
-				ImGui::TextWrapped(
-					"Apply will save these settings and rebuild typography once.");
-			}
-			else
-			{
-				ImGui::TextWrapped(
-					"Appearance is previewed locally. Apply to save it.");
-			}
-			ImGui::Spacing();
-		}
-
-		void DrawBehaviorAndReset() noexcept
-		{
-			DrawSectionHeader("Behavior and reset");
-			ImGui::TextWrapped(
-				"Apply persists the complete draft once to "
-				"Data/F4SE/Plugins/AddictolCustom.toml. Revert or leaving this view discards it.");
-			ImGui::Spacing();
-
-			const auto changed =
-				HostSettingsDraftDiffers(g_settingsDraft);
-			ImGui::BeginDisabled(!changed);
-			if (ImGui::Button("Apply"))
-				ApplyDraft();
-			ImGui::SameLine();
-			if (ImGui::Button("Revert"))
-			{
-				RevertHostSettingsDraft(g_settingsDraft);
-				PreviewDraft();
-			}
-			ImGui::EndDisabled();
-			ImGui::Spacing();
-			if (ImGui::Button("Reset all interface settings"))
-			{
-				ResetHostSettingsDraft(g_settingsDraft);
-				PreviewDraft();
-			}
-			DrawHelp(
-				"Loads shipped defaults into the draft. Use Apply to save them.");
 		}
 
 		void DrawReadOnlyHostFact(
@@ -406,15 +331,40 @@ namespace Addictol::DearModdingUI
 		}
 	}
 
+	HostSettingsTitleActionAvailability
+		GetHostSettingsTitleActionAvailability() noexcept
+	{
+		EnsureDraft();
+		return ResolveHostSettingsTitleActionAvailability(
+			HostSettingsDraftDiffers(g_settingsDraft));
+	}
+
+	void InvokeHostSettingsTitleAction(
+		HostSettingsTitleAction a_action) noexcept
+	{
+		EnsureDraft();
+		switch (a_action)
+		{
+		case HostSettingsTitleAction::kApply:
+			ApplyDraft();
+			break;
+		case HostSettingsTitleAction::kRevert:
+			RevertHostSettingsDraft(g_settingsDraft);
+			PreviewDraft();
+			break;
+		case HostSettingsTitleAction::kReset:
+			ResetHostSettingsDraft(g_settingsDraft);
+			PreviewDraft();
+			break;
+		}
+	}
+
 	void DrawHostSettingsControls() noexcept
 	{
 		EnsureDraft();
-		DrawDraftStatus();
 		DrawAppearance();
 		ImGui::Spacing();
 		DrawReadability();
-		ImGui::Spacing();
-		DrawBehaviorAndReset();
 		ImGui::Spacing();
 		DrawReadOnlyFacts();
 	}

@@ -390,5 +390,21 @@
     "replace": "return a_draft.uiScale != a_committed.uiScale &&\r\n\t\t\ta_draft.bodyFontFamily != a_committed.bodyFontFamily;",
     "check": "host settings atlas rebuild predicate is exact",
     "message": "UI scale change did not request an atlas rebuild"
+  },
+  {
+    "name": "host settings title actions follow dirty state",
+    "target": "Addictol/Include/DearModdingUI/HostSettingsView.h",
+    "find": "return { a_dirty, a_dirty, true };",
+    "replace": "return { false, a_dirty, true };",
+    "check": "host settings title action availability follows dirty state",
+    "message": "dirty settings exposed the wrong title actions"
+  },
+  {
+    "name": "host settings title actions preserve close spacing",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "close.adjacentMaxX,\r\n\t\t\ta_actionButtonWidthSum,",
+    "replace": "close.controlMinX,\r\n\t\t\ta_actionButtonWidthSum,",
+    "check": "host settings title actions keep fixed non-overlapping geometry",
+    "message": "settings title controls overlapped"
   }
 ]

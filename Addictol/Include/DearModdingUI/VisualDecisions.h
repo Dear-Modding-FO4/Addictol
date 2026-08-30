@@ -203,4 +203,49 @@ namespace Addictol::DearModdingUI
 			requestedWidth
 		};
 	}
+
+	struct HostSettingsTitleRowLayout
+	{
+		float titleMinX{ 0.0f };
+		float titleMaxX{ 0.0f };
+		float actionsMinX{ 0.0f };
+		float actionsMaxX{ 0.0f };
+		float closeMinX{ 0.0f };
+		float closeMaxX{ 0.0f };
+		float reservedWidth{ 0.0f };
+	};
+
+	[[nodiscard]] constexpr HostSettingsTitleRowLayout
+		ResolveHostSettingsTitleRowLayout(
+			float a_contentMinX,
+			float a_contentMaxX,
+			float a_actionButtonWidthSum,
+			size_t a_actionCount,
+			float a_closeButtonWidth,
+			float a_spacing) noexcept
+	{
+		const auto close = ResolveTrailingControlLayout(
+			a_contentMinX,
+			a_contentMaxX,
+			a_closeButtonWidth,
+			a_spacing);
+		const auto actions = ResolvePageActionRowLayout(
+			a_contentMinX,
+			close.adjacentMaxX,
+			a_actionButtonWidthSum,
+			a_actionCount,
+			a_spacing);
+		const auto controlsMinX = a_actionCount > 0 ?
+			actions.actionsMinX :
+			close.controlMinX;
+		return {
+			a_contentMinX,
+			actions.titleMaxX,
+			actions.actionsMinX,
+			actions.actionsMaxX,
+			close.controlMinX,
+			close.controlMaxX,
+			close.controlMaxX - controlsMinX
+		};
+	}
 }
