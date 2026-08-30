@@ -475,6 +475,9 @@ namespace Addictol::DearModdingUI
 			const auto titleMaxX = a_drawClose ?
 				buttonLayout.adjacentMaxX :
 				contentMaxX;
+			const auto titleMinX = start.x + BulletRunContentInset(
+				ImGui::GetStyle().FramePadding.x,
+				ImGui::GetFontSize());
 			ImVec2 textSize{};
 			float rowHeight{ 0.0f };
 			{
@@ -486,12 +489,12 @@ namespace Addictol::DearModdingUI
 					a_drawClose ? buttonExtent : 0.0f);
 				const auto titleFontSize = ImGui::GetFontSize();
 				const ImVec2 titlePosition{
-					start.x,
+					titleMinX,
 					start.y + CurrentFontOpticalTextOffsetY(
 						rowHeight,
 						titleFontSize)
 				};
-				if (titleMaxX > start.x)
+				if (titleMaxX > titleMinX)
 				{
 					ImGui::RenderTextEllipsis(
 						ImGui::GetWindowDrawList(),

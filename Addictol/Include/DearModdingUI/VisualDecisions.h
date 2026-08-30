@@ -114,6 +114,18 @@ namespace Addictol::DearModdingUI
 		};
 	}
 
+	// Leftmost bullet ink: ImGui centers it at FramePadding.x + FontSize/2 with radius FontSize/5.
+	[[nodiscard]] constexpr float BulletRunContentInset(
+		float a_framePaddingX,
+		float a_fontSize) noexcept
+	{
+		const auto framePaddingX = a_framePaddingX > 0.0f ?
+			a_framePaddingX :
+			0.0f;
+		const auto fontSize = a_fontSize > 0.0f ? a_fontSize : 0.0f;
+		return framePaddingX + fontSize * 0.3f;
+	}
+
 	[[nodiscard]] constexpr float CenterOffsetY(
 		float a_rowHeight,
 		float a_contentHeight) noexcept

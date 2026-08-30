@@ -502,5 +502,13 @@
     "replace": "return boxOffset;",
     "check": "capital ink provides stable optical text offset",
     "message": "capital ink did not center between box heuristics"
+  },
+  {
+    "name": "header title keeps the bullet run inset",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "return framePaddingX + fontSize * 0.3f;",
+    "replace": "return 0.0f;",
+    "check": "header title aligns with the footer bullet run",
+    "message": "header title inset did not match the bullet ink edge"
   }
 ]

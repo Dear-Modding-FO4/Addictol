@@ -576,6 +576,20 @@ namespace vmm_tests
 					"status text did not fit after the metadata");
 		});
 
+		runner.test("header title aligns with the footer bullet run", [] {
+			constexpr float framePaddingX{ 8.0f };
+			constexpr float fontSize{ 21.0f };
+			const auto inset = BulletRunContentInset(framePaddingX, fontSize);
+			const auto bulletInkMinX =
+				framePaddingX + fontSize * 0.5f - fontSize * 0.2f;
+			require(
+					std::abs(inset - bulletInkMinX) < 0.001f,
+					"header title inset did not match the bullet ink edge");
+			require(
+					BulletRunContentInset(-4.0f, -8.0f) == 0.0f,
+					"header title inset accepted negative metrics");
+		});
+
 		runner.test("row content centers vertically without negative offset", [] {
 			require(
 					CenterOffsetY(40.0f, 20.0f) == 10.0f &&
