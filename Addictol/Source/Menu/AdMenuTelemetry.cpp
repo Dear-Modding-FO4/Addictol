@@ -140,7 +140,7 @@ namespace Addictol
 			{
 				const auto color = display.fraction >= 0.9f ? Theme::colors::kError :
 					display.fraction >= 0.75f ? Theme::colors::kWarning :
-					Theme::colors::kAccentMuted;
+					Theme::colors::AccentMuted();
 				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
 				ImGui::ProgressBar(display.fraction, ImVec2(-FLT_MIN, 0.0f), "");
 				ImGui::PopStyleColor();

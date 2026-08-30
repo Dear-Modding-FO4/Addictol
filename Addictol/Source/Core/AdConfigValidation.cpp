@@ -59,7 +59,10 @@ namespace Addictol
 			"bIgnoreCompatibilityChecks"sv,
 			"fLocalMapScaleFactor"sv,
 			"bMenu"sv, "sMenuToggleKey"sv, "uMenuRefreshMs"sv,
-			"bMenuMonochromeIcons"sv, "bMenuBackgroundBlur"sv
+			"bMenuMonochromeIcons"sv, "sMenuAccentColor"sv,
+			"fMenuWindowOpacity"sv, "bMenuBackgroundBlur"sv,
+			"fMenuBackgroundBlurStrength"sv, "fMenuUiScale"sv,
+			"sMenuBodyFontFamily"sv
 		}}
 	};
 

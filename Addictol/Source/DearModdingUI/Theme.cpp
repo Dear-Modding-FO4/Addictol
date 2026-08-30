@@ -1,4 +1,5 @@
 #include <DearModdingUI/Theme.h>
+#include <DearModdingUI/FontCatalog.h>
 #include <DearModdingUI/HostSettings.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <Core/AdUtils.h>
@@ -37,17 +38,22 @@ namespace Addictol::DearModdingUI::Theme
 		{
 			bool roles{ false };
 			bool icons{ false };
+			bool requestedBody{ false };
 		};
 
 		struct LoadedFont
 		{
-			std::string_view file;
+			std::string file;
 			float size{ 0.0f };
 			ImFont* font{ nullptr };
 		};
 
 		Fonts g_fonts;
 		float g_baseFontSize{ 0.0f };
+		std::vector<FontCatalog::FontFamily> g_fontFamilies;
+		std::vector<std::string> g_fontFamilyNames;
+		std::string g_fontRequestFamily;
+		std::string g_effectiveBodyFontFamily;
 
 		[[nodiscard]] std::filesystem::path AssetPath(std::string_view a_relative)
 		{
@@ -103,51 +109,115 @@ namespace Addictol::DearModdingUI::Theme
 				kIconGlyphRanges) != nullptr;
 		}
 
-		[[nodiscard]] ImFont* LoadRoleFont(
-			ImFontAtlas& a_atlas,
-			FontRole a_role,
-			uint32_t a_backBufferHeight,
-			std::array<LoadedFont, static_cast<size_t>(FontRole::kCount)>& a_loaded,
-			size_t a_loadedCount) noexcept
+		void RefreshFontFamilies()
 		{
-			const auto index = static_cast<size_t>(a_role);
-			const auto& role = kFontRoleDefaults[index];
-			const auto size = ResolveRoleFontSize(a_role, a_backBufferHeight);
-			for (size_t cached = 0; cached < a_loadedCount; ++cached)
+			g_fontFamilies = FontCatalog::Enumerate(AssetPath({}));
+			g_fontFamilyNames.clear();
+			g_fontFamilyNames.reserve(g_fontFamilies.size());
+			for (const auto& family : g_fontFamilies)
+				g_fontFamilyNames.push_back(family.name);
+		}
+
+		[[nodiscard]] const FontCatalog::FontFamily* ResolveFamily(
+			std::string_view a_requested) noexcept
+		{
+			return FontCatalog::Resolve(
+				a_requested,
+				g_fontFamilies,
+				kDefaultBodyFontFamily);
+		}
+
+		[[nodiscard]] bool MergeIconFonts(
+			ImFontAtlas& a_atlas,
+			const Fonts& a_fonts) noexcept
+		{
+			const ImFont* candidates[]{
+				a_fonts.body,
+				a_fonts.title,
+				a_fonts.heading,
+				a_fonts.subheading,
+				a_fonts.subtext
+			};
+			std::array<const ImFont*, static_cast<size_t>(FontRole::kCount)> merged{};
+			size_t mergedCount = 0;
+			for (auto* candidate : candidates)
 			{
-				if (a_loaded[cached].file == role.file &&
-					a_loaded[cached].size == size)
-					return a_loaded[cached].font;
+				if (!candidate)
+					continue;
+				const auto duplicate = std::ranges::find(
+					merged.begin(),
+					merged.begin() + static_cast<ptrdiff_t>(mergedCount),
+					candidate);
+				if (duplicate != merged.begin() + static_cast<ptrdiff_t>(mergedCount))
+					continue;
+				if (!MergeIconFont(
+						a_atlas,
+						const_cast<ImFont*>(candidate),
+						candidate->LegacySize))
+					return false;
+				merged[mergedCount++] = candidate;
 			}
-			return AddFont(a_atlas, role.file, size);
+			return mergedCount > 0;
 		}
 
 		[[nodiscard]] FontLoadResult LoadFonts(
 			ImGuiIO& a_io,
-			uint32_t a_backBufferHeight) noexcept
+			uint32_t a_backBufferHeight,
+			float a_userScale,
+			const FontCatalog::FontFamily* a_family) noexcept
 		{
 			g_fonts = {};
 			auto& atlas = *a_io.Fonts;
-			std::array<LoadedFont, static_cast<size_t>(FontRole::kCount)> loaded{};
+			std::array<LoadedFont, static_cast<size_t>(FontRole::kCount) + 1> loaded{};
 			size_t loadedCount = 0;
 
-			auto load = [&](FontRole a_role) {
-				const auto index = static_cast<size_t>(a_role);
-				auto* font = LoadRoleFont(
-					atlas, a_role, a_backBufferHeight, loaded, loadedCount);
+			auto loadFile = [&](std::string_view a_file, float a_size) {
+				for (size_t cached = 0; cached < loadedCount; ++cached)
+				{
+					if (loaded[cached].file == a_file &&
+						loaded[cached].size == a_size)
+						return loaded[cached].font;
+				}
+				auto* font = AddFont(atlas, a_file, a_size);
 				loaded[loadedCount++] = {
-					kFontRoleDefaults[index].file,
-					ResolveRoleFontSize(a_role, a_backBufferHeight),
+					std::string{ a_file },
+					a_size,
 					font
 				};
 				return font;
 			};
 
-			g_fonts.body = load(FontRole::kBody);
-			g_fonts.title = load(FontRole::kTitle);
-			g_fonts.heading = load(FontRole::kHeading);
-			g_fonts.subheading = load(FontRole::kSubheading);
-			g_fonts.subtext = load(FontRole::kSubtext);
+			const auto bodySize = ResolveRoleFontSize(
+				FontRole::kBody, a_backBufferHeight, a_userScale);
+			const auto requestedFile = a_family ?
+				std::string_view{ a_family->regularFile } :
+				kFontRoleDefaults[static_cast<size_t>(FontRole::kBody)].file;
+			g_fonts.body = loadFile(requestedFile, bodySize);
+			const auto requestedBodyLoaded = g_fonts.body != nullptr;
+			g_effectiveBodyFontFamily = a_family ?
+				a_family->name :
+				std::string{ kDefaultBodyFontFamily };
+			const auto& defaultBody =
+				kFontRoleDefaults[static_cast<size_t>(FontRole::kBody)];
+			if (!g_fonts.body && requestedFile != defaultBody.file)
+			{
+				g_fonts.body = loadFile(defaultBody.file, bodySize);
+				g_effectiveBodyFontFamily = kDefaultBodyFontFamily;
+			}
+
+			const auto loadRole = [&](FontRole a_role) {
+				const auto index = static_cast<size_t>(a_role);
+				return loadFile(
+					kFontRoleDefaults[index].file,
+					ResolveRoleFontSize(
+						a_role,
+						a_backBufferHeight,
+						a_userScale));
+			};
+			g_fonts.title = loadRole(FontRole::kTitle);
+			g_fonts.heading = loadRole(FontRole::kHeading);
+			g_fonts.subheading = loadRole(FontRole::kSubheading);
+			g_fonts.subtext = loadRole(FontRole::kSubtext);
 
 			const auto allBundled = g_fonts.body &&
 				g_fonts.title &&
@@ -155,7 +225,10 @@ namespace Addictol::DearModdingUI::Theme
 				g_fonts.subheading &&
 				g_fonts.subtext;
 			if (!g_fonts.body)
+			{
 				g_fonts.body = atlas.AddFontDefault();
+				g_effectiveBodyFontFamily = "Built-in fallback";
+			}
 			if (!g_fonts.title)
 				g_fonts.title = g_fonts.body;
 			if (!g_fonts.heading)
@@ -167,7 +240,8 @@ namespace Addictol::DearModdingUI::Theme
 			a_io.FontDefault = g_fonts.body;
 			return {
 				allBundled,
-				MergeIconFont(atlas, g_fonts.body, g_fonts.body->LegacySize)
+				MergeIconFonts(atlas, g_fonts),
+				requestedBodyLoaded
 			};
 		}
 
@@ -197,8 +271,24 @@ namespace Addictol::DearModdingUI::Theme
 			g_fonts.heading = g_fonts.body;
 			g_fonts.subheading = g_fonts.body;
 			g_fonts.subtext = g_fonts.body;
+			g_effectiveBodyFontFamily = "Built-in fallback";
 			a_io.FontDefault = g_fonts.body;
 			return g_fonts.body && a_io.Fonts->Build();
+		}
+	}
+
+	namespace colors
+	{
+		ImVec4 Accent() noexcept
+		{
+			return HostAccentToImVec4(HostSettings::Current().accentColor);
+		}
+
+		ImVec4 AccentMuted() noexcept
+		{
+			auto accent = Accent();
+			accent.w = 0.39f;
+			return accent;
 		}
 	}
 
@@ -229,7 +319,10 @@ namespace Addictol::DearModdingUI::Theme
 		style.HoverDelayNormal = kTooltipHoverDelay;
 		style.FontScaleMain = std::exp2(kDefaultGlobalScale);
 
-		const auto palette = MakeEffectivePalette();
+		const auto settings = HostSettings::Current();
+		const auto palette = MakeEffectivePalette(
+			HostAccentToImVec4(settings.accentColor),
+			settings.windowBackgroundOpacity);
 		for (size_t index = 0; index < palette.size(); ++index)
 			style.Colors[index] = palette[index];
 		ImGui::GetStyle() = style;
@@ -240,22 +333,43 @@ namespace Addictol::DearModdingUI::Theme
 		auto& io = ImGui::GetIO();
 		io.ConfigDockingWithShift = true;
 		io.ConfigInputTrickleEventQueue = false;
-		const auto loaded = LoadFonts(io, static_cast<uint32_t>(kDefaultScreenHeight));
+		RefreshFontFamilies();
+		const auto settings = HostSettings::Current();
+		const auto* family = ResolveFamily(settings.bodyFontFamily);
+		const auto loaded = LoadFonts(
+			io,
+			static_cast<uint32_t>(kDefaultScreenHeight),
+			settings.uiScale,
+			family);
 		if (!loaded.roles)
 			REX::WARN("DearModdingUI: bundled font roles are incomplete; using safe fallbacks"sv);
 		if (!loaded.icons)
 			REX::WARN("DearModdingUI: Phosphor icon font is unavailable; using text-only labels"sv);
 		if (!io.Fonts->Build() && !BuildEmergencyAtlas(io))
 			REX::ERROR("DearModdingUI: no usable font atlas could be prepared"sv);
-		g_baseFontSize = ResolveFontSize(static_cast<uint32_t>(kDefaultScreenHeight));
+		g_baseFontSize =
+			ResolveFontSize(static_cast<uint32_t>(kDefaultScreenHeight)) *
+			settings.uiScale;
+		g_fontRequestFamily = family ?
+			family->name :
+			std::string{ kDefaultBodyFontFamily };
 		ApplyStyle();
+		if (!loaded.requestedBody)
+			REX::WARN("DearModdingUI: requested body font failed; using Jost"sv);
 	}
 
 	bool PrepareFrame(uint32_t a_backBufferHeight) noexcept
 	{
-		const auto desiredFontSize = ResolveFontSize(a_backBufferHeight);
+		const auto settings = HostSettings::Current();
+		const auto* family = ResolveFamily(settings.bodyFontFamily);
+		const auto requestedFamily = family ?
+			std::string_view{ family->name } :
+			kDefaultBodyFontFamily;
+		const auto desiredFontSize =
+			ResolveFontSize(a_backBufferHeight) * settings.uiScale;
 		if (std::abs(desiredFontSize - g_baseFontSize) <
-			0.01f)
+				0.01f &&
+			requestedFamily == g_fontRequestFamily)
 		{
 			ApplyStyle();
 			return true;
@@ -268,7 +382,11 @@ namespace Addictol::DearModdingUI::Theme
 		auto& io = ImGui::GetIO();
 		ImGui_ImplDX11_InvalidateDeviceObjects();
 		io.Fonts->Clear();
-		const auto loaded = LoadFonts(io, a_backBufferHeight);
+		const auto loaded = LoadFonts(
+			io,
+			a_backBufferHeight,
+			settings.uiScale,
+			family);
 		const auto built = io.Fonts->Build() && ImGui_ImplDX11_CreateDeviceObjects();
 		if (!built)
 		{
@@ -282,6 +400,7 @@ namespace Addictol::DearModdingUI::Theme
 		}
 
 		g_baseFontSize = desiredFontSize;
+		g_fontRequestFamily = requestedFamily;
 		ApplyStyle();
 		REX::INFO("DearModdingUI: typography resolved to {:.0f}px at {}p"sv,
 			desiredFontSize, a_backBufferHeight);
@@ -289,6 +408,8 @@ namespace Addictol::DearModdingUI::Theme
 			REX::WARN("DearModdingUI: scaled atlas uses fallback font roles"sv);
 		if (!loaded.icons)
 			REX::WARN("DearModdingUI: scaled atlas uses text-only labels"sv);
+		if (!loaded.requestedBody)
+			REX::WARN("DearModdingUI: requested body font failed; using Jost"sv);
 		return true;
 	}
 
@@ -313,10 +434,29 @@ namespace Addictol::DearModdingUI::Theme
 
 	ImVec4 IconTint() noexcept
 	{
+		const auto settings = HostSettings::Current();
 		return ResolveIconTint(
-			HostSettings::Current().iconColorMode,
-			colors::kAccent,
+			settings.iconColorMode,
+			HostAccentToImVec4(settings.accentColor),
 			kFullPalette[ImGuiCol_Text]);
+	}
+
+	const std::vector<std::string>& AvailableBodyFontFamilies() noexcept
+	{
+		return g_fontFamilyNames;
+	}
+
+	std::string_view ResolveBodyFontFamily(
+		std::string_view a_requested) noexcept
+	{
+		if (const auto* family = ResolveFamily(a_requested))
+			return family->name;
+		return kDefaultBodyFontFamily;
+	}
+
+	std::string_view EffectiveBodyFontFamily() noexcept
+	{
+		return g_effectiveBodyFontFamily;
 	}
 
 	FontGuard::FontGuard(FontRole a_role) noexcept

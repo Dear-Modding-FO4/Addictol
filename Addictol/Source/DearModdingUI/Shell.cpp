@@ -2,10 +2,10 @@
 #include <DearModdingUI/BackgroundBlur.h>
 #include <DearModdingUI/Host.h>
 #include <DearModdingUI/HostSettings.h>
+#include <DearModdingUI/HostSettingsView.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <DearModdingUI/Theme.h>
 #include <DearModdingUI/VisualDecisions.h>
-#include <Menu/AdMenu.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -174,10 +174,6 @@ namespace Addictol::DearModdingUI
 		};
 		inline constexpr float kCloseCrossInset{ 1.0f };
 		inline constexpr ImVec4 kTransparentButtonChrome{ 0, 0, 0, 0 };
-		inline constexpr char kHostSettingsPopup[]{
-			"##DearModdingUI.HostSettings"
-		};
-
 		[[nodiscard]] ImRect TitleBarButtonRect(
 			const ImVec2& a_origin,
 			float a_fontSize) noexcept
@@ -298,7 +294,8 @@ namespace Addictol::DearModdingUI
 			char32_t a_glyph,
 			const char* a_text,
 			const char* a_tooltip,
-			ImU32 a_color) noexcept
+			ImU32 a_color,
+			bool a_active = false) noexcept
 		{
 			auto* window = ImGui::GetCurrentWindow();
 			if (!window)
@@ -315,7 +312,11 @@ namespace Addictol::DearModdingUI
 			};
 
 			(void)DrawRoundedButtonHighlight(
-				bounds.Min, bounds.Max, hovered, held, window->DrawList);
+				bounds.Min,
+				bounds.Max,
+				hovered || a_active,
+				held,
+				window->DrawList);
 			const auto center = bounds.GetCenter();
 			if (a_glyph)
 			{
@@ -358,7 +359,11 @@ namespace Addictol::DearModdingUI
 			const auto* client = a_model.FindClient(a_state.activeClient);
 			const auto breadcrumb = BuildHostBreadcrumb(
 				"Evil Modding",
-				client ? std::string_view{ client->displayName } : std::string_view{});
+				HostSettings::IsPanelOpen() ?
+					std::string_view{ "Interface Settings" } :
+					(client ?
+							std::string_view{ client->displayName } :
+							std::string_view{}));
 			const auto textScale = Theme::kHeaderFallbackTextScale;
 			const auto start = ImGui::GetCursorScreenPos();
 			const auto contentMaxX =
@@ -412,7 +417,7 @@ namespace Addictol::DearModdingUI
 					PhosphorGlyph::kX,
 					nullptr,
 					"Close menu",
-					ImGui::GetColorU32(ImGuiCol_Text));
+					IconColor(ImGui::GetColorU32(ImGuiCol_Text)));
 			}
 
 			ImGui::SeparatorEx(
@@ -629,7 +634,10 @@ namespace Addictol::DearModdingUI
 							selected,
 							ImGuiSelectableFlags_None,
 							{ 0.0f, rowHeight }))
+					{
+						HostSettings::NotifyModSelected();
 						(void)SelectClient(a_model, client.handle, a_state);
+					}
 					const auto itemMin = ImGui::GetItemRectMin();
 					const auto itemMax = ImGui::GetItemRectMax();
 					const ImVec4 clip{
@@ -931,6 +939,78 @@ namespace Addictol::DearModdingUI
 				return;
 			}
 
+			if (HostSettings::IsPanelOpen())
+			{
+				const auto start = ImGui::GetCursorScreenPos();
+				const auto contentMaxX =
+					start.x + ImGui::GetContentRegionAvail().x;
+				const auto buttonExtent = TitleBarButtonExtent(
+					ImGui::GetFontSize(), kTitleBarButtonPadding);
+				const auto hasCloseGlyph = HasIconGlyph(PhosphorGlyph::kX);
+				constexpr const char* fallbackLabel{ "Back" };
+				const auto buttonWidth = ActionButtonWidth(
+					hasCloseGlyph,
+					ImGui::CalcTextSize(fallbackLabel).x,
+					buttonExtent,
+					ImGui::GetStyle().FramePadding.x);
+				const auto layout = ResolveTrailingControlLayout(
+					start.x,
+					contentMaxX,
+					buttonWidth,
+					ImGui::GetStyle().ItemSpacing.x);
+				ImVec2 titleSize{};
+				{
+					const Theme::FontGuard font{ Theme::FontRole::kTitle };
+					ImGui::SetWindowFontScale(Theme::kFeatureTitleScale);
+					titleSize = ImGui::CalcTextSize("Interface Settings");
+					const auto rowHeight =
+						(std::max)(titleSize.y, buttonExtent);
+					if (layout.adjacentMaxX > start.x)
+					{
+						ImGui::RenderTextEllipsis(
+							ImGui::GetWindowDrawList(),
+							start,
+							{ layout.adjacentMaxX, start.y + rowHeight },
+							layout.adjacentMaxX,
+							"Interface Settings",
+							nullptr,
+							&titleSize);
+					}
+					ImGui::SetWindowFontScale(1.0f);
+					ImGui::Dummy({
+						contentMaxX - start.x,
+						rowHeight
+					});
+				}
+				const auto rowHeight =
+					(std::max)(titleSize.y, buttonExtent);
+				const auto dismiss = DrawCompactChromeButton(
+					"##DearModdingUI.HostSettingsBackButton",
+					{
+						layout.controlMinX,
+						start.y + (rowHeight - buttonExtent) * 0.5f
+					},
+					{ buttonWidth, buttonExtent },
+					hasCloseGlyph ? PhosphorGlyph::kX : char32_t{},
+					hasCloseGlyph ? nullptr : fallbackLabel,
+					"Back to the current mod page",
+					hasCloseGlyph ?
+						IconColor(ImGui::GetColorU32(ImGuiCol_Text)) :
+						ImGui::GetColorU32(ImGuiCol_Text));
+				ImGui::TextDisabled(
+					"Host-owned accessibility and appearance options apply immediately.");
+				ImGui::Spacing();
+				ImGui::SeparatorEx(
+					ImGuiSeparatorFlags_Horizontal,
+					Theme::kSeparatorThickness);
+				ImGui::Spacing();
+				DrawHostSettingsControls();
+				if (dismiss)
+					HostSettings::DismissPanel();
+				ImGui::EndChild();
+				return;
+			}
+
 			const auto* page = a_model.FindPage(a_state.activePage);
 			if (!page)
 			{
@@ -972,10 +1052,17 @@ namespace Addictol::DearModdingUI
 				start.x + ImGui::GetContentRegionAvail().x;
 			const auto buttonExtent = TitleBarButtonExtent(
 				ImGui::GetFontSize(), kTitleBarButtonPadding);
+			const auto hasGearGlyph = HasIconGlyph(PhosphorGlyph::kGear);
+			constexpr const char* fallbackLabel{ "Settings" };
+			const auto buttonWidth = ActionButtonWidth(
+				hasGearGlyph,
+				ImGui::CalcTextSize(fallbackLabel).x,
+				buttonExtent,
+				ImGui::GetStyle().FramePadding.x);
 			const auto layout = ResolveTrailingControlLayout(
 				start.x,
 				contentMaxX,
-				buttonExtent,
+				buttonWidth,
 				ImGui::GetStyle().ItemSpacing.x);
 			ImGui::PushClipRect(
 				start,
@@ -1002,157 +1089,17 @@ namespace Addictol::DearModdingUI
 						layout.controlMinX,
 						start.y + (rowHeight - buttonExtent) * 0.5f
 					},
-					{ buttonExtent, buttonExtent },
-					PhosphorGlyph::kGear,
-					nullptr,
+					{ buttonWidth, buttonExtent },
+					hasGearGlyph ? PhosphorGlyph::kGear : char32_t{},
+					hasGearGlyph ? nullptr : fallbackLabel,
 					"Interface settings",
-					ImGui::GetColorU32(ImGuiCol_Text)))
+					hasGearGlyph ?
+						IconColor(ImGui::GetColorU32(ImGuiCol_Text)) :
+						ImGui::GetColorU32(ImGuiCol_Text),
+					HostSettings::IsPanelOpen()))
 			{
-				HostSettings::RequestPanelOpen(true);
-				ImGui::OpenPopup(kHostSettingsPopup);
+				HostSettings::TogglePanel(true);
 			}
-		}
-
-		void DrawReadOnlyHostFact(
-			const char* a_label,
-			const char* a_value,
-			const char* a_source) noexcept
-		{
-			{
-				const Theme::FontGuard font{ Theme::FontRole::kHeading };
-				ImGui::TextUnformatted(a_label);
-			}
-			ImGui::SameLine();
-			ImGui::TextUnformatted(a_value);
-			{
-				const Theme::FontGuard font{ Theme::FontRole::kSubtext };
-				ImGui::TextDisabled("%s", a_source);
-			}
-			ImGui::Spacing();
-		}
-
-		void DrawHostSettingsPopup() noexcept
-		{
-			const auto requested = HostSettings::IsPanelOpen();
-			const auto popupOpen = ImGui::IsPopupOpen(kHostSettingsPopup);
-			if (!requested && !popupOpen)
-				return;
-			if (requested && !popupOpen)
-			{
-				HostSettings::DismissPanel();
-				return;
-			}
-
-			const auto* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(
-				viewport->GetCenter(),
-				ImGuiCond_Appearing,
-				{ 0.5f, 0.5f });
-			ImGui::SetNextWindowSizeConstraints(
-				{ ImGui::GetFontSize() * 24.0f, 0.0f },
-				{ viewport->WorkSize.x * 0.6f, FLT_MAX });
-			if (!ImGui::BeginPopup(
-					kHostSettingsPopup,
-					ImGuiWindowFlags_AlwaysAutoResize |
-						ImGuiWindowFlags_NoSavedSettings))
-			{
-				if (requested)
-					HostSettings::DismissPanel();
-				return;
-			}
-
-			if (!requested)
-			{
-				ImGui::CloseCurrentPopup();
-				ImGui::EndPopup();
-				return;
-			}
-
-			{
-				const Theme::FontGuard font{ Theme::FontRole::kTitle };
-				ImGui::SetWindowFontScale(Theme::kFeatureTitleScale);
-				ImGui::TextUnformatted("Interface Settings");
-				ImGui::SetWindowFontScale(1.0f);
-			}
-			ImGui::TextDisabled(
-				"Host-owned options apply immediately and are saved with Addictol.");
-			ImGui::Spacing();
-			DrawSectionHeader("Appearance");
-
-			auto settings = HostSettings::Current();
-			auto changed = false;
-			auto iconMode =
-				settings.iconColorMode == Theme::IconColorMode::kMonochrome ? 1 : 0;
-			constexpr const char* iconModes[]{ "Colored", "Monochrome" };
-			if (ImGui::Combo(
-					"Icon color mode",
-					&iconMode,
-					iconModes,
-					static_cast<int>(std::size(iconModes))))
-			{
-				settings.iconColorMode = iconMode == 1 ?
-					Theme::IconColorMode::kMonochrome :
-					Theme::IconColorMode::kColored;
-				changed = true;
-			}
-			changed |= ImGui::Checkbox(
-				"Background blur", &settings.backgroundBlur);
-			if (changed)
-				HostSettings::Apply(settings);
-
-			ImGui::Spacing();
-			DrawSectionHeader("Read-only host facts");
-			ImGui::TextDisabled(
-				"Menu timing and key bindings are configured outside the game.");
-			ImGui::Spacing();
-
-			char toggleKey[32]{};
-			const auto key = Menu::ToggleKeyName();
-			std::snprintf(
-				toggleKey,
-				sizeof(toggleKey),
-				"%.*s",
-				static_cast<int>(key.size()),
-				key.data());
-			DrawReadOnlyHostFact(
-				"Menu toggle key",
-				toggleKey,
-				"Override [Additional] sMenuToggleKey in Data/F4SE/Plugins/AddictolCustom.toml.");
-
-			char refresh[32]{};
-			std::snprintf(
-				refresh,
-				sizeof(refresh),
-				"%u ms",
-				Menu::RefreshMs());
-			DrawReadOnlyHostFact(
-				"Menu refresh interval",
-				refresh,
-				"Override [Additional] uMenuRefreshMs in Data/F4SE/Plugins/AddictolCustom.toml.");
-
-			const auto* body = Theme::GetFonts().body;
-			char typography[32]{};
-			std::snprintf(
-				typography,
-				sizeof(typography),
-				"%.0f px",
-				body ? body->LegacySize : ImGui::GetFontSize());
-			DrawReadOnlyHostFact(
-				"Resolved typography size",
-				typography,
-				"Resolved by DearModdingUI from the current backbuffer height.");
-
-			char scale[32]{};
-			std::snprintf(
-				scale,
-				sizeof(scale),
-				"%.2fx",
-				Theme::Scale());
-			DrawReadOnlyHostFact(
-				"Resolved UI scale",
-				scale,
-				"Resolved by DearModdingUI from the current backbuffer height.");
-			ImGui::EndPopup();
 		}
 
 		void SaveLayout() noexcept
@@ -1203,6 +1150,9 @@ namespace Addictol::DearModdingUI
 	void DrawShell() noexcept
 	{
 		Theme::ApplyStyle();
+		if (HostSettings::IsPanelOpen() &&
+			ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+			HostSettings::DismissPanel();
 		const auto& model = Navigation();
 		auto& state = State();
 		const auto requested = SelectedPage();
@@ -1301,7 +1251,6 @@ namespace Addictol::DearModdingUI
 			ImGui::Spacing();
 			DrawFooter(model, state);
 		}
-		DrawHostSettingsPopup();
 		ImGui::End();
 
 		if (!open)

@@ -31,7 +31,6 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 
 		inline constexpr UINT kDownsampleFactor{ 8 };
 		inline constexpr int kBlurSampleCount{ 9 };
-		inline constexpr float kBlurIntensity{ 0.30f };
 		inline constexpr float kScissorPadding{ 2.0f };
 		inline constexpr UINT kFullscreenVertexCount{ 3 };
 		inline constexpr size_t kClassInstanceCapacity{ 256 };
@@ -609,7 +608,8 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 		void PerformBlur(
 			ID3D11DeviceContext* a_context,
 			const D3D11_TEXTURE2D_DESC& a_description,
-			ID3D11RenderTargetView* a_target) noexcept
+			ID3D11RenderTargetView* a_target,
+			float a_strength) noexcept
 		{
 			auto& resources = g_resources;
 			const PipelineStateScope previousState{ a_context };
@@ -667,9 +667,9 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 
 			BlurConstants blurConstants{};
 			blurConstants.texelSize[0] =
-				kBlurIntensity / static_cast<float>(resources.downsampledWidth);
+				a_strength / static_cast<float>(resources.downsampledWidth);
 			blurConstants.texelSize[1] =
-				kBlurIntensity / static_cast<float>(resources.downsampledHeight);
+				a_strength / static_cast<float>(resources.downsampledHeight);
 			blurConstants.texelSize[3] = static_cast<float>(kDownsampleFactor);
 			blurConstants.blurParameters[0] = kBlurSampleCount;
 			a_context->UpdateSubresource(
@@ -778,7 +778,8 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 		ID3D11Texture2D* a_backBuffer,
 		ID3D11RenderTargetView* a_backBufferView) noexcept
 	{
-		if (!HostSettings::Current().backgroundBlur ||
+		const auto settings = HostSettings::Current();
+		if (!settings.backgroundBlur ||
 			!g_region.valid ||
 			!a_device ||
 			!a_context ||
@@ -823,6 +824,10 @@ namespace Addictol::DearModdingUI::BackgroundBlur
 		{
 			a_context->CopyResource(g_resources.sourceCopy.Get(), a_backBuffer);
 		}
-		PerformBlur(a_context, description, a_backBufferView);
+		PerformBlur(
+			a_context,
+			description,
+			a_backBufferView,
+			settings.backgroundBlurStrength);
 	}
 }

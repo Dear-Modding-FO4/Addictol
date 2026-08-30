@@ -26,8 +26,10 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\CarrierMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\FontCatalog.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettingsView.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Shell.cpp" />
@@ -155,8 +157,10 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\CarrierMenu.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\FontCatalog.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettings.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettingsView.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiFingerprint.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h" />
@@ -280,6 +284,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Addictol\Include\DearModdingUI\README.md" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Bold.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-BoldItalic.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Italic.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Regular.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\OFL.txt" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\UPSTREAM.md" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-Regular.ttf" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-SemiBold.ttf" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt" />

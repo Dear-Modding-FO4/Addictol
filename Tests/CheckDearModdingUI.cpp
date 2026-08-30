@@ -1,5 +1,6 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
 #include "../Addictol/Include/DearModdingUI/CarrierMenu.h"
+#include "../Addictol/Include/DearModdingUI/FontCatalog.h"
 #include "../Addictol/Include/DearModdingUI/HostSettings.h"
 #include "../Addictol/Include/DearModdingUI/IconGlyphs.h"
 #include "../Addictol/Include/DearModdingUI/ThemeDefaults.h"
@@ -12,6 +13,9 @@
 #include "../Addictol/Include/DearModdingUI/ImGuiFingerprint.h"
 
 #include <array>
+#include <filesystem>
+#include <fstream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -761,7 +765,8 @@ namespace vmm_tests
 		});
 
 		runner.test("theme icon tint selects colored and monochrome modes", [] {
-			const ImVec4 accent{ 0.26f, 0.98f, 0.3752f, 1.0f };
+			const HostAccentColor storedAccent{ 0x00, 0x72, 0xB2 };
+			const auto accent = HostAccentToImVec4(storedAccent);
 			const ImVec4 text{ 1.0f, 1.0f, 1.0f, 1.0f };
 			require(Theme::kIconDefaults.colorMode == Theme::IconColorMode::kColored,
 				"default icon mode is not colored");
@@ -780,18 +785,22 @@ namespace vmm_tests
 						text),
 				"monochrome icons did not use the text tint");
 			require(SameColor(
-							Theme::ResolveIconTint(
-								DecodeHostInterfaceSettings({ false, true }).iconColorMode,
-								accent,
-								text),
-							accent) &&
-					SameColor(
-							Theme::ResolveIconTint(
-								DecodeHostInterfaceSettings({ true, true }).iconColorMode,
-								accent,
-								text),
+						Theme::ResolveIconTint(
+							Theme::IconColorMode::kColored,
+							accent,
 							text),
+						accent) &&
+					SameColor(
+						Theme::ResolveIconTint(
+							Theme::IconColorMode::kMonochrome,
+							accent,
+							text),
+						text),
 				"persisted icon mode did not select its runtime tint");
+			require(
+				DecodeHostAccentColor(EncodeHostAccentColor(storedAccent)) ==
+					storedAccent,
+				"accent color did not preserve icon tint bytes");
 		});
 
 		runner.test("host breadcrumb identifies zero or one selected client", [] {
@@ -801,6 +810,10 @@ namespace vmm_tests
 					BuildHostBreadcrumb("Evil Modding", "Community Shaders") ==
 						"Evil Modding > Community Shaders",
 					"selected client was not added to the breadcrumb");
+			require(
+					BuildHostBreadcrumb("Evil Modding", "Interface Settings") ==
+						"Evil Modding > Interface Settings",
+					"settings view was not identified in the breadcrumb");
 			require(ShouldDrawHeaderClose(false, true),
 				"undocked titleless host lost its close button");
 			require(
@@ -876,13 +889,13 @@ namespace vmm_tests
 			auto open = DecideHostSettingsPanelOpen(
 				false,
 				false,
-				HostSettingsPanelEvent::kOpenRequested);
+				HostSettingsPanelEvent::kToggleRequested);
 			require(!open, "settings opened while the menu was closed");
 
 			open = DecideHostSettingsPanelOpen(
 				open,
 				true,
-				HostSettingsPanelEvent::kOpenRequested);
+				HostSettingsPanelEvent::kToggleRequested);
 			require(open, "settings did not open from the visible menu");
 			require(DecideHostSettingsPanelOpen(
 							open,
@@ -898,7 +911,25 @@ namespace vmm_tests
 			open = DecideHostSettingsPanelOpen(
 				open,
 				true,
-				HostSettingsPanelEvent::kOpenRequested);
+				HostSettingsPanelEvent::kToggleRequested);
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kModSelected);
+			require(!open, "settings remained open after mod selection");
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kToggleRequested);
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kToggleRequested);
+			require(!open, "settings gear did not toggle the view off");
+			open = DecideHostSettingsPanelOpen(
+				open,
+				true,
+				HostSettingsPanelEvent::kToggleRequested);
 			open = DecideHostSettingsPanelOpen(
 				open,
 				false,
@@ -912,20 +943,121 @@ namespace vmm_tests
 		});
 
 		runner.test("host settings persistence round trips every stored value", [] {
-			for (const auto monochrome : { false, true })
-			{
-				for (const auto blur : { false, true })
-				{
-					const PersistedHostInterfaceSettings persisted{
-							monochrome,
-							blur
-					};
-					require(
-							EncodeHostInterfaceSettings(
-								DecodeHostInterfaceSettings(persisted)) == persisted,
-							"stored host settings did not round trip");
+			std::array settings{
+				DefaultHostInterfaceSettings(),
+				HostInterfaceSettings{
+					Theme::IconColorMode::kMonochrome,
+					{ 0x00, 0x72, 0xB2 },
+					0.80f,
+					false,
+					0.75f,
+					1.75f,
+					"Atkinson Hyperlegible"
+				},
+				HostInterfaceSettings{
+					Theme::IconColorMode::kColored,
+					{ 0xD5, 0x5E, 0x00 },
+					kMinWindowBackgroundOpacity,
+					true,
+					kMinBackgroundBlurStrength,
+					Theme::kMinUserScale,
+					"Jost"
 				}
+			};
+			for (const auto& runtime : settings)
+			{
+				const auto persisted = EncodeHostInterfaceSettings(runtime);
+				require(
+					DecodeHostInterfaceSettings(persisted) == runtime,
+					"stored host settings did not round trip");
+				require(
+					EncodeHostInterfaceSettings(
+						DecodeHostInterfaceSettings(persisted)) == persisted,
+					"encoded host settings did not round trip");
 			}
+		});
+
+		runner.test("host settings clamp malformed persisted values and reset", [] {
+			PersistedHostInterfaceSettings persisted;
+			persisted.accentColor = "#GG00ZZ";
+			persisted.windowBackgroundOpacity = -5.0f;
+			persisted.backgroundBlurStrength =
+				std::numeric_limits<float>::infinity();
+			persisted.uiScale = 99.0f;
+			persisted.bodyFontFamily = "..\\escaped";
+			const auto decoded = DecodeHostInterfaceSettings(persisted);
+			require(
+				decoded.accentColor == kDefaultHostAccentColor,
+				"malformed accent did not fall back");
+			require(
+				decoded.windowBackgroundOpacity ==
+					kMinWindowBackgroundOpacity,
+				"window opacity did not clamp");
+			require(
+				decoded.backgroundBlurStrength ==
+					kDefaultBackgroundBlurStrength,
+				"non-finite blur strength did not fall back");
+			require(
+				decoded.uiScale == Theme::kMaxUserScale,
+				"UI scale did not clamp");
+			require(
+				decoded.bodyFontFamily == kDefaultBodyFontFamily,
+				"malformed font family did not fall back");
+			require(
+				DefaultHostInterfaceSettings() == HostInterfaceSettings{},
+				"reset did not restore shipped defaults");
+		});
+
+		runner.test("font families enumerate regular faces and fall back", [] {
+			struct RemoveTree
+			{
+				std::filesystem::path path;
+				~RemoveTree()
+				{
+					std::error_code error;
+					std::filesystem::remove_all(path, error);
+				}
+			};
+
+			const auto root =
+				std::filesystem::temp_directory_path() /
+				"AddictolDearModdingUIFontCatalog";
+			std::error_code error;
+			std::filesystem::remove_all(root, error);
+			const RemoveTree cleanup{ root };
+			std::filesystem::create_directories(root / "Jost", error);
+			std::filesystem::create_directories(
+				root / "Atkinson Hyperlegible", error);
+			std::filesystem::create_directories(root / "Phosphor", error);
+			std::ofstream(root / "Jost" / "Jost-Regular.ttf").put('\0');
+			std::ofstream(
+				root /
+				"Atkinson Hyperlegible" /
+				"AtkinsonHyperlegible-Bold.ttf").put('\0');
+			std::ofstream(
+				root /
+				"Atkinson Hyperlegible" /
+				"AtkinsonHyperlegible-Regular.ttf").put('\0');
+			std::ofstream(
+				root /
+				"Phosphor" /
+				"Phosphor-Fill.ttf").put('\0');
+
+			const auto families = FontCatalog::Enumerate(root);
+			require(families.size() == 2,
+				"font family folders were not enumerated safely");
+			const auto* atkinson = FontCatalog::Resolve(
+				"atkinson hyperlegible", families, "Jost");
+			require(
+				atkinson &&
+					atkinson->name == "Atkinson Hyperlegible" &&
+					atkinson->regularFile.ends_with(
+						"AtkinsonHyperlegible-Regular.ttf"),
+				"font family did not choose its regular face");
+			const auto* fallback = FontCatalog::Resolve(
+				"Missing Family", families, "Jost");
+			require(fallback && fallback->name == "Jost",
+				"missing font family did not fall back to Jost");
 		});
 
 		runner.test("client dropdown selection handles zero one and many clients", [] {
@@ -1181,6 +1313,15 @@ namespace vmm_tests
 					effective[ImGuiCol_ScrollbarGrabHovered].w == 0.75f &&
 					effective[ImGuiCol_ScrollbarGrabActive].w == 0.9f,
 				"effective scrollbar opacity changed");
+			const ImVec4 customAccent{ 0.2f, 0.4f, 0.8f, 1.0f };
+			const auto customized =
+				Theme::MakeEffectivePalette(customAccent, 0.85f);
+			require(
+				customized[ImGuiCol_Button].x == customAccent.x &&
+					customized[ImGuiCol_Button].y == customAccent.y &&
+					customized[ImGuiCol_Button].z == customAccent.z &&
+					customized[ImGuiCol_WindowBg].w == 0.85f,
+				"accent or window opacity did not drive the effective palette");
 		});
 
 		runner.test("theme font roles and scaling stay exact", [] {
@@ -1210,6 +1351,16 @@ namespace vmm_tests
 			require(ResolveUiScale(1.0f, 1080) == 1.0f, "1080p UI scale changed");
 			require(ResolveUiScale(2.0f, 1080) == 1.0f, "DPI altered theme scaling");
 			require(ResolveUiScale(1.0f, 2160) == 2.0f, "4K UI scale changed");
+			require(
+				Theme::ResolveRoleFontSize(
+					Theme::FontRole::kBody,
+					1080,
+					Theme::kMaxUserScale) == 42.0f &&
+					ResolveUiScale(
+						1.0f,
+						1080,
+						Theme::kMaxUserScale) == 2.0f,
+				"accessibility UI scale was not applied after resolution scaling");
 			require(Theme::ResolveStyleScale(21.0f, 0.0f) == 1.0f,
 				"default global scale changed");
 			require(Theme::ResolveStyleScale(21.0f, 1.0f) == 2.0f,

@@ -3,6 +3,9 @@
 #include <DearModdingUI/ThemeDefaults.h>
 
 #include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace Addictol::DearModdingUI::Theme
 {
@@ -30,13 +33,14 @@ namespace Addictol::DearModdingUI::Theme
 
 	namespace colors
 	{
-		inline const ImVec4 kAccent{ 0.26f, 0.98f, 0.3752f, 1.0f };
-		inline const ImVec4 kAccentMuted{ 0.26f, 0.98f, 0.3752f, 0.39f };
 		inline const ImVec4 kSuccess{ 0.0f, 1.0f, 0.0f, 1.0f };
 		inline const ImVec4 kWarning{ 1.0f, 0.6f, 0.2f, 1.0f };
 		inline const ImVec4 kError{ 1.0f, 0.4f, 0.4f, 1.0f };
 		inline const ImVec4 kInfo{ 0.2f, 1.0f, 0.328f, 1.0f };
 		inline const ImVec4 kMuted{ 0.5f, 0.5f, 0.5f, 1.0f };
+
+		[[nodiscard]] ImVec4 Accent() noexcept;
+		[[nodiscard]] ImVec4 AccentMuted() noexcept;
 	}
 
 	void Initialize(void* a_window) noexcept;
@@ -46,6 +50,10 @@ namespace Addictol::DearModdingUI::Theme
 	[[nodiscard]] float Scale() noexcept;
 	[[nodiscard]] float SearchScale() noexcept;
 	[[nodiscard]] ImVec4 IconTint() noexcept;
+	[[nodiscard]] const std::vector<std::string>& AvailableBodyFontFamilies() noexcept;
+	[[nodiscard]] std::string_view ResolveBodyFontFamily(
+		std::string_view a_requested) noexcept;
+	[[nodiscard]] std::string_view EffectiveBodyFontFamily() noexcept;
 }
 
 namespace Addictol

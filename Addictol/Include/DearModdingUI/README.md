@@ -28,7 +28,8 @@ game-input suppression; overlay demand never suppresses input.
 ## Shared menu
 
 The Evil Modding window owns all navigation chrome. Its header shows the host and selected client as a
-breadcrumb with the undocked close control. Its mod dropdown is built from registered client
+breadcrumb with the undocked close control. While host interface settings are open, the breadcrumb
+names that view instead of the selected client. Its mod dropdown is built from registered client
 display names. The sidebar groups each client's settings pages by category and orders pages by
 `sortKey`, display name, and ID. Switching mods selects that client's first page. Overlay pages never
 appear there. `selectPage` accepts settings pages, switches both the active mod and page, opens the
@@ -45,11 +46,19 @@ rounded title-bar highlights, footer, docking, and background blur around the ne
 Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts, icons, and blur shaders load
 only from that neutral root. Client IDs and category names select Phosphor glyphs from an in-code
 table after lowercase slug normalization. Icons use the accent tint by default. The footer gear
-opens host-only interface settings for colored or monochrome icons and background blur without adding
-an entry to the mod dropdown. The same popup reports the configured toggle key and refresh interval
-alongside the resolved typography size and UI scale. Editable values use Addictol's `[Additional]`
-TOML settings. A missing icon font falls back to text-only labels without disabling the menu or the
-C ABI host.
+toggles a host-only settings view inside the existing scrolling content pane without changing the
+active client page or adding an entry to the mod dropdown. The view closes from its title-row control,
+the gear, Escape, or a mod selection. It exposes an accent picker with color-vision-friendly presets,
+colored or monochrome icon tint, host-window opacity, background blur and safe per-frame strength,
+accessibility UI scale, and body-font family. It also reports the configured toggle key and refresh
+interval alongside the resolved typography size and effective UI scale as read-only facts. Editable
+values use Addictol's `[Additional]` TOML settings.
+
+Body-font families are enumerated from subfolders of
+`Data\F4SE\Plugins\DearModdingUI\Fonts`; the selected regular face is rebuilt only between frames.
+Atkinson Hyperlegible and Jost ship with the host, and users can add another family without changing
+code. A missing or failed family falls back to Jost, while a missing icon font falls back to text-only
+labels without disabling the menu or the C ABI host.
 When a normalized category name equals its client's normalized display name or full client ID, the
 category inherits that client's glyph.
 

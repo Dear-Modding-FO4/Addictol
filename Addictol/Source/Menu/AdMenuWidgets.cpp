@@ -33,7 +33,7 @@ namespace Addictol
 	void MenuUi::Heading(std::string_view a_text) noexcept
 	{
 		const ScopedFont font{ Theme::GetFonts().heading };
-		ImGui::TextColored(Theme::colors::kAccent, "%.*s", static_cast<int>(a_text.size()), a_text.data());
+		ImGui::TextColored(Theme::colors::Accent(), "%.*s", static_cast<int>(a_text.size()), a_text.data());
 	}
 
 	void MenuUi::Title(std::string_view a_text) noexcept

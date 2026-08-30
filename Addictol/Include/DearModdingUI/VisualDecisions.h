@@ -11,11 +11,13 @@ namespace Addictol::DearModdingUI
 {
 	[[nodiscard]] inline float ResolveUiScale(
 		[[maybe_unused]] float a_dpiScale,
-		uint32_t a_backBufferHeight) noexcept
+		uint32_t a_backBufferHeight,
+		float a_userScale = Theme::kDefaultUserScale) noexcept
 	{
 		return Theme::ResolveRoleFontSize(
 				   Theme::FontRole::kBody,
-				   a_backBufferHeight) /
+				   a_backBufferHeight,
+				   a_userScale) /
 			Theme::kBaselineFontSize;
 	}
 

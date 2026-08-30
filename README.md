@@ -52,6 +52,12 @@ Data/F4SE/Plugins/Addictol.dll
 Data/F4SE/Plugins/Addictol.toml
 Data/F4SE/Plugins/Addictol_FacegenExceptions.ini
 Data/F4SE/Plugins/Addictol_SNCT.ini
+Data/F4SE/Plugins/DearModdingUI/Fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-Bold.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-BoldItalic.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-Italic.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-Regular.ttf
+Data/F4SE/Plugins/DearModdingUI/Fonts/Atkinson Hyperlegible/OFL.txt
+Data/F4SE/Plugins/DearModdingUI/Fonts/Atkinson Hyperlegible/UPSTREAM.md
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-Regular.ttf
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/Jost-SemiBold.ttf
 Data/F4SE/Plugins/DearModdingUI/Fonts/Jost/OFL.txt
@@ -96,10 +102,20 @@ The Evil Modding window selects a registered mod from a dropdown, then shows its
 pages. Each mod supplies its own pages. Client and category names select glyphs from the shared
 Phosphor icon font in code; a category named after its owning mod inherits the client glyph, and
 missing icon fonts fall back to text without reserving empty space.
-The title-bar gear opens host-only interface settings and never appears in the mod dropdown. Colored
-or monochrome icon tint and background blur are editable there; the configured toggle key and refresh
-interval plus the resolved typography size and UI scale are read-only. Editable values persist through
-`[Additional] bMenuMonochromeIcons` and `bMenuBackgroundBlur`.
+The footer gear toggles a host-owned Interface Settings view in the normal scrolling content pane and
+never adds an entry to the mod dropdown. Its title-row close button, the footer gear, Escape, or
+selecting a mod returns to the active mod page. The view provides a full accent picker with
+color-vision-friendly presets, colored or monochrome icon tint, window opacity, background blur and
+strength, accessibility UI scale, and a body-font family selector. Accent changes retint the palette
+and Phosphor glyphs immediately. Font families are discovered from subfolders under
+`Data/F4SE/Plugins/DearModdingUI/Fonts`; missing or invalid families fall back to Jost. Atkinson
+Hyperlegible is included for low-vision readability. The configured toggle key and refresh interval,
+resolved typography size, and effective UI scale remain visible as read-only facts.
+
+Editable interface values persist through `[Additional] bMenuMonochromeIcons`, `sMenuAccentColor`,
+`fMenuWindowOpacity`, `bMenuBackgroundBlur`, `fMenuBackgroundBlurStrength`, `fMenuUiScale`, and
+`sMenuBodyFontFamily`. Malformed values fall back to shipped defaults and numeric values are clamped
+to their documented ranges.
 Addictol telemetry pages retain their configured order and Log Control remains last.
 Addictol's first page is an ordinary settings page named Home in the Addictol category. It shows the
 game runtime and live module outcomes, provides its documented project link, and answers the
@@ -145,7 +161,8 @@ GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPT
 The shared menu shell, theme, font roles, cursor behavior, and blur are ported from Fallout 4
 Community Shaders (`src/Menu/FeatureListRenderer.*`, `Menu.*`, `ThemeManager.*`, `Fonts.*`,
 `CursorLoader.*`, `BackgroundBlur.*`, `src/Utils/UI.*`, and `ImGuiRecovery.h`), which is GPL-3.0.
-Its Gaussian blur credits Unrimp by Christian Ofenberg under MIT. The bundled Jost fonts under
-`Data\F4SE\Plugins\DearModdingUI\Fonts` ship under the SIL Open Font License; their license text sits
-next to them. The bundled Phosphor icon font ships under MIT; its license and upstream pin sit next
-to the font.
+Its Gaussian blur credits Unrimp by Christian Ofenberg under MIT. The bundled Jost and Atkinson
+Hyperlegible fonts under `Data\F4SE\Plugins\DearModdingUI\Fonts` ship under the SIL Open Font License;
+their license text sits next to them. Atkinson Hyperlegible's pinned official source is recorded in
+its provenance note. The bundled Phosphor icon font ships under MIT; its license and upstream pin sit
+next to the font.

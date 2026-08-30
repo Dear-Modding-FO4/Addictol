@@ -19,6 +19,15 @@ namespace Addictol::DearModdingUI::Theme
 	inline constexpr float kMaxFontSize{ 108.0f };
 	inline constexpr float kDefaultFontSize{ 27.0f };
 	inline constexpr float kDefaultGlobalScale{ 0.0f };
+	inline constexpr float kMinUserScale{ 0.75f };
+	inline constexpr float kMaxUserScale{ 2.0f };
+	inline constexpr float kDefaultUserScale{ 1.0f };
+	inline constexpr ImVec4 kDefaultAccent{
+		66.0f / 255.0f,
+		250.0f / 255.0f,
+		96.0f / 255.0f,
+		1.0f
+	};
 
 	enum class IconColorMode : uint32_t
 	{
@@ -209,9 +218,52 @@ namespace Addictol::DearModdingUI::Theme
 	};
 
 	[[nodiscard]] inline std::array<ImVec4, ImGuiCol_COUNT>
-		MakeEffectivePalette() noexcept
+		MakeEffectivePalette(
+			const ImVec4& a_accent = kDefaultAccent,
+			float a_windowOpacity = 0.55f) noexcept
 	{
 		auto palette = kFullPalette;
+		const auto accent = ImVec4{
+			std::clamp(a_accent.x, 0.0f, 1.0f),
+			std::clamp(a_accent.y, 0.0f, 1.0f),
+			std::clamp(a_accent.z, 0.0f, 1.0f),
+			1.0f
+		};
+		constexpr ImGuiCol accentColors[]{
+			ImGuiCol_CheckboxSelectedBg,
+			ImGuiCol_SliderGrab,
+			ImGuiCol_SliderGrabActive,
+			ImGuiCol_Button,
+			ImGuiCol_ButtonHovered,
+			ImGuiCol_ButtonActive,
+			ImGuiCol_Header,
+			ImGuiCol_HeaderHovered,
+			ImGuiCol_HeaderActive,
+			ImGuiCol_InputTextCursor,
+			ImGuiCol_TabHovered,
+			ImGuiCol_Tab,
+			ImGuiCol_TabSelected,
+			ImGuiCol_TabSelectedOverline,
+			ImGuiCol_TabDimmedSelected,
+			ImGuiCol_TabDimmedSelectedOverline,
+			ImGuiCol_DockingPreview,
+			ImGuiCol_TextLink,
+			ImGuiCol_TextSelectedBg,
+			ImGuiCol_DragDropTarget,
+			ImGuiCol_DragDropTargetBg,
+			ImGuiCol_UnsavedMarker,
+			ImGuiCol_NavCursor
+		};
+		for (const auto color : accentColors)
+		{
+			palette[color].x = accent.x;
+			palette[color].y = accent.y;
+			palette[color].z = accent.z;
+		}
+		palette[ImGuiCol_WindowBg].w =
+			std::isfinite(a_windowOpacity) ?
+				std::clamp(a_windowOpacity, 0.0f, 1.0f) :
+				0.55f;
 		palette[ImGuiCol_ScrollbarBg].w =
 			kScrollbarOpacityDefaults.background;
 		palette[ImGuiCol_ScrollbarGrab].w =
@@ -262,16 +314,20 @@ namespace Addictol::DearModdingUI::Theme
 
 	[[nodiscard]] inline float ResolveRoleFontSize(
 		FontRole a_role,
-		uint32_t a_backBufferHeight) noexcept
+		uint32_t a_backBufferHeight,
+		float a_userScale = kDefaultUserScale) noexcept
 	{
 		const auto index = static_cast<std::size_t>(a_role);
 		const auto role = index < kFontRoleDefaults.size() ?
 			kFontRoleDefaults[index].sizeScale :
 			1.0f;
+		const auto userScale = std::isfinite(a_userScale) ?
+			std::clamp(a_userScale, kMinUserScale, kMaxUserScale) :
+			kDefaultUserScale;
 		return std::round(std::clamp(
-			ResolveFontSize(a_backBufferHeight) * role,
-			kMinFontSize,
-			kMaxFontSize));
+			ResolveFontSize(a_backBufferHeight) * userScale * role,
+			kMinFontSize * kMinUserScale,
+			kMaxFontSize * kMaxUserScale));
 	}
 
 	[[nodiscard]] inline float ResolveStyleScale(
