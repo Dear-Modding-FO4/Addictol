@@ -8,6 +8,8 @@ static_assert(std::is_standard_layout_v<DMUI_ClientDescriptor>);
 static_assert(std::is_trivially_copyable_v<DMUI_ClientDescriptor>);
 static_assert(std::is_standard_layout_v<DMUI_PageDescriptor>);
 static_assert(std::is_trivially_copyable_v<DMUI_PageDescriptor>);
+static_assert(std::is_standard_layout_v<DMUI_ActionDescriptor>);
+static_assert(std::is_trivially_copyable_v<DMUI_ActionDescriptor>);
 static_assert(std::is_standard_layout_v<DMUI_HostAPI>);
 static_assert(std::is_trivially_copyable_v<DMUI_HostAPI>);
 static_assert(!std::is_nothrow_invocable_v<
@@ -18,6 +20,14 @@ static_assert(std::is_nothrow_invocable_v<
 	DMUI_AttachSwapChainFn,
 	DMUI_ClientHandle,
 	void*>);
+static_assert(!std::is_nothrow_invocable_v<
+	DMUI_ActionCallback,
+	void*>);
+static_assert(std::is_nothrow_invocable_v<
+	DMUI_RegisterActionFn,
+	DMUI_ClientHandle,
+	const DMUI_ActionDescriptor*,
+	DMUI_ActionHandle*>);
 static_assert(DMUI_PAGE_KIND_SETTINGS == 1u);
 static_assert(DMUI_PAGE_KIND_OVERLAY == 2u);
 
@@ -26,7 +36,11 @@ static_assert(sizeof(DMUI_ImGuiFingerprint) == 216);
 static_assert(sizeof(DMUI_HostReadyInfo) == 40);
 static_assert(sizeof(DMUI_ClientDescriptor) == 72);
 static_assert(sizeof(DMUI_PageDescriptor) == 64);
+static_assert(sizeof(DMUI_ActionDescriptor) == 64);
 static_assert(sizeof(DMUI_HostStateInfo) == 28);
-static_assert(sizeof(DMUI_HostAPI) == 80);
-static_assert(DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE == sizeof(DMUI_HostAPI));
+static_assert(sizeof(DMUI_HostAPI) == 88);
+static_assert(offsetof(DMUI_HostAPI, attachSwapChain) == 72);
+static_assert(offsetof(DMUI_HostAPI, registerAction) == 80);
+static_assert(DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE == 80);
+static_assert(DMUI_HOST_API_REGISTER_ACTION_SIZE == sizeof(DMUI_HostAPI));
 #endif

@@ -52,6 +52,20 @@ namespace Addictol::DearModdingUI
 		bool callbackFailed{ false };
 	};
 
+	struct RegisteredAction
+	{
+		DMUI_ActionHandle handle{ DMUI_INVALID_ACTION_HANDLE };
+		DMUI_ClientHandle client{ DMUI_INVALID_CLIENT_HANDLE };
+		std::string id;
+		std::string displayLabel;
+		std::string iconName;
+		std::string tooltip;
+		int32_t sortKey{ 0 };
+		DMUI_ActionCallback callback{ nullptr };
+		void* userData{ nullptr };
+		bool callbackFailed{ false };
+	};
+
 	class Registry
 	{
 	public:
@@ -65,6 +79,10 @@ namespace Addictol::DearModdingUI
 			DMUI_ClientHandle a_client,
 			const DMUI_PageDescriptor* a_descriptor,
 			DMUI_PageHandle* a_page) noexcept;
+		[[nodiscard]] DMUI_Result RegisterAction(
+			DMUI_ClientHandle a_client,
+			const DMUI_ActionDescriptor* a_descriptor,
+			DMUI_ActionHandle* a_action) noexcept;
 		[[nodiscard]] bool Freeze() noexcept;
 		[[nodiscard]] bool IsOpen() const noexcept;
 		[[nodiscard]] bool Empty() const noexcept;
@@ -73,6 +91,7 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] size_t DemandedOverlayCount() const noexcept;
 		[[nodiscard]] bool HasSettingsPages() const noexcept;
 		[[nodiscard]] const std::vector<RegisteredPage>& OrderedPages() const noexcept;
+		[[nodiscard]] const std::vector<RegisteredAction>& OrderedActions() const noexcept;
 		[[nodiscard]] const NavigationModel& Navigation() const noexcept;
 		[[nodiscard]] DMUI_Result RequestFrame(
 			DMUI_ClientHandle a_client,
@@ -90,6 +109,9 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] DMUI_Result InvokePage(DMUI_PageHandle a_page) noexcept;
 		[[nodiscard]] bool PageFailed(DMUI_PageHandle a_page) const noexcept;
 		void MarkPageFailed(DMUI_PageHandle a_page) noexcept;
+		[[nodiscard]] DMUI_Result InvokeAction(DMUI_ActionHandle a_action) noexcept;
+		[[nodiscard]] bool ActionFailed(DMUI_ActionHandle a_action) const noexcept;
+		void MarkActionFailed(DMUI_ActionHandle a_action) noexcept;
 		void NotifyReady(const DMUI_HostReadyInfo& a_info) noexcept;
 		void NotifyUnavailable(DMUI_UnavailableReason a_reason) noexcept;
 
@@ -111,6 +133,8 @@ namespace Addictol::DearModdingUI
 		[[nodiscard]] const RegisteredClient* FindClient(DMUI_ClientHandle a_client) const noexcept;
 		[[nodiscard]] RegisteredPage* FindPage(DMUI_PageHandle a_page) noexcept;
 		[[nodiscard]] const RegisteredPage* FindPage(DMUI_PageHandle a_page) const noexcept;
+		[[nodiscard]] RegisteredAction* FindAction(DMUI_ActionHandle a_action) noexcept;
+		[[nodiscard]] const RegisteredAction* FindAction(DMUI_ActionHandle a_action) const noexcept;
 		[[nodiscard]] bool OwnsPage(
 			DMUI_ClientHandle a_client,
 			DMUI_PageHandle a_page) const noexcept;
@@ -119,9 +143,11 @@ namespace Addictol::DearModdingUI
 		mutable std::mutex m_mutex;
 		std::vector<RegisteredClient> m_clients;
 		std::vector<RegisteredPage> m_pages;
+		std::vector<RegisteredAction> m_actions;
 		NavigationModel m_navigation;
 		DMUI_ClientHandle m_nextClient{ 1 };
 		DMUI_PageHandle m_nextPage{ 1 };
+		DMUI_ActionHandle m_nextAction{ 1 };
 		Notification m_notification{ Notification::kNone };
 		bool m_open{ true };
 	};

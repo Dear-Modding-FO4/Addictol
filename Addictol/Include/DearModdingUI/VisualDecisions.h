@@ -2,7 +2,10 @@
 
 #include <DearModdingUI/ThemeDefaults.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <string>
+#include <string_view>
 
 namespace Addictol::DearModdingUI
 {
@@ -81,6 +84,121 @@ namespace Addictol::DearModdingUI
 			iconSize + spacing,
 			textWidth + iconSize + spacing,
 			textHeight > iconSize ? textHeight : iconSize
+		};
+	}
+
+	[[nodiscard]] inline std::string BuildHostBreadcrumb(
+		std::string_view a_hostName,
+		std::string_view a_clientName)
+	{
+		std::string breadcrumb{ a_hostName };
+		if (!a_clientName.empty())
+		{
+			breadcrumb.append(" > ");
+			breadcrumb.append(a_clientName);
+		}
+		return breadcrumb;
+	}
+
+	[[nodiscard]] constexpr bool ShouldDrawHeaderClose(
+		bool a_docked,
+		bool a_noTitleBar) noexcept
+	{
+		return !a_docked && a_noTitleBar;
+	}
+
+	struct TrailingControlLayout
+	{
+		float adjacentMinX{ 0.0f };
+		float adjacentMaxX{ 0.0f };
+		float controlMinX{ 0.0f };
+		float controlMaxX{ 0.0f };
+	};
+
+	[[nodiscard]] constexpr TrailingControlLayout ResolveTrailingControlLayout(
+		float a_contentMinX,
+		float a_contentMaxX,
+		float a_controlExtent,
+		float a_spacing) noexcept
+	{
+		const auto contentMax = a_contentMaxX > a_contentMinX ?
+			a_contentMaxX :
+			a_contentMinX;
+		const auto extent = a_controlExtent > 0.0f ? a_controlExtent : 0.0f;
+		const auto spacing = a_spacing > 0.0f ? a_spacing : 0.0f;
+		const auto unboundedControlMin = contentMax - extent;
+		const auto controlMin = unboundedControlMin > a_contentMinX ?
+			unboundedControlMin :
+			a_contentMinX;
+		const auto unboundedAdjacentMax = controlMin - spacing;
+		const auto adjacentMax = unboundedAdjacentMax > a_contentMinX ?
+			unboundedAdjacentMax :
+			a_contentMinX;
+		return {
+			a_contentMinX,
+			adjacentMax,
+			controlMin,
+			contentMax
+		};
+	}
+
+	[[nodiscard]] constexpr float ActionButtonWidth(
+		bool a_hasIcon,
+		float a_textWidth,
+		float a_iconExtent,
+		float a_horizontalPadding) noexcept
+	{
+		if (a_hasIcon)
+			return a_iconExtent > 0.0f ? a_iconExtent : 0.0f;
+		const auto textWidth = a_textWidth > 0.0f ? a_textWidth : 0.0f;
+		const auto padding = a_horizontalPadding > 0.0f ? a_horizontalPadding : 0.0f;
+		return textWidth + padding * 2.0f;
+	}
+
+	struct PageActionRowLayout
+	{
+		float titleMinX{ 0.0f };
+		float titleMaxX{ 0.0f };
+		float actionsMinX{ 0.0f };
+		float actionsMaxX{ 0.0f };
+		float reservedWidth{ 0.0f };
+	};
+
+	[[nodiscard]] constexpr PageActionRowLayout ResolvePageActionRowLayout(
+		float a_contentMinX,
+		float a_contentMaxX,
+		float a_buttonWidthSum,
+		size_t a_actionCount,
+		float a_spacing) noexcept
+	{
+		const auto contentMax = a_contentMaxX > a_contentMinX ?
+			a_contentMaxX :
+			a_contentMinX;
+		if (a_actionCount == 0)
+		{
+			return {
+				a_contentMinX,
+				contentMax,
+				contentMax,
+				contentMax,
+				0.0f
+			};
+		}
+		const auto spacing = a_spacing > 0.0f ? a_spacing : 0.0f;
+		const auto buttonWidth = a_buttonWidthSum > 0.0f ? a_buttonWidthSum : 0.0f;
+		const auto requestedWidth =
+			buttonWidth + spacing * static_cast<float>(a_actionCount - 1);
+		const auto actionsMin = contentMax - requestedWidth;
+		const auto unboundedTitleMax = actionsMin - spacing;
+		const auto titleMax = unboundedTitleMax > a_contentMinX ?
+			unboundedTitleMax :
+			a_contentMinX;
+		return {
+			a_contentMinX,
+			titleMax,
+			actionsMin,
+			contentMax,
+			requestedWidth
 		};
 	}
 }

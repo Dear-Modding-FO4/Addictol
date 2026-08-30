@@ -14,10 +14,10 @@ version is unsupported. Discovery may succeed before the host plugin initializes
 registration then return `DMUI_RESULT_HOST_NOT_INITIALIZED`. Export presence does not mean the
 renderer is ready: register at `kPostPostLoad` and wait for exactly one lifecycle callback.
 
-Client and page registration closes when the first valid active-swapchain `Present` begins host
-initialization. Register every page immediately after the client. All descriptor strings are copied;
+Client, page, and action registration closes when the first valid active-swapchain `Present` begins
+host initialization. Register every page and action immediately after the client. All descriptor strings are copied;
 callback and userdata pointers must remain valid for the process lifetime. IDs use ASCII letters,
-digits, `.`, `_`, and `-`. Client IDs are process-wide; page IDs are unique within their client.
+digits, `.`, `_`, and `-`. Client IDs are process-wide; page and action IDs are unique within their client.
 Set only documented `DMUI_ClientDescriptor::capabilities`; unknown bits reject the descriptor.
 
 Settings pages draw only inside the common modal menu. Overlay pages draw without input capture while
@@ -27,7 +27,8 @@ game-input suppression; overlay demand never suppresses input.
 
 ## Shared menu
 
-The Evil Modding window owns all navigation chrome. Its mod dropdown is built from registered client
+The Evil Modding window owns all navigation chrome. Its header shows the host and selected client as a
+breadcrumb with the undocked close control. Its mod dropdown is built from registered client
 display names. The sidebar groups each client's settings pages by category and orders pages by
 `sortKey`, display name, and ID. Switching mods selects that client's first page. Overlay pages never
 appear there. `selectPage` accepts settings pages, switches both the active mod and page, opens the
@@ -43,7 +44,7 @@ Heading, Subheading, and Subtext roles, resolution scaling, search and navigatio
 rounded title-bar highlights, footer, docking, and background blur around the neutral registry.
 Layout is saved to `Data\F4SE\Plugins\DearModdingUI\imgui.ini`. Fonts, icons, and blur shaders load
 only from that neutral root. Client IDs and category names select Phosphor glyphs from an in-code
-table after lowercase slug normalization. Icons use the accent tint by default. The title-bar gear
+table after lowercase slug normalization. Icons use the accent tint by default. The footer gear
 opens host-only interface settings for colored or monochrome icons and background blur without adding
 an entry to the mod dropdown. The same popup reports the configured toggle key and refresh interval
 alongside the resolved typography size and UI scale. Editable values use Addictol's `[Additional]`
@@ -51,6 +52,19 @@ TOML settings. A missing icon font falls back to text-only labels without disabl
 C ABI host.
 When a normalized category name equals its client's normalized display name or full client ID, the
 category inherits that client's glyph.
+
+## Client actions
+
+Clients may register actions through the optional appended `registerAction` entry. Check
+`DMUI_HostAPI::structSize >= DMUI_HOST_API_REGISTER_ACTION_SIZE` and that the pointer is non-null before
+using it. Actions belong to their client, appear on every one of that client's page-title rows, and
+order by `sortKey` then stable ID. The host copies the ID, display label, optional Phosphor icon name,
+and optional tooltip. A missing or unknown icon uses a compact text button without reserving unused
+space for clients that register no actions.
+
+Action callbacks run only when the host-rendered control is pressed. The host contains C++ exceptions
+and Windows structured exceptions, recovers shared ImGui state, and permanently disables a faulting
+action. Clients must not draw their own header, footer, or action chrome.
 
 The modal host opens a registered, hidden Fallout 4 carrier menu so absolute client coordinates remain
 valid, then maps them into the attached backbuffer. The carrier movie and operating-system cursor stay
@@ -99,7 +113,7 @@ Include the pinned `imgui.h` and `imgui_internal.h`, then vendored `ImGuiFingerp
 `ImDrawVert`, `ImWchar`, color packing, docking, obsolete API, test-engine, CRC, FreeType, debug-tool,
 math-operator, and vector-extension flags directly from the active preprocessor configuration.
 
-`onHostReady`, `onHostUnavailable`, and page draw callbacks run on the render thread. The context and
+`onHostReady`, `onHostUnavailable`, page draw callbacks, and action callbacks run on the render thread. The context and
 allocator functions exist only in `DMUI_HostReadyInfo`; clients must not poll for a context. In the
 ready callback, set the client's statically linked ImGui globals:
 
@@ -115,7 +129,7 @@ void DMUI_CALL Ready(const DMUI_HostReadyInfo* info, void*)
 Client callback typedefs are intentionally not `noexcept`, so a C++ exception reaches the host guard
 instead of terminating the process. Host API entry points and allocator callbacks remain `noexcept`.
 The host catches C++ exceptions and Windows structured exceptions around client callbacks, disables a
-faulting page, recovers the pinned ImGui stack state, and keeps a stable error entry in navigation.
+faulting page or action, recovers the pinned ImGui stack state, and keeps the rest of the host usable.
 Shared-context drawing cannot provide process isolation, so callbacks must still balance every ImGui
 stack operation.
 
@@ -173,6 +187,23 @@ if (api->registerPage(clientHandle, &page, &pageHandle) != DMUI_RESULT_OK)
 {
 	StartStandalone();
 	return;
+}
+
+if (api->structSize >= DMUI_HOST_API_REGISTER_ACTION_SIZE && api->registerAction)
+{
+	DMUI_ActionDescriptor action{
+		sizeof(action),
+		"refresh",
+		"Refresh",
+		"arrow-counter-clockwise",
+		"Refresh this mod's data.",
+		0,
+		&Refresh,
+		nullptr
+	};
+	DMUI_ActionHandle actionHandle{};
+	if (api->registerAction(clientHandle, &action, &actionHandle) != DMUI_RESULT_OK)
+		ReportActionRegistrationFailure();
 }
 ```
 

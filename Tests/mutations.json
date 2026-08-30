@@ -328,12 +328,12 @@
     "message": "burst series counters changed"
   },
   {
-    "name": "host title bar reserves one settings button extent",
-    "target": "Addictol/Include/DearModdingUI/HostSettings.h",
-    "find": "a_offset -",
-    "replace": "0.0f -",
-    "check": "host title bar buttons stay adjacent without overlap",
-    "message": "settings and close buttons were not adjacent"
+    "name": "host chrome reserves trailing control spacing",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "controlMin - spacing",
+    "replace": "controlMin + spacing",
+    "check": "host close and footer gear stay clear of adjacent content",
+    "message": "close button geometry changed"
   },
   {
     "name": "host settings require visible menu",
@@ -350,5 +350,29 @@
     "replace": "a_settings.iconColorMode != Theme::IconColorMode::kMonochrome,",
     "check": "host settings persistence round trips every stored value",
     "message": "stored host settings did not round trip"
+  },
+  {
+    "name": "action duplicate ids stay client scoped",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "return DMUI_RESULT_DUPLICATE_ACTION_ID;",
+    "replace": "return DMUI_RESULT_OK;",
+    "check": "action registration validates descriptors clients duplicates and freeze",
+    "message": "duplicate action ID in one client was accepted"
+  },
+  {
+    "name": "actions sort by key before id",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "return std::tie(a_left.client, a_left.sortKey, a_left.id) <",
+    "replace": "return std::tie(a_left.client, a_right.sortKey, a_left.id) <",
+    "check": "client actions order by sort key then stable ID",
+    "message": "actions did not order by sort key then ID"
+  },
+  {
+    "name": "empty action rows reserve no width",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "if (a_actionCount == 0)",
+    "replace": "if (false)",
+    "check": "page action row reserves space only for registered actions",
+    "message": "client with no actions reserved title-row space"
   }
 ]

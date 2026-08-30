@@ -66,14 +66,6 @@ namespace Addictol::DearModdingUI
 		return a_open;
 	}
 
-	struct TitleBarButtonPair
-	{
-		float settingsMinX{ 0.0f };
-		float settingsMaxX{ 0.0f };
-		float closeMinX{ 0.0f };
-		float closeMaxX{ 0.0f };
-	};
-
 	[[nodiscard]] constexpr float TitleBarButtonExtent(
 		float a_fontSize,
 		float a_buttonPadding) noexcept
@@ -97,36 +89,6 @@ namespace Addictol::DearModdingUI
 			a_fontSize -
 			a_offset -
 			a_buttonPadding;
-	}
-
-	[[nodiscard]] constexpr TitleBarButtonPair ResolveTitleBarButtonPair(
-		float a_windowMaxX,
-		float a_windowBorder,
-		float a_framePaddingX,
-		float a_fontSize,
-		float a_buttonPadding) noexcept
-	{
-		const auto extent = TitleBarButtonExtent(a_fontSize, a_buttonPadding);
-		const auto closeMin = RightTitleBarButtonOriginX(
-			a_windowMaxX,
-			a_windowBorder,
-			a_framePaddingX,
-			a_fontSize,
-			0.0f,
-			a_buttonPadding);
-		const auto settingsMin = RightTitleBarButtonOriginX(
-			a_windowMaxX,
-			a_windowBorder,
-			a_framePaddingX,
-			a_fontSize,
-			extent,
-			a_buttonPadding);
-		return {
-			settingsMin,
-			settingsMin + extent,
-			closeMin,
-			closeMin + extent
-		};
 	}
 
 	namespace HostSettings

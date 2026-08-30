@@ -8,6 +8,7 @@
 #include <imgui/imgui.h>
 
 #include <array>
+#include <cstdio>
 #include <cstdint>
 
 namespace Addictol::Menu
@@ -178,5 +179,34 @@ namespace Addictol::Menu
 		DrawWelcomeSection();
 		DrawQuickLinksSection();
 		DrawFaqSection();
+	}
+
+	void CopyDiagnosticsSummaryToClipboard(
+		[[maybe_unused]] void* a_userData) noexcept
+	{
+		const auto counts =
+			Plugin::GetSingleton()->GetModules().ModuleOutcomeCounts();
+		const auto total =
+			counts[0] + counts[1] + counts[2] + counts[3] + counts[4];
+		static const auto runtime =
+			REX::FModule::GetExecutingModule().GetFileVersion();
+		char summary[512]{};
+		std::snprintf(
+			summary,
+			sizeof(summary),
+			"Game runtime: %u.%u.%u.%u\n"
+			"Addictol modules: %llu installed, %llu disabled, %llu skipped, "
+			"%llu failed query, %llu failed install (%llu total)",
+			runtime.major(),
+			runtime.minor(),
+			runtime.patch(),
+			runtime.build(),
+			static_cast<unsigned long long>(counts[0]),
+			static_cast<unsigned long long>(counts[1]),
+			static_cast<unsigned long long>(counts[2]),
+			static_cast<unsigned long long>(counts[3]),
+			static_cast<unsigned long long>(counts[4]),
+			static_cast<unsigned long long>(total));
+		ImGui::SetClipboardText(summary);
 	}
 }

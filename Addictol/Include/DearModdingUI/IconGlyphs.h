@@ -22,9 +22,13 @@ namespace Addictol::DearModdingUI
 		inline constexpr char32_t kQuestion{ 0xE3E8 };
 		inline constexpr char32_t kArchive{ 0xE00C };
 		inline constexpr char32_t kAppWindow{ 0xE5DA };
+		inline constexpr char32_t kArrowCounterClockwise{ 0xE038 };
+		inline constexpr char32_t kClipboardText{ 0xE198 };
 		inline constexpr char32_t kDotsThreeCircle{ 0xE200 };
 		inline constexpr char32_t kGear{ 0xE270 };
 		inline constexpr char32_t kSun{ 0xE472 };
+		inline constexpr char32_t kTrash{ 0xE4A6 };
+		inline constexpr char32_t kX{ 0xE4F6 };
 		inline constexpr char32_t kPuzzlePiece{ 0xE596 };
 		inline constexpr char32_t kGauge{ 0xE628 };
 		inline constexpr char32_t kMagicWand{ 0xE6B6 };
@@ -54,6 +58,19 @@ namespace Addictol::DearModdingUI
 	inline constexpr std::array kClientGlyphs{
 		IconGlyphMapping{ "dearmoddingaddictol", PhosphorGlyph::kPuzzlePiece },
 		IconGlyphMapping{ "dearmoddingcommunityshaders", PhosphorGlyph::kSun }
+	};
+
+	inline constexpr std::array kActionGlyphs{
+		IconGlyphMapping{ "arrowcounterclockwise", PhosphorGlyph::kArrowCounterClockwise },
+		IconGlyphMapping{ "arrow-counter-clockwise", PhosphorGlyph::kArrowCounterClockwise },
+		IconGlyphMapping{ "clearcache", PhosphorGlyph::kTrash },
+		IconGlyphMapping{ "clear-cache", PhosphorGlyph::kTrash },
+		IconGlyphMapping{ "clipboard", PhosphorGlyph::kClipboardText },
+		IconGlyphMapping{ "clipboardtext", PhosphorGlyph::kClipboardText },
+		IconGlyphMapping{ "clipboard-text", PhosphorGlyph::kClipboardText },
+		IconGlyphMapping{ "restoresettings", PhosphorGlyph::kArrowCounterClockwise },
+		IconGlyphMapping{ "restore-settings", PhosphorGlyph::kArrowCounterClockwise },
+		IconGlyphMapping{ "trash", PhosphorGlyph::kTrash }
 	};
 
 	[[nodiscard]] inline std::string SlugifyIconName(std::string_view a_name)
@@ -154,6 +171,25 @@ namespace Addictol::DearModdingUI
 		catch (...)
 		{
 			return static_cast<char32_t>(PhosphorGlyph::kQuestion);
+		}
+	}
+
+	[[nodiscard]] inline char32_t ResolveActionIconGlyph(
+		std::string_view a_name) noexcept
+	{
+		try
+		{
+			const auto slug = SlugifyIconName(a_name);
+			for (const auto& mapping : kActionGlyphs)
+			{
+				if (mapping.slug == slug)
+					return mapping.glyph;
+			}
+			return {};
+		}
+		catch (...)
+		{
+			return {};
 		}
 	}
 }

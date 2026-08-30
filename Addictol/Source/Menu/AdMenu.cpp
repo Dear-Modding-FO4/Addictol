@@ -202,6 +202,27 @@ namespace Addictol
 			return false;
 		}
 
+		const DMUI_ActionDescriptor copyDiagnostics{
+			sizeof(DMUI_ActionDescriptor),
+			"copy-diagnostics",
+			"Copy diagnostics",
+			"clipboard-text",
+			"Copy the game runtime and Addictol module outcomes to the clipboard.",
+			0,
+			&CopyDiagnosticsSummaryToClipboard,
+			nullptr
+		};
+		DMUI_ActionHandle copyDiagnosticsAction{ DMUI_INVALID_ACTION_HANDLE };
+		const auto actionResult = DearModdingUI::HostAPI().registerAction(
+			s_client, &copyDiagnostics, &copyDiagnosticsAction);
+		if (actionResult != DMUI_RESULT_OK)
+		{
+			REX::ERROR(
+				"Menu: Addictol diagnostics action registration failed, result {}."sv,
+				actionResult);
+			return false;
+		}
+
 		const DMUI_PageDescriptor home{
 			sizeof(DMUI_PageDescriptor),
 			"home",

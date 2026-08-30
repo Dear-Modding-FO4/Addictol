@@ -180,6 +180,24 @@ namespace Addictol::DearModdingUI
 			return service.registry.RegisterPage(a_client, a_descriptor, a_page);
 		}
 
+		[[nodiscard]] DMUI_Result DMUI_CALL ApiRegisterActionCpp(
+			DMUI_ClientHandle a_client,
+			const DMUI_ActionDescriptor* a_descriptor,
+			DMUI_ActionHandle* a_action) noexcept
+		{
+			if (!a_descriptor || !a_action || a_client == DMUI_INVALID_CLIENT_HANDLE)
+				return DMUI_RESULT_INVALID_ARGUMENT;
+			*a_action = DMUI_INVALID_ACTION_HANDLE;
+			auto& service = GetService();
+			const auto state = service.state.load(std::memory_order_acquire);
+			if (state == DMUI_HOST_STATE_INITIALIZING ||
+				state == DMUI_HOST_STATE_READY)
+				return DMUI_RESULT_REGISTRATION_CLOSED;
+			if (state != DMUI_HOST_STATE_WAITING_FOR_PRESENT)
+				return StateResult(state);
+			return service.registry.RegisterAction(a_client, a_descriptor, a_action);
+		}
+
 		[[nodiscard]] DMUI_Result DMUI_CALL ApiQueryStateCpp(
 			DMUI_HostStateInfo* a_state) noexcept
 		{
@@ -330,6 +348,16 @@ namespace Addictol::DearModdingUI
 			});
 		}
 
+		[[nodiscard]] DMUI_Result DMUI_CALL ApiRegisterAction(
+			DMUI_ClientHandle a_client,
+			const DMUI_ActionDescriptor* a_descriptor,
+			DMUI_ActionHandle* a_action) noexcept
+		{
+			return GuardApiCall([&]() noexcept {
+				return ApiRegisterActionCpp(a_client, a_descriptor, a_action);
+			});
+		}
+
 		[[nodiscard]] DMUI_Result DMUI_CALL ApiQueryState(DMUI_HostStateInfo* a_state) noexcept
 		{
 			return GuardApiCall([&]() noexcept {
@@ -379,6 +407,37 @@ namespace Addictol::DearModdingUI
 				return ApiAttachSwapChainCpp(a_client, a_nativeSwapChain);
 			});
 		}
+
+		template <class InvokeCallback, class DisableCallback>
+		[[nodiscard]] bool InvokeClientCallback(
+			const char* a_kind,
+			uint64_t a_handle,
+			InvokeCallback&& a_invoke,
+			DisableCallback&& a_disable) noexcept
+		{
+			auto recovery = ImGuiRecoverySnapshot::Capture();
+			if (!recovery)
+			{
+				a_disable();
+				REX::ERROR(
+					"DearModdingUI: {} callback {} could not be isolated and was disabled"sv,
+					a_kind,
+					a_handle);
+				return false;
+			}
+			const auto result = a_invoke();
+			if (result == DMUI_RESULT_CALLBACK_FAILED)
+			{
+				recovery->RecoverFailure();
+				REX::ERROR(
+					"DearModdingUI: {} callback {} failed and was disabled"sv,
+					a_kind,
+					a_handle);
+				return false;
+			}
+			recovery->RecoverAfterCallback();
+			return result == DMUI_RESULT_OK;
+		}
 	}
 
 	const DMUI_ImGuiFingerprint& HostFingerprint() noexcept
@@ -400,7 +459,8 @@ namespace Addictol::DearModdingUI
 			&ApiReleaseFrame,
 			&ApiIsMenuVisible,
 			&ApiSelectPage,
-			&ApiAttachSwapChain
+			&ApiAttachSwapChain,
+			&ApiRegisterAction
 		};
 		return api;
 	}
@@ -554,28 +614,39 @@ namespace Addictol::DearModdingUI
 	bool DrawPage(DMUI_PageHandle a_page) noexcept
 	{
 		auto& service = GetService();
-		auto recovery = ImGuiRecoverySnapshot::Capture();
-		if (!recovery)
-		{
-			service.registry.MarkPageFailed(a_page);
-			REX::ERROR("DearModdingUI: page callback {} could not be isolated and was disabled"sv,
-				a_page);
-			return false;
-		}
-		const auto result = service.registry.InvokePage(a_page);
-		if (result == DMUI_RESULT_CALLBACK_FAILED)
-		{
-			recovery->RecoverFailure();
-			REX::ERROR("DearModdingUI: page callback {} failed and was disabled"sv, a_page);
-			return false;
-		}
-		recovery->RecoverAfterCallback();
-		return result == DMUI_RESULT_OK;
+		return InvokeClientCallback(
+			"page",
+			a_page,
+			[&]() noexcept {
+				return service.registry.InvokePage(a_page);
+			},
+			[&]() noexcept {
+				service.registry.MarkPageFailed(a_page);
+			});
 	}
 
 	bool PageFailed(DMUI_PageHandle a_page) noexcept
 	{
 		return GetService().registry.PageFailed(a_page);
+	}
+
+	bool InvokeAction(DMUI_ActionHandle a_action) noexcept
+	{
+		auto& service = GetService();
+		return InvokeClientCallback(
+			"action",
+			a_action,
+			[&]() noexcept {
+				return service.registry.InvokeAction(a_action);
+			},
+			[&]() noexcept {
+				service.registry.MarkActionFailed(a_action);
+			});
+	}
+
+	bool ActionFailed(DMUI_ActionHandle a_action) noexcept
+	{
+		return GetService().registry.ActionFailed(a_action);
 	}
 
 	void DrawDemandedOverlays() noexcept
@@ -592,6 +663,11 @@ namespace Addictol::DearModdingUI
 	const std::vector<RegisteredPage>& OrderedPages() noexcept
 	{
 		return GetService().registry.OrderedPages();
+	}
+
+	const std::vector<RegisteredAction>& OrderedActions() noexcept
+	{
+		return GetService().registry.OrderedActions();
 	}
 
 	const NavigationModel& Navigation() noexcept

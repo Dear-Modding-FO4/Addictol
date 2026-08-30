@@ -123,6 +123,25 @@ namespace vmm_tests
 			};
 		}
 
+		[[nodiscard]] DMUI_ActionDescriptor Action(
+			const char* a_id,
+			const char* a_label,
+			const char* a_icon,
+			int32_t a_sort,
+			CallbackState& a_state) noexcept
+		{
+			return {
+				sizeof(DMUI_ActionDescriptor),
+				a_id,
+				a_label,
+				a_icon,
+				nullptr,
+				a_sort,
+				&Draw,
+				&a_state
+			};
+		}
+
 		[[nodiscard]] DMUI_ClientHandle AddClient(
 			Registry& a_registry,
 			const char* a_id,
@@ -152,6 +171,23 @@ namespace vmm_tests
 			DMUI_PageHandle handle{};
 			require(a_registry.RegisterPage(a_client, &descriptor, &handle) == DMUI_RESULT_OK,
 				"page registration failed");
+			return handle;
+		}
+
+		[[nodiscard]] DMUI_ActionHandle AddAction(
+			Registry& a_registry,
+			DMUI_ClientHandle a_client,
+			const char* a_id,
+			const char* a_label,
+			const char* a_icon,
+			int32_t a_sort,
+			CallbackState& a_state)
+		{
+			auto descriptor = Action(a_id, a_label, a_icon, a_sort, a_state);
+			DMUI_ActionHandle handle{};
+			require(a_registry.RegisterAction(a_client, &descriptor, &handle) ==
+					DMUI_RESULT_OK,
+				"action registration failed");
 			return handle;
 		}
 	}
@@ -336,6 +372,89 @@ namespace vmm_tests
 				"same page ID in another client was rejected");
 		});
 
+		runner.test("action registration validates descriptors clients duplicates and freeze", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto first = AddClient(
+				registry, "actions.first", "First", fingerprint, state);
+			const auto second = AddClient(
+				registry, "actions.second", "Second", fingerprint, state);
+			auto action = Action(
+				"copy-diagnostics", "Copy diagnostics", "clipboard-text", 0, state);
+			DMUI_ActionHandle handle{};
+
+			require(registry.RegisterAction(first, nullptr, &handle) ==
+					DMUI_RESULT_INVALID_ARGUMENT,
+				"null action descriptor was accepted");
+			require(registry.RegisterAction(first, &action, nullptr) ==
+					DMUI_RESULT_INVALID_ARGUMENT,
+				"null action output was accepted");
+			require(registry.RegisterAction(
+						DMUI_INVALID_CLIENT_HANDLE, &action, &handle) ==
+					DMUI_RESULT_INVALID_ARGUMENT,
+				"invalid action client handle was accepted");
+			action.structSize = sizeof(action) - 1;
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_STRUCT_TOO_SMALL,
+				"short action descriptor was accepted");
+			action.structSize = sizeof(action);
+			action.callback = nullptr;
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_INVALID_DESCRIPTOR,
+				"null action callback was accepted");
+			action.callback = &Draw;
+			action.id = "invalid action";
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_INVALID_DESCRIPTOR,
+				"invalid action ID was accepted");
+			action.id = "copy-diagnostics";
+			action.displayLabel = "";
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_INVALID_DESCRIPTOR,
+				"empty action label was accepted");
+			action.displayLabel = "Copy diagnostics";
+			require(registry.RegisterAction(9999, &action, &handle) ==
+					DMUI_RESULT_CLIENT_NOT_FOUND,
+				"action for an unknown client was accepted");
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_OK,
+				"valid action was rejected");
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_DUPLICATE_ACTION_ID,
+				"duplicate action ID in one client was accepted");
+			require(registry.RegisterAction(second, &action, &handle) ==
+					DMUI_RESULT_OK,
+				"same action ID in another client was rejected");
+			require(registry.Freeze(), "action registry did not freeze");
+			action.id = "late";
+			require(registry.RegisterAction(first, &action, &handle) ==
+					DMUI_RESULT_REGISTRATION_CLOSED,
+				"action registration remained open after freeze");
+		});
+
+		runner.test("client actions order by sort key then stable ID", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(
+				registry, "actions.mod", "Actions", fingerprint, state);
+			(void)AddAction(
+				registry, client, "zulu", "Zulu", nullptr, 10, state);
+			(void)AddAction(
+				registry, client, "bravo", "Bravo", nullptr, -10, state);
+			(void)AddAction(
+				registry, client, "alpha", "Alpha", nullptr, 10, state);
+			require(registry.Freeze(), "ordered action registry did not freeze");
+			const auto& actions = registry.OrderedActions();
+			require(actions.size() == 3, "registered actions were lost");
+			require(
+					actions[0].id == "bravo" &&
+						actions[1].id == "alpha" &&
+						actions[2].id == "zulu",
+					"actions did not order by sort key then ID");
+		});
+
 		runner.test("Addictol home sorts first through ordinary settings ordering", [] {
 			const auto fingerprint = Fingerprint();
 			Registry registry{ fingerprint };
@@ -426,6 +545,20 @@ namespace vmm_tests
 				"copy client failed");
 			clientId[0] = 'x';
 			clientName[0] = 'X';
+			char actionId[] = "copy";
+			char actionLabel[] = "Copy diagnostics";
+			char actionIcon[] = "clipboard-text";
+			char actionTooltip[] = "Copy a summary.";
+			auto action = Action(actionId, actionLabel, actionIcon, 0, state);
+			action.tooltip = actionTooltip;
+			DMUI_ActionHandle actionHandle{};
+			require(registry.RegisterAction(client, &action, &actionHandle) ==
+					DMUI_RESULT_OK,
+				"copy action failed");
+			actionId[0] = 'x';
+			actionLabel[0] = 'X';
+			actionIcon[0] = 'x';
+			actionTooltip[0] = 'X';
 			for (size_t index = 0; index < 32; ++index)
 			{
 				const auto id = "page-" + std::to_string(index);
@@ -439,6 +572,15 @@ namespace vmm_tests
 				"client ID was not copied");
 			require(registry.OrderedPages().front().clientDisplayName == "Copy",
 				"client name was not copied");
+			require(
+					registry.OrderedActions().front().id == "copy" &&
+						registry.OrderedActions().front().displayLabel ==
+							"Copy diagnostics" &&
+						registry.OrderedActions().front().iconName ==
+							"clipboard-text" &&
+						registry.OrderedActions().front().tooltip ==
+							"Copy a summary.",
+					"action descriptor strings were not copied");
 		});
 
 		runner.test("frozen pages have deterministic host category and sort ordering", [] {
@@ -522,6 +664,8 @@ namespace vmm_tests
 		runner.test("icon names resolve to deterministic Phosphor glyphs", [] {
 			require(PhosphorGlyph::kGear == 0xE270,
 				"host settings gear glyph changed");
+			require(PhosphorGlyph::kX == 0xE4F6,
+				"host close glyph changed");
 			require(SlugifyIconName("Post Process") == "post-process",
 				"spaces were not collapsed");
 			require(SlugifyIconName("Mixed___CASE Name") == "mixed-case-name",
@@ -604,6 +748,16 @@ namespace vmm_tests
 					ResolveIconGlyph(IconKind::kClient, "") ==
 					PhosphorGlyph::kQuestion,
 				"unknown icon names did not use the fallback");
+			require(
+					ResolveActionIconGlyph("clipboard-text") ==
+							PhosphorGlyph::kClipboardText &&
+						ResolveActionIconGlyph("Clear Cache") ==
+							PhosphorGlyph::kTrash &&
+						ResolveActionIconGlyph("restore_settings") ==
+							PhosphorGlyph::kArrowCounterClockwise,
+					"known action icon names changed glyphs");
+			require(ResolveActionIconGlyph("unknown") == char32_t{},
+				"unknown action icon name did not request text fallback");
 		});
 
 		runner.test("theme icon tint selects colored and monochrome modes", [] {
@@ -640,36 +794,82 @@ namespace vmm_tests
 				"persisted icon mode did not select its runtime tint");
 		});
 
-		runner.test("host title bar buttons stay adjacent without overlap", [] {
+		runner.test("host breadcrumb identifies zero or one selected client", [] {
+			require(BuildHostBreadcrumb("Evil Modding", "") == "Evil Modding",
+				"empty selection changed the host-only breadcrumb");
+			require(
+					BuildHostBreadcrumb("Evil Modding", "Community Shaders") ==
+						"Evil Modding > Community Shaders",
+					"selected client was not added to the breadcrumb");
+			require(ShouldDrawHeaderClose(false, true),
+				"undocked titleless host lost its close button");
+			require(
+					!ShouldDrawHeaderClose(true, true) &&
+						!ShouldDrawHeaderClose(true, false) &&
+						!ShouldDrawHeaderClose(false, false),
+					"host close duplicated a native or docked close affordance");
+		});
+
+		runner.test("host close and footer gear stay clear of adjacent content", [] {
 			struct Case
 			{
 				float fontSize;
-				float framePadding;
+				float uiScale;
 			};
 			constexpr std::array cases{
-				Case{ 16.0f, 6.0f },
-				Case{ 21.0f, 8.0f },
-				Case{ 42.0f, 16.0f },
-				Case{ 84.0f, 32.0f }
+				Case{ 16.0f, 1.0f },
+				Case{ 18.0f, 1.25f },
+				Case{ 21.0f, 1.5f },
+				Case{ 28.0f, 2.0f }
 			};
 			for (const auto& test : cases)
 			{
-				const auto pair = ResolveTitleBarButtonPair(
-					1920.0f,
-					2.0f,
-					test.framePadding,
-					test.fontSize,
-					2.0f);
-				const auto extent = TitleBarButtonExtent(test.fontSize, 2.0f);
-				require(pair.settingsMaxX == pair.closeMinX,
-					"settings and close buttons were not adjacent");
-				require(pair.settingsMaxX <= pair.closeMinX,
-					"settings and close buttons overlapped");
+				const auto fontSize = test.fontSize * test.uiScale;
+				const auto padding = 2.0f * test.uiScale;
+				const auto spacing = 8.0f * test.uiScale;
+				const auto extent = TitleBarButtonExtent(fontSize, padding);
+				const auto header = ResolveTrailingControlLayout(
+					24.0f, 1896.0f, extent, spacing);
+				const auto footer = ResolveTrailingControlLayout(
+					36.0f, 1264.0f, extent, spacing);
 				require(
-					pair.settingsMaxX - pair.settingsMinX == extent &&
-							pair.closeMaxX - pair.closeMinX == extent,
-					"title bar button extents diverged");
+						header.controlMaxX == 1896.0f &&
+							header.controlMinX == 1896.0f - extent &&
+							header.adjacentMaxX ==
+								header.controlMinX - spacing,
+						"close button geometry changed");
+				require(
+						footer.controlMaxX == 1264.0f &&
+							footer.controlMinX == 1264.0f - extent &&
+							footer.adjacentMaxX ==
+								footer.controlMinX - spacing,
+						"footer gear geometry changed");
+				require(
+						header.adjacentMaxX <= header.controlMinX &&
+							footer.adjacentMaxX <= footer.controlMinX,
+						"host chrome overlapped adjacent content");
 			}
+		});
+
+		runner.test("page action row reserves space only for registered actions", [] {
+			const auto empty = ResolvePageActionRowLayout(
+				100.0f, 900.0f, 0.0f, 0, 8.0f);
+			require(
+					empty.titleMaxX == 900.0f &&
+						empty.actionsMinX == 900.0f &&
+						empty.actionsMaxX == 900.0f &&
+						empty.reservedWidth == 0.0f,
+					"client with no actions reserved title-row space");
+
+			const auto populated = ResolvePageActionRowLayout(
+				100.0f, 900.0f, 72.0f, 2, 8.0f);
+			require(
+					populated.actionsMinX == 820.0f &&
+						populated.titleMaxX == 812.0f &&
+						populated.reservedWidth == 80.0f,
+					"registered actions did not reserve their exact strip");
+			require(populated.titleMaxX <= populated.actionsMinX,
+				"page title overlapped client actions");
 		});
 
 		runner.test("host settings panel follows menu visibility", [] {
@@ -1237,6 +1437,23 @@ namespace vmm_tests
 			require(drawRegistry.InvokePage(drawPage) == DMUI_RESULT_CALLBACK_FAILED,
 				"a faulted page was invoked again");
 
+			auto drawActionDescriptor = Action(
+				"throw", "Throw", nullptr, 0, drawState);
+			drawActionDescriptor.callback = &ThrowDraw;
+			DMUI_ActionHandle drawAction{};
+			require(drawRegistry.RegisterAction(
+						drawClient, &drawActionDescriptor, &drawAction) ==
+					DMUI_RESULT_OK,
+				"throwing action was not registered");
+			require(drawRegistry.InvokeAction(drawAction) ==
+					DMUI_RESULT_CALLBACK_FAILED,
+				"a throwing action escaped its host guard");
+			require(drawRegistry.ActionFailed(drawAction),
+				"faulted action was not permanently disabled");
+			require(drawRegistry.InvokeAction(drawAction) ==
+					DMUI_RESULT_CALLBACK_FAILED,
+				"a faulted action was invoked again");
+
 			CallbackState unavailableState;
 			CallbackState healthyState;
 			Registry unavailableRegistry{ fingerprint };
@@ -1295,6 +1512,13 @@ namespace vmm_tests
 			require(state.draws == 1, "draw callback did not receive userdata");
 			require(registry.InvokePage(page + 1) == DMUI_RESULT_PAGE_NOT_FOUND,
 				"unknown page was invoked");
+			const auto action = AddAction(
+				registry, client, "draw", "Draw", nullptr, 0, state);
+			require(registry.InvokeAction(action) == DMUI_RESULT_OK,
+				"action callback failed");
+			require(state.draws == 2, "action callback did not receive userdata");
+			require(registry.InvokeAction(action + 1) == DMUI_RESULT_ACTION_NOT_FOUND,
+				"unknown action was invoked");
 		});
 	}
 }

@@ -71,6 +71,8 @@ typedef uint32_t DMUI_Result;
 #define DMUI_RESULT_CLIENT_CAPABILITY_REQUIRED 19u
 #define DMUI_RESULT_SWAPCHAIN_REJECTED 20u
 #define DMUI_RESULT_RENDERER_BUSY 21u
+#define DMUI_RESULT_DUPLICATE_ACTION_ID 22u
+#define DMUI_RESULT_ACTION_NOT_FOUND 23u
 
 typedef uint32_t DMUI_HostState;
 
@@ -98,9 +100,11 @@ typedef uint32_t DMUI_ClientCapabilities;
 
 typedef uint64_t DMUI_ClientHandle;
 typedef uint64_t DMUI_PageHandle;
+typedef uint64_t DMUI_ActionHandle;
 
 #define DMUI_INVALID_CLIENT_HANDLE ((DMUI_ClientHandle)0u)
 #define DMUI_INVALID_PAGE_HANDLE ((DMUI_PageHandle)0u)
+#define DMUI_INVALID_ACTION_HANDLE ((DMUI_ActionHandle)0u)
 
 #if defined(_MSC_VER)
 #pragma pack(push, 8)
@@ -172,6 +176,7 @@ typedef void (DMUI_CALL *DMUI_HostUnavailableCallback)(
 	DMUI_UnavailableReason reason,
 	void* userData);
 typedef void (DMUI_CALL *DMUI_PageDrawCallback)(void* userData);
+typedef void (DMUI_CALL *DMUI_ActionCallback)(void* userData);
 
 typedef struct DMUI_ClientDescriptor
 {
@@ -199,6 +204,18 @@ typedef struct DMUI_PageDescriptor
 	DMUI_PageDrawCallback draw;
 	void* userData;
 } DMUI_PageDescriptor;
+
+typedef struct DMUI_ActionDescriptor
+{
+	uint32_t structSize;
+	const char* id;
+	const char* displayLabel;
+	const char* iconName;
+	const char* tooltip;
+	int32_t sortKey;
+	DMUI_ActionCallback callback;
+	void* userData;
+} DMUI_ActionDescriptor;
 
 typedef struct DMUI_HostStateInfo
 {
@@ -234,6 +251,10 @@ typedef DMUI_Result (DMUI_CALL *DMUI_SelectPageFn)(
 typedef DMUI_Result (DMUI_CALL *DMUI_AttachSwapChainFn)(
 	DMUI_ClientHandle client,
 	void* nativeSwapChain) DMUI_NOEXCEPT;
+typedef DMUI_Result (DMUI_CALL *DMUI_RegisterActionFn)(
+	DMUI_ClientHandle client,
+	const DMUI_ActionDescriptor* descriptor,
+	DMUI_ActionHandle* action) DMUI_NOEXCEPT;
 
 typedef struct DMUI_HostAPI
 {
@@ -248,10 +269,13 @@ typedef struct DMUI_HostAPI
 	DMUI_IsMenuVisibleFn isMenuVisible;
 	DMUI_SelectPageFn selectPage;
 	DMUI_AttachSwapChainFn attachSwapChain;
+	DMUI_RegisterActionFn registerAction;
 } DMUI_HostAPI;
 
 #define DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE \
 	((uint32_t)(offsetof(DMUI_HostAPI, attachSwapChain) + sizeof(DMUI_AttachSwapChainFn)))
+#define DMUI_HOST_API_REGISTER_ACTION_SIZE \
+	((uint32_t)(offsetof(DMUI_HostAPI, registerAction) + sizeof(DMUI_RegisterActionFn)))
 
 #if defined(_MSC_VER)
 #pragma pack(pop)

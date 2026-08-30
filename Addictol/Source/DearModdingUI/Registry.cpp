@@ -14,6 +14,7 @@ namespace Addictol::DearModdingUI
 		inline constexpr size_t kDisplayNameCapacity{ 256 };
 		inline constexpr size_t kCategoryCapacity{ 128 };
 		inline constexpr size_t kSummaryCapacity{ 1024 };
+		inline constexpr size_t kIconNameCapacity{ 128 };
 
 		[[nodiscard]] bool ReadString(
 			const char* a_value,
@@ -295,6 +296,72 @@ namespace Addictol::DearModdingUI
 		}
 	}
 
+	DMUI_Result Registry::RegisterAction(
+		DMUI_ClientHandle a_client,
+		const DMUI_ActionDescriptor* a_descriptor,
+		DMUI_ActionHandle* a_action) noexcept
+	{
+		if (!a_descriptor || !a_action || a_client == DMUI_INVALID_CLIENT_HANDLE)
+			return DMUI_RESULT_INVALID_ARGUMENT;
+		*a_action = DMUI_INVALID_ACTION_HANDLE;
+		if (a_descriptor->structSize < sizeof(DMUI_ActionDescriptor))
+			return DMUI_RESULT_STRUCT_TOO_SMALL;
+		if (!a_descriptor->callback)
+			return DMUI_RESULT_INVALID_DESCRIPTOR;
+
+		try
+		{
+			RegisteredAction action{};
+			action.client = a_client;
+			action.sortKey = a_descriptor->sortKey;
+			action.callback = a_descriptor->callback;
+			action.userData = a_descriptor->userData;
+			if (!ReadString(a_descriptor->id, kIdCapacity, false, action.id) ||
+				!ReadString(
+					a_descriptor->displayLabel,
+					kDisplayNameCapacity,
+					false,
+					action.displayLabel) ||
+				!ReadString(
+					a_descriptor->iconName,
+					kIconNameCapacity,
+					true,
+					action.iconName) ||
+				!ReadString(
+					a_descriptor->tooltip,
+					kSummaryCapacity,
+					true,
+					action.tooltip) ||
+				!ValidId(action.id) ||
+				!ValidText(action.displayLabel, false) ||
+				!ValidText(action.iconName, true) ||
+				!ValidText(action.tooltip, true))
+				return DMUI_RESULT_INVALID_DESCRIPTOR;
+
+			const std::scoped_lock lock{ m_mutex };
+			if (!m_open)
+				return DMUI_RESULT_REGISTRATION_CLOSED;
+			if (!FindClient(a_client))
+				return DMUI_RESULT_CLIENT_NOT_FOUND;
+			if (std::ranges::any_of(m_actions, [&](const auto& a_existing) {
+					return a_existing.client == a_client &&
+						a_existing.id == action.id;
+				}))
+				return DMUI_RESULT_DUPLICATE_ACTION_ID;
+			if (m_nextAction == DMUI_INVALID_ACTION_HANDLE)
+				return DMUI_RESULT_RESOURCE_EXHAUSTED;
+
+			action.handle = m_nextAction++;
+			m_actions.push_back(std::move(action));
+			*a_action = m_actions.back().handle;
+			return DMUI_RESULT_OK;
+		}
+		catch (...)
+		{
+			return DMUI_RESULT_RESOURCE_EXHAUSTED;
+		}
+	}
+
 	bool Registry::Freeze() noexcept
 	{
 		try
@@ -319,6 +386,10 @@ namespace Addictol::DearModdingUI
 						a_right.sortKey,
 						a_right.displayName,
 						a_right.id);
+			});
+			std::ranges::sort(m_actions, [](const auto& a_left, const auto& a_right) {
+				return std::tie(a_left.client, a_left.sortKey, a_left.id) <
+					std::tie(a_right.client, a_right.sortKey, a_right.id);
 			});
 			m_navigation = BuildNavigationModel(m_clients, m_pages);
 			m_open = false;
@@ -375,6 +446,11 @@ namespace Addictol::DearModdingUI
 	const std::vector<RegisteredPage>& Registry::OrderedPages() const noexcept
 	{
 		return m_pages;
+	}
+
+	const std::vector<RegisteredAction>& Registry::OrderedActions() const noexcept
+	{
+		return m_actions;
 	}
 
 	const NavigationModel& Registry::Navigation() const noexcept
@@ -487,6 +563,44 @@ namespace Addictol::DearModdingUI
 			page->callbackFailed = true;
 	}
 
+	DMUI_Result Registry::InvokeAction(DMUI_ActionHandle a_action) noexcept
+	{
+		DMUI_ActionCallback callback{ nullptr };
+		void* userData{ nullptr };
+		{
+			const std::scoped_lock lock{ m_mutex };
+			auto* action = FindAction(a_action);
+			if (!action)
+				return DMUI_RESULT_ACTION_NOT_FOUND;
+			if (action->callbackFailed)
+				return DMUI_RESULT_CALLBACK_FAILED;
+			callback = action->callback;
+			userData = action->userData;
+		}
+
+		if (InvokeDraw(callback, userData))
+			return DMUI_RESULT_OK;
+
+		const std::scoped_lock lock{ m_mutex };
+		if (auto* action = FindAction(a_action))
+			action->callbackFailed = true;
+		return DMUI_RESULT_CALLBACK_FAILED;
+	}
+
+	bool Registry::ActionFailed(DMUI_ActionHandle a_action) const noexcept
+	{
+		const std::scoped_lock lock{ m_mutex };
+		const auto* action = FindAction(a_action);
+		return !action || action->callbackFailed;
+	}
+
+	void Registry::MarkActionFailed(DMUI_ActionHandle a_action) noexcept
+	{
+		const std::scoped_lock lock{ m_mutex };
+		if (auto* action = FindAction(a_action))
+			action->callbackFailed = true;
+	}
+
 	void Registry::NotifyReady(const DMUI_HostReadyInfo& a_info) noexcept
 	{
 		{
@@ -523,6 +637,11 @@ namespace Addictol::DearModdingUI
 				{
 					if (page.client == handle)
 						page.callbackFailed = true;
+				}
+				for (auto& action : m_actions)
+				{
+					if (action.client == handle)
+						action.callbackFailed = true;
 				}
 			}
 		}
@@ -654,6 +773,22 @@ namespace Addictol::DearModdingUI
 			return a_existing.handle == a_page;
 		});
 		return found != m_pages.end() ? &*found : nullptr;
+	}
+
+	RegisteredAction* Registry::FindAction(DMUI_ActionHandle a_action) noexcept
+	{
+		const auto found = std::ranges::find_if(m_actions, [&](const auto& a_existing) {
+			return a_existing.handle == a_action;
+		});
+		return found != m_actions.end() ? &*found : nullptr;
+	}
+
+	const RegisteredAction* Registry::FindAction(DMUI_ActionHandle a_action) const noexcept
+	{
+		const auto found = std::ranges::find_if(m_actions, [&](const auto& a_existing) {
+			return a_existing.handle == a_action;
+		});
+		return found != m_actions.end() ? &*found : nullptr;
 	}
 
 	bool Registry::OwnsPage(
