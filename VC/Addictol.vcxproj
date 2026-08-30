@@ -301,6 +301,7 @@
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\performance.png" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Categories\Monochrome\post-process.png" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingaddictol.png" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingcommunityshaders.png" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurDownsample.hlsl" />
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurHorizontal.hlsl" />

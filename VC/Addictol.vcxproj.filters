@@ -861,6 +861,9 @@
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingaddictol.png">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Icons\Clients\dearmoddingcommunityshaders.png">
+      <Filter>Resources\DearModdingUI</Filter>
+    </None>
     <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl">
       <Filter>Resources\DearModdingUI</Filter>
     </None>
