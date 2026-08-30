@@ -295,27 +295,59 @@ target("vmm-tests", function()
 
     -- add dependencies
     add_deps("vmm", "spdlog-vendored", "imgui")
+    add_deps("commonlib-shared", dependency_interface)
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
 
     -- add source files
     add_files("Tests/**.cpp")
+    add_files("Addictol/Source/Core/AdConfigValidation.cpp")
     add_files("Addictol/Source/Core/AdLogControl.cpp")
+    add_files("Addictol/Source/Core/Settings/**.cpp")
     add_files("Addictol/Source/DearModdingUI/FontCatalog.cpp")
     add_files("Addictol/Source/DearModdingUI/Navigation.cpp")
     add_files("Addictol/Source/DearModdingUI/Registry.cpp")
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
 
     -- add include directories
-    add_includedirs("Tests", "Addictol/Include", "Depends", "Depends/spdlog/include", "Depends/vmm/source")
+    add_includedirs(
+        "Tests",
+        "Addictol/Include",
+        "Depends",
+        "Depends/commonlibf4/lib/commonlib-shared/include",
+        "Depends/spdlog/include",
+        "Depends/vmm/source"
+    )
 
     -- add defines
-    add_defines("NDEBUG", "NOMINMAX", "WIN32_LEAN_AND_MEAN", "SPDLOG_COMPILED_LIB", "SPDLOG_USE_STD_FORMAT", "AD_TELEMETRY_TESTS")
+    add_defines(
+        "NDEBUG",
+        "NOMINMAX",
+        "WIN32_LEAN_AND_MEAN",
+        "SPDLOG_COMPILED_LIB",
+        "SPDLOG_USE_STD_FORMAT",
+        "COMMONLIB_OPTION_TOML",
+        "AD_TELEMETRY_TESTS"
+    )
 
     -- add libraries
     add_linkdirs(xmake_library_dir)
-    add_links("deflatestatic", "Psapi")
+    add_links("deflatestatic", "commonlib-shared", "Psapi")
+    add_syslinks(
+        "Advapi32",
+        "Bcrypt",
+        "d3d11",
+        "d3dcompiler",
+        "Dbghelp",
+        "dxgi",
+        "Ole32",
+        "Shell32",
+        "User32",
+        "version",
+        "ws2_32"
+    )
+    add_ldflags("/LTCG", { force = true })
 end)
 
 target(plugin_name, function()

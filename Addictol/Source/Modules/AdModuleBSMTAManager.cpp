@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesBSMTAManager{ "Patches"sv, "bBSMTAManager"sv, true };
 
 	namespace bsMTAManagerDetail
 	{

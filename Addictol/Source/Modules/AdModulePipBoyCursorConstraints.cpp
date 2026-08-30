@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesPipBoyCursorConstraints{ "Fixes"sv, "bPipBoyCursorConstraints"sv, true };
 
 	namespace pipBoyCursorConstraintsDetail
 	{

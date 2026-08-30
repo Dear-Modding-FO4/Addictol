@@ -8,7 +8,6 @@ namespace Addictol
 	constexpr inline static auto DEFAULT_MAXSTDIO = 512;
 	constexpr inline static auto MAX_MAXSTDIO = 8 * 1024;
 
-	static REX::TOML::I32<> nFixesMaxStdIO{ "Fixes"sv, "nMaxStdIO"sv, RESET_MAXSTDIO };
 
 	ModuleMaxStdIO::ModuleMaxStdIO() :
 		Module("MaxStdIO")

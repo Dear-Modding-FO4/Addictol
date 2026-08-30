@@ -1,5 +1,13 @@
 [
   {
+    "name": "config validation rejects unregistered keys",
+    "target": "Addictol/Source/Core/AdConfigValidation.cpp",
+    "find": "return SettingRegistry::GetSingleton().Find(a_section, a_key) != nullptr;",
+    "replace": "return true;",
+    "check": "config validation follows the setting registry",
+    "message": "validation accepted an unknown key"
+  },
+  {
     "name": "DearModdingUI navigation filters overlay pages",
     "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
     "find": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_SETTINGS)\r\n\t\t\t\t\torderedPages.push_back(&page);",

@@ -4,7 +4,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesLoadScreen{ "Patches"sv, "bLoadScreen"sv, true };
 
 	static RE::BSGraphics::RendererData* g_RendererData{ nullptr };
 	static void DrawUILoadScreen(uint32_t a_unk) noexcept;

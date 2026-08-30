@@ -1,4 +1,5 @@
 #include <Core/AdLogControl.h>
+#include <Core/Settings/AdSettings.h>
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/sink.h>
@@ -18,8 +19,7 @@ namespace Addictol::LogControl
 	using namespace std::literals;
 
 #ifdef COMMONLIB_OPTION_TOML
-	static REX::TOML::Str<> sAdditionalLogLevel{ "Additional"sv, "sLogLevel"sv, "info" };
-	static REX::TOML::Str<> sAdditionalLogFlushLevel{ "Additional"sv, "sLogFlushLevel"sv, "info" };
+
 #endif
 
 	namespace

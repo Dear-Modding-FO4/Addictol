@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesWorkbenchSwap{ "Fixes"sv, "bWorkbenchSwap"sv, true };
 
 	namespace workbenchSwapDetail
 	{

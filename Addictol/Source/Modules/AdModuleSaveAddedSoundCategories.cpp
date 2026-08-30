@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesSaveAddedSoundCategories{ "Patches"sv, "bSaveAddedSoundCategories"sv, true };
 
 	namespace saveAddedSoundCategoriesDetail
 	{

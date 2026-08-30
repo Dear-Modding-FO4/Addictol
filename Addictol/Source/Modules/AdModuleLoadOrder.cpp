@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesLoadOrder{ "Fixes"sv, "bLoadOrder"sv, true };
 
 	namespace loadOrderDetail
 	{

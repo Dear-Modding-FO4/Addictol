@@ -66,11 +66,6 @@ namespace Addictol
 {
 	static_assert(offsetof(RE::TESFile, filename) == LoadTiming::kTESFileNameOffset);
 
-	static REX::TOML::Bool<> bTelemetryFormLoadTiming{
-		"Telemetry"sv,
-		"bFormLoadTiming"sv,
-		false
-	};
 
 	ModuleFormLoadTiming::ModuleFormLoadTiming() :
 		Module("Form Load Timing", &bTelemetryFormLoadTiming),

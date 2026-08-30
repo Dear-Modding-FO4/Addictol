@@ -17,7 +17,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bCosaveIO{ "Fixes"sv, "bCosaveIO"sv, true };
 
 	namespace cosaveIODetail
 	{

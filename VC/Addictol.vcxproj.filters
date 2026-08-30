@@ -37,6 +37,24 @@
     <ClCompile Include="..\Addictol\Source\Core\AdConfigValidation.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdAdditionalSettings.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdFixSettings.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdPatchSettings.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSetting.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdTelemetrySettings.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdWarningSettings.cpp">
+      <Filter>Source\Core\Settings</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
@@ -426,6 +444,12 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdConfigValidation.h">
       <Filter>Include\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSetting.h">
+      <Filter>Include\Core\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettings.h">
+      <Filter>Include\Core\Settings</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h">
       <Filter>Include\Core</Filter>
@@ -869,6 +893,9 @@
     <Filter Include="Source\Core">
       <UniqueIdentifier>{36abdbfa-cc74-4846-baa3-5ae01bc504be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Core\Settings">
+      <UniqueIdentifier>{c93c9cc6-7e5f-4954-a79e-a5cdd40e6ff8}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{62cf36df-9933-4419-a1b8-f8fe3b3e1486}</UniqueIdentifier>
     </Filter>
@@ -886,6 +913,9 @@
     </Filter>
     <Filter Include="Include\Core">
       <UniqueIdentifier>{1f45f9d0-a9ca-474a-8859-9e8b8706fcd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Core\Settings">
+      <UniqueIdentifier>{4b4c71d8-6bcc-468b-846f-c6d53eb97c50}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Memory">
       <UniqueIdentifier>{39135848-b106-436e-bd7f-bb2031e743f5}</UniqueIdentifier>

@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesDofFix{ "Fixes"sv, "bDofFix"sv, true };
 
 	// Worker takes 5 args (5th at [rsp+0x28]); forward all five or the original loads garbage.
 	// OG arg2 is the effect pointer; NG/AE arg2 is an index into effectList._data (+0x18).

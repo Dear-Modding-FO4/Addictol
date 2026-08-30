@@ -11,8 +11,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesLibDeflate{ "Patches"sv, "bLibDeflate"sv, true };
-	static REX::TOML::Str<> sAdditionalZlibBackend{ "Additional"sv, "sZlibBackend"sv, "libdeflate" };
+
 
 	namespace zlibDetail
 	{

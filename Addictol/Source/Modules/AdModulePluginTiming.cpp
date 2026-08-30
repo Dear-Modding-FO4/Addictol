@@ -21,11 +21,6 @@ namespace
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bTelemetryPluginTiming{
-		"Telemetry"sv,
-		"bPluginTiming"sv,
-		false
-	};
 
 	ModulePluginTiming::ModulePluginTiming() :
 		Module("Plugin Timing", &bTelemetryPluginTiming),

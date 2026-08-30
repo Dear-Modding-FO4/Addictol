@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bClimateLoad{ "Fixes"sv, "bClimateLoad"sv, true };
 
 	struct Sky
 	{

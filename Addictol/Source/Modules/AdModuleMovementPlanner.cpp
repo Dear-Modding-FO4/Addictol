@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMovementPlanner{ "Fixes"sv, "bMovementPlanner"sv, true };
 
 	namespace movementPlannerDetail
 	{

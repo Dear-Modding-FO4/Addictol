@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesAchievements{ "Patches"sv, "bAchievements"sv, true };
 
 	namespace achievementsDetail
 	{

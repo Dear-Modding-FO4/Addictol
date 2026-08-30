@@ -158,19 +158,19 @@ Only do that deliberately, and only if installing twice is harmless.
 
 ## Adding a module
 
-A new module touches seven places. The last two produce no compiler error, which is why they are the
-ones people forget.
+A configurable module touches seven places. The last two produce no compiler error, which is why they
+are the ones people forget.
 
 1. `Addictol/Include/Modules/AdModule<Name>.h`, the class declaration.
-2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the TOML option and the implementation.
+2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the implementation.
 3. The constructor, inside that `.cpp`, wiring name, option, listener stages and Papyrus flag.
 4. `Addictol/Source/Core/AdRegisterModules.cpp`: the `#include`, the `static auto sModule<Name> =
    std::make_shared<...>()`, and the `modules.Register(...)` call.
 5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
-6. `.Build/F4SE/Plugins/Addictol.toml`, the key with a user facing comment under the right section.
-   Skip it and the option is undiscoverable and cannot be overridden without a warning.
-7. `Addictol/Source/Core/AdConfigValidation.cpp`, adding the key to `s_knownKeys`, or the plugin logs a
-   spurious `Config: unknown key` warning at every launch.
+6. `Addictol/Include/Core/Settings/AdSettings.h` and the matching section source under
+   `Addictol/Source/Core/Settings`, declaring the setting and its metadata.
+7. `.Build/F4SE/Plugins/Addictol.toml`, the key with the same user-facing description under the right
+   section. Registry tests enforce that the shipped file and registered keys match in both directions.
 
 ### Worked example
 
@@ -184,8 +184,6 @@ The header is boilerplate: a constructor and the four `DoX` overrides, each `[[n
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
-
 	ModuleUnalignedLoad::ModuleUnalignedLoad() :
 		Module("Unaligned Load", &bFixesUnalignedLoad)
 	{}
@@ -217,6 +215,16 @@ static auto sModuleUnalignedLoad			= std::make_shared<Addictol::ModuleUnalignedL
 	modules.Register(sModuleUnalignedLoad);
 ```
 
+```cpp
+BoolSetting bFixesUnalignedLoad{
+	"Fixes"sv,
+	"bUnalignedLoad"sv,
+	true,
+	"Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory."sv,
+	SettingApplyTiming::kNextLaunch
+};
+```
+
 ```toml
 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
 bUnalignedLoad = true
@@ -227,17 +235,24 @@ Note how the module scopes its patch: one address resolved for all runtimes, plu
 
 ## Configuration
 
-Options are declared next to the code that uses them, as file scope statics taking section, key and
-default:
+Options are declared under `Addictol/Source/Core/Settings`, split by TOML section. Each declaration
+provides its section, key, default, shipped description, apply timing, and any enforced numeric range:
 
 ```cpp
-static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
-static REX::TOML::I32<>  nAdditionalSleepTimer{ "Additional"sv, "nSleepTimer"sv, 125 };
-static REX::TOML::U32<>  uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 64ul };
+I32Setting nAdditionalSleepTimer{
+	"Additional"sv,
+	"nSleepTimer"sv,
+	125,
+	"Sampling interval in milliseconds for Escape Freeze (needs bEscapeFreeze)."sv,
+	SettingApplyTiming::kNextLaunch,
+	SettingNumericRange{ 1.0, 60000.0 }
+};
 ```
 
-`Bool<>`, `I32<>`, `U32<>` and `F64<>` are the types this codebase uses; CommonLibF4 defines more.
-There is no type named `Float`, so floating point options use `F64<>`.
+Use `BoolSetting`, `F32Setting`, `I32Setting`, `U32Setting`, or `StrSetting`. They derive from the
+matching REX TOML setting, so existing typed accessors and module-gate pointer conversions still work.
+Use `kImmediate` only when writes affect already-installed runtime behavior; otherwise use
+`kNextLaunch`.
 
 | Section | For |
 | --- | --- |
@@ -257,7 +272,7 @@ language rather than implementation terms:
 uScaleformPageSize = 64
 ```
 
-Declare the default in the C++ option and ship the same value in the TOML, and keep the two in sync.
+Declare the default in the C++ setting and ship the same value in the TOML, and keep the two in sync.
 The shipped TOML value wins at load time, so a stale C++ default is invisible to users but misleads
 the next person reading the source. Users override settings in their own `AddictolCustom.toml`;
 never expect them to edit the shipped file.

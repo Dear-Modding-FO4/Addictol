@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesViewmodelShading{ "Fixes"sv, "bViewmodelShading"sv, true };
 
 	using TMove1stPersonToOrigin = void(__fastcall*)();
 	static TMove1stPersonToOrigin OriginalMove1stPersonToOrigin = nullptr;

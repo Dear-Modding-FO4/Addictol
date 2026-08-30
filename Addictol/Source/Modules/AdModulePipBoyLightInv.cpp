@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesPipBoyLightInv{ "Fixes"sv, "bPipBoyLightInv"sv, true };
 	
 	namespace pipBoyDetail
 	{

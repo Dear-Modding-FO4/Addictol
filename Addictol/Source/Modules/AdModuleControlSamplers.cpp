@@ -27,7 +27,6 @@ namespace Addictol
 	RE::Setting g_MaxAnisotropySetting{ MAXANISTROPY_OPTION_NAME, 16 };
 	std::wstring g_PrefIniFileName;
 
-	static REX::TOML::Bool<> bAdditionalIgnorePreInstallBias{ "Additional"sv, "bIgnorePreInstallBias"sv, false };
 
 	using namespace Microsoft::WRL;
 

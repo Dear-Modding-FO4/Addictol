@@ -14,12 +14,9 @@ namespace Addictol
 {
 	namespace
 	{
-		REX::TOML::Bool<> bTelemetryEnabled{ "Telemetry"sv, "bEnabled"sv, false };
-		REX::TOML::U32<> uTelemetrySampleMs{ "Telemetry"sv, "uSampleMs"sv, 1000 };
-		REX::TOML::U32<> uTelemetryFrameRecordMs{
-			"Telemetry"sv, "uFrameRecordMs"sv, 50
-		};
-		REX::TOML::Bool<> bTelemetryCsv{ "Telemetry"sv, "bCsv"sv, false };
+
+
+
 
 		std::atomic<FrameMetricSource*> s_frameSource{ nullptr };
 		const ModuleManager* s_moduleManager{ nullptr };

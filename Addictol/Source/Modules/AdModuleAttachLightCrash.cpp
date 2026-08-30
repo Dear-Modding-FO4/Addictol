@@ -23,7 +23,6 @@ namespace RE
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesAttachLightCrash{ "Fixes"sv, "bAttachLightCrash"sv, true };
 
 	namespace attachLightCrashDetail
 	{

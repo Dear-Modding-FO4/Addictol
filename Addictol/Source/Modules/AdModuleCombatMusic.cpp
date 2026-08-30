@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesCombatMusic{ "Fixes"sv, "bCombatMusic"sv, true };
 
 	namespace combatMusicDetail
 	{

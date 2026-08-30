@@ -10,7 +10,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesActorCauseSaveBloat{ "Fixes"sv, "bActorCauseSaveBloat"sv, true };
 
 	namespace actorCauseSaveBloatDetail
 	{

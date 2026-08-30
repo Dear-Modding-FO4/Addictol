@@ -22,8 +22,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Str<> sAdditionalMenuToggleKey{ "Additional"sv, "sMenuToggleKey"sv, "F11" };
-	static REX::TOML::U32<> uAdditionalMenuRefreshMs{ "Additional"sv, "uMenuRefreshMs"sv, 250 };
+
 
 	namespace menuDetail
 	{

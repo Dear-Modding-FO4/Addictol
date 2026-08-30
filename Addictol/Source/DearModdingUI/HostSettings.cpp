@@ -12,29 +12,12 @@ namespace Addictol::DearModdingUI::HostSettings
 
 	namespace
 	{
-		REX::TOML::Bool<> bAdditionalMenuMonochromeIcons{
-			"Additional"sv, "bMenuMonochromeIcons"sv, false
-		};
-		REX::TOML::Str<> sAdditionalMenuAccentColor{
-			"Additional"sv, "sMenuAccentColor"sv, "#42FA60"
-		};
-		REX::TOML::F32<> fAdditionalMenuWindowOpacity{
-			"Additional"sv, "fMenuWindowOpacity"sv, kDefaultWindowBackgroundOpacity
-		};
-		REX::TOML::Bool<> bAdditionalMenuBackgroundBlur{
-			"Additional"sv, "bMenuBackgroundBlur"sv, true
-		};
-		REX::TOML::F32<> fAdditionalMenuBackgroundBlurStrength{
-			"Additional"sv, "fMenuBackgroundBlurStrength"sv,
-			kDefaultBackgroundBlurStrength
-		};
-		REX::TOML::F32<> fAdditionalMenuUiScale{
-			"Additional"sv, "fMenuUiScale"sv, Theme::kDefaultUserScale
-		};
-		REX::TOML::Str<> sAdditionalMenuBodyFontFamily{
-			"Additional"sv, "sMenuBodyFontFamily"sv,
-			std::string{ kDefaultBodyFontFamily }
-		};
+
+
+
+
+
+
 		std::atomic<bool> g_panelOpen{ false };
 		std::atomic<uint64_t> g_panelRevision{ 0 };
 		std::mutex g_previewMutex;

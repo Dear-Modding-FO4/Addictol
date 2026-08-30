@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesCellInit{ "Fixes"sv, "bCellInit"sv, true };
 
 	namespace cellInitDetail
 	{

@@ -18,8 +18,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesFacegen{ "Patches"sv, "bFacegen"sv, true };
-	static REX::TOML::Bool<> bAdditionalDbgFacegenOutput{ "Additional"sv, "bDbgFacegenOutput"sv, false };
+
 
 	static bool __stdcall CanUsePreprocessingHead(const RE::TESNPC* NPC) noexcept;
 

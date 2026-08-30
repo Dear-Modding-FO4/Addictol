@@ -23,9 +23,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesMemoryManager{ "Patches"sv, "bMemoryManager"sv, true };
-	static REX::TOML::Bool<> bAdditionalUseNewRedistributable{ "Additional"sv, "bUseNewRedistributable"sv, true };
-	static REX::TOML::Str<> sAdditionalAllocator{ "Additional"sv, "sAllocator"sv, "voltek" };
+
+
 
 	class AutoScrapHeap
 	{

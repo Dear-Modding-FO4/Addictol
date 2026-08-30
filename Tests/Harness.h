@@ -151,6 +151,7 @@ namespace vmm_tests
 	void run_dear_modding_ui_checks(Runner& runner);
 	void run_log_control_checks(Runner& runner);
 	void run_menu_checks(Runner& runner);
+	void run_setting_registry_checks(Runner& runner);
 	void run_telemetry_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);

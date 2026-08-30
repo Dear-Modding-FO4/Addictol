@@ -12,6 +12,12 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Core\AdConfigValidation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdAdditionalSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdFixSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdPatchSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSetting.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdTelemetrySettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdWarningSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryRuntime.cpp" />
@@ -142,6 +148,8 @@
     <ClInclude Include="..\Addictol\Include\Core\AdModuleDefender.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPCH.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdConfigValidation.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSetting.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettings.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdLoadTiming.h" />

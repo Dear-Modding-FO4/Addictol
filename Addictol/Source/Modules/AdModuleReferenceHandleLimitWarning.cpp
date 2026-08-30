@@ -16,7 +16,6 @@ namespace Addictol
 	// this can be set to anything, i just set it to 90% for right now
 	constexpr auto WARNING_MIN_RATIO = 0.90f;
 
-	static REX::TOML::Bool<> bWarningsReferenceHandleLimit{ "Warnings"sv, "bReferenceHandleLimit"sv, true };
 	static std::atomic_bool againReport_OutOfEntries_ReferenceHandleLimit{ false };
 
 	class HandleManager :

@@ -13,8 +13,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesSafeExit{ "Fixes"sv, "bSafeExit"sv, true };
-	static REX::TOML::I32<>  nAdditionalQuitGameDelayMs{ "Additional"sv, "nQuitGameDelayMs"sv, 2000 };
+
 
 	inline static void Shutdown() noexcept
 	{

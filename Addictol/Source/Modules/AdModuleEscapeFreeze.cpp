@@ -21,9 +21,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesEscapeFreeze{ "Fixes"sv, "bEscapeFreeze"sv, true };
-	static REX::TOML::I32<> nAdditionalSleepTimer{ "Additional"sv, "nSleepTimer"sv, 125 };
-	static REX::TOML::I32<> nAdditionalMaxLockCount{ "Additional"sv, "nMaxLockCount"sv, 8 };
+
+
 
 	namespace escapeFreezeDetail
 	{

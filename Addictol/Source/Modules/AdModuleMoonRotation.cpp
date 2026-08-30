@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMoonRotation{ "Fixes"sv, "bMoonRotation"sv, true };
 
 	ModuleMoonRotation::ModuleMoonRotation() :
 		Module("Moon Rotation", &bFixesMoonRotation)

@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesInitTints{ "Fixes"sv, "bInitTints"sv, true };
 
 	ModuleInitTints::ModuleInitTints() :
 		Module("Init Tints", &bFixesInitTints)

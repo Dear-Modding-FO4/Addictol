@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesStolenPowerArmorOwnership{ "Fixes"sv, "bStolenPowerArmorOwnership"sv, true };
 
 	namespace stolenPowerArmorOwnershipDetail
 	{

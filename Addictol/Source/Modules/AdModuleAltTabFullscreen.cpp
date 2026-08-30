@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesAltTabFullscreen{"Fixes"sv, "bAltTabFullscreen"sv, true};
 
 	using TD3D11CreateDeviceAndSwapChain = HRESULT(WINAPI *)(
 		IDXGIAdapter *, D3D_DRIVER_TYPE, HMODULE, UINT,

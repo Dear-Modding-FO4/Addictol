@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesAnimSignedCrash{ "Fixes"sv, "bAnimSignedCrash"sv, true };
 
 	ModuleAnimSignedCrash::ModuleAnimSignedCrash() :
 		Module("Anim Signed Crash", &bFixesAnimSignedCrash)

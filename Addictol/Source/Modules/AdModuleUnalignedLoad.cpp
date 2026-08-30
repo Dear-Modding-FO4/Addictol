@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
 
 	ModuleUnalignedLoad::ModuleUnalignedLoad() :
 		Module("Unaligned Load", &bFixesUnalignedLoad)

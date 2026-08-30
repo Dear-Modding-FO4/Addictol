@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesDpiScaling{ "Patches"sv, "bDpiScaling"sv, true };
 
 	namespace detail
 	{

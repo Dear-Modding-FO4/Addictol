@@ -19,7 +19,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesCraftingMenuFix{ "Fixes"sv, "bCraftingMenuFix"sv, true };
 
 	namespace craftingMenuFixDetail
 	{

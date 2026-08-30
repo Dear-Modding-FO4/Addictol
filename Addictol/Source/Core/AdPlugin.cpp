@@ -27,7 +27,6 @@ extern void AdRegisterPreloadModules();
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bAdditionalIgnoreCompatibilityChecks{ "Additional"sv, "bIgnoreCompatibilityChecks"sv, false };
 
 	static std::vector<const RE::TESFile*> AnalyzeGameCollectionCriticalCompatibility() noexcept
 	{

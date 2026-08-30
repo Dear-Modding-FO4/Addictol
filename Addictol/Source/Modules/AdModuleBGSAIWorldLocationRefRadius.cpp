@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesBGSAIWorldLocationRefRadius{ "Fixes"sv, "bBGSAIWorldLocationRefRadius"sv, true };
 
 	namespace bgsAIWorldLocationRefRadiusDetail
 	{

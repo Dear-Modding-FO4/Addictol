@@ -22,7 +22,6 @@ namespace RE::PowerUtils
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesPowerGridScrap{ "Fixes"sv, "bPowerGridScrap"sv, true };
 
 	using TDeleteWorkshopItem = void(__fastcall*)(RE::TESObjectREFR*);
 	static REL::Relocation<TDeleteWorkshopItem> g_DeleteWorkshopItem{ REL::ID{ 853152, 2195121 } };

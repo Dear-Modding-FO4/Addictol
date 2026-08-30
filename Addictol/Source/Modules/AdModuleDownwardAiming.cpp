@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesDownwardAiming{ "Fixes"sv, "bDownwardAiming"sv, true };
 
 	namespace detail
 	{

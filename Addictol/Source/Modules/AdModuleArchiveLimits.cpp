@@ -16,7 +16,6 @@
 namespace Addictol
 {
 	// Off by default: 1.11.240 reworked the archive index layout these patches hardcode.
-	static REX::TOML::Bool<> bPatchesArchiveLimits{ "Patches"sv, "bArchiveLimits"sv, false };
 
 	constexpr static auto MAX_SIZE = 64ul * 1024ul;
 

@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesWeaponDebrisCrash{ "Fixes"sv, "bWeaponDebrisCrash"sv, true };
 
 	ModuleWeaponDebrisCrash::ModuleWeaponDebrisCrash() :
 		Module("Weapon Debris Crash", &bFixesWeaponDebrisCrash)
