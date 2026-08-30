@@ -316,15 +316,16 @@ namespace Addictol::DearModdingUI
 					style.WindowPadding.x - extent,
 				a_rowTop
 			};
-			const auto bounds = TitleBarButtonRect(origin, size);
-			bool hovered = false;
-			bool held = false;
-			const auto pressed = ImGui::ButtonBehavior(
-				bounds,
-				window->GetID("##DearModdingUI.HostSettingsButton"),
-				&hovered,
-				&held,
-				ImGuiButtonFlags_NoNavFocus);
+
+			const auto restore = ImGui::GetCursorScreenPos();
+			ImGui::SetCursorScreenPos(origin);
+			const auto pressed = ImGui::InvisibleButton(
+				"##DearModdingUI.HostSettingsButton", { extent, extent });
+			const auto hovered = ImGui::IsItemHovered();
+			const auto held = ImGui::IsItemActive();
+			const ImRect bounds{
+				origin, { origin.x + extent, origin.y + extent }
+			};
 
 			(void)DrawRoundedButtonHighlight(
 				bounds.Min, bounds.Max, hovered, held, window->DrawList);
@@ -338,6 +339,7 @@ namespace Addictol::DearModdingUI
 				nullptr);
 			if (hovered)
 				ImGui::SetTooltip("Interface settings");
+			ImGui::SetCursorScreenPos(restore);
 			return pressed;
 		}
 
