@@ -4,6 +4,7 @@
 #include <DearModdingUI/IconGlyphs.h>
 #include <DearModdingUI/Shell.h>
 #include <DearModdingUI/Theme.h>
+#include <Menu/AdMenu.h>
 
 #include <REX/REX.h>
 
@@ -37,7 +38,6 @@ namespace Addictol::Menu
 			true
 		};
 		bool g_drawnThisFrame{ false };
-		std::string g_error;
 
 		[[nodiscard]] size_t CategoryIndex(
 			SettingDisplayCategory a_category) noexcept
@@ -70,7 +70,6 @@ namespace Addictol::Menu
 		{
 			if (g_draft.active)
 				LeaveSettingsDraft(g_draft);
-			g_error.clear();
 		}
 
 		[[nodiscard]] bool DrawControl(SettingDraftEntry& a_entry)
@@ -400,11 +399,15 @@ namespace Addictol::Menu
 				if (result.success)
 				{
 					CompleteSettingsDraftApply(g_draft, commit);
-					g_error.clear();
+					Menu::ReportStatus(
+						DMUI_STATUS_SEVERITY_SUCCESS,
+						"Settings saved.");
 				}
 				else
 				{
-					g_error = result.error;
+					Menu::ReportStatus(
+						DMUI_STATUS_SEVERITY_ERROR,
+						result.error.c_str());
 					REX::WARN(
 						"Settings: AddictolCustom.toml could not be saved: {}"sv,
 						result.error);
@@ -412,10 +415,7 @@ namespace Addictol::Menu
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Revert", { revertWidth, 0.0f }))
-			{
 				RevertSettingsDraft(g_draft);
-				g_error.clear();
-			}
 			ImGui::EndDisabled();
 			ImGui::SameLine();
 			if (ImGui::Button("Reset all", { resetWidth, 0.0f }))
@@ -498,13 +498,6 @@ namespace Addictol::Menu
 			"Only settings labeled \"Applies now\" update immediately.");
 		ImGui::TextDisabled(
 			"Menu appearance is owned by the gear panel's Interface Settings.");
-		if (!g_error.empty())
-		{
-			ImGui::TextColored(
-				DearModdingUI::Theme::kStatusPaletteDefaults.error,
-				"Could not save AddictolCustom.toml: %s",
-				g_error.c_str());
-		}
 		ImGui::Spacing();
 
 		for (const auto category : kSettingDisplayCategoryOrder)

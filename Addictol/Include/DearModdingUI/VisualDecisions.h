@@ -144,6 +144,76 @@ namespace Addictol::DearModdingUI
 		};
 	}
 
+	struct FooterStatusLayout
+	{
+		float metadataMinX{ 0.0f };
+		float metadataMaxX{ 0.0f };
+		float statusMinX{ 0.0f };
+		float statusMaxX{ 0.0f };
+		float settingsMinX{ 0.0f };
+		float settingsMaxX{ 0.0f };
+		float rowHeight{ 0.0f };
+		float footerHeight{ 0.0f };
+
+		constexpr bool operator==(const FooterStatusLayout&) const noexcept = default;
+	};
+
+	[[nodiscard]] constexpr float ReservedFooterHeight(
+		float a_rowHeight,
+		float a_verticalSpacing,
+		float a_separatorThickness) noexcept
+	{
+		const auto rowHeight = a_rowHeight > 0.0f ? a_rowHeight : 0.0f;
+		const auto verticalSpacing = a_verticalSpacing > 0.0f ?
+			a_verticalSpacing :
+			0.0f;
+		const auto separator = a_separatorThickness > 0.0f ?
+			a_separatorThickness :
+			0.0f;
+		return rowHeight + verticalSpacing * 4.0f + separator;
+	}
+
+	[[nodiscard]] constexpr FooterStatusLayout ResolveFooterStatusLayout(
+		float a_contentMinX,
+		float a_contentMaxX,
+		float a_settingsWidth,
+		float a_desiredStatusWidth,
+		float a_horizontalSpacing,
+		float a_rowHeight,
+		float a_verticalSpacing,
+		float a_separatorThickness,
+		[[maybe_unused]] bool a_hasStatus) noexcept
+	{
+		const auto trailing = ResolveTrailingControlLayout(
+			a_contentMinX,
+			a_contentMaxX,
+			a_settingsWidth,
+			a_horizontalSpacing);
+		const auto available = trailing.adjacentMaxX - a_contentMinX;
+		const auto desired = a_desiredStatusWidth > 0.0f ?
+			a_desiredStatusWidth :
+			0.0f;
+		const auto statusWidth = (std::min)(desired, available * 0.5f);
+		const auto statusMin = trailing.adjacentMaxX - statusWidth;
+		const auto metadataMax = statusWidth > 0.0f ?
+			(std::max)(a_contentMinX, statusMin - a_horizontalSpacing) :
+			trailing.adjacentMaxX;
+		const auto rowHeight = a_rowHeight > 0.0f ? a_rowHeight : 0.0f;
+		return {
+			a_contentMinX,
+			metadataMax,
+			statusMin,
+			trailing.adjacentMaxX,
+			trailing.controlMinX,
+			trailing.controlMaxX,
+			rowHeight,
+			ReservedFooterHeight(
+				rowHeight,
+				a_verticalSpacing,
+				a_separatorThickness)
+		};
+	}
+
 	[[nodiscard]] constexpr float ActionButtonWidth(
 		bool a_hasIcon,
 		float a_textWidth,

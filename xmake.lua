@@ -308,6 +308,7 @@ target("vmm-tests", function()
     add_files("Addictol/Source/DearModdingUI/FontCatalog.cpp")
     add_files("Addictol/Source/DearModdingUI/Navigation.cpp")
     add_files("Addictol/Source/DearModdingUI/Registry.cpp")
+    add_files("Addictol/Source/DearModdingUI/Status.cpp")
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
 
     -- add include directories

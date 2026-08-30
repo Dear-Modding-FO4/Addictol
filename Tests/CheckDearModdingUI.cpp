@@ -1,4 +1,5 @@
 #include "../Addictol/Include/DearModdingUI/Registry.h"
+#include "../Addictol/Include/DearModdingUI/Status.h"
 #include "../Addictol/Include/DearModdingUI/CarrierMenu.h"
 #include "../Addictol/Include/DearModdingUI/FontCatalog.h"
 #include "../Addictol/Include/DearModdingUI/HostSettings.h"
@@ -204,6 +205,237 @@ namespace vmm_tests
 			require(!Registry::SupportsVersion(DMUI_MAKE_VERSION(1, 1)), "future minor was accepted");
 			require(!Registry::SupportsVersion(DMUI_MAKE_VERSION(2, 0)), "future major was accepted");
 			require(!Registry::SupportsVersion(0), "zero ABI was accepted");
+		});
+
+		runner.test("status severity controls expiry and persistence", [] {
+			const auto start = StatusClock::time_point{};
+			StatusModel model;
+			require(model.Set(
+						StatusOwnerKind::kHost,
+						"Evil Modding",
+						DMUI_STATUS_SEVERITY_INFO,
+						"Working",
+						start) == DMUI_RESULT_OK,
+				"info status was rejected");
+			require(model.Snapshot(
+						start +
+						kTransientStatusLifetime -
+						std::chrono::milliseconds{ 1 }).has_value(),
+				"info status expired early");
+			require(!model.Snapshot(start + kTransientStatusLifetime),
+				"info status did not expire");
+
+			require(model.Set(
+						StatusOwnerKind::kHost,
+						"Evil Modding",
+						DMUI_STATUS_SEVERITY_SUCCESS,
+						"Saved",
+						start) == DMUI_RESULT_OK,
+				"success status was rejected");
+			require(!model.Snapshot(start + kTransientStatusLifetime),
+				"success status did not expire");
+
+			require(model.Set(
+						StatusOwnerKind::kHost,
+						"Evil Modding",
+						DMUI_STATUS_SEVERITY_WARNING,
+						"Warning",
+						start) == DMUI_RESULT_OK,
+				"warning status was rejected");
+			require(model.Snapshot(start + std::chrono::hours{ 24 }).has_value(),
+				"warning status expired");
+
+			require(model.Set(
+						StatusOwnerKind::kHost,
+						"Evil Modding",
+						DMUI_STATUS_SEVERITY_ERROR,
+						"Error",
+						start) == DMUI_RESULT_OK,
+				"error status was rejected");
+			require(model.Snapshot(start + std::chrono::hours{ 24 }).has_value(),
+				"error status expired");
+		});
+
+		runner.test("newest status supersedes older status regardless of severity", [] {
+			const auto start = StatusClock::time_point{};
+			StatusModel model;
+			require(model.Set(
+						StatusOwnerKind::kClient,
+						"First",
+						DMUI_STATUS_SEVERITY_ERROR,
+						"Older error",
+						start) == DMUI_RESULT_OK,
+				"older status was rejected");
+			const auto older = model.Snapshot(start);
+			require(older.has_value(), "older status was lost");
+			require(model.Set(
+						StatusOwnerKind::kClient,
+						"Second",
+						DMUI_STATUS_SEVERITY_INFO,
+						"Newer info",
+						start + std::chrono::milliseconds{ 1 }) == DMUI_RESULT_OK,
+				"newer status was rejected");
+			const auto newer = model.Snapshot(start + std::chrono::milliseconds{ 1 });
+			require(
+					newer &&
+						newer->generation > older->generation &&
+						newer->owner == "Second" &&
+						newer->message == "Newer info",
+					"newest status did not supersede an older persistent status");
+		});
+
+		runner.test("persistent status can be dismissed without clearing a replacement", [] {
+			const auto start = StatusClock::time_point{};
+			StatusModel model;
+			require(model.Set(
+						StatusOwnerKind::kClient,
+						"Client",
+						DMUI_STATUS_SEVERITY_ERROR,
+						"Persistent",
+						start) == DMUI_RESULT_OK,
+				"persistent status was rejected");
+			const auto persistent = model.Snapshot(start);
+			require(persistent && model.Dismiss(persistent->generation),
+				"persistent status was not dismissed");
+			require(!model.Snapshot(start), "dismissed status remained visible");
+
+			require(model.Set(
+						StatusOwnerKind::kClient,
+						"Client",
+						DMUI_STATUS_SEVERITY_WARNING,
+						"Older",
+						start) == DMUI_RESULT_OK,
+				"older persistent status was rejected");
+			const auto older = model.Snapshot(start);
+			require(model.Set(
+						StatusOwnerKind::kClient,
+						"Client",
+						DMUI_STATUS_SEVERITY_ERROR,
+						"Replacement",
+						start) == DMUI_RESULT_OK,
+				"replacement status was rejected");
+			require(older && !model.Dismiss(older->generation),
+				"stale dismissal cleared a replacement");
+			require(model.Snapshot(start)->message == "Replacement",
+				"replacement was lost after stale dismissal");
+		});
+
+		runner.test("status attribution distinguishes host and client owners", [] {
+			const auto start = StatusClock::time_point{};
+			StatusModel model;
+			require(model.Set(
+						StatusOwnerKind::kHost,
+						"Evil Modding",
+						DMUI_STATUS_SEVERITY_SUCCESS,
+						"Saved",
+						start) == DMUI_RESULT_OK,
+				"host status was rejected");
+			const auto host = model.Snapshot(start);
+			require(
+					host &&
+						host->ownerKind == StatusOwnerKind::kHost &&
+						host->attributedText == "Evil Modding: Saved",
+					"host status attribution changed");
+			require(model.Set(
+						StatusOwnerKind::kClient,
+						"Community Shaders",
+						DMUI_STATUS_SEVERITY_ERROR,
+						"Failed",
+						start) == DMUI_RESULT_OK,
+				"client status was rejected");
+			const auto client = model.Snapshot(start);
+			require(
+					client &&
+						client->ownerKind == StatusOwnerKind::kClient &&
+						client->attributedText == "Community Shaders: Failed",
+					"client status attribution changed");
+		});
+
+		runner.test("status truncation preserves full tooltip text", [] {
+			const auto measure = [](std::string_view a_text) {
+				return static_cast<float>(a_text.size());
+			};
+			const auto full = std::string{ "Community Shaders: A detailed failure message" };
+			const auto truncated = FitStatusText(full, 24.0f, measure);
+			require(
+					truncated.truncated &&
+						truncated.full == full &&
+						truncated.visible != full &&
+						truncated.visible.ends_with("\xE2\x80\xA6") &&
+						measure(truncated.visible) <= 24.0f,
+					"truncated status lost its full tooltip text");
+			const auto fitting = FitStatusText(full, measure(full), measure);
+			require(
+					!fitting.truncated &&
+						fitting.visible == full &&
+						fitting.full == full,
+					"fitting status was truncated");
+		});
+
+		runner.test("status validation rejects invalid clients and messages", [] {
+			const auto fingerprint = Fingerprint();
+			Registry registry{ fingerprint };
+			CallbackState state;
+			const auto client = AddClient(
+				registry, "status.mod", "Status Mod", fingerprint, state);
+			std::string owner;
+			require(
+					ValidateStatusRequest(
+						registry.CopyClientDisplayName(9999, owner),
+						DMUI_STATUS_SEVERITY_INFO,
+						"Message") == DMUI_RESULT_CLIENT_NOT_FOUND,
+					"unaccepted status client was not rejected");
+			const auto accepted = registry.CopyClientDisplayName(client, owner);
+			require(
+					accepted == DMUI_RESULT_OK && owner == "Status Mod",
+					"accepted status owner was not copied");
+			require(
+					ValidateStatusRequest(
+						accepted,
+						DMUI_STATUS_SEVERITY_INFO,
+						nullptr) == DMUI_RESULT_INVALID_ARGUMENT,
+					"null status message was not rejected");
+			require(
+					ValidateStatusRequest(
+						accepted,
+						DMUI_STATUS_SEVERITY_INFO,
+						"") == DMUI_RESULT_INVALID_ARGUMENT,
+					"empty status message was not rejected");
+			require(
+					ValidateStatusRequest(
+						accepted,
+						99,
+						"Message") == DMUI_RESULT_INVALID_ARGUMENT,
+					"unknown status severity was not rejected");
+		});
+
+		runner.test("footer reserves identical status geometry while idle", [] {
+			const auto idle = ResolveFooterStatusLayout(
+				20.0f,
+				1200.0f,
+				28.0f,
+				480.0f,
+				8.0f,
+				32.0f,
+				8.0f,
+				1.0f,
+				false);
+			const auto active = ResolveFooterStatusLayout(
+				20.0f,
+				1200.0f,
+				28.0f,
+				480.0f,
+				8.0f,
+				32.0f,
+				8.0f,
+				1.0f,
+				true);
+			require(idle == active, "status presence changed reserved footer geometry");
+			require(
+					idle.statusMaxX > idle.statusMinX &&
+						idle.rowHeight == 32.0f &&
+						idle.footerHeight == 65.0f,
+					"footer status area was not reserved");
 		});
 
 		runner.test("client descriptors reject null size and callback failures", [] {

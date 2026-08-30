@@ -93,6 +93,13 @@ typedef uint32_t DMUI_PageKind;
 #define DMUI_PAGE_KIND_SETTINGS 1u
 #define DMUI_PAGE_KIND_OVERLAY 2u
 
+typedef uint32_t DMUI_StatusSeverity;
+
+#define DMUI_STATUS_SEVERITY_INFO 0u
+#define DMUI_STATUS_SEVERITY_SUCCESS 1u
+#define DMUI_STATUS_SEVERITY_WARNING 2u
+#define DMUI_STATUS_SEVERITY_ERROR 3u
+
 typedef uint32_t DMUI_ClientCapabilities;
 
 #define DMUI_CLIENT_CAPABILITY_NONE 0u
@@ -255,6 +262,10 @@ typedef DMUI_Result (DMUI_CALL *DMUI_RegisterActionFn)(
 	DMUI_ClientHandle client,
 	const DMUI_ActionDescriptor* descriptor,
 	DMUI_ActionHandle* action) DMUI_NOEXCEPT;
+typedef DMUI_Result (DMUI_CALL *DMUI_SetStatusFn)(
+	DMUI_ClientHandle client,
+	DMUI_StatusSeverity severity,
+	const char* message) DMUI_NOEXCEPT;
 
 typedef struct DMUI_HostAPI
 {
@@ -270,12 +281,15 @@ typedef struct DMUI_HostAPI
 	DMUI_SelectPageFn selectPage;
 	DMUI_AttachSwapChainFn attachSwapChain;
 	DMUI_RegisterActionFn registerAction;
+	DMUI_SetStatusFn setStatus;
 } DMUI_HostAPI;
 
 #define DMUI_HOST_API_ATTACH_SWAP_CHAIN_SIZE \
 	((uint32_t)(offsetof(DMUI_HostAPI, attachSwapChain) + sizeof(DMUI_AttachSwapChainFn)))
 #define DMUI_HOST_API_REGISTER_ACTION_SIZE \
 	((uint32_t)(offsetof(DMUI_HostAPI, registerAction) + sizeof(DMUI_RegisterActionFn)))
+#define DMUI_HOST_API_SET_STATUS_SIZE \
+	((uint32_t)(offsetof(DMUI_HostAPI, setStatus) + sizeof(DMUI_SetStatusFn)))
 
 #if defined(_MSC_VER)
 #pragma pack(pop)

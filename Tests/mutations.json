@@ -454,5 +454,37 @@
     "replace": "if (a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
     "check": "settings reset predicate and control selection follow metadata",
     "message": "fully bounded number did not select a slider"
+  },
+  {
+    "name": "persistent status severities do not expire",
+    "target": "Addictol/Include/DearModdingUI/Status.h",
+    "find": "return a_severity == DMUI_STATUS_SEVERITY_WARNING ||",
+    "replace": "return a_severity == DMUI_STATUS_SEVERITY_WARNING &&",
+    "check": "status severity controls expiry and persistence",
+    "message": "warning status expired"
+  },
+  {
+    "name": "new status replaces the previous message",
+    "target": "Addictol/Source/DearModdingUI/Status.cpp",
+    "find": "m_current = std::move(next);",
+    "replace": "if (!m_current)\r\n\t\t\t\tm_current = std::move(next);",
+    "check": "newest status supersedes older status regardless of severity",
+    "message": "newest status did not supersede an older persistent status"
+  },
+  {
+    "name": "status validation retains client rejection",
+    "target": "Addictol/Include/DearModdingUI/Status.h",
+    "find": "if (a_clientValidation != DMUI_RESULT_OK)",
+    "replace": "if (false)",
+    "check": "status validation rejects invalid clients and messages",
+    "message": "unaccepted status client was not rejected"
+  },
+  {
+    "name": "idle footer keeps the status reservation",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "const auto statusWidth = (std::min)(desired, available * 0.5f);",
+    "replace": "const auto statusWidth = a_hasStatus ?\r\n\t\t\t(std::min)(desired, available * 0.5f) :\r\n\t\t\t0.0f;",
+    "check": "footer reserves identical status geometry while idle",
+    "message": "status presence changed reserved footer geometry"
   }
 ]

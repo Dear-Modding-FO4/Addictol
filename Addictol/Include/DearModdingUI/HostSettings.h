@@ -300,7 +300,7 @@ namespace Addictol::DearModdingUI
 	{
 		[[nodiscard]] HostInterfaceSettings Current() noexcept;
 		[[nodiscard]] HostInterfacePreviewSettings EffectivePreview() noexcept;
-		void Apply(HostInterfaceSettings a_settings) noexcept;
+		[[nodiscard]] bool Apply(HostInterfaceSettings a_settings) noexcept;
 		void SetPreview(
 			HostInterfacePreviewSettings a_settings,
 			uint64_t a_panelRevision) noexcept;

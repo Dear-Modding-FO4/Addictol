@@ -106,6 +106,9 @@ namespace Addictol::DearModdingUI
 			DMUI_PageKind a_kind) const noexcept;
 		[[nodiscard]] DMUI_Result ValidateSwapChainClient(
 			DMUI_ClientHandle a_client) const noexcept;
+		[[nodiscard]] DMUI_Result CopyClientDisplayName(
+			DMUI_ClientHandle a_client,
+			std::string& a_displayName) const noexcept;
 		[[nodiscard]] DMUI_Result InvokePage(DMUI_PageHandle a_page) noexcept;
 		[[nodiscard]] bool PageFailed(DMUI_PageHandle a_page) const noexcept;
 		void MarkPageFailed(DMUI_PageHandle a_page) noexcept;

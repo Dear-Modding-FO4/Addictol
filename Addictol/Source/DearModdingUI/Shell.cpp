@@ -1082,6 +1082,7 @@ namespace Addictol::DearModdingUI
 			const NavigationModel& a_model,
 			const ShellState& a_state) noexcept
 		{
+			const auto status = CurrentStatus();
 			const auto start = ImGui::GetCursorScreenPos();
 			const auto contentMaxX =
 				start.x + ImGui::GetContentRegionAvail().x;
@@ -1094,14 +1095,19 @@ namespace Addictol::DearModdingUI
 				ImGui::CalcTextSize(fallbackLabel).x,
 				buttonExtent,
 				ImGui::GetStyle().FramePadding.x);
-			const auto layout = ResolveTrailingControlLayout(
+			const auto layout = ResolveFooterStatusLayout(
 				start.x,
 				contentMaxX,
 				buttonWidth,
-				ImGui::GetStyle().ItemSpacing.x);
+				ImGui::GetFontSize() * 28.0f,
+				ImGui::GetStyle().ItemSpacing.x,
+				ImGui::GetFrameHeight(),
+				ImGui::GetStyle().ItemSpacing.y,
+				Theme::kSeparatorThickness,
+				status.has_value());
 			ImGui::PushClipRect(
 				start,
-				{ layout.adjacentMaxX, start.y + ImGui::GetFrameHeight() },
+				{ layout.metadataMaxX, start.y + layout.rowHeight },
 				true);
 			ImGui::BulletText("Host: Evil Modding");
 			if (const auto* client =
@@ -1116,13 +1122,124 @@ namespace Addictol::DearModdingUI
 					client->version & 0xFFFFu);
 			}
 			ImGui::PopClipRect();
-			const auto rowHeight =
-				(std::max)(ImGui::GetItemRectMax().y - start.y, buttonExtent);
+			const auto statusWidth = layout.statusMaxX - layout.statusMinX;
+			if (statusWidth > 0.0f)
+			{
+				const auto persistent = status && status->persistent;
+				const auto hasDismissGlyph = HasIconGlyph(PhosphorGlyph::kX);
+				constexpr const char* dismissLabel{ "Dismiss" };
+				const auto dismissWidth = persistent ?
+					(std::min)(
+						statusWidth,
+						ActionButtonWidth(
+							hasDismissGlyph,
+							ImGui::CalcTextSize(dismissLabel).x,
+							buttonExtent,
+							ImGui::GetStyle().FramePadding.x)) :
+					0.0f;
+				const auto textMaxX = persistent ?
+					(std::max)(
+						layout.statusMinX,
+						layout.statusMaxX -
+							dismissWidth -
+							ImGui::GetStyle().ItemSpacing.x) :
+					layout.statusMaxX;
+				const auto textWidth = textMaxX - layout.statusMinX;
+				if (textWidth > 0.0f)
+				{
+					ImGui::SetCursorScreenPos({ layout.statusMinX, start.y });
+					ImGui::InvisibleButton(
+						"##DearModdingUI.StatusArea",
+						{ textWidth, layout.rowHeight });
+					const auto hovered = ImGui::IsItemHovered(
+						ImGuiHoveredFlags_DelayNormal);
+					if (status)
+					{
+						try
+						{
+							const auto presentation = FitStatusText(
+								status->attributedText,
+								textWidth,
+								[](std::string_view a_text) {
+									return ImGui::CalcTextSize(
+										a_text.data(),
+										a_text.data() + a_text.size()).x;
+								});
+							const auto textSize = ImGui::CalcTextSize(
+								presentation.visible.data(),
+								presentation.visible.data() +
+									presentation.visible.size());
+							const ImVec4 clip{
+								layout.statusMinX,
+								start.y,
+								textMaxX,
+								start.y + layout.rowHeight
+							};
+							ImGui::GetWindowDrawList()->AddText(
+								ImGui::GetFont(),
+								ImGui::GetFontSize(),
+								{
+									layout.statusMinX,
+									start.y +
+										(layout.rowHeight - textSize.y) * 0.5f
+								},
+								ImGui::ColorConvertFloat4ToU32(
+									status->severity ==
+											DMUI_STATUS_SEVERITY_SUCCESS ?
+										Theme::kStatusPaletteDefaults.success :
+										status->severity ==
+												DMUI_STATUS_SEVERITY_WARNING ?
+											Theme::kStatusPaletteDefaults.warning :
+											status->severity ==
+													DMUI_STATUS_SEVERITY_ERROR ?
+												Theme::kStatusPaletteDefaults.error :
+												Theme::kStatusPaletteDefaults.info),
+								presentation.visible.data(),
+								presentation.visible.data() +
+									presentation.visible.size(),
+								0.0f,
+								&clip);
+							if (hovered && presentation.truncated)
+								ImGui::SetTooltip(
+									"%s",
+									presentation.full.c_str());
+						}
+						catch (...)
+						{}
+					}
+				}
+				else
+				{
+					ImGui::SetCursorScreenPos(
+						{ layout.statusMinX, start.y });
+					ImGui::Dummy({ 0.0f, layout.rowHeight });
+				}
+
+				if (persistent &&
+					DrawCompactChromeButton(
+						"##DearModdingUI.StatusDismissButton",
+						{
+							layout.statusMaxX - dismissWidth,
+							start.y +
+								(layout.rowHeight - buttonExtent) * 0.5f
+						},
+						{ dismissWidth, buttonExtent },
+						hasDismissGlyph ? PhosphorGlyph::kX : char32_t{},
+						hasDismissGlyph ? nullptr : dismissLabel,
+						"Dismiss status",
+						hasDismissGlyph ?
+							IconColor(ImGui::GetColorU32(ImGuiCol_Text)) :
+							ImGui::GetColorU32(ImGuiCol_Text)))
+				{
+					(void)DismissStatus(status->generation);
+				}
+			}
 			if (DrawCompactChromeButton(
 					"##DearModdingUI.HostSettingsButton",
 					{
-						layout.controlMinX,
-						start.y + (rowHeight - buttonExtent) * 0.5f
+						layout.settingsMinX,
+						start.y +
+							(layout.rowHeight - buttonExtent) * 0.5f
 					},
 					{ buttonWidth, buttonExtent },
 					hasGearGlyph ? PhosphorGlyph::kGear : char32_t{},
@@ -1329,9 +1446,10 @@ namespace Addictol::DearModdingUI
 			if (DrawHeader(model, state, drawHeaderClose))
 				open = false;
 			const auto footerHeight =
-				ImGui::GetFrameHeightWithSpacing() +
-				ImGui::GetStyle().ItemSpacing.y * 3.0f +
-				Theme::kSeparatorThickness;
+				ReservedFooterHeight(
+					ImGui::GetFrameHeight(),
+					ImGui::GetStyle().ItemSpacing.y,
+					Theme::kSeparatorThickness);
 			ImGui::BeginChild(
 				"Dear Modding Menus Table",
 				{ 0.0f, -footerHeight });

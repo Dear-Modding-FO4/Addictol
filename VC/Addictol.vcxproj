@@ -41,6 +41,7 @@
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Shell.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Status.cpp" />
     <ClCompile Include="..\Addictol\Source\DearModdingUI\Theme.cpp" />
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Shell.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Status.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\Theme.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ThemeDefaults.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h" />

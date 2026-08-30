@@ -27,6 +27,9 @@ namespace Addictol::Menu
 	[[nodiscard]] bool RegisterPanel(const Panel& a_panel) noexcept;
 
 	[[nodiscard]] bool Install() noexcept;
+	void ReportStatus(
+		DMUI_StatusSeverity a_severity,
+		const char* a_message) noexcept;
 
 	void FinalizeRegistration() noexcept;
 

@@ -79,6 +79,34 @@ Action callbacks run only when the host-rendered control is pressed. The host co
 and Windows structured exceptions, recovers shared ImGui state, and permanently disables a faulting
 action. Clients must not draw their own header, footer, or action chrome.
 
+## Shared status
+
+Clients may report status through the optional appended `setStatus` entry. Check
+`DMUI_HostAPI::structSize >= DMUI_HOST_API_SET_STATUS_SIZE` and that the pointer is non-null before
+using it. Pass the accepted client handle, one of `DMUI_STATUS_SEVERITY_INFO`,
+`DMUI_STATUS_SEVERITY_SUCCESS`, `DMUI_STATUS_SEVERITY_WARNING`, or
+`DMUI_STATUS_SEVERITY_ERROR`, and a non-empty null-terminated UTF-8 message. The host copies the
+message before `setStatus` returns; the client retains ownership and may release or reuse its buffer
+afterward. An unaccepted handle returns `DMUI_RESULT_CLIENT_NOT_FOUND`; a null or empty message and an
+unknown severity return `DMUI_RESULT_INVALID_ARGUMENT`. `setStatus` may be called from any thread and
+never calls ImGui from the calling thread.
+
+The footer reserves a fixed status area whether or not a message is active. It shows the most recent
+host or client message globally, attributed to the host name or registered client display name, even
+when another client's page is selected. Info and success messages expire after four seconds. Warning
+and error messages persist until a newer message supersedes them or the user dismisses them. Long
+messages are truncated with an ellipsis, and hovering shows the full attributed text.
+
+```cpp
+if (api->structSize >= DMUI_HOST_API_SET_STATUS_SIZE && api->setStatus)
+{
+	api->setStatus(
+		clientHandle,
+		DMUI_STATUS_SEVERITY_SUCCESS,
+		"Settings saved.");
+}
+```
+
 The modal host opens a registered, hidden Fallout 4 carrier menu so absolute client coordinates remain
 valid, then maps them into the attached backbuffer. The carrier movie and operating-system cursor stay
 hidden while ImGui draws the only visible pointer. Closing the modal host releases Win32 cursor
@@ -126,9 +154,10 @@ Include the pinned `imgui.h` and `imgui_internal.h`, then vendored `ImGuiFingerp
 `ImDrawVert`, `ImWchar`, color packing, docking, obsolete API, test-engine, CRC, FreeType, debug-tool,
 math-operator, and vector-extension flags directly from the active preprocessor configuration.
 
-`onHostReady`, `onHostUnavailable`, page draw callbacks, and action callbacks run on the render thread. The context and
-allocator functions exist only in `DMUI_HostReadyInfo`; clients must not poll for a context. In the
-ready callback, set the client's statically linked ImGui globals:
+`onHostReady`, `onHostUnavailable`, page draw callbacks, and action callbacks run on the render thread.
+`setStatus` is the exception and may be called from any thread. The context and allocator functions
+exist only in `DMUI_HostReadyInfo`; clients must not poll for a context. In the ready callback, set the
+client's statically linked ImGui globals:
 
 ```cpp
 void DMUI_CALL Ready(const DMUI_HostReadyInfo* info, void*)

@@ -525,6 +525,25 @@ namespace Addictol::DearModdingUI
 			DMUI_RESULT_CLIENT_CAPABILITY_REQUIRED;
 	}
 
+	DMUI_Result Registry::CopyClientDisplayName(
+		DMUI_ClientHandle a_client,
+		std::string& a_displayName) const noexcept
+	{
+		try
+		{
+			const std::scoped_lock lock{ m_mutex };
+			const auto* client = FindClient(a_client);
+			if (!client)
+				return DMUI_RESULT_CLIENT_NOT_FOUND;
+			a_displayName = client->displayName;
+			return DMUI_RESULT_OK;
+		}
+		catch (...)
+		{
+			return DMUI_RESULT_RESOURCE_EXHAUSTED;
+		}
+	}
+
 	DMUI_Result Registry::InvokePage(DMUI_PageHandle a_page) noexcept
 	{
 		DMUI_PageDrawCallback callback{ nullptr };

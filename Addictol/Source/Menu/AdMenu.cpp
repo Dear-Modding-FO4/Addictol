@@ -180,6 +180,20 @@ namespace Addictol
 		return result == DMUI_RESULT_OK;
 	}
 
+	void Menu::ReportStatus(
+		DMUI_StatusSeverity a_severity,
+		const char* a_message) noexcept
+	{
+		using namespace menuDetail;
+
+		const auto& api = DearModdingUI::HostAPI();
+		if (api.structSize < DMUI_HOST_API_SET_STATUS_SIZE || !api.setStatus)
+			return;
+		const auto result = api.setStatus(s_client, a_severity, a_message);
+		if (result != DMUI_RESULT_OK)
+			REX::WARN("Menu: status report rejected, result {}."sv, result);
+	}
+
 	bool Menu::Install() noexcept
 	{
 		using namespace menuDetail;

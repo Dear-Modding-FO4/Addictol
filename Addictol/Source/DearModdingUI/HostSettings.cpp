@@ -1,6 +1,7 @@
 #include <DearModdingUI/HostSettings.h>
 
 #include <Core/Settings/AdSettingPersistence.h>
+#include <DearModdingUI/Host.h>
 
 #include <REX/REX.h>
 
@@ -69,12 +70,17 @@ namespace Addictol::DearModdingUI::HostSettings
 		return PreviewHostInterfaceSettings(Current());
 	}
 
-	void Apply(HostInterfaceSettings a_settings) noexcept
+	bool Apply(HostInterfaceSettings a_settings) noexcept
 	{
 		a_settings = DecodeHostInterfaceSettings(
 			EncodeHostInterfaceSettings(a_settings));
 		if (a_settings == Current())
-			return;
+		{
+			(void)SetHostStatus(
+				DMUI_STATUS_SEVERITY_SUCCESS,
+				"Settings saved.");
+			return true;
+		}
 
 		const auto persisted = EncodeHostInterfaceSettings(a_settings);
 		auto settings = SettingsRepository::GetSingleton().Snapshot();
@@ -103,7 +109,15 @@ namespace Addictol::DearModdingUI::HostSettings
 			REX::WARN(
 				"DearModdingUI: interface settings could not be persisted: {}"sv,
 				result.error);
+			(void)SetHostStatus(
+				DMUI_STATUS_SEVERITY_ERROR,
+				result.error);
+			return false;
 		}
+		(void)SetHostStatus(
+			DMUI_STATUS_SEVERITY_SUCCESS,
+			"Settings saved.");
+		return true;
 	}
 
 	void SetPreview(

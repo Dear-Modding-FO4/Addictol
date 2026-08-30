@@ -2,9 +2,15 @@
 
 #include <DearModdingUI/API.h>
 #include <DearModdingUI/Registry.h>
+#include <DearModdingUI/Status.h>
+
+#include <optional>
+#include <string_view>
 
 namespace Addictol::DearModdingUI
 {
+	inline constexpr std::string_view kHostDisplayName{ "Evil Modding" };
+
 	[[nodiscard]] const DMUI_ImGuiFingerprint& HostFingerprint() noexcept;
 	[[nodiscard]] const DMUI_HostAPI& HostAPI() noexcept;
 
@@ -30,6 +36,11 @@ namespace Addictol::DearModdingUI
 	[[nodiscard]] const std::vector<RegisteredPage>& OrderedPages() noexcept;
 	[[nodiscard]] const std::vector<RegisteredAction>& OrderedActions() noexcept;
 	[[nodiscard]] const NavigationModel& Navigation() noexcept;
+	[[nodiscard]] DMUI_Result SetHostStatus(
+		DMUI_StatusSeverity a_severity,
+		std::string_view a_message) noexcept;
+	[[nodiscard]] std::optional<StatusMessage> CurrentStatus() noexcept;
+	[[nodiscard]] bool DismissStatus(uint64_t a_generation) noexcept;
 
 	[[nodiscard]] DMUI_Result RegisterInternalClient(
 		const DMUI_ClientDescriptor* a_descriptor,

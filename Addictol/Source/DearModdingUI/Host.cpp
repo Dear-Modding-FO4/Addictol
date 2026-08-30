@@ -48,6 +48,7 @@ namespace Addictol::DearModdingUI
 			std::atomic<bool> menuVisible{ false };
 			std::atomic<DMUI_PageHandle> selectedPage{ DMUI_INVALID_PAGE_HANDLE };
 			AllocatorState allocator;
+			StatusModel status;
 		};
 
 		[[nodiscard]] Service& GetService() noexcept
@@ -312,6 +313,26 @@ namespace Addictol::DearModdingUI
 				DMUI_RESULT_SWAPCHAIN_REJECTED;
 		}
 
+		[[nodiscard]] DMUI_Result DMUI_CALL ApiSetStatusCpp(
+			DMUI_ClientHandle a_client,
+			DMUI_StatusSeverity a_severity,
+			const char* a_message) noexcept
+		{
+			auto& service = GetService();
+			std::string owner;
+			const auto validation = ValidateStatusRequest(
+				service.registry.CopyClientDisplayName(a_client, owner),
+				a_severity,
+				a_message);
+			if (validation != DMUI_RESULT_OK)
+				return validation;
+			return service.status.Set(
+				StatusOwnerKind::kClient,
+				owner,
+				a_severity,
+				a_message);
+		}
+
 		template <class Function>
 		[[nodiscard]] DMUI_Result GuardApiCall(Function&& a_function) noexcept
 		{
@@ -408,6 +429,16 @@ namespace Addictol::DearModdingUI
 			});
 		}
 
+		[[nodiscard]] DMUI_Result DMUI_CALL ApiSetStatus(
+			DMUI_ClientHandle a_client,
+			DMUI_StatusSeverity a_severity,
+			const char* a_message) noexcept
+		{
+			return GuardApiCall([&]() noexcept {
+				return ApiSetStatusCpp(a_client, a_severity, a_message);
+			});
+		}
+
 		template <class InvokeCallback, class DisableCallback>
 		[[nodiscard]] bool InvokeClientCallback(
 			const char* a_kind,
@@ -460,7 +491,8 @@ namespace Addictol::DearModdingUI
 			&ApiIsMenuVisible,
 			&ApiSelectPage,
 			&ApiAttachSwapChain,
-			&ApiRegisterAction
+			&ApiRegisterAction,
+			&ApiSetStatus
 		};
 		return api;
 	}
@@ -673,6 +705,27 @@ namespace Addictol::DearModdingUI
 	const NavigationModel& Navigation() noexcept
 	{
 		return GetService().registry.Navigation();
+	}
+
+	DMUI_Result SetHostStatus(
+		DMUI_StatusSeverity a_severity,
+		std::string_view a_message) noexcept
+	{
+		return GetService().status.Set(
+			StatusOwnerKind::kHost,
+			kHostDisplayName,
+			a_severity,
+			a_message);
+	}
+
+	std::optional<StatusMessage> CurrentStatus() noexcept
+	{
+		return GetService().status.Snapshot();
+	}
+
+	bool DismissStatus(uint64_t a_generation) noexcept
+	{
+		return GetService().status.Dismiss(a_generation);
 	}
 
 	DMUI_Result RegisterInternalClient(

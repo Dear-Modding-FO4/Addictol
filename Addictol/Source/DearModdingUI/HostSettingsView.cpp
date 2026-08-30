@@ -99,11 +99,16 @@ namespace Addictol::DearModdingUI
 
 		void ApplyDraft() noexcept
 		{
+			const auto committed = g_settingsDraft.committed;
 			auto commit = ApplyHostSettingsDraft(g_settingsDraft);
 			if (!commit.settings)
 				return;
 
-			HostSettings::Apply(*commit.settings);
+			if (!HostSettings::Apply(*commit.settings))
+			{
+				g_settingsDraft.committed = committed;
+				return;
+			}
 			g_settingsDraft = BeginHostSettingsDraft(
 				HostSettings::Current());
 			PreviewDraft();
