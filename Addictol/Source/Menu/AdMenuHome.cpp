@@ -248,8 +248,8 @@ namespace Addictol::Menu
 	{
 		DrawWelcomeSection();
 		DrawQuickLinksSection();
-		DrawFaqSection();
 		DrawModdingStateSection();
+		DrawFaqSection();
 	}
 
 	void CopyDiagnosticsSummaryToClipboard(
