@@ -1,7 +1,7 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
-#include "../Addictol/Include/DearModdingUI/ImGuiFingerprint.h"
+#include <DearModdingUI/ImGuiFingerprint.h>
 
 #include <type_traits>
 

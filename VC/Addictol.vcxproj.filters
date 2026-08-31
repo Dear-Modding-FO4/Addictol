@@ -505,9 +505,6 @@
     <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiFingerprint.h">
-      <Filter>Include\DearModdingUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h">
       <Filter>Include\DearModdingUI</Filter>
     </ClInclude>

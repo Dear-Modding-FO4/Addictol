@@ -1,10 +1,12 @@
 # DearModdingUI client API
 
-`API.h` is a vendorable C ABI for Dear-Modding F4SE user interfaces. `ImGuiFingerprint.h` is the
-optional C++ fingerprint builder. Clients link their own copy of the pinned Dear ImGui sources and
+`API.h` is the C ABI for Dear-Modding F4SE user interfaces, and `ImGuiFingerprint.h` is the optional
+C++ fingerprint builder. Both ship in `Dear-Modding-FO4/commonlibf4` under `include/DearModdingUI/`,
+so linking that fork is enough to consume them. `Client.h` beside them is a header-only C++ wrapper
+that handles discovery, registration, and the ImGui context handoff; prefer it over the raw ABI.
+Clients link their own copy of the pinned Dear ImGui sources and
 discover a host dynamically; they do not link against the host DLL or include Addictol, CommonLibF4,
 F4SE, Windows, D3D, TOML, or C++ library types through the C contract.
-Vendors should copy the current `API.h` as a unit.
 
 ## Discovery and registration
 
@@ -149,7 +151,7 @@ a copied magic value. A client must build its expected fingerprint from the exac
 configuration used to compile its own ImGui sources. Registration rejects any field mismatch before
 storing callbacks.
 
-Include the pinned `imgui.h` and `imgui_internal.h`, then vendored `ImGuiFingerprint.h`, and call
+Include the pinned `imgui.h` and `imgui_internal.h`, then `ImGuiFingerprint.h`, and call
 `DMUI_MakeImGuiFingerprint()`. The builder derives custom `ImTextureID`, `ImDrawIdx`, callback,
 `ImDrawVert`, `ImWchar`, color packing, docking, obsolete API, test-engine, CRC, FreeType, debug-tool,
 math-operator, and vector-extension flags directly from the active preprocessor configuration.
