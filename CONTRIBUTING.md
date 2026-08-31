@@ -79,8 +79,8 @@ Version/                     version resource and the tracked version header
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`
-APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored libraries (`imgui`,
-`vmm`, `xbyak`, `unordered_dense`). `Depends/imgui/UPSTREAM.md` records the Dear ImGui source pin.
+APIs, plus `detours`, `imgui`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored libraries
+(`vmm`, `xbyak`, `unordered_dense`).
 
 Crash logging is not part of this plugin. It ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).

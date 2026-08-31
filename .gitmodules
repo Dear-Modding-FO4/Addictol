@@ -17,3 +17,7 @@
 	path = Depends/commonlibf4
 	url = https://github.com/Dear-Modding-FO4/commonlibf4.git
 	branch = main
+[submodule "Depends/imgui"]
+	path = Depends/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking

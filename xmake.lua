@@ -162,7 +162,7 @@ target("imgui", function()
     set_objectdir(project_dir(".LinkConf/xmake/imgui"))
     set_dependir(project_dir(".LinkConf/xmake/imgui/deps"))
 
-    -- add source files, matching Depends/imgui/imgui.vcxproj exactly
+    -- add source files, matching Depends/imgui_vc22.vcxproj exactly
     add_files(
         "Depends/imgui/imgui.cpp",
         "Depends/imgui/imgui_demo.cpp",
