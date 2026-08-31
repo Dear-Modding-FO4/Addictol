@@ -441,7 +441,9 @@ if (!RELEX::Validate(target, { 0x48, 0x83, 0xEC, 0x28, 0xC6, 0x44, 0x24, 0x38, 0
 instructions or an API output buffer.
 
 Files are prefixed `Ad`, and modules are `AdModule<Name>.h` / `.cpp` declaring `class Module<Name>`
-in `namespace Addictol`. Functions and methods are PascalCase, and hook functions are conventionally
+in `namespace Addictol`. The exception is `DearModdingUI/`, which is a hosted framework in its own
+`namespace DearModdingUI` rather than Addictol code, so its files carry no prefix. Functions and
+methods are PascalCase, and hook functions are conventionally
 `HK<OriginalName>`. Parameters take an `a_` prefix, except in a hook or thunk mirroring an external
 signature. File scope and static variables take `s_` and class members `m_`; TOML options use the
 type prefix instead. Private module helpers go in a nested `namespace <camelCaseModuleName>Detail`.
