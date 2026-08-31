@@ -4,7 +4,12 @@
 #include "../Addictol/Include/Modules/AdFacegenExceptions.h"
 #include "Harness.h"
 
+#include <INI/SimpleIni.h>
+
+#include <filesystem>
+#include <fstream>
 #include <initializer_list>
+#include <iterator>
 
 namespace vmm_tests
 {
@@ -89,6 +94,135 @@ namespace vmm_tests
 		runner.test("facegen FormIDs parse as hexadecimal or decimal", [] {
 			require(ParseFacegenFormID("0x6e5b") == 0x6E5B, "hexadecimal FormID changed");
 			require(ParseFacegenFormID("50359899") == 50359899, "decimal FormID changed");
+		});
+
+		runner.test("facegen exception entries serialize in INI form", [] {
+			const FacegenExceptionDraft entry{
+				" OldLongfellow ",
+				" 0x6e5b ",
+				" DLCCoast.esm "
+			};
+			require(
+				SerializeFacegenExceptionEntry(entry) ==
+					"OldLongfellow=0x6e5b:DLCCoast.esm",
+				"qualified exception serialization changed");
+			require(
+				SerializeFacegenExceptionEntry({ "Marcy", "0x19FDC", std::nullopt }) ==
+					"Marcy=0x19FDC",
+				"bare exception serialization changed");
+		});
+
+		runner.test("facegen exception duplicate keys follow INI casing", [] {
+			const std::vector<FacegenExceptionDraft> entries{
+				{ "OldLongfellow", "0x6e5b", "DLCCoast.esm" },
+				{ "Marcy", "0x19FDC", std::nullopt }
+			};
+			require(
+				HasDuplicateFacegenExceptionKey(entries, "oldlongfellow"),
+				"case-insensitive duplicate key was accepted");
+			require(
+				!HasDuplicateFacegenExceptionKey(entries, "oldlongfellow", 0),
+				"edited key matched itself");
+		});
+
+		runner.test("facegen exception validation rejects invalid fields", [] {
+			const std::vector<FacegenExceptionDraft> entries{
+				{ "Existing", "0x1234", std::nullopt }
+			};
+			require(
+				ValidateFacegenExceptionFields({ "", "0x1234", std::nullopt }, entries).issue ==
+					FacegenExceptionValidationIssue::kEmptyKey,
+				"empty exception key was accepted");
+			require(
+				ValidateFacegenExceptionFields({ "Broken=Key", "0x1234", std::nullopt }, entries).issue ==
+					FacegenExceptionValidationIssue::kMalformedKey,
+				"malformed exception key was accepted");
+			require(
+				ValidateFacegenExceptionFields({ "existing", "0x1234", std::nullopt }, entries).issue ==
+					FacegenExceptionValidationIssue::kDuplicateKey,
+				"duplicate exception key was accepted");
+			require(
+				ValidateFacegenExceptionFields({ "New", "", std::nullopt }, entries).issue ==
+					FacegenExceptionValidationIssue::kEmptyFormID,
+				"empty FormID was accepted");
+			require(
+				ValidateFacegenExceptionFields({ "New", "0x12ZZ", std::nullopt }, entries).issue ==
+					FacegenExceptionValidationIssue::kMalformedFormID,
+				"malformed hexadecimal FormID was accepted");
+			require(
+				ValidateFacegenExceptionFields({ "New", "4294967296", std::nullopt }, entries).issue ==
+					FacegenExceptionValidationIssue::kMalformedFormID,
+				"out-of-range decimal FormID was accepted");
+		});
+
+		runner.test("SimpleIni preserves the shipped facegen documentation", [] {
+			const std::filesystem::path source{
+				".Build/F4SE/Plugins/Addictol_FacegenExceptions.ini"
+			};
+			const std::filesystem::path output{
+				".Build/Tests/facegen-exceptions-roundtrip.ini"
+			};
+			CSimpleIniA ini;
+			require(ini.LoadFile(source.string().c_str()) == SI_OK, "shipped exceptions INI did not load");
+			ini.SetSpaces(false);
+			std::ifstream sourceFile{ source, std::ios::binary };
+			const std::string sourceContents{
+				std::istreambuf_iterator<char>{ sourceFile },
+				std::istreambuf_iterator<char>{}
+			};
+			const auto leadingComments =
+				ExtractFacegenExceptionLeadingComments(sourceContents);
+			require(
+				ini.SetValue(
+					"FacegenException",
+					"RoundTripProof",
+					"0x6e5b:DLCCoast.esm",
+					leadingComments.c_str()) >= SI_OK,
+				"round-trip entry was not added");
+			require(ini.SaveFile(output.string().c_str()) == SI_OK, "round-trip exceptions INI did not save");
+
+			std::ifstream savedFile{ output, std::ios::binary };
+			const std::string saved{
+				std::istreambuf_iterator<char>{ savedFile },
+				std::istreambuf_iterator<char>{}
+			};
+			const auto commentLines = [](std::string_view a_text) {
+				std::vector<std::string> comments;
+				size_t position = 0;
+				while (position < a_text.size())
+				{
+					auto end = a_text.find_first_of("\r\n", position);
+					if (end == std::string_view::npos)
+						end = a_text.size();
+					const auto line = a_text.substr(position, end - position);
+					const auto first = line.find_first_not_of(" \t");
+					if (first != std::string_view::npos &&
+						(line[first] == ';' || line[first] == '#'))
+						comments.emplace_back(line.substr(first));
+					position = end;
+					while (position < a_text.size() &&
+						(a_text[position] == '\r' || a_text[position] == '\n'))
+						++position;
+				}
+				return comments;
+			};
+			require(
+				commentLines(saved) == commentLines(sourceContents),
+				"documentation comments changed during the round trip");
+			require(
+				saved.contains("; ========== Addictol's FaceGen Exceptions list"),
+				"documentation title was lost");
+			require(
+				saved.contains("; - <UniqueName> HAS TO BE UNIQUE FOR THIS LIST."),
+				"documentation rules were lost");
+			require(
+				saved.contains("; OldLongfellow=0x3006e5b (or 0x6e5b:DLCCoast.esm)"),
+				"inline examples were lost");
+			require(
+				saved.contains("RoundTripProof=0x6e5b:DLCCoast.esm"),
+				"round-trip entry was lost");
+			std::error_code error;
+			(void)std::filesystem::remove(output, error);
 		});
 
 		runner.test("an open page refreshes once per cadence", [] {
