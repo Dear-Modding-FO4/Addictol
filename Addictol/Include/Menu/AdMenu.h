@@ -1,12 +1,15 @@
 #pragma once
 
-#include <DearModdingUI/API.h>
 #include <Menu/AdMenuTargets.h>
 
 #include <REX/REX.h>
 
+#include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
+
+#include <DearModdingUI/Client.h>
+
 #include <cstdint>
-#include <string_view>
 
 namespace Addictol::Menu
 {
@@ -27,6 +30,8 @@ namespace Addictol::Menu
 	[[nodiscard]] bool RegisterPanel(const Panel& a_panel) noexcept;
 
 	[[nodiscard]] bool Install() noexcept;
+	[[nodiscard]] dmui::Client& Client() noexcept;
+	[[nodiscard]] const DMUI_ThemeColors& ThemeColors() noexcept;
 	void ReportStatus(
 		DMUI_StatusSeverity a_severity,
 		const char* a_message) noexcept;
@@ -34,7 +39,4 @@ namespace Addictol::Menu
 	void FinalizeRegistration() noexcept;
 
 	[[nodiscard]] uint32_t RefreshMs() noexcept;
-	[[nodiscard]] std::string_view ToggleKeyName() noexcept;
-	[[nodiscard]] double LastDrawMs() noexcept;
-	[[nodiscard]] uint64_t OpenGeneration() noexcept;
 }

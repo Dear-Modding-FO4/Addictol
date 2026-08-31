@@ -1,4 +1,3 @@
-#include <DearModdingUI/Theme.h>
 #include <Menu/AdMenuWidgets.h>
 
 #include <array>
@@ -16,52 +15,58 @@ namespace Addictol
 		return buffer.data();
 	}
 
-	MenuUi::ScopedFont::ScopedFont(ImFont* a_font) noexcept
-	{
-		if (!a_font)
-			return;
-		ImGui::PushFont(a_font, a_font->LegacySize);
-		m_pushed = true;
-	}
-
-	MenuUi::ScopedFont::~ScopedFont() noexcept
-	{
-		if (m_pushed)
-			ImGui::PopFont();
-	}
+	MenuUi::ScopedFont::ScopedFont(DMUI_FontRole a_role) noexcept :
+		m_guard(Menu::Client(), a_role)
+	{}
 
 	void MenuUi::Heading(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().heading };
-		ImGui::TextColored(Theme::colors::Accent(), "%.*s", static_cast<int>(a_text.size()), a_text.data());
+		const ScopedFont font{ DMUI_FONT_ROLE_HEADING };
+		ImGui::TextColored(
+			dmui::ToImVec4(Menu::ThemeColors().accent),
+			"%.*s",
+			static_cast<int>(a_text.size()),
+			a_text.data());
 	}
 
 	void MenuUi::Title(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().title };
+		const ScopedFont font{ DMUI_FONT_ROLE_TITLE };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 
 	void MenuUi::Mono(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().body };
+		const ScopedFont font{ DMUI_FONT_ROLE_BODY };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 
 	void MenuUi::Muted(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().subtext };
-		ImGui::TextColored(Theme::colors::kMuted, "%.*s", static_cast<int>(a_text.size()), a_text.data());
+		const ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
+		ImGui::TextColored(
+			dmui::ToImVec4(Menu::ThemeColors().muted),
+			"%.*s",
+			static_cast<int>(a_text.size()),
+			a_text.data());
 	}
 
 	void MenuUi::Warn(std::string_view a_text) noexcept
 	{
-		ImGui::TextColored(Theme::colors::kWarning, "%.*s", static_cast<int>(a_text.size()), a_text.data());
+		ImGui::TextColored(
+			dmui::ToImVec4(Menu::ThemeColors().warning),
+			"%.*s",
+			static_cast<int>(a_text.size()),
+			a_text.data());
 	}
 
 	void MenuUi::Error(std::string_view a_text) noexcept
 	{
-		ImGui::TextColored(Theme::colors::kError, "%.*s", static_cast<int>(a_text.size()), a_text.data());
+		ImGui::TextColored(
+			dmui::ToImVec4(Menu::ThemeColors().error),
+			"%.*s",
+			static_cast<int>(a_text.size()),
+			a_text.data());
 	}
 
 	void MenuUi::LabeledValue(std::string_view a_label, std::string_view a_value) noexcept
@@ -75,9 +80,10 @@ namespace Addictol
 	{
 		ImGui::TextUnformatted(a_label.data(), a_label.data() + a_label.size());
 		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x * 2.0f);
-		const ScopedFont font{ Theme::GetFonts().heading };
+		const ScopedFont font{ DMUI_FONT_ROLE_HEADING };
 		ImGui::TextColored(
-			a_ok ? Theme::colors::kSuccess : Theme::colors::kWarning,
+			dmui::ToImVec4(
+				a_ok ? Menu::ThemeColors().success : Menu::ThemeColors().warning),
 			"%.*s",
 			static_cast<int>(a_value.size()),
 			a_value.data());
@@ -85,7 +91,7 @@ namespace Addictol
 
 	void MenuUi::MonoCell(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().body };
+		const ScopedFont font{ DMUI_FONT_ROLE_BODY };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 

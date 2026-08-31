@@ -1,7 +1,6 @@
 #include <Menu/AdMenu.h>
 #include <Core/AdClock.h>
 #include <Core/AdModuleManager.h>
-#include <Platform/AdPlatformImgui.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Core/AdUtils.h>
 #include <Menu/AdMenuTelemetry.h>
@@ -15,11 +14,8 @@ namespace Addictol
 {
 	namespace
 	{
-
-
-
-
 		std::atomic<FrameMetricSource*> s_frameSource{ nullptr };
+		std::atomic<dmui::Client*> s_dmuiClient{ nullptr };
 		const ModuleManager* s_moduleManager{ nullptr };
 
 		[[nodiscard]] uint32_t CurrentThreadId() noexcept
@@ -33,6 +29,21 @@ namespace Addictol
 			if (!s_moduleManager)
 				return false;
 			a_values = ModuleOutcomeMetricValues(s_moduleManager->ModuleOutcomeCounts());
+			return true;
+		}
+
+		[[nodiscard]] bool ReadVideoMemory(
+			uint64_t& a_used,
+			uint64_t& a_budget) noexcept
+		{
+			const auto client = s_dmuiClient.load(std::memory_order_acquire);
+			if (!client)
+				return false;
+			const auto info = client->QueryVideoMemory();
+			if (!info)
+				return false;
+			a_used = info->used;
+			a_budget = info->budget;
 			return true;
 		}
 	}
@@ -55,7 +66,7 @@ namespace Addictol
 			const auto processMemoryRegistration =
 				hub.Register(std::make_shared<ProcessMemoryMetricSource>());
 			const auto gpuMemoryRegistration = hub.Register(
-				std::make_shared<GpuVideoMemoryMetricSource>(&PlatformImgui::QueryVideoMemory));
+				std::make_shared<GpuVideoMemoryMetricSource>(&ReadVideoMemory));
 			const auto systemMemoryRegistration =
 				hub.Register(std::make_shared<SystemMemoryMetricSource>());
 			const auto moduleOutcomeRegistration = hub.Register(
@@ -112,6 +123,19 @@ namespace Addictol
 				std::move(seriesCsvPath)))
 				REX::ERROR("Telemetry: worker failed to start"sv);
 		});
+	}
+
+	bool Telemetry::ConnectDearModdingUI(dmui::Client& a_client) noexcept
+	{
+		if (!bTelemetryEnabled.GetValue())
+			return true;
+		const auto observer = a_client.AddFrameObserver([] {
+			ObserveFrame();
+		});
+		if (!observer)
+			return false;
+		s_dmuiClient.store(&a_client, std::memory_order_release);
+		return true;
 	}
 
 	void Telemetry::ObserveFrame() noexcept

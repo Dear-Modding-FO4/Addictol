@@ -2,11 +2,8 @@
 #include <Core/AdUtils.h>
 #include <Core/AdConfigValidation.h>
 #include <Core/AdLogControl.h>
-#include <DearModdingUI/CarrierMenu.h>
-#include <DearModdingUI/Host.h>
 #include <Menu/AdMenu.h>
 #include <Zlib/AdZlibBackend.h>
-#include <Platform/AdPlatformImgui.h>
 #include <Telemetry/AdTelemetryHub.h>
 
 #include <RE/B/BSCRC32.h>
@@ -132,20 +129,6 @@ namespace Addictol
 	{
 		if (!a_msg)
 			return;
-		switch (a_msg->type)
-		{
-		case F4SE::MessagingInterface::kPreLoadGame:
-		case F4SE::MessagingInterface::kNewGame:
-		case F4SE::MessagingInterface::kGameLoaded:
-		case F4SE::MessagingInterface::kGameDataReady:
-			PlatformImgui::HandleGameTransition();
-			break;
-		default:
-			break;
-		}
-		if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
-			(void)DearModdingUI::CarrierMenu::Register();
-
 		auto plugin = Plugin::GetSingleton();
 		if (!plugin->IsInstall())
 		{
@@ -235,8 +218,6 @@ namespace Addictol
 				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
 			}
-
-			DearModdingUI::Initialize();
 
 			// Register all modules
 			AdRegisterModules();

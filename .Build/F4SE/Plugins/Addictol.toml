@@ -295,6 +295,9 @@ bFormLoadTiming = false
 
 [Additional]
 
+# DearModdingUI owns menu visibility and sMenuToggleKey; configure both in DearModdingUI.toml.
+# Existing Addictol bMenu and sMenuToggleKey values are not migrated.
+
 # Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen).
 bDbgFacegenOutput = false
 
@@ -352,33 +355,5 @@ bIgnoreCompatibilityChecks = false
 # Local Map Scale Factor (needs bHighResLocalMaps).
 fLocalMapScaleFactor = 1.5
 
-# In-game diagnostics window drawn over the game.
-# Tabs appear in module name order; Log Control is always last and is always available.
-bMenu = true
-
-# Key that opens and closes the menu: F1-F12, Home, End, Insert, or Delete (needs bMenu).
-sMenuToggleKey = "F11"
-
-# How often the open tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000 (needs bMenu).
+# How often an open Addictol tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000.
 uMenuRefreshMs = 250
-
-# Uses the theme text color for menu icons instead of colored accents (needs bMenu).
-bMenuMonochromeIcons = false
-
-# Menu accent as a six-digit RGB hex color. Drives controls and colored menu icons (needs bMenu).
-sMenuAccentColor = "#42FA60"
-
-# Host window background opacity from 0.20 to 1.00 (needs bMenu).
-fMenuWindowOpacity = 0.55
-
-# Blurs the game behind the menu window (needs bMenu).
-bMenuBackgroundBlur = true
-
-# Background blur sample spread from 0.10 to 1.00 (needs bMenuBackgroundBlur).
-fMenuBackgroundBlurStrength = 0.30
-
-# Accessibility scale applied on top of resolution-derived menu sizing, from 0.75 to 2.00 (needs bMenu).
-fMenuUiScale = 1.00
-
-# Body font family folder under Data/F4SE/Plugins/DearModdingUI/Fonts (needs bMenu).
-sMenuBodyFontFamily = "Jost"

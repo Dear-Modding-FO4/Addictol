@@ -31,19 +31,6 @@
     <ClCompile Include="..\Addictol\Source\Memory\AdMemoryTracer.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\CarrierMenu.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\FontCatalog.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettings.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettingsView.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\Shell.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\Status.cpp" />
-    <ClCompile Include="..\Addictol\Source\DearModdingUI\Theme.cpp" />
-    <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuModules.cpp" />
@@ -66,7 +53,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFullPrecisionDecals.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDofFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDownwardAiming.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModulePlatformImgui.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMenu.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp" />
@@ -167,27 +153,11 @@
     <ClInclude Include="..\Addictol\Include\Telemetry\AdAllocatorPoolTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdAssert.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
-    <ClInclude Include="..\Addictol\Include\Platform\AdPlatformImgui.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\CarrierMenu.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\FontCatalog.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettings.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettingsView.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\SettingsActions.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\Shell.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\Status.h" />
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\Theme.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\ThemeDefaults.h" />
     <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h" />
-    <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuModules.h" />
@@ -214,7 +184,6 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFullPrecisionDecals.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDofFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDownwardAiming.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModulePlatformImgui.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMenu.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h" />
@@ -302,25 +271,6 @@
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Addictol\Include\DearModdingUI\README.md" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Bold.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-BoldItalic.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Italic.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Regular.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\OFL.txt" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\UPSTREAM.md" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-Regular.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-SemiBold.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\LICENSE" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\Phosphor-Fill.ttf" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\UPSTREAM.md" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurDownsample.hlsl" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurHorizontal.hlsl" />
-    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurVertical.hlsl" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -387,6 +337,17 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="CopyDearModdingUI" AfterTargets="Build">
+    <PropertyGroup>
+      <DearModdingUIOutput>$(ProjectDir)..\..\DearModdingUI\.Build\F4SE\Plugins</DearModdingUIOutput>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(DearModdingUIOutput)\DearModdingUI.dll')" Text="Build DearModdingUI first at $(DearModdingUIOutput)." />
+    <ItemGroup>
+      <DearModdingUIRuntime Include="$(DearModdingUIOutput)\DearModdingUI\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="$(DearModdingUIOutput)\DearModdingUI.dll;$(DearModdingUIOutput)\DearModdingUI.toml" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DearModdingUIRuntime)" DestinationFiles="@(DearModdingUIRuntime->'$(OutDir)DearModdingUI\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

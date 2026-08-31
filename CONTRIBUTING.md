@@ -67,26 +67,29 @@ Addictol/Include/Memory/     memory allocation and tracing
 Addictol/Include/Zlib/       compression backend and helpers
 Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
-Addictol/Include/Platform/   ImGui platform integration
-Addictol/Include/DearModdingUI/ vendorable UI API and neutral host shell
+Addictol/Include/DearModdingUI/ vendored header-only menu decisions
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
-Addictol/Source/Modules/     one .cpp per feature module (~80 of them)
+Addictol/Source/Modules/     one .cpp per feature module (90 total)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header
-.Build/F4SE/Plugins/         build output, tracked config, and neutral DearModdingUI resources
+.Build/F4SE/Plugins/         build output and tracked Addictol configuration
 ```
 
-`Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`
-APIs, plus `detours`, `imgui`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored libraries
-(`vmm`, `xbyak`, `unordered_dense`).
+`Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::`, `F4SE::`
+and DearModdingUI client APIs, plus `detours`, `imgui`, `libdeflate`, `spdlog`, `toml11` and `INI`)
+and vendored libraries (`vmm`, `xbyak`, `unordered_dense`).
 
 Crash logging is not part of this plugin. It ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
 
-The neutral cross-DLL UI contract and client lifecycle are documented in
-[`Addictol/Include/DearModdingUI/README.md`](Addictol/Include/DearModdingUI/README.md).
+The neutral cross-DLL UI contract and client lifecycle come from CommonLibF4's
+`include/DearModdingUI/` headers. The four header-only decision files retained in Addictol mirror
+the standalone DearModdingUI repository, which remains their source of truth.
+
+Release packaging expects a sibling `DearModdingUI` checkout with a completed build. Both MSBuild
+and xmake copy its DLL, TOML, fonts, and shaders into Addictol's plugin output.
 
 ## Versioning
 
@@ -441,8 +444,7 @@ if (!RELEX::Validate(target, { 0x48, 0x83, 0xEC, 0x28, 0xC6, 0x44, 0x24, 0x38, 0
 instructions or an API output buffer.
 
 Files are prefixed `Ad`, and modules are `AdModule<Name>.h` / `.cpp` declaring `class Module<Name>`
-in `namespace Addictol`. The exception is `DearModdingUI/`, which is a hosted framework in its own
-`namespace DearModdingUI` rather than Addictol code, so its files carry no prefix. Functions and
+in `namespace Addictol`. Vendored upstream headers retain their upstream names. Functions and
 methods are PascalCase, and hook functions are conventionally
 `HK<OriginalName>`. Parameters take an `a_` prefix, except in a hook or thunk mirroring an external
 signature. File scope and static variables take `s_` and class members `m_`; TOML options use the

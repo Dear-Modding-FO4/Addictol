@@ -1,9 +1,8 @@
 #include <Menu/AdMenuHome.h>
 
 #include <Core/AdPlugin.h>
-#include <DearModdingUI/Shell.h>
-#include <DearModdingUI/Theme.h>
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuWidgets.h>
 
 #include <imgui/imgui.h>
 
@@ -88,16 +87,12 @@ namespace Addictol::Menu
 		void DrawWelcomeSection() noexcept
 		{
 			{
-				const DearModdingUI::Theme::FontGuard font{
-					DearModdingUI::Theme::FontRole::kTitle
-				};
+				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_TITLE };
 				ImGui::TextUnformatted("Welcome to Addictol");
 			}
 			ImGui::Spacing();
 			{
-				const DearModdingUI::Theme::FontGuard font{
-					DearModdingUI::Theme::FontRole::kSubtext
-				};
+				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
 				ImGui::TextWrapped(
 					"Addictol combines engine fixes, crash fixes, and performance patches "
 					"for Fallout 4 in a single F4SE plugin. Use the pages on the left to "
@@ -126,8 +121,8 @@ namespace Addictol::Menu
 				static_cast<unsigned long long>(counts[2]));
 			ImGui::TextColored(
 				counts[3] == 0 && counts[4] == 0 ?
-					DearModdingUI::Theme::kStatusPaletteDefaults.success :
-					DearModdingUI::Theme::kStatusPaletteDefaults.error,
+					dmui::ToImVec4(ThemeColors().statusSuccess) :
+					dmui::ToImVec4(ThemeColors().statusError),
 				"%llu failed query, %llu failed install (%llu total)",
 				static_cast<unsigned long long>(counts[3]),
 				static_cast<unsigned long long>(counts[4]),
@@ -137,7 +132,7 @@ namespace Addictol::Menu
 
 		void DrawQuickLinksSection() noexcept
 		{
-			DearModdingUI::DrawSectionHeader("Quick Links");
+			(void)Client().DrawSectionHeader("Quick Links");
 			const auto spacing = ImGui::GetStyle().ItemSpacing.x;
 			const auto buttonWidth =
 				(ImGui::GetContentRegionAvail().x -
@@ -173,23 +168,18 @@ namespace Addictol::Menu
 
 		void DrawFaqSection() noexcept
 		{
-			DearModdingUI::DrawSectionHeader("FAQ");
+			(void)Client().DrawSectionHeader("FAQ");
 			for (const auto& entry : kFaqEntries)
 			{
 				if (!ImGui::CollapsingHeader(entry.question))
 					continue;
-				const DearModdingUI::Theme::FontGuard font{
-					DearModdingUI::Theme::FontRole::kSubtext
-				};
+				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
 				ImGui::Indent();
 				if (entry.showToggleKey)
 				{
-					const auto key = ToggleKeyName();
 					ImGui::TextWrapped(
-						"Enable [Additional] bMenu, then press %.*s in game. "
-						"The default key is F11 and sMenuToggleKey changes it.",
-						static_cast<int>(key.size()),
-						key.data());
+						"Press the key configured in DearModdingUI.toml. "
+						"The default key is F11.");
 				}
 				else
 				{
@@ -202,10 +192,8 @@ namespace Addictol::Menu
 
 		void DrawModdingStateSection() noexcept
 		{
-			DearModdingUI::DrawSectionHeader("On the state of F4SE mods");
-			const DearModdingUI::Theme::FontGuard font{
-				DearModdingUI::Theme::FontRole::kSubtext
-			};
+			(void)Client().DrawSectionHeader("On the state of F4SE mods");
+			const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
 			ImGui::TextWrapped(
 				"CommonLibF4 is GPL-3.0. If a plugin links it and ships without "
 				"source, that is a license violation. Not a style disagreement, "

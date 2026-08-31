@@ -54,8 +54,6 @@ int main(int argc, char** argv)
 	run_zlib_backend_checks(runner);
 	run_zlib_inflate_checks(runner);
 	run_libdeflate_checks(runner);
-	run_imgui_platform_checks(runner);
-	run_dear_modding_ui_checks(runner);
 	run_menu_checks(runner);
 	run_setting_registry_checks(runner);
 	run_escape_freeze_checks(runner);

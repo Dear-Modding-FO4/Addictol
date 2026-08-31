@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Menu/AdMenuTargets.h>
 #include <Core/AdUtils.h>
+#include <Menu/AdMenu.h>
+#include <Menu/AdMenuTargets.h>
 
 #include <imgui/imgui.h>
 
@@ -20,14 +21,13 @@ namespace Addictol::MenuUi
 
 	struct ScopedFont
 	{
-		explicit ScopedFont(ImFont* a_font) noexcept;
-		~ScopedFont() noexcept;
+		explicit ScopedFont(DMUI_FontRole a_role) noexcept;
 
 		ScopedFont(const ScopedFont&) = delete;
 		ScopedFont& operator=(const ScopedFont&) = delete;
 
 	private:
-		bool m_pushed{ false };
+		dmui::FontGuard m_guard;
 	};
 
 	void Heading(std::string_view a_text) noexcept;

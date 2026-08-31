@@ -32,12 +32,13 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 | **Fallout 4** | OG **1.10.163**, NG **1.10.984**, or AE **1.11.240**. One DLL supports all three. |
 | **[Fallout 4 Script Extender (F4SE)](https://f4se.silverlock.org/)** | Required for the matching game runtime. |
 | **[Address Library for F4SE](https://www.nexusmods.com/fallout4/mods/47327)** | Required for the matching game runtime. Addictol will refuse to load without it. |
+| **DearModdingUI** | The standalone menu host is included in Addictol release archives. Addictol continues without an in-game menu when the host is absent. |
 
 ---
 
 ## Features
 
-More than 90 modules cover the following areas. Most can be toggled independently; a small set of
+The 90 modules cover the following areas. Most can be toggled independently; a small set of
 core modules is mandatory.
 
 | Capability | Implementation |
@@ -62,6 +63,7 @@ Install with a mod manager, or extract the release archive into the Fallout 4 `D
 Data\
 ├─ F4SE\Plugins\
 │  ├─ Addictol.dll, Addictol.toml, Addictol_*.ini
+│  ├─ DearModdingUI.dll, DearModdingUI.toml
 │  └─ DearModdingUI\{Fonts,Shaders}\...
 └─ Scripts\{Addictol,XCELL}.pex
 ```
@@ -72,7 +74,7 @@ The archive also contains `Addictol.pdb` and Papyrus source files; neither is re
 
 ## Configuration
 
-The central registry exposes 121 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
+The central registry exposes 112 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
 `[Telemetry]`, and `[Additional]`. The shipped `Addictol.toml` documents every option inline.
 
 > [!WARNING]
@@ -91,13 +93,16 @@ loaded, were disabled, or skipped; check it first when something is not working.
 
 ## Menu
 
-The menu is enabled by default. Press **F11** to open it, or set `[Additional] sMenuToggleKey` to
-F1-F12, Home, End, Insert, or Delete. It can also display pages registered by other loaded mods.
+DearModdingUI owns the shared menu. Press **F11** to open it, or set `[Additional] sMenuToggleKey`
+in `DearModdingUI.toml` to F1-F12, Home, End, Insert, or Delete.
+
+Addictol no longer reads its former `bMenu` or `sMenuToggleKey` settings. Existing custom keys are
+not migrated; copy them to `DearModdingUI.toml` or change them through the host settings page.
 
 | Page | Contents |
 |---|---|
 | **Home** | Runtime, live module summary, project links, and common answers. |
-| **Settings** | All 121 settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
+| **Settings** | All 112 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
 | **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
 | **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels. |
 | **Log Control** | Session-only record and flush levels with the live output rate. |
@@ -105,8 +110,8 @@ F1-F12, Home, End, Insert, or Delete. It can also display pages registered by ot
 > [!NOTE]
 > Telemetry panels appear only when `[Telemetry] bEnabled` is `true`; it defaults to `false`.
 
-Shared appearance and accessibility controls live behind the footer gear. Addictol's menu enablement,
-toggle key, and refresh interval are under **Settings > Interface**.
+Shared appearance, accessibility, and toggle-key controls live behind the footer gear. Addictol's
+refresh interval remains under **Settings > Interface**.
 
 ---
 
@@ -122,7 +127,8 @@ cd Addictol
 MSBuild VC/Addictol.sln -p:Configuration=Release -p:Platform=x64
 ```
 
-Output: `.Build/F4SE/Plugins/Addictol.dll`
+Output: `.Build/F4SE/Plugins/Addictol.dll`. Packaging also copies the standalone DearModdingUI
+payload from a sibling `DearModdingUI/.Build/F4SE/Plugins` checkout; build that project first.
 
 ---
 
@@ -137,7 +143,7 @@ address rules, and pull request requirements.
 
 GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPTIONS).
 
-The DearModdingUI shell, theme, font roles, cursor behavior, and blur are ported from
+The bundled standalone DearModdingUI shell, theme, font roles, cursor behavior, and blur are ported from
 [Fallout 4 Community Shaders](https://github.com/northaxosky/fallout4-community-shaders)
 (`src/Menu/FeatureListRenderer.*`, `Menu.*`, `ThemeManager.*`, `Fonts.*`, `CursorLoader.*`,
 `BackgroundBlur.*`, `src/Utils/UI.*`, and `ImGuiRecovery.h`), which is GPL-3.0. Its Gaussian blur

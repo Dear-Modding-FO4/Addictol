@@ -57,10 +57,6 @@ namespace Addictol
 
 	[[nodiscard]] std::string_view SettingDisplayCategoryName(
 		SettingDisplayCategory a_category) noexcept;
-	[[nodiscard]] bool IsHostPresentationSetting(
-		const SettingEntry& a_setting) noexcept;
-	[[nodiscard]] bool IsSettingsPageEditable(
-		const SettingEntry& a_setting) noexcept;
 	[[nodiscard]] std::span<const std::string_view> SettingStringOptions(
 		const SettingEntry& a_setting) noexcept;
 	[[nodiscard]] SettingControlKind SelectSettingControl(

@@ -306,10 +306,6 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Core/AdConfigValidation.cpp")
     add_files("Addictol/Source/Core/AdLogControl.cpp")
     add_files("Addictol/Source/Core/Settings/**.cpp")
-    add_files("Addictol/Source/DearModdingUI/FontCatalog.cpp")
-    add_files("Addictol/Source/DearModdingUI/Navigation.cpp")
-    add_files("Addictol/Source/DearModdingUI/Registry.cpp")
-    add_files("Addictol/Source/DearModdingUI/Status.cpp")
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
 
     -- add include directories
@@ -403,7 +399,6 @@ target(plugin_name, function()
     add_files("Addictol/Source/**.cpp")
     add_files("Version/resource_version.rc")
     add_headerfiles("Addictol/Include/**.h")
-    add_extrafiles(".Build/F4SE/Plugins/DearModdingUI/**")
 
     -- add include directories
     add_includedirs(
@@ -493,4 +488,24 @@ target(plugin_name, function()
         "/PDB:" .. xmake_plugin_pdb,
         { force = true }
     )
+
+    after_build(function(target)
+        local host = path.join(
+            os.projectdir(),
+            "..",
+            "DearModdingUI",
+            ".Build",
+            "F4SE",
+            "Plugins"
+        )
+        local dll = path.join(host, "DearModdingUI.dll")
+        if not os.isfile(dll) then
+            raise("build DearModdingUI first at " .. host)
+        end
+        local runtime = path.join(target:targetdir(), "DearModdingUI")
+        os.cp(dll, target:targetdir())
+        os.cp(path.join(host, "DearModdingUI.toml"), target:targetdir())
+        os.rm(runtime)
+        os.cp(path.join(host, "DearModdingUI"), runtime)
+    end)
 end)

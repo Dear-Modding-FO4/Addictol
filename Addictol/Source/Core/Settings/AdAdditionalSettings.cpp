@@ -1,5 +1,4 @@
 #include <Core/Settings/AdSettings.h>
-#include <DearModdingUI/HostSettings.h>
 
 namespace Addictol
 {
@@ -180,97 +179,13 @@ namespace Addictol
 		SettingApplyTiming::kImmediate
 	};
 
-	BoolSetting bAdditionalMenu{
-		"Additional"sv,
-		"bMenu"sv,
-		SettingDisplayCategory::kInterface,
-		true,
-		"In-game diagnostics window drawn over the game. Tabs appear in module name order; Log Control is always last and is always available."sv,
-		SettingApplyTiming::kNextLaunch
-	};
-
-	StrSetting sAdditionalMenuToggleKey{
-		"Additional"sv,
-		"sMenuToggleKey"sv,
-		SettingDisplayCategory::kInterface,
-		"F11",
-		"Key that opens and closes the menu: F1-F12, Home, End, Insert, or Delete (needs bMenu)."sv,
-		SettingApplyTiming::kNextLaunch
-	};
-
 	U32Setting uAdditionalMenuRefreshMs{
 		"Additional"sv,
 		"uMenuRefreshMs"sv,
 		SettingDisplayCategory::kInterface,
 		250,
-		"How often the open tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000 (needs bMenu)."sv,
+		"How often an open Addictol tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000."sv,
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ 100.0, 2000.0 }
-	};
-
-	BoolSetting bAdditionalMenuMonochromeIcons{
-		"Additional"sv,
-		"bMenuMonochromeIcons"sv,
-		SettingDisplayCategory::kInterface,
-		false,
-		"Uses the theme text color for menu icons instead of colored accents (needs bMenu)."sv,
-		SettingApplyTiming::kImmediate
-	};
-
-	StrSetting sAdditionalMenuAccentColor{
-		"Additional"sv,
-		"sMenuAccentColor"sv,
-		SettingDisplayCategory::kInterface,
-		"#42FA60",
-		"Menu accent as a six-digit RGB hex color. Drives controls and colored menu icons (needs bMenu)."sv,
-		SettingApplyTiming::kImmediate
-	};
-
-	F32Setting fAdditionalMenuWindowOpacity{
-		"Additional"sv,
-		"fMenuWindowOpacity"sv,
-		SettingDisplayCategory::kInterface,
-		DearModdingUI::kDefaultWindowBackgroundOpacity,
-		"Host window background opacity from 0.20 to 1.00 (needs bMenu)."sv,
-		SettingApplyTiming::kImmediate,
-		SettingNumericRange{ 0.20, 1.0 }
-	};
-
-	BoolSetting bAdditionalMenuBackgroundBlur{
-		"Additional"sv,
-		"bMenuBackgroundBlur"sv,
-		SettingDisplayCategory::kInterface,
-		true,
-		"Blurs the game behind the menu window (needs bMenu)."sv,
-		SettingApplyTiming::kImmediate
-	};
-
-	F32Setting fAdditionalMenuBackgroundBlurStrength{
-		"Additional"sv,
-		"fMenuBackgroundBlurStrength"sv,
-		SettingDisplayCategory::kInterface,
-		DearModdingUI::kDefaultBackgroundBlurStrength,
-		"Background blur sample spread from 0.10 to 1.00 (needs bMenuBackgroundBlur)."sv,
-		SettingApplyTiming::kImmediate,
-		SettingNumericRange{ 0.10, 1.0 }
-	};
-
-	F32Setting fAdditionalMenuUiScale{
-		"Additional"sv,
-		"fMenuUiScale"sv,
-		SettingDisplayCategory::kInterface,
-		DearModdingUI::Theme::kDefaultUserScale,
-		"Accessibility scale applied on top of resolution-derived menu sizing, from 0.75 to 2.00 (needs bMenu)."sv,
-		SettingApplyTiming::kImmediate,
-		SettingNumericRange{ 0.75, 2.0 }
-	};
-
-	StrSetting sAdditionalMenuBodyFontFamily{
-		"Additional"sv,
-		"sMenuBodyFontFamily"sv,
-		SettingDisplayCategory::kInterface,
-		std::string{ DearModdingUI::kDefaultBodyFontFamily },
-		"Body font family folder under Data/F4SE/Plugins/DearModdingUI/Fonts (needs bMenu)."sv,
-		SettingApplyTiming::kImmediate
 	};
 }

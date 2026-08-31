@@ -3,10 +3,9 @@
 #include <Core/Settings/AdSettingsModel.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <DearModdingUI/SettingsActions.h>
-#include <DearModdingUI/Shell.h>
-#include <DearModdingUI/Theme.h>
 #include <DearModdingUI/VisualDecisions.h>
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuWidgets.h>
 
 #include <REX/REX.h>
 
@@ -312,9 +311,7 @@ namespace Addictol::Menu
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 			{
-				const DearModdingUI::Theme::FontGuard font{
-					DearModdingUI::Theme::FontRole::kSubheading
-				};
+				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBHEADING };
 				ImGui::TextUnformatted(
 					setting.DisplayName().data(),
 					setting.DisplayName().data() +
@@ -329,13 +326,11 @@ namespace Addictol::Menu
 			{
 				ImGui::SameLine();
 				ImGui::TextColored(
-					DearModdingUI::Theme::colors::Accent(),
+					dmui::ToImVec4(ThemeColors().accent),
 					"Applies now");
 			}
 			{
-				const DearModdingUI::Theme::FontGuard font{
-					DearModdingUI::Theme::FontRole::kSubtext
-				};
+				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
 				ImGui::TextWrapped(
 					"%.*s",
 					static_cast<int>(setting.Description().size()),
@@ -388,7 +383,6 @@ namespace Addictol::Menu
 				g_draft.entries,
 				[&](const SettingDraftEntry& a_entry) {
 					return a_entry.setting->DisplayCategory() == a_category &&
-						IsSettingsPageEditable(*a_entry.setting) &&
 						MatchesSettingFilter(
 							*a_entry.setting,
 							a_entry.draft,
@@ -440,18 +434,24 @@ namespace Addictol::Menu
 					DearModdingUI::SettingsAction::kApply,
 					"##AddictolSettingsApplyButton",
 					applyLabel,
-					"Apply (121)",
+					"Apply (112)",
 					applyTooltip }
 			};
-			const auto buttonExtent =
-				DearModdingUI::SettingsActionButtonExtent();
+			const auto buttonExtentResult =
+				Client().SettingsActionButtonExtent();
+			if (!buttonExtentResult)
+				return;
+			const auto buttonExtent = *buttonExtentResult;
 			std::array<float, actions.size()> widths{};
 			for (size_t index = 0; index < actions.size(); ++index)
 			{
-				widths[index] = DearModdingUI::SettingsActionButtonWidth(
-					actions[index].action,
+				const auto width = Client().SettingsActionButtonWidth(
+					static_cast<DMUI_SettingsAction>(actions[index].action),
 					actions[index].widthLabel,
 					buttonExtent);
+				if (!width)
+					return;
+				widths[index] = *width;
 			}
 			const auto widthSum =
 				DearModdingUI::ResolveSettingsActionButtonWidthSum(
@@ -513,20 +513,20 @@ namespace Addictol::Menu
 			for (size_t index = 0; index < actions.size(); ++index)
 			{
 				const auto& action = actions[index];
-				const auto pressed = DearModdingUI::DrawSettingsActionButton(
+				const auto pressed = Client().DrawSettingsActionButton(
 					action.id,
 					{
 						actionX,
 						start.y + (rowHeight - buttonExtent) * 0.5f
 					},
 					{ widths[index], buttonExtent },
-					action.action,
+					static_cast<DMUI_SettingsAction>(action.action),
 					action.fallbackLabel,
 					action.tooltip,
 					DearModdingUI::SettingsActionEnabled(
 						action.action,
 						dirty));
-				if (pressed)
+				if (pressed.value_or(false))
 				{
 					switch (action.action)
 					{
@@ -597,10 +597,8 @@ namespace Addictol::Menu
 			const auto index = CategoryIndex(category);
 			const auto name = SettingDisplayCategoryName(category);
 			{
-				const DearModdingUI::Theme::FontGuard font{
-					DearModdingUI::Theme::FontRole::kHeading
-				};
-				DearModdingUI::DrawCollapsingSectionHeader(
+				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_HEADING };
+				(void)Client().DrawCollapsingSectionHeader(
 					name.data(),
 					name.data(),
 					CategoryGlyph(category),
@@ -629,7 +627,6 @@ namespace Addictol::Menu
 				for (auto& entry : g_draft.entries)
 				{
 					if (entry.setting->DisplayCategory() != category ||
-						!IsSettingsPageEditable(*entry.setting) ||
 						!MatchesSettingFilter(
 							*entry.setting,
 							entry.draft,

@@ -2,8 +2,7 @@
 
 #include <Core/AdPlugin.h>
 #include <DearModdingUI/IconGlyphs.h>
-#include <DearModdingUI/Shell.h>
-#include <DearModdingUI/Theme.h>
+#include <Menu/AdMenu.h>
 
 #include <imgui/imgui.h>
 
@@ -21,20 +20,20 @@ namespace Addictol::Menu
 			ModuleOutcomeFilter filter{ ModuleOutcomeFilter::kAll };
 		};
 
-		[[nodiscard]] const ImVec4& OutcomeColor(
+		[[nodiscard]] ImVec4 OutcomeColor(
 			ModuleOutcomeSeverity a_severity) noexcept
 		{
 			using enum ModuleOutcomeSeverity;
 			switch (a_severity)
 			{
 			case kDisabled:
-				return DearModdingUI::Theme::kStatusPaletteDefaults.disable;
+				return dmui::ToImVec4(ThemeColors().statusDisable);
 			case kInfo:
-				return DearModdingUI::Theme::kStatusPaletteDefaults.info;
+				return dmui::ToImVec4(ThemeColors().statusInfo);
 			case kWarning:
-				return DearModdingUI::Theme::kStatusPaletteDefaults.warning;
+				return dmui::ToImVec4(ThemeColors().statusWarning);
 			case kError:
-				return DearModdingUI::Theme::kStatusPaletteDefaults.error;
+				return dmui::ToImVec4(ThemeColors().statusError);
 			case kNormal:
 				return ImGui::GetStyleColorVec4(ImGuiCol_Text);
 			}
@@ -63,8 +62,8 @@ namespace Addictol::Menu
 				static_cast<unsigned long long>(a_counts[2]));
 			ImGui::TextColored(
 				a_counts[3] == 0 && a_counts[4] == 0 ?
-					DearModdingUI::Theme::kStatusPaletteDefaults.success :
-					DearModdingUI::Theme::kStatusPaletteDefaults.error,
+					dmui::ToImVec4(ThemeColors().statusSuccess) :
+					dmui::ToImVec4(ThemeColors().statusError),
 				"%llu failed query, %llu failed install (%llu total)",
 				static_cast<unsigned long long>(a_counts[3]),
 				static_cast<unsigned long long>(a_counts[4]),
@@ -83,7 +82,7 @@ namespace Addictol::Menu
 			ImGui::TableHeadersRow();
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			DearModdingUI::DrawSearchInput(
+			(void)Client().DrawSearchInput(
 				"ModuleSearchBar",
 				"Search modules...",
 				a_state.search);
@@ -122,7 +121,7 @@ namespace Addictol::Menu
 			if (a_status.outcome == ModuleOutcome::kSkipped)
 			{
 				ImGui::TextColored(
-					DearModdingUI::Theme::kStatusPaletteDefaults.warning,
+					dmui::ToImVec4(ThemeColors().statusWarning),
 					"%s",
 					a_status.skipReason.c_str());
 			}
@@ -204,7 +203,7 @@ namespace Addictol::Menu
 			Plugin::GetSingleton()->GetModules().ModuleStatuses();
 		const auto counts = TallyModuleOutcomes(statuses);
 
-		DearModdingUI::DrawSectionHeader(
+		(void)Client().DrawSectionHeader(
 			"Modules",
 			DearModdingUI::PhosphorGlyph::kPuzzlePiece);
 		DrawSummary(counts);

@@ -89,7 +89,6 @@
 #include <Modules/AdModuleCraftingMenuFix.h>
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
-#include <Modules/AdModulePlatformImgui.h>
 #include <Modules/AdModuleMenu.h>
 
 // Create patches
@@ -182,7 +181,6 @@ static auto sModuleWaterJetpackFix					= std::make_shared<Addictol::ModuleWaterJ
 static auto sModuleCraftingMenuFix					= std::make_shared<Addictol::ModuleCraftingMenuFix>();
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
-static auto sModulePlatformImgui					= std::make_shared<Addictol::ModulePlatformImgui>();
 static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
 
 void AdRegisterPreloadModules()
@@ -286,7 +284,6 @@ void AdRegisterModules()
 	modules.Register(sModuleWaterJetpackFix);
 	modules.Register(sModuleAIProcess3DUpdateFlag);
 	modules.Register(sModuleHighResLocalMaps);
-	modules.Register(sModulePlatformImgui);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
@@ -308,9 +305,8 @@ void AdRegisterModules()
 	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
 	modules.Register(sModuleUtilityShader,					kGameLoaded);
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
-	modules.Register(sModulePlatformImgui,					kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
 	// Menu
-	modules.Register(sModuleMenu);
+	modules.Register(sModuleMenu,							kPostPostLoad);
 }

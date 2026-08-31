@@ -12,6 +12,11 @@
 #include <thread>
 #include <vector>
 
+namespace dmui
+{
+	class Client;
+}
+
 namespace Addictol
 {
 	class ModuleManager;
@@ -241,6 +246,7 @@ namespace Addictol
 	{
 		[[nodiscard]] TelemetryHub& Hub() noexcept;
 		void Initialize(const ModuleManager& a_modules) noexcept;
+		[[nodiscard]] bool ConnectDearModdingUI(dmui::Client& a_client) noexcept;
 		void ObserveFrame() noexcept;
 	}
 }

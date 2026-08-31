@@ -147,8 +147,6 @@ namespace vmm_tests
 	void run_zlib_backend_checks(Runner& runner);
 	void run_zlib_inflate_checks(Runner& runner);
 	void run_libdeflate_checks(Runner& runner);
-	void run_imgui_platform_checks(Runner& runner);
-	void run_dear_modding_ui_checks(Runner& runner);
 	void run_log_control_checks(Runner& runner);
 	void run_menu_checks(Runner& runner);
 	void run_setting_registry_checks(Runner& runner);

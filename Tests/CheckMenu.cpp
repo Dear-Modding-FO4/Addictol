@@ -4,7 +4,6 @@
 #include "Harness.h"
 
 #include <initializer_list>
-#include <string>
 
 namespace vmm_tests
 {
@@ -12,12 +11,6 @@ namespace vmm_tests
 	{
 		using namespace Addictol;
 		using namespace Addictol::Menu;
-
-		struct ExpectedToggleKey
-		{
-			std::string_view name;
-			uint32_t virtualKey;
-		};
 
 		struct ExpectedLogLevel
 		{
@@ -30,25 +23,6 @@ namespace vmm_tests
 			ModuleOutcome outcome;
 		};
 
-		inline constexpr std::initializer_list<ExpectedToggleKey> kExpectedToggleKeys{
-			{ "F1"sv, 0x70 },
-			{ "F2"sv, 0x71 },
-			{ "F3"sv, 0x72 },
-			{ "F4"sv, 0x73 },
-			{ "F5"sv, 0x74 },
-			{ "F6"sv, 0x75 },
-			{ "F7"sv, 0x76 },
-			{ "F8"sv, 0x77 },
-			{ "F9"sv, 0x78 },
-			{ "F10"sv, 0x79 },
-			{ "F11"sv, 0x7A },
-			{ "F12"sv, 0x7B },
-			{ "Home"sv, 0x24 },
-			{ "End"sv, 0x23 },
-			{ "Insert"sv, 0x2D },
-			{ "Delete"sv, 0x2E }
-		};
-
 		inline constexpr std::initializer_list<ExpectedLogLevel> kExpectedLogLevels{
 			{ LogControl::Level::kTrace, "trace"sv },
 			{ LogControl::Level::kDebug, "debug"sv },
@@ -59,28 +33,13 @@ namespace vmm_tests
 			{ LogControl::Level::kOff, "off"sv }
 		};
 
-		static_assert(kMenuDefaultToggleKey == 0x7A);
 		static_assert(kMenuMinRefreshMs == 100);
 		static_assert(kMenuMaxRefreshMs == 2000);
-		static_assert(ParseMenuToggleKey("F11"sv).virtualKey == 0x7A);
-		static_assert(ParseMenuToggleKey("F11"sv).recognized);
-		static_assert(!ParseMenuToggleKey("Q"sv).recognized);
 		static_assert(ClampMenuFormattedLength(53, 48) == 47);
 	}
 
 	void run_menu_checks(Runner& runner)
 	{
-		runner.test("toggle key table matches pinned virtual keys", [] {
-			require(kMenuToggleKeys.size() == kExpectedToggleKeys.size(), "toggle key count changed");
-			size_t index = 0;
-			for (const auto& expected : kExpectedToggleKeys)
-			{
-				const auto& actual = kMenuToggleKeys[index++];
-				require(actual.name == expected.name, "toggle key name or order changed");
-				require(actual.virtualKey == expected.virtualKey, "toggle virtual key changed");
-			}
-		});
-
 		runner.test("log level combo matches the public levels", [] {
 			require(kMenuLogLevels.size() == kExpectedLogLevels.size(), "log level count changed");
 			size_t index = 0;
@@ -89,27 +48,6 @@ namespace vmm_tests
 				const auto actual = kMenuLogLevels[index++];
 				require(actual == expected.level, "log level order changed");
 				require(LogControl::LevelName(actual) == expected.name, "public log level name changed");
-			}
-		});
-
-		runner.test("toggle key parser accepts every supported name", [] {
-			for (const auto& key : kExpectedToggleKeys)
-			{
-				const auto parsed = ParseMenuToggleKey(key.name);
-				require(parsed.recognized, std::string("rejected ") + std::string(key.name));
-				require(parsed.virtualKey == key.virtualKey, "wrong virtual key");
-				require(MenuToggleKeyName(parsed.virtualKey) == key.name, "toggle key did not round trip");
-			}
-		});
-
-		runner.test("toggle key parser ignores case and rejects unsupported names", [] {
-			require(ParseMenuToggleKey("f11"sv).virtualKey == 0x7A, "lower case name rejected");
-			require(ParseMenuToggleKey("hOmE"sv).virtualKey == 0x24, "mixed case name rejected");
-			for (const auto name : { ""sv, "F0"sv, "F13"sv, "Escape"sv, "F1 "sv })
-			{
-				const auto parsed = ParseMenuToggleKey(name);
-				require(!parsed.recognized, "unsupported name was accepted");
-				require(parsed.virtualKey == kMenuDefaultToggleKey, "fallback is not F11");
 			}
 		});
 
@@ -139,18 +77,6 @@ namespace vmm_tests
 				"250 ms did not refresh");
 			require(!ShouldRefreshPanel(true, last, last, frequency, 250),
 				"an unchanged counter refreshed");
-		});
-
-		runner.test("menu toggle decisions follow the key and backend readiness", [] {
-			constexpr uint32_t toggle = 0x7A;
-			auto decision = DecideMenuToggle(0x70, toggle, false, true);
-			require(!decision.matched && !decision.open, "a foreign key opened the menu");
-			decision = DecideMenuToggle(toggle, toggle, false, true);
-			require(decision.matched && decision.open, "toggle did not open the menu");
-			decision = DecideMenuToggle(toggle, toggle, true, true);
-			require(decision.matched && !decision.open, "toggle did not close the menu");
-			decision = DecideMenuToggle(toggle, toggle, true, false);
-			require(decision.matched && decision.open, "backend loss changed the requested state");
 		});
 
 		runner.test("module outcomes classify into actionable severities", [] {

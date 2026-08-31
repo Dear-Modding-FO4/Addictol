@@ -1,5 +1,4 @@
 #include <Core/AdClock.h>
-#include <DearModdingUI/Theme.h>
 #include <Menu/AdMenu.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Menu/AdMenuTelemetry.h>
@@ -139,9 +138,11 @@ namespace Addictol
 			ImGui::TableNextColumn();
 			if (display.progress)
 			{
-				const auto color = display.fraction >= 0.9f ? Theme::colors::kError :
-					display.fraction >= 0.75f ? Theme::colors::kWarning :
-					Theme::colors::AccentMuted();
+				const auto color = display.fraction >= 0.9f ?
+					dmui::ToImVec4(Menu::ThemeColors().error) :
+					display.fraction >= 0.75f ?
+						dmui::ToImVec4(Menu::ThemeColors().warning) :
+						dmui::ToImVec4(Menu::ThemeColors().accentMuted);
 				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
 				ImGui::ProgressBar(display.fraction, ImVec2(-FLT_MIN, 0.0f), "");
 				ImGui::PopStyleColor();

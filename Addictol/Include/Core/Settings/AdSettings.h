@@ -119,14 +119,5 @@ namespace Addictol
 	extern I32Setting nAdditionalBloomScale;
 	extern BoolSetting bAdditionalIgnoreCompatibilityChecks;
 	extern F32Setting fAdditionalLocalMapScaleFactor;
-	extern BoolSetting bAdditionalMenu;
-	extern StrSetting sAdditionalMenuToggleKey;
 	extern U32Setting uAdditionalMenuRefreshMs;
-	extern BoolSetting bAdditionalMenuMonochromeIcons;
-	extern StrSetting sAdditionalMenuAccentColor;
-	extern F32Setting fAdditionalMenuWindowOpacity;
-	extern BoolSetting bAdditionalMenuBackgroundBlur;
-	extern F32Setting fAdditionalMenuBackgroundBlurStrength;
-	extern F32Setting fAdditionalMenuUiScale;
-	extern StrSetting sAdditionalMenuBodyFontFamily;
 }

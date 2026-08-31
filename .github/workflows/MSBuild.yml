@@ -75,7 +75,7 @@ jobs:
         New-Item -ItemType Directory -Path "$name\scripts" -Force | Out-Null
 
         Get-ChildItem -Recurse -Path '.\.Build\F4SE\Plugins' `
-          -Include 'Addictol.dll','Addictol.pdb','Addictol.toml','Addictol_FacegenExceptions.ini','Addictol_SNCT.ini' |
+          -Include 'Addictol.dll','Addictol.pdb','Addictol.toml','Addictol_FacegenExceptions.ini','Addictol_SNCT.ini','DearModdingUI.dll','DearModdingUI.toml' |
           ForEach-Object { Copy-Item -Path $_.FullName -Destination "$name\f4se\plugins\$($_.Name)" -Force }
 
         if (Test-Path '.\.Build\Scripts') {

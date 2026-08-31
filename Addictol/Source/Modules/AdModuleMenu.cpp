@@ -6,7 +6,7 @@ namespace Addictol
 {
 
 	ModuleMenu::ModuleMenu() :
-		Module("Menu", &bAdditionalMenu)
+		Module("Menu")
 	{}
 
 	bool ModuleMenu::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

@@ -24,25 +24,6 @@ namespace Addictol
 			"critical",
 			"off"
 		};
-		inline constexpr std::array<std::string_view, 16> kMenuToggleKeyOptions{
-			"F1",
-			"F2",
-			"F3",
-			"F4",
-			"F5",
-			"F6",
-			"F7",
-			"F8",
-			"F9",
-			"F10",
-			"F11",
-			"F12",
-			"Home",
-			"End",
-			"Insert",
-			"Delete"
-		};
-
 		[[nodiscard]] std::string Lower(std::string_view a_value)
 		{
 			std::string result{ a_value };
@@ -88,27 +69,6 @@ namespace Addictol
 		}
 	}
 
-	bool IsHostPresentationSetting(const SettingEntry& a_setting) noexcept
-	{
-		if (a_setting.Section() != "Additional")
-			return false;
-		constexpr std::array keys{
-			std::string_view{ "bMenuMonochromeIcons" },
-			std::string_view{ "sMenuAccentColor" },
-			std::string_view{ "fMenuWindowOpacity" },
-			std::string_view{ "bMenuBackgroundBlur" },
-			std::string_view{ "fMenuBackgroundBlurStrength" },
-			std::string_view{ "fMenuUiScale" },
-			std::string_view{ "sMenuBodyFontFamily" }
-		};
-		return std::ranges::find(keys, a_setting.Key()) != keys.end();
-	}
-
-	bool IsSettingsPageEditable(const SettingEntry& a_setting) noexcept
-	{
-		return !IsHostPresentationSetting(a_setting);
-	}
-
 	std::span<const std::string_view> SettingStringOptions(
 		const SettingEntry& a_setting) noexcept
 	{
@@ -119,8 +79,6 @@ namespace Addictol
 		if (IsSettingKey(a_setting, "sLogLevel") ||
 			IsSettingKey(a_setting, "sLogFlushLevel"))
 			return kLogLevelOptions;
-		if (IsSettingKey(a_setting, "sMenuToggleKey"))
-			return kMenuToggleKeyOptions;
 		return {};
 	}
 
@@ -248,16 +206,12 @@ namespace Addictol
 		if (!a_state.active)
 			return;
 		for (auto& entry : a_state.entries)
-		{
-			if (IsSettingsPageEditable(*entry.setting))
-				entry.draft = entry.setting->DefaultValue();
-		}
+			entry.draft = entry.setting->DefaultValue();
 	}
 
 	void ResetSettingDraft(SettingDraftEntry& a_entry)
 	{
-		if (IsSettingsPageEditable(*a_entry.setting))
-			a_entry.draft = a_entry.setting->DefaultValue();
+		a_entry.draft = a_entry.setting->DefaultValue();
 	}
 
 	void LeaveSettingsDraft(SettingsDraftState& a_state)

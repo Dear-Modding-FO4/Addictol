@@ -81,9 +81,10 @@ namespace
 	}
 
 	// Derived so flipping a shipped default cannot silently invalidate these fixtures.
-	[[nodiscard]] bool MenuDefault()
+	[[nodiscard]] bool CompatibilityDefault()
 	{
-		return std::get<bool>(Setting("Additional", "bMenu").DefaultValue());
+		return std::get<bool>(
+			Setting("Additional", "bIgnoreCompatibilityChecks").DefaultValue());
 	}
 
 	[[nodiscard]] std::filesystem::path TemporarySettingsDirectory()
@@ -163,11 +164,11 @@ namespace vmm_tests
 		runner.test("setting registry resolves module gate pointers", [] {
 			const auto* setting =
 				Addictol::SettingRegistry::GetSingleton().Find(
-					&Addictol::bAdditionalMenu);
+					&Addictol::bAdditionalIgnoreCompatibilityChecks);
 			require(setting != nullptr, "module gate pointer was not registered");
 			require(
 				setting->Section() == "Additional" &&
-					setting->Key() == "bMenu",
+					setting->Key() == "bIgnoreCompatibilityChecks",
 				"module gate pointer resolved to the wrong key");
 		});
 
@@ -209,7 +210,7 @@ namespace vmm_tests
 
 			const auto* setting = Addictol::SettingRegistry::GetSingleton().Find(
 				"Additional",
-				"bMenuMonochromeIcons");
+				"bIgnoreCompatibilityChecks");
 			require(setting != nullptr, "menu icon setting is not registered");
 			const auto original = setting->Value();
 			const auto* originalBool = std::get_if<bool>(&original);
@@ -232,7 +233,7 @@ namespace vmm_tests
 				counts{};
 			const auto settings =
 				Addictol::SettingRegistry::GetSingleton().Settings();
-			require(settings.size() == 121, "setting registry size changed");
+			require(settings.size() == 112, "setting registry size changed");
 			for (const auto* setting : settings)
 			{
 				const auto category =
@@ -250,11 +251,12 @@ namespace vmm_tests
 		});
 
 		runner.test("settings override output keeps only non-default owned values", [] {
-			const auto& menu = Setting("Additional", "bMenu");
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const auto& achievements = Setting("Patches", "bAchievements");
 			const auto& bloom = Setting("Patches", "bHighResBloom");
 			const std::array values{
-				Addictol::SettingValueSnapshot{ &menu, !MenuDefault() },
+				Addictol::SettingValueSnapshot{ &menu, !CompatibilityDefault() },
 				Addictol::SettingValueSnapshot{ &achievements, false },
 				Addictol::SettingValueSnapshot{ &bloom, bloom.DefaultValue() }
 			};
@@ -271,8 +273,11 @@ namespace vmm_tests
 			require(parsed.is_ok(), "override TOML could not be parsed");
 			const auto& root = parsed.unwrap();
 			require(
-				toml::find(root, "Additional").contains("bMenu") &&
-					toml::find<bool>(root, "Additional", "bMenu") == !MenuDefault(),
+				toml::find(root, "Additional").contains("bIgnoreCompatibilityChecks") &&
+					toml::find<bool>(
+						root,
+						"Additional",
+						"bIgnoreCompatibilityChecks") == !CompatibilityDefault(),
 				"non-default boolean was not written");
 			require(
 				!toml::find<bool>(root, "Patches", "bAchievements"),
@@ -283,14 +288,15 @@ namespace vmm_tests
 		});
 
 		runner.test("settings override output groups and round trips every value type", [] {
-			const auto& boolean = Setting("Additional", "bMenu");
+			const auto& boolean =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const auto& floating = Setting("Additional", "fLocalMapScaleFactor");
 			const auto& signedInteger = Setting("Additional", "nQuitGameDelayMs");
 			const auto& unsignedInteger = Setting("Additional", "uMenuRefreshMs");
-			const auto& string = Setting("Additional", "sMenuToggleKey");
+			const auto& string = Setting("Additional", "sAllocator");
 			const std::string quoted{ "F\"11\\path\nnext" };
 			const std::array values{
-				Addictol::SettingValueSnapshot{ &boolean, !MenuDefault() },
+				Addictol::SettingValueSnapshot{ &boolean, !CompatibilityDefault() },
 				Addictol::SettingValueSnapshot{ &floating, 2.25 },
 				Addictol::SettingValueSnapshot{ &signedInteger, int64_t{ 1234 } },
 				Addictol::SettingValueSnapshot{ &unsignedInteger, uint64_t{ 777 } },
@@ -309,7 +315,10 @@ namespace vmm_tests
 			require(parsed.is_ok(), "typed override TOML could not be parsed");
 			const auto& root = parsed.unwrap();
 			require(
-				toml::find<bool>(root, "Additional", "bMenu") == !MenuDefault(),
+				toml::find<bool>(
+					root,
+					"Additional",
+					"bIgnoreCompatibilityChecks") == !CompatibilityDefault(),
 				"boolean did not round trip");
 			require(
 				toml::find<double>(
@@ -333,18 +342,19 @@ namespace vmm_tests
 				toml::find<std::string>(
 					root,
 					"Additional",
-					"sMenuToggleKey") == quoted,
+					"sAllocator") == quoted,
 				"quoted string did not round trip");
 		});
 
 		runner.test("settings override output preserves unknown existing keys", [] {
-			const auto& menu = Setting("Additional", "bMenu");
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
 				Addictol::SettingValueSnapshot{ &menu, menu.DefaultValue() }
 			};
 			const std::string existing{
 				"[Additional]\n"
-				"bMenu = true\n"
+				"bIgnoreCompatibilityChecks = true\n"
 				"foreign = 17\n"
 				"\n"
 				"[ThirdParty]\n"
@@ -369,7 +379,8 @@ namespace vmm_tests
 				toml::find<std::string>(root, "ThirdParty", "name") == "keep",
 				"unknown section was dropped");
 			require(
-				!toml::find(root, "Additional").contains("bMenu"),
+				!toml::find(root, "Additional").contains(
+					"bIgnoreCompatibilityChecks"),
 				"default owned key was retained");
 		});
 
@@ -382,7 +393,8 @@ namespace vmm_tests
 				std::ofstream file{ base, std::ios::binary };
 				file << "shipped-base-sentinel\n";
 			}
-			const auto& menu = Setting("Additional", "bMenu");
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
 				Addictol::SettingValueSnapshot{ &menu, true }
 			};
@@ -405,11 +417,12 @@ namespace vmm_tests
 			const auto custom = directory / "AddictolCustom.toml";
 			{
 				std::ofstream file{ custom, std::ios::binary };
-				file << "[Additional]\nbMenu = true\nzUnowned = 7\n";
+				file << "[Additional]\nbIgnoreCompatibilityChecks = true\nzUnowned = 7\n";
 			}
-			const auto& menu = Setting("Additional", "bMenu");
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
-				Addictol::SettingValueSnapshot{ &menu, !MenuDefault() }
+				Addictol::SettingValueSnapshot{ &menu, !CompatibilityDefault() }
 			};
 			std::string error;
 			require(
@@ -417,7 +430,10 @@ namespace vmm_tests
 				"existing custom document could not be rewritten: " + error);
 			const auto root = toml::parse_str(ReadText(custom));
 			require(
-				toml::find<bool>(root, "Additional", "bMenu") == !MenuDefault(),
+				toml::find<bool>(
+					root,
+					"Additional",
+					"bIgnoreCompatibilityChecks") == !CompatibilityDefault(),
 				"existing custom document lost its override");
 			require(
 				toml::find<int64_t>(root, "Additional", "zUnowned") == 7,
@@ -429,12 +445,15 @@ namespace vmm_tests
 			const auto directory = TemporarySettingsDirectory();
 			std::filesystem::create_directories(directory);
 			const auto custom = directory / "AddictolCustom.toml";
-			const std::string invalid{ "[Additional\nbMenu = true\n" };
+			const std::string invalid{
+				"[Additional\nbIgnoreCompatibilityChecks = true\n"
+			};
 			{
 				std::ofstream file{ custom, std::ios::binary };
 				file << invalid;
 			}
-			const auto& menu = Setting("Additional", "bMenu");
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
 				Addictol::SettingValueSnapshot{ &menu, true }
 			};
@@ -480,8 +499,7 @@ namespace vmm_tests
 			const auto editable = std::ranges::find_if(
 				state.entries,
 				[](const Addictol::SettingDraftEntry& a_entry) {
-					return Addictol::IsSettingsPageEditable(*a_entry.setting) &&
-						a_entry.committed == a_entry.setting->DefaultValue() &&
+					return a_entry.committed == a_entry.setting->DefaultValue() &&
 						std::holds_alternative<bool>(a_entry.committed);
 				});
 			require(editable != state.entries.end(), "no editable boolean setting found");
@@ -501,24 +519,11 @@ namespace vmm_tests
 			const auto resettable = std::ranges::find_if(
 				state.entries,
 				[](const Addictol::SettingDraftEntry& a_entry) {
-					return Addictol::IsSettingsPageEditable(*a_entry.setting) &&
-						std::holds_alternative<bool>(a_entry.draft);
+					return std::holds_alternative<bool>(a_entry.draft);
 				});
-			const auto hostOwned = std::ranges::find_if(
-				state.entries,
-				[](const Addictol::SettingDraftEntry& a_entry) {
-					return Addictol::IsHostPresentationSetting(*a_entry.setting) &&
-						std::holds_alternative<bool>(a_entry.draft);
-				});
-			require(
-				resettable != state.entries.end() &&
-					hostOwned != state.entries.end(),
-				"reset authority test settings were not found");
+			require(resettable != state.entries.end(), "reset test setting was not found");
 			resettable->draft = !std::get<bool>(
 				resettable->setting->DefaultValue());
-			hostOwned->draft = !std::get<bool>(
-				hostOwned->setting->DefaultValue());
-			const auto hostDraft = hostOwned->draft;
 			Addictol::ResetSettingsDraftToDefaults(state);
 			require(
 				resettable->draft == resettable->setting->DefaultValue(),
@@ -527,28 +532,26 @@ namespace vmm_tests
 				resettable->committed == committed[
 					static_cast<size_t>(resettable - state.entries.begin())].value,
 				"global reset changed committed state");
-			require(
-				hostOwned->draft == hostDraft,
-				"global reset crossed the host presentation authority boundary");
 		});
 
 		runner.test("settings filters search metadata and modified values", [] {
-			const auto& menu = Setting("Additional", "bMenu");
-			Addictol::SettingFilter filter{ "bMenu", false };
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			Addictol::SettingFilter filter{ "bIgnoreCompatibilityChecks", false };
 			require(
 				Addictol::MatchesSettingFilter(
 					menu,
 					menu.DefaultValue(),
 					filter),
 				"key search did not match");
-			filter.search = "Menu";
+			filter.search = "Ignore";
 			require(
 				Addictol::MatchesSettingFilter(
 					menu,
 					menu.DefaultValue(),
 					filter),
 				"display-name search did not match");
-			filter.search = "diagnostics window";
+			filter.search = "compatibility checks";
 			require(
 				Addictol::MatchesSettingFilter(
 					menu,
@@ -563,15 +566,15 @@ namespace vmm_tests
 					filter),
 				"modified-only included a default value");
 			require(
-				Addictol::MatchesSettingFilter(menu, !MenuDefault(), filter),
+				Addictol::MatchesSettingFilter(menu, !CompatibilityDefault(), filter),
 				"modified-only excluded a changed value");
 		});
 
 		runner.test("settings reset predicate and control selection follow metadata", [] {
-			const auto& menu = Setting("Additional", "bMenu");
-			const auto& toggle = Setting("Additional", "sMenuToggleKey");
-			const auto& font = Setting("Additional", "sMenuBodyFontFamily");
-			const auto& opacity = Setting("Additional", "fMenuWindowOpacity");
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const auto& allocator = Setting("Additional", "sAllocator");
+			const auto& refresh = Setting("Additional", "uMenuRefreshMs");
 			const auto& maxStdio = Setting("Fixes", "nMaxStdIO");
 			const auto& maxPapyrus =
 				Setting("Additional", "nMaxPapyrusOpsPerFrame");
@@ -579,22 +582,18 @@ namespace vmm_tests
 				!Addictol::IsSettingModified(menu, menu.DefaultValue()),
 				"default value exposed reset");
 			require(
-				Addictol::IsSettingModified(menu, !MenuDefault()),
+				Addictol::IsSettingModified(menu, !CompatibilityDefault()),
 				"changed value did not expose reset");
 			require(
 				Addictol::SelectSettingControl(menu) ==
 					Addictol::SettingControlKind::kCheckbox,
 				"boolean did not select a checkbox");
 			require(
-				Addictol::SelectSettingControl(toggle) ==
+				Addictol::SelectSettingControl(allocator) ==
 					Addictol::SettingControlKind::kCombo,
 				"known string set did not select a combo");
 			require(
-				Addictol::SelectSettingControl(font) ==
-					Addictol::SettingControlKind::kTextInput,
-				"free string did not select text input");
-			require(
-				Addictol::SelectSettingControl(opacity) ==
+				Addictol::SelectSettingControl(refresh) ==
 					Addictol::SettingControlKind::kSlider,
 				"fully bounded number did not select a slider");
 			require(
@@ -607,16 +606,10 @@ namespace vmm_tests
 				"unbounded number did not select numeric input");
 		});
 
-		runner.test("settings edit authority keeps host presentation in the gear panel", [] {
-			require(
-				Addictol::IsSettingsPageEditable(
-					Setting("Additional", "bMenu")) &&
-					Addictol::IsSettingsPageEditable(
-						Setting("Additional", "sMenuToggleKey")) &&
-					Addictol::IsSettingsPageEditable(
-						Setting("Additional", "uMenuRefreshMs")),
-				"Addictol host configuration was not editable on the settings page");
-			constexpr std::array hostPresentationKeys{
+		runner.test("host-owned menu settings leave the Addictol registry", [] {
+			constexpr std::array hostOwnedKeys{
+				std::string_view{ "bMenu" },
+				std::string_view{ "sMenuToggleKey" },
 				std::string_view{ "bMenuMonochromeIcons" },
 				std::string_view{ "sMenuAccentColor" },
 				std::string_view{ "fMenuWindowOpacity" },
@@ -625,13 +618,19 @@ namespace vmm_tests
 				std::string_view{ "fMenuUiScale" },
 				std::string_view{ "sMenuBodyFontFamily" }
 			};
-			for (const auto key : hostPresentationKeys)
+			for (const auto key : hostOwnedKeys)
 			{
 				require(
-					!Addictol::IsSettingsPageEditable(
-						Setting("Additional", key)),
-					"host presentation setting gained duplicate edit authority");
+					Addictol::SettingRegistry::GetSingleton().Find(
+						"Additional",
+						key) == nullptr,
+					"host-owned setting remained in Addictol");
 			}
+			require(
+				Addictol::SettingRegistry::GetSingleton().Find(
+					"Additional",
+					"uMenuRefreshMs") != nullptr,
+				"client refresh setting left Addictol");
 		});
 	}
 }
