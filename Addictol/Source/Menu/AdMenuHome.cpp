@@ -58,6 +58,33 @@ namespace Addictol::Menu
 				true }
 		};
 
+		struct ModCheck
+		{
+			const char* check;
+			const char* detail;
+		};
+
+		constexpr std::array<ModCheck, 6> kModChecks{
+			ModCheck{
+				"Is the source public?",
+				"If it links CommonLibF4, GPL-3.0 requires it." },
+			ModCheck{
+				"Do the claims come with data?",
+				"\"+30% FPS\" should arrive with a method and numbers you can reproduce." },
+			ModCheck{
+				"How does the author handle bug reports?",
+				"Engagement and fixes, or deletion and blocking." },
+			ModCheck{
+				"Does it duplicate a fix you already have?",
+				"Two mods patching the same code is a common cause of crashes." },
+			ModCheck{
+				"Does the file list make sense?",
+				"Stray DLLs, unexplained INIs, and bundled redistributables deserve a question." },
+			ModCheck{
+				"Does it say what it actually changes?",
+				"A changelog naming specific systems beats \"various optimizations.\"" }
+		};
+
 		void DrawWelcomeSection() noexcept
 		{
 			{
@@ -172,6 +199,49 @@ namespace Addictol::Menu
 				ImGui::Spacing();
 			}
 		}
+
+		void DrawModdingStateSection() noexcept
+		{
+			DearModdingUI::DrawSectionHeader("On the state of F4SE mods");
+			const DearModdingUI::Theme::FontGuard font{
+				DearModdingUI::Theme::FontRole::kSubtext
+			};
+			ImGui::TextWrapped(
+				"CommonLibF4 is GPL-3.0. If a plugin links it and ships without "
+				"source, that is a license violation. Not a style disagreement, "
+				"not a preference. A violation. You are entitled to the source. "
+				"Ask for it.");
+			ImGui::Spacing();
+			ImGui::TextWrapped(
+				"The rest isn't a legal matter, just bad practice. Code generated "
+				"by a model, understood by nobody, shipped as an engine fix with "
+				"no measurement behind it. Implementations lifted out of other "
+				"people's mods without permission or credit. Another framework "
+				"that does what an existing one already does, splitting the user "
+				"base and handing two mods one more way to conflict. Releases "
+				"shaped for attention and donation points rather than for being "
+				"correct.");
+			ImGui::Spacing();
+			ImGui::TextWrapped("Don't take our word for any of it. Check.");
+			ImGui::Spacing();
+
+			ImGui::TextWrapped("Before you install:");
+			ImGui::Indent();
+			for (const auto& entry : kModChecks)
+			{
+				ImGui::Bullet();
+				ImGui::SameLine();
+				ImGui::TextWrapped("%s %s", entry.check, entry.detail);
+			}
+			ImGui::Unindent();
+			ImGui::Spacing();
+
+			ImGui::TextWrapped(
+				"New to this? The Midnight Ride is a maintained, opinionated "
+				"guide that gets you to a stable Fallout 4 without guesswork. "
+				"Start there, then add.");
+			ImGui::Spacing();
+		}
 	}
 
 	void DrawHomePage([[maybe_unused]] void* a_userData) noexcept
@@ -179,6 +249,7 @@ namespace Addictol::Menu
 		DrawWelcomeSection();
 		DrawQuickLinksSection();
 		DrawFaqSection();
+		DrawModdingStateSection();
 	}
 
 	void CopyDiagnosticsSummaryToClipboard(
