@@ -315,6 +315,7 @@ target("vmm-tests", function()
         "Depends",
         "Depends/commonlibf4/include",
         "Depends/commonlibf4/lib/commonlib-shared/include",
+        "Depends/commonlibf4/lib/dearmoddingui-api/include",
         "Depends/spdlog/include",
         "Depends/vmm/source"
     )

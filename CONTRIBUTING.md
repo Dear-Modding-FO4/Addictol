@@ -67,7 +67,6 @@ Addictol/Include/Memory/     memory allocation and tracing
 Addictol/Include/Zlib/       compression backend and helpers
 Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
-Addictol/Include/DearModdingUI/ vendored header-only menu decisions
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
 Addictol/Source/Modules/     one .cpp per feature module (90 total)
@@ -84,9 +83,9 @@ and vendored libraries (`vmm`, `xbyak`, `unordered_dense`).
 Crash logging is not part of this plugin. It ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
 
-The neutral cross-DLL UI contract and client lifecycle come from CommonLibF4's
-`include/DearModdingUI/` headers. The four header-only decision files retained in Addictol mirror
-the standalone DearModdingUI repository, which remains their source of truth.
+The neutral cross-DLL UI contract, client lifecycle, and shared visual helpers come from the
+standalone DearModdingUI API repository through CommonLibF4's nested
+`lib/dearmoddingui-api` public dependency.
 
 Release packaging expects a sibling `DearModdingUI` checkout with a completed build. Both MSBuild
 and xmake copy its DLL, TOML, fonts, and shaders into Addictol's plugin output.

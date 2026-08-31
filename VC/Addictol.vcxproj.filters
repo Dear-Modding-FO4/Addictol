@@ -436,18 +436,6 @@
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h">
-      <Filter>Include\DearModdingUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\SettingsActions.h">
-      <Filter>Include\DearModdingUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\ThemeDefaults.h">
-      <Filter>Include\DearModdingUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h">
-      <Filter>Include\DearModdingUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
       <Filter>Include\Telemetry</Filter>
     </ClInclude>
@@ -809,9 +797,6 @@
     </Filter>
     <Filter Include="Include\Telemetry">
       <UniqueIdentifier>{b9ce6c9b-4700-4e5e-9b31-3e6f1a56d176}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Include\DearModdingUI">
-      <UniqueIdentifier>{228cbdc6-78e1-45fc-9b73-8ba0f0f9c660}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Modules">
       <UniqueIdentifier>{7f9dc727-58b0-4894-9e00-e9eb155fc5f9}</UniqueIdentifier>
