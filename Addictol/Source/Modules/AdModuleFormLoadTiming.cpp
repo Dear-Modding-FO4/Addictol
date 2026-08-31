@@ -1,5 +1,6 @@
 #include <Modules/AdModuleFormLoadTiming.h>
 
+#include <Core/AdClock.h>
 #include <Core/AdUtils.h>
 #include <Telemetry/AdTelemetryHub.h>
 
@@ -170,9 +171,9 @@ namespace Addictol
 		const auto original = s_originalCompileFiles;
 		if (!original)
 			return false;
-		const auto start = TelemetryDetail::ReadQpc();
+		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_this, a_load);
-		const auto end = TelemetryDetail::ReadQpc();
+		const auto end = Addictol::ReadQpc();
 		if (s_instance && end >= start)
 		{
 			(void)s_instance->Record(
@@ -197,9 +198,9 @@ namespace Addictol
 			fileName.data ? fileName.data : "(unknown)",
 			fileName.data ? fileName.length : sizeof("(unknown)") - 1
 		};
-		const auto start = TelemetryDetail::ReadQpc();
+		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_this, a_file, a_isFirst);
-		const auto end = TelemetryDetail::ReadQpc();
+		const auto end = Addictol::ReadQpc();
 		if (s_instance && end >= start)
 		{
 			(void)s_instance->Record(

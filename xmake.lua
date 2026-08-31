@@ -302,6 +302,7 @@ target("vmm-tests", function()
 
     -- add source files
     add_files("Tests/**.cpp")
+    add_files("Addictol/Source/Core/AdClock.cpp")
     add_files("Addictol/Source/Core/AdConfigValidation.cpp")
     add_files("Addictol/Source/Core/AdLogControl.cpp")
     add_files("Addictol/Source/Core/Settings/**.cpp")

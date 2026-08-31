@@ -35,7 +35,6 @@ namespace Addictol
 		static std::atomic<bool> s_backendFailureLogged{ false };
 		static DMUI_ClientHandle s_client{ DMUI_INVALID_CLIENT_HANDLE };
 
-		static uint64_t s_qpcFrequency{ 0 };
 		static double s_lastDrawMs{ 0.0 };
 
 		void Configure() noexcept
@@ -68,25 +67,9 @@ namespace Addictol
 			});
 		}
 
-		[[nodiscard]] uint64_t ReadQpc() noexcept
-		{
-			LARGE_INTEGER counter{};
-			QueryPerformanceCounter(&counter);
-			return static_cast<uint64_t>(counter.QuadPart);
-		}
-
-		[[nodiscard]] uint64_t ReadQpcFrequency() noexcept
-		{
-			LARGE_INTEGER frequency{};
-			if (!QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0)
-				return 0;
-			return static_cast<uint64_t>(frequency.QuadPart);
-		}
-
 		void SetupSink(void* a_window) noexcept
 		{
 			auto& io = ImGui::GetIO();
-			s_qpcFrequency = ReadQpcFrequency();
 			DearModdingUI::Theme::Initialize(a_window);
 			DearModdingUI::CursorLoader::Initialize(a_window);
 			REX::INFO("Menu: DearModdingUI visuals configured"sv);
@@ -124,7 +107,7 @@ namespace Addictol
 				DearModdingUI::IsMenuVisible());
 			if (!DearModdingUI::IsMenuVisible())
 				PlatformImgui::SetDrawingEnabled(false);
-			s_lastDrawMs = QpcToMilliseconds(ReadQpc() - start, s_qpcFrequency);
+			s_lastDrawMs = QpcToMilliseconds(ReadQpc() - start, GetQpcFrequency());
 		}
 
 		[[nodiscard]] bool ToggleSink(uint32_t a_virtualKey) noexcept

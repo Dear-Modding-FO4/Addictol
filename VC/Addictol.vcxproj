@@ -55,6 +55,7 @@
     <ClCompile Include="..\Addictol\Source\Memory\AdProxyVisperHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdRegisterModules.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\AdClock.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdVisperMemoryAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />

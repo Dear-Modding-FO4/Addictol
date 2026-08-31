@@ -1,3 +1,4 @@
+#include <Core/AdClock.h>
 #include <DearModdingUI/Theme.h>
 #include <Menu/AdMenu.h>
 #include <Telemetry/AdTelemetryHub.h>
@@ -48,8 +49,8 @@ namespace Addictol
 
 		void RefreshCache() noexcept
 		{
-			const auto frequency = TelemetryDetail::QpcFrequency();
-			const auto now = TelemetryDetail::ReadQpc();
+			const auto frequency = Addictol::GetQpcFrequency();
+			const auto now = Addictol::ReadQpc();
 			if (!ShouldRefreshPanel(
 					s_cache.attempted,
 					now,
@@ -58,7 +59,7 @@ namespace Addictol
 					Menu::RefreshMs()))
 				return;
 
-			const auto start = TelemetryDetail::ReadQpc();
+			const auto start = Addictol::ReadQpc();
 			const auto& hub = Telemetry::Hub();
 			if (hub.CopyLatest(s_cache.candidate) &&
 				(!s_cache.hasData ||
@@ -88,7 +89,7 @@ namespace Addictol
 			s_cache.stats = hub.Stats();
 			s_cache.frameRecordCount = hub.CopyFrameRecords(s_cache.frameRecords);
 
-			const auto finish = TelemetryDetail::ReadQpc();
+			const auto finish = Addictol::ReadQpc();
 			s_cache.refreshedAtQpc = finish;
 			s_cache.refreshTicks = finish > start ? finish - start : 0;
 			s_cache.attempted = true;
@@ -263,7 +264,7 @@ namespace Addictol
 			ImGui::TableSetupColumn("QPC time", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("Frame time", ImGuiTableColumnFlags_WidthFixed);
 			ImGui::TableHeadersRow();
-			const auto frequency = TelemetryDetail::QpcFrequency();
+			const auto frequency = Addictol::GetQpcFrequency();
 			for (size_t index = 0; index < s_cache.frameRecordCount; ++index)
 			{
 				const auto& record = s_cache.frameRecords[index];
@@ -329,7 +330,7 @@ namespace Addictol
 			ImGui::Separator();
 			Muted(Print(
 				"refresh %.3f ms, cadence %u ms",
-				QpcToMilliseconds(s_cache.refreshTicks, TelemetryDetail::QpcFrequency()),
+				QpcToMilliseconds(s_cache.refreshTicks, Addictol::GetQpcFrequency()),
 				Menu::RefreshMs()));
 		}
 

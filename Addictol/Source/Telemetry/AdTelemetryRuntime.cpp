@@ -1,4 +1,5 @@
 #include <Menu/AdMenu.h>
+#include <Core/AdClock.h>
 #include <Core/AdModuleManager.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Telemetry/AdTelemetryHub.h>
@@ -38,7 +39,7 @@ namespace Addictol
 
 	TelemetryHub& Telemetry::Hub() noexcept
 	{
-		static TelemetryHub hub{ TelemetryDetail::QpcFrequency() };
+		static TelemetryHub hub{ Addictol::GetQpcFrequency() };
 		return hub;
 	}
 
@@ -49,7 +50,7 @@ namespace Addictol
 			auto& hub = Hub();
 			s_moduleManager = &a_modules;
 			auto frameSource = std::make_shared<FrameMetricSource>(
-				hub, TelemetryDetail::QpcFrequency(),
+				hub, Addictol::GetQpcFrequency(),
 				(std::max)(uTelemetryFrameRecordMs.GetValue(), 1u));
 			const auto processMemoryRegistration =
 				hub.Register(std::make_shared<ProcessMemoryMetricSource>());
@@ -118,6 +119,6 @@ namespace Addictol
 		TelemetryDetail::CaptureRenderThread(&CurrentThreadId);
 		TelemetryDetail::ObserveFrame(
 			s_frameSource.load(std::memory_order_acquire),
-			&TelemetryDetail::ReadQpc);
+			&Addictol::ReadQpc);
 	}
 }

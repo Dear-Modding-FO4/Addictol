@@ -270,27 +270,6 @@ namespace Addictol
 		return time_since_epoch.count();
 	}
 
-	uint64_t ReadQpc() noexcept
-	{
-		LARGE_INTEGER value{};
-		QueryPerformanceCounter(&value);
-		return static_cast<uint64_t>(value.QuadPart);
-	}
-
-	uint64_t GetQpcFrequency() noexcept
-	{
-		LARGE_INTEGER value{};
-		return QueryPerformanceFrequency(&value) && (value.QuadPart > 0) ?
-			static_cast<uint64_t>(value.QuadPart) : 0;
-	}
-
-	double QpcToMilliseconds(uint64_t a_ticks, uint64_t a_qpcFrequency) noexcept
-	{
-		return a_qpcFrequency ?
-			(static_cast<double>(a_ticks) * 1000.0) / static_cast<double>(a_qpcFrequency) :
-			0.0;
-	}
-
 	uint32_t Extend16(uint32_t a_in) noexcept
 	{
 		return (a_in & 0x8000) ? (0xFFFF0000 | a_in) : a_in;

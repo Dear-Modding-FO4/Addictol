@@ -22,6 +22,9 @@
     <ClCompile Include="..\Addictol\Source\Core\AdRegisterModules.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\AdClock.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Core\AdUtils.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>

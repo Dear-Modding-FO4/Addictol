@@ -1,4 +1,5 @@
 #include <Modules/AdModuleLibDeflate.h>
+#include <Core/AdClock.h>
 #include <Core/AdUtils.h>
 #include <Zlib/AdZlibBackend.h>
 #include <Zlib/AdZlibInflate.h>
@@ -43,7 +44,7 @@ namespace Addictol
 						return OriginalInflate(a_stockStream, a_stockFlush);
 					};
 					const auto clock = []() noexcept {
-						return TelemetryDetail::ReadQpc();
+						return Addictol::ReadQpc();
 					};
 					const auto bytesInBefore = a_stream->total_in;
 					const auto bytesOutBefore = a_stream->total_out;

@@ -1,4 +1,5 @@
 #include <Core/AdLogControl.h>
+#include <Core/AdUtils.h>
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuLogControl.h>
 #include <Menu/AdMenuWidgets.h>
@@ -22,29 +23,10 @@ namespace Addictol
 		};
 
 		LogControlCache s_cache;
-		uint64_t s_qpcFrequency{ 0 };
-
-		[[nodiscard]] uint64_t ReadQpc() noexcept
-		{
-			LARGE_INTEGER counter{};
-			QueryPerformanceCounter(&counter);
-			return static_cast<uint64_t>(counter.QuadPart);
-		}
-
-		[[nodiscard]] uint64_t QpcFrequency() noexcept
-		{
-			if (!s_qpcFrequency)
-			{
-				LARGE_INTEGER frequency{};
-				QueryPerformanceFrequency(&frequency);
-				s_qpcFrequency = static_cast<uint64_t>(frequency.QuadPart);
-			}
-			return s_qpcFrequency;
-		}
 
 		void Refresh() noexcept
 		{
-			const auto frequency = QpcFrequency();
+			const auto frequency = GetQpcFrequency();
 			const auto now = ReadQpc();
 			if (!ShouldRefreshPanel(
 					s_cache.hasData,
@@ -122,7 +104,7 @@ namespace Addictol
 		ImGui::Separator();
 		Muted(Print(
 			"refresh %.3f ms, cadence %u ms",
-			QpcToMilliseconds(s_cache.refreshTicks, QpcFrequency()),
+			QpcToMilliseconds(s_cache.refreshTicks, GetQpcFrequency()),
 			Menu::RefreshMs()));
 	}
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/AdClock.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Zlib/AdZlibBackend.h>
 
@@ -22,7 +23,7 @@ namespace Addictol::TelemetryDetail
 			a_flush,
 			original,
 			telemetryEnabled,
-			telemetryEnabled ? QpcFrequency() : 0,
+			telemetryEnabled ? Addictol::GetQpcFrequency() : 0,
 			clock);
 		const auto recordEnabled =
 			telemetryEnabled && Telemetry::EnabledRelaxed();
