@@ -396,7 +396,7 @@ namespace Addictol::Menu
 				}));
 		}
 
-		void DrawActions()
+		void DrawFilters()
 		{
 			const auto pending = SettingsDraftPendingCount(g_draft);
 			const auto dirty = pending != 0;
@@ -468,13 +468,57 @@ namespace Addictol::Menu
 				widthSum,
 				actions.size(),
 				spacing);
+
+			std::array<char, 256> search{};
+			strncpy_s(
+				search.data(),
+				search.size(),
+				g_filter.search.c_str(),
+				_TRUNCATE);
+			const auto frameHeight = ImGui::GetFrameHeight();
+			const auto rowHeight = (std::max)(frameHeight, buttonExtent);
+			const auto modifiedWidth =
+				frameHeight +
+				ImGui::GetStyle().ItemInnerSpacing.x +
+				ImGui::CalcTextSize("Modified only").x;
+			const auto filterWidth =
+				(std::max)(layout.titleMaxX - start.x, 0.0f);
+			const auto minimumSearchWidth = ImGui::GetFontSize() * 10.0f;
+			const auto searchWidth = (std::max)(
+				minimumSearchWidth,
+				(std::min)(
+					ImGui::GetFontSize() * 24.0f,
+					filterWidth - modifiedWidth - spacing));
+			ImGui::SetNextItemWidth((std::min)(searchWidth, filterWidth));
+			if (ImGui::InputTextWithHint(
+					"##AddictolSettingsSearch",
+					"Search settings...",
+					search.data(),
+					search.size()))
+				g_filter.search = search.data();
+			const auto modifiedInline =
+				searchWidth + modifiedWidth + spacing <= filterWidth;
+			if (modifiedInline)
+				ImGui::SameLine();
+			else
+			{
+				ImGui::SetCursorScreenPos({
+					start.x,
+					start.y + rowHeight + ImGui::GetStyle().ItemSpacing.y
+				});
+			}
+			ImGui::Checkbox("Modified only", &g_filter.modifiedOnly);
+
 			auto actionX = layout.actionsMinX;
 			for (size_t index = 0; index < actions.size(); ++index)
 			{
 				const auto& action = actions[index];
 				const auto pressed = DearModdingUI::DrawSettingsActionButton(
 					action.id,
-					{ actionX, start.y },
+					{
+						actionX,
+						start.y + (rowHeight - buttonExtent) * 0.5f
+					},
 					{ widths[index], buttonExtent },
 					action.action,
 					action.fallbackLabel,
@@ -499,41 +543,13 @@ namespace Addictol::Menu
 				}
 				actionX += widths[index] + spacing;
 			}
-			ImGui::Dummy({ available, buttonExtent });
-		}
-
-		void DrawFilters()
-		{
-			std::array<char, 256> search{};
-			strncpy_s(
-				search.data(),
-				search.size(),
-				g_filter.search.c_str(),
-				_TRUNCATE);
-			const auto available = ImGui::GetContentRegionAvail().x;
-			const auto modifiedWidth =
-				ImGui::GetFrameHeight() +
-				ImGui::GetStyle().ItemInnerSpacing.x +
-				ImGui::CalcTextSize("Modified only").x;
-			const auto searchWidth = (std::max)(
-				ImGui::GetFontSize() * 10.0f,
-				(std::min)(
-					ImGui::GetFontSize() * 24.0f,
-					available -
-						modifiedWidth -
-						ImGui::GetStyle().ItemSpacing.x));
-			ImGui::SetNextItemWidth((std::min)(searchWidth, available));
-			if (ImGui::InputTextWithHint(
-					"##AddictolSettingsSearch",
-					"Search settings...",
-					search.data(),
-					search.size()))
-				g_filter.search = search.data();
-			if (searchWidth + modifiedWidth +
-					ImGui::GetStyle().ItemSpacing.x <=
-				available)
-				ImGui::SameLine();
-			ImGui::Checkbox("Modified only", &g_filter.modifiedOnly);
+			const auto consumedHeight =
+				rowHeight +
+				(modifiedInline ?
+						0.0f :
+						ImGui::GetStyle().ItemSpacing.y + frameHeight);
+			ImGui::SetCursorScreenPos(start);
+			ImGui::Dummy({ available, consumedHeight });
 		}
 	}
 
@@ -564,7 +580,6 @@ namespace Addictol::Menu
 	{
 		g_drawnThisFrame = true;
 		EnsureDraft();
-		DrawActions();
 		DrawFilters();
 		ImGui::Spacing();
 		ImGui::TextWrapped(

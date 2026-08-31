@@ -259,7 +259,15 @@ namespace Addictol
 				Muted("No frame has crossed the recording threshold."sv);
 				return;
 			}
-			if (!ImGui::BeginTable("TelemetryFrameRecords", 2, kTableFlags, ImVec2(0.0f, 180.0f)))
+			const auto tableHeight =
+				ImGui::GetTextLineHeightWithSpacing() *
+					static_cast<float>(s_cache.frameRecords.size() + 1) +
+				ImGui::GetStyle().CellPadding.y * 2.0f;
+			if (!ImGui::BeginTable(
+					"TelemetryFrameRecords",
+					2,
+					kTableFlags,
+					ImVec2(0.0f, tableHeight)))
 				return;
 			ImGui::TableSetupColumn("QPC time", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("Frame time", ImGuiTableColumnFlags_WidthFixed);
