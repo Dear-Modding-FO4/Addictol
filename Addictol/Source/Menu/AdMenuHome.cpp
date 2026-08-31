@@ -217,9 +217,9 @@ namespace Addictol::Menu
 			ImGui::Indent();
 			for (const auto& entry : kModChecks)
 			{
-				ImGui::Bullet();
-				ImGui::SameLine();
-				ImGui::TextWrapped("%s %s", entry.check, entry.detail);
+				char text[512]{};
+				std::snprintf(text, sizeof(text), "%s %s", entry.check, entry.detail);
+				(void)Client().DrawBulletText(text);
 			}
 			ImGui::Unindent();
 			ImGui::Spacing();

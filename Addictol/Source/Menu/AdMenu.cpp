@@ -145,8 +145,7 @@ namespace Addictol
 
 		Menu::BeginSettingsPageFrame();
 		if (!s_client.AddFrameObserver([] {
-				const auto visible = s_client.IsMenuVisible();
-				Menu::EndSettingsPageFrame(visible.value_or(false));
+				Menu::EndSettingsPageFrame(s_client.IsMenuVisible().value_or(false));
 				Menu::BeginSettingsPageFrame();
 			}))
 		{
