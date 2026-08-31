@@ -68,21 +68,25 @@ Addictol/Include/Zlib/       compression backend and helpers
 Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
 Addictol/Include/Platform/   ImGui platform integration
+Addictol/Include/DearModdingUI/ vendorable UI API and neutral host shell
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
 Addictol/Source/Modules/     one .cpp per feature module (~80 of them)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header
-.Build/F4SE/Plugins/         build output, the tracked shipped config, and shipped resources
+.Build/F4SE/Plugins/         build output, tracked config, and neutral DearModdingUI resources
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::` and `F4SE::`
-APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored libraries (`vmm`,
-`xbyak`, `unordered_dense`).
+APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`) and vendored libraries (`imgui`,
+`vmm`, `xbyak`, `unordered_dense`). `Depends/imgui/UPSTREAM.md` records the Dear ImGui source pin.
 
 Crash logging is not part of this plugin. It ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
+
+The neutral cross-DLL UI contract and client lifecycle are documented in
+[`Addictol/Include/DearModdingUI/README.md`](Addictol/Include/DearModdingUI/README.md).
 
 ## Versioning
 
@@ -154,19 +158,19 @@ Only do that deliberately, and only if installing twice is harmless.
 
 ## Adding a module
 
-A new module touches seven places. The last two produce no compiler error, which is why they are the
-ones people forget.
+A configurable module touches seven places. The last two produce no compiler error, which is why they
+are the ones people forget.
 
 1. `Addictol/Include/Modules/AdModule<Name>.h`, the class declaration.
-2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the TOML option and the implementation.
+2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the implementation.
 3. The constructor, inside that `.cpp`, wiring name, option, listener stages and Papyrus flag.
 4. `Addictol/Source/Core/AdRegisterModules.cpp`: the `#include`, the `static auto sModule<Name> =
    std::make_shared<...>()`, and the `modules.Register(...)` call.
 5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
-6. `.Build/F4SE/Plugins/Addictol.toml`, the key with a user facing comment under the right section.
-   Skip it and the option is undiscoverable and cannot be overridden without a warning.
-7. `Addictol/Source/Core/AdConfigValidation.cpp`, adding the key to `s_knownKeys`, or the plugin logs a
-   spurious `Config: unknown key` warning at every launch.
+6. `Addictol/Include/Core/Settings/AdSettings.h` and the matching section source under
+   `Addictol/Source/Core/Settings`, declaring the setting and its metadata.
+7. `.Build/F4SE/Plugins/Addictol.toml`, the key with the same user-facing description under the right
+   section. Registry tests enforce that the shipped file and registered keys match in both directions.
 
 ### Worked example
 
@@ -180,8 +184,6 @@ The header is boilerplate: a constructor and the four `DoX` overrides, each `[[n
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
-
 	ModuleUnalignedLoad::ModuleUnalignedLoad() :
 		Module("Unaligned Load", &bFixesUnalignedLoad)
 	{}
@@ -213,6 +215,16 @@ static auto sModuleUnalignedLoad			= std::make_shared<Addictol::ModuleUnalignedL
 	modules.Register(sModuleUnalignedLoad);
 ```
 
+```cpp
+BoolSetting bFixesUnalignedLoad{
+	"Fixes"sv,
+	"bUnalignedLoad"sv,
+	true,
+	"Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory."sv,
+	SettingApplyTiming::kNextLaunch
+};
+```
+
 ```toml
 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
 bUnalignedLoad = true
@@ -223,17 +235,24 @@ Note how the module scopes its patch: one address resolved for all runtimes, plu
 
 ## Configuration
 
-Options are declared next to the code that uses them, as file scope statics taking section, key and
-default:
+Options are declared under `Addictol/Source/Core/Settings`, split by TOML section. Each declaration
+provides its section, key, default, shipped description, apply timing, and any enforced numeric range:
 
 ```cpp
-static REX::TOML::Bool<> bFixesUnalignedLoad{ "Fixes"sv, "bUnalignedLoad"sv, true };
-static REX::TOML::I32<>  nAdditionalSleepTimer{ "Additional"sv, "nSleepTimer"sv, 125 };
-static REX::TOML::U32<>  uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 64ul };
+I32Setting nAdditionalSleepTimer{
+	"Additional"sv,
+	"nSleepTimer"sv,
+	125,
+	"Sampling interval in milliseconds for Escape Freeze (needs bEscapeFreeze)."sv,
+	SettingApplyTiming::kNextLaunch,
+	SettingNumericRange{ 1.0, 60000.0 }
+};
 ```
 
-`Bool<>`, `I32<>`, `U32<>` and `F64<>` are the types this codebase uses; CommonLibF4 defines more.
-There is no type named `Float`, so floating point options use `F64<>`.
+Use `BoolSetting`, `F32Setting`, `I32Setting`, `U32Setting`, or `StrSetting`. They derive from the
+matching REX TOML setting, so existing typed accessors and module-gate pointer conversions still work.
+Use `kImmediate` only when writes affect already-installed runtime behavior; otherwise use
+`kNextLaunch`.
 
 | Section | For |
 | --- | --- |
@@ -253,7 +272,7 @@ language rather than implementation terms:
 uScaleformPageSize = 64
 ```
 
-Declare the default in the C++ option and ship the same value in the TOML, and keep the two in sync.
+Declare the default in the C++ setting and ship the same value in the TOML, and keep the two in sync.
 The shipped TOML value wins at load time, so a stale C++ default is invisible to users but misleads
 the next person reading the source. Users override settings in their own `AddictolCustom.toml`;
 never expect them to edit the shipped file.
@@ -422,7 +441,9 @@ if (!RELEX::Validate(target, { 0x48, 0x83, 0xEC, 0x28, 0xC6, 0x44, 0x24, 0x38, 0
 instructions or an API output buffer.
 
 Files are prefixed `Ad`, and modules are `AdModule<Name>.h` / `.cpp` declaring `class Module<Name>`
-in `namespace Addictol`. Functions and methods are PascalCase, and hook functions are conventionally
+in `namespace Addictol`. The exception is `DearModdingUI/`, which is a hosted framework in its own
+`namespace DearModdingUI` rather than Addictol code, so its files carry no prefix. Functions and
+methods are PascalCase, and hook functions are conventionally
 `HK<OriginalName>`. Parameters take an `a_` prefix, except in a hook or thunk mirroring an external
 signature. File scope and static variables take `s_` and class members `m_`; TOML options use the
 type prefix instead. Private module helpers go in a nested `namespace <camelCaseModuleName>Detail`.

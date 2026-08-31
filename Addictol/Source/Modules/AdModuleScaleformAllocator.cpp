@@ -7,9 +7,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesScaleformAllocator{ "Patches"sv, "bScaleformAllocator"sv, true };
-	static REX::TOML::U32<> uAdditionalScaleformPageSize{ "Additional"sv, "uScaleformPageSize"sv, 64ul };
-	static REX::TOML::U32<> uAdditionalScaleformHeapSize{ "Additional"sv, "uScaleformHeapSize"sv, 2048ul };
+
+
 
 	template<typename Heap>
 	class BSScaleformAllocator final : public Scaleform::SysAlloc

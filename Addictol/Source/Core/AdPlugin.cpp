@@ -2,6 +2,8 @@
 #include <Core/AdUtils.h>
 #include <Core/AdConfigValidation.h>
 #include <Core/AdLogControl.h>
+#include <DearModdingUI/CarrierMenu.h>
+#include <DearModdingUI/Host.h>
 #include <Menu/AdMenu.h>
 #include <Zlib/AdZlibBackend.h>
 #include <Platform/AdPlatformImgui.h>
@@ -25,7 +27,6 @@ extern void AdRegisterPreloadModules();
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bAdditionalIgnoreCompatibilityChecks{ "Additional"sv, "bIgnoreCompatibilityChecks"sv, false };
 
 	static std::vector<const RE::TESFile*> AnalyzeGameCollectionCriticalCompatibility() noexcept
 	{
@@ -129,6 +130,22 @@ namespace Addictol
 
 	static void F4SEMessageListener(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		if (!a_msg)
+			return;
+		switch (a_msg->type)
+		{
+		case F4SE::MessagingInterface::kPreLoadGame:
+		case F4SE::MessagingInterface::kNewGame:
+		case F4SE::MessagingInterface::kGameLoaded:
+		case F4SE::MessagingInterface::kGameDataReady:
+			PlatformImgui::HandleGameTransition();
+			break;
+		default:
+			break;
+		}
+		if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
+			(void)DearModdingUI::CarrierMenu::Register();
+
 		auto plugin = Plugin::GetSingleton();
 		if (!plugin->IsInstall())
 		{
@@ -218,6 +235,8 @@ namespace Addictol
 				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
 			}
+
+			DearModdingUI::Initialize();
 
 			// Register all modules
 			AdRegisterModules();

@@ -1,5 +1,6 @@
 #include <Modules/AdModulePluginTiming.h>
 
+#include <Core/AdClock.h>
 #include <Core/AdUtils.h>
 #include <Telemetry/AdTelemetryHub.h>
 
@@ -21,11 +22,6 @@ namespace
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bTelemetryPluginTiming{
-		"Telemetry"sv,
-		"bPluginTiming"sv,
-		false
-	};
 
 	ModulePluginTiming::ModulePluginTiming() :
 		Module("Plugin Timing", &bTelemetryPluginTiming),
@@ -142,9 +138,9 @@ namespace Addictol
 		const auto original = s_originalQuery;
 		if (!original)
 			return false;
-		const auto start = TelemetryDetail::ReadQpc();
+		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_f4se, a_info);
-		const auto end = TelemetryDetail::ReadQpc();
+		const auto end = Addictol::ReadQpc();
 		if (s_instance && end >= start)
 			s_instance->RecordPlugin(LoadTiming::kPluginSeriesNames[0], end - start);
 		return result;
@@ -155,9 +151,9 @@ namespace Addictol
 		const auto original = s_originalLoad;
 		if (!original)
 			return false;
-		const auto start = TelemetryDetail::ReadQpc();
+		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_f4se);
-		const auto end = TelemetryDetail::ReadQpc();
+		const auto end = Addictol::ReadQpc();
 		if (s_instance && end >= start)
 			s_instance->RecordPlugin(LoadTiming::kPluginSeriesNames[1], end - start);
 		return result;

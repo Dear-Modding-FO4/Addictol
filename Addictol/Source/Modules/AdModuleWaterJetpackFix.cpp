@@ -42,7 +42,6 @@ namespace RE
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesWaterJetpackFix{ "Fixes"sv, "bWaterJetpackFix"sv, true };
 
 	namespace waterJetpackFixDetail
 	{

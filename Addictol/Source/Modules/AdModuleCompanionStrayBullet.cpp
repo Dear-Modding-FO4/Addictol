@@ -26,7 +26,6 @@ namespace RE
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesCompanionStrayBullet{"Fixes"sv, "bCompanionStrayBullet"sv, true};
 
 	namespace companionStrayBulletDetail
 	{

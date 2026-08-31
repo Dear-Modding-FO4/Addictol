@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesPuddleCubemaps{"Fixes"sv, "bPuddleCubemaps"sv, false};
 
 	ModulePuddleCubemaps::ModulePuddleCubemaps() :
 		Module("Puddle Cubemaps", &bFixesPuddleCubemaps)

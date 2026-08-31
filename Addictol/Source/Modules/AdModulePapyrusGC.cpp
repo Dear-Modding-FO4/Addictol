@@ -10,7 +10,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesPapyrusGCBug{ "Fixes"sv, "bPapyrusGCBug"sv, true };
 
 	namespace papyrusGCDetail
 	{

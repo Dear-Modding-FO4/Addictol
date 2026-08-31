@@ -5,6 +5,7 @@
 //  [X] Renderer: User texture binding. Use 'ID3D10ShaderResourceView*' as texture identifier. Read the FAQ about ImTextureID/ImTextureRef!
 //  [X] Renderer: Large meshes support (64k+ vertices) even with 16-bit indices (ImGuiBackendFlags_RendererHasVtxOffset).
 //  [X] Renderer: Texture updates support for dynamic font atlas (ImGuiBackendFlags_RendererHasTextures).
+//  [X] Renderer: Multi-viewport support (multiple windows). Enable with 'io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable'.
 
 // You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
 // Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
@@ -16,6 +17,9 @@
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
+//  2026-XX-XX: Platform: Added support for multiple windows via the ImGuiPlatformIO interface.
+//  2026-04-23: DirectX10: Added support for standard draw callbacks (in platform_io): DrawCallback_ResetRenderState, DrawCallback_SetSamplerLinear, DrawCallback_SetSamplerNearest. Obsoleting samplers from ImGui_ImplDX10_RenderState. (#9378)
+//  2026-01-19: DirectX10: Added 'SamplerNearest' in ImGui_ImplDX10_RenderState. Renamed 'SamplerDefault' to 'SamplerLinear'. 
 //  2025-09-18: Call platform_io.ClearRendererHandlers() on shutdown.
 //  2025-06-11: DirectX10: Added support for ImGuiBackendFlags_RendererHasTextures, for dynamic font atlas.
 //  2025-05-07: DirectX10: Honor draw_data->FramebufferScale to allow for custom backends and experiment using it (consistently with other renderer backends, even though in normal condition it is not set under Windows).
@@ -75,6 +79,7 @@ struct ImGui_ImplDX10_Data
     ID3D10Buffer*               pVertexConstantBuffer;
     ID3D10PixelShader*          pPixelShader;
     ID3D10SamplerState*         pTexSamplerLinear;
+    ID3D10SamplerState*         pTexSamplerNearest;
     ID3D10RasterizerState*      pRasterizerState;
     ID3D10BlendState*           pBlendState;
     ID3D10DepthStencilState*    pDepthStencilState;
@@ -95,6 +100,10 @@ static ImGui_ImplDX10_Data* ImGui_ImplDX10_GetBackendData()
 {
     return ImGui::GetCurrentContext() ? (ImGui_ImplDX10_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
 }
+
+// Forward Declarations
+static void ImGui_ImplDX10_InitMultiViewportSupport();
+static void ImGui_ImplDX10_ShutdownMultiViewportSupport();
 
 // Functions
 static void ImGui_ImplDX10_SetupRenderState(ImDrawData* draw_data, ID3D10Device* device)
@@ -145,11 +154,16 @@ static void ImGui_ImplDX10_SetupRenderState(ImDrawData* draw_data, ID3D10Device*
     device->GSSetShader(nullptr);
 
     // Setup render state
-    const float blend_factor[4] = { 0.f, 0.f, 0.f, 0.f };
+    const float blend_factor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     device->OMSetBlendState(bd->pBlendState, blend_factor, 0xffffffff);
     device->OMSetDepthStencilState(bd->pDepthStencilState, 0);
     device->RSSetState(bd->pRasterizerState);
 }
+
+// Draw callbacks
+static void ImGui_ImplDX10_DrawCallback_ResetRenderState(const ImDrawList*, const ImDrawCmd*)       {} // Intentionally empty. Used as an identifier for rendering loop to call its code. Simpler to implement this way.
+static void ImGui_ImplDX10_DrawCallback_SetSamplerLinear(const ImDrawList*, const ImDrawCmd*)       { ImGui_ImplDX10_Data* bd = ImGui_ImplDX10_GetBackendData(); bd->pd3dDevice->PSSetSamplers(0, 1, &bd->pTexSamplerLinear); }
+static void ImGui_ImplDX10_DrawCallback_SetSamplerNearest(const ImDrawList*, const ImDrawCmd*)      { ImGui_ImplDX10_Data* bd = ImGui_ImplDX10_GetBackendData(); bd->pd3dDevice->PSSetSamplers(0, 1, &bd->pTexSamplerNearest); }
 
 // Render function
 void ImGui_ImplDX10_RenderDrawData(ImDrawData* draw_data)
@@ -175,7 +189,7 @@ void ImGui_ImplDX10_RenderDrawData(ImDrawData* draw_data)
         bd->VertexBufferSize = draw_data->TotalVtxCount + 5000;
         D3D10_BUFFER_DESC desc = {};
         desc.Usage = D3D10_USAGE_DYNAMIC;
-        desc.ByteWidth = bd->VertexBufferSize * sizeof(ImDrawVert);
+        desc.ByteWidth = (UINT)bd->VertexBufferSize * sizeof(ImDrawVert);
         desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
         desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
         desc.MiscFlags = 0;
@@ -189,7 +203,7 @@ void ImGui_ImplDX10_RenderDrawData(ImDrawData* draw_data)
         bd->IndexBufferSize = draw_data->TotalIdxCount + 10000;
         D3D10_BUFFER_DESC desc = {};
         desc.Usage = D3D10_USAGE_DYNAMIC;
-        desc.ByteWidth = bd->IndexBufferSize * sizeof(ImDrawIdx);
+        desc.ByteWidth = (UINT)bd->IndexBufferSize * sizeof(ImDrawIdx);
         desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
         desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
         if (device->CreateBuffer(&desc, nullptr, &bd->pIB) < 0)
@@ -258,7 +272,6 @@ void ImGui_ImplDX10_RenderDrawData(ImDrawData* draw_data)
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
     ImGui_ImplDX10_RenderState render_state;
     render_state.Device = bd->pd3dDevice;
-    render_state.SamplerDefault = bd->pTexSamplerLinear;
     render_state.VertexConstantBuffer = bd->pVertexConstantBuffer;
     platform_io.Renderer_RenderState = &render_state;
 
@@ -276,8 +289,7 @@ void ImGui_ImplDX10_RenderDrawData(ImDrawData* draw_data)
             if (pcmd->UserCallback != nullptr)
             {
                 // User callback, registered via ImDrawList::AddCallback()
-                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-                if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
+                if (pcmd->UserCallback == ImGui_ImplDX10_DrawCallback_ResetRenderState)
                     ImGui_ImplDX10_SetupRenderState(draw_data, device);
                 else
                     pcmd->UserCallback(draw_list, pcmd);
@@ -440,7 +452,7 @@ bool    ImGui_ImplDX10_CreateDeviceObjects()
             PS_INPUT main(VS_INPUT input)\
             {\
               PS_INPUT output;\
-              output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
+              output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.0f, 1.0f));\
               output.col = input.col;\
               output.uv  = input.uv;\
               return output;\
@@ -560,11 +572,13 @@ bool    ImGui_ImplDX10_CreateDeviceObjects()
         desc.AddressU = D3D10_TEXTURE_ADDRESS_CLAMP;
         desc.AddressV = D3D10_TEXTURE_ADDRESS_CLAMP;
         desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
-        desc.MipLODBias = 0.f;
+        desc.MipLODBias = 0.0f;
         desc.ComparisonFunc = D3D10_COMPARISON_ALWAYS;
-        desc.MinLOD = 0.f;
-        desc.MaxLOD = 0.f;
+        desc.MinLOD = 0.0f;
+        desc.MaxLOD = 0.0f;
         bd->pd3dDevice->CreateSamplerState(&desc, &bd->pTexSamplerLinear);
+        desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
+        bd->pd3dDevice->CreateSamplerState(&desc, &bd->pTexSamplerNearest);
     }
 
     return true;
@@ -581,6 +595,7 @@ void    ImGui_ImplDX10_InvalidateDeviceObjects()
         if (tex->RefCount == 1)
             ImGui_ImplDX10_DestroyTexture(tex);
     if (bd->pTexSamplerLinear)      { bd->pTexSamplerLinear->Release(); bd->pTexSamplerLinear = nullptr; }
+    if (bd->pTexSamplerNearest)     { bd->pTexSamplerNearest->Release(); bd->pTexSamplerNearest = nullptr; }
     if (bd->pIB)                    { bd->pIB->Release(); bd->pIB = nullptr; }
     if (bd->pVB)                    { bd->pVB->Release(); bd->pVB = nullptr; }
     if (bd->pBlendState)            { bd->pBlendState->Release(); bd->pBlendState = nullptr; }
@@ -604,9 +619,13 @@ bool    ImGui_ImplDX10_Init(ID3D10Device* device)
     io.BackendRendererName = "imgui_impl_dx10";
     io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;  // We can create multi-viewports on the Renderer side (optional)
 
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
     platform_io.Renderer_TextureMaxWidth = platform_io.Renderer_TextureMaxHeight = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    platform_io.DrawCallback_ResetRenderState = ImGui_ImplDX10_DrawCallback_ResetRenderState;
+    platform_io.DrawCallback_SetSamplerLinear = ImGui_ImplDX10_DrawCallback_SetSamplerLinear;
+    platform_io.DrawCallback_SetSamplerNearest = ImGui_ImplDX10_DrawCallback_SetSamplerNearest;
 
     // Get factory from device
     IDXGIDevice* pDXGIDevice = nullptr;
@@ -623,6 +642,8 @@ bool    ImGui_ImplDX10_Init(ID3D10Device* device)
     if (pDXGIAdapter) pDXGIAdapter->Release();
     bd->pd3dDevice->AddRef();
 
+    ImGui_ImplDX10_InitMultiViewportSupport();
+
     return true;
 }
 
@@ -633,13 +654,14 @@ void ImGui_ImplDX10_Shutdown()
     ImGuiIO& io = ImGui::GetIO();
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
 
+    ImGui_ImplDX10_ShutdownMultiViewportSupport();
     ImGui_ImplDX10_InvalidateDeviceObjects();
     if (bd->pFactory) { bd->pFactory->Release(); }
     if (bd->pd3dDevice) { bd->pd3dDevice->Release(); }
 
     io.BackendRendererName = nullptr;
     io.BackendRendererUserData = nullptr;
-    io.BackendFlags &= ~(ImGuiBackendFlags_RendererHasVtxOffset | ImGuiBackendFlags_RendererHasTextures);
+    io.BackendFlags &= ~(ImGuiBackendFlags_RendererHasVtxOffset | ImGuiBackendFlags_RendererHasTextures | ImGuiBackendFlags_RendererHasViewports);
     platform_io.ClearRendererHandlers();
     IM_DELETE(bd);
 }
@@ -652,6 +674,131 @@ void ImGui_ImplDX10_NewFrame()
     if (!bd->pVertexShader)
         if (!ImGui_ImplDX10_CreateDeviceObjects())
             IM_ASSERT(0 && "ImGui_ImplDX10_CreateDeviceObjects() failed!");
+}
+
+//--------------------------------------------------------------------------------------------------------
+// MULTI-VIEWPORT / PLATFORM INTERFACE SUPPORT
+// This is an _advanced_ and _optional_ feature, allowing the backend to create and handle multiple viewports simultaneously.
+// If you are new to dear imgui or creating a new binding for dear imgui, it is recommended that you completely ignore this section first..
+//--------------------------------------------------------------------------------------------------------
+
+// Helper structure we store in the void* RendererUserData field of each ImGuiViewport to easily retrieve our backend data.
+struct ImGui_ImplDX10_ViewportData
+{
+    IDXGISwapChain*         SwapChain;
+    ID3D10RenderTargetView* RTView;
+
+    ImGui_ImplDX10_ViewportData()   { SwapChain = nullptr; RTView = nullptr; }
+    ~ImGui_ImplDX10_ViewportData()  { IM_ASSERT(SwapChain == nullptr && RTView == nullptr); }
+};
+
+static void ImGui_ImplDX10_CreateWindow(ImGuiViewport* viewport)
+{
+    ImGui_ImplDX10_Data* bd = ImGui_ImplDX10_GetBackendData();
+    ImGui_ImplDX10_ViewportData* vd = IM_NEW(ImGui_ImplDX10_ViewportData)();
+    viewport->RendererUserData = vd;
+
+    // PlatformHandleRaw should always be a HWND, whereas PlatformHandle might be a higher-level handle (e.g. GLFWWindow*, SDL's WindowID).
+    // Some backends will leave PlatformHandleRaw == 0, in which case we assume PlatformHandle will contain the HWND.
+    HWND hwnd = viewport->PlatformHandleRaw ? (HWND)viewport->PlatformHandleRaw : (HWND)viewport->PlatformHandle;
+    IM_ASSERT(hwnd != 0);
+
+    // Create swap chain
+    DXGI_SWAP_CHAIN_DESC sd;
+    ZeroMemory(&sd, sizeof(sd));
+    sd.BufferDesc.Width = (UINT)viewport->Size.x;
+    sd.BufferDesc.Height = (UINT)viewport->Size.y;
+    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    sd.SampleDesc.Count = 1;
+    sd.SampleDesc.Quality = 0;
+    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    sd.BufferCount = 1;
+    sd.OutputWindow = hwnd;
+    sd.Windowed = TRUE;
+    sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    sd.Flags = 0;
+
+    IM_ASSERT(vd->SwapChain == nullptr && vd->RTView == nullptr);
+    bd->pFactory->CreateSwapChain(bd->pd3dDevice, &sd, &vd->SwapChain);
+    bd->pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER | DXGI_MWA_NO_WINDOW_CHANGES); // Disable e.g. Alt+Enter
+
+    // Create the render target
+    if (vd->SwapChain)
+    {
+        ID3D10Texture2D* pBackBuffer;
+        vd->SwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+        bd->pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &vd->RTView);
+        pBackBuffer->Release();
+    }
+}
+
+static void ImGui_ImplDX10_DestroyWindow(ImGuiViewport* viewport)
+{
+    // The main viewport (owned by the application) will always have RendererUserData == 0 here since we didn't create the data for it.
+    if (ImGui_ImplDX10_ViewportData* vd = (ImGui_ImplDX10_ViewportData*)viewport->RendererUserData)
+    {
+        if (vd->SwapChain)
+            vd->SwapChain->Release();
+        vd->SwapChain = nullptr;
+        if (vd->RTView)
+            vd->RTView->Release();
+        vd->RTView = nullptr;
+        IM_DELETE(vd);
+    }
+    viewport->RendererUserData = nullptr;
+}
+
+static void ImGui_ImplDX10_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
+{
+    ImGui_ImplDX10_Data* bd = ImGui_ImplDX10_GetBackendData();
+    ImGui_ImplDX10_ViewportData* vd = (ImGui_ImplDX10_ViewportData*)viewport->RendererUserData;
+    if (vd->RTView)
+    {
+        vd->RTView->Release();
+        vd->RTView = nullptr;
+    }
+    if (vd->SwapChain)
+    {
+        ID3D10Texture2D* pBackBuffer = nullptr;
+        vd->SwapChain->ResizeBuffers(0, (UINT)size.x, (UINT)size.y, DXGI_FORMAT_UNKNOWN, 0);
+        vd->SwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+        if (pBackBuffer == nullptr) { fprintf(stderr, "ImGui_ImplDX10_SetWindowSize() failed creating buffers.\n"); return; }
+        bd->pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &vd->RTView);
+        pBackBuffer->Release();
+    }
+}
+
+static void ImGui_ImplDX10_RenderViewport(ImGuiViewport* viewport, void*)
+{
+    ImGui_ImplDX10_Data* bd = ImGui_ImplDX10_GetBackendData();
+    ImGui_ImplDX10_ViewportData* vd = (ImGui_ImplDX10_ViewportData*)viewport->RendererUserData;
+    ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+    bd->pd3dDevice->OMSetRenderTargets(1, &vd->RTView, nullptr);
+    if (!(viewport->Flags & ImGuiViewportFlags_NoRendererClear))
+        bd->pd3dDevice->ClearRenderTargetView(vd->RTView, (float*)&clear_color);
+    ImGui_ImplDX10_RenderDrawData(viewport->DrawData);
+}
+
+static void ImGui_ImplDX10_SwapBuffers(ImGuiViewport* viewport, void*)
+{
+    ImGui_ImplDX10_ViewportData* vd = (ImGui_ImplDX10_ViewportData*)viewport->RendererUserData;
+    if (vd->SwapChain)
+        vd->SwapChain->Present(0, 0); // Present without vsync
+}
+
+void ImGui_ImplDX10_InitMultiViewportSupport()
+{
+    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    platform_io.Renderer_CreateWindow = ImGui_ImplDX10_CreateWindow;
+    platform_io.Renderer_DestroyWindow = ImGui_ImplDX10_DestroyWindow;
+    platform_io.Renderer_SetWindowSize = ImGui_ImplDX10_SetWindowSize;
+    platform_io.Renderer_RenderWindow = ImGui_ImplDX10_RenderViewport;
+    platform_io.Renderer_SwapBuffers = ImGui_ImplDX10_SwapBuffers;
+}
+
+void ImGui_ImplDX10_ShutdownMultiViewportSupport()
+{
+    ImGui::DestroyPlatformWindows();
 }
 
 //-----------------------------------------------------------------------------

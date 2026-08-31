@@ -6,8 +6,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesHighResBloom{ "Patches"sv, "bHighResBloom"sv, false };
-	static REX::TOML::I32<> nAdditionalBloomScale{ "Additional"sv, "nBloomScale"sv, 2 };
+
 
 	// Vanilla bloom RT downsample: shr esi, 2; shr r12d, 2 (width >> 2; height >> 2).
 	static constexpr std::array<std::uint8_t, 7> kVanillaPattern{ 0xC1, 0xEE, 0x02, 0x41, 0xC1, 0xEC, 0x02 };

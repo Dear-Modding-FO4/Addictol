@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bCrashRemoveRefFix{ "Fixes"sv, "bCrashRemoveRefFix"sv, true };
 
 	struct BGSObjectVisibilityManager
 	{

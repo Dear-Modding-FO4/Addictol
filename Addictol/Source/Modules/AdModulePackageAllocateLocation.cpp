@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesPackageAllocateLocation{ "Fixes"sv, "bPackageAllocateLocation"sv, true };
 
 	struct GetPrimitive
 	{

@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesAIProcess3DUpdateFlag{ "Fixes"sv, "bAIProcess3DUpdateFlag"sv, true };
 
 	namespace Detail
 	{

@@ -7,8 +7,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesHighResLocalMaps{ "Patches"sv, "bHighResLocalMaps"sv, false };
-	static REX::TOML::F32<> fAdditionalLocalMapScaleFactor{ "Additional"sv, "fLocalMapScaleFactor"sv, 1.5f };
+
 
 	namespace highResLocalMapsDetail
 	{

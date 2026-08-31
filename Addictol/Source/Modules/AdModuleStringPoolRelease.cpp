@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesStringPoolRelease{ "Fixes"sv, "bStringPoolRelease"sv, true };
 
 	namespace detail
 	{

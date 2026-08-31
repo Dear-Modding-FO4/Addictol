@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesManyItems{ "Fixes"sv, "bManyItems"sv, true };
 
 	using TDropItemIntoWorld = uint32_t* (*)(RE::TESObjectREFR*, uint32_t*, RE::TESBoundObject*, int32_t, RE::TESObjectREFR*,
 		RE::NiPoint3*, RE::NiPoint3*, RE::ExtraDataList*);

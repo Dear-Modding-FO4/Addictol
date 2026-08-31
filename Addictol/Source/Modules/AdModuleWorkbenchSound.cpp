@@ -12,7 +12,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesWorkbenchSound{ "Fixes"sv, "bWorkbenchSound"sv, true };
 
 	namespace workbenchSoundDetail
 	{

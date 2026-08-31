@@ -14,8 +14,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesInteriorNavCut{ "Fixes"sv, "bInteriorNavCut"sv, true };
-	static REX::TOML::Bool<> bAdditionalMultiThreading { "Additional"sv, "bInteriorNavCutMultiThreading"sv, true };
+
 
 	// ---- RE Functions ---- //
 

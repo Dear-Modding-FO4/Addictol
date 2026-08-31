@@ -1,4 +1,4 @@
-#include <Platform/AdImguiTheme.h>
+#include <DearModdingUI/Theme.h>
 #include <Menu/AdMenuWidgets.h>
 
 #include <array>
@@ -33,7 +33,7 @@ namespace Addictol
 	void MenuUi::Heading(std::string_view a_text) noexcept
 	{
 		const ScopedFont font{ Theme::GetFonts().heading };
-		ImGui::TextColored(Theme::colors::kAccent, "%.*s", static_cast<int>(a_text.size()), a_text.data());
+		ImGui::TextColored(Theme::colors::Accent(), "%.*s", static_cast<int>(a_text.size()), a_text.data());
 	}
 
 	void MenuUi::Title(std::string_view a_text) noexcept
@@ -44,7 +44,7 @@ namespace Addictol
 
 	void MenuUi::Mono(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().heading };
+		const ScopedFont font{ Theme::GetFonts().body };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 
@@ -85,7 +85,7 @@ namespace Addictol
 
 	void MenuUi::MonoCell(std::string_view a_text) noexcept
 	{
-		const ScopedFont font{ Theme::GetFonts().heading };
+		const ScopedFont font{ Theme::GetFonts().body };
 		ImGui::TextUnformatted(a_text.data(), a_text.data() + a_text.size());
 	}
 

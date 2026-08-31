@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMusicOverlap{ "Fixes"sv, "bMusicOverlap"sv, true };
 
 	namespace detail
 	{

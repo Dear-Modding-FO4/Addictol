@@ -8,9 +8,8 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesFullPrecisionDecals{ "Fixes"sv, "bFullPrecisionDecals"sv, true };
-	static REX::TOML::Bool<> bAdditionalFullPrecisionDecalsMembrane{ "Additional"sv, "bFullPrecisionDecalsMembrane"sv, true };
-	static REX::TOML::Bool<> bAdditionalFullPrecisionDecalsEffectShaders{ "Additional"sv, "bFullPrecisionDecalsEffectShaders"sv, true };
+
+
 
 	namespace fullPrecisionDecalsDetail
 	{

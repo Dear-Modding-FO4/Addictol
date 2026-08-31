@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesCheckInternetAccess{ "Fixes"sv, "bCheckInternetAccess"sv, true };
 
 	namespace detail
 	{

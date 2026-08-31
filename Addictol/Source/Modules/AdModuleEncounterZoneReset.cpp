@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesEncounterZoneReset{ "Fixes"sv, "bEncounterZoneReset"sv, true };
 
 	namespace encounterZoneResetDetail
 	{

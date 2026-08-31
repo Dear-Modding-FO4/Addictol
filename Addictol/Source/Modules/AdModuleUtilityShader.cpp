@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesUtilityShader{ "Fixes"sv, "bUtilityShader"sv, true };
 
 	namespace utilityShaderDetail
 	{

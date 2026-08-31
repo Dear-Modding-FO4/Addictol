@@ -4,84 +4,229 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <string_view>
 
 namespace Addictol::ImguiPlatform
 {
-	enum class Runtime : uint32_t
-	{
-		kOG,
-		kNG,
-		kAE
-	};
+	inline constexpr uint32_t kPresentSlot = 8;
+	inline constexpr uint32_t kResizeBuffersSlot = 13;
+	inline constexpr uint32_t kPresentTestFlag = 0x00000001;
+	inline constexpr uint32_t kWindowNcDestroyMessage = 0x0082;
 
-	struct TargetId
+	struct AttachmentIdentity
 	{
-		uint64_t og{ 0 };
-		uint64_t ng{ 0 };
-		uint64_t ae{ 0 };
+		uintptr_t swapChain{ 0 };
+		uintptr_t device{ 0 };
+		uintptr_t context{ 0 };
+		uintptr_t window{ 0 };
 
-		[[nodiscard]] constexpr uint64_t For(Runtime a_runtime) const noexcept
+		[[nodiscard]] constexpr bool Valid() const noexcept
 		{
-			return a_runtime == Runtime::kOG ? og : a_runtime == Runtime::kNG ? ng : ae;
+			return swapChain && device && context && window;
 		}
 	};
 
-	// UIEndFrame is the only engine function this provider patches; every id was round tripped per runtime.
-	inline constexpr TargetId kUIEndFrameId{ 137303, 2284763, 2284763 };
-
-	[[nodiscard]] constexpr std::string_view Describe(Runtime a_runtime) noexcept
+	enum class AttachmentSource : uint32_t
 	{
-		return a_runtime == Runtime::kOG ? "OG" : a_runtime == Runtime::kNG ? "NG" : "AE";
+		kDiscovery,
+		kExplicit
+	};
+
+	enum class AttachmentDecision : uint32_t
+	{
+		kReject,
+		kKeepCurrent,
+		kAttach
+	};
+
+	enum class AttachmentLifecycle : uint32_t
+	{
+		kVacant,
+		kActive,
+		kRetired
+	};
+
+	[[nodiscard]] constexpr AttachmentDecision DecideAttachment(
+		const AttachmentIdentity& a_current,
+		const AttachmentIdentity& a_candidate,
+		AttachmentSource a_source,
+		AttachmentLifecycle a_lifecycle) noexcept
+	{
+		if (!a_candidate.Valid())
+			return AttachmentDecision::kReject;
+		if (a_lifecycle == AttachmentLifecycle::kRetired)
+			return AttachmentDecision::kAttach;
+		if (a_current.swapChain == a_candidate.swapChain &&
+			a_current.device == a_candidate.device &&
+			a_current.context == a_candidate.context &&
+			a_current.window == a_candidate.window &&
+			a_lifecycle == AttachmentLifecycle::kActive)
+			return AttachmentDecision::kKeepCurrent;
+		if (a_current.swapChain == a_candidate.swapChain &&
+			a_lifecycle == AttachmentLifecycle::kActive)
+			return AttachmentDecision::kAttach;
+		if (a_lifecycle != AttachmentLifecycle::kActive ||
+			!a_current.Valid() ||
+			a_source == AttachmentSource::kExplicit)
+			return AttachmentDecision::kAttach;
+		return AttachmentDecision::kKeepCurrent;
 	}
 
-	[[nodiscard]] constexpr uint64_t UIEndFrameId(Runtime a_runtime) noexcept
+	inline constexpr uint32_t kDxgiErrorDeviceRemoved = 0x887A0005u;
+	inline constexpr uint32_t kDxgiErrorDeviceHung = 0x887A0006u;
+	inline constexpr uint32_t kDxgiErrorDeviceReset = 0x887A0007u;
+	inline constexpr uint32_t kDxgiErrorDriverInternal = 0x887A0020u;
+
+	[[nodiscard]] constexpr bool IsDefinitiveSwapChainLoss(uint32_t a_result) noexcept
 	{
-		return kUIEndFrameId.For(a_runtime);
+		return a_result == kDxgiErrorDeviceRemoved ||
+			a_result == kDxgiErrorDeviceHung ||
+			a_result == kDxgiErrorDeviceReset ||
+			a_result == kDxgiErrorDriverInternal;
 	}
 
-	// Each signature runs into runtime specific bytes because the bare prologue repeats across hundreds of functions.
-	inline constexpr std::initializer_list<std::optional<uint8_t>> kUIEndFrameSignatureOG{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48,
-		0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x8B, 0x15, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x65, 0x48,
-		0x8B, 0x04, 0x25, 0x58, 0x00, 0x00, 0x00, 0x48, 0x8B, 0xF1, 0x48, 0x8B, 0x3C, 0xD0, 0xB9, 0xC0, 0x09,
-		0x00, 0x00 };
-	inline constexpr std::initializer_list<std::optional<uint8_t>> kUIEndFrameSignatureNGandAE{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48,
-		0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x54, 0x41,
-		0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x8B, 0x15, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x4C, 0x8B, 0xF9 };
-
-	[[nodiscard]] constexpr const std::initializer_list<std::optional<uint8_t>>& UIEndFrameSignature(Runtime a_runtime) noexcept
+	[[nodiscard]] constexpr bool ReusesHookAssociation(
+		AttachmentLifecycle a_lifecycle,
+		uintptr_t a_liveVtable,
+		uintptr_t a_associatedVtable) noexcept
 	{
-		return a_runtime == Runtime::kOG ? kUIEndFrameSignatureOG : kUIEndFrameSignatureNGandAE;
+		return a_lifecycle != AttachmentLifecycle::kRetired ||
+			(a_liveVtable && a_liveVtable == a_associatedVtable);
+	}
+
+	enum class HookDispatchMatch : uint32_t
+	{
+		kNone,
+		kSwapChain,
+		kVtable
+	};
+
+	[[nodiscard]] constexpr HookDispatchMatch MatchHookDispatch(
+		uintptr_t a_swapChain,
+		uintptr_t a_liveVtable,
+		uintptr_t a_associatedSwapChain,
+		uintptr_t a_patchedVtable) noexcept
+	{
+		if (a_associatedSwapChain && a_swapChain == a_associatedSwapChain)
+			return HookDispatchMatch::kSwapChain;
+		if (a_patchedVtable && a_liveVtable == a_patchedVtable)
+			return HookDispatchMatch::kVtable;
+		return HookDispatchMatch::kNone;
+	}
+
+	[[nodiscard]] constexpr bool ObservesDisplayedFrame(
+		uint32_t a_presentFlags,
+		bool a_presentSucceeded) noexcept
+	{
+		return a_presentSucceeded && (a_presentFlags & kPresentTestFlag) == 0;
+	}
+
+	[[nodiscard]] constexpr bool ShouldInitializeHost(
+		bool a_hasClients,
+		bool a_windowReady) noexcept
+	{
+		return a_hasClients && a_windowReady;
+	}
+
+	[[nodiscard]] constexpr bool ShouldRenderHostFrame(
+		bool a_modalVisible,
+		bool a_overlayDemanded) noexcept
+	{
+		return a_modalVisible || a_overlayDemanded;
+	}
+
+	[[nodiscard]] constexpr bool ShouldSuppressGameInput(bool a_modalVisible) noexcept
+	{
+		return a_modalVisible;
+	}
+
+	[[nodiscard]] constexpr bool RequiresBackendReset(
+		const AttachmentIdentity& a_current,
+		const AttachmentIdentity& a_candidate,
+		bool a_backendInitialized) noexcept
+	{
+		return a_backendInitialized &&
+			(a_current.device != a_candidate.device ||
+				a_current.context != a_candidate.context ||
+				a_current.window != a_candidate.window);
+	}
+
+	struct BackBufferIdentity
+	{
+		uintptr_t resource{ 0 };
+		uint32_t width{ 0 };
+		uint32_t height{ 0 };
+
+		[[nodiscard]] constexpr bool Valid() const noexcept
+		{
+			return resource && width && height;
+		}
+	};
+
+	struct MousePosition
+	{
+		float x{ 0.0f };
+		float y{ 0.0f };
+	};
+
+	[[nodiscard]] constexpr MousePosition MapClientToBackBuffer(
+		MousePosition a_position,
+		uint32_t a_clientWidth,
+		uint32_t a_clientHeight,
+		uint32_t a_backBufferWidth,
+		uint32_t a_backBufferHeight) noexcept
+	{
+		if (!a_clientWidth ||
+			!a_clientHeight ||
+			!a_backBufferWidth ||
+			!a_backBufferHeight ||
+			(a_clientWidth == a_backBufferWidth &&
+				a_clientHeight == a_backBufferHeight) ||
+			!(a_position.x >= 0.0f &&
+				a_position.y >= 0.0f &&
+				a_position.x < static_cast<float>(a_clientWidth) &&
+				a_position.y < static_cast<float>(a_clientHeight)))
+			return a_position;
+
+		return {
+			a_position.x * static_cast<float>(a_backBufferWidth) /
+				static_cast<float>(a_clientWidth),
+			a_position.y * static_cast<float>(a_backBufferHeight) /
+				static_cast<float>(a_clientHeight)
+		};
+	}
+
+	enum class BackBufferDecision : uint32_t
+	{
+		kSkip,
+		kKeep,
+		kRecreate
+	};
+
+	[[nodiscard]] constexpr BackBufferDecision DecideBackBuffer(
+		const BackBufferIdentity& a_current,
+		const BackBufferIdentity& a_candidate,
+		bool a_hasRenderTarget) noexcept
+	{
+		if (!a_candidate.Valid())
+			return BackBufferDecision::kSkip;
+		if (a_hasRenderTarget &&
+			a_current.resource == a_candidate.resource &&
+			a_current.width == a_candidate.width &&
+			a_current.height == a_candidate.height)
+			return BackBufferDecision::kKeep;
+		return BackBufferDecision::kRecreate;
 	}
 
 	enum class InstallState : uint32_t
 	{
 		kNotAttempted,
-		kRejected,
 		kAttempted,
 		kInstalled,
-		kIndeterminate
+		kRejected
 	};
 
-	[[nodiscard]] constexpr std::string_view Describe(InstallState a_state) noexcept
-	{
-		switch (a_state)
-		{
-		case InstallState::kNotAttempted:
-			return "not attempted";
-		case InstallState::kRejected:
-			return "rejected before any write";
-		case InstallState::kAttempted:
-			return "write attempted";
-		case InstallState::kInstalled:
-			return "installed";
-		default:
-			return "indeterminate";
-		}
-	}
-
-	// A rejected target is never retried: the executable does not change while the process runs.
+	// Installation is attempted once so repeated calls cannot disturb an existing IAT chain.
 	[[nodiscard]] constexpr bool AllowsInstallAttempt(InstallState a_state) noexcept
 	{
 		return a_state == InstallState::kNotAttempted;
@@ -215,7 +360,9 @@ namespace Addictol::ImguiPlatform
 	inline constexpr uint32_t kMouseMessageFirst = 0x0200;
 	inline constexpr uint32_t kMouseMessageLast = 0x020E;
 	inline constexpr uint32_t kKeyDownMessage = 0x0100;
+	inline constexpr uint32_t kKeyUpMessage = 0x0101;
 	inline constexpr uint32_t kSysKeyDownMessage = 0x0104;
+	inline constexpr uint32_t kSysKeyUpMessage = 0x0105;
 	inline constexpr uint64_t kKeyRepeatBit = uint64_t{ 1 } << 30;
 
 	[[nodiscard]] constexpr MessageClass ClassifyMessage(uint32_t a_message) noexcept
@@ -249,10 +396,53 @@ namespace Addictol::ImguiPlatform
 		return (a_lparam & kKeyRepeatBit) != 0;
 	}
 
-	// Auto repeat must not retrigger a toggle that is held down.
-	// Windows posts bare F10 and every Alt combination as WM_SYSKEYDOWN, so both keydown forms must toggle.
+	// Fresh WM_KEYDOWN and WM_SYSKEYDOWN messages both dispatch, while auto repeat does not.
 	[[nodiscard]] constexpr bool DispatchesToggleSinks(uint32_t a_message, uint64_t a_lparam) noexcept
 	{
 		return (a_message == kKeyDownMessage || a_message == kSysKeyDownMessage) && !IsKeyRepeat(a_lparam);
+	}
+
+	enum class ToggleMessageDecision : uint32_t
+	{
+		kForward,
+		kDispatch,
+		kConsume,
+		kConsumeAndRelease
+	};
+
+	[[nodiscard]] constexpr ToggleMessageDecision DecideToggleMessage(
+		uint32_t a_message,
+		uint64_t a_lparam,
+		bool a_pressConsumed) noexcept
+	{
+		if (a_message == kKeyDownMessage || a_message == kSysKeyDownMessage)
+		{
+			if (!IsKeyRepeat(a_lparam))
+				return ToggleMessageDecision::kDispatch;
+			return a_pressConsumed ?
+				ToggleMessageDecision::kConsume :
+				ToggleMessageDecision::kForward;
+		}
+		if ((a_message == kKeyUpMessage || a_message == kSysKeyUpMessage) &&
+			a_pressConsumed)
+			return ToggleMessageDecision::kConsumeAndRelease;
+		return ToggleMessageDecision::kForward;
+	}
+
+	[[nodiscard]] constexpr bool HandlesWindowMessage(
+		bool a_activeWindow,
+		bool a_drawingRequested,
+		bool a_backendReady,
+		bool a_hasContext) noexcept
+	{
+		return a_activeWindow &&
+			a_drawingRequested &&
+			a_backendReady &&
+			a_hasContext;
+	}
+
+	[[nodiscard]] constexpr bool RetiresWindowHook(uint32_t a_message) noexcept
+	{
+		return a_message == kWindowNcDestroyMessage;
 	}
 }

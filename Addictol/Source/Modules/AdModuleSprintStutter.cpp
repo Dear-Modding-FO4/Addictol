@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesSprintStutter{ "Fixes"sv, "bSprintStutter"sv, true };
 
 	ModuleSprintStutter::ModuleSprintStutter() :
 		Module("Sprint Stutter", &bFixesSprintStutter)

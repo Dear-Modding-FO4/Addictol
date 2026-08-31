@@ -12,6 +12,14 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Core\AdConfigValidation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdAdditionalSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdFixSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdPatchSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSetting.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSettingPersistence.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdSettingsModel.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdTelemetrySettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\Settings\AdWarningSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryRuntime.cpp" />
@@ -23,9 +31,23 @@
     <ClCompile Include="..\Addictol\Source\Memory\AdMemoryTracer.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\BackgroundBlur.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\CarrierMenu.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\CursorLoader.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\FontCatalog.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Host.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettings.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\HostSettingsView.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Navigation.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Registry.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Shell.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Status.cpp" />
+    <ClCompile Include="..\Addictol\Source\DearModdingUI\Theme.cpp" />
     <ClCompile Include="..\Addictol\Source\Platform\AdPlatformImgui.cpp" />
-    <ClCompile Include="..\Addictol\Source\Platform\AdImguiTheme.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuModules.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuLogControl.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuTelemetry.cpp" />
@@ -33,6 +55,7 @@
     <ClCompile Include="..\Addictol\Source\Memory\AdProxyVisperHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdProxyVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdRegisterModules.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\AdClock.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdVisperMemoryAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
@@ -131,6 +154,10 @@
     <ClInclude Include="..\Addictol\Include\Core\AdModuleDefender.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPCH.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdConfigValidation.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSetting.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingPersistence.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettings.h" />
+    <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingsModel.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdLoadTiming.h" />
@@ -142,17 +169,39 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\Platform\AdPlatformImgui.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\API.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\BackgroundBlur.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\CarrierMenu.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\CursorLoader.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\FontCatalog.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Host.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettings.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\HostSettingsView.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\IconGlyphs.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiFingerprint.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\ImGuiRecovery.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Navigation.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Registry.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\SettingsActions.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Shell.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Status.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\Theme.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\ThemeDefaults.h" />
+    <ClInclude Include="..\Addictol\Include\DearModdingUI\VisualDecisions.h" />
     <ClInclude Include="..\Addictol\Include\Platform\AdImguiPlatformTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuModules.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuWidgets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuLogControl.h" />
-    <ClInclude Include="..\Addictol\Include\Platform\AdImguiTheme.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInflate.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdGameUtils.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdMemoryTracer.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModule.h" />
+    <ClInclude Include="..\Addictol\Include\Core\AdModuleOutcome.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h" />
@@ -254,6 +303,25 @@
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Addictol\Include\DearModdingUI\README.md" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Bold.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-BoldItalic.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Italic.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\AtkinsonHyperlegible-Regular.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\OFL.txt" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Atkinson Hyperlegible\UPSTREAM.md" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-Regular.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\Jost-SemiBold.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Jost\OFL.txt" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\LICENSE" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\Phosphor-Fill.ttf" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Fonts\Phosphor\UPSTREAM.md" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurComposite.hlsl" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurDownsample.hlsl" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurHorizontal.hlsl" />
+    <None Include="..\.Build\F4SE\Plugins\DearModdingUI\Shaders\BackgroundBlurVertical.hlsl" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -312,7 +380,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;Ole32.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ResourceCompile>

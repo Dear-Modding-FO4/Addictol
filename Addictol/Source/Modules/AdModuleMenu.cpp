@@ -4,7 +4,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bAdditionalMenu{ "Additional"sv, "bMenu"sv, false };
 
 	ModuleMenu::ModuleMenu() :
 		Module("Menu", &bAdditionalMenu)

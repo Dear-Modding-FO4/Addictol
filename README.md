@@ -1,107 +1,120 @@
 <div align="center">
-  <img src="Pics/logo.png" alt="Addictol" width="640">
-</div>
+
+<img src="Pics/logo.png" alt="Addictol" width="640">
 
 # Addictol
 
-An F4SE plugin that combines engine fixes, crash fixes, and performance patches for Fallout 4 into
-a single DLL.
+**Engine fixes, crash fixes, and performance patches for Fallout 4 in one F4SE plugin.**
 
-Consolidates patches from Buffout 4, X-Cell, Mentats, Escape Freeze Fix, Baka MaxPapyrusOps,
-Interior NavCut Fix, and Faster Workshop, alongside fixes written for this project.
+Addictol consolidates proven work from Buffout 4, X-Cell, Mentats, Escape Freeze Fix,
+Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes developed here.
 
-Crash logging is not included here. It ships separately as
-[AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
+<br>
 
-## Supported runtimes
+[![CI](https://img.shields.io/github/actions/workflow/status/Dear-Modding-FO4/Addictol/xmake.yml?branch=master&style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Dear-Modding-FO4/Addictol/actions/workflows/xmake.yml)
+[![Version](https://img.shields.io/badge/version-1.6.x-orange?style=for-the-badge)](Version/resource_version2.h)
+[![License](https://img.shields.io/badge/license-GPL--3.0%20with%20exception-blue?style=for-the-badge)](LICENSE)
 
-One DLL covers all three; there is no separate download per version.
+[![Fallout 4](https://img.shields.io/badge/Fallout%204-OG%20%C2%B7%20NG%20%C2%B7%20AE-3a7d44?style=for-the-badge)](#requirements)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](xmake.lua)
+[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](#building)
 
-| Runtime | Version |
-| --- | --- |
-| OG | 1.10.163 |
-| NG | 1.10.984 |
-| AE | 1.11.240 |
+<sub>[Requirements](#requirements) · [Features](#features) · [Installation](#installation) · [Configuration](#configuration) · [Menu](#menu) · [Building](#building) · [Contributing](#contributing) · [License](#license)</sub>
 
-## Features
+</div>
 
-- **Memory Manager** - Replaces the game's allocator with a selectable backend
-- **Faster Workshop** - O(1) keyword lookups instead of scanning all constructible objects
-- **Zlib Decompression** - Selectable stock/libdeflate backend
-- **Facegen** - Validates NPC face textures before using preprocessed data
-- **Input Switch** - Proper keyboard/gamepad device switching
-- **Scaleform Allocator** - Replaces Scaleform's memory mapper with configurable page/heap sizes
-- **Archive Limits** - Increases max BA2 archives the game can load
-- **Menu** - In-game diagnostics window drawn over the game on a configurable key
-- **Papyrus GC Bug** - Fixes a critical bug in garbage collection that causes premature loop termination
-- ~80 modules in total, covering crash fixes, engine bug fixes and stability patches
+---
 
 ## Requirements
 
-- Fallout 4, on one of the runtimes above
-- [F4SE](https://f4se.silverlock.org/)
-- The **Address Library** for your runtime. Addictol will refuse to load without it.
+| | |
+|---|---|
+| **Fallout 4** | OG **1.10.163**, NG **1.10.984**, or AE **1.11.240**. One DLL supports all three. |
+| **[Fallout 4 Script Extender (F4SE)](https://f4se.silverlock.org/)** | Required for the matching game runtime. |
+| **[Address Library for F4SE](https://www.nexusmods.com/fallout4/mods/47327)** | Required for the matching game runtime. Addictol will refuse to load without it. |
+
+---
+
+## Features
+
+More than 90 modules cover the following areas. Most can be toggled independently; a small set of
+core modules is mandatory.
+
+| Capability | Implementation |
+|---|---|
+| **Stability and crash fixes** | Guards invalid engine state, repairs shutdown and loading faults, and fixes known crashes across gameplay, rendering, animation, and UI paths. |
+| **Memory, I/O, and compression** | Replaces game allocators, accelerates zlib and save compression, and reduces file and co-save overhead. |
+| **Performance and limits** | Optimizes workshop and configuration lookups, raises archive and handle limits, and removes avoidable engine bottlenecks. |
+| **Engine and gameplay correctness** | Fixes Papyrus GC, navmesh cuts, input switching, audio state, encounter zones, crafting, and other engine behavior. |
+| **Visuals and display** | Corrects facegen, viewmodel shading and depth of field, high-DPI behavior, bloom, local maps, and fullscreen transitions. |
+| **Diagnostics and telemetry** | Reports load-order hazards and module outcomes, with optional sampled memory, frame, decompression, stability, and audio telemetry. |
+
+> [!NOTE]
+> Crash logging is separate: use [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger).
+
+---
 
 ## Installation
 
-Install with a mod manager, or extract the release archive into your Fallout 4 `Data` directory so
-that the files land as:
+Install with a mod manager, or extract the release archive into the Fallout 4 `Data` directory:
 
-```
-Data/F4SE/Plugins/Addictol.dll
-Data/F4SE/Plugins/Addictol.toml
-Data/F4SE/Plugins/Addictol_FacegenExceptions.ini
-Data/F4SE/Plugins/Addictol_SNCT.ini
-Data/F4SE/Plugins/Addictol/Fonts/Inter-Regular.ttf
-Data/F4SE/Plugins/Addictol/Fonts/JetBrainsMono-Regular.ttf
-Data/F4SE/Plugins/Addictol/Fonts/JetBrainsMono-Bold.ttf
-Data/Scripts/Addictol.pex
-Data/Scripts/XCELL.pex
+```text
+Data\
+├─ F4SE\Plugins\
+│  ├─ Addictol.dll, Addictol.toml, Addictol_*.ini
+│  └─ DearModdingUI\{Fonts,Shaders}\...
+└─ Scripts\{Addictol,XCELL}.pex
 ```
 
-The archive also contains `Addictol.pdb` and the Papyrus script sources; neither is needed to play.
+The archive also contains `Addictol.pdb` and Papyrus source files; neither is required to play.
+
+---
 
 ## Configuration
 
-Nearly every module can be individually toggled; a small number are mandatory and always run.
-`Addictol.toml` is the shipped configuration and documents each option inline.
+The central registry exposes 121 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
+`[Telemetry]`, and `[Additional]`. The shipped `Addictol.toml` documents every option inline.
 
-**Do not edit `Addictol.toml` directly**, because it is overwritten on update. Instead create
-`AddictolCustom.toml` next to it, containing only the sections and keys you want to change:
+> [!WARNING]
+> Do not edit `Addictol.toml`; updates overwrite it. Put only your overrides in
+> `AddictolCustom.toml` beside it.
 
 ```toml
 [Fixes]
 bUnalignedLoad = false
 ```
 
-Options are grouped into `[Patches]` (subsystem replacements), `[Fixes]` (bug and crash fixes),
-`[Warnings]` (diagnostics for problems in your load order) and `[Additional]` (tunables belonging
-to another option).
+Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`. It records which modules
+loaded, were disabled, or skipped; check it first when something is not working.
 
-Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`, listing which modules loaded
-and any that disabled themselves. Check it first if something is not working.
+---
 
-### Menu
+## Menu
 
-`[Additional] bMenu` adds an in-game diagnostics window drawn over the game.
-`sMenuToggleKey` accepts F1-F12, Home, End, Insert, and Delete, and falls back to F11 when it does
-not recognize the name. `uMenuRefreshMs` sets how often the open tab copies fresh data, clamped to
-100-2000 ms.
+The menu is enabled by default. Press **F11** to open it, or set `[Additional] sMenuToggleKey` to
+F1-F12, Home, End, Insert, or Delete. It can also display pages registered by other loaded mods.
 
-Tabs appear in module name order and Log Control is always last.
+| Page | Contents |
+|---|---|
+| **Home** | Runtime, live module summary, project links, and common answers. |
+| **Settings** | All 121 settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
+| **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
+| **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels. |
+| **Log Control** | Session-only record and flush levels with the live output rate. |
 
-The menu always starts closed. The ImGui host installs its hook for external F4SE plugins regardless
-of `bMenu`; a disabled menu registers no setup, draw, or toggle sinks. Window geometry is kept in
-`Data\F4SE\Plugins\Addictol\imgui.ini`; the open state is not persisted.
+> [!NOTE]
+> Telemetry panels appear only when `[Telemetry] bEnabled` is `true`; it defaults to `false`.
 
-Log Control changes the record and flush levels for the current session and shows the live output
-rate. The record level decides which lines are kept; the flush level forces a synchronous disk
-write at that level or higher. These overrides are not persisted; `[Additional] sLogLevel` and
-`sLogFlushLevel` are the persistent controls.
+Shared appearance and accessibility controls live behind the footer gear. Addictol's menu enablement,
+toggle key, and refresh interval are under **Settings > Interface**.
+
+---
 
 ## Building
 
-Requires Visual Studio 2022 Build Tools (or VS 2022) with the v143 toolset.
+Use Visual Studio 2022 or its Build Tools with the pinned v143 toolset; newer Visual Studio releases
+ship v145, so install v143 or override `PlatformToolset` on the command line as described in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```powershell
 git clone --recurse-submodules https://github.com/Dear-Modding-FO4/Addictol.git
@@ -111,16 +124,26 @@ MSBuild VC/Addictol.sln -p:Configuration=Release -p:Platform=x64
 
 Output: `.Build/F4SE/Plugins/Addictol.dll`
 
+---
+
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, the module model, the rules for
-handling game addresses across the three runtimes, and what a pull request needs to include.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, the module model, cross-runtime
+address rules, and pull request requirements.
+
+---
 
 ## License
 
 GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPTIONS).
 
-The menu theme is adapted from Fallout 4 Community Shaders (`src/Menu/Theme.h` and
-`src/Menu/Theme.cpp`), which is GPL-3.0. The bundled Inter and JetBrains Mono fonts in
-`Data\F4SE\Plugins\Addictol\Fonts` ship under the SIL Open Font License; their license texts sit
-next to them.
+The DearModdingUI shell, theme, font roles, cursor behavior, and blur are ported from
+[Fallout 4 Community Shaders](https://github.com/northaxosky/fallout4-community-shaders)
+(`src/Menu/FeatureListRenderer.*`, `Menu.*`, `ThemeManager.*`, `Fonts.*`, `CursorLoader.*`,
+`BackgroundBlur.*`, `src/Utils/UI.*`, and `ImGuiRecovery.h`), which is GPL-3.0. Its Gaussian blur
+credits Unrimp by Christian Ofenberg under MIT.
+
+The bundled Jost and Atkinson Hyperlegible fonts under
+`Data\F4SE\Plugins\DearModdingUI\Fonts` use the SIL Open Font License; their license text sits next
+to them, and Atkinson Hyperlegible's pinned official source is recorded in its provenance note. The
+bundled Phosphor icon font uses MIT; its license and upstream pin sit next to the font.

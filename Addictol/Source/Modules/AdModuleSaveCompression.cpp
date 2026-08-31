@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesSaveCompression{ "Patches"sv, "bSaveCompression"sv, true };
 
 	namespace saveCompDetail
 	{

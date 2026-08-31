@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesActorIsHostileToActor{ "Fixes"sv, "bActorIsHostileToActor"sv, true };
 
 	namespace actorIsHostileToActorDetail
 	{

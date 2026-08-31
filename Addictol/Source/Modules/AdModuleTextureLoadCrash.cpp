@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesTextureLoadCrash{ "Fixes"sv, "bTextureLoadCrash"sv, true };
 
 	static inline REL::Relocation<void(RE::BSResourceNiBinaryStream* a_self, RE::BSTSmartPointer<RE::BSResource::Stream>& a_stream,
 		bool a_fullReadHint, bool a_useOwnBuffer)> BSResourceNiBinaryStream_ctorFromResourceStream{ REL::ID{ 306612, 2269831 } };

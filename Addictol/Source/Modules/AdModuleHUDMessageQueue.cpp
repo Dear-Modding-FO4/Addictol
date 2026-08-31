@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesHUDMessageQueue{ "Fixes"sv, "bHUDMessageQueue"sv, true };
 
 	namespace hudMessageQueueDetail
 	{

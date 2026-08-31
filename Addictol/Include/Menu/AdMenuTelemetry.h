@@ -8,7 +8,7 @@
 
 namespace Addictol
 {
-	void DrawMenuTelemetryPanel(const void* a_context) noexcept;
+	void DrawMenuTelemetryPanel(void* a_context) noexcept;
 
 	enum class TelemetryPanel : uint8_t
 	{
@@ -24,23 +24,24 @@ namespace Addictol
 	struct TelemetryPanelDefinition
 	{
 		TelemetryPanel panel;
+		const char* id;
 		std::string_view name;
 		std::string_view description;
+		int32_t sortKey;
 	};
 
 	inline constexpr std::array kTelemetryPanels{
-		TelemetryPanelDefinition{ TelemetryPanel::kOverview, "Overview"sv,
-			"Frame pacing and the signals most likely to need attention."sv },
-		TelemetryPanelDefinition{ TelemetryPanel::kMemory, "Memory"sv,
-			"Process, system, video, and allocator memory."sv },
-		TelemetryPanelDefinition{ TelemetryPanel::kDecompression, "Decompression"sv,
-			"Libdeflate interval totals and zlib workload distribution."sv },
-		TelemetryPanelDefinition{ TelemetryPanel::kStability, "Stability"sv,
-			"Escape recovery, reference handles, and module outcomes."sv },
-		TelemetryPanelDefinition{ TelemetryPanel::kAudio, "Audio"sv,
-			"XAudio2 voice, latency, memory, and glitch telemetry."sv }
+		TelemetryPanelDefinition{ TelemetryPanel::kOverview, "overview", "Overview"sv,
+			"Frame pacing and the signals most likely to need attention."sv, 0 },
+		TelemetryPanelDefinition{ TelemetryPanel::kMemory, "memory", "Memory"sv,
+			"Process, system, video, and allocator memory."sv, 10 },
+		TelemetryPanelDefinition{ TelemetryPanel::kDecompression, "decompression", "Decompression"sv,
+			"Libdeflate interval totals and zlib workload distribution."sv, 20 },
+		TelemetryPanelDefinition{ TelemetryPanel::kStability, "stability", "Stability"sv,
+			"Escape recovery, reference handles, and module outcomes."sv, 30 },
+		TelemetryPanelDefinition{ TelemetryPanel::kAudio, "audio", "Audio"sv,
+			"XAudio2 voice, latency, memory, and glitch telemetry."sv, 40 }
 	};
-	static_assert(kTelemetryPanels.size() + 1 <= kMenuPanelCapacity);
 
 	struct TelemetryMetricGroup
 	{

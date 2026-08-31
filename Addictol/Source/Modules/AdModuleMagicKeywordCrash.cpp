@@ -22,7 +22,6 @@ namespace RE
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMagicKeywordCrash{ "Fixes"sv, "bMagicKeywordCrash"sv, true };
 
 	namespace magicKeywordCrashDetail
 	{

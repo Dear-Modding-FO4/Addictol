@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesCreateD3DAndSwapchain{ "Fixes"sv, "bCreateD3DAndSwapchain"sv, true };
 
 	namespace createD3DAndSwapchainDetail
 	{

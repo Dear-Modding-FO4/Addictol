@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bWarningsDuplicateAddonNodeIndex{"Warnings"sv, "bDuplicateAddonNodeIndex"sv, true};
 
 	ModuleDuplicateAddonNodeIndex::ModuleDuplicateAddonNodeIndex()
 		: Module("Duplicate Addon Node Index", &bWarningsDuplicateAddonNodeIndex)

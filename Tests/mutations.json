@@ -1,11 +1,67 @@
 [
   {
-    "name": "menu requires log control before platform registration",
-    "target": "Addictol/Include/Menu/AdMenuTargets.h",
-    "find": "if (a_menuRequested && result == Registration::kAccepted)",
-    "replace": "if (a_menuRequested)",
-    "check": "a menu that cannot register log control asks for no platform sinks",
-    "message": "a menu without log control asked the platform for sinks"
+    "name": "config validation rejects unregistered keys",
+    "target": "Addictol/Source/Core/AdConfigValidation.cpp",
+    "find": "return SettingRegistry::GetSingleton().Find(a_section, a_key) != nullptr;",
+    "replace": "return true;",
+    "check": "config validation follows the setting registry",
+    "message": "validation accepted an unknown key"
+  },
+  {
+    "name": "DearModdingUI navigation filters overlay pages",
+    "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
+    "find": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_SETTINGS)\r\n\t\t\t\t\torderedPages.push_back(&page);",
+    "replace": "if (page.client == client->handle &&\r\n\t\t\t\t\tpage.kind == DMUI_PAGE_KIND_OVERLAY)\r\n\t\t\t\t\torderedPages.push_back(&page);",
+    "check": "navigation groups clients categories and settings pages deterministically",
+    "message": "categories were not grouped"
+  },
+  {
+    "name": "DearModdingUI client-named categories inherit client glyphs",
+    "target": "Addictol/Include/DearModdingUI/IconGlyphs.h",
+    "find": "if (!category.empty() &&\r\n\t\t\t\t(category == NormalizeIconOwnerName(a_clientDisplayName) ||\r\n\t\t\t\t\tcategory == NormalizeIconOwnerName(a_clientId)))",
+    "replace": "if (false)",
+    "check": "icon names resolve to deterministic Phosphor glyphs",
+    "message": "registered client-named categories did not inherit client glyphs"
+  },
+  {
+    "name": "DearModdingUI client selection clears search",
+    "target": "Addictol/Source/DearModdingUI/Navigation.cpp",
+    "find": "a_state.search.clear();\r\n\t\treturn true;",
+    "replace": "a_state.search = a_state.search;\r\n\t\treturn true;",
+    "check": "client dropdown selection handles zero one and many clients",
+    "message": "single-client selection did not clear search"
+  },
+  {
+    "name": "DearModdingUI unknown icons use the fallback glyph",
+    "target": "Addictol/Include/DearModdingUI/IconGlyphs.h",
+    "find": "return PhosphorGlyph::kQuestion;",
+    "replace": "return PhosphorGlyph::kSun;",
+    "check": "icon names resolve to deterministic Phosphor glyphs",
+    "message": "non-matching categories were affected by client naming"
+  },
+  {
+    "name": "DearModdingUI icon modes select their theme tints",
+    "target": "Addictol/Include/DearModdingUI/ThemeDefaults.h",
+    "find": "return a_mode == IconColorMode::kColored ? a_accent : a_text;",
+    "replace": "return a_mode == IconColorMode::kColored ? a_text : a_accent;",
+    "check": "theme icon tint selects colored and monochrome modes",
+    "message": "colored icons did not use the accent tint"
+  },
+  {
+    "name": "DearModdingUI freeze closes registration",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "if (!m_open)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",
+    "replace": "if (false)\r\n\t\t\t\treturn DMUI_RESULT_REGISTRATION_CLOSED;\r\n\t\t\tif (std::ranges::any_of(m_clients",
+    "check": "registry freeze rejects late clients and pages",
+    "message": "late client was accepted"
+  },
+  {
+    "name": "DearModdingUI carrier opens only for modal frames",
+    "target": "Addictol/Include/DearModdingUI/CarrierMenu.h",
+    "find": "const auto nextOpen = a_event == Event::kOpen;",
+    "replace": "const auto nextOpen = false;",
+    "check": "carrier menu open and close messages remain balanced",
+    "message": "the first modal open did not show the carrier"
   },
   {
     "name": "public warning level name",
@@ -22,14 +78,6 @@
     "replace": "if (a_decode.consumed != a_expectedInput && a_decode.produced != a_expectedOutput)",
     "check": "libdeflate failures classify into distinct fallback reasons",
     "message": "a wrong expected size was accepted"
-  },
-  {
-    "name": "wildcard mask takes the target byte",
-    "target": "Addictol/Include/Core/AdSignature.h",
-    "find": "expected.push_back(a_expected[i].value_or(target[i]));",
-    "replace": "expected.push_back(a_expected[i].value_or(0));",
-    "check": "wildcard signature takes target bytes only at masked positions",
-    "message": "masked positions must take the target's own bytes"
   },
   {
     "name": "allocator busy metric reads busy pages",
@@ -205,7 +253,7 @@
     "find": "if (!a_value.valid)",
     "replace": "if (a_value.valid)",
     "check": "invalid telemetry values stay visually distinct",
-    "message": "invalid telemetry value did not render as a placeholder"
+    "message": "invalid telemetry value became valid"
   },
   {
     "name": "plugin timing series name stays public",
@@ -286,5 +334,213 @@
     "replace": "m_counters[a_index - 1].fetch_add(0, std::memory_order_relaxed);",
     "check": "burst series source owns shared telemetry plumbing",
     "message": "burst series counters changed"
+  },
+  {
+    "name": "host chrome reserves trailing control spacing",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "controlMin - spacing",
+    "replace": "controlMin + spacing",
+    "check": "host close and footer gear stay clear of adjacent content",
+    "message": "close button geometry changed"
+  },
+  {
+    "name": "host settings require visible menu",
+    "target": "Addictol/Include/DearModdingUI/HostSettings.h",
+    "find": "if (!a_menuVisible ||",
+    "replace": "if (false ||",
+    "check": "host settings panel follows menu visibility",
+    "message": "settings opened while the menu was closed"
+  },
+  {
+    "name": "host icon setting preserves monochrome value",
+    "target": "Addictol/Include/DearModdingUI/HostSettings.h",
+    "find": "a_settings.iconColorMode == Theme::IconColorMode::kMonochrome,",
+    "replace": "a_settings.iconColorMode != Theme::IconColorMode::kMonochrome,",
+    "check": "host settings persistence round trips every stored value",
+    "message": "stored host settings did not round trip"
+  },
+  {
+    "name": "action duplicate ids stay client scoped",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "return DMUI_RESULT_DUPLICATE_ACTION_ID;",
+    "replace": "return DMUI_RESULT_OK;",
+    "check": "action registration validates descriptors clients duplicates and freeze",
+    "message": "duplicate action ID in one client was accepted"
+  },
+  {
+    "name": "actions sort by key before id",
+    "target": "Addictol/Source/DearModdingUI/Registry.cpp",
+    "find": "return std::tie(a_left.client, a_left.sortKey, a_left.id) <",
+    "replace": "return std::tie(a_left.client, a_right.sortKey, a_left.id) <",
+    "check": "client actions order by sort key then stable ID",
+    "message": "actions did not order by sort key then ID"
+  },
+  {
+    "name": "empty action rows reserve no width",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "if (a_actionCount == 0)",
+    "replace": "if (false)",
+    "check": "page action row reserves space only for registered actions",
+    "message": "client with no actions reserved title-row space"
+  },
+  {
+    "name": "unchanged host settings drafts do not commit",
+    "target": "Addictol/Include/DearModdingUI/HostSettingsView.h",
+    "find": "if (!HostSettingsDraftDiffers(a_state))",
+    "replace": "if (false)",
+    "check": "host settings draft applies all fields once",
+    "message": "unchanged settings draft produced a commit"
+  },
+  {
+    "name": "host settings atlas changes use disjunction",
+    "target": "Addictol/Include/DearModdingUI/HostSettingsView.h",
+    "find": "return a_draft.uiScale != a_committed.uiScale ||\r\n\t\t\ta_draft.bodyFontFamily != a_committed.bodyFontFamily;",
+    "replace": "return a_draft.uiScale != a_committed.uiScale &&\r\n\t\t\ta_draft.bodyFontFamily != a_committed.bodyFontFamily;",
+    "check": "host settings atlas rebuild predicate is exact",
+    "message": "UI scale change did not request an atlas rebuild"
+  },
+  {
+    "name": "host settings title actions follow dirty state",
+    "target": "Addictol/Include/DearModdingUI/SettingsActions.h",
+    "find": "case SettingsAction::kReset:\r\n\t\t\treturn true;",
+    "replace": "case SettingsAction::kReset:\r\n\t\t\treturn false;",
+    "check": "settings action availability follows dirty state",
+    "message": "clean settings exposed the wrong title actions"
+  },
+  {
+    "name": "host settings title actions preserve close spacing",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "close.adjacentMaxX,\r\n\t\t\ta_actionButtonWidthSum,",
+    "replace": "close.controlMinX,\r\n\t\t\ta_actionButtonWidthSum,",
+    "check": "settings action rows keep fixed non-overlapping geometry",
+    "message": "settings title controls overlapped"
+  },
+  {
+    "name": "custom settings omit default values",
+    "target": "Addictol/Source/Core/Settings/AdSettingPersistence.cpp",
+    "find": "if (item.value == item.setting->DefaultValue())\r\n\t\t\t\t\tcontinue;",
+    "replace": "if (false)\r\n\t\t\t\t\tcontinue;",
+    "check": "settings override output keeps only non-default owned values",
+    "message": "default-valued setting was written"
+  },
+  {
+    "name": "custom settings remove replaced owned keys",
+    "target": "Addictol/Source/Core/Settings/AdSettingPersistence.cpp",
+    "find": "if (!RemoveOwnedSettings(output, a_settings, a_error))\r\n\t\t\t\treturn false;",
+    "replace": "if (false)\r\n\t\t\t\treturn false;",
+    "check": "settings override output preserves unknown existing keys",
+    "message": "default owned key was retained"
+  },
+  {
+    "name": "settings draft dirty detection compares committed values",
+    "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
+    "find": "return a_entry.draft != a_entry.committed;",
+    "replace": "return a_entry.draft == a_entry.committed;",
+    "check": "settings draft applies each changed field once",
+    "message": "new draft was dirty"
+  },
+  {
+    "name": "settings modified predicate compares defaults",
+    "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
+    "find": "return a_value != a_setting.DefaultValue();",
+    "replace": "return a_value == a_setting.DefaultValue();",
+    "check": "settings reset predicate and control selection follow metadata",
+    "message": "default value exposed reset"
+  },
+  {
+    "name": "settings numeric controls honor ranges",
+    "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
+    "find": "if (!a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
+    "replace": "if (a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
+    "check": "settings reset predicate and control selection follow metadata",
+    "message": "fully bounded number did not select a slider"
+  },
+  {
+    "name": "persistent status severities do not expire",
+    "target": "Addictol/Include/DearModdingUI/Status.h",
+    "find": "return a_severity == DMUI_STATUS_SEVERITY_WARNING ||",
+    "replace": "return a_severity == DMUI_STATUS_SEVERITY_WARNING &&",
+    "check": "status severity controls expiry and persistence",
+    "message": "warning status expired"
+  },
+  {
+    "name": "new status replaces the previous message",
+    "target": "Addictol/Source/DearModdingUI/Status.cpp",
+    "find": "m_current = std::move(next);",
+    "replace": "if (!m_current)\r\n\t\t\t\tm_current = std::move(next);",
+    "check": "newest status supersedes older status regardless of severity",
+    "message": "newest status did not supersede an older persistent status"
+  },
+  {
+    "name": "status validation retains client rejection",
+    "target": "Addictol/Include/DearModdingUI/Status.h",
+    "find": "if (a_clientValidation != DMUI_RESULT_OK)",
+    "replace": "if (false)",
+    "check": "status validation rejects invalid clients and messages",
+    "message": "unaccepted status client was not rejected"
+  },
+  {
+    "name": "footer metadata clip ignores status presence",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "const auto metadataMax = metadataLimit;",
+    "replace": "const auto metadataMax = a_hasStatus ?\r\n\t\t\tmetadataLimit :\r\n\t\t\ttrailing.controlMaxX;",
+    "check": "footer metadata geometry stays fixed while idle",
+    "message": "status presence changed reserved footer geometry"
+  },
+  {
+    "name": "footer metadata clip ignores status text width",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "const auto metadataLimit = trailing.adjacentMaxX;",
+    "replace": "const auto metadataLimit = (std::max)(\r\n\t\t\ta_contentMinX,\r\n\t\t\ttrailing.adjacentMaxX - a_statusTextWidth);",
+    "check": "footer metadata geometry ignores status length",
+    "message": "status message length changed reserved footer geometry"
+  },
+  {
+    "name": "chrome row text keeps its capital ink offset",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "return origin.y;",
+    "replace": "return boxOffset;",
+    "check": "capital ink provides stable optical text offset",
+    "message": "capital ink did not center between box heuristics"
+  },
+  {
+    "name": "header title keeps the bullet run inset",
+    "target": "Addictol/Include/DearModdingUI/VisualDecisions.h",
+    "find": "return framePaddingX + fontSize * 0.3f;",
+    "replace": "return 0.0f;",
+    "check": "header title aligns with the footer bullet run",
+    "message": "header title inset did not match the bullet ink edge"
+  },
+  {
+    "name": "module skipped outcomes remain warnings",
+    "target": "Addictol/Include/Menu/AdMenuModules.h",
+    "find": "return { \"Skipped\", ModuleOutcomeSeverity::kWarning };",
+    "replace": "return { \"Skipped\", ModuleOutcomeSeverity::kError };",
+    "check": "module outcomes classify into actionable severities",
+    "message": "skipped outcome was not a warning"
+  },
+  {
+    "name": "module outcome filter rejects other outcomes",
+    "target": "Addictol/Include/Menu/AdMenuModules.h",
+    "find": "if (a_filter != ModuleOutcomeFilter::kAll && a_outcome != selected)",
+    "replace": "if (false)",
+    "check": "module search and outcome filters combine deterministically",
+    "message": "outcome filter accepted another outcome"
+  },
+  {
+    "name": "module outcome transitions remove the previous tally",
+    "target": "Addictol/Include/Core/AdModuleOutcome.h",
+    "find": "update(a_current, false);",
+    "replace": "update(a_current, true);",
+    "check": "per-module outcome tally equals ModuleOutcomeCounts",
+    "message": "per-module outcomes disagreed with ModuleOutcomeCounts"
+  },
+  {
+    "name": "module outcome tally keeps install failures distinct",
+    "target": "Addictol/Include/Core/AdModuleOutcome.h",
+    "find": "++tally[4];",
+    "replace": "++tally[3];",
+    "check": "per-module outcome tally equals ModuleOutcomeCounts",
+    "message": "per-module outcomes disagreed with ModuleOutcomeCounts"
   }
 ]

@@ -233,8 +233,6 @@ namespace Addictol
 	{
 		using FrameClock = uint64_t (*)() noexcept;
 		using ThreadIdReader = uint32_t (*)() noexcept;
-		[[nodiscard]] uint64_t ReadQpc() noexcept;
-		[[nodiscard]] uint64_t QpcFrequency() noexcept;
 		void ObserveFrame(FrameMetricSource* a_source, FrameClock a_clock) noexcept;
 		void CaptureRenderThread(ThreadIdReader a_reader) noexcept;
 	}

@@ -25,7 +25,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesInputSwitch{ "Patches"sv, "bInputSwitch"sv, true };
 
 	template <class E, class U = std::underlying_type_t<E>> class enumeration : public REX::EnumSet<E, U>
 	{

@@ -16,7 +16,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesFasterWorkshop{ "Patches"sv, "bFasterWorkshop"sv, true };
 
 	namespace fasterWorkshopDetail
 	{

@@ -10,8 +10,7 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesBakaMaxPapyrusOps{ "Fixes"sv, "bBakaMaxPapyrusOps"sv, true };
-	static REX::TOML::I32<> nAdditionalMaxPapyrusOpsPerFrame{ "Additional"sv, "nMaxPapyrusOpsPerFrame"sv, 500 };
+
 
 	class hkGetLargestAvailablePage :
 		public REX::Singleton<hkGetLargestAvailablePage>

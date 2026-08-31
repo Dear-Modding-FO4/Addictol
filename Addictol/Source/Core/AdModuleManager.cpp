@@ -1,7 +1,11 @@
 #include <Core/AdAssert.h>
 #include <Core/AdUtils.h>
 #include <Core/AdModuleManager.h>
+#include <Core/Settings/AdSetting.h>
 #include <Telemetry/AdTelemetryHub.h>
+
+#include <algorithm>
+#include <tuple>
 
 namespace Addictol
 {
@@ -21,6 +25,17 @@ namespace Addictol
 		"kGameLoaded",
 		"kGameDataReady"
 	};
+
+	namespace
+	{
+		[[nodiscard]] std::string_view ModuleStageName(
+			ModuleManager::Type a_type) noexcept
+		{
+			if (a_type == ModuleManager::Type::kLoad)
+				return "Load"sv;
+			return g_msgName[std::to_underlying(a_type) - 1];
+		}
+	}
 
 	bool ModuleManager::SafeQueryMod(const ModulePtr& a_mod) const
 	{
@@ -78,6 +93,7 @@ namespace Addictol
 
 	void ModuleManager::UnregisterPreloadAll() noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		modules.clear();
 	}
 
@@ -87,6 +103,7 @@ namespace Addictol
 
 	bool ModuleManager::Register(const ModulePtr& a_mod, Type a_type) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_mod)
 		{
 			REX::ERROR("{}: a_mod is nullptr"sv, __FUNCTION__);
@@ -109,9 +126,6 @@ namespace Addictol
 			}
 
 			modules.try_emplace(a_mod->GetName(), a_mod);
-			if (const auto source = std::dynamic_pointer_cast<MetricSource>(a_mod))
-				(void)Telemetry::Hub().Register(source);
-			return true;
 		}
 		else
 		{
@@ -132,14 +146,24 @@ namespace Addictol
 			}
 
 			modules_by_type.try_emplace(a_mod->GetName(), a_mod);
-			if (const auto source = std::dynamic_pointer_cast<MetricSource>(a_mod))
-				(void)Telemetry::Hub().Register(source);
-			return true;
 		}
+
+		ModuleRegistrationStatus status{ a_mod, a_type };
+		if (const auto* setting =
+				SettingRegistry::GetSingleton().Find(a_mod->GetOption()))
+		{
+			status.settingSection = setting->Section();
+			status.settingKey = setting->Key();
+		}
+		m_registrations.push_back(std::move(status));
+		if (const auto source = std::dynamic_pointer_cast<MetricSource>(a_mod))
+			(void)Telemetry::Hub().Register(source);
+		return true;
 	}
 
 	bool ModuleManager::Unregister(const ModulePtr& a_mod, Type a_type) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_mod)
 		{
 			REX::ERROR("{}: mod is nullptr"sv, __FUNCTION__);
@@ -194,6 +218,7 @@ namespace Addictol
 
 	bool ModuleManager::UnregisterByName(const char* a_name, Type a_type) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_name || !a_name[0])
 		{
 			REX::ERROR("{}: name is nullptr/empty"sv, __FUNCTION__);
@@ -248,6 +273,7 @@ namespace Addictol
 
 	void ModuleManager::QueryLoadAll() noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		std::vector<ModulePtr> needRemovedList;
 
 		for (auto it = modules.begin(); it != modules.end(); it++)
@@ -265,7 +291,7 @@ namespace Addictol
 				if (!optionName->GetValue())
 				{
 					REX::INFO("Module \"{}\": disabled"sv, mod->GetName());
-					m_disabled++;
+					RecordOutcome(mod, Type::kLoad, ModuleOutcome::kDisabled);
 					needRemovedList.emplace_back(mod);
 					continue;
 				}
@@ -280,12 +306,12 @@ namespace Addictol
 			{
 				if (mod->WasSkipped())
 				{
-					m_skipped++;
+					RecordOutcome(mod, Type::kLoad, ModuleOutcome::kSkipped);
 					REX::INFO("Module \"{}\": skipped ({})"sv, mod->GetName(), mod->GetSkipReason());
 				}
 				else
 				{
-					m_failedQuery++;
+					RecordOutcome(mod, Type::kLoad, ModuleOutcome::kFailedQuery);
 					REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
 				}
 
@@ -294,11 +320,12 @@ namespace Addictol
 		}
 
 		for (auto& m : needRemovedList)
-			Unregister(m);
+			modules.erase(m->GetName());
 	}
 
 	void ModuleManager::InstallLoadAll() noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		(void)m_defender->Initialize();
 
 		for (auto& it : modules)
@@ -313,12 +340,12 @@ namespace Addictol
 			{
 				if (mod->WasSkipped())
 				{
-					m_skipped++;
+					RecordOutcome(mod, Type::kLoad, ModuleOutcome::kSkipped);
 					REX::INFO("Module \"{}\": skipped ({})"sv, mod->GetName(), mod->GetSkipReason());
 				}
 				else
 				{
-					m_failedInstall++;
+					RecordOutcome(mod, Type::kLoad, ModuleOutcome::kFailedInstall);
 					REX::ERROR("Module \"{}\": fatal installation"sv, mod->GetName());
 				}
 
@@ -327,7 +354,7 @@ namespace Addictol
 			}
 			else
 			{
-				m_installed++;
+				RecordOutcome(mod, Type::kLoad, ModuleOutcome::kInstalled);
 				REX::INFO("Module \"{}\": installed"sv, mod->GetName());
 			}
 		}
@@ -337,6 +364,7 @@ namespace Addictol
 
 	void ModuleManager::ListenerLoadAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_msg)
 			return;
 
@@ -361,6 +389,7 @@ namespace Addictol
 
 	void ModuleManager::QueryAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_msg)
 			return;
 
@@ -369,6 +398,7 @@ namespace Addictol
 			return;
 
 		auto& modules_by_type = it->second;
+		const auto moduleType = static_cast<Type>(a_msg->type + 1);
 		std::vector<ModulePtr> needRemovedList;
 
 		for (auto it = modules_by_type.begin(); it != modules_by_type.end(); it++)
@@ -386,7 +416,7 @@ namespace Addictol
 				if (!optionName->GetValue())
 				{
 					REX::INFO("Module \"{}\": disabled by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
-					m_disabled++;
+					RecordOutcome(mod, moduleType, ModuleOutcome::kDisabled);
 					needRemovedList.emplace_back(mod);
 					continue;
 				}
@@ -401,12 +431,12 @@ namespace Addictol
 			{
 				if (mod->WasSkipped())
 				{
-					m_skipped++;
+					RecordOutcome(mod, moduleType, ModuleOutcome::kSkipped);
 					REX::INFO("Module \"{}\": skipped by message {} ({})"sv, mod->GetName(), g_msgName[a_msg->type], mod->GetSkipReason());
 				}
 				else
 				{
-					m_failedQuery++;
+					RecordOutcome(mod, moduleType, ModuleOutcome::kFailedQuery);
 					REX::ERROR("Module \"{}\": failed verification by message {}, the game version may not be supported"sv,
 						mod->GetName(), g_msgName[a_msg->type]);
 				}
@@ -416,11 +446,14 @@ namespace Addictol
 		}
 
 		for (auto& m : needRemovedList)
-			Unregister(m, (Type)(a_msg->type + 1));
+			modules_by_type.erase(m->GetName());
+		if (modules_by_type.empty())
+			rl_modules.erase(it);
 	}
 
 	void ModuleManager::InstallAllByMessage(F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_msg)
 			return;
 
@@ -439,6 +472,7 @@ namespace Addictol
 		(void)m_defender->Initialize();
 
 		auto& modules_by_type = it->second;
+		const auto moduleType = static_cast<Type>(a_msg->type + 1);
 		for (auto& it : modules_by_type)
 		{
 			auto& mod = it.second;
@@ -451,12 +485,12 @@ namespace Addictol
 			{
 				if (mod->WasSkipped())
 				{
-					m_skipped++;
+					RecordOutcome(mod, moduleType, ModuleOutcome::kSkipped);
 					REX::INFO("Module \"{}\": skipped by message {} ({})"sv, mod->GetName(), g_msgName[a_msg->type], mod->GetSkipReason());
 				}
 				else
 				{
-					m_failedInstall++;
+					RecordOutcome(mod, moduleType, ModuleOutcome::kFailedInstall);
 					REX::ERROR("Module \"{}\": fatal installation by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 				}
 
@@ -465,7 +499,7 @@ namespace Addictol
 			}
 			else
 			{
-				m_installed++;
+				RecordOutcome(mod, moduleType, ModuleOutcome::kInstalled);
 				REX::INFO("Module \"{}\": installed by message {}"sv, mod->GetName(), g_msgName[a_msg->type]);
 			}
 		}
@@ -475,6 +509,7 @@ namespace Addictol
 
 	void ModuleManager::ListenerAllPapyrus(RE::BSScript::IVirtualMachine* a_vm) noexcept
 	{
+		const std::scoped_lock lock{ m_modulesMutex };
 		if (!a_vm)
 			return;
 
@@ -489,6 +524,77 @@ namespace Addictol
 			else
 				REX::INFO("Module \"{}\": papyrus installed"sv, mod->GetName());
 		}
+	}
+
+	void ModuleManager::RecordOutcome(
+		const ModulePtr& a_mod,
+		Type a_type,
+		ModuleOutcome a_outcome) noexcept
+	{
+		const auto position = std::find_if(
+			m_registrations.rbegin(),
+			m_registrations.rend(),
+			[&](const ModuleRegistrationStatus& a_status) {
+				return a_status.module == a_mod && a_status.type == a_type;
+			});
+		if (position == m_registrations.rend())
+		{
+			REX::ERROR("Module \"{}\": outcome has no registration"sv, a_mod->GetName());
+			return;
+		}
+
+		a_mod->SetOutcome(a_outcome);
+		position->skipReason =
+			a_outcome == ModuleOutcome::kSkipped ?
+				std::string{ a_mod->GetSkipReason() } :
+				std::string{};
+
+		ModuleOutcomeTally tally{
+			m_installed.load(std::memory_order_relaxed),
+			m_disabled.load(std::memory_order_relaxed),
+			m_skipped.load(std::memory_order_relaxed),
+			m_failedQuery.load(std::memory_order_relaxed),
+			m_failedInstall.load(std::memory_order_relaxed)
+		};
+		RecordModuleOutcome(position->outcome, tally, a_outcome);
+		m_installed.store(tally[0], std::memory_order_relaxed);
+		m_disabled.store(tally[1], std::memory_order_relaxed);
+		m_skipped.store(tally[2], std::memory_order_relaxed);
+		m_failedQuery.store(tally[3], std::memory_order_relaxed);
+		m_failedInstall.store(tally[4], std::memory_order_relaxed);
+	}
+
+	std::vector<ModuleStatusSnapshot> ModuleManager::ModuleStatuses() const
+	{
+		const std::scoped_lock lock{ m_modulesMutex };
+		std::map<std::string_view, size_t> registrationsByName;
+		for (const auto& registration : m_registrations)
+			++registrationsByName[registration.module->GetName()];
+
+		std::vector<ModuleStatusSnapshot> statuses;
+		statuses.reserve(m_registrations.size());
+		for (const auto& registration : m_registrations)
+		{
+			const auto name = registration.module->GetName();
+			statuses.push_back({
+				std::string{ name },
+				registration.outcome,
+				registration.skipReason,
+				registration.settingSection,
+				registration.settingKey,
+				registrationsByName[name] > 1 ?
+					std::string{ ModuleStageName(registration.type) } :
+					std::string{}
+			});
+		}
+		std::ranges::sort(
+			statuses,
+			[](const ModuleStatusSnapshot& a_left,
+				const ModuleStatusSnapshot& a_right) {
+				return std::tie(a_left.name, a_left.stage) <
+					std::tie(a_right.name, a_right.stage);
+			});
+		return statuses;
 	}
 
 	void ModuleManager::LogSummary() const noexcept

@@ -1,13 +1,8 @@
-#include "../Addictol/Include/Core/AdSignature.h"
 #include "../Addictol/Include/Platform/AdImguiPlatformTargets.h"
 #include "Harness.h"
 
-#include <algorithm>
-#include <initializer_list>
-#include <iterator>
-#include <ranges>
+#include <limits>
 #include <string>
-#include <vector>
 
 namespace
 {
@@ -15,135 +10,262 @@ namespace
 
 	void draw_sink_a() noexcept {}
 	void draw_sink_b() noexcept {}
-	void key_sink(uint32_t) noexcept {}
+	bool key_sink(uint32_t) noexcept { return false; }
 
 	using DrawSink = void (*)() noexcept;
-	using KeySink = void (*)(uint32_t) noexcept;
-
-	// Pinned independently of the header so a silent edit to either side fails the check.
-	constexpr std::optional<uint8_t> expected_og[]{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48,
-		0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x8B, 0x15, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x65, 0x48,
-		0x8B, 0x04, 0x25, 0x58, 0x00, 0x00, 0x00, 0x48, 0x8B, 0xF1, 0x48, 0x8B, 0x3C, 0xD0, 0xB9, 0xC0, 0x09,
-		0x00, 0x00 };
-	constexpr std::optional<uint8_t> expected_ngandae[]{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48,
-		0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x54, 0x41,
-		0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x8B, 0x15, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x4C, 0x8B, 0xF9 };
-
-	// A candidate of a different length is a mismatch: partial prologue agreement proves nothing.
-	[[nodiscard]] constexpr bool MatchesSignature(
-		std::ranges::contiguous_range auto&& a_candidate,
-		const std::initializer_list<std::optional<uint8_t>>& a_signature) noexcept
-	{
-		return a_signature.size() != 0 && std::ranges::equal(a_candidate, a_signature);
-	}
-
-	void check_every_byte_mutation(vmm_tests::Runner& runner, std::string_view name, Runtime runtime)
-	{
-		runner.test(name, [runtime] {
-			const auto& signature = UIEndFrameSignature(runtime);
-			vmm_tests::require(MatchesSignature(signature, signature), "unmutated signature must match");
-
-			std::vector<std::optional<uint8_t>> mutated(signature.begin(), signature.end());
-			for (size_t index = 0; index < mutated.size(); ++index)
-			{
-				const auto original = mutated[index];
-				if (!original)
-					continue;
-
-				for (const uint8_t delta : { uint8_t{ 1 }, uint8_t{ 0x80 }, uint8_t{ 0xFF } })
-				{
-					mutated[index] = static_cast<uint8_t>(*original ^ delta);
-					if (mutated[index] == original)
-						continue;
-					vmm_tests::require(
-						!MatchesSignature(mutated, signature),
-						"byte " + std::to_string(index) + " must be load bearing");
-				}
-				mutated[index] = original;
-			}
-
-			const std::vector<std::optional<uint8_t>> truncated(signature.begin(), std::prev(signature.end()));
-			vmm_tests::require(
-				!MatchesSignature(truncated, signature),
-				"a truncated candidate must not match");
-		});
-	}
+	using KeySink = bool (*)(uint32_t) noexcept;
 }
 
 namespace vmm_tests
 {
 	void run_imgui_platform_checks(Runner& runner)
 	{
-		runner.test("wildcard signature takes target bytes only at masked positions", [] {
-			constexpr uint8_t target[]{ 0x48, 0x8B, 0x11, 0x22, 0x33, 0x44, 0x90 };
-			constexpr std::optional<uint8_t> masked[]{
-				0x48, 0x8B, std::nullopt, std::nullopt, std::nullopt, std::nullopt, 0x90
-			};
-			const auto address = reinterpret_cast<uintptr_t>(target);
-			const auto built = RELEX::GetWildcardSignature(address, masked);
-
-			require(built.size() == std::size(masked), "wildcard signature must keep its length");
-			require(built[0] == 0x48 && built[1] == 0x8B, "concrete bytes must survive");
-			require(built[6] == 0x90, "trailing concrete byte must survive");
-			require(built[2] == 0x11 && built[3] == 0x22 && built[4] == 0x33 && built[5] == 0x44,
-				"masked positions must take the target's own bytes");
-			require(RELEX::Validate(address, built), "a wildcard signature must match its target");
-
-			uint8_t moved[std::size(target)]{};
-			std::ranges::copy(target, std::begin(moved));
-			moved[3] = 0x99;
-			const auto relocated = RELEX::GetWildcardSignature(reinterpret_cast<uintptr_t>(moved), masked);
-			require(RELEX::Validate(reinterpret_cast<uintptr_t>(moved), relocated),
-				"a masked operand must not break validation when it changes");
-
-			moved[1] = 0x8C;
-			require(!RELEX::Validate(reinterpret_cast<uintptr_t>(moved), built),
-				"a changed concrete byte must fail validation");
+		runner.test("swapchain vtable slots match the DXGI ABI", [] {
+			require(kPresentSlot == 8, "Present must use slot 8");
+			require(kResizeBuffersSlot == 13, "ResizeBuffers must use slot 13");
 		});
 
-		runner.test("wildcard signature rejects an empty mask", [] {
-			constexpr uint8_t target[]{ 0x48 };
-			const auto address = reinterpret_cast<uintptr_t>(target);
-			require(RELEX::GetWildcardSignature(address, {}).empty(),
-				"an empty mask must produce no signature");
-			require(!RELEX::Validate(address, {}), "an empty signature must never validate");
+		runner.test("swapchain discovery attaches once and explicit handoff retargets", [] {
+			constexpr AttachmentIdentity empty{};
+			constexpr AttachmentIdentity game{ 1, 2, 3, 4 };
+			constexpr AttachmentIdentity sameGame{ 1, 2, 3, 4 };
+			constexpr AttachmentIdentity reboundGame{ 1, 2, 3, 8 };
+			constexpr AttachmentIdentity other{ 5, 2, 3, 4 };
+			constexpr AttachmentIdentity invalid{ 5, 2, 0, 4 };
+
+			require(
+				DecideAttachment(
+					empty,
+					game,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kVacant) ==
+					AttachmentDecision::kAttach,
+				"the first discovered swapchain must attach");
+			require(
+				DecideAttachment(
+					game,
+					sameGame,
+					AttachmentSource::kExplicit,
+					AttachmentLifecycle::kActive) ==
+					AttachmentDecision::kKeepCurrent,
+				"reattaching the same swapchain must be idempotent");
+			require(
+				DecideAttachment(
+					game,
+					reboundGame,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kActive) ==
+					AttachmentDecision::kAttach,
+				"a captured swapchain with a changed binding must refresh its attachment");
+			require(
+				DecideAttachment(
+					game,
+					other,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kActive) ==
+					AttachmentDecision::kKeepCurrent,
+				"an active attachment must keep an unrelated discovery");
+			require(
+				DecideAttachment(
+					game,
+					other,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kRetired) ==
+					AttachmentDecision::kAttach,
+				"a retired attachment must accept a discovered replacement");
+			require(
+				DecideAttachment(
+					game,
+					sameGame,
+					AttachmentSource::kDiscovery,
+					AttachmentLifecycle::kRetired) ==
+					AttachmentDecision::kAttach,
+				"a retired address reused by a new swapchain must attach");
+			require(
+				DecideAttachment(
+					game,
+					other,
+					AttachmentSource::kExplicit,
+					AttachmentLifecycle::kActive) ==
+					AttachmentDecision::kAttach,
+				"an explicit final swapchain must replace discovery");
+			require(
+				DecideAttachment(
+					game,
+					invalid,
+					AttachmentSource::kExplicit,
+					AttachmentLifecycle::kActive) ==
+					AttachmentDecision::kReject,
+				"incomplete render bindings must be rejected");
 		});
 
-		runner.test("UIEndFrame ids are pinned per runtime", [] {
-			require(kUIEndFrameId.og == 137303, "OG id must be 137303");
-			require(kUIEndFrameId.ng == 2284763, "NG id must be 2284763");
-			require(kUIEndFrameId.ae == 2284763, "AE id must be 2284763");
-			require(UIEndFrameId(Runtime::kOG) == 137303, "OG lookup must resolve the OG id");
-			require(UIEndFrameId(Runtime::kNG) == 2284763, "NG lookup must resolve the NG id");
-			require(UIEndFrameId(Runtime::kAE) == 2284763, "AE lookup must resolve the AE id");
+		runner.test("definitive DXGI failures retire the active attachment", [] {
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDeviceRemoved),
+				"device removal must retire the attachment");
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDeviceHung),
+				"a device hang must retire the attachment");
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDeviceReset),
+				"a device reset must retire the attachment");
+			require(IsDefinitiveSwapChainLoss(kDxgiErrorDriverInternal),
+				"an internal driver failure must retire the attachment");
+			require(!IsDefinitiveSwapChainLoss(0), "success must keep the attachment");
+			require(!IsDefinitiveSwapChainLoss(0x887A0001u),
+				"a transient invalid call must keep the attachment");
 		});
 
-		runner.test("UIEndFrame signature bytes are pinned per runtime", [] {
-			require(MatchesSignature(expected_og, UIEndFrameSignature(Runtime::kOG)), "OG signature drifted");
-			require(MatchesSignature(expected_ngandae, UIEndFrameSignature(Runtime::kNG)), "NG signature drifted");
-			require(MatchesSignature(expected_ngandae, UIEndFrameSignature(Runtime::kAE)), "AE signature drifted");
-			require(!MatchesSignature(expected_og, UIEndFrameSignature(Runtime::kNG)),
-				"OG and NG signatures must not cross match");
-			require(!MatchesSignature(std::initializer_list<uint8_t>{}, UIEndFrameSignature(Runtime::kOG)),
-				"an empty candidate must not match");
-			require(!MatchesSignature(expected_og, {}), "an empty signature must never validate");
+		runner.test("backend reset follows render binding rather than swapchain identity", [] {
+			constexpr AttachmentIdentity game{ 1, 2, 3, 4 };
+			constexpr AttachmentIdentity proxy{ 5, 2, 3, 4 };
+			constexpr AttachmentIdentity newDevice{ 5, 6, 7, 4 };
+			constexpr AttachmentIdentity newWindow{ 5, 2, 3, 8 };
+
+			require(
+				!RequiresBackendReset(game, proxy, true),
+				"a same-binding proxy must reuse the backend");
+			require(
+				RequiresBackendReset(game, newDevice, true),
+				"a device replacement must reset the backend");
+			require(
+				RequiresBackendReset(game, newWindow, true),
+				"a window replacement must reset the backend");
+			require(
+				!RequiresBackendReset(game, newDevice, false),
+				"an uncreated backend needs no reset");
 		});
 
-		check_every_byte_mutation(runner, "every OG signature byte is load bearing", Runtime::kOG);
-		check_every_byte_mutation(runner, "every NG signature byte is load bearing", Runtime::kNG);
-		check_every_byte_mutation(runner, "every AE signature byte is load bearing", Runtime::kAE);
+		runner.test("swapchain dispatch survives shadow vtable retargeting", [] {
+			require(
+				MatchHookDispatch(1, 20, 1, 10) == HookDispatchMatch::kSwapChain,
+				"an associated swapchain must keep its captured predecessor after its vptr changes");
+			require(
+				MatchHookDispatch(2, 10, 1, 10) == HookDispatchMatch::kVtable,
+				"an unassociated instance on the patched vtable must use the vtable predecessor");
+			require(
+				MatchHookDispatch(2, 20, 1, 10) == HookDispatchMatch::kNone,
+				"an unrelated instance and vtable must not borrow another predecessor");
+			require(
+				ReusesHookAssociation(AttachmentLifecycle::kActive, 20, 10),
+				"an active proxy must retain its predecessor after shadow-vtable retargeting");
+			require(
+				ReusesHookAssociation(AttachmentLifecycle::kRetired, 10, 10),
+				"a reused address on the same patched vtable must retain its predecessor");
+			require(
+				!ReusesHookAssociation(AttachmentLifecycle::kRetired, 20, 10),
+				"a reused address with a new vtable must establish a new predecessor");
+		});
 
-		runner.test("install state governs registration, attempts and readiness", [] {
+		runner.test("frame telemetry observes only displayed presents", [] {
+			require(ObservesDisplayedFrame(0, true), "a successful real Present displays a frame");
+			require(!ObservesDisplayedFrame(kPresentTestFlag, true), "DXGI_PRESENT_TEST displays no frame");
+			require(!ObservesDisplayedFrame(0, false), "a failed Present displays no frame");
+			require(!ObservesDisplayedFrame(kPresentTestFlag, false), "a failed test Present displays no frame");
+		});
+
+		runner.test("host initializes eagerly while overlays never suppress game input", [] {
+			require(ShouldInitializeHost(true, true),
+				"accepted clients did not initialize on an active Present");
+			require(!ShouldInitializeHost(false, true),
+				"an empty registry initialized the renderer");
+			require(ShouldRenderHostFrame(false, true),
+				"overlay demand did not produce a frame");
+			require(!ShouldSuppressGameInput(false),
+				"overlay-only drawing suppressed game input");
+			require(ShouldSuppressGameInput(true),
+				"a modal menu did not suppress game input");
+		});
+
+		runner.test("backbuffer state recreates on identity size and view changes", [] {
+			constexpr BackBufferIdentity empty{};
+			constexpr BackBufferIdentity first{ 1, 1920, 1080 };
+			constexpr BackBufferIdentity replacement{ 2, 1920, 1080 };
+			constexpr BackBufferIdentity resized{ 1, 2560, 1440 };
+			constexpr BackBufferIdentity invalid{ 1, 0, 1080 };
+
+			require(
+				DecideBackBuffer(empty, first, false) == BackBufferDecision::kRecreate,
+				"the first valid backbuffer must create an RTV");
+			require(
+				DecideBackBuffer(first, first, true) == BackBufferDecision::kKeep,
+				"an unchanged backbuffer must keep its RTV");
+			require(
+				DecideBackBuffer(first, first, false) == BackBufferDecision::kRecreate,
+				"a missing RTV must be recreated");
+			require(
+				DecideBackBuffer(first, replacement, true) == BackBufferDecision::kRecreate,
+				"a replacement resource must recreate its RTV");
+			require(
+				DecideBackBuffer(first, resized, true) == BackBufferDecision::kRecreate,
+				"a size change must recreate the RTV");
+			require(
+				DecideBackBuffer(first, invalid, true) == BackBufferDecision::kSkip,
+				"an invalid backbuffer must skip rendering");
+		});
+
+		runner.test("mouse coordinates map from the client into the backbuffer", [] {
+			constexpr MousePosition equal{ 123.75f, 456.25f };
+			constexpr auto equalMapped =
+				MapClientToBackBuffer(equal, 1920, 1080, 1920, 1080);
+			require(equalMapped.x == equal.x && equalMapped.y == equal.y,
+				"equal dimensions changed mouse coordinates");
+
+			constexpr auto uniform =
+				MapClientToBackBuffer({ 480.0f, 270.0f }, 960, 540, 1920, 1080);
+			require(uniform.x == 960.0f && uniform.y == 540.0f,
+				"uniform scaling did not match the backbuffer");
+
+			constexpr auto nonUniform =
+				MapClientToBackBuffer({ 400.0f, 300.0f }, 800, 600, 2560, 1080);
+			require(nonUniform.x == 1280.0f && nonUniform.y == 540.0f,
+				"independent axis scaling changed");
+
+			constexpr MousePosition position{ 400.0f, 300.0f };
+			constexpr auto zeroClientWidth =
+				MapClientToBackBuffer(position, 0, 600, 2560, 1080);
+			constexpr auto zeroClientHeight =
+				MapClientToBackBuffer(position, 800, 0, 2560, 1080);
+			constexpr auto zeroBackBufferWidth =
+				MapClientToBackBuffer(position, 800, 600, 0, 1080);
+			constexpr auto zeroBackBufferHeight =
+				MapClientToBackBuffer(position, 800, 600, 2560, 0);
+			require(
+				zeroClientWidth.x == position.x && zeroClientWidth.y == position.y &&
+					zeroClientHeight.x == position.x && zeroClientHeight.y == position.y &&
+					zeroBackBufferWidth.x == position.x && zeroBackBufferWidth.y == position.y &&
+					zeroBackBufferHeight.x == position.x && zeroBackBufferHeight.y == position.y,
+				"degenerate dimensions changed mouse coordinates");
+
+			constexpr auto unavailable =
+				-(std::numeric_limits<float>::max)();
+			constexpr auto sentinel =
+				MapClientToBackBuffer({ unavailable, unavailable }, 800, 600, 2560, 1080);
+			require(sentinel.x == unavailable && sentinel.y == unavailable,
+				"the unavailable mouse sentinel was scaled");
+
+			constexpr MousePosition leftOutside{ -1.0f, 300.0f };
+			constexpr MousePosition rightOutside{ 800.0f, 300.0f };
+			constexpr MousePosition belowOutside{ 400.0f, 601.0f };
+			constexpr auto leftMapped =
+				MapClientToBackBuffer(leftOutside, 800, 600, 2560, 1080);
+			constexpr auto rightMapped =
+				MapClientToBackBuffer(rightOutside, 800, 600, 2560, 1080);
+			constexpr auto belowMapped =
+				MapClientToBackBuffer(belowOutside, 800, 600, 2560, 1080);
+			require(
+				leftMapped.x == leftOutside.x && leftMapped.y == leftOutside.y &&
+					rightMapped.x == rightOutside.x && rightMapped.y == rightOutside.y &&
+					belowMapped.x == belowOutside.x && belowMapped.y == belowOutside.y,
+				"out-of-window mouse coordinates were scaled into the viewport");
+		});
+
+		runner.test("install state permits one IAT attempt", [] {
 			require(AllowsInstallAttempt(InstallState::kNotAttempted), "the first attempt must be allowed");
-			require(!AllowsInstallAttempt(InstallState::kRejected), "a rejected target is never retried");
+			require(!AllowsInstallAttempt(InstallState::kRejected), "an unavailable IAT is never retried");
 			require(!AllowsInstallAttempt(InstallState::kAttempted), "a started attempt is never repeated");
 			require(!AllowsInstallAttempt(InstallState::kInstalled), "installation is idempotent");
-			require(!AllowsInstallAttempt(InstallState::kIndeterminate), "an indeterminate target is never retried");
 
 			require(IsInstalled(InstallState::kInstalled), "only the installed state is ready");
 			require(!IsInstalled(InstallState::kAttempted), "an attempt alone is not ready");
-			require(!IsInstalled(InstallState::kIndeterminate), "an indeterminate target is not ready");
-			require(Describe(InstallState::kIndeterminate) == "indeterminate", "state descriptions are user facing");
+			require(!IsInstalled(InstallState::kRejected), "an unavailable IAT is not ready");
 		});
 
 		runner.test("sink registration rejects null, duplicate and overlong names", [] {
@@ -203,6 +325,30 @@ namespace vmm_tests
 			require(!SwallowsMessage(MessageClass::kOther, true, true), "other messages always reach the game");
 		});
 
+		runner.test("window input requires live state under the context lock", [] {
+			require(
+				HandlesWindowMessage(true, true, true, true),
+				"a live backend may handle active-window input");
+			require(
+				!HandlesWindowMessage(false, true, true, true),
+				"an inactive window must only forward input");
+			require(
+				!HandlesWindowMessage(true, false, true, true),
+				"an idle renderer must only forward input");
+			require(
+				!HandlesWindowMessage(true, true, false, true),
+				"an unavailable backend must only forward input");
+			require(
+				!HandlesWindowMessage(true, true, true, false),
+				"a destroyed ImGui context must only forward input");
+		});
+
+		runner.test("window hooks retire only after non-client destruction", [] {
+			require(RetiresWindowHook(kWindowNcDestroyMessage), "WM_NCDESTROY must retire its hook record");
+			require(!RetiresWindowHook(0x0081), "WM_NCCREATE must keep its hook record");
+			require(!RetiresWindowHook(0x0002), "WM_DESTROY must preserve the chain through WM_NCDESTROY");
+		});
+
 		runner.test("toggle sinks fire once per physical press", [] {
 			require(IsKeyRepeat(kKeyRepeatBit), "bit 30 marks an auto repeat");
 			require(!IsKeyRepeat(0), "a first press carries no repeat bit");
@@ -219,6 +365,31 @@ namespace vmm_tests
 			require(!DispatchesToggleSinks(0x0105, 0x0001), "WM_SYSKEYUP does not dispatch");
 			require(ClassifyMessage(0x0104) == MessageClass::kKeyboard,
 				"WM_SYSKEYDOWN is keyboard traffic and follows the capture state");
+
+			require(
+				DecideToggleMessage(kKeyDownMessage, 1, false) ==
+					ToggleMessageDecision::kDispatch,
+				"a fresh keydown must ask toggle sinks");
+			require(
+				DecideToggleMessage(kKeyDownMessage, kKeyRepeatBit | 1, true) ==
+					ToggleMessageDecision::kConsume,
+				"a consumed press must also consume repeats");
+			require(
+				DecideToggleMessage(kKeyDownMessage, kKeyRepeatBit | 1, false) ==
+					ToggleMessageDecision::kForward,
+				"an unrelated repeat must reach the game");
+			require(
+				DecideToggleMessage(kKeyUpMessage, 1, true) ==
+					ToggleMessageDecision::kConsumeAndRelease,
+				"a consumed press must consume and release its key-up");
+			require(
+				DecideToggleMessage(kSysKeyUpMessage, 1, true) ==
+					ToggleMessageDecision::kConsumeAndRelease,
+				"a consumed system press must consume its system key-up");
+			require(
+				DecideToggleMessage(kKeyUpMessage, 1, false) ==
+					ToggleMessageDecision::kForward,
+				"an unrelated key-up must reach the game");
 		});
 	}
 }

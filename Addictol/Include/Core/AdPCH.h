@@ -4,3 +4,4 @@
 
 #include <REX/REX.h>
 #include <F4SE/F4SE.h>
+#include <Core/Settings/AdSettings.h>

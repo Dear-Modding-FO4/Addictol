@@ -32,7 +32,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesAudioSwitch{ "Patches"sv, "bAudioSwitch"sv, true };
 
 	// XAudio27
 	namespace AudioSystem

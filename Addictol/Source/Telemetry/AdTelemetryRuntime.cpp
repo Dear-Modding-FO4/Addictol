@@ -1,4 +1,5 @@
 #include <Menu/AdMenu.h>
+#include <Core/AdClock.h>
 #include <Core/AdModuleManager.h>
 #include <Platform/AdPlatformImgui.h>
 #include <Telemetry/AdTelemetryHub.h>
@@ -14,12 +15,9 @@ namespace Addictol
 {
 	namespace
 	{
-		REX::TOML::Bool<> bTelemetryEnabled{ "Telemetry"sv, "bEnabled"sv, false };
-		REX::TOML::U32<> uTelemetrySampleMs{ "Telemetry"sv, "uSampleMs"sv, 1000 };
-		REX::TOML::U32<> uTelemetryFrameRecordMs{
-			"Telemetry"sv, "uFrameRecordMs"sv, 50
-		};
-		REX::TOML::Bool<> bTelemetryCsv{ "Telemetry"sv, "bCsv"sv, false };
+
+
+
 
 		std::atomic<FrameMetricSource*> s_frameSource{ nullptr };
 		const ModuleManager* s_moduleManager{ nullptr };
@@ -41,7 +39,7 @@ namespace Addictol
 
 	TelemetryHub& Telemetry::Hub() noexcept
 	{
-		static TelemetryHub hub{ TelemetryDetail::QpcFrequency() };
+		static TelemetryHub hub{ Addictol::GetQpcFrequency() };
 		return hub;
 	}
 
@@ -52,7 +50,7 @@ namespace Addictol
 			auto& hub = Hub();
 			s_moduleManager = &a_modules;
 			auto frameSource = std::make_shared<FrameMetricSource>(
-				hub, TelemetryDetail::QpcFrequency(),
+				hub, Addictol::GetQpcFrequency(),
 				(std::max)(uTelemetryFrameRecordMs.GetValue(), 1u));
 			const auto processMemoryRegistration =
 				hub.Register(std::make_shared<ProcessMemoryMetricSource>());
@@ -84,10 +82,14 @@ namespace Addictol
 			for (const auto& panel : kTelemetryPanels)
 			{
 				const auto registered = Menu::RegisterPanel({
-					panel.name,
+					panel.id,
+					panel.name.data(),
+					"Diagnostics",
+					panel.description.data(),
+					panel.sortKey,
 					&DrawMenuTelemetryPanel,
 					&bTelemetryEnabled,
-					&panel
+					const_cast<TelemetryPanelDefinition*>(&panel)
 				});
 				panelsRegistered = registered && panelsRegistered;
 			}
@@ -117,6 +119,6 @@ namespace Addictol
 		TelemetryDetail::CaptureRenderThread(&CurrentThreadId);
 		TelemetryDetail::ObserveFrame(
 			s_frameSource.load(std::memory_order_acquire),
-			&TelemetryDetail::ReadQpc);
+			&Addictol::ReadQpc);
 	}
 }

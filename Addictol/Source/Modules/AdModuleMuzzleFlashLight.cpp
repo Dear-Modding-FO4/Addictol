@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMuzzleFlashLight{ "Fixes"sv, "bMuzzleFlashLight"sv, true };
 
 	using TUpdateLight = void(__fastcall*)(void*, bool);
 	static TUpdateLight OriginalUpdateLight = nullptr;

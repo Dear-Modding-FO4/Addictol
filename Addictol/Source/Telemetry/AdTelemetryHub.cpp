@@ -1,3 +1,4 @@
+#include <Core/AdClock.h>
 #include <Telemetry/AdTelemetryHub.h>
 
 #include <Windows.h>
@@ -115,23 +116,6 @@ namespace Addictol
 		}
 	}
 
-	uint64_t TelemetryDetail::ReadQpc() noexcept
-	{
-		LARGE_INTEGER value{};
-		QueryPerformanceCounter(&value);
-		return static_cast<uint64_t>(value.QuadPart);
-	}
-
-	uint64_t TelemetryDetail::QpcFrequency() noexcept
-	{
-		static const uint64_t frequency = [] {
-			LARGE_INTEGER value{};
-			return QueryPerformanceFrequency(&value) && value.QuadPart > 0 ?
-				static_cast<uint64_t>(value.QuadPart) : 0;
-		}();
-		return frequency;
-	}
-
 	bool Telemetry::EnabledRelaxed() noexcept
 	{
 		return s_enabled.load(std::memory_order_relaxed);
@@ -178,7 +162,7 @@ namespace Addictol
 	}
 
 	TelemetryHub::TelemetryHub(uint64_t a_qpcFrequency) noexcept :
-		m_qpcFrequency(a_qpcFrequency ? a_qpcFrequency : TelemetryDetail::QpcFrequency())
+		m_qpcFrequency(a_qpcFrequency ? a_qpcFrequency : Addictol::GetQpcFrequency())
 	{}
 
 	TelemetryHub::~TelemetryHub()
@@ -301,7 +285,7 @@ namespace Addictol
 			m_seriesCsvPath = std::move(a_seriesCsvPath);
 			ClearIntervals();
 			m_stopRequested = false;
-			m_workerStartQpc = TelemetryDetail::ReadQpc();
+			m_workerStartQpc = Addictol::ReadQpc();
 			for (const auto& entry : m_sources)
 				entry.source->BeginInterval(m_workerStartQpc);
 			s_enabled.store(true, std::memory_order_release);
@@ -589,7 +573,7 @@ namespace Addictol
 			}
 
 			const auto nowSteady = std::chrono::steady_clock::now();
-			const auto nowQpc = TelemetryDetail::ReadQpc();
+			const auto nowQpc = Addictol::ReadQpc();
 			const auto intervalMs = m_qpcFrequency ?
 				static_cast<double>(nowQpc - previousQpc) * 1000.0 /
 					static_cast<double>(m_qpcFrequency) : 0.0;

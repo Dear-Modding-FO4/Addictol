@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bPatchesCOMInit{ "Patches"sv, "bCOMInit"sv, true };
 
 	namespace detail
 	{

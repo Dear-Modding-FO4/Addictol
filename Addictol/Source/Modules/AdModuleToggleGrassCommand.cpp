@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesToggleGrassCommand{ "Fixes"sv, "bToggleGrassCommand"sv, true };
 
 	ModuleToggleGrassCommand::ModuleToggleGrassCommand() :
 		Module("Toggle Grass Command", &bFixesToggleGrassCommand)

@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesMagicEffectConditions{"Fixes"sv, "bMagicEffectConditions"sv, true};
 
 	namespace magicEffectConditionsDetail
 	{

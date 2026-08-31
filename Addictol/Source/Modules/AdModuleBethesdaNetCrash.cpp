@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-	static REX::TOML::Bool<> bFixesBethesdaNetCrash{ "Fixes"sv, "bBethesdaNetCrash"sv, true };
 
 	static errno_t __cdecl Hook_wcsrtombs_s(
 		std::size_t*                     pReturnValue,
