@@ -1,6 +1,7 @@
 #include <Menu/AdMenuWidgets.h>
 
 #include <array>
+#include <atomic>
 
 namespace Addictol
 {
@@ -18,6 +19,24 @@ namespace Addictol
 	MenuUi::ScopedFont::ScopedFont(DMUI_FontRole a_role) noexcept :
 		m_guard(Menu::Client(), a_role)
 	{}
+
+	std::optional<DMUI_StyleMetrics> MenuUi::StyleMetrics() noexcept
+	{
+		DMUI_StyleMetrics metrics{};
+		metrics.structSize = DMUI_STYLE_METRICS_1_0_SIZE;
+		const auto result = ImGui::GetStyleMetrics(metrics);
+		if (result == DMUI_RESULT_OK)
+			return metrics;
+
+		static std::atomic_flag reported = ATOMIC_FLAG_INIT;
+		if (!reported.test_and_set(std::memory_order_relaxed))
+		{
+			REX::ERROR(
+				"Menu: DearModdingUI style metrics unavailable, result {}."sv,
+				DMUI_ResultToString(result));
+		}
+		return std::nullopt;
+	}
 
 	void MenuUi::Heading(std::string_view a_text) noexcept
 	{
@@ -71,15 +90,21 @@ namespace Addictol
 
 	void MenuUi::LabeledValue(std::string_view a_label, std::string_view a_value) noexcept
 	{
+		const auto style = StyleMetrics();
+		if (!style)
+			return;
 		ImGui::TextUnformatted(a_label.data(), a_label.data() + a_label.size());
-		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x * 2.0f);
+		ImGui::SameLine(0.0f, style->itemSpacing.x * 2.0f);
 		Mono(a_value);
 	}
 
 	void MenuUi::LabeledState(std::string_view a_label, bool a_ok, std::string_view a_value) noexcept
 	{
+		const auto style = StyleMetrics();
+		if (!style)
+			return;
 		ImGui::TextUnformatted(a_label.data(), a_label.data() + a_label.size());
-		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x * 2.0f);
+		ImGui::SameLine(0.0f, style->itemSpacing.x * 2.0f);
 		const ScopedFont font{ DMUI_FONT_ROLE_HEADING };
 		ImGui::TextColored(
 			dmui::ToImVec4(

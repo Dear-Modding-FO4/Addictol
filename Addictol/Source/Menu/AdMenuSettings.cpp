@@ -9,7 +9,7 @@
 
 #include <REX/REX.h>
 
-#include <imgui/imgui.h>
+#include <DearModdingUI/ImGuiForward.h>
 
 #include <algorithm>
 #include <array>
@@ -309,7 +309,7 @@ namespace Addictol::Menu
 			ImGui::PushID(setting.Section().data());
 			ImGui::PushID(setting.Key().data());
 			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
+			(void)ImGui::TableSetColumnIndex(0);
 			{
 				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBHEADING };
 				ImGui::TextUnformatted(
@@ -337,8 +337,9 @@ namespace Addictol::Menu
 					setting.Description().data());
 			}
 
-			ImGui::TableSetColumnIndex(1);
-			if (ImGui::BeginTable(
+			(void)ImGui::TableSetColumnIndex(1);
+			const auto style = MenuUi::StyleMetrics();
+			if (style && ImGui::BeginTable(
 					"##SettingControls",
 					2,
 					ImGuiTableFlags_SizingStretchProp))
@@ -350,11 +351,11 @@ namespace Addictol::Menu
 					"##ResetColumn",
 					ImGuiTableColumnFlags_WidthFixed,
 					ImGui::CalcTextSize("Reset").x +
-						ImGui::GetStyle().FramePadding.x * 2.0f);
+						style->framePadding.x * 2.0f);
 				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
+				(void)ImGui::TableSetColumnIndex(0);
 				(void)DrawControl(a_entry);
-				ImGui::TableSetColumnIndex(1);
+				(void)ImGui::TableSetColumnIndex(1);
 				const auto modified =
 					IsSettingModified(setting, a_entry.draft);
 				ImGui::BeginDisabled(!modified);
@@ -461,7 +462,10 @@ namespace Addictol::Menu
 			const auto start = ImGui::GetCursorScreenPos();
 			const auto available =
 				(std::max)(ImGui::GetContentRegionAvail().x, 0.0f);
-			const auto spacing = ImGui::GetStyle().ItemSpacing.x;
+			const auto style = MenuUi::StyleMetrics();
+			if (!style)
+				return;
+			const auto spacing = style->itemSpacing.x;
 			const auto layout = DearModdingUI::ResolvePageActionRowLayout(
 				start.x,
 				start.x + available,
@@ -479,7 +483,7 @@ namespace Addictol::Menu
 			const auto rowHeight = (std::max)(frameHeight, buttonExtent);
 			const auto modifiedWidth =
 				frameHeight +
-				ImGui::GetStyle().ItemInnerSpacing.x +
+				style->itemInnerSpacing.x +
 				ImGui::CalcTextSize("Modified only").x;
 			const auto filterWidth =
 				(std::max)(layout.titleMaxX - start.x, 0.0f);
@@ -502,12 +506,15 @@ namespace Addictol::Menu
 				ImGui::SameLine();
 			else
 			{
+				const auto wrappedStyle = MenuUi::StyleMetrics();
+				if (!wrappedStyle)
+					return;
 				ImGui::SetCursorScreenPos({
 					start.x,
-					start.y + rowHeight + ImGui::GetStyle().ItemSpacing.y
+					start.y + rowHeight + wrappedStyle->itemSpacing.y
 				});
 			}
-			ImGui::Checkbox("Modified only", &g_filter.modifiedOnly);
+			(void)ImGui::Checkbox("Modified only", &g_filter.modifiedOnly);
 
 			auto actionX = layout.actionsMinX;
 			for (size_t index = 0; index < actions.size(); ++index)
@@ -543,11 +550,14 @@ namespace Addictol::Menu
 				}
 				actionX += widths[index] + spacing;
 			}
-			const auto consumedHeight =
-				rowHeight +
-				(modifiedInline ?
-						0.0f :
-						ImGui::GetStyle().ItemSpacing.y + frameHeight);
+			auto consumedHeight = rowHeight;
+			if (!modifiedInline)
+			{
+				const auto wrappedStyle = MenuUi::StyleMetrics();
+				if (!wrappedStyle)
+					return;
+				consumedHeight += wrappedStyle->itemSpacing.y + frameHeight;
+			}
 			ImGui::SetCursorScreenPos(start);
 			ImGui::Dummy({ available, consumedHeight });
 		}

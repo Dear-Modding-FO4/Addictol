@@ -4,7 +4,7 @@
 #include <Menu/AdMenuTelemetry.h>
 #include <Menu/AdMenuWidgets.h>
 
-#include <imgui/imgui.h>
+#include <DearModdingUI/ImGuiForward.h>
 
 #include <array>
 #include <cfloat>
@@ -131,11 +131,11 @@ namespace Addictol
 			const auto display = FormatTelemetryValue(value, descriptor.unit);
 
 			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
+			(void)ImGui::TableNextColumn();
 			ImGui::TextUnformatted(a_label.data(), a_label.data() + a_label.size());
-			ImGui::TableNextColumn();
+			(void)ImGui::TableNextColumn();
 			DrawDisplay(display);
-			ImGui::TableNextColumn();
+			(void)ImGui::TableNextColumn();
 			if (display.progress)
 			{
 				const auto color = display.fraction >= 0.9f ?
@@ -166,9 +166,9 @@ namespace Addictol
 				s_cache.current.intervalMs > 0.0;
 
 			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
+			(void)ImGui::TableNextColumn();
 			ImGui::TextUnformatted("frame.fps");
-			ImGui::TableNextColumn();
+			(void)ImGui::TableNextColumn();
 			if (valid)
 			{
 				MonoCell(Print(
@@ -178,7 +178,7 @@ namespace Addictol
 			}
 			else
 				Muted("-"sv);
-			ImGui::TableNextColumn();
+			(void)ImGui::TableNextColumn();
 		}
 
 		template<class Label>
@@ -260,10 +260,13 @@ namespace Addictol
 				Muted("No frame has crossed the recording threshold."sv);
 				return;
 			}
+			const auto style = MenuUi::StyleMetrics();
+			if (!style)
+				return;
 			const auto tableHeight =
 				ImGui::GetTextLineHeightWithSpacing() *
 					static_cast<float>(s_cache.frameRecords.size() + 1) +
-				ImGui::GetStyle().CellPadding.y * 2.0f;
+				style->cellPadding.y * 2.0f;
 			if (!ImGui::BeginTable(
 					"TelemetryFrameRecords",
 					2,
@@ -280,9 +283,9 @@ namespace Addictol
 				const auto seconds = frequency ?
 					static_cast<double>(record.qpc) / static_cast<double>(frequency) : 0.0;
 				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				MonoCell(Print("%.3f s", seconds));
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				MonoCell(FormatMs(static_cast<double>(record.durationUs) / 1000.0));
 			}
 			ImGui::EndTable();
@@ -304,17 +307,17 @@ namespace Addictol
 				if (!sample.calls)
 					continue;
 				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				ImGui::TextUnformatted(
 					sample.series.data(), sample.series.data() + sample.series.size());
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				ImGui::TextUnformatted(
 					sample.bucket.data(), sample.bucket.data() + sample.bucket.size());
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				MonoCell(FormatCount(sample.calls));
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				MonoCell(FormatCount(sample.ticks));
-				ImGui::TableNextColumn();
+				(void)ImGui::TableNextColumn();
 				MonoCell(FormatBytes(sample.bytes));
 			}
 			ImGui::EndTable();

@@ -4,10 +4,8 @@
 
 #include <REX/REX.h>
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_internal.h>
-
 #include <DearModdingUI/Client.h>
+#include <DearModdingUI/ImGuiForward.h>
 
 #include <cstdint>
 

@@ -150,51 +150,6 @@ target("commonlibf4", function()
     add_defines("NDEBUG")
 end)
 
-target("imgui", function()
-    set_kind("static")
-    set_arch("x64")
-    set_languages("c++latest")
-    set_optimize("fastest")
-    set_runtimes("MT")
-    set_symbols("debug")
-    set_exceptions("cxx")
-    set_targetdir(xmake_library_dir)
-    set_objectdir(project_dir(".LinkConf/xmake/imgui"))
-    set_dependir(project_dir(".LinkConf/xmake/imgui/deps"))
-
-    -- add source files, matching Depends/imgui_vc22.vcxproj exactly
-    add_files(
-        "Depends/imgui/imgui.cpp",
-        "Depends/imgui/imgui_demo.cpp",
-        "Depends/imgui/imgui_draw.cpp",
-        "Depends/imgui/imgui_tables.cpp",
-        "Depends/imgui/imgui_widgets.cpp",
-        "Depends/imgui/backends/imgui_impl_win32.cpp",
-        "Depends/imgui/backends/imgui_impl_dx11.cpp"
-    )
-
-    -- add include directories
-    add_includedirs("Depends/imgui", { public = true })
-
-    -- add defines
-    add_defines("NDEBUG", "_LIB")
-
-    -- add compiler flags
-    add_cxxflags(
-        "/Ob2",
-        "/Oi",
-        "/Ot",
-        "/Gy",
-        "/GS",
-        "/arch:AVX",
-        "/fp:fast",
-        "/permissive-",
-        "/sdl",
-        "/MP",
-        { force = true }
-    )
-end)
-
 target("detours", function()
     set_kind("static")
     set_arch("x64")
@@ -294,7 +249,7 @@ target("vmm-tests", function()
     set_dependir(project_dir(".LinkConf/xmake/vmm-tests/deps"))
 
     -- add dependencies
-    add_deps("vmm", "spdlog-vendored", "imgui")
+    add_deps("vmm", "spdlog-vendored")
     add_deps("commonlib-shared", dependency_interface)
 
     -- add packages
@@ -365,7 +320,6 @@ target(plugin_name, function()
     add_deps("commonlib-shared", dependency_interface)
     add_deps("commonlibf4", dependency_interface)
     add_deps("vmm", dependency_interface)
-    add_deps("imgui", dependency_interface)
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
@@ -379,7 +333,6 @@ target(plugin_name, function()
         "commonlibf4",
         "commonlib-shared",
         "spdlog",
-        "imgui",
         "Advapi32",
         "Bcrypt",
         "dxgi",
@@ -411,8 +364,7 @@ target(plugin_name, function()
         "Version",
         "Addictol/Include",
         "Depends/vmm/include",
-        "Depends/vmm/source",
-        "Depends/imgui"
+        "Depends/vmm/source"
     )
 
     -- add defines

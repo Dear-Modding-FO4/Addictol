@@ -4,10 +4,11 @@
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuTargets.h>
 
-#include <imgui/imgui.h>
+#include <DearModdingUI/ImGuiForward.h>
 
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <string_view>
 
 namespace Addictol::MenuUi
@@ -39,6 +40,7 @@ namespace Addictol::MenuUi
 	void LabeledValue(std::string_view a_label, std::string_view a_value) noexcept;
 	void LabeledState(std::string_view a_label, bool a_ok, std::string_view a_value) noexcept;
 	void MonoCell(std::string_view a_text) noexcept;
+	[[nodiscard]] std::optional<DMUI_StyleMetrics> StyleMetrics() noexcept;
 
 	inline constexpr size_t kFormatCapacity{ 96 };
 

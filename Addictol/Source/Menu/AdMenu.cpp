@@ -21,7 +21,8 @@ namespace Addictol
 		static dmui::Client s_client{
 			"dear-modding.addictol",
 			"Addictol",
-			dmui::Version{ VERSION_MAJOR, VERSION_MINOR }
+			dmui::Version{ VERSION_MAJOR, VERSION_MINOR },
+			dmui::kForwardingClient
 		};
 		static std::atomic<uint32_t> s_refreshMs{ kMenuMinRefreshMs };
 		static std::atomic<bool> s_connected{ false };
@@ -141,6 +142,13 @@ namespace Addictol
 				"Menu: DearModdingUI client connection failed, result {}."sv,
 				DMUI_ResultToString(s_client.LastResult()));
 			return false;
+		}
+		if (!ImGui::IsForwardVersionCompatible())
+		{
+			REX::WARN(
+				"Menu: DearModdingUI ImGui version {} does not match forwarding header version {}; drawing may be incorrect."sv,
+				ImGui::GetHostImGuiVersionNum(),
+				ImGui::kForwardImGuiVersionNum);
 		}
 
 		Menu::BeginSettingsPageFrame();

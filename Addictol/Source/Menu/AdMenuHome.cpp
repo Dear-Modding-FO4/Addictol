@@ -4,7 +4,7 @@
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuWidgets.h>
 
-#include <imgui/imgui.h>
+#include <DearModdingUI/ImGuiForward.h>
 
 #include <array>
 #include <cstdio>
@@ -133,7 +133,10 @@ namespace Addictol::Menu
 		void DrawQuickLinksSection() noexcept
 		{
 			(void)Client().DrawSectionHeader("Quick Links");
-			const auto spacing = ImGui::GetStyle().ItemSpacing.x;
+			const auto style = MenuUi::StyleMetrics();
+			if (!style)
+				return;
+			const auto spacing = style->itemSpacing.x;
 			const auto buttonWidth =
 				(ImGui::GetContentRegionAvail().x -
 					spacing * static_cast<float>(kQuickLinks.size() - 1)) /
@@ -156,7 +159,7 @@ namespace Addictol::Menu
 							ImGuiHoveredFlags_AllowWhenDisabled);
 				if (ImGui::IsItemHovered(hoverFlags))
 				{
-					ImGui::BeginTooltip();
+					(void)ImGui::BeginTooltip();
 					ImGui::TextUnformatted(link.tooltip);
 					ImGui::EndTooltip();
 				}

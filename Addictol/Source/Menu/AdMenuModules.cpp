@@ -4,7 +4,7 @@
 #include <DearModdingUI/IconGlyphs.h>
 #include <Menu/AdMenu.h>
 
-#include <imgui/imgui.h>
+#include <DearModdingUI/ImGuiForward.h>
 
 #include <algorithm>
 #include <string>
@@ -81,12 +81,12 @@ namespace Addictol::Menu
 			ImGui::TableSetupColumn("Outcome", ImGuiTableColumnFlags_WidthStretch, 1.0f);
 			ImGui::TableHeadersRow();
 			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
+			(void)ImGui::TableSetColumnIndex(0);
 			(void)Client().DrawSearchInput(
 				"ModuleSearchBar",
 				"Search modules...",
 				a_state.search);
-			ImGui::TableSetColumnIndex(1);
+			(void)ImGui::TableSetColumnIndex(1);
 			ImGui::SetNextItemWidth(-1.0f);
 			const auto preview = FilterLabel(a_state.filter);
 			if (ImGui::BeginCombo(
@@ -172,16 +172,16 @@ namespace Addictol::Menu
 				++visibleCount;
 				ImGui::PushID(static_cast<int>(visibleCount));
 				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
+				(void)ImGui::TableSetColumnIndex(0);
 				DrawModuleName(status);
-				ImGui::TableSetColumnIndex(1);
+				(void)ImGui::TableSetColumnIndex(1);
 				const auto presentation = ClassifyModuleOutcome(status.outcome);
 				ImGui::TextColored(
 					OutcomeColor(presentation.severity),
 					"%.*s",
 					static_cast<int>(presentation.label.size()),
 					presentation.label.data());
-				ImGui::TableSetColumnIndex(2);
+				(void)ImGui::TableSetColumnIndex(2);
 				DrawModuleDetail(status);
 				ImGui::PopID();
 			}
@@ -189,7 +189,7 @@ namespace Addictol::Menu
 			if (visibleCount == 0)
 			{
 				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
+				(void)ImGui::TableSetColumnIndex(0);
 				ImGui::TextDisabled("No modules match the current search and outcome filter.");
 			}
 			ImGui::EndTable();
