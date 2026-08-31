@@ -72,7 +72,7 @@ namespace Addictol
 				REX::WARN(
 					"Menu: page \"{}\" rejected, result {}."sv,
 					a_panel.name,
-					s_client.LastResult());
+					DMUI_ResultToString(s_client.LastResult()));
 			}
 			return page.has_value();
 		}
@@ -120,7 +120,7 @@ namespace Addictol
 		{
 			REX::WARN(
 				"Menu: status report rejected, result {}."sv,
-				s_client.LastResult());
+				DMUI_ResultToString(s_client.LastResult()));
 		}
 	}
 
@@ -139,7 +139,7 @@ namespace Addictol
 			}
 			REX::ERROR(
 				"Menu: DearModdingUI client connection failed, result {}."sv,
-				s_client.LastResult());
+				DMUI_ResultToString(s_client.LastResult()));
 			return false;
 		}
 
@@ -151,7 +151,7 @@ namespace Addictol
 		{
 			REX::ERROR(
 				"Menu: frame lifecycle registration failed, result {}."sv,
-				s_client.LastResult());
+				DMUI_ResultToString(s_client.LastResult()));
 			return false;
 		}
 
@@ -166,14 +166,14 @@ namespace Addictol
 		{
 			REX::ERROR(
 				"Menu: diagnostics action registration failed, result {}."sv,
-				s_client.LastResult());
+				DMUI_ResultToString(s_client.LastResult()));
 			return false;
 		}
 		if (!Telemetry::ConnectDearModdingUI(s_client))
 		{
 			REX::ERROR(
 				"Menu: DearModdingUI telemetry registration failed, result {}."sv,
-				s_client.LastResult());
+				DMUI_ResultToString(s_client.LastResult()));
 			return false;
 		}
 
