@@ -358,6 +358,9 @@
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuFacegenExceptions.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
@@ -730,6 +733,9 @@
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuFacegenExceptions.h">
+      <Filter>Include\Menu</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
@@ -753,6 +759,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMenu.h">
       <Filter>Include\Modules\M</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdFacegenExceptions.h">
+      <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdModuleOutcome.h">
       <Filter>Include\Core</Filter>

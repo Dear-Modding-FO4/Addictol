@@ -1,4 +1,5 @@
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuFacegenExceptions.h>
 #include <Menu/AdMenuHome.h>
 #include <Menu/AdMenuLogControl.h>
 #include <Menu/AdMenuModules.h>
@@ -232,6 +233,18 @@ namespace Addictol
 				nullptr
 			}))
 			REX::ERROR("Menu: Modules page could not be retained."sv);
+
+		if (!RegisterPanel({
+				"facegen-exceptions",
+				"Facegen Exceptions",
+				"Diagnostics",
+				"Facegen exception coverage, configuration state, and resolution failures.",
+				900,
+				&DrawFacegenExceptionsPage,
+				nullptr,
+				nullptr
+			}))
+			REX::ERROR("Menu: Facegen Exceptions page could not be retained."sv);
 
 		if (!RegisterPanel({
 				"log-control",

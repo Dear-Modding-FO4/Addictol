@@ -16,6 +16,8 @@
 #include <RE/B/BGSSaveLoadGame.h>
 #include <RE/C/CHANGE_TYPES.h>
 
+#include <mutex>
+
 namespace Addictol
 {
 
@@ -41,24 +43,18 @@ namespace Addictol
 		public REX::TSingleton<FacegenSystem>
 	{
 		RE::BGSKeyword* keywordIsChildPlayer{ nullptr };
-		std::vector<uint32_t> facegenPrimaryExceptionFormIDs =
-		{
-			// Since it has no protection in the game
-
-			0x26F0A,	// MQ102PlayerSpouseCorpseMale
-			0x26F36,	// MQ102PlayerSpouseCorpseFemale
-			0xA7D34,	// MQ101PlayerSpouseMale
-			0xA7D35,	// MQ101PlayerSpouseFemale
-			0x246BF0,	// MQ101PlayerSpouseMale_NameOnly
-			0x246BF1,	// MQ101PlayerSpouseFemale_NameOnly
-		};
 		std::unordered_set<uint32_t> facegenExceptionFormIDs;
 		RE::TESDataHandler* dataHandler{ nullptr };
+		mutable std::mutex exceptionSnapshotMutex;
+		FacegenExceptionSnapshot exceptionSnapshot;
 
 		FacegenSystem(const FacegenSystem&) = delete;
 		FacegenSystem operator=(const FacegenSystem&) = delete;
 
-		[[nodiscard]] bool GetLoadOrderByFormID(const char* a_pluginName, uint32_t& a_formID) const noexcept;
+		[[nodiscard]] FacegenExceptionStatus GetLoadOrderByFormID(
+			const char* a_pluginName,
+			uint32_t& a_formID) const noexcept;
+		void PublishExceptionSnapshot(FacegenExceptionSnapshot a_snapshot);
 		void ReadExceptions() noexcept;
 	public:
 		FacegenSystem() = default;
@@ -67,9 +63,12 @@ namespace Addictol
 		bool Init() noexcept;
 		bool InitContinue([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept;
 		bool NeedSkipNPC(const RE::TESNPC* a_NPC) const noexcept;
+		[[nodiscard]] FacegenExceptionSnapshot ExceptionSnapshot() const;
 	};
 
-	bool FacegenSystem::GetLoadOrderByFormID(const char* a_pluginName, uint32_t& a_formID) const noexcept
+	FacegenExceptionStatus FacegenSystem::GetLoadOrderByFormID(
+		const char* a_pluginName,
+		uint32_t& a_formID) const noexcept
 	{
 		__try
 		{
@@ -85,7 +84,7 @@ namespace Addictol
 					if (!id.has_value())
 					{
 						REX::WARN("[FACEGEN] Failed NPC added (no found plugin) \"{}\" (0x{:08X})"sv, a_pluginName, a_formID);
-						return false;
+						return FacegenExceptionStatus::kPluginNotFound;
 					}
 
 					a_formID = (a_formID & (0x00000FFF)) | (*id << 12) | 0xFE000000;
@@ -96,93 +95,117 @@ namespace Addictol
 			else
 			{
 				REX::WARN("[FACEGEN] Failed NPC added (empty name plugin) (0x{:08X})"sv, a_formID);
-				return false;
+				return FacegenExceptionStatus::kMissingPluginName;
 			}
 
-			return true;
+			return FacegenExceptionStatus::kResolved;
 		}
 		__except (1)
 		{
 			REX::ERROR("[FACEGEN] Failed NPC added (fatal error) \"{}\" (0x{:08X})"sv, a_pluginName, a_formID);
-			return false;
+			return FacegenExceptionStatus::kFatalError;
 		}
+	}
+
+	void FacegenSystem::PublishExceptionSnapshot(FacegenExceptionSnapshot a_snapshot)
+	{
+		const std::scoped_lock lock{ exceptionSnapshotMutex };
+		exceptionSnapshot = std::move(a_snapshot);
 	}
 
 	void FacegenSystem::ReadExceptions() noexcept
 	{
 		constexpr static auto FILE_NAME = "Data\\F4SE\\Plugins\\" _PluginName "_FacegenExceptions.ini";
+		FacegenExceptionSnapshot snapshot;
+		snapshot.readAttempted = true;
 
 		CSimpleIniA ini;
 		SI_Error rc = ini.LoadFile(FILE_NAME);
 		if (rc != SI_OK)
 		{
 			REX::WARN("[FACEGEN] Can't find the exception file \"{}\""sv, FILE_NAME);
+			snapshot.effectiveExceptionCount = facegenExceptionFormIDs.size();
+			PublishExceptionSnapshot(std::move(snapshot));
 			return;
 		}
+		snapshot.iniFound = true;
 
 		// get all keys in a section
 		auto Section = ini.GetSection("FacegenException");
 		if (!Section)
 		{
 			REX::WARN("[FACEGEN] Section \"FacegenException\" not found in \"{}\""sv, FILE_NAME);
+			snapshot.effectiveExceptionCount = facegenExceptionFormIDs.size();
+			PublishExceptionSnapshot(std::move(snapshot));
 			return;
 		}
+		snapshot.sectionFound = true;
 		for (auto& key : *Section)
 		{
+			FacegenExceptionRecord record;
+			record.key = key.first.pItem ? key.first.pItem : "";
+			record.rawValue = key.second ? key.second : "";
 			PathUnquoteSpacesA(const_cast<char*>(key.second));
 
 			uint32_t FormID = 0;
 			std::string KeyValue = key.second;
 			
 			if (KeyValue.empty() || !KeyValue.length())
+			{
+				snapshot.entries.push_back(std::move(record));
 				continue;
+			}
 
 			//REX::INFO("[DBG] KeyValue \"{}\"", KeyValue);
 
-			auto It = KeyValue.find_first_of(':');
-			if (It != std::string::npos)
+			auto parsed = ParseFacegenExceptionValue(KeyValue);
+			record.pluginName = parsed.pluginName;
+			if (parsed.pluginName.has_value())
 			{
-				std::string PluginName = KeyValue.substr(It + 1);
-				std::string Value = KeyValue.substr(0, It);
-				Trim(PluginName);
-				Trim(Value);
-
-				if (PluginName.empty() || !PluginName.length())
+				if (parsed.pluginName->empty() || !parsed.pluginName->length())
 				{
 					REX::WARN("[FACEGEN] The plugin file was not specified \"{}\""sv, key.first.pItem);
+					record.status = FacegenExceptionStatus::kMissingPluginName;
+					snapshot.entries.push_back(std::move(record));
 					continue;
 				}
 
-				//REX::INFO("[DBG] Value \"{}\"", Value);
-				//REX::INFO("[DBG] PluginName \"{}\"", PluginName);
+				//REX::INFO("[DBG] Value \"{}\"", parsed.formID);
+				//REX::INFO("[DBG] PluginName \"{}\"", *parsed.pluginName);
 
-				if (Value.find_first_of("0x"sv) == 0)
-					FormID = strtoul(Value.c_str() + 2, nullptr, 16);
-				else
-					FormID = strtoul(Value.c_str(), nullptr, 10);
+				FormID = ParseFacegenFormID(parsed.formID);
+				record.status = GetLoadOrderByFormID(parsed.pluginName->c_str(), FormID);
 
-				if (GetLoadOrderByFormID(PluginName.c_str(), FormID))
+				if (record.status == FacegenExceptionStatus::kResolved)
 				{
 					REX::INFO("[FACEGEN] Skip NPC added \"{}\" (0x{:08X})"sv, key.first.pItem, FormID);
 					facegenExceptionFormIDs.insert(FormID);
+					record.resolvedFormID = FormID;
 				}
 			}
 			else
 			{
-				if (KeyValue.find_first_of("0x"sv) == 0)
-					FormID = strtoul(KeyValue.c_str() + 2, nullptr, 16);
-				else
-					FormID = strtoul(KeyValue.c_str(), nullptr, 10);
+				FormID = ParseFacegenFormID(parsed.formID);
 
 				REX::INFO("[FACEGEN] Skip NPC added \"{}\" (0x{:08X})"sv, key.first.pItem, FormID);
 				facegenExceptionFormIDs.insert(FormID);
+				record.resolvedFormID = FormID;
+				record.status = FacegenExceptionStatus::kResolved;
 			}
+			snapshot.entries.push_back(std::move(record));
 		}
+		snapshot.effectiveExceptionCount = facegenExceptionFormIDs.size();
+		PublishExceptionSnapshot(std::move(snapshot));
 	}
 
 	bool FacegenSystem::Init() noexcept
 	{
-		facegenExceptionFormIDs = { facegenPrimaryExceptionFormIDs.begin(), facegenPrimaryExceptionFormIDs.end() };
+		facegenExceptionFormIDs.clear();
+		for (const auto& exception : kFacegenPrimaryExceptions)
+			facegenExceptionFormIDs.insert(exception.formID);
+		FacegenExceptionSnapshot snapshot;
+		snapshot.effectiveExceptionCount = facegenExceptionFormIDs.size();
+		PublishExceptionSnapshot(std::move(snapshot));
 
 		if (!RELEX::IsRuntimeOG())
 		{
@@ -283,6 +306,17 @@ namespace Addictol
 		// ConsoleLog::GetSingleton()->Log("FACEGEN: NPC \"{}\" (0x{:08X}) have facegen", a_NPC->GetFullName(), a_NPC->formID);
 
 		return result;
+	}
+
+	FacegenExceptionSnapshot FacegenSystem::ExceptionSnapshot() const
+	{
+		const std::scoped_lock lock{ exceptionSnapshotMutex };
+		return exceptionSnapshot;
+	}
+
+	FacegenExceptionSnapshot GetFacegenExceptionSnapshot()
+	{
+		return FacegenSystem::GetSingleton()->ExceptionSnapshot();
 	}
 
 	static bool __stdcall CanUsePreprocessingHead(const RE::TESNPC* NPC) noexcept

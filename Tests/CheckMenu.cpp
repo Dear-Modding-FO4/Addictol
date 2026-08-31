@@ -1,6 +1,7 @@
 #include "../Addictol/Include/Menu/AdMenuTargets.h"
 #include "../Addictol/Include/Menu/AdMenuModules.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
+#include "../Addictol/Include/Modules/AdFacegenExceptions.h"
 #include "Harness.h"
 
 #include <initializer_list>
@@ -65,6 +66,29 @@ namespace vmm_tests
 			require(ClampMenuFormattedLength(48, 48) == 47, "terminator was counted as text");
 			require(ClampMenuFormattedLength(80, 48) == 47, "long output escaped the buffer");
 			require(ClampMenuFormattedLength(1, 0) == 0, "zero capacity returned a length");
+		});
+
+		runner.test("facegen exception values split and trim plugin-qualified fields", [] {
+			const auto qualified = ParseFacegenExceptionValue(
+				" 0x6e5b : DLCCoast.esm ");
+			require(qualified.formID == "0x6e5b", "qualified FormID was not trimmed");
+			require(
+				qualified.pluginName == "DLCCoast.esm",
+				"qualified plugin name was not trimmed");
+
+			const auto bare = ParseFacegenExceptionValue("50359899");
+			require(bare.formID == "50359899", "bare FormID changed");
+			require(!bare.pluginName.has_value(), "bare FormID acquired a plugin name");
+
+			const auto missing = ParseFacegenExceptionValue("0x1234: \t");
+			require(
+				missing.pluginName.has_value() && missing.pluginName->empty(),
+				"missing plugin name was not retained");
+		});
+
+		runner.test("facegen FormIDs parse as hexadecimal or decimal", [] {
+			require(ParseFacegenFormID("0x6e5b") == 0x6E5B, "hexadecimal FormID changed");
+			require(ParseFacegenFormID("50359899") == 50359899, "decimal FormID changed");
 		});
 
 		runner.test("an open page refreshes once per cadence", [] {

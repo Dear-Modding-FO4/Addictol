@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/AdModule.h>
+#include <Modules/AdFacegenExceptions.h>
 
 namespace Addictol
 {

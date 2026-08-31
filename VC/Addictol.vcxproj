@@ -32,6 +32,7 @@
     <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuFacegenExceptions.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuModules.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuFacegenExceptions.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuModules.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h" />
@@ -169,6 +171,7 @@
     <ClInclude Include="..\Addictol\Include\Core\AdModuleOutcome.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdFacegenExceptions.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdUtils.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdVisperMemoryAllocator.h" />
