@@ -82,7 +82,9 @@ jobs:
           Copy-Item -Path '.\.Build\Scripts\*' -Destination "$name\scripts" -Recurse -Force
         }
 
-        Copy-Item -Path '.\.Build\F4SE\Plugins\DearModdingUI' -Destination "$name\f4se\plugins" -Recurse -Force
+        if (Test-Path '.\.Build\F4SE\Plugins\DearModdingUI') {
+          Copy-Item -Path '.\.Build\F4SE\Plugins\DearModdingUI' -Destination "$name\f4se\plugins" -Recurse -Force
+        }
 
         "BUNDLE_NAME=$name" >> $env:GITHUB_ENV
 
