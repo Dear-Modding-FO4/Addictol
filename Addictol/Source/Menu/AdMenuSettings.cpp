@@ -2,24 +2,19 @@
 
 #include <Core/Settings/AdSettingsModel.h>
 #include <DearModdingUI/IconGlyphs.h>
-#include <DearModdingUI/SettingsActions.h>
-#include <DearModdingUI/VisualDecisions.h>
 #include <Menu/AdMenu.h>
-#include <Menu/AdMenuWidgets.h>
 
 #include <REX/REX.h>
 
-#include <DearModdingUI/ImGuiForward.h>
-
 #include <algorithm>
-#include <array>
-#include <cfloat>
 #include <cmath>
-#include <cstdio>
-#include <cstring>
 #include <limits>
+#include <new>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace Addictol::Menu
 {
@@ -28,27 +23,8 @@ namespace Addictol::Menu
 	namespace
 	{
 		SettingsDraftState g_draft;
-		SettingFilter g_filter;
-		std::array<bool, kSettingDisplayCategoryOrder.size()> g_expanded{
-			true,
-			true,
-			true,
-			true,
-			true,
-			true,
-			true
-		};
 		bool g_drawnThisFrame{ false };
-
-		[[nodiscard]] size_t CategoryIndex(
-			SettingDisplayCategory a_category) noexcept
-		{
-			const auto position = std::ranges::find(
-				kSettingDisplayCategoryOrder,
-				a_category);
-			return static_cast<size_t>(
-				position - kSettingDisplayCategoryOrder.begin());
-		}
+		bool g_resetView{ false };
 
 		[[nodiscard]] char32_t CategoryGlyph(
 			SettingDisplayCategory a_category) noexcept
@@ -96,470 +72,272 @@ namespace Addictol::Menu
 			}
 		}
 
-		[[nodiscard]] bool DrawControl(SettingDraftEntry& a_entry)
+		template <class T>
+		[[nodiscard]] std::optional<T> ConvertNumericBound(
+			const std::optional<double>& a_bound) noexcept
 		{
-			auto changed = false;
-			const auto& setting = *a_entry.setting;
-			ImGui::SetNextItemWidth(-FLT_MIN);
-			switch (SelectSettingControl(setting))
+			if (!a_bound || !std::isfinite(*a_bound))
+				return std::nullopt;
+			if constexpr (std::is_same_v<T, double>)
+			{
+				return std::clamp(
+					*a_bound,
+					-static_cast<double>(
+						(std::numeric_limits<float>::max)()),
+					static_cast<double>(
+						(std::numeric_limits<float>::max)()));
+			}
+			else if constexpr (std::is_same_v<T, int64_t>)
+			{
+				return static_cast<int64_t>(std::clamp(
+					*a_bound,
+					static_cast<double>(
+						(std::numeric_limits<int32_t>::min)()),
+					static_cast<double>(
+						(std::numeric_limits<int32_t>::max)())));
+			}
+			else
+			{
+				return static_cast<uint64_t>(std::clamp(
+					*a_bound,
+					0.0,
+					static_cast<double>(
+						(std::numeric_limits<uint32_t>::max)())));
+			}
+		}
+
+		template <class T>
+		[[nodiscard]] std::optional<dmui::NumericSettingRange<T>>
+			ConvertNumericRange(const SettingEntry& a_setting) noexcept
+		{
+			if (!a_setting.NumericRange())
+				return std::nullopt;
+			return dmui::NumericSettingRange<T>{
+				.minimum = ConvertNumericBound<T>(
+					a_setting.NumericRange()->minimum),
+				.maximum = ConvertNumericBound<T>(
+					a_setting.NumericRange()->maximum)
+			};
+		}
+
+		template <class T>
+		[[nodiscard]] dmui::NumericSettingControl<T> MakeNumericControl(
+			const SettingEntry& a_setting)
+		{
+			auto control = dmui::NumericSettingControl<T>{
+				.range = ConvertNumericRange<T>(a_setting),
+				.dragSpeed = std::is_same_v<T, double> ? 0.01f : 1.0f
+			};
+			if constexpr (std::is_same_v<T, double>)
+				control.format = "%.3f";
+			else if constexpr (std::is_same_v<T, int64_t>)
+				control.format = "%lld";
+			else
+				control.format = "%llu";
+			return control;
+		}
+
+		[[nodiscard]] dmui::SettingControl MakeSettingControl(
+			const SettingEntry& a_setting)
+		{
+			switch (SelectSettingControl(a_setting))
 			{
 			case SettingControlKind::kCheckbox:
-			{
-				auto value = std::get<bool>(a_entry.draft);
-				changed = ImGui::Checkbox("##Value", &value);
-				if (changed)
-					a_entry.draft = value;
-				break;
-			}
+				return dmui::CheckboxSettingControl{};
 			case SettingControlKind::kCombo:
 			{
-				auto& value = std::get<std::string>(a_entry.draft);
-				if (ImGui::BeginCombo("##Value", value.c_str()))
+				dmui::ChoiceSettingControl control;
+				const auto options = SettingStringOptions(a_setting);
+				control.options.reserve(options.size());
+				for (const auto option : options)
 				{
-					for (const auto option : SettingStringOptions(setting))
-					{
-						const auto selected = option == value;
-						if (ImGui::Selectable(
-								std::string{ option }.c_str(),
-								selected))
-						{
-							value = option;
-							changed = true;
-						}
-						if (selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndCombo();
+					control.options.push_back({
+						std::string{ option },
+						std::string{ option }
+					});
 				}
-				break;
+				return control;
 			}
 			case SettingControlKind::kTextInput:
-			{
-				auto& value = std::get<std::string>(a_entry.draft);
-				std::array<char, 512> buffer{};
-				strncpy_s(buffer.data(), buffer.size(), value.c_str(), _TRUNCATE);
-				if (ImGui::InputText(
-						"##Value",
-						buffer.data(),
-						buffer.size()))
-				{
-					value = buffer.data();
-					changed = true;
-				}
-				break;
-			}
+				return dmui::TextSettingControl{ 512 };
 			case SettingControlKind::kSlider:
 			case SettingControlKind::kDrag:
 			case SettingControlKind::kNumericInput:
-			{
-				const auto control = SelectSettingControl(setting);
-				const auto range = setting.NumericRange();
-				const auto draw = [&](ImGuiDataType a_type,
-					void* a_value,
-					const char* a_format) {
-					if (control == SettingControlKind::kNumericInput)
-						return ImGui::InputScalar(
-							"##Value",
-							a_type,
-							a_value);
-					if (control == SettingControlKind::kSlider)
-					{
-						const auto minimum = *range->minimum;
-						const auto maximum = *range->maximum;
-						if (a_type == ImGuiDataType_Double)
-						{
-							return ImGui::SliderScalar(
-								"##Value",
-								a_type,
-								a_value,
-								&minimum,
-								&maximum,
-								a_format,
-								ImGuiSliderFlags_AlwaysClamp);
-						}
-						if (a_type == ImGuiDataType_S64)
-						{
-							const auto minValue =
-								static_cast<int64_t>(minimum);
-							const auto maxValue =
-								static_cast<int64_t>(maximum);
-							return ImGui::SliderScalar(
-								"##Value",
-								a_type,
-								a_value,
-								&minValue,
-								&maxValue,
-								a_format,
-								ImGuiSliderFlags_AlwaysClamp);
-						}
-						const auto minValue =
-							static_cast<uint64_t>((std::max)(minimum, 0.0));
-						const auto maxValue =
-							static_cast<uint64_t>((std::max)(maximum, 0.0));
-						return ImGui::SliderScalar(
-							"##Value",
-							a_type,
-							a_value,
-							&minValue,
-							&maxValue,
-							a_format,
-							ImGuiSliderFlags_AlwaysClamp);
-					}
-					return ImGui::DragScalar(
-						"##Value",
-						a_type,
-						a_value,
-						a_type == ImGuiDataType_Double ? 0.01f : 1.0f,
-						nullptr,
-						nullptr,
-						a_format,
-						ImGuiSliderFlags_AlwaysClamp);
-				};
-
-				switch (setting.Type())
+				switch (a_setting.Type())
 				{
 				case SettingValueType::kFloat32:
-					changed = draw(
-						ImGuiDataType_Double,
-						&std::get<double>(a_entry.draft),
-						"%.3f");
-					break;
+					return MakeNumericControl<double>(a_setting);
 				case SettingValueType::kInt32:
-					changed = draw(
-						ImGuiDataType_S64,
-						&std::get<int64_t>(a_entry.draft),
-						"%lld");
-					break;
+					return MakeNumericControl<int64_t>(a_setting);
 				case SettingValueType::kUInt32:
-					changed = draw(
-						ImGuiDataType_U64,
-						&std::get<uint64_t>(a_entry.draft),
-						"%llu");
-					break;
+					return MakeNumericControl<uint64_t>(a_setting);
 				default:
 					break;
 				}
-
-				if (changed)
-				{
-					std::visit(
-						[&](auto& a_value) {
-							using T =
-								std::remove_cvref_t<decltype(a_value)>;
-							if constexpr (
-								std::is_same_v<T, double> ||
-								std::is_same_v<T, int64_t> ||
-								std::is_same_v<T, uint64_t>)
-							{
-								auto number =
-									static_cast<double>(a_value);
-								if constexpr (std::is_same_v<T, double>)
-								{
-									if (!std::isfinite(number))
-									{
-										number = std::get<double>(
-											setting.DefaultValue());
-									}
-									number = std::clamp(
-										number,
-										-static_cast<double>(
-											(std::numeric_limits<float>::max)()),
-										static_cast<double>(
-											(std::numeric_limits<float>::max)()));
-								}
-								else if constexpr (
-									std::is_same_v<T, int64_t>)
-								{
-									number = std::clamp(
-										number,
-										static_cast<double>(
-											(std::numeric_limits<int32_t>::min)()),
-										static_cast<double>(
-											(std::numeric_limits<int32_t>::max)()));
-								}
-								else
-								{
-									number = (std::min)(
-										number,
-										static_cast<double>(
-											(std::numeric_limits<uint32_t>::max)()));
-								}
-								if (range && range->minimum)
-									number = (std::max)(
-										number,
-										*range->minimum);
-								if (range && range->maximum)
-									number = (std::min)(
-										number,
-										*range->maximum);
-								a_value = static_cast<T>(number);
-							}
-						},
-						a_entry.draft);
-				}
 				break;
 			}
-			}
-			return changed;
-		}
-
-		void DrawSetting(SettingDraftEntry& a_entry)
-		{
-			const auto& setting = *a_entry.setting;
-			ImGui::PushID(setting.Section().data());
-			ImGui::PushID(setting.Key().data());
-			ImGui::TableNextRow();
-			(void)ImGui::TableSetColumnIndex(0);
-			{
-				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBHEADING };
-				ImGui::TextUnformatted(
-					setting.DisplayName().data(),
-					setting.DisplayName().data() +
-						setting.DisplayName().size());
-			}
-			ImGui::SameLine();
-			ImGui::TextDisabled(
-				"[%.*s]",
-				static_cast<int>(setting.Key().size()),
-				setting.Key().data());
-			if (setting.ApplyTiming() == SettingApplyTiming::kImmediate)
-			{
-				ImGui::SameLine();
-				ImGui::TextColored(
-					dmui::ToImVec4(ThemeColors().accent),
-					"Applies now");
-			}
-			{
-				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
-				ImGui::TextWrapped(
-					"%.*s",
-					static_cast<int>(setting.Description().size()),
-					setting.Description().data());
-			}
-
-			(void)ImGui::TableSetColumnIndex(1);
-			const auto style = MenuUi::StyleMetrics();
-			if (style && ImGui::BeginTable(
-					"##SettingControls",
-					2,
-					ImGuiTableFlags_SizingStretchProp))
-			{
-				ImGui::TableSetupColumn(
-					"##ValueColumn",
-					ImGuiTableColumnFlags_WidthStretch);
-				ImGui::TableSetupColumn(
-					"##ResetColumn",
-					ImGuiTableColumnFlags_WidthFixed,
-					ImGui::CalcTextSize("Reset").x +
-						style->framePadding.x * 2.0f);
-				ImGui::TableNextRow();
-				(void)ImGui::TableSetColumnIndex(0);
-				(void)DrawControl(a_entry);
-				(void)ImGui::TableSetColumnIndex(1);
-				const auto modified =
-					IsSettingModified(setting, a_entry.draft);
-				ImGui::BeginDisabled(!modified);
-				if (ImGui::Button("Reset"))
-					ResetSettingDraft(a_entry);
-				ImGui::EndDisabled();
-				if (ImGui::IsItemHovered(
-						ImGuiHoveredFlags_AllowWhenDisabled |
-						ImGuiHoveredFlags_DelayNormal))
-				{
-					ImGui::SetTooltip(
-						modified ?
-							"Load this setting's shipped default into the draft." :
-							"This setting already uses its shipped default.");
-				}
-				ImGui::EndTable();
-			}
-			ImGui::PopID();
-			ImGui::PopID();
-		}
-
-		[[nodiscard]] size_t MatchingCategoryCount(
-			SettingDisplayCategory a_category)
-		{
-			return static_cast<size_t>(std::ranges::count_if(
-				g_draft.entries,
-				[&](const SettingDraftEntry& a_entry) {
-					return a_entry.setting->DisplayCategory() == a_category &&
-						MatchesSettingFilter(
-							*a_entry.setting,
-							a_entry.draft,
-							g_filter);
-				}));
-		}
-
-		void DrawFilters()
-		{
-			const auto pending = SettingsDraftPendingCount(g_draft);
-			const auto dirty = pending != 0;
-			char applyLabel[32]{};
-			std::snprintf(
-				applyLabel,
-				sizeof(applyLabel),
-				"Apply (%zu)",
-				pending);
-			char applyTooltip[128]{};
-			std::snprintf(
-				applyTooltip,
-				sizeof(applyTooltip),
-				"Apply saves %zu pending %s to AddictolCustom.toml.",
-				pending,
-				pending == 1 ? "change" : "changes");
-
-			struct ActionButton
-			{
-				DearModdingUI::SettingsAction action;
-				const char* id;
-				const char* fallbackLabel;
-				const char* widthLabel;
-				const char* tooltip;
+			return dmui::UnsupportedSettingControl{
+				static_cast<uint32_t>(a_setting.Type())
 			};
-			const std::array actions{
-				ActionButton{
-					DearModdingUI::SettingsAction::kReset,
-					"##AddictolSettingsResetButton",
-					"Reset all",
-					"Reset all",
-					"Reset loads every Addictol setting's shipped default into "
-					"the draft. Use Apply to save them." },
-				ActionButton{
-					DearModdingUI::SettingsAction::kRevert,
-					"##AddictolSettingsRevertButton",
-					"Revert",
-					"Revert",
-					"Revert discards pending edits and restores saved settings." },
-				ActionButton{
-					DearModdingUI::SettingsAction::kApply,
-					"##AddictolSettingsApplyButton",
-					applyLabel,
-					"Apply (112)",
-					applyTooltip }
-			};
-			const auto buttonExtentResult =
-				Client().SettingsActionButtonExtent();
-			if (!buttonExtentResult)
-				return;
-			const auto buttonExtent = *buttonExtentResult;
-			std::array<float, actions.size()> widths{};
-			for (size_t index = 0; index < actions.size(); ++index)
-			{
-				const auto width = Client().SettingsActionButtonWidth(
-					static_cast<DMUI_SettingsAction>(actions[index].action),
-					actions[index].widthLabel,
-					buttonExtent);
-				if (!width)
-					return;
-				widths[index] = *width;
-			}
-			const auto widthSum =
-				DearModdingUI::ResolveSettingsActionButtonWidthSum(
-					widths,
-					dirty,
-					pending);
-			const auto start = ImGui::GetCursorScreenPos();
-			const auto available =
-				(std::max)(ImGui::GetContentRegionAvail().x, 0.0f);
-			const auto style = MenuUi::StyleMetrics();
-			if (!style)
-				return;
-			const auto spacing = style->itemSpacing.x;
-			const auto layout = DearModdingUI::ResolvePageActionRowLayout(
-				start.x,
-				start.x + available,
-				widthSum,
-				actions.size(),
-				spacing);
+		}
 
-			std::array<char, 256> search{};
-			strncpy_s(
-				search.data(),
-				search.size(),
-				g_filter.search.c_str(),
-				_TRUNCATE);
-			const auto frameHeight = ImGui::GetFrameHeight();
-			const auto rowHeight = (std::max)(frameHeight, buttonExtent);
-			const auto modifiedWidth =
-				frameHeight +
-				style->itemInnerSpacing.x +
-				ImGui::CalcTextSize("Modified only").x;
-			const auto filterWidth =
-				(std::max)(layout.titleMaxX - start.x, 0.0f);
-			const auto minimumSearchWidth = ImGui::GetFontSize() * 10.0f;
-			const auto searchWidth = (std::max)(
-				minimumSearchWidth,
-				(std::min)(
-					ImGui::GetFontSize() * 24.0f,
-					filterWidth - modifiedWidth - spacing));
-			ImGui::SetNextItemWidth((std::min)(searchWidth, filterWidth));
-			if (ImGui::InputTextWithHint(
-					"##AddictolSettingsSearch",
-					"Search settings...",
-					search.data(),
-					search.size()))
-				g_filter.search = search.data();
-			const auto modifiedInline =
-				searchWidth + modifiedWidth + spacing <= filterWidth;
-			if (modifiedInline)
-				ImGui::SameLine();
-			else
-			{
-				const auto wrappedStyle = MenuUi::StyleMetrics();
-				if (!wrappedStyle)
-					return;
-				ImGui::SetCursorScreenPos({
-					start.x,
-					start.y + rowHeight + wrappedStyle->itemSpacing.y
+		template <dmui::SettingValueAlternative T>
+		[[nodiscard]] dmui::SettingBinding BindDraftSetting(
+			const SettingIdentity& a_identity,
+			const T& a_fallback)
+		{
+			return dmui::BindSetting(
+				[identity = a_identity, fallback = a_fallback]() -> T {
+					const auto* entry =
+						ResolveSettingDraftEntry(g_draft, identity);
+					if (!entry || !std::holds_alternative<T>(entry->draft))
+						return fallback;
+					return std::get<T>(entry->draft);
+				},
+				[identity = a_identity, fallback = a_fallback](
+					T a_value) -> T {
+					auto* entry =
+						ResolveSettingDraftEntry(g_draft, identity);
+					if (!entry || !std::holds_alternative<T>(entry->draft))
+						return fallback;
+					entry->draft = NormalizeSettingDraftValue(
+						*entry->setting,
+						SettingValue{ std::move(a_value) });
+					return std::get<T>(entry->draft);
 				});
-			}
-			(void)ImGui::Checkbox("Modified only", &g_filter.modifiedOnly);
+		}
 
-			auto actionX = layout.actionsMinX;
-			for (size_t index = 0; index < actions.size(); ++index)
-			{
-				const auto& action = actions[index];
-				const auto pressed = Client().DrawSettingsActionButton(
-					action.id,
-					{
-						actionX,
-						start.y + (rowHeight - buttonExtent) * 0.5f
+		[[nodiscard]] dmui::SettingApplyTiming ConvertApplyTiming(
+			SettingApplyTiming a_timing) noexcept
+		{
+			return a_timing == SettingApplyTiming::kImmediate ?
+				dmui::SettingApplyTiming::kImmediate :
+				dmui::SettingApplyTiming::kNextLaunch;
+		}
+
+		[[nodiscard]] dmui::SettingDescriptor MakeSettingDescriptor(
+			const SettingEntry& a_setting)
+		{
+			const auto identity = MakeSettingIdentity(a_setting);
+			const auto defaultValue = a_setting.DefaultValue();
+			auto label = std::string{ a_setting.DisplayName() };
+			label.append(" [");
+			label.append(a_setting.Key());
+			label.push_back(']');
+
+			auto descriptor = dmui::SettingDescriptor{
+				.id = identity.section + "." + identity.key,
+				.label = std::move(label),
+				.description = std::string{ a_setting.Description() },
+				.control = MakeSettingControl(a_setting),
+				.defaultValue = defaultValue,
+				.binding = std::visit(
+					[&]<class T>(const T& a_value) {
+						return BindDraftSetting(identity, a_value);
 					},
-					{ widths[index], buttonExtent },
-					static_cast<DMUI_SettingsAction>(action.action),
-					action.fallbackLabel,
-					action.tooltip,
-					DearModdingUI::SettingsActionEnabled(
-						action.action,
-						dirty));
-				if (pressed.value_or(false))
-				{
-					switch (action.action)
-					{
-					case DearModdingUI::SettingsAction::kReset:
-						ResetSettingsDraftToDefaults(g_draft);
-						break;
-					case DearModdingUI::SettingsAction::kRevert:
-						RevertSettingsDraft(g_draft);
-						break;
-					case DearModdingUI::SettingsAction::kApply:
-						ApplyDraft();
-						break;
-					}
+					defaultValue),
+				.applyTiming = ConvertApplyTiming(a_setting.ApplyTiming()),
+				.isDirty = [identity] {
+					const auto* entry =
+						ResolveSettingDraftEntry(g_draft, identity);
+					return entry && entry->draft != entry->committed;
+				},
+				.isModified = [identity] {
+					const auto* entry =
+						ResolveSettingDraftEntry(g_draft, identity);
+					return entry &&
+						IsSettingModified(*entry->setting, entry->draft);
 				}
-				actionX += widths[index] + spacing;
-			}
-			auto consumedHeight = rowHeight;
-			if (!modifiedInline)
+			};
+			return descriptor;
+		}
+
+		[[nodiscard]] std::vector<dmui::SettingGroup> MakeSettingGroups()
+		{
+			std::vector<dmui::SettingGroup> groups;
+			groups.reserve(kSettingDisplayCategoryOrder.size());
+			for (const auto category : kSettingDisplayCategoryOrder)
 			{
-				const auto wrappedStyle = MenuUi::StyleMetrics();
-				if (!wrappedStyle)
-					return;
-				consumedHeight += wrappedStyle->itemSpacing.y + frameHeight;
+				const auto name = SettingDisplayCategoryName(category);
+				auto group = dmui::SettingGroup{
+					.id = std::string{ name },
+					.label = std::string{ name },
+					.glyph = CategoryGlyph(category)
+				};
+				for (const auto& entry : g_draft.entries)
+				{
+					if (entry.setting->DisplayCategory() == category)
+						group.settings.push_back(
+							MakeSettingDescriptor(*entry.setting));
+				}
+				if (!group.settings.empty())
+					groups.push_back(std::move(group));
 			}
-			ImGui::SetCursorScreenPos(start);
-			ImGui::Dummy({ available, consumedHeight });
+			return groups;
+		}
+
+		void PrepareSettingsView(dmui::SettingsPage& a_page)
+		{
+			if (g_resetView)
+			{
+				a_page.ResetView();
+				g_resetView = false;
+			}
+			if (a_page.groups.empty())
+				a_page.groups = MakeSettingGroups();
+		}
+
+		[[nodiscard]] dmui::SettingsPage MakeSettingsPage()
+		{
+			return {
+				.actions = {
+					.showReset = true,
+					.reset = [] {
+						ResetSettingsDraftToDefaults(g_draft);
+					},
+					.revert = [] {
+						RevertSettingsDraft(g_draft);
+					},
+					.apply = [] {
+						ApplyDraft();
+					}
+				},
+				.actionTooltips = {
+					.reset =
+						"Reset loads every Addictol setting's shipped default "
+						"into the draft. Use Apply to save them.",
+					.revert =
+						"Revert discards pending edits and restores saved settings.",
+					.apply = [](size_t a_pending) {
+						return "Apply saves " + std::to_string(a_pending) +
+							" pending " +
+							(a_pending == 1 ? "change" : "changes") +
+							" to AddictolCustom.toml.";
+					}
+				},
+				.filterOptions = {
+					.showSearch = true,
+					.showModifiedOnly = true,
+					.searchHint = "Search settings..."
+				},
+				.notes = {
+					{
+						"Most settings take effect after the next game launch. "
+						"Only settings labeled \"Applies now\" update immediately.",
+						false
+					},
+					{
+						"Menu appearance is owned by the gear panel's "
+						"Interface Settings.",
+						true
+					}
+				},
+				.prepare = [] {
+					g_drawnThisFrame = true;
+					EnsureDraft();
+				},
+				.prepareView = &PrepareSettingsView
+			};
 		}
 	}
 
@@ -582,71 +360,39 @@ namespace Addictol::Menu
 	void CloseSettingsPage() noexcept
 	{
 		DiscardDraft();
-		g_filter = {};
-		g_expanded.fill(true);
+		g_resetView = true;
 	}
 
-	void DrawSettingsPage([[maybe_unused]] void* a_userData) noexcept
+	bool RegisterSettingsPage() noexcept
 	{
-		g_drawnThisFrame = true;
-		EnsureDraft();
-		DrawFilters();
-		ImGui::Spacing();
-		ImGui::TextWrapped(
-			"Most settings take effect after the next game launch. "
-			"Only settings labeled \"Applies now\" update immediately.");
-		ImGui::TextDisabled(
-			"Menu appearance is owned by the gear panel's Interface Settings.");
-		ImGui::Spacing();
-
-		for (const auto category : kSettingDisplayCategoryOrder)
+		try
 		{
-			const auto count = MatchingCategoryCount(category);
-			if (count == 0)
-				continue;
-			const auto index = CategoryIndex(category);
-			const auto name = SettingDisplayCategoryName(category);
+			const auto page = Client().AddSettingsPage(
+				"settings",
+				"Settings",
+				"Addictol",
+				MakeSettingsPage(),
+				"Configure Addictol fixes, performance, visuals, gameplay, "
+				"and diagnostics.",
+				100);
+			if (!page)
 			{
-				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_HEADING };
-				(void)Client().DrawCollapsingSectionHeader(
-					name.data(),
-					name.data(),
-					CategoryGlyph(category),
-					g_expanded[index],
-					count);
+				REX::WARN(
+					"Menu: page \"Settings\" rejected, result {}."sv,
+					DMUI_ResultToString(Client().LastResult()));
 			}
-			if (!g_expanded[index])
-				continue;
-
-			if (ImGui::BeginTable(
-					name.data(),
-					2,
-					ImGuiTableFlags_SizingStretchProp |
-						ImGuiTableFlags_RowBg |
-						ImGuiTableFlags_BordersInnerH |
-						ImGuiTableFlags_PadOuterX))
-			{
-				ImGui::TableSetupColumn(
-					"Setting",
-					ImGuiTableColumnFlags_WidthStretch,
-					3.0f);
-				ImGui::TableSetupColumn(
-					"Value",
-					ImGuiTableColumnFlags_WidthStretch,
-					2.0f);
-				for (auto& entry : g_draft.entries)
-				{
-					if (entry.setting->DisplayCategory() != category ||
-						!MatchesSettingFilter(
-							*entry.setting,
-							entry.draft,
-							g_filter))
-						continue;
-					DrawSetting(entry);
-				}
-				ImGui::EndTable();
-			}
-			ImGui::Spacing();
+			return page.has_value();
 		}
+		catch (const std::bad_alloc&)
+		{
+			REX::ERROR(
+				"Menu: page \"Settings\" could not allocate its descriptors."sv);
+		}
+		catch (...)
+		{
+			REX::ERROR(
+				"Menu: page \"Settings\" descriptor construction failed."sv);
+		}
+		return false;
 	}
 }

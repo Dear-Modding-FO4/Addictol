@@ -6,16 +6,20 @@
 #include <Core/Settings/AdSettings.h>
 #include <Core/Settings/AdSettingsModel.h>
 
+#include <DearModdingUI/Client.h>
 #include <toml11/single_include/toml.hpp>
 
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <set>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace
@@ -534,39 +538,125 @@ namespace vmm_tests
 				"global reset changed committed state");
 		});
 
+		runner.test("settings draft identities resolve across rebuilt entry storage", [] {
+			const auto committed =
+				Addictol::SettingsRepository::GetSingleton().Snapshot();
+			auto first = Addictol::BeginSettingsDraft(committed);
+			const auto identity = Addictol::MakeSettingIdentity(
+				Setting("Additional", "bIgnoreCompatibilityChecks"));
+			const auto* firstEntry =
+				Addictol::ResolveSettingDraftEntry(first, identity);
+			require(firstEntry != nullptr, "identity did not resolve in the first draft");
+
+			auto rebuilt = Addictol::BeginSettingsDraft(committed);
+			auto* rebuiltEntry =
+				Addictol::ResolveSettingDraftEntry(rebuilt, identity);
+			require(
+				rebuiltEntry != nullptr &&
+					rebuiltEntry->setting == firstEntry->setting,
+				"identity did not resolve after draft storage was rebuilt");
+			rebuiltEntry->draft = !std::get<bool>(rebuiltEntry->draft);
+			const auto* constEntry = Addictol::ResolveSettingDraftEntry(
+				std::as_const(rebuilt),
+				identity);
+			require(
+				constEntry && constEntry->draft == rebuiltEntry->draft,
+				"const identity resolution returned a different draft entry");
+
+			Addictol::LeaveSettingsDraft(first);
+			require(
+				Addictol::ResolveSettingDraftEntry(first, identity) == nullptr,
+				"inactive draft storage remained resolvable");
+		});
+
+		runner.test("settings draft values recover and clamp before binding", [] {
+			const auto& scale = Setting("Additional", "fLocalMapScaleFactor");
+			const auto recovered = Addictol::NormalizeSettingDraftValue(
+				scale,
+				Addictol::SettingValue{
+					std::numeric_limits<double>::quiet_NaN() });
+			require(
+				std::get<double>(recovered) ==
+					std::get<double>(scale.DefaultValue()),
+				"non-finite float did not recover its default");
+
+			const auto& operations =
+				Setting("Additional", "nMaxPapyrusOpsPerFrame");
+			const auto signedValue = Addictol::NormalizeSettingDraftValue(
+				operations,
+				Addictol::SettingValue{
+					(std::numeric_limits<int64_t>::max)() });
+			require(
+				std::get<int64_t>(signedValue) ==
+					(std::numeric_limits<int32_t>::max)(),
+				"signed input escaped its backing type");
+
+			const auto& refresh = Setting("Additional", "uMenuRefreshMs");
+			const auto unsignedValue = Addictol::NormalizeSettingDraftValue(
+				refresh,
+				Addictol::SettingValue{
+					(std::numeric_limits<uint64_t>::max)() });
+			require(
+				std::get<uint64_t>(unsignedValue) == 2000,
+				"unsigned input escaped its declared range");
+
+			const auto& maxStdio = Setting("Fixes", "nMaxStdIO");
+			const auto draggedValue = Addictol::NormalizeSettingDraftValue(
+				maxStdio,
+				Addictol::SettingValue{ int64_t{ 9000 } });
+			require(
+				std::get<int64_t>(draggedValue) == 8192,
+				"partially bounded drag escaped its declared maximum");
+		});
+
 		runner.test("settings filters search metadata and modified values", [] {
 			const auto& menu =
 				Setting("Additional", "bIgnoreCompatibilityChecks");
-			Addictol::SettingFilter filter{ "bIgnoreCompatibilityChecks", false };
+			const dmui::SettingDescriptor descriptor{
+				.id = std::string{ menu.Key() },
+				.label = std::string{ menu.DisplayName() },
+				.description = std::string{ menu.Description() },
+				.control = dmui::CheckboxSettingControl{},
+				.defaultValue = menu.DefaultValue()
+			};
+			dmui::SettingFilter filter{ "bIgnoreCompatibilityChecks", false };
 			require(
-				Addictol::MatchesSettingFilter(
-					menu,
-					menu.DefaultValue(),
+				dmui::MatchesSettingFilter(
+					descriptor,
+					descriptor.label,
+					false,
 					filter),
 				"key search did not match");
 			filter.search = "Ignore";
 			require(
-				Addictol::MatchesSettingFilter(
-					menu,
-					menu.DefaultValue(),
+				dmui::MatchesSettingFilter(
+					descriptor,
+					descriptor.label,
+					false,
 					filter),
 				"display-name search did not match");
 			filter.search = "compatibility checks";
 			require(
-				Addictol::MatchesSettingFilter(
-					menu,
-					menu.DefaultValue(),
+				dmui::MatchesSettingFilter(
+					descriptor,
+					descriptor.label,
+					false,
 					filter),
 				"description search did not match");
 			filter = { {}, true };
 			require(
-				!Addictol::MatchesSettingFilter(
-					menu,
-					menu.DefaultValue(),
+				!dmui::MatchesSettingFilter(
+					descriptor,
+					descriptor.label,
+					false,
 					filter),
 				"modified-only included a default value");
 			require(
-				Addictol::MatchesSettingFilter(menu, !CompatibilityDefault(), filter),
+				dmui::MatchesSettingFilter(
+					descriptor,
+					descriptor.label,
+					true,
+					filter),
 				"modified-only excluded a changed value");
 		});
 

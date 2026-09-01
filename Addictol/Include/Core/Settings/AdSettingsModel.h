@@ -30,10 +30,12 @@ namespace Addictol
 		kCombo
 	};
 
-	struct SettingFilter
+	struct SettingIdentity
 	{
-		std::string search;
-		bool modifiedOnly{ false };
+		std::string section;
+		std::string key;
+
+		bool operator==(const SettingIdentity&) const noexcept = default;
 	};
 
 	struct SettingDraftEntry
@@ -64,10 +66,17 @@ namespace Addictol
 	[[nodiscard]] bool IsSettingModified(
 		const SettingEntry& a_setting,
 		const SettingValue& a_value) noexcept;
-	[[nodiscard]] bool MatchesSettingFilter(
+	[[nodiscard]] SettingIdentity MakeSettingIdentity(
+		const SettingEntry& a_setting);
+	[[nodiscard]] SettingDraftEntry* ResolveSettingDraftEntry(
+		SettingsDraftState& a_state,
+		const SettingIdentity& a_identity) noexcept;
+	[[nodiscard]] const SettingDraftEntry* ResolveSettingDraftEntry(
+		const SettingsDraftState& a_state,
+		const SettingIdentity& a_identity) noexcept;
+	[[nodiscard]] SettingValue NormalizeSettingDraftValue(
 		const SettingEntry& a_setting,
-		const SettingValue& a_value,
-		const SettingFilter& a_filter);
+		SettingValue a_value);
 
 	[[nodiscard]] SettingsDraftState BeginSettingsDraft(
 		std::span<const SettingValueSnapshot> a_committed);
@@ -82,6 +91,5 @@ namespace Addictol
 		const SettingsDraftCommit& a_commit);
 	void RevertSettingsDraft(SettingsDraftState& a_state);
 	void ResetSettingsDraftToDefaults(SettingsDraftState& a_state);
-	void ResetSettingDraft(SettingDraftEntry& a_entry);
 	void LeaveSettingsDraft(SettingsDraftState& a_state);
 }

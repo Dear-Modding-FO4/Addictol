@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
+#include <cmath>
+#include <limits>
+#include <type_traits>
 
 namespace Addictol
 {
@@ -24,18 +26,6 @@ namespace Addictol
 			"critical",
 			"off"
 		};
-		[[nodiscard]] std::string Lower(std::string_view a_value)
-		{
-			std::string result{ a_value };
-			std::ranges::transform(
-				result,
-				result.begin(),
-				[](unsigned char a_character) {
-					return static_cast<char>(std::tolower(a_character));
-				});
-			return result;
-		}
-
 		[[nodiscard]] bool IsSettingKey(
 			const SettingEntry& a_setting,
 			std::string_view a_key) noexcept
@@ -110,21 +100,108 @@ namespace Addictol
 		return a_value != a_setting.DefaultValue();
 	}
 
-	bool MatchesSettingFilter(
-		const SettingEntry& a_setting,
-		const SettingValue& a_value,
-		const SettingFilter& a_filter)
+	SettingIdentity MakeSettingIdentity(const SettingEntry& a_setting)
 	{
-		if (a_filter.modifiedOnly &&
-			!IsSettingModified(a_setting, a_value))
-			return false;
-		if (a_filter.search.empty())
-			return true;
+		return {
+			std::string{ a_setting.Section() },
+			std::string{ a_setting.Key() }
+		};
+	}
 
-		const auto search = Lower(a_filter.search);
-		return Lower(a_setting.Key()).contains(search) ||
-			Lower(a_setting.DisplayName()).contains(search) ||
-			Lower(a_setting.Description()).contains(search);
+	SettingDraftEntry* ResolveSettingDraftEntry(
+		SettingsDraftState& a_state,
+		const SettingIdentity& a_identity) noexcept
+	{
+		if (!a_state.active)
+			return nullptr;
+		const auto entry = std::ranges::find_if(
+			a_state.entries,
+			[&](const SettingDraftEntry& a_entry) {
+				return a_entry.setting->Section() == a_identity.section &&
+					a_entry.setting->Key() == a_identity.key;
+			});
+		return entry == a_state.entries.end() ? nullptr : &*entry;
+	}
+
+	const SettingDraftEntry* ResolveSettingDraftEntry(
+		const SettingsDraftState& a_state,
+		const SettingIdentity& a_identity) noexcept
+	{
+		if (!a_state.active)
+			return nullptr;
+		const auto entry = std::ranges::find_if(
+			a_state.entries,
+			[&](const SettingDraftEntry& a_entry) {
+				return a_entry.setting->Section() == a_identity.section &&
+					a_entry.setting->Key() == a_identity.key;
+			});
+		return entry == a_state.entries.end() ? nullptr : &*entry;
+	}
+
+	SettingValue NormalizeSettingDraftValue(
+		const SettingEntry& a_setting,
+		SettingValue a_value)
+	{
+		const auto validType =
+			(a_setting.Type() == SettingValueType::kBoolean &&
+				std::holds_alternative<bool>(a_value)) ||
+			(a_setting.Type() == SettingValueType::kFloat32 &&
+				std::holds_alternative<double>(a_value)) ||
+			(a_setting.Type() == SettingValueType::kInt32 &&
+				std::holds_alternative<int64_t>(a_value)) ||
+			(a_setting.Type() == SettingValueType::kUInt32 &&
+				std::holds_alternative<uint64_t>(a_value)) ||
+			(a_setting.Type() == SettingValueType::kString &&
+				std::holds_alternative<std::string>(a_value));
+		if (!validType)
+			return a_setting.DefaultValue();
+
+		const auto range = a_setting.NumericRange();
+		std::visit(
+			[&](auto& a_typedValue) {
+				using T = std::remove_cvref_t<decltype(a_typedValue)>;
+				if constexpr (
+					std::is_same_v<T, double> ||
+					std::is_same_v<T, int64_t> ||
+					std::is_same_v<T, uint64_t>)
+				{
+					auto number = static_cast<double>(a_typedValue);
+					if constexpr (std::is_same_v<T, double>)
+					{
+						if (!std::isfinite(number))
+							number = std::get<double>(a_setting.DefaultValue());
+						number = std::clamp(
+							number,
+							-static_cast<double>(
+								(std::numeric_limits<float>::max)()),
+							static_cast<double>(
+								(std::numeric_limits<float>::max)()));
+					}
+					else if constexpr (std::is_same_v<T, int64_t>)
+					{
+						number = std::clamp(
+							number,
+							static_cast<double>(
+								(std::numeric_limits<int32_t>::min)()),
+							static_cast<double>(
+								(std::numeric_limits<int32_t>::max)()));
+					}
+					else
+					{
+						number = (std::min)(
+							number,
+							static_cast<double>(
+								(std::numeric_limits<uint32_t>::max)()));
+					}
+					if (range && range->minimum)
+						number = (std::max)(number, *range->minimum);
+					if (range && range->maximum)
+						number = (std::min)(number, *range->maximum);
+					a_typedValue = static_cast<T>(number);
+				}
+			},
+			a_value);
+		return a_value;
 	}
 
 	SettingsDraftState BeginSettingsDraft(
@@ -207,11 +284,6 @@ namespace Addictol
 			return;
 		for (auto& entry : a_state.entries)
 			entry.draft = entry.setting->DefaultValue();
-	}
-
-	void ResetSettingDraft(SettingDraftEntry& a_entry)
-	{
-		a_entry.draft = a_entry.setting->DefaultValue();
 	}
 
 	void LeaveSettingsDraft(SettingsDraftState& a_state)

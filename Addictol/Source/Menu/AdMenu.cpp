@@ -196,16 +196,7 @@ namespace Addictol
 				nullptr,
 				nullptr
 			}) ||
-			!RegisterPage({
-				"settings",
-				"Settings",
-				"Addictol",
-				"Configure Addictol fixes, performance, visuals, gameplay, and diagnostics.",
-				100,
-				&DrawSettingsPage,
-				nullptr,
-				nullptr
-			}))
+			!RegisterSettingsPage())
 			return false;
 
 		s_connected.store(true, std::memory_order_release);
