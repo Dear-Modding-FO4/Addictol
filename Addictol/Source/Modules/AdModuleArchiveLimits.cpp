@@ -46,6 +46,22 @@ namespace Addictol
 			uint64_t unk10;
 			Data* data;
 		};
+
+		struct TextureEx
+		{
+			struct Data
+			{
+				uint32_t refCount;			// 00
+				uint16_t dataFileIndex;		// 04
+				uint8_t chunkCount;			// 06
+				uint8_t chunkOffsetOrType;	// 07
+			};
+
+			uint64_t unk00;
+			uint64_t unk08;
+			uint64_t unk10;
+			Data* data;
+		};
 	}
 
 	struct Index
@@ -853,9 +869,9 @@ namespace Addictol
 
 				if (request.texture && request.texture->rendererTexture)
 				{
-					auto Renderer = (BSGraphics::Texture*)request.texture->rendererTexture;
+					auto Renderer = (BSGraphics::TextureEx*)request.texture->rendererTexture;
 					if (Renderer->data)
-						return (((uint16_t)Renderer->data->dataFileHighIndex) << 8) | Renderer->data->dataFileIndex;
+						return Renderer->data->dataFileIndex;
 				}
 
 				RE::BSResource::ID id = request.header.nameID;
@@ -1174,9 +1190,9 @@ namespace Addictol
 				// BSGraphics::Renderer::CreateStreamingTexture
 				////////////////////////////////////////////////
 				{
-					struct CreateStreamingTexturePatch : Xbyak::CodeGenerator
+					struct CreateStreamingTexturePatch_256 : Xbyak::CodeGenerator
 					{
-						CreateStreamingTexturePatch(uintptr_t target, uintptr_t func)
+						CreateStreamingTexturePatch_256(uintptr_t target, uintptr_t func)
 						{
 							Xbyak::Label retnLabel;
 							Xbyak::Label funcLabel;
@@ -1213,8 +1229,49 @@ namespace Addictol
 						}
 					};
 
+					struct CreateStreamingTexturePatch_1024 : Xbyak::CodeGenerator
+					{
+						CreateStreamingTexturePatch_1024(uintptr_t target, uintptr_t func)
+						{
+							Xbyak::Label retnLabel;
+							Xbyak::Label funcLabel;
+
+							push(rax);
+							push(rcx);
+							sub(rsp, 0x20);
+
+							lea(rcx, ptr[rsi]);
+							call(ptr[rip + funcLabel]);
+
+							mov(edx, eax);
+
+							add(rsp, 0x20);
+							pop(rcx);
+							pop(rax);
+
+							cmp(edx, 0xFFFF);
+							je("RET");
+
+							mov(byte[rax + 4], dx);
+
+							L("RET");
+							movzx(edx, byte[rcx + 0x3C]);
+							mov(ptr[rax + 8], dx);
+							jmp(ptr[rip + retnLabel]);
+
+							L(retnLabel);
+							dq(target + 0xD);
+
+							L(funcLabel);
+							dq(func);
+						}
+					};
+
 					auto target = REL::Relocation{ REL::ID{ 917602, 2276914 }, REL::Offset{ 0x8B } }.get();
-					RELEX::XbyakJump<CreateStreamingTexturePatch>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
+					if (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)
+						RELEX::XbyakJump<CreateStreamingTexturePatch_256>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
+					else
+						RELEX::XbyakJump<CreateStreamingTexturePatch_1024>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
 				}
 				////////////////////////////////////////////////
 				// BSGraphics::CreateStreamingDDSTexture
