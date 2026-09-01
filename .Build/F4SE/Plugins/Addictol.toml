@@ -107,7 +107,7 @@ bCellInit = true
 # Fixes a crash when you are scrapping or swapping many inventory items in the workbench.
 bWorkbenchSwap = true
 
-# Replaces the maximum stdio handles (max 8192, but not for everyone OS).
+# Replaces the maximum stdio handles (max 2048 for OG, 8192 for NG/AE, but not for everyone OS).
 nMaxStdIO = -1
 
 # Fixes a bug where the the Movement Planner crashes with non-actors.
