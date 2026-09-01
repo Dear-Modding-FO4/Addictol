@@ -2,6 +2,7 @@
 #include "../Addictol/Include/Menu/AdMenuModules.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "../Addictol/Include/Modules/AdFacegenExceptions.h"
+#include "../Addictol/Include/Modules/AdModuleInputSwitch.h"
 #include "Harness.h"
 
 #include <INI/SimpleIni.h>
@@ -46,6 +47,13 @@ namespace vmm_tests
 
 	void run_menu_checks(Runner& runner)
 	{
+		runner.test("input switching preserves modal keyboard and mouse ownership", [] {
+			require(inputSwitchDetail::ShouldClearKeyboardMouseIgnore(false),
+				"a closed menu prevented keyboard and mouse re-enabling");
+			require(!inputSwitchDetail::ShouldClearKeyboardMouseIgnore(true),
+				"an open menu allowed keyboard and mouse re-enabling");
+		});
+
 		runner.test("log level combo matches the public levels", [] {
 			require(kMenuLogLevels.size() == kExpectedLogLevels.size(), "log level count changed");
 			size_t index = 0;

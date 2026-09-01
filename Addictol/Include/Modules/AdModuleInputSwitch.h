@@ -4,6 +4,14 @@
 
 namespace Addictol
 {
+	namespace inputSwitchDetail
+	{
+		[[nodiscard]] constexpr bool ShouldClearKeyboardMouseIgnore(bool a_menuVisible) noexcept
+		{
+			return !a_menuVisible;
+		}
+	}
+
 	class ModuleInputSwitch :
 		public Module
 	{

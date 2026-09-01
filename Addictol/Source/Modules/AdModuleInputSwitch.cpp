@@ -1,4 +1,5 @@
 #include <Modules/AdModuleInputSwitch.h>
+#include <Menu/AdMenu.h>
 #include <Core/AdUtils.h>
 #include <Core/AdAssert.h>
 
@@ -77,6 +78,13 @@ namespace Addictol
 					{
 						_active.device = input;
 						UpdateControls();
+
+						if (_proxied.controlMap &&
+							ShouldClearKeyboardMouseIgnore(
+								Menu::Client().IsMenuVisible().value_or(false)))
+						{
+							_proxied.controlMap->SetIgnoreKeyboardMouse(false);
+						}
 					}
 
 					if (const auto id = event.As<RE::IDEvent>(); id)
@@ -98,11 +106,6 @@ namespace Addictol
 						{
 							trySet(_active.looking);
 						}
-					}
-
-					if (_proxied.controlMap)
-					{
-						_proxied.controlMap->SetIgnoreKeyboardMouse(false);
 					}
 				}
 
