@@ -361,6 +361,7 @@ target(plugin_name, function()
         "Depends/spdlog/include",
         "Depends/detours",
         "Depends/commonlibf4/lib/commonlib-shared/include",
+        "Depends/commonlibf4/lib/dearmoddingui-api/include",
         "Version",
         "Addictol/Include",
         "Depends/vmm/include",
@@ -453,7 +454,8 @@ target(plugin_name, function()
         )
         local dll = path.join(host, "DearModdingUI.dll")
         if not os.isfile(dll) then
-            raise("build DearModdingUI first at " .. host)
+            cprint("${yellow}warning: Local DearModdingUI deployment skipped because DearModdingUI.dll was not found. Build DearModdingUI first at %s.", host)
+            return
         end
         local runtime = path.join(target:targetdir(), "DearModdingUI")
         os.cp(dll, target:targetdir())
