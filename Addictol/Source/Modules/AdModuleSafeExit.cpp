@@ -13,8 +13,6 @@
 
 namespace Addictol
 {
-
-
 	inline static void Shutdown() noexcept
 	{
 #if AD_TRACER
@@ -44,11 +42,6 @@ namespace Addictol
 		Module("Safe Exit", &bFixesSafeExit)
 	{}
 
-	bool ModuleSafeExit::IsEnabledInConfig() noexcept
-	{
-		return bFixesSafeExit.GetValue();
-	}
-
 	bool ModuleSafeExit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& trampoline = REL::GetTrampoline();
@@ -62,5 +55,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }
