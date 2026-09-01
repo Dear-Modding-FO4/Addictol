@@ -7,6 +7,7 @@ namespace Addictol
 	constexpr inline static auto FATAL_MAXSTDIO = -1;
 	constexpr inline static auto DEFAULT_MAXSTDIO = 512;
 	constexpr inline static auto MAX_MAXSTDIO = 8 * 1024;
+	constexpr inline static auto MAX_MAXSTDIO_FOR_MAMMONTHS = 2 * 1024;
 
 
 	ModuleMaxStdIO::ModuleMaxStdIO() :
@@ -26,6 +27,12 @@ namespace Addictol
 		int nmaxiouser = nFixesMaxStdIO.GetValue();
 		if (nmaxiouser <= RESET_MAXSTDIO)
 			nmaxiouser = DEFAULT_MAXSTDIO;
+
+		if (RELEX::IsRuntimeOG() && (nmaxiouser > MAX_MAXSTDIO_FOR_MAMMONTHS))
+		{
+			REX::WARN("On the ancient version of the game, the limit can't be higher to \"{}\""sv, MAX_MAXSTDIO_FOR_MAMMONTHS);
+			nmaxiouser = MAX_MAXSTDIO_FOR_MAMMONTHS;
+		}
 
 		if (nmaxio != nmaxiouser)
 		{
