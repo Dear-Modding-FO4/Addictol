@@ -225,9 +225,6 @@ bSprintStutter = true
 # Corrects the lunar disc orientation during moon initialization.
 bMoonRotation = true
 
-# Prevents the NVIDIA Weapon Debris CTD on Turing+ / deprecated-FleX drivers by skipping the crashing collision path.
-bWeaponDebrisCrash = true
-
 # Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR.
 bCrashRemoveRefFix = true
 

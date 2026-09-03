@@ -343,9 +343,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWaterJetpackFix.cpp">
       <Filter>Source\Modules\W</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp">
-      <Filter>Source\Modules\W</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWorkbenchSound.cpp">
       <Filter>Source\Modules\W</Filter>
     </ClCompile>
@@ -716,9 +713,6 @@
       <Filter>Include\Modules\V</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWaterJetpackFix.h">
-      <Filter>Include\Modules\W</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h">
       <Filter>Include\Modules\W</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWorkbenchSound.h">

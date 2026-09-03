@@ -74,7 +74,6 @@
 #include <Modules/AdModuleDownwardAiming.h>
 #include <Modules/AdModuleSprintStutter.h>
 #include <Modules/AdModuleMoonRotation.h>
-#include <Modules/AdModuleWeaponDebrisCrash.h>
 #include <Modules/AdModuleCrashRemoveRef.h>
 #include <Modules/AdModuleClimateLoad.h>
 #include <Modules/AdModuleMusicOverlap.h>
@@ -166,7 +165,6 @@ static auto sModuleAttachLightCrash					= std::make_shared<Addictol::ModuleAttac
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
 static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
-static auto sModuleWeaponDebrisCrash				= std::make_shared<Addictol::ModuleWeaponDebrisCrash>();
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
@@ -273,7 +271,6 @@ void AdRegisterModules()
 	modules.Register(sModuleDownwardAiming);
 	modules.Register(sModuleSprintStutter);
 	modules.Register(sModuleMoonRotation);
-	modules.Register(sModuleWeaponDebrisCrash);
 	modules.Register(sModuleCrashRemoveRef);
 	modules.Register(sModuleClimateLoadFix);
 	modules.Register(sModuleMusicOverlap);
@@ -297,8 +294,8 @@ void AdRegisterModules()
 	modules.Register(sModuleFasterWorkshop,					kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
-	modules.Register(sModuleCompanionStrayBullet,		kGameDataReady);
-	modules.Register(sModuleCraftingMenuFix,			kGameDataReady);
+	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
+	modules.Register(sModuleCraftingMenuFix,				kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);

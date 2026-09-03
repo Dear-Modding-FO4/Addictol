@@ -58,7 +58,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMoonRotation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAIProcess3DUpdateFlag.cpp" />
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWeaponDebrisCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp" />
@@ -187,7 +186,6 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMoonRotation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAIProcess3DUpdateFlag.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWeaponDebrisCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h" />
