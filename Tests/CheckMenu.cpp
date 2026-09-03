@@ -275,14 +275,14 @@ namespace vmm_tests
 		runner.test("module search and outcome filters combine deterministically", [] {
 			require(
 				MatchesModuleStatus(
-					"Weapon Debris Crash",
+					"Moon Rotation",
 					ModuleOutcome::kInstalled,
-					"deBRis",
+					"roTAtion",
 					ModuleOutcomeFilter::kAll),
 				"case-insensitive module search did not match");
 			require(
 				!MatchesModuleStatus(
-					"Weapon Debris Crash",
+					"Moon Rotation",
 					ModuleOutcome::kInstalled,
 					"allocator",
 					ModuleOutcomeFilter::kAll),

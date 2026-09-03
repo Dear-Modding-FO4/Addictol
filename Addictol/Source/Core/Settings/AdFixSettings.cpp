@@ -446,15 +446,6 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bFixesWeaponDebrisCrash{
-		"Fixes"sv,
-		"bWeaponDebrisCrash"sv,
-		SettingDisplayCategory::kStability,
-		true,
-		"Prevents the NVIDIA Weapon Debris CTD on Turing+ / deprecated-FleX drivers by skipping the crashing collision path."sv,
-		SettingApplyTiming::kNextLaunch
-	};
-
 	BoolSetting bCrashRemoveRefFix{
 		"Fixes"sv,
 		"bCrashRemoveRefFix"sv,

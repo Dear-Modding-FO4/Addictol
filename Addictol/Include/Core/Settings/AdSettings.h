@@ -77,7 +77,6 @@ namespace Addictol
 	extern BoolSetting bFixesDownwardAiming;
 	extern BoolSetting bFixesSprintStutter;
 	extern BoolSetting bFixesMoonRotation;
-	extern BoolSetting bFixesWeaponDebrisCrash;
 	extern BoolSetting bCrashRemoveRefFix;
 	extern BoolSetting bClimateLoad;
 	extern BoolSetting bFixesMusicOverlap;
