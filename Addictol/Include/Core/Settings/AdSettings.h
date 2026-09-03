@@ -87,6 +87,7 @@ namespace Addictol
 	extern BoolSetting bFixesWaterJetpackFix;
 	extern BoolSetting bFixesCraftingMenuFix;
 	extern BoolSetting bFixesAIProcess3DUpdateFlag;
+	extern BoolSetting bFixesNPCHealthOverflowFix;
 
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;

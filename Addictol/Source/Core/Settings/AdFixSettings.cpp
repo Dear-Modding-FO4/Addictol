@@ -535,4 +535,13 @@ namespace Addictol
 		"Fixes a bug where there is no check for nullptr when AI for a character is disabled."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesNPCHealthOverflowFix{
+		"Fixes"sv,
+		"bNPCHealthOverflowFix"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		"Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }
