@@ -1,6 +1,7 @@
 #include <Modules/AdModuleNPCHealthOverflowFix.h>
 #include <Core/AdUtils.h>
 
+#include <RE/A/ActorValue.h>
 #include <RE/A/ActorValueInfo.h>
 #include <RE/A/ActorValueOwner.h>
 #include <RE/T/TESDataHandler.h>
@@ -11,24 +12,35 @@ namespace Addictol
 
 	namespace npcHealthOverflowFixDetail
 	{
-		// TESActorBase::ActorValueOwner sub-object, same offset on OG / NG / AE.
+		// Verified on OG / NG / AE.
 		constexpr std::uintptr_t kAVOwnerInTESNPC = 0x130;
 
-		// Hand-written negative health offsets stay small, the int16 wraparound lands
-		// around -31k, so anything below -1000 is a wrap.
-		constexpr int16_t kNegativeThreshold = -1000;
-
-		// TESNPC::GetActorValue prologue, byte-identical on every runtime:
-		//   mov [rsp+8], rbx ; push rdi ; sub rsp, 0x30 ; mov rbx, rcx
+		// mov [rsp+8], rbx ; push rdi ; sub rsp, 0x30 ; mov rbx, rcx
 		inline constexpr std::initializer_list<uint8_t> kPrologue{
 			0x48, 0x89, 0x5C, 0x24, 0x08,
 			0x57,
 			0x48, 0x83, 0xEC, 0x30,
 			0x48, 0x8B, 0xD9 };
 
-		// OG then walks the sub-object pointer back to the NPC, NG / AE just keep going.
-		inline constexpr std::initializer_list<uint8_t> kPrologueTailOG{ 0x48, 0x81, 0xC1, 0xD0, 0xFE, 0xFF, 0xFF };
-		inline constexpr std::initializer_list<uint8_t> kPrologueTailNGAE{ 0x48, 0x8B, 0xFA };
+		// add rcx, -0x130 -- the rebase the thunk's arithmetic relies on; OG emits it before mov rdi, rdx and NG / AE after.
+		inline constexpr std::initializer_list<uint8_t> kRebaseThis{ 0x48, 0x81, 0xC1, 0xD0, 0xFE, 0xFF, 0xFF };
+		inline constexpr std::initializer_list<uint8_t> kMovRdiRdx{ 0x48, 0x8B, 0xFA };
+
+		const RE::ActorValueInfo* gHealth{ nullptr };
+		const RE::ActorValueInfo* gActionPoints{ nullptr };
+
+		[[nodiscard]] bool ValidateGetActorValue(std::uintptr_t a_target) noexcept
+		{
+			if (!RELEX::Validate(a_target, kPrologue))
+				return false;
+
+			const auto tail = a_target + kPrologue.size();
+			return RELEX::IsRuntimeOG() ?
+				RELEX::Validate(tail, kRebaseThis) &&
+					RELEX::Validate(tail + kRebaseThis.size(), kMovRdiRdx) :
+				RELEX::Validate(tail, kMovRdiRdx) &&
+					RELEX::Validate(tail + kMovRdiRdx.size(), kRebaseThis);
+		}
 
 		struct GetActorValue // TESNPC::GetActorValue()
 		{
@@ -37,30 +49,22 @@ namespace Addictol
 			static float thunk(RE::ActorValueOwner* a_this, const RE::ActorValueInfo* a_info)
 			{
 				const float result = original(a_this, a_info);
-				if (result >= 0.0F)
+				if (result >= 0.0F || (a_info != gHealth && a_info != gActionPoints))
 					return result;
 
 				auto* npc = reinterpret_cast<RE::TESNPC*>(
 					reinterpret_cast<std::uintptr_t>(a_this) - kAVOwnerInTESNPC);
-				if (!npc || !npc->HasAutoCalcStats())
+				if (!npc->Is(RE::ENUM_FORM_ID::kNPC_) || !npc->HasAutoCalcStats())
 					return result;
 
-				// With auto-calc stats on, the level-derived health / AP seed is stored into an
-				// int16 with no clamping. Past level ~120 the value passes 32767 and wraps, and
-				// the engine sign-extends it, so the NPC's base HP reads as roughly -31k and
-				// it dies to the first hit. The wrap is modular, adding 65536 recovers the
-				// intended value. Matching the returned float against the raw int16 is what
-				// tells us the value really came from the sign extension and not from
-				// race / class / perk additions.
-				const auto health = npc->data.autoCalcHealth;
-				if (health < kNegativeThreshold && result == static_cast<float>(health))
-					return result + 65536.0F;
+				// AutoCalcSkillsAttributes truncates a 32-bit seed into the int16 unclamped; the engine's own accessors read it back with movzx.
+				const auto raw = a_info == gHealth ?
+					npc->data.autoCalcHealth :
+					npc->data.autoCalcActionPoints;
+				if (result != static_cast<float>(raw))
+					return result;
 
-				const auto actionPoints = npc->data.autoCalcActionPoints;
-				if (actionPoints < kNegativeThreshold && result == static_cast<float>(actionPoints))
-					return result + 65536.0F;
-
-				return result;
+				return static_cast<float>(static_cast<std::uint16_t>(raw));
 			}
 
 			static inline GetActorValue_t original = nullptr;
@@ -72,10 +76,10 @@ namespace Addictol
 			if (!handler)
 				return nullptr;
 
-			for (auto* form : handler->formArrays[std::to_underlying(RE::ENUM_FORM_ID::kNPC_)])
+			for (auto* npc : handler->GetFormArray<RE::TESNPC>())
 			{
-				if (form)
-					return form->As<RE::TESNPC>();
+				if (npc)
+					return npc;
 			}
 
 			return nullptr;
@@ -102,9 +106,14 @@ namespace Addictol
 		if (a_msg && a_msg->type != F4SE::MessagingInterface::kGameDataReady)
 			return true;
 
-		// TESNPC overrides GetActorValue on its ActorValueOwner sub-object, but there is no
-		// address library id for that vtable, so borrow it from a live NPC. Every instance
-		// shares it, one is enough.
+		auto* actorValues = RE::ActorValue::GetSingleton();
+		if (!actorValues || !actorValues->health || !actorValues->actionPoints)
+		{
+			Skip("actor value list is unavailable"sv);
+			return false;
+		}
+
+		// VTABLE::TESNPC[6] is REL::ID(235917), which resolves to the wrong address on AE, where the real vtable has no id.
 		auto* npc = npcHealthOverflowFixDetail::FindAnyNPC();
 		if (!npc)
 		{
@@ -112,17 +121,25 @@ namespace Addictol
 			return false;
 		}
 
-		const auto owner = reinterpret_cast<std::uintptr_t>(npc) + npcHealthOverflowFixDetail::kAVOwnerInTESNPC;
+		// Take the sub-object offset from the compiler instead of trusting the literal.
+		const auto owner = reinterpret_cast<std::uintptr_t>(static_cast<RE::ActorValueOwner*>(npc));
+		if (owner - reinterpret_cast<std::uintptr_t>(npc) != npcHealthOverflowFixDetail::kAVOwnerInTESNPC)
+		{
+			Skip("TESNPC ActorValueOwner sub-object is not at the expected offset"sv);
+			return false;
+		}
+
 		const auto vtable = *reinterpret_cast<std::uintptr_t*>(owner);
 		const auto target = *reinterpret_cast<std::uintptr_t*>(vtable + sizeof(void*)); // slot 1
 
-		const auto tail = RELEX::IsRuntimeOG() ? npcHealthOverflowFixDetail::kPrologueTailOG : npcHealthOverflowFixDetail::kPrologueTailNGAE;
-		if (!RELEX::Validate(target, npcHealthOverflowFixDetail::kPrologue) ||
-			!RELEX::Validate(target + npcHealthOverflowFixDetail::kPrologue.size(), tail))
+		if (!npcHealthOverflowFixDetail::ValidateGetActorValue(target))
 		{
-			REX::WARN("NPC Health Overflow Fix: unexpected bytes at TESNPC::GetActorValue, skipping to avoid corruption."sv);
+			Skip("unexpected bytes at TESNPC::GetActorValue"sv);
 			return false;
 		}
+
+		npcHealthOverflowFixDetail::gHealth = actorValues->health;
+		npcHealthOverflowFixDetail::gActionPoints = actorValues->actionPoints;
 
 		*((uintptr_t*)&npcHealthOverflowFixDetail::GetActorValue::original) =
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&npcHealthOverflowFixDetail::GetActorValue::thunk));
