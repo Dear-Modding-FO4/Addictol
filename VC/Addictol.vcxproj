@@ -61,6 +61,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleNPCHealthOverflowFix.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProcessIcon.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleNPCHealthOverflowFix.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProcessIcon.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h" />

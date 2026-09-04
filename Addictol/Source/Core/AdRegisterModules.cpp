@@ -89,6 +89,7 @@
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
 #include <Modules/AdModuleMenu.h>
+#include <Modules/AdModuleNPCHealthOverflowFix.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -180,6 +181,7 @@ static auto sModuleCraftingMenuFix					= std::make_shared<Addictol::ModuleCrafti
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
+static auto sModuleNPCHealthOverflowFix				= std::make_shared<Addictol::ModuleNPCHealthOverflowFix>();
 
 void AdRegisterPreloadModules()
 {
@@ -296,6 +298,7 @@ void AdRegisterModules()
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleCraftingMenuFix,				kGameDataReady);
+	modules.Register(sModuleNPCHealthOverflowFix,			kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);

@@ -265,6 +265,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMuzzleFlashLight.cpp">
       <Filter>Source\Modules\M</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleNPCHealthOverflowFix.cpp">
+      <Filter>Source\Modules\N</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePackageAllocateLocation.cpp">
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
@@ -637,6 +640,9 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMuzzleFlashLight.h">
       <Filter>Include\Modules\M</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleNPCHealthOverflowFix.h">
+      <Filter>Include\Modules\N</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePackageAllocateLocation.h">
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
@@ -840,6 +846,9 @@
     <Filter Include="Source\Modules\M">
       <UniqueIdentifier>{4bf4ef20-3f27-4726-8eed-29475563cbe1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Modules\N">
+      <UniqueIdentifier>{7a3c9d1e-5b24-4e8f-9c47-2d61e8a9b0f3}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Modules\P">
       <UniqueIdentifier>{ce084078-3a41-4d40-b54a-7b327199e685}</UniqueIdentifier>
     </Filter>
@@ -893,6 +902,9 @@
     </Filter>
     <Filter Include="Include\Modules\M">
       <UniqueIdentifier>{b99f2740-8b50-4811-953b-348fe15149f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\N">
+      <UniqueIdentifier>{b9e4f2a8-1c7d-4a63-8e52-93f0c5d2a481}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include\Modules\P">
       <UniqueIdentifier>{020887d5-4a7a-44fc-9980-b9786a7f611a}</UniqueIdentifier>
