@@ -165,7 +165,7 @@ namespace vmm_tests
 
 		runner.test("SimpleIni preserves the shipped facegen documentation", [] {
 			const std::filesystem::path source{
-				".Build/F4SE/Plugins/Addictol_FacegenExceptions.ini"
+				"data/F4SE/Plugins/Addictol_FacegenExceptions.ini"
 			};
 			const std::filesystem::path output{
 				".Build/Tests/facegen-exceptions-roundtrip.ini"

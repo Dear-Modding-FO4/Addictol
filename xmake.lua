@@ -4,6 +4,9 @@ includes("Depends/commonlibf4")
 -- set project constants
 local plugin_name = "Addictol"
 
+-- mod manager folder for xmake install, joined onto FO4_DEV_MODS
+local dev_mod_folder = "Addictol - Dev"
+
 -- output paths follow the project, not the working directory: a build invoked with a
 -- project root elsewhere must not write generated headers into this tree
 local function project_dir(relative)
@@ -315,6 +318,30 @@ target(plugin_name, function()
     set_objectdir(".LinkConf/xmake/Addictol")
     set_dependir(".LinkConf/xmake/Addictol/deps")
 
+    add_installfiles("data/F4SE/Plugins/(**)", { prefixdir = "F4SE/Plugins" })
+    add_installfiles("data/Scripts/(**)", { prefixdir = "Scripts" })
+
+    on_config(function(target)
+        target:add("installfiles", target:targetfile(), { prefixdir = "F4SE/Plugins" })
+        target:add("installfiles", target:symbolfile(), { prefixdir = "F4SE/Plugins" })
+
+        local mods_root = os.getenv("FO4_DEV_MODS")
+
+        if mods_root then
+            target:set("installdir", path.join(mods_root, dev_mod_folder))
+        end
+    end)
+
+    -- this target carries no commonlib plugin rule, so the mod payload is the whole install
+    on_install(function(target)
+        import("target.action.install")(target, {
+            binaries = false,
+            headers = false,
+            libraries = false,
+            packages = false
+        })
+    end)
+
     -- add dependencies
     add_deps("detours", dependency_interface)
     add_deps("commonlib-shared", dependency_interface)
@@ -443,24 +470,11 @@ target(plugin_name, function()
         { force = true }
     )
 
-    after_build(function(target)
-        local host = path.join(
-            os.projectdir(),
-            "..",
-            "DearModdingUI",
-            ".Build",
-            "F4SE",
-            "Plugins"
-        )
-        local dll = path.join(host, "DearModdingUI.dll")
-        if not os.isfile(dll) then
-            cprint("${yellow}warning: Local DearModdingUI deployment skipped because DearModdingUI.dll was not found. Build DearModdingUI first at %s.", host)
-            return
+    after_build(function()
+        for _, file in ipairs(os.files(project_dir("data/**"))) do
+            local destination = project_dir(path.join(".Build", path.relative(file, project_dir("data"))))
+            os.mkdir(path.directory(destination))
+            os.cp(file, destination)
         end
-        local runtime = path.join(target:targetdir(), "DearModdingUI")
-        os.cp(dll, target:targetdir())
-        os.cp(path.join(host, "DearModdingUI.toml"), target:targetdir())
-        os.rm(runtime)
-        os.cp(path.join(host, "DearModdingUI"), runtime)
     end)
 end)

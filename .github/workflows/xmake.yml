@@ -58,6 +58,6 @@ jobs:
         path: |
           .Build/F4SE/Plugins/Addictol.dll
           .Build/F4SE/Plugins/Addictol.pdb
-          .Build/F4SE/Plugins/DearModdingUI.dll
-          .Build/F4SE/Plugins/DearModdingUI.toml
-          .Build/F4SE/Plugins/DearModdingUI
+          .Build/F4SE/Plugins/Addictol.toml
+          .Build/F4SE/Plugins/Addictol_*.ini
+          .Build/Scripts

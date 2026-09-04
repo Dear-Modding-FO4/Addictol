@@ -32,7 +32,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 | **Fallout 4** | OG **1.10.163**, NG **1.10.984**, or AE **1.11.240**. One DLL supports all three. |
 | **[Fallout 4 Script Extender (F4SE)](https://f4se.silverlock.org/)** | Required for the matching game runtime. |
 | **[Address Library for F4SE](https://www.nexusmods.com/fallout4/mods/47327)** | Required for the matching game runtime. Addictol will refuse to load without it. |
-| **DearModdingUI** | The standalone menu host is included in Addictol release archives. Addictol continues without an in-game menu when the host is absent. |
+| **[DearModdingUI](https://github.com/Dear-Modding-FO4/DearModdingUI)** | The standalone menu host is a separate mod installed independently. Addictol continues without an in-game menu when the host is absent. |
 
 ---
 
@@ -62,9 +62,7 @@ Install with a mod manager, or extract the release archive into the Fallout 4 `D
 ```text
 Data\
 ├─ F4SE\Plugins\
-│  ├─ Addictol.dll, Addictol.toml, Addictol_*.ini
-│  ├─ DearModdingUI.dll, DearModdingUI.toml
-│  └─ DearModdingUI\{Fonts,Shaders}\...
+│  └─ Addictol.dll, Addictol.toml, Addictol_*.ini
 └─ Scripts\{Addictol,XCELL}.pex
 ```
 
@@ -127,8 +125,9 @@ cd Addictol
 MSBuild VC/Addictol.sln -p:Configuration=Release -p:Platform=x64
 ```
 
-Output: `.Build/F4SE/Plugins/Addictol.dll`. Packaging also copies the standalone DearModdingUI
-payload from a sibling `DearModdingUI/.Build/F4SE/Plugins` checkout; build that project first.
+Both build systems stage Addictol's DLL and authored payload under `.Build`. Addictol builds and ships
+only its own files; install DearModdingUI separately for the in-game menu. With `FO4_DEV_MODS` set,
+`xmake install Addictol` deploys to its `Addictol - Dev` mod folder.
 
 ---
 
@@ -142,14 +141,3 @@ address rules, and pull request requirements.
 ## License
 
 GPL-3.0 with a Modding Exception. See [LICENSE](LICENSE) and [EXCEPTIONS](EXCEPTIONS).
-
-The bundled standalone DearModdingUI shell, theme, font roles, cursor behavior, and blur are ported from
-[Fallout 4 Community Shaders](https://github.com/northaxosky/fallout4-community-shaders)
-(`src/Menu/FeatureListRenderer.*`, `Menu.*`, `ThemeManager.*`, `Fonts.*`, `CursorLoader.*`,
-`BackgroundBlur.*`, `src/Utils/UI.*`, and `ImGuiRecovery.h`), which is GPL-3.0. Its Gaussian blur
-credits Unrimp by Christian Ofenberg under MIT.
-
-The bundled Jost and Atkinson Hyperlegible fonts under
-`Data\F4SE\Plugins\DearModdingUI\Fonts` use the SIL Open Font License; their license text sits next
-to them, and Atkinson Hyperlegible's pinned official source is recorded in its provenance note. The
-bundled Phosphor icon font uses MIT; its license and upstream pin sit next to the font.

@@ -336,16 +336,11 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Target Name="CopyDearModdingUI" AfterTargets="Build">
-    <PropertyGroup>
-      <DearModdingUIOutput>$(ProjectDir)..\..\DearModdingUI\.Build\F4SE\Plugins</DearModdingUIOutput>
-    </PropertyGroup>
-    <Warning Condition="!Exists('$(DearModdingUIOutput)\DearModdingUI.dll')" Text="Local DearModdingUI deployment skipped because DearModdingUI.dll was not found. Build DearModdingUI first at $(DearModdingUIOutput)." />
-    <ItemGroup Condition="Exists('$(DearModdingUIOutput)\DearModdingUI.dll')">
-      <DearModdingUIRuntime Include="$(DearModdingUIOutput)\DearModdingUI\**\*" />
+  <Target Name="StagePayload" AfterTargets="Build">
+    <ItemGroup>
+      <AddictolPayload Include="$(ProjectDir)..\data\**\*" />
     </ItemGroup>
-    <Copy Condition="Exists('$(DearModdingUIOutput)\DearModdingUI.dll')" SourceFiles="$(DearModdingUIOutput)\DearModdingUI.dll;$(DearModdingUIOutput)\DearModdingUI.toml" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
-    <Copy Condition="Exists('$(DearModdingUIOutput)\DearModdingUI.dll')" SourceFiles="@(DearModdingUIRuntime)" DestinationFiles="@(DearModdingUIRuntime->'$(OutDir)DearModdingUI\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(AddictolPayload)" DestinationFiles="@(AddictolPayload->'$(ProjectDir)..\.Build\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

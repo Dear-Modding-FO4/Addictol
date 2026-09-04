@@ -29,7 +29,7 @@ namespace
 	[[nodiscard]] std::filesystem::path ShippedConfigPath()
 	{
 		return std::filesystem::path{ __FILE__ }.parent_path().parent_path() /
-			".Build/F4SE/Plugins/Addictol.toml";
+			"data/F4SE/Plugins/Addictol.toml";
 	}
 
 	[[nodiscard]] std::set<SettingKey> ReadShippedKeys()

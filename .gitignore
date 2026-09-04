@@ -49,13 +49,7 @@
 *.vcxproj.user
 /.LinkConf
 /.Lib
-/.Build/Tests
-
-# Copied from the DearModdingUI host repo at build time.
-/.Build/F4SE/Plugins/DearModdingUI/
-/.Build/F4SE/Plugins/DearModdingUI.dll
-/.Build/F4SE/Plugins/DearModdingUI.pdb
-/.Build/F4SE/Plugins/DearModdingUI.toml
+/.Build
 /Depends/vmm/.vs/vmm
 /Depends/vmm/x64/MemoryManager/Debug/microsoft/STL
 .vscode

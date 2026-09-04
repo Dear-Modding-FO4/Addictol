@@ -34,10 +34,18 @@ MSBuild VC/Addictol.sln -p:Configuration=Release -p:Platform=x64
 If you already cloned without submodules, run `git submodule update --init --recursive`. The
 `--recursive` matters: `commonlibf4` has its own nested submodule.
 
-The build produces `.Build/F4SE/Plugins/Addictol.dll`. To test it, put that DLL next to the tracked
-`Addictol.toml` and `.ini` files already in `.Build/F4SE/Plugins/`, then deploy that payload to your
-game or mod manager. Running the plugin also needs [F4SE](https://f4se.silverlock.org/) and the
-Address Library for your runtime.
+The build stages `.Build/F4SE/Plugins/Addictol.dll` with the authored configuration and Papyrus
+payload from `data/`. Deploy that payload to your game or mod manager. Running the plugin also needs
+[F4SE](https://f4se.silverlock.org/) and the Address Library for your runtime.
+
+Set `FO4_DEV_MODS` to your mod manager's mods directory and `xmake install Addictol` deploys that
+payload to an `Addictol - Dev` folder inside it. Without the variable the build still succeeds and
+deploys nothing. Name the target explicitly; a bare `xmake install` also selects the test and library
+targets.
+
+Staging only ever adds files. If you built before `data/` existed, delete `.Build` once: earlier
+revisions copied DearModdingUI into it, and `.Build` is now fully ignored, so leftovers no longer
+show up in `git status`.
 
 ### Things that will confuse you the first time
 
@@ -73,7 +81,8 @@ Addictol/Source/Modules/     one .cpp per feature module (90 total)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header
-.Build/F4SE/Plugins/         build output and tracked Addictol configuration
+data/                        authored mod payload
+.Build/                      generated build output and staged mod payload
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::`, `F4SE::`
@@ -87,8 +96,7 @@ The neutral cross-DLL UI contract, client lifecycle, and shared visual helpers c
 standalone DearModdingUI API repository through CommonLibF4's nested
 `lib/dearmoddingui-api` public dependency.
 
-Release packaging expects a sibling `DearModdingUI` checkout with a completed build. Both MSBuild
-and xmake copy its DLL, TOML, fonts, and shaders into Addictol's plugin output.
+Addictol packages only its own payload. DearModdingUI is a separate mod installed independently.
 
 ## Versioning
 
@@ -171,7 +179,7 @@ are the ones people forget.
 5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
 6. `Addictol/Include/Core/Settings/AdSettings.h` and the matching section source under
    `Addictol/Source/Core/Settings`, declaring the setting and its metadata.
-7. `.Build/F4SE/Plugins/Addictol.toml`, the key with the same user-facing description under the right
+7. `data/F4SE/Plugins/Addictol.toml`, the key with the same user-facing description under the right
    section. Registry tests enforce that the shipped file and registered keys match in both directions.
 
 ### Worked example
@@ -266,8 +274,8 @@ Use `kImmediate` only when writes affect already-installed runtime behavior; oth
 Prefix keys by type: `b` boolean, `n` signed, `u` unsigned, `f` float. The C++ variable name
 conventionally embeds the section too, as in `bFixesUnalignedLoad`.
 
-Give every key a one line, user facing comment in `Addictol.toml` that explains what it does in plain
-language rather than implementation terms:
+Give every key a one line, user facing comment in `data/F4SE/Plugins/Addictol.toml` that explains what
+it does in plain language rather than implementation terms:
 
 ```toml
 # The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
