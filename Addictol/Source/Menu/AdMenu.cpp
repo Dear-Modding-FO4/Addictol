@@ -61,14 +61,16 @@ namespace Addictol
 		[[nodiscard]] bool RegisterPage(const Menu::Panel& a_panel) noexcept
 		{
 			const auto page = s_client.AddPage(
-				a_panel.id,
-				a_panel.name,
-				a_panel.category,
+				{
+					.id = a_panel.id,
+					.displayName = a_panel.name,
+					.category = a_panel.category,
+					.summary = a_panel.summary,
+					.sortKey = a_panel.sortKey
+				},
 				[a_panel] {
 					DrawPanel(a_panel);
-				},
-				a_panel.summary,
-				a_panel.sortKey);
+				});
 			if (!page)
 			{
 				REX::WARN(
@@ -189,7 +191,7 @@ namespace Addictol
 		if (!RegisterPage({
 				"home",
 				"Home",
-				"Addictol",
+				nullptr,
 				"Overview, live module status, project links, and FAQ.",
 				0,
 				&DrawHomePage,
@@ -216,7 +218,7 @@ namespace Addictol
 		if (!RegisterPanel({
 				"modules",
 				"Modules",
-				"Addictol",
+				nullptr,
 				"Individual install, disable, skip, and failure outcomes for every module.",
 				200,
 				&DrawModulesPage,

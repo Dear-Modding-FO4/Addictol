@@ -23,7 +23,7 @@ namespace Addictol
 	std::optional<DMUI_StyleMetrics> MenuUi::StyleMetrics() noexcept
 	{
 		DMUI_StyleMetrics metrics{};
-		metrics.structSize = DMUI_STYLE_METRICS_1_0_SIZE;
+		metrics.structSize = DMUI_STYLE_METRICS_0_1_SIZE;
 		const auto result = ImGui::GetStyleMetrics(metrics);
 		if (result == DMUI_RESULT_OK)
 			return metrics;

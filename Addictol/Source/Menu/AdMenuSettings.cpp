@@ -368,13 +368,15 @@ namespace Addictol::Menu
 		try
 		{
 			const auto page = Client().AddSettingsPage(
-				"settings",
-				"Settings",
-				"Addictol",
-				MakeSettingsPage(),
-				"Configure Addictol fixes, performance, visuals, gameplay, "
-				"and diagnostics.",
-				100);
+				{
+					.id = "settings",
+					.displayName = "Settings",
+					.summary =
+						"Configure Addictol fixes, performance, visuals, gameplay, "
+						"and diagnostics.",
+					.sortKey = 100
+				},
+				MakeSettingsPage());
 			if (!page)
 			{
 				REX::WARN(
