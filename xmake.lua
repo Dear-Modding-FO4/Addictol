@@ -67,8 +67,8 @@ target("spdlog-vendored", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(project_dir(".LinkConf/xmake/spdlog"))
-    set_dependir(project_dir(".LinkConf/xmake/spdlog/deps"))
+    set_objectdir(".LinkConf/xmake/spdlog")
+    set_dependir(".LinkConf/xmake/spdlog/deps")
 
     -- add source files
     add_files(
@@ -118,8 +118,8 @@ target("commonlib-shared", function()
     set_runtimes("MT")
     set_symbols("debug")
     set_targetdir(xmake_library_dir)
-    set_objectdir(project_dir(".LinkConf/xmake/commonlib-shared"))
-    set_dependir(project_dir(".LinkConf/xmake/commonlib-shared/deps"))
+    set_objectdir(".LinkConf/xmake/commonlib-shared")
+    set_dependir(".LinkConf/xmake/commonlib-shared/deps")
 
     -- preserve the MSBuild spdlog build
     add_deps("spdlog-vendored", dependency_interface)
@@ -145,8 +145,8 @@ target("commonlibf4", function()
     set_runtimes("MT")
     set_symbols("debug")
     set_targetdir(xmake_library_dir)
-    set_objectdir(project_dir(".LinkConf/xmake/commonlibf4"))
-    set_dependir(project_dir(".LinkConf/xmake/commonlibf4/deps"))
+    set_objectdir(".LinkConf/xmake/commonlibf4")
+    set_dependir(".LinkConf/xmake/commonlibf4/deps")
     add_defines("NDEBUG")
 end)
 
@@ -159,8 +159,8 @@ target("detours", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(project_dir(".LinkConf/xmake/detours"))
-    set_dependir(project_dir(".LinkConf/xmake/detours/deps"))
+    set_objectdir(".LinkConf/xmake/detours")
+    set_dependir(".LinkConf/xmake/detours/deps")
 
     -- add source files
     add_files(
@@ -198,8 +198,8 @@ target("vmm", function()
     set_symbols("debug")
     set_exceptions("cxx")
     set_targetdir(xmake_library_dir)
-    set_objectdir(project_dir(".LinkConf/xmake/vmm"))
-    set_dependir(project_dir(".LinkConf/xmake/vmm/deps"))
+    set_objectdir(".LinkConf/xmake/vmm")
+    set_dependir(".LinkConf/xmake/vmm/deps")
 
     -- add source files
     add_files(
@@ -245,8 +245,8 @@ target("vmm-tests", function()
     set_optimize("fastest")
     set_runtimes("MT")
     set_targetdir(project_dir(".Build/Tests"))
-    set_objectdir(project_dir(".LinkConf/xmake/vmm-tests"))
-    set_dependir(project_dir(".LinkConf/xmake/vmm-tests/deps"))
+    set_objectdir(".LinkConf/xmake/vmm-tests")
+    set_dependir(".LinkConf/xmake/vmm-tests/deps")
 
     -- add dependencies
     add_deps("vmm", "spdlog-vendored")
@@ -312,8 +312,8 @@ target(plugin_name, function()
     set_runtimes("MT")
     set_warnings("all")
     set_targetdir(project_dir(".Build/F4SE/Plugins"))
-    set_objectdir(project_dir(".LinkConf/xmake/Addictol"))
-    set_dependir(project_dir(".LinkConf/xmake/Addictol/deps"))
+    set_objectdir(".LinkConf/xmake/Addictol")
+    set_dependir(".LinkConf/xmake/Addictol/deps")
 
     -- add dependencies
     add_deps("detours", dependency_interface)
