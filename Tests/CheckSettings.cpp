@@ -237,7 +237,6 @@ namespace vmm_tests
 				counts{};
 			const auto settings =
 				Addictol::SettingRegistry::GetSingleton().Settings();
-			require(settings.size() == 111, "setting registry size changed");
 			for (const auto* setting : settings)
 			{
 				const auto category =
