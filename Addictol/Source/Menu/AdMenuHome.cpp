@@ -14,47 +14,22 @@ namespace Addictol::Menu
 {
 	namespace
 	{
-		struct QuickLink
-		{
-			const char* label;
-			const char* url;
-			const char* tooltip;
-			bool enabled;
+		constexpr std::array kQuickLinks{
+			dmui::Link{
+				"Nexus Mods",
+				"https://www.nexusmods.com/fallout4/mods/84214" },
+			dmui::Link{
+				"GitHub",
+				"https://github.com/Dear-Modding-FO4/Addictol" }
 		};
 
-		constexpr std::array<QuickLink, 2> kQuickLinks{
-			QuickLink{
-				"Copy Nexus URL",
-				"https://www.nexusmods.com/fallout4/mods/84214",
-				"Copy the Addictol Nexus Mods URL to the clipboard.",
-				true },
-			QuickLink{
-				"Copy GitHub URL",
-				"https://github.com/Dear-Modding-FO4/Addictol",
-				"Copy the Addictol GitHub URL to the clipboard.",
-				true }
-		};
-
-		struct FaqEntry
-		{
-			const char* question;
-			const char* answer;
-			bool showToggleKey;
-		};
-
-		constexpr std::array<FaqEntry, 3> kFaqEntries{
-			FaqEntry{
+		constexpr std::array kFaqEntries{
+			dmui::FaqEntry{
 				"Which Fallout 4 runtimes are supported?",
-				"One Addictol DLL supports OG 1.10.163, NG 1.10.984, and AE 1.11.240.",
-				false },
-			FaqEntry{
+				"One Addictol DLL supports OG 1.10.163, NG 1.10.984, and AE 1.11.240." },
+			dmui::FaqEntry{
 				"Where is the configuration stored?",
-				"Defaults are documented in Data/F4SE/Plugins/Addictol.toml. Put overrides in AddictolCustom.toml beside it so updates do not overwrite them.",
-				false },
-			FaqEntry{
-				"How do I open the menu?",
-				nullptr,
-				true }
+				"Defaults are documented in Data/F4SE/Plugins/Addictol.toml. Put overrides in AddictolCustom.toml beside it so updates do not overwrite them." }
 		};
 
 		struct ModCheck
@@ -133,64 +108,14 @@ namespace Addictol::Menu
 		void DrawQuickLinksSection() noexcept
 		{
 			(void)Client().DrawSectionHeader("Quick Links");
-			const auto style = MenuUi::StyleMetrics();
-			if (!style)
-				return;
-			const auto spacing = style->itemSpacing.x;
-			const auto buttonWidth =
-				(ImGui::GetContentRegionAvail().x -
-					spacing * static_cast<float>(kQuickLinks.size() - 1)) /
-				static_cast<float>(kQuickLinks.size());
-
-			for (size_t index = 0; index < kQuickLinks.size(); ++index)
-			{
-				const auto& link = kQuickLinks[index];
-				ImGui::BeginDisabled(!link.enabled);
-				const auto clicked =
-					ImGui::Button(link.label, { buttonWidth, 0.0f });
-				ImGui::EndDisabled();
-				if (link.enabled && clicked)
-					ImGui::SetClipboardText(link.url);
-
-				const auto hoverFlags =
-					ImGuiHoveredFlags_DelayNormal |
-					(link.enabled ?
-							ImGuiHoveredFlags_None :
-							ImGuiHoveredFlags_AllowWhenDisabled);
-				if (ImGui::IsItemHovered(hoverFlags))
-				{
-					(void)ImGui::BeginTooltip();
-					ImGui::TextUnformatted(link.tooltip);
-					ImGui::EndTooltip();
-				}
-				if (index + 1 < kQuickLinks.size())
-					ImGui::SameLine();
-			}
+			(void)Client().DrawLinkRow("Addictol.QuickLinks", kQuickLinks);
 			ImGui::Spacing();
 		}
 
 		void DrawFaqSection() noexcept
 		{
 			(void)Client().DrawSectionHeader("FAQ");
-			for (const auto& entry : kFaqEntries)
-			{
-				if (!ImGui::CollapsingHeader(entry.question))
-					continue;
-				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
-				ImGui::Indent();
-				if (entry.showToggleKey)
-				{
-					ImGui::TextWrapped(
-						"Press the key configured in DearModdingUI.toml. "
-						"The default key is F11.");
-				}
-				else
-				{
-					ImGui::TextWrapped("%s", entry.answer);
-				}
-				ImGui::Unindent();
-				ImGui::Spacing();
-			}
+			(void)Client().DrawFaq("Addictol.Faq", kFaqEntries);
 		}
 
 		void DrawModdingStateSection() noexcept
