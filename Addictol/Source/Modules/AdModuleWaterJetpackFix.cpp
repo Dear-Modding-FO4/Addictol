@@ -64,6 +64,28 @@ namespace Addictol
 			}
 		}
 
+		// Stopping the effect is only half the story. Boosting into water leaves the
+		// controller itself wedged (stuck jetpack flag, stale fall data), which is what
+		// actually breaks the jump state. Vanilla recovers through JetpackStop, but
+		// modded jetpacks that don't run through JetpackEffect never got that cleanup,
+		// so reset the controller directly.
+		static void ResetControllerState(RE::Actor* a_actor) noexcept
+		{
+			if (!a_actor->currentProcess || !a_actor->currentProcess->middleHigh)
+				return;
+
+			auto* controller = a_actor->currentProcess->middleHigh->charController.get();
+			if (!controller)
+				return;
+
+			controller->flags &= ~0x2000;
+			controller->flags |= 0x400;
+			controller->fallTime = 0.0F;
+			controller->fallStartHeight = 0.0F;
+			controller->inAirPreMove = false;
+			controller->context.m_currentState = RE::hknpCharacterState::hknpCharacterStateType::kOnGround;
+		}
+
 		class CharacterStateChangeEventSink : public RE::BSTEventSink<RE::bhkCharacterStateChangeEvent>
 		{
 		public:
@@ -79,7 +101,10 @@ namespace Addictol
 				{
 					auto* player = RE::PlayerCharacter::GetSingleton();
 					if (player)
+					{
 						ResetJetpack(player);
+						ResetControllerState(player);
+					}
 				}
 
 				return RE::BSEventNotifyControl::kContinue;
