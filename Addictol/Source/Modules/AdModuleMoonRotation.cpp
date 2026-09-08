@@ -16,6 +16,18 @@ namespace Addictol
 			return false;
 		}
 
+		if (IsModDLLPresent("MoonDirectionFix.dll"))
+		{
+			Skip("standalone 'MoonDirectionFix.dll' is installed"sv);
+			return false;
+		}
+
+		if (IsModDLLPresent("MoonMotionFix.dll"))
+		{
+			Skip("standalone 'MoonMotionFix.dll' is installed"sv);
+			return false;
+		}
+
 		return true;
 	}
 
