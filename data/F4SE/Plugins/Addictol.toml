@@ -241,7 +241,7 @@ bPuddleCubemaps = false
 bStringPoolRelease = true
 
 # Fixes multiple AE Load Order issues when the Creations Platform is enabled.
-# Including Plugins getting disabled, moved around, and inability to toggle certain Plugins in-game.
+# Including Plugins getting disabled, moved around, inability to toggle certain Plugins in-game and a freeze on game load.
 bLoadOrder = true
 
 # Fixes a crash related to queued HUD messages on NG & AE.
@@ -275,6 +275,7 @@ bDuplicateAddonNodeIndex = true
 # Terminate process if out of entries!
 bReferenceHandleLimit = true
 
+
 [Telemetry]
 
 # Enables low-overhead sampled telemetry.
@@ -297,9 +298,6 @@ bFormLoadTiming = false
 
 
 [Additional]
-
-# DearModdingUI owns menu visibility and sMenuToggleKey; configure both in DearModdingUI.toml.
-# Existing Addictol bMenu and sMenuToggleKey values are not migrated.
 
 # Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen).
 bDbgFacegenOutput = false
