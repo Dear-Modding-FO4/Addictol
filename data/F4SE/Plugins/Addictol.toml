@@ -259,6 +259,9 @@ bAIProcess3DUpdateFlag = true
 # Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly.
 bNPCHealthOverflowFix = true
 
+# Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons.
+bFixesArmorPenetration = true
+
 
 [Warnings]
 

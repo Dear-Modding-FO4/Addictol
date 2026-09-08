@@ -90,6 +90,7 @@
 #include <Modules/AdModuleHighResLocalMaps.h>
 #include <Modules/AdModuleMenu.h>
 #include <Modules/AdModuleNPCHealthOverflowFix.h>
+#include <Modules/AdModuleArmorPenetration.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -182,6 +183,7 @@ static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAI
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
 static auto sModuleNPCHealthOverflowFix				= std::make_shared<Addictol::ModuleNPCHealthOverflowFix>();
+static auto sModuleArmorPenetration					= std::make_shared<Addictol::ModuleArmorPenetration>();
 
 void AdRegisterPreloadModules()
 {
@@ -299,6 +301,7 @@ void AdRegisterModules()
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleCraftingMenuFix,				kGameDataReady);
 	modules.Register(sModuleNPCHealthOverflowFix,			kGameDataReady);
+	modules.Register(sModuleArmorPenetration,				kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);
@@ -307,6 +310,5 @@ void AdRegisterModules()
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
-	// Menu
 	modules.Register(sModuleMenu,							kPostPostLoad);
 }

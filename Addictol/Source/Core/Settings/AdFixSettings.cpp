@@ -544,4 +544,13 @@ namespace Addictol
 		"Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesArmorPenetration{
+		"Fixes"sv,
+		"bFixesArmorPenetration"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }
