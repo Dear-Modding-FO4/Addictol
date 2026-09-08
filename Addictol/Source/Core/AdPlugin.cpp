@@ -101,7 +101,7 @@ namespace Addictol
 			"x-cell-ae.dll"sv, "x-cell-ng2.dll"sv, "x-cell-og.dll"sv,	// X-Cell
 			"Buffout4AE.dll"sv, "MiniBuffAE.dll"sv, "Buffout4.dll"sv,	// Buffout 4
 			"MentatsF4SE.dll"sv,										// Mentats
-			"Daytripper4"sv												// Daytripper 4
+			"Daytripper4.dll"sv											// Daytripper 4
 		};
 
 		// Check the Mods
@@ -119,7 +119,8 @@ namespace Addictol
 		{
 			std::string incompatibilityMessage = "Incompatible F4SE mods are installed, please disable Addictol or remove the following incompatible mods:\n\n";
 			incompatibilityMessage += incompatibleMods;
-			incompatibilityMessage += "\nCheck the mod page's description for more info, Addictol will now terminate itself.";
+			incompatibilityMessage += "\nThis compatibility check can be disabled in the config file, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
+			incompatibilityMessage += "\n\nCheck the mod page's description for more info, Addictol will now terminate itself.";
 
 			// CTD
 			REX::FAIL("\n\n{}"sv, incompatibilityMessage);
@@ -158,7 +159,8 @@ namespace Addictol
 							}
 						}
 
-						incompatibilityMessage += "\nCheck the mod page's description for more info, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
+						incompatibilityMessage += "\nThis compatibility check can be disabled in the config file, we cannot provide support if you choose to ignore this warning and you do so at your own risk.";
+						incompatibilityMessage += "\n\nCheck the mod page's description for more info, Addictol will now terminate itself.";
 
 						// CTD
 						REX::FAIL("\n\n{}"sv, incompatibilityMessage);
