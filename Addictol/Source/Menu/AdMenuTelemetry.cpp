@@ -2,7 +2,7 @@
 #include <Menu/AdMenu.h>
 #include <Telemetry/AdTelemetryHub.h>
 #include <Menu/AdMenuTelemetry.h>
-#include <Menu/AdMenuWidgets.h>
+#include <Menu/AdMenuFormatting.h>
 
 #include <DearModdingUI/ImGuiForward.h>
 
@@ -14,6 +14,7 @@ namespace Addictol
 	namespace
 	{
 		using namespace MenuUi;
+		using Menu::ReportPresentationResult;
 
 		struct TelemetryMenuCache
 		{
@@ -114,10 +115,9 @@ namespace Addictol
 
 		void DrawDisplay(const TelemetryValueDisplay& a_display) noexcept
 		{
-			if (a_display.valid)
-				MonoCell(a_display.Text());
-			else
-				Muted(a_display.Text());
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), a_display.Text(),
+				a_display.valid ? Menu::kBodyText : Menu::kMutedText));
 		}
 
 		void DrawMetricRow(
@@ -151,9 +151,10 @@ namespace Addictol
 			{
 				const auto delta = IntervalDelta(a_index, descriptor.key);
 				if (delta.valid)
-					MonoCell(Print("+%.0f", delta.value));
+					ReportPresentationResult(dmui::DrawStyledText(
+						Menu::Client(), Print("+%.0f", delta.value), Menu::kBodyText));
 				else
-					Muted("-"sv);
+					ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "-", Menu::kMutedText));
 			}
 		}
 
@@ -171,13 +172,13 @@ namespace Addictol
 			(void)ImGui::TableNextColumn();
 			if (valid)
 			{
-				MonoCell(Print(
+				ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
 					"%.2f fps",
 					s_cache.current.values[index].value * 1000.0 /
-						s_cache.current.intervalMs));
+						s_cache.current.intervalMs), Menu::kBodyText));
 			}
 			else
-				Muted("-"sv);
+				ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "-", Menu::kMutedText));
 			(void)ImGui::TableNextColumn();
 		}
 
@@ -208,7 +209,7 @@ namespace Addictol
 
 		void DrawOverviewMetrics() noexcept
 		{
-			Heading("Key metrics"sv);
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Key metrics", Menu::kHeadingText));
 			DrawMetricTable(
 				"TelemetryOverviewMetrics",
 				[](std::string_view a_key) noexcept {
@@ -224,7 +225,7 @@ namespace Addictol
 
 		void DrawMetricGroup(const TelemetryMetricGroup& a_group) noexcept
 		{
-			Heading(a_group.heading);
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), a_group.heading, Menu::kHeadingText));
 			DrawMetricTable(
 				a_group.prefix.data(),
 				[&a_group](std::string_view a_key) noexcept {
@@ -235,10 +236,11 @@ namespace Addictol
 
 		void DrawFrameHistory() noexcept
 		{
-			Heading("Frame time history"sv);
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Frame time history", Menu::kHeadingText));
 			if (!s_cache.frameTimeCount)
 			{
-				Muted("No valid frame-time samples are available."sv);
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), "No valid frame-time samples are available.", Menu::kMutedText));
 				return;
 			}
 			ImGui::PlotLines(
@@ -254,13 +256,15 @@ namespace Addictol
 
 		void DrawFrameRecords() noexcept
 		{
-			Heading("Recent frame records"sv);
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "Recent frame records", Menu::kHeadingText));
 			if (!s_cache.frameRecordCount)
 			{
-				Muted("No frame has crossed the recording threshold."sv);
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), "No frame has crossed the recording threshold.", Menu::kMutedText));
 				return;
 			}
-			const auto style = MenuUi::StyleMetrics();
+			const auto style = Menu::StyleMetrics();
 			if (!style)
 				return;
 			const auto tableHeight =
@@ -270,7 +274,7 @@ namespace Addictol
 			if (!ImGui::BeginTable(
 					"TelemetryFrameRecords",
 					2,
-					kTableFlags,
+					Menu::kDiagnosticTableFlags,
 					ImVec2(0.0f, tableHeight)))
 				return;
 			ImGui::TableSetupColumn("QPC time", ImGuiTableColumnFlags_WidthStretch);
@@ -284,17 +288,20 @@ namespace Addictol
 					static_cast<double>(record.qpc) / static_cast<double>(frequency) : 0.0;
 				ImGui::TableNextRow();
 				(void)ImGui::TableNextColumn();
-				MonoCell(Print("%.3f s", seconds));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), Print("%.3f s", seconds), Menu::kBodyText));
 				(void)ImGui::TableNextColumn();
-				MonoCell(FormatMs(static_cast<double>(record.durationUs) / 1000.0));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), FormatMs(static_cast<double>(record.durationUs) / 1000.0),
+					Menu::kBodyText));
 			}
 			ImGui::EndTable();
 		}
 
 		void DrawSeries() noexcept
 		{
-			Heading("Zlib series"sv);
-			if (!ImGui::BeginTable("TelemetrySeries", 5, kTableFlags, ImVec2(0.0f, 260.0f)))
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Zlib series", Menu::kHeadingText));
+			if (!ImGui::BeginTable("TelemetrySeries", 5, Menu::kDiagnosticTableFlags, ImVec2(0.0f, 260.0f)))
 				return;
 			ImGui::TableSetupColumn("Series", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("Bucket", ImGuiTableColumnFlags_WidthStretch);
@@ -314,11 +321,14 @@ namespace Addictol
 				ImGui::TextUnformatted(
 					sample.bucket.data(), sample.bucket.data() + sample.bucket.size());
 				(void)ImGui::TableNextColumn();
-				MonoCell(FormatCount(sample.calls));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), FormatCount(sample.calls), Menu::kBodyText));
 				(void)ImGui::TableNextColumn();
-				MonoCell(FormatCount(sample.ticks));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), FormatCount(sample.ticks), Menu::kBodyText));
 				(void)ImGui::TableNextColumn();
-				MonoCell(FormatBytes(sample.bytes));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Menu::Client(), FormatBytes(sample.bytes), Menu::kBodyText));
 			}
 			ImGui::EndTable();
 		}
@@ -340,10 +350,10 @@ namespace Addictol
 		void DrawPanelFooter() noexcept
 		{
 			ImGui::Separator();
-			Muted(Print(
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
 				"refresh %.3f ms, cadence %u ms",
 				QpcToMilliseconds(s_cache.refreshTicks, Addictol::GetQpcFrequency()),
-				Menu::RefreshMs()));
+				Menu::RefreshMs()), Menu::kMutedText));
 		}
 
 	}
@@ -353,12 +363,14 @@ namespace Addictol
 		const auto& panel = *static_cast<const TelemetryPanelDefinition*>(a_context);
 		RefreshCache();
 
-		Title(panel.name);
-		Muted(panel.description);
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), panel.name, { .fontRole = DMUI_FONT_ROLE_TITLE }));
+		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), panel.description, Menu::kMutedText));
 		ImGui::Separator();
 		if (!s_cache.hasData)
 		{
-			Muted("Waiting for the first sample."sv);
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "Waiting for the first sample.", Menu::kMutedText));
 			DrawPanelFooter();
 			return;
 		}

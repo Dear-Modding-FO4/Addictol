@@ -373,7 +373,7 @@
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp">
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuFormatting.cpp">
       <Filter>Source\Menu</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuLogControl.cpp">
@@ -757,7 +757,7 @@
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Menu\AdMenuWidgets.h">
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuFormatting.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuLogControl.h">

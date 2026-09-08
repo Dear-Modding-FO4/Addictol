@@ -36,7 +36,7 @@
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuModules.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuSettings.cpp" />
-    <ClCompile Include="..\Addictol\Source\Menu\AdMenuWidgets.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuFormatting.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuLogControl.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuTelemetry.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdPlugin.cpp" />
@@ -163,7 +163,7 @@
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h" />
-    <ClInclude Include="..\Addictol\Include\Menu\AdMenuWidgets.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuFormatting.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuLogControl.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInflate.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdGameUtils.h" />

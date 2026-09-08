@@ -3,7 +3,7 @@
 #include <Core/Settings/AdSettings.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <Menu/AdMenu.h>
-#include <Menu/AdMenuWidgets.h>
+#include <Menu/AdMenuFormatting.h>
 #include <Modules/AdFacegenExceptions.h>
 
 #include <DearModdingUI/ImGuiForward.h>
@@ -56,16 +56,18 @@ namespace Addictol::Menu
 		{
 			const auto label = StatusLabel(a_status);
 			if (a_status == FacegenExceptionStatus::kResolved)
-				MenuUi::MonoCell(label);
+				ReportPresentationResult(dmui::DrawStyledText(Client(), label, kBodyText));
 			else if (a_status == FacegenExceptionStatus::kEmptyValue)
-				MenuUi::Warn(label);
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), label, { .tone = dmui::TextTone::kWarning }));
 			else
-				MenuUi::Error(label);
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), label, { .tone = dmui::TextTone::kError }));
 		}
 
 		[[nodiscard]] float FormIDColumnWidth(std::string_view a_heading) noexcept
 		{
-			const auto style = MenuUi::StyleMetrics();
+			const auto style = StyleMetrics();
 			if (!style)
 				return 0.0f;
 			const auto valueWidth = ImGui::CalcTextSize("0x00000000").x;
@@ -79,7 +81,7 @@ namespace Addictol::Menu
 
 		[[nodiscard]] float ActionsColumnWidth() noexcept
 		{
-			const auto style = MenuUi::StyleMetrics();
+			const auto style = StyleMetrics();
 			if (!style)
 				return 0.0f;
 			return ImGui::CalcTextSize("Edit").x +
@@ -157,7 +159,8 @@ namespace Addictol::Menu
 
 			const auto adding =
 				*g_pageState.editingIndex == g_pageState.entries.size();
-			MenuUi::Heading(adding ? "Add exception"sv : "Edit exception"sv);
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), adding ? "Add exception"sv : "Edit exception"sv, kHeadingText));
 
 			std::array<char, 256> keyBuffer{};
 			std::array<char, 64> formIDBuffer{};
@@ -215,13 +218,20 @@ namespace Addictol::Menu
 				ignoredIndex);
 			if (validation.valid)
 			{
-				MenuUi::LabeledState("Validation:", true, "Valid");
-				MenuUi::LabeledValue(
-					"Resolved runtime FormID:",
-					MenuUi::Print("0x%08X", *validation.resolvedFormID));
+				ReportPresentationResult(dmui::DrawLabeledValue(Client(), "Validation:", "Valid", {
+					.valueStyle = {
+						.fontRole = DMUI_FONT_ROLE_HEADING,
+						.tone = dmui::TextTone::kSuccess
+					}
+				}));
+				ReportPresentationResult(dmui::DrawLabeledValue(
+					Client(), "Resolved runtime FormID:",
+					MenuUi::Print("0x%08X", *validation.resolvedFormID),
+					{ .valueStyle = kBodyText }));
 			}
 			else
-				MenuUi::Error(validation.message);
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), validation.message, { .tone = dmui::TextTone::kError }));
 
 			ImGui::BeginDisabled(!validation.valid);
 			if (ImGui::Button(adding ? "Add entry" : "Update entry"))
@@ -308,11 +318,15 @@ namespace Addictol::Menu
 			ImGui::EndDisabled();
 
 			if (g_pageState.dirty)
-				MenuUi::Warn("Unsaved changes. Save or discard before reloading from file.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "Unsaved changes. Save or discard before reloading from file.",
+					{ .tone = dmui::TextTone::kWarning }));
 			if (!g_pageState.operationError.empty())
-				MenuUi::Error(g_pageState.operationError);
-			MenuUi::Muted(
-				"Saved changes affect NPCs processed afterward. NPCs already using preprocessed head data must be reloaded.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), g_pageState.operationError, { .tone = dmui::TextTone::kError }));
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), "Saved changes affect NPCs processed afterward. NPCs already using preprocessed head data must be reloaded.",
+				kMutedText));
 		}
 
 		void DrawOverview(
@@ -329,41 +343,48 @@ namespace Addictol::Menu
 			const auto effectiveCount =
 				a_facegenEnabled ? a_snapshot.effectiveExceptionCount : 0;
 
-			MenuUi::Heading("Status");
-			MenuUi::LabeledState(
-				"Facegen module:",
-				a_facegenEnabled,
-				a_facegenEnabled ? "Enabled"sv : "Disabled"sv);
-			MenuUi::LabeledValue(
-				"Exceptions in effect:",
-				MenuUi::FormatCount(effectiveCount));
-			MenuUi::LabeledValue(
-				"Configured coverage:",
+			ReportPresentationResult(dmui::DrawStyledText(Client(), "Status", kHeadingText));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Client(), "Facegen module:", a_facegenEnabled ? "Enabled"sv : "Disabled"sv, {
+					.valueStyle = {
+						.fontRole = DMUI_FONT_ROLE_HEADING,
+						.tone = a_facegenEnabled ? dmui::TextTone::kSuccess : dmui::TextTone::kWarning
+					}
+				}));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Client(), "Exceptions in effect:", MenuUi::FormatCount(effectiveCount),
+				{ .valueStyle = kBodyText }));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Client(), "Configured coverage:",
 				MenuUi::Print(
 					"%llu built-in, %llu resolved user-defined",
 					static_cast<unsigned long long>(kFacegenPrimaryExceptions.size()),
-					static_cast<unsigned long long>(resolvedCount)));
-			MenuUi::LabeledValue(
-				"Debug output ([Additional] bDbgFacegenOutput):",
-				bAdditionalDbgFacegenOutput.GetValue() ? "Enabled"sv : "Disabled"sv);
+					static_cast<unsigned long long>(resolvedCount)),
+				{ .valueStyle = kBodyText }));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Client(), "Debug output ([Additional] bDbgFacegenOutput):",
+				bAdditionalDbgFacegenOutput.GetValue() ? "Enabled"sv : "Disabled"sv,
+				{ .valueStyle = kBodyText }));
 
 			if (!a_facegenEnabled)
 			{
-				MenuUi::Warn(
-					"Exceptions are inactive because [Patches] bFacegen is disabled. Enable it and restart the game.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "Exceptions are inactive because [Patches] bFacegen is disabled. Enable it and restart the game.",
+					{ .tone = dmui::TextTone::kWarning }));
 			}
 			if (failureCount != 0)
 			{
-				MenuUi::Error(MenuUi::Print(
+				ReportPresentationResult(dmui::DrawStyledText(Client(), MenuUi::Print(
 					"%llu user-defined entr%s failed and %s not in effect.",
 					static_cast<unsigned long long>(failureCount),
 					failureCount == 1 ? "y" : "ies",
-					failureCount == 1 ? "is" : "are"));
+					failureCount == 1 ? "is" : "are"), { .tone = dmui::TextTone::kError }));
 			}
 			else if (!bAdditionalDbgFacegenOutput.GetValue())
 			{
-				MenuUi::Muted(
-					"Enable bDbgFacegenOutput for NPC facegen presence messages in the console and log.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "Enable bDbgFacegenOutput for NPC facegen presence messages in the console and log.",
+					kMutedText));
 			}
 		}
 
@@ -371,40 +392,52 @@ namespace Addictol::Menu
 			const FacegenExceptionSnapshot& a_snapshot,
 			bool a_facegenEnabled) noexcept
 		{
-			MenuUi::Heading("Configuration");
-			MenuUi::LabeledValue("File:", kFacegenExceptionsPath);
+			ReportPresentationResult(dmui::DrawStyledText(Client(), "Configuration", kHeadingText));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Client(), "File:", kFacegenExceptionsPath, { .valueStyle = kBodyText }));
 			if (!a_snapshot.readAttempted)
 			{
-				MenuUi::LabeledValue(
-					"INI state:",
-					a_facegenEnabled ? "Not read yet"sv : "Not read while module is disabled"sv);
-				MenuUi::LabeledValue("Section [FacegenException]:", "Not checked");
+				ReportPresentationResult(dmui::DrawLabeledValue(
+					Client(), "INI state:",
+					a_facegenEnabled ? "Not read yet"sv : "Not read while module is disabled"sv,
+					{ .valueStyle = kBodyText }));
+				ReportPresentationResult(dmui::DrawLabeledValue(
+					Client(), "Section [FacegenException]:", "Not checked", { .valueStyle = kBodyText }));
 				return;
 			}
 
-			MenuUi::LabeledState(
-				"INI state:",
-				a_snapshot.iniFound,
-				a_snapshot.iniFound ? "Found"sv : "Missing"sv);
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Client(), "INI state:", a_snapshot.iniFound ? "Found"sv : "Missing"sv, {
+					.valueStyle = {
+						.fontRole = DMUI_FONT_ROLE_HEADING,
+						.tone = a_snapshot.iniFound ? dmui::TextTone::kSuccess : dmui::TextTone::kWarning
+					}
+				}));
 			if (a_snapshot.iniFound)
 			{
-				MenuUi::LabeledState(
-					"Section [FacegenException]:",
-					a_snapshot.sectionFound,
-					a_snapshot.sectionFound ? "Found"sv : "Missing"sv);
+				ReportPresentationResult(dmui::DrawLabeledValue(
+					Client(), "Section [FacegenException]:",
+					a_snapshot.sectionFound ? "Found"sv : "Missing"sv, {
+						.valueStyle = {
+							.fontRole = DMUI_FONT_ROLE_HEADING,
+							.tone = a_snapshot.sectionFound ? dmui::TextTone::kSuccess : dmui::TextTone::kWarning
+						}
+					}));
 			}
 			else
-				MenuUi::LabeledValue("Section [FacegenException]:", "Not checked");
+				ReportPresentationResult(dmui::DrawLabeledValue(
+					Client(), "Section [FacegenException]:", "Not checked", { .valueStyle = kBodyText }));
 		}
 
 		void DrawPrimaryExceptions() noexcept
 		{
-			MenuUi::Heading("Built-in primary exceptions");
-			MenuUi::Muted("These six exceptions are configured without user INI entries.");
+			ReportPresentationResult(dmui::DrawStyledText(Client(), "Built-in primary exceptions", kHeadingText));
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), "These six exceptions are configured without user INI entries.", kMutedText));
 			if (!ImGui::BeginTable(
 					"##facegen_primary_exceptions",
 					2,
-					MenuUi::kTableFlags & ~ImGuiTableFlags_ScrollY))
+					kDiagnosticTableFlags & ~ImGuiTableFlags_ScrollY))
 				return;
 
 			ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, 3.0f);
@@ -417,9 +450,10 @@ namespace Addictol::Menu
 			{
 				ImGui::TableNextRow();
 				(void)ImGui::TableSetColumnIndex(0);
-				MenuUi::MonoCell(exception.name);
+				ReportPresentationResult(dmui::DrawStyledText(Client(), exception.name, kBodyText));
 				(void)ImGui::TableSetColumnIndex(1);
-				MenuUi::MonoCell(MenuUi::Print("0x%08X", exception.formID));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), MenuUi::Print("0x%08X", exception.formID), kBodyText));
 			}
 			ImGui::EndTable();
 		}
@@ -428,29 +462,36 @@ namespace Addictol::Menu
 		{
 			if (!a_snapshot.readAttempted)
 			{
-				MenuUi::Muted("User-defined exceptions will appear after the module reads the INI.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "User-defined exceptions will appear after the module reads the INI.", kMutedText));
 			}
 			else if (!a_snapshot.iniFound)
 			{
-				MenuUi::Error("The exceptions INI was not found.");
-				MenuUi::Muted(
-					"Create the file at the path above and add a [FacegenException] section.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "The exceptions INI was not found.", { .tone = dmui::TextTone::kError }));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "Create the file at the path above and add a [FacegenException] section.", kMutedText));
 			}
 			else if (!a_snapshot.sectionFound)
 			{
-				MenuUi::Error("The INI does not contain a [FacegenException] section.");
-				MenuUi::Muted("Add the section, then use UniqueName=FormID or UniqueName=FormID:PluginName.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "The INI does not contain a [FacegenException] section.",
+					{ .tone = dmui::TextTone::kError }));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "Add the section, then use UniqueName=FormID or UniqueName=FormID:PluginName.", kMutedText));
 			}
 			else
 			{
-				MenuUi::Muted("No user-defined facegen exceptions are configured.");
-				MenuUi::Muted("Use UniqueName=FormID or UniqueName=FormID:PluginName.");
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "No user-defined facegen exceptions are configured.", kMutedText));
+				ReportPresentationResult(dmui::DrawStyledText(
+					Client(), "Use UniqueName=FormID or UniqueName=FormID:PluginName.", kMutedText));
 			}
 		}
 
 		void DrawUserExceptions(const FacegenExceptionSnapshot& a_snapshot)
 		{
-			MenuUi::Heading("User-defined exceptions");
+			ReportPresentationResult(dmui::DrawStyledText(Client(), "User-defined exceptions", kHeadingText));
 			DrawEditActions(a_snapshot);
 			DrawEditor();
 			if (g_pageState.entries.empty())
@@ -466,7 +507,7 @@ namespace Addictol::Menu
 			if (!ImGui::BeginTable(
 					"##facegen_user_exceptions",
 					6,
-					MenuUi::kTableFlags,
+					kDiagnosticTableFlags,
 					{ 0.0f, height }))
 				return;
 
@@ -493,21 +534,21 @@ namespace Addictol::Menu
 				ImGui::PushID(static_cast<int>(index));
 				ImGui::TableNextRow();
 				(void)ImGui::TableSetColumnIndex(0);
-				MenuUi::MonoCell(entry.key);
+				ReportPresentationResult(dmui::DrawStyledText(Client(), entry.key, kBodyText));
 				(void)ImGui::TableSetColumnIndex(1);
-				MenuUi::MonoCell(entry.formID);
+				ReportPresentationResult(dmui::DrawStyledText(Client(), entry.formID, kBodyText));
 				(void)ImGui::TableSetColumnIndex(2);
 				if (entry.pluginName && !entry.pluginName->empty())
-					MenuUi::MonoCell(*entry.pluginName);
+					ReportPresentationResult(dmui::DrawStyledText(Client(), *entry.pluginName, kBodyText));
 				else
-					MenuUi::Muted("-");
+					ReportPresentationResult(dmui::DrawStyledText(Client(), "-", kMutedText));
 				(void)ImGui::TableSetColumnIndex(3);
 				if (validation.resolvedFormID)
-					MenuUi::MonoCell(MenuUi::Print(
+					ReportPresentationResult(dmui::DrawStyledText(Client(), MenuUi::Print(
 						"0x%08X",
-						*validation.resolvedFormID));
+						*validation.resolvedFormID), kBodyText));
 				else
-					MenuUi::Muted("-");
+					ReportPresentationResult(dmui::DrawStyledText(Client(), "-", kMutedText));
 				(void)ImGui::TableSetColumnIndex(4);
 				DrawStatus(validation.status);
 				(void)ImGui::TableSetColumnIndex(5);

@@ -1,47 +1,14 @@
 #pragma once
 
 #include <Core/AdUtils.h>
-#include <Menu/AdMenu.h>
 #include <Menu/AdMenuTargets.h>
-
-#include <DearModdingUI/ImGuiForward.h>
 
 #include <cstdint>
 #include <cstdio>
-#include <optional>
 #include <string_view>
 
 namespace Addictol::MenuUi
 {
-	inline constexpr ImGuiTableFlags kSortableTableFlags =
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable | ImGuiTableFlags_RowBg |
-		ImGuiTableFlags_BordersInner | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_ScrollY;
-	inline constexpr ImGuiTableFlags kTableFlags =
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg |
-		ImGuiTableFlags_BordersInner | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_ScrollY;
-
-	struct ScopedFont
-	{
-		explicit ScopedFont(DMUI_FontRole a_role) noexcept;
-
-		ScopedFont(const ScopedFont&) = delete;
-		ScopedFont& operator=(const ScopedFont&) = delete;
-
-	private:
-		dmui::FontGuard m_guard;
-	};
-
-	void Heading(std::string_view a_text) noexcept;
-	void Title(std::string_view a_text) noexcept;
-	void Mono(std::string_view a_text) noexcept;
-	void Muted(std::string_view a_text) noexcept;
-	void Warn(std::string_view a_text) noexcept;
-	void Error(std::string_view a_text) noexcept;
-	void LabeledValue(std::string_view a_label, std::string_view a_value) noexcept;
-	void LabeledState(std::string_view a_label, bool a_ok, std::string_view a_value) noexcept;
-	void MonoCell(std::string_view a_text) noexcept;
-	[[nodiscard]] std::optional<DMUI_StyleMetrics> StyleMetrics() noexcept;
-
 	inline constexpr size_t kFormatCapacity{ 96 };
 
 	// rotate: several values live per ImGui call

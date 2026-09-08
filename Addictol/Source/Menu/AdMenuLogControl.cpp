@@ -2,7 +2,7 @@
 #include <Core/AdUtils.h>
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuLogControl.h>
-#include <Menu/AdMenuWidgets.h>
+#include <Menu/AdMenuFormatting.h>
 
 #include <Windows.h>
 
@@ -11,6 +11,7 @@ namespace Addictol
 	namespace
 	{
 		using namespace MenuUi;
+		using Menu::ReportPresentationResult;
 
 		struct LogControlCache
 		{
@@ -52,31 +53,23 @@ namespace Addictol
 			LogControl::Level& a_current,
 			void (*a_setter)(LogControl::Level) noexcept) noexcept
 		{
-			auto preview = "unknown"sv;
-			for (const auto level : kMenuLogLevels)
-			{
-				if (level == a_current)
+			static const auto choices = [] {
+				std::array<dmui::ChoiceOption<LogControl::Level>, kMenuLogLevels.size()> result;
+				for (size_t index = 0; index < kMenuLogLevels.size(); ++index)
 				{
-					preview = LogControl::LevelName(level);
-					break;
+					const auto level = kMenuLogLevels[index];
+					const std::string name{ LogControl::LevelName(level) };
+					result[index] = { level, name, name };
 				}
-			}
-			if (!ImGui::BeginCombo(a_label, preview.data()))
-				return;
-
-			for (const auto level : kMenuLogLevels)
+				return result;
+			}();
+			const auto selected = dmui::DrawChoice<LogControl::Level>(
+				a_label, a_current, choices, "unknown", a_label);
+			if (selected.changed)
 			{
-				const auto name = LogControl::LevelName(level);
-				const auto selected = level == a_current;
-				if (ImGui::Selectable(name.data(), selected))
-				{
-					a_setter(level);
-					a_current = level;
-				}
-				if (selected)
-					ImGui::SetItemDefaultFocus();
+				a_setter(*selected.selected);
+				a_current = *selected.selected;
 			}
-			ImGui::EndCombo();
 		}
 	}
 
@@ -84,27 +77,41 @@ namespace Addictol
 	{
 		Refresh();
 
-		Title("Log control"sv);
-		Muted("Overrides apply to this session only; they reset when the game exits."sv);
-		Muted("[Additional] sLogLevel and sLogFlushLevel are the persistent TOML controls."sv);
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), "Log control", { .fontRole = DMUI_FONT_ROLE_TITLE }));
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), "Overrides apply to this session only; they reset when the game exits.",
+			Menu::kMutedText));
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), "[Additional] sLogLevel and sLogFlushLevel are the persistent TOML controls.",
+			Menu::kMutedText));
 		ImGui::Separator();
 
-		Heading("Levels"sv);
-		Muted("Record level decides which lines are kept at all."sv);
+		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Levels", Menu::kHeadingText));
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), "Record level decides which lines are kept at all.", Menu::kMutedText));
 		DrawLevelCombo("Record level", s_cache.level, &LogControl::SetLevel);
-		Muted("Flush level forces a synchronous disk write at that level or higher."sv);
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), "Flush level forces a synchronous disk write at that level or higher.",
+			Menu::kMutedText));
 		DrawLevelCombo("Flush level", s_cache.flushLevel, &LogControl::SetFlushLevel);
 
 		ImGui::Spacing();
-		Heading("Output"sv);
-		LabeledValue("Recent output"sv, FormatLinesInLastMinute(s_cache.stats.linesPerMinute));
-		LabeledValue("Lines written (session)"sv, FormatCount(s_cache.stats.written));
-		LabeledValue("Flushes (session)"sv, FormatCount(s_cache.stats.flushed));
+		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Output", Menu::kHeadingText));
+		ReportPresentationResult(dmui::DrawLabeledValue(
+			Menu::Client(), "Recent output", FormatLinesInLastMinute(s_cache.stats.linesPerMinute),
+			{ .valueStyle = Menu::kBodyText }));
+		ReportPresentationResult(dmui::DrawLabeledValue(
+			Menu::Client(), "Lines written (session)", FormatCount(s_cache.stats.written),
+			{ .valueStyle = Menu::kBodyText }));
+		ReportPresentationResult(dmui::DrawLabeledValue(
+			Menu::Client(), "Flushes (session)", FormatCount(s_cache.stats.flushed),
+			{ .valueStyle = Menu::kBodyText }));
 
 		ImGui::Separator();
-		Muted(Print(
+		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
 			"refresh %.3f ms, cadence %u ms",
 			QpcToMilliseconds(s_cache.refreshTicks, GetQpcFrequency()),
-			Menu::RefreshMs()));
+			Menu::RefreshMs()), Menu::kMutedText));
 	}
 }

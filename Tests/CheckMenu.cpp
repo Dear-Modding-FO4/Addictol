@@ -49,6 +49,26 @@ namespace vmm_tests
 
 	void run_menu_checks(Runner& runner)
 	{
+		runner.test("shared presentation styles preserve menu typography", [] {
+			require(
+				kHeadingText.fontRole == DMUI_FONT_ROLE_HEADING &&
+					kHeadingText.tone == dmui::TextTone::kAccent,
+				"section text lost its heading font or accent tone");
+			require(
+				kBodyText.fontRole == DMUI_FONT_ROLE_BODY &&
+					kBodyText.tone == dmui::TextTone::kInherit,
+				"diagnostic values no longer use ordinary body text");
+			require(
+				kMutedText.fontRole == DMUI_FONT_ROLE_SUBTEXT &&
+					kMutedText.tone == dmui::TextTone::kMuted &&
+					!kMutedText.wrapped,
+				"muted descriptions changed typography or wrapping");
+			require(
+				(kDiagnosticTableFlags & ImGuiTableFlags_Sortable) == 0 &&
+					(kDiagnosticTableFlags & ImGuiTableFlags_ScrollY) != 0,
+				"diagnostic tables acquired sorting or lost scrolling");
+		});
+
 		runner.test("menu categories place General before Diagnostics", [] {
 			require(
 				std::string_view{ kGeneralCategory.id } == "general" &&

@@ -2,7 +2,6 @@
 
 #include <Core/AdPlugin.h>
 #include <Menu/AdMenu.h>
-#include <Menu/AdMenuWidgets.h>
 
 #include <DearModdingUI/ImGuiForward.h>
 
@@ -53,12 +52,12 @@ namespace Addictol::Menu
 		void DrawWelcomeSection() noexcept
 		{
 			{
-				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_TITLE };
+				const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_TITLE };
 				ImGui::TextUnformatted("Welcome to Addictol");
 			}
 			ImGui::Spacing();
 			{
-				const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
+				const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
 				ImGui::TextWrapped(
 					"Addictol combines engine fixes, crash fixes, and performance patches "
 					"for Fallout 4 in a single F4SE plugin. Use the pages on the left to "
@@ -128,7 +127,7 @@ namespace Addictol::Menu
 			(void)Client().DrawSectionHeader(
 				"On the state of F4SE mods",
 				DearModdingUI::PhosphorGlyph::kShieldCheck);
-			const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
+			const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
 			ImGui::TextWrapped(
 				"CommonLibF4 is GPL-3.0. If a plugin links it and ships without "
 				"source, that is a license violation. Not a style disagreement, "

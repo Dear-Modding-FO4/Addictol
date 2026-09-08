@@ -115,6 +115,30 @@ namespace Addictol
 		return menuDetail::s_themeColors;
 	}
 
+	void Menu::ReportPresentationResult(bool a_succeeded) noexcept
+	{
+		if (a_succeeded)
+			return;
+		const auto result = Client().LastResult();
+		static std::atomic<uint32_t> reported{ DMUI_RESULT_OK };
+		if (reported.exchange(result, std::memory_order_relaxed) != result)
+		{
+			REX::ERROR(
+				"Menu: DearModdingUI presentation failed, result {}."sv,
+				DMUI_ResultToString(result));
+			ReportStatus(
+				DMUI_STATUS_SEVERITY_ERROR,
+				"Menu presentation failed. See Addictol.log for details.");
+		}
+	}
+
+	std::optional<DMUI_StyleMetrics> Menu::StyleMetrics() noexcept
+	{
+		auto metrics = Client().GetStyleMetrics();
+		ReportPresentationResult(metrics.has_value());
+		return metrics;
+	}
+
 	void Menu::ReportStatus(
 		DMUI_StatusSeverity a_severity,
 		const char* a_message) noexcept

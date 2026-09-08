@@ -101,6 +101,14 @@ The client forwards drawing to that host and compiles no Dear ImGui sources. Use
 matching the pinned API headers: pre-release API changes may retain the same version number.
 Register categories before pages, reference their stable IDs, and keep external-link actions host-owned.
 
+Use the shared `dmui::DrawStyledText`, `DrawLabeledValue`, `FontGuard`, and keyed
+`DrawChoice` helpers for menu presentation. `Menu::ReportPresentationResult`
+reports failed shared drawing calls without duplicating their styling or layout.
+Addictol retains its page-specific text styles and table flags, while
+`AdMenuFormatting` contains only data formatting. Diagnostic values use the Body
+font; they do not request a separate monospace font. Logging, telemetry, facegen
+validation, and persistence remain Addictol-owned.
+
 ## Versioning
 
 `Version/resource_version2.h` is tracked and hand edited; it is the single source for the DLL's
