@@ -13,11 +13,26 @@ namespace Addictol::Menu
 {
 	using PanelDraw = MenuPanelDraw;
 
+	inline constexpr dmui::ClientOptions kClientOptions{
+		.requiredServices = DMUI_HOST_SERVICE_EXTERNAL_OPEN,
+		.minimumForwardingVersion = DMUI_FORWARDING_VERSION_CURRENT
+	};
+	inline constexpr dmui::CategoryDescriptor kGeneralCategory{
+		.id = "general",
+		.displayName = "General",
+		.sortKey = 0
+	};
+	inline constexpr dmui::CategoryDescriptor kDiagnosticsCategory{
+		.id = "diagnostics",
+		.displayName = "Diagnostics",
+		.sortKey = 100
+	};
+
 	struct Panel
 	{
 		const char* id;
 		const char* name;
-		const char* category;
+		const char* categoryId;
 		const char* summary;
 		int32_t sortKey;
 		PanelDraw draw;

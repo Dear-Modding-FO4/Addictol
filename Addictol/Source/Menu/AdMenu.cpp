@@ -23,7 +23,10 @@ namespace Addictol
 			"dear-modding.addictol",
 			"Addictol",
 			dmui::Version{ VERSION_MAJOR, VERSION_MINOR },
-			dmui::kForwardingClient
+			dmui::kForwardingClient,
+			{},
+			{},
+			Menu::kClientOptions
 		};
 		static std::atomic<uint32_t> s_refreshMs{ kMenuMinRefreshMs };
 		static std::atomic<bool> s_connected{ false };
@@ -64,7 +67,7 @@ namespace Addictol
 				{
 					.id = a_panel.id,
 					.displayName = a_panel.name,
-					.category = a_panel.category,
+					.categoryId = a_panel.categoryId,
 					.summary = a_panel.summary,
 					.sortKey = a_panel.sortKey
 				},
@@ -142,16 +145,20 @@ namespace Addictol
 				return true;
 			}
 			REX::ERROR(
-				"Menu: DearModdingUI client connection failed, result {}."sv,
+				"Menu: DearModdingUI client connection failed, result {}. A matching standalone DearModdingUI build is required."sv,
 				DMUI_ResultToString(s_client.LastResult()));
 			return false;
 		}
-		if (!ImGui::IsForwardVersionCompatible())
+		for (const auto& category : { Menu::kGeneralCategory, Menu::kDiagnosticsCategory })
 		{
-			REX::WARN(
-				"Menu: DearModdingUI ImGui version {} does not match forwarding header version {}; drawing may be incorrect."sv,
-				ImGui::GetHostImGuiVersionNum(),
-				ImGui::kForwardImGuiVersionNum);
+			if (!s_client.AddCategory(category))
+			{
+				REX::ERROR(
+					"Menu: category \"{}\" rejected, result {}."sv,
+					category.displayName,
+					DMUI_ResultToString(s_client.LastResult()));
+				return false;
+			}
 		}
 
 		Menu::BeginSettingsPageFrame();
@@ -191,7 +198,7 @@ namespace Addictol
 		if (!RegisterPage({
 				"home",
 				"Home",
-				nullptr,
+				kGeneralCategory.id,
 				"Overview, live module status, project links, and FAQ.",
 				0,
 				&DrawHomePage,
@@ -218,7 +225,7 @@ namespace Addictol
 		if (!RegisterPanel({
 				"modules",
 				"Modules",
-				nullptr,
+				kGeneralCategory.id,
 				"Individual install, disable, skip, and failure outcomes for every module.",
 				200,
 				&DrawModulesPage,
@@ -230,7 +237,7 @@ namespace Addictol
 		if (!RegisterPanel({
 				"facegen-exceptions",
 				"Facegen Exceptions",
-				"Diagnostics",
+				kDiagnosticsCategory.id,
 				"Facegen exception coverage, configuration state, and resolution failures.",
 				900,
 				&DrawFacegenExceptionsPage,
@@ -242,7 +249,7 @@ namespace Addictol
 		if (!RegisterPanel({
 				"log-control",
 				kMenuLogControlPanelName.data(),
-				"Diagnostics",
+				kDiagnosticsCategory.id,
 				"Runtime logging levels and output statistics.",
 				1000,
 				&DrawMenuLogControlPanel,

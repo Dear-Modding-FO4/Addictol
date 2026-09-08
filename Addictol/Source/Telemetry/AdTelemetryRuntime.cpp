@@ -95,7 +95,7 @@ namespace Addictol
 				const auto registered = Menu::RegisterPanel({
 					panel.id,
 					panel.name.data(),
-					"Diagnostics",
+					Menu::kDiagnosticsCategory.id,
 					panel.description.data(),
 					panel.sortKey,
 					&DrawMenuTelemetryPanel,

@@ -86,7 +86,7 @@ data/                        authored mod payload
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::`, `F4SE::`
-and DearModdingUI client APIs, plus `detours`, `imgui`, `libdeflate`, `spdlog`, `toml11` and `INI`)
+and DearModdingUI client APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`)
 and vendored libraries (`vmm`, `xbyak`, `unordered_dense`).
 
 Crash logging is not part of this plugin. It ships separately as
@@ -97,6 +97,9 @@ standalone DearModdingUI API repository through CommonLibF4's nested
 `lib/dearmoddingui-api` public dependency.
 
 Addictol packages only its own payload. DearModdingUI is a separate mod installed independently.
+The client forwards drawing to that host and compiles no Dear ImGui sources. Use a host build
+matching the pinned API headers: pre-release API changes may retain the same version number.
+Register categories before pages, reference their stable IDs, and keep external-link actions host-owned.
 
 ## Versioning
 

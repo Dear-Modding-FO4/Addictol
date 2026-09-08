@@ -371,6 +371,7 @@ namespace Addictol::Menu
 				{
 					.id = "settings",
 					.displayName = "Settings",
+					.categoryId = kGeneralCategory.id,
 					.summary =
 						"Configure Addictol fixes, performance, visuals, gameplay, "
 						"and diagnostics.",

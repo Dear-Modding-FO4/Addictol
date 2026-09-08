@@ -14,15 +14,6 @@ namespace Addictol::Menu
 {
 	namespace
 	{
-		constexpr std::array kQuickLinks{
-			dmui::Link{
-				"Nexus Mods",
-				"https://www.nexusmods.com/fallout4/mods/84214" },
-			dmui::Link{
-				"GitHub",
-				"https://github.com/Dear-Modding-FO4/Addictol" }
-		};
-
 		constexpr std::array kFaqEntries{
 			dmui::FaqEntry{
 				"Which Fallout 4 runtimes are supported?",
@@ -74,8 +65,9 @@ namespace Addictol::Menu
 					"inspect live diagnostics and runtime behavior.");
 			}
 			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
+			(void)Client().DrawSectionHeader(
+				"Overview",
+				DearModdingUI::FindPhosphorSlugGlyphOrZero("info"));
 
 			const auto counts =
 				Plugin::GetSingleton()->GetModules().ModuleOutcomeCounts();
@@ -107,20 +99,35 @@ namespace Addictol::Menu
 
 		void DrawQuickLinksSection() noexcept
 		{
-			(void)Client().DrawSectionHeader("Quick Links");
-			(void)Client().DrawLinkRow("Addictol.QuickLinks", kQuickLinks);
+			(void)Client().DrawSectionHeader(
+				"Quick Links",
+				DearModdingUI::FindPhosphorSlugGlyphOrZero("link"));
+			if (!Client().DrawLinkRow("Addictol.QuickLinks", kHomeQuickLinks))
+			{
+				const auto result = Client().LastResult();
+				ReportStatus(
+					DMUI_STATUS_SEVERITY_ERROR,
+					"A project link failed. See Addictol.log for details.");
+				REX::WARN(
+					"Menu: project link row failed, result {}."sv,
+					DMUI_ResultToString(result));
+			}
 			ImGui::Spacing();
 		}
 
 		void DrawFaqSection() noexcept
 		{
-			(void)Client().DrawSectionHeader("FAQ");
+			(void)Client().DrawSectionHeader(
+				"FAQ",
+				DearModdingUI::PhosphorGlyph::kQuestion);
 			(void)Client().DrawFaq("Addictol.Faq", kFaqEntries);
 		}
 
 		void DrawModdingStateSection() noexcept
 		{
-			(void)Client().DrawSectionHeader("On the state of F4SE mods");
+			(void)Client().DrawSectionHeader(
+				"On the state of F4SE mods",
+				DearModdingUI::PhosphorGlyph::kShieldCheck);
 			const MenuUi::ScopedFont font{ DMUI_FONT_ROLE_SUBTEXT };
 			ImGui::TextWrapped(
 				"CommonLibF4 is GPL-3.0. If a plugin links it and ships without "

@@ -6,6 +6,8 @@
 #include "Harness.h"
 
 #include <INI/SimpleIni.h>
+#include <Menu/AdMenu.h>
+#include <Menu/AdMenuHome.h>
 
 #include <filesystem>
 #include <fstream>
@@ -47,6 +49,79 @@ namespace vmm_tests
 
 	void run_menu_checks(Runner& runner)
 	{
+		runner.test("menu categories place General before Diagnostics", [] {
+			require(
+				std::string_view{ kGeneralCategory.id } == "general" &&
+					std::string_view{ kGeneralCategory.displayName } == "General",
+				"General lost its stable ID or display name");
+			require(
+				std::string_view{ kDiagnosticsCategory.id } == "diagnostics" &&
+					std::string_view{ kDiagnosticsCategory.displayName } == "Diagnostics",
+				"Diagnostics lost its stable ID or display name");
+			require(
+				kGeneralCategory.sortKey < kDiagnosticsCategory.sortKey,
+				"General no longer sorts before Diagnostics");
+		});
+
+		runner.test("home project links use host browser actions and icons", [] {
+			require(kHomeQuickLinks.size() == 2, "project link count changed");
+			require(
+				std::string_view{ kHomeQuickLinks[0].external.target } ==
+					"https://www.nexusmods.com/fallout4/mods/84214",
+				"Nexus Mods link changed");
+			require(
+				std::string_view{ kHomeQuickLinks[1].external.target } ==
+					"https://github.com/Dear-Modding-FO4/Addictol",
+				"GitHub repository link changed");
+			for (const auto& link : kHomeQuickLinks)
+			{
+				require(link.enabled, "project link is disabled");
+				require(
+					link.action == dmui::LinkAction::kOpenExternal &&
+						link.external.targetKind == DMUI_EXTERNAL_TARGET_URI,
+					"project link does not open its URI through the host");
+				require(
+					!link.external.application && link.external.arguments.empty() &&
+						!link.external.workingDirectory,
+					"project link overrides the default browser");
+				require(link.glyph != 0, "project link icon is unavailable");
+			}
+			require(
+				kHomeQuickLinks[1].glyph ==
+					DearModdingUI::FindPhosphorIconGlyphOrZero("github-logo"),
+				"GitHub link lost its logo");
+		});
+
+		runner.test("menu preflight requires host external-opening support", [] {
+			DMUI_HostAPI api{};
+			api.structSize = sizeof(api);
+			api.registerClient = [](
+				const DMUI_ClientDescriptor*, DMUI_ClientHandle*) noexcept {
+				return DMUI_RESULT_OK;
+			};
+			api.queryServices = [](DMUI_HostServicesInfo* a_services) noexcept {
+				a_services->forwardingVersion = DMUI_FORWARDING_VERSION_CURRENT;
+				a_services->supportedServices = DMUI_HOST_SERVICE_EXTERNAL_OPEN;
+				return DMUI_RESULT_OK;
+			};
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host without an external-opening entry passed preflight");
+			api.openExternal = [](
+				DMUI_ClientHandle, const DMUI_ExternalOpenDescriptor*, uint32_t*) noexcept {
+				return DMUI_RESULT_OK;
+			};
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) == DMUI_RESULT_OK,
+				"host with external-opening support failed preflight");
+			api.structSize = DMUI_HOST_API_UPDATE_IMAGE_SIZE;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"superseded host API passed preflight");
+		});
+
 		runner.test("input switching preserves modal keyboard and mouse ownership", [] {
 			require(inputSwitchDetail::ShouldClearKeyboardMouseIgnore(false),
 				"a closed menu prevented keyboard and mouse re-enabling");
