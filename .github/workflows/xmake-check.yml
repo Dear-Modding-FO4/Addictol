@@ -1,0 +1,90 @@
+name: xmake check
+
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        description: Full commit SHA to validate.
+        required: true
+        type: string
+      upload_artifact:
+        description: Upload the staged xmake output.
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    name: xmake validation
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          submodules: recursive
+
+      - name: Verify requested source
+        shell: pwsh
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:SOURCE_SHA) {
+            throw "Checkout resolved to $actual instead of requested source $env:SOURCE_SHA."
+          }
+
+      - name: Add MSVC to PATH
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Set up xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+
+      - name: Configure
+        run: xmake config --yes
+
+      - name: Build
+        run: xmake build --yes -vD Addictol
+
+      - name: Check plugin exports
+        shell: pwsh
+        run: |
+          $dll = '.Build/F4SE/Plugins/Addictol.dll'
+          if (-not (Test-Path $dll)) {
+            throw "$dll was not produced"
+          }
+
+          $exports = (dumpbin /exports $dll) -join "`n"
+          $missing = @('F4SEPlugin_Load','F4SEPlugin_Preload','F4SEPlugin_Query','F4SEPlugin_Version') |
+            Where-Object { $exports -notmatch [regex]::Escape($_) }
+
+          if ($missing) {
+            throw "missing F4SE exports: $($missing -join ', ')"
+          }
+          Write-Host 'all four F4SE exports present'
+
+      - name: Build VMM tests
+        run: xmake build --yes -vD vmm-tests
+
+      # Benchmarks stay local because shared-runner timing is noise.
+      - name: Run VMM checks
+        run: .Build/Tests/vmm-tests.exe
+
+      - name: Upload build output
+        if: inputs.upload_artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: addictol-xmake-${{ inputs.source_sha }}
+          path: |
+            .Build/F4SE/Plugins/Addictol.dll
+            .Build/F4SE/Plugins/Addictol.pdb
+            .Build/F4SE/Plugins/Addictol.toml
+            .Build/F4SE/Plugins/Addictol_*.ini
+            .Build/Scripts
+          if-no-files-found: error
+          retention-days: 14

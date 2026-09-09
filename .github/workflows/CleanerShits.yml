@@ -1,9 +1,7 @@
-# THIS AI CODE! BUT FOR ME DON'T CARE!
-
 name: Cleanup Old Runs
 on:
   schedule:
-    - cron: '0 0 * * 0' # Runs weekly on Sundays
+    - cron: '0 0 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -18,16 +16,46 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          retain_days: 14 # Keeps only the last 14 days of runs
-          keep_minimum_runs: 6 # Ensures you don't delete everything
-      - name: Delete old beta releases
-        uses: ophub/delete-releases-workflows@main
+          retain_days: 14
+          keep_minimum_runs: 6
+
+      - name: Delete old prereleases and their tags
+        uses: actions/github-script@v8
         with:
-          delete_releases: true
-          prerelease_option: true
-          releases_keep_keyword: none
-          releases_keep_latest: 14
-          delete_tags: true
-          delete_workflows: false
-          workflows_keep_day: 14
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            const expired = releases
+              .filter(release => release.prerelease && !release.draft)
+              .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))
+              .slice(14);
+
+            for (const release of expired) {
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id
+              });
+
+              const ref = `tags/${release.tag_name}`;
+              try {
+                await github.rest.git.getRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  continue;
+                }
+                throw error;
+              }
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref
+              });
+            }

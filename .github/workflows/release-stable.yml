@@ -1,0 +1,211 @@
+name: Release stable
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable product version (major.minor.patch).
+        required: true
+        type: string
+      source_ref:
+        description: Commit or ref reachable from master.
+        required: true
+        default: master
+        type: string
+      next_version:
+        description: Next development product version.
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  prepare:
+    name: Pin and validate release source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      source_sha: ${{ steps.prepare.outputs.source_sha }}
+      release_version: ${{ steps.prepare.outputs.release_version }}
+      next_version: ${{ steps.prepare.outputs.next_version }}
+
+    steps:
+      - name: Require the master workflow
+        shell: pwsh
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          if ($env:WORKFLOW_REF -ne 'refs/heads/master') {
+            throw 'Run Release stable using the master branch.'
+          }
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: automation
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          path: source
+
+      - name: Pin source and validate versions
+        id: prepare
+        shell: pwsh
+        working-directory: source
+        env:
+          AUTOMATION_ROOT: ${{ github.workspace }}/automation
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          NEXT_VERSION: ${{ inputs.next_version }}
+        run: |
+          & "$env:AUTOMATION_ROOT/.github/scripts/prepare-release.ps1" `
+            -Repository $env:REPOSITORY `
+            -SourceRef $env:SOURCE_REF `
+            -Version $env:RELEASE_VERSION `
+            -NextVersion $env:NEXT_VERSION `
+            -OutputPath $env:GITHUB_OUTPUT
+
+  package:
+    name: Release MSBuild
+    permissions:
+      contents: read
+    needs: prepare
+    uses: ./.github/workflows/build-package.yml
+    with:
+      source_sha: ${{ needs.prepare.outputs.source_sha }}
+      kind: stable
+      expected_version: ${{ needs.prepare.outputs.release_version }}
+
+  validate-xmake:
+    name: Release xmake
+    permissions:
+      contents: read
+    needs: prepare
+    uses: ./.github/workflows/xmake-check.yml
+    with:
+      source_sha: ${{ needs.prepare.outputs.source_sha }}
+      upload_artifact: false
+
+  publish:
+    name: Publish pinned stable release
+    needs: [prepare, package, validate-xmake]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    concurrency:
+      group: release-publication
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: automation
+
+      - name: Download pinned package
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ needs.package.outputs.artifact_name }}
+          path: release-assets
+
+      - name: Publish stable release
+        shell: pwsh
+        env:
+          AUTOMATION_ROOT: ${{ github.workspace }}/automation
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PRODUCT_VERSION: ${{ needs.package.outputs.product_version }}
+          BUILD_IDENTITY: ${{ needs.package.outputs.build_identity }}
+          SOURCE_SHA: ${{ needs.prepare.outputs.source_sha }}
+          ASSET_PATH: release-assets/${{ needs.package.outputs.asset_name }}
+        run: |
+          & "$env:AUTOMATION_ROOT/.github/scripts/publish-release.ps1" `
+            -Channel stable `
+            -Repository $env:REPOSITORY `
+            -ProductVersion $env:PRODUCT_VERSION `
+            -BuildIdentity $env:BUILD_IDENTITY `
+            -SourceSha $env:SOURCE_SHA `
+            -AssetPath $env:ASSET_PATH
+
+  prepare-next-version:
+    name: Prepare next-version branch
+    needs: [prepare, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      bump_sha: ${{ steps.bump.outputs.bump_sha }}
+      bump_branch: ${{ steps.bump.outputs.bump_branch }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: automation
+
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+          fetch-depth: 0
+          path: source
+
+      - name: Create or recover version-bump branch
+        id: bump
+        shell: pwsh
+        working-directory: source
+        env:
+          AUTOMATION_ROOT: ${{ github.workspace }}/automation
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.release_version }}
+          NEXT_VERSION: ${{ needs.prepare.outputs.next_version }}
+        run: |
+          & "$env:AUTOMATION_ROOT/.github/scripts/prepare-next-version.ps1" `
+            -Repository $env:REPOSITORY `
+            -ReleaseVersion $env:RELEASE_VERSION `
+            -NextVersion $env:NEXT_VERSION `
+            -OutputPath $env:GITHUB_OUTPUT
+
+  open-bump-pr:
+    name: Open and validate next-version pull request
+    if: needs.prepare-next-version.outputs.bump_sha != ''
+    needs: [prepare, prepare-next-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: automation
+
+      - name: Create or recover pull request
+        shell: pwsh
+        env:
+          AUTOMATION_ROOT: ${{ github.workspace }}/automation
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          BUMP_BRANCH: ${{ needs.prepare-next-version.outputs.bump_branch }}
+          BUMP_SHA: ${{ needs.prepare-next-version.outputs.bump_sha }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.release_version }}
+          NEXT_VERSION: ${{ needs.prepare.outputs.next_version }}
+        run: |
+          & "$env:AUTOMATION_ROOT/.github/scripts/open-next-version-pull-request.ps1" `
+            -Repository $env:REPOSITORY `
+            -Branch $env:BUMP_BRANCH `
+            -SourceSha $env:BUMP_SHA `
+            -ReleaseVersion $env:RELEASE_VERSION `
+            -NextVersion $env:NEXT_VERSION

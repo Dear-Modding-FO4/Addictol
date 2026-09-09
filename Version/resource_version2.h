@@ -9,25 +9,33 @@
 
 #define VERSION_MAJOR			1
 #define VERSION_MINOR			6
-
-#ifndef VERSION_BUILD
-#define VERSION_BUILD			0
-#endif
-
+#define VERSION_PATCH			0
 #define VERSION_REVISION		0
 
-// F4SE stores the patch field in 12 bits.
-#if VERSION_BUILD < 0 || VERSION_BUILD > 4095
-#error VERSION_BUILD must be in the range 0..4095
+// CommonLib/F4SE packs major/minor into 8 bits, patch into 12, and revision into 4.
+#if VERSION_MAJOR < 0 || VERSION_MAJOR > 255
+#error VERSION_MAJOR must be in the range 0..255
 #endif
 
-#define VER_FILE_VERSION		VERSION_MAJOR,	VERSION_MINOR,	VERSION_BUILD,	VERSION_REVISION
+#if VERSION_MINOR < 0 || VERSION_MINOR > 255
+#error VERSION_MINOR must be in the range 0..255
+#endif
+
+#if VERSION_PATCH < 0 || VERSION_PATCH > 4095
+#error VERSION_PATCH must be in the range 0..4095
+#endif
+
+#if VERSION_REVISION < 0 || VERSION_REVISION > 15
+#error VERSION_REVISION must be in the range 0..15
+#endif
+
+#define VER_FILE_VERSION		VERSION_MAJOR,	VERSION_MINOR,	VERSION_PATCH,	VERSION_REVISION
 #define VER_PRODUCT_VERSION		VER_FILE_VERSION
 
 #define VER_FILE_VERSION_STR	\
 	STRINGIZE(VERSION_MAJOR)	\
 "." STRINGIZE(VERSION_MINOR)	\
-"." STRINGIZE(VERSION_BUILD)	\
+"." STRINGIZE(VERSION_PATCH)	\
 "." STRINGIZE(VERSION_REVISION)
 
 #define VER_PRODUCT_VERSION_STR	VER_FILE_VERSION_STR

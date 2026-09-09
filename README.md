@@ -12,7 +12,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 <br>
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Dear-Modding-FO4/Addictol/xmake.yml?branch=master&style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Dear-Modding-FO4/Addictol/actions/workflows/xmake.yml)
-[![Version](https://img.shields.io/badge/version-1.6.x-orange?style=for-the-badge)](Version/resource_version2.h)
+[![Release](https://img.shields.io/github/v/release/Dear-Modding-FO4/Addictol?style=for-the-badge&label=release&color=orange)](https://github.com/Dear-Modding-FO4/Addictol/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20with%20exception-blue?style=for-the-badge)](LICENSE)
 
 [![Fallout 4](https://img.shields.io/badge/Fallout%204-OG%20%C2%B7%20NG%20%C2%B7%20AE-3a7d44?style=for-the-badge)](#requirements)
@@ -67,6 +67,11 @@ Data\
 ```
 
 The archive also contains `Addictol.pdb` and Papyrus source files; neither is required to play.
+
+Use the [latest stable release](https://github.com/Dear-Modding-FO4/Addictol/releases/latest) for
+normal installations. Development prereleases are published from `master` as
+`vMAJOR.MINOR.PATCH-dev.RUN`; they contain newer unpromoted changes and are available from the
+[full releases list](https://github.com/Dear-Modding-FO4/Addictol/releases).
 
 ---
 

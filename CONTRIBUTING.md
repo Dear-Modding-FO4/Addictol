@@ -113,10 +113,20 @@ validation, and persistence remain Addictol-owned.
 
 `Version/resource_version2.h` is tracked and hand edited; it is the single source for the DLL's
 `FileVersion` and `ProductVersion`, the F4SE plugin version and the startup log line. Major and
-minor live in the file. The third field is `VERSION_BUILD`, which CI sets to the GitHub Actions run
-number via `-p:AddictolVersionBuild=<n>` and which defaults to 0 otherwise, so a local build always
-reports `1.6.0.0` and never writes to a tracked file. F4SE packs that field into 12 bits, so values
-outside `0..4095` fail the build.
+minor and the explicit product patch live in the file as `VERSION_MAJOR`, `VERSION_MINOR`, and
+`VERSION_PATCH`; `VERSION_REVISION` remains zero. Both MSBuild and xmake consume those same values.
+CommonLib/F4SE packs major and minor into 8 bits, patch into 12 bits, and revision into 4 bits, so
+the header and release tooling reject values outside those ranges.
+
+GitHub Actions run numbers are build identity, not product patch versions. A push to `master` at
+product version `1.6.0` is published as a prerelease such as `v1.6.0-dev.615`, while the DLL
+continues to report `1.6.0.0`. MSBuild CI packages include `build-info.txt` with the product version, build
+identity, and exact source commit. Local builds do not claim a CI identity.
+
+`master` is the only development branch and channel. Stable releases are prepared with the manual
+**Release stable** workflow, followed by a reviewed version-bump pull request back to `master`.
+See [releasing.md](releasing.md) for repository settings, migration details, guarded publication,
+recovery behavior, and the release-to-next-development walkthrough.
 
 ## The module model
 

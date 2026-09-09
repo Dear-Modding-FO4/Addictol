@@ -6,7 +6,7 @@
 F4SE_PLUGIN_VERSION = []() noexcept
 {
     F4SE::PluginVersionData data{};
-    data.PluginVersion({ VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD, 0 });
+    data.PluginVersion({ VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_REVISION });
     data.PluginName(_PluginName);
     data.AuthorName(_PluginAuthor);
     data.UsesAddressLibrary(true);

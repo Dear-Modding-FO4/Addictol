@@ -2,116 +2,64 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [master]
   pull_request:
-    branches: [ "master" ]
+    branches: [master]
   workflow_dispatch:
 
-env:
-  SOLUTION_FILE_PATH: .\VC
-  BUILD_CONFIGURATION: Release
-
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
-  build:
-    runs-on: windows-2022
+  package:
+    name: package
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-package.yml
+    with:
+      source_sha: ${{ github.sha }}
+      kind: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && 'development' || 'validation' }}
+      build_number: ${{ github.run_number }}
+
+  publish-development:
+    name: Publish development prerelease
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    concurrency:
+      group: release-publication
+      cancel-in-progress: false
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: automation
 
-    - name: Compute version
-      id: ver
-      shell: pwsh
-      run: |
-        $isRelease = ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -eq 'refs/heads/master') -or `
-                     '${{ github.event_name }}' -eq 'workflow_dispatch'
+      - name: Download pinned package
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ needs.package.outputs.artifact_name }}
+          path: release-assets
 
-        $header = Get-Content -Path 'Version/resource_version2.h' -Raw
-        $majorMatch = [regex]::Match($header, '#define\s+VERSION_MAJOR\s+(\d+)')
-        $minorMatch = [regex]::Match($header, '#define\s+VERSION_MINOR\s+(\d+)')
-        if (-not $majorMatch.Success -or -not $minorMatch.Success) {
-          throw 'Could not read VERSION_MAJOR and VERSION_MINOR from resource_version2.h.'
-        }
-
-        $major = $majorMatch.Groups[1].Value
-        $minor = $minorMatch.Groups[1].Value
-        $build = if ($isRelease) { [int]'${{ github.run_number }}' } else { 0 }
-        if ($build -gt 4095) {
-          throw "GitHub run number $build exceeds F4SE's 4095 patch-version limit."
-        }
-
-        $sha   = '${{ github.sha }}'.Substring(0, 8)
-        $version = "$major.$minor.$build.0"
-        $tag = "v$version"
-
-        Write-Host "Computed version: $version (release=$isRelease, sha=$sha)"
-
-        "version=$version"   >> $env:GITHUB_OUTPUT
-        "build=$build"       >> $env:GITHUB_OUTPUT
-        "tag=$tag"           >> $env:GITHUB_OUTPUT
-        "sha=$sha"           >> $env:GITHUB_OUTPUT
-        "is_release=$($isRelease.ToString().ToLower())" >> $env:GITHUB_OUTPUT
-
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v3
-
-    - name: Build
-      working-directory: ${{ github.workspace }}
-      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:AddictolVersionBuild=${{ steps.ver.outputs.build }} ${{ env.SOLUTION_FILE_PATH }}
-
-    - name: Bundle build output
-      shell: pwsh
-      run: |
-        $name = if ('${{ steps.ver.outputs.is_release }}' -eq 'true') {
-          "Addictol-${{ steps.ver.outputs.version }}"
-        } else {
-          "addictol-${{ steps.ver.outputs.sha }}"
-        }
-        New-Item -ItemType Directory -Path "$name\f4se\plugins" -Force | Out-Null
-        New-Item -ItemType Directory -Path "$name\scripts" -Force | Out-Null
-
-        $plugins = (Resolve-Path '.\.Build\F4SE\Plugins').Path
-        Get-ChildItem -Recurse -File -Path $plugins `
-          -Include 'Addictol.dll','Addictol.pdb','Addictol.toml','Addictol*.ini' |
-          ForEach-Object {
-            $destination = Join-Path "$name\f4se\plugins" $_.FullName.Substring($plugins.Length).TrimStart('\')
-            New-Item -ItemType Directory -Path (Split-Path $destination) -Force | Out-Null
-            Copy-Item -Path $_.FullName -Destination $destination -Force
-          }
-
-        if (Test-Path '.\.Build\Scripts') {
-          Copy-Item -Path '.\.Build\Scripts\*' -Destination "$name\scripts" -Recurse -Force
-        }
-
-        "BUNDLE_NAME=$name" >> $env:GITHUB_ENV
-
-    - name: Upload PR / non-release artifact
-      if: steps.ver.outputs.is_release != 'true'
-      uses: actions/upload-artifact@v6
-      with:
-        name: ${{ env.BUNDLE_NAME }}
-        path: ${{ env.BUNDLE_NAME }}
-
-    - name: Zip release artifact
-      if: steps.ver.outputs.is_release == 'true'
-      shell: pwsh
-      run: Compress-Archive -Path "$env:BUNDLE_NAME\*" -DestinationPath "$env:BUNDLE_NAME.zip" -Force
-
-    - name: Create GitHub Release
-      if: steps.ver.outputs.is_release == 'true'
-      uses: softprops/action-gh-release@v3
-      with:
-        tag_name: ${{ steps.ver.outputs.tag }}
-        name: ${{ steps.ver.outputs.tag }}
-        body: |
-          Built from ${{ github.sha }}.
-
-          Internal version: `${{ steps.ver.outputs.version }}`
-        generate_release_notes: true
-        prerelease: true
-        fail_on_unmatched_files: true
-        files: ${{ env.BUNDLE_NAME }}.zip
+      - name: Publish prerelease unless product version is stable
+        shell: pwsh
+        env:
+          AUTOMATION_ROOT: ${{ github.workspace }}/automation
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PRODUCT_VERSION: ${{ needs.package.outputs.product_version }}
+          BUILD_IDENTITY: ${{ needs.package.outputs.build_identity }}
+          SOURCE_SHA: ${{ github.sha }}
+          ASSET_PATH: release-assets/${{ needs.package.outputs.asset_name }}
+        run: |
+          & "$env:AUTOMATION_ROOT/.github/scripts/publish-release.ps1" `
+            -Channel development `
+            -Repository $env:REPOSITORY `
+            -ProductVersion $env:PRODUCT_VERSION `
+            -BuildIdentity $env:BUILD_IDENTITY `
+            -SourceSha $env:SOURCE_SHA `
+            -AssetPath $env:ASSET_PATH

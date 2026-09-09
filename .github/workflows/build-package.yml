@@ -1,0 +1,135 @@
+name: Build package
+
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        description: Full commit SHA to build.
+        required: true
+        type: string
+      kind:
+        description: Package identity kind.
+        required: true
+        type: string
+      build_number:
+        description: GitHub run number for development identities.
+        required: false
+        default: ''
+        type: string
+      expected_version:
+        description: Required product version for a stable build.
+        required: false
+        default: ''
+        type: string
+    outputs:
+      product_version:
+        value: ${{ jobs.package.outputs.product_version }}
+      build_identity:
+        value: ${{ jobs.package.outputs.build_identity }}
+      artifact_name:
+        value: ${{ jobs.package.outputs.artifact_name }}
+      asset_name:
+        value: ${{ jobs.package.outputs.asset_name }}
+
+jobs:
+  package:
+    name: MSBuild package
+    runs-on: windows-2022
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    outputs:
+      product_version: ${{ steps.metadata.outputs.product_version }}
+      build_identity: ${{ steps.metadata.outputs.build_identity }}
+      artifact_name: ${{ steps.metadata.outputs.artifact_name }}
+      asset_name: ${{ steps.metadata.outputs.asset_name }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: automation
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: source
+          submodules: recursive
+
+      - name: Test release tooling at the pinned source
+        shell: pwsh
+        run: ./source/Tests/release-tools.tests.ps1
+
+      - name: Verify pinned source and compute metadata
+        id: metadata
+        shell: pwsh
+        working-directory: source
+        env:
+          AUTOMATION_ROOT: ${{ github.workspace }}/automation
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          PACKAGE_KIND: ${{ inputs.kind }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:SOURCE_SHA) {
+            throw "Checkout resolved to $actual instead of pinned source $env:SOURCE_SHA."
+          }
+          & "$env:AUTOMATION_ROOT/.github/scripts/get-build-metadata.ps1" `
+            -Kind $env:PACKAGE_KIND `
+            -BuildNumber $env:BUILD_NUMBER `
+            -ExpectedVersion $env:EXPECTED_VERSION `
+            -SourceSha $env:SOURCE_SHA `
+            -RepositoryRoot $PWD.Path `
+            -OutputPath $env:GITHUB_OUTPUT
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Build
+        working-directory: source
+        run: msbuild /m /p:Configuration=Release /p:Platform=x64 .\VC
+
+      - name: Bundle package
+        shell: pwsh
+        working-directory: source
+        env:
+          BUNDLE_NAME: ${{ steps.metadata.outputs.bundle_name }}
+          ASSET_NAME: ${{ steps.metadata.outputs.asset_name }}
+          PRODUCT_VERSION: ${{ steps.metadata.outputs.product_version }}
+          BUILD_IDENTITY: ${{ steps.metadata.outputs.build_identity }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          New-Item -ItemType Directory -Path "$env:BUNDLE_NAME\f4se\plugins" -Force | Out-Null
+          New-Item -ItemType Directory -Path "$env:BUNDLE_NAME\scripts" -Force | Out-Null
+
+          $plugins = (Resolve-Path '.\.Build\F4SE\Plugins').Path
+          Get-ChildItem -Recurse -File -Path $plugins `
+            -Include 'Addictol.dll','Addictol.pdb','Addictol.toml','Addictol*.ini' |
+            ForEach-Object {
+              $relative = $_.FullName.Substring($plugins.Length).TrimStart('\')
+              $destination = Join-Path "$env:BUNDLE_NAME\f4se\plugins" $relative
+              New-Item -ItemType Directory -Path (Split-Path $destination) -Force | Out-Null
+              Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
+            }
+
+          if (Test-Path '.\.Build\Scripts') {
+            Copy-Item -Path '.\.Build\Scripts\*' -Destination "$env:BUNDLE_NAME\scripts" -Recurse -Force
+          }
+
+          @(
+            "Product-Version: $env:PRODUCT_VERSION"
+            "Build-Identity: $env:BUILD_IDENTITY"
+            "Source-Commit: $env:SOURCE_SHA"
+            'Build-System: MSBuild'
+          ) | Set-Content -LiteralPath "$env:BUNDLE_NAME\build-info.txt" -Encoding utf8
+
+          Compress-Archive -Path "$env:BUNDLE_NAME\*" -DestinationPath $env:ASSET_NAME -Force
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.metadata.outputs.artifact_name }}
+          path: source/${{ steps.metadata.outputs.asset_name }}
+          if-no-files-found: error
+          retention-days: 14
