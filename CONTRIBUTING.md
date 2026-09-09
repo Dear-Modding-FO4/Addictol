@@ -77,7 +77,7 @@ Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
-Addictol/Source/Modules/     one .cpp per feature module (90 total)
+Addictol/Source/Modules/     one .cpp per feature module (91 total)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header
@@ -129,8 +129,28 @@ identity, and exact source commit. Local builds do not claim a CI identity.
 
 `master` is the only development branch and channel. Stable releases are prepared with the manual
 **Release stable** workflow, followed by a reviewed version-bump pull request back to `master`.
-See [releasing.md](releasing.md) for repository settings, migration details, guarded publication,
-recovery behavior, and the release-to-next-development walkthrough.
+
+## Releases
+
+Addictol maintains one development branch: `master`.
+
+### Development prereleases
+
+Every push to `master` builds the tracked product version in `Version/resource_version2.h` and
+publishes a development prerelease tagged `vMAJOR.MINOR.PATCH-dev.RUN` (for example, `v1.6.0-dev.615`).
+The DLL version remains `MAJOR.MINOR.PATCH.0`.
+
+### Stable releases
+
+1. Confirm `master` contains the intended code and `Version/resource_version2.h` reflects the release
+   version (do not edit it to the next version yet).
+2. Open **Actions > Release stable > Run workflow** on `master`.
+3. Enter the release **version** (e.g. `1.6.0`), **source_ref** (`master` or an exact commit SHA), and
+   **next_version** (e.g. `1.7.0`).
+4. The workflow verifies the commit, packages with MSBuild, builds and verifies F4SE exports and
+   `vmm-tests` with xmake, publishes the stable release `vMAJOR.MINOR.PATCH` marked **Latest**, and
+   opens a pull request to `master` bumping the version header to `next_version`.
+5. Once the bump pull request's dispatched checks pass, review and merge it to `master`.
 
 ## The module model
 

@@ -38,7 +38,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 
 ## Features
 
-The 90 modules cover the following areas. Most can be toggled independently; a small set of
+The 91 modules cover the following areas. Most can be toggled independently; a small set of
 core modules is mandatory.
 
 | Capability | Implementation |
@@ -77,7 +77,7 @@ normal installations. Development prereleases are published from `master` as
 
 ## Configuration
 
-The central registry exposes 112 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
+The central registry exposes 113 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
 `[Telemetry]`, and `[Additional]`. The shipped `Addictol.toml` documents every option inline.
 
 > [!WARNING]
@@ -96,26 +96,22 @@ loaded, were disabled, or skipped; check it first when something is not working.
 
 ## Menu
 
-DearModdingUI owns the shared menu. Press **F11** to open it, or set `[Additional] sMenuToggleKey`
-in `DearModdingUI.toml` to F1-F12, Home, End, Insert, or Delete.
-
-Addictol no longer reads its former `bMenu` or `sMenuToggleKey` settings. Existing custom keys are
-not migrated; copy them to `DearModdingUI.toml` or change them through the host settings page.
+DearModdingUI owns the shared menu. Press **F11** to open it, or configure the toggle key and
+appearance in the host settings page behind the footer gear (or via `DearModdingUI.toml`).
 
 | Page | Contents |
 |---|---|
-| **Home** | Runtime, live module summary, project links, and common answers. |
-| **Settings** | All 112 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
+| **Home** | Runtime, live module summary, project links, FAQ, and mod evaluation guide. |
+| **Settings** | All 113 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
 | **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
-| **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels. |
+| **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels (when `[Telemetry] bEnabled = true`). |
+| **Facegen Exceptions** | Facegen exception coverage, configuration state, and resolution failures. |
 | **Log Control** | Session-only record and flush levels with the live output rate. |
 
-Home, Settings, and Modules appear under **General**, before the **Diagnostics** group. Home uses
-DmUI's icon-bearing section headers and project-link buttons; GitHub and Nexus Mods open in your
-default browser through the host.
-
-> [!NOTE]
-> Telemetry panels appear only when `[Telemetry] bEnabled` is `true`; it defaults to `false`.
+Home, Settings, and Modules appear under **General**. Telemetry, Facegen Exceptions, and Log Control
+appear under **Diagnostics**. Home uses DmUI's icon-bearing section headers and project-link buttons;
+GitHub and Nexus Mods open in your default browser through the host. Use the header action button to
+copy a diagnostic summary to the clipboard.
 
 Shared appearance, accessibility, and toggle-key controls live behind the footer gear. Addictol's
 refresh interval remains under **Settings > Interface**.
@@ -124,19 +120,36 @@ refresh interval remains under **Settings > Interface**.
 
 ## Building
 
-Use Visual Studio 2022 or its Build Tools with the pinned v143 toolset; newer Visual Studio releases
-ship v145, so install v143 or override `PlatformToolset` on the command line as described in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Clone recursively to initialize dependencies:
 
 ```powershell
 git clone --recurse-submodules https://github.com/Dear-Modding-FO4/Addictol.git
 cd Addictol
+```
+
+### xmake (recommended)
+
+```powershell
+xmake build Addictol
+```
+
+To build and run tests:
+
+```powershell
+xmake build vmm-tests
+.\.Build\Tests\vmm-tests.exe
+```
+
+### MSBuild / Visual Studio
+
+Build with Visual Studio 2022 or standalone Build Tools using the pinned `v143` toolset:
+
+```powershell
 MSBuild VC/Addictol.sln -p:Configuration=Release -p:Platform=x64
 ```
 
-Both build systems stage Addictol's DLL and authored payload under `.Build`. Addictol builds and ships
-only its own files; install DearModdingUI separately for the in-game menu. With `FO4_DEV_MODS` set,
-`xmake install Addictol` deploys to its `Addictol - Dev` mod folder.
+Both build systems stage Addictol's DLL and authored payload under `.Build\`. Install DearModdingUI
+separately for the in-game menu.
 
 ---
 
