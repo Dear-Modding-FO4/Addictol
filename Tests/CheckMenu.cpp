@@ -32,6 +32,81 @@ namespace vmm_tests
 			ModuleOutcome outcome;
 		};
 
+		template <class... Arguments>
+		DMUI_Result DMUI_CALL UnsupportedUIOperation(Arguments...) noexcept
+		{
+			return DMUI_RESULT_UNSUPPORTED_ABI;
+		}
+
+		const DMUI_UIAPI kMockUI{
+			.structSize = sizeof(DMUI_UIAPI),
+			.abiVersion = DMUI_UI_ABI_CURRENT,
+			.revision = DMUI_UI_REVISION_1,
+			.getStyleMetrics = &UnsupportedUIOperation,
+			.beginCombo = &UnsupportedUIOperation,
+			.endCombo = &UnsupportedUIOperation,
+			.beginDisabled = &UnsupportedUIOperation,
+			.endDisabled = &UnsupportedUIOperation,
+			.beginTable = &UnsupportedUIOperation,
+			.endTable = &UnsupportedUIOperation,
+			.beginTooltip = &UnsupportedUIOperation,
+			.endTooltip = &UnsupportedUIOperation,
+			.button = &UnsupportedUIOperation,
+			.calcTextSize = &UnsupportedUIOperation,
+			.checkbox = &UnsupportedUIOperation,
+			.collapsingHeader = &UnsupportedUIOperation,
+			.collapsingHeaderVisible = &UnsupportedUIOperation,
+			.dragScalar = &UnsupportedUIOperation,
+			.dummy = &UnsupportedUIOperation,
+			.getContentRegionAvail = &UnsupportedUIOperation,
+			.getCursorScreenPos = &UnsupportedUIOperation,
+			.getFontSize = &UnsupportedUIOperation,
+			.getFrameHeight = &UnsupportedUIOperation,
+			.getStyleColor = &UnsupportedUIOperation,
+			.getTextLineHeightWithSpacing = &UnsupportedUIOperation,
+			.indent = &UnsupportedUIOperation,
+			.inputScalar = &UnsupportedUIOperation,
+			.inputText = &UnsupportedUIOperation,
+			.inputTextMultiline = &UnsupportedUIOperation,
+			.inputTextWithHint = &UnsupportedUIOperation,
+			.isItemDeactivatedAfterEdit = &UnsupportedUIOperation,
+			.isItemHovered = &UnsupportedUIOperation,
+			.popID = &UnsupportedUIOperation,
+			.popStyleColor = &UnsupportedUIOperation,
+			.popTextWrapPos = &UnsupportedUIOperation,
+			.progressBar = &UnsupportedUIOperation,
+			.pushIDString = &UnsupportedUIOperation,
+			.pushIDRange = &UnsupportedUIOperation,
+			.pushIDValue = &UnsupportedUIOperation,
+			.pushStyleColorU32 = &UnsupportedUIOperation,
+			.pushStyleColor = &UnsupportedUIOperation,
+			.pushTextWrapPos = &UnsupportedUIOperation,
+			.sameLine = &UnsupportedUIOperation,
+			.selectable = &UnsupportedUIOperation,
+			.selectableToggle = &UnsupportedUIOperation,
+			.separator = &UnsupportedUIOperation,
+			.setClipboardText = &UnsupportedUIOperation,
+			.setCursorScreenPos = &UnsupportedUIOperation,
+			.setItemDefaultFocus = &UnsupportedUIOperation,
+			.setNextItemWidth = &UnsupportedUIOperation,
+			.setTooltipText = &UnsupportedUIOperation,
+			.sliderScalar = &UnsupportedUIOperation,
+			.spacing = &UnsupportedUIOperation,
+			.tableHeadersRow = &UnsupportedUIOperation,
+			.tableNextColumn = &UnsupportedUIOperation,
+			.tableNextRow = &UnsupportedUIOperation,
+			.tableSetColumnIndex = &UnsupportedUIOperation,
+			.tableSetupColumn = &UnsupportedUIOperation,
+			.tableSetupScrollFreeze = &UnsupportedUIOperation,
+			.text = &UnsupportedUIOperation,
+			.textColored = &UnsupportedUIOperation,
+			.textDisabled = &UnsupportedUIOperation,
+			.textWrapped = &UnsupportedUIOperation,
+			.unindent = &UnsupportedUIOperation,
+			.newLine = &UnsupportedUIOperation,
+			.plotLines = &UnsupportedUIOperation
+		};
+
 		inline constexpr std::initializer_list<ExpectedLogLevel> kExpectedLogLevels{
 			{ LogControl::Level::kTrace, "trace"sv },
 			{ LogControl::Level::kDebug, "debug"sv },
@@ -64,8 +139,9 @@ namespace vmm_tests
 					!kMutedText.wrapped,
 				"muted descriptions changed typography or wrapping");
 			require(
-				(kDiagnosticTableFlags & ImGuiTableFlags_Sortable) == 0 &&
-					(kDiagnosticTableFlags & ImGuiTableFlags_ScrollY) != 0,
+				(kDiagnosticTableFlags & dmui::ui::TableFlags::kSortable) == dmui::ui::TableFlags::kNone &&
+					(kDiagnosticTableFlags & dmui::ui::TableFlags::kScrollY) != dmui::ui::TableFlags::kNone &&
+					(kStaticDiagnosticTableFlags & dmui::ui::TableFlags::kScrollY) == dmui::ui::TableFlags::kNone,
 				"diagnostic tables acquired sorting or lost scrolling");
 		});
 
@@ -115,13 +191,28 @@ namespace vmm_tests
 		runner.test("menu preflight requires host external-opening support", [] {
 			DMUI_HostAPI api{};
 			api.structSize = sizeof(api);
+			api.hostAbiVersion = DMUI_HOST_ABI_CURRENT;
+			api.apiVersion = DMUI_API_VERSION_CURRENT;
 			api.registerClient = [](
 				const DMUI_ClientDescriptor*, DMUI_ClientHandle*) noexcept {
 				return DMUI_RESULT_OK;
 			};
 			api.queryServices = [](DMUI_HostServicesInfo* a_services) noexcept {
-				a_services->forwardingVersion = DMUI_FORWARDING_VERSION_CURRENT;
 				a_services->supportedServices = DMUI_HOST_SERVICE_EXTERNAL_OPEN;
+				return DMUI_RESULT_OK;
+			};
+			api.queryUIAPI = [](
+				uint32_t abi, uint32_t revision, uint32_t tableSize,
+				DMUI_UIAPIInfo* info) noexcept -> DMUI_Result {
+				if (!info || info->structSize < DMUI_UI_API_INFO_1_SIZE)
+					return DMUI_RESULT_STRUCT_TOO_SMALL;
+				if (abi != kMockUI.abiVersion || revision > kMockUI.revision ||
+					tableSize > kMockUI.structSize)
+					return DMUI_RESULT_UNSUPPORTED_ABI;
+				info->abiVersion = kMockUI.abiVersion;
+				info->revision = kMockUI.revision;
+				info->tableSize = kMockUI.structSize;
+				info->api = &kMockUI;
 				return DMUI_RESULT_OK;
 			};
 			require(
@@ -138,7 +229,7 @@ namespace vmm_tests
 			api.structSize = DMUI_HOST_API_UPDATE_IMAGE_SIZE;
 			require(
 				dmui::PreflightHostAPI(&api, kClientOptions) ==
-					DMUI_RESULT_SERVICE_UNAVAILABLE,
+					DMUI_RESULT_UNSUPPORTED_ABI,
 				"superseded host API passed preflight");
 		});
 

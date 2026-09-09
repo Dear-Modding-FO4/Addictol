@@ -85,7 +85,7 @@ namespace Addictol
 		ReportPresentationResult(dmui::DrawStyledText(
 			Menu::Client(), "[Additional] sLogLevel and sLogFlushLevel are the persistent TOML controls.",
 			Menu::kMutedText));
-		ImGui::Separator();
+		dmui::ui::Separator();
 
 		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Levels", Menu::kHeadingText));
 		ReportPresentationResult(dmui::DrawStyledText(
@@ -96,7 +96,7 @@ namespace Addictol
 			Menu::kMutedText));
 		DrawLevelCombo("Flush level", s_cache.flushLevel, &LogControl::SetFlushLevel);
 
-		ImGui::Spacing();
+		dmui::ui::Spacing();
 		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Output", Menu::kHeadingText));
 		ReportPresentationResult(dmui::DrawLabeledValue(
 			Menu::Client(), "Recent output", FormatLinesInLastMinute(s_cache.stats.linesPerMinute),
@@ -108,7 +108,7 @@ namespace Addictol
 			Menu::Client(), "Flushes (session)", FormatCount(s_cache.stats.flushed),
 			{ .valueStyle = Menu::kBodyText }));
 
-		ImGui::Separator();
+		dmui::ui::Separator();
 		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
 			"refresh %.3f ms, cadence %u ms",
 			QpcToMilliseconds(s_cache.refreshTicks, GetQpcFrequency()),

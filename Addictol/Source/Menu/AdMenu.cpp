@@ -23,7 +23,6 @@ namespace Addictol
 			"dear-modding.addictol",
 			"Addictol",
 			dmui::Version{ VERSION_MAJOR, VERSION_MINOR },
-			dmui::kForwardingClient,
 			{},
 			{},
 			Menu::kClientOptions

@@ -11,7 +11,7 @@ namespace Addictol::MenuUi
 {
 	inline constexpr size_t kFormatCapacity{ 96 };
 
-	// rotate: several values live per ImGui call
+	// Rotate so one drawing call can consume several formatted values.
 	[[nodiscard]] char* NextFormatBuffer() noexcept;
 
 	[[nodiscard]] std::string_view Print(const char* a_format, auto... a_args) noexcept

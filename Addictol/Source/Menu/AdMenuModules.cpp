@@ -4,7 +4,7 @@
 #include <DearModdingUI/IconGlyphs.h>
 #include <Menu/AdMenu.h>
 
-#include <DearModdingUI/ImGuiForward.h>
+#include <DearModdingUI/UI.h>
 
 #include <algorithm>
 #include <string>
@@ -20,24 +20,24 @@ namespace Addictol::Menu
 			ModuleOutcomeFilter filter{ ModuleOutcomeFilter::kAll };
 		};
 
-		[[nodiscard]] ImVec4 OutcomeColor(
+		[[nodiscard]] dmui::ui::Vec4 OutcomeColor(
 			ModuleOutcomeSeverity a_severity) noexcept
 		{
 			using enum ModuleOutcomeSeverity;
 			switch (a_severity)
 			{
 			case kDisabled:
-				return dmui::ToImVec4(ThemeColors().statusDisable);
+				return dmui::ToUIVec4(ThemeColors().statusDisable);
 			case kInfo:
-				return dmui::ToImVec4(ThemeColors().statusInfo);
+				return dmui::ToUIVec4(ThemeColors().statusInfo);
 			case kWarning:
-				return dmui::ToImVec4(ThemeColors().statusWarning);
+				return dmui::ToUIVec4(ThemeColors().statusWarning);
 			case kError:
-				return dmui::ToImVec4(ThemeColors().statusError);
+				return dmui::ToUIVec4(ThemeColors().statusError);
 			case kNormal:
-				return ImGui::GetStyleColorVec4(ImGuiCol_Text);
+				return dmui::ui::GetStyleColor(dmui::ui::Color::kText);
 			}
-			return ImGui::GetStyleColorVec4(ImGuiCol_Text);
+			return dmui::ui::GetStyleColor(dmui::ui::Color::kText);
 		}
 
 		[[nodiscard]] std::string_view FilterLabel(
@@ -55,15 +55,15 @@ namespace Addictol::Menu
 		{
 			const auto total =
 				a_counts[0] + a_counts[1] + a_counts[2] + a_counts[3] + a_counts[4];
-			ImGui::Text(
+			dmui::ui::Text(
 				"Modules: %llu installed, %llu disabled, %llu skipped",
 				static_cast<unsigned long long>(a_counts[0]),
 				static_cast<unsigned long long>(a_counts[1]),
 				static_cast<unsigned long long>(a_counts[2]));
-			ImGui::TextColored(
+			dmui::ui::TextColored(
 				a_counts[3] == 0 && a_counts[4] == 0 ?
-					dmui::ToImVec4(ThemeColors().statusSuccess) :
-					dmui::ToImVec4(ThemeColors().statusError),
+					dmui::ToUIVec4(ThemeColors().statusSuccess) :
+					dmui::ToUIVec4(ThemeColors().statusError),
 				"%llu failed query, %llu failed install (%llu total)",
 				static_cast<unsigned long long>(a_counts[3]),
 				static_cast<unsigned long long>(a_counts[4]),
@@ -72,47 +72,47 @@ namespace Addictol::Menu
 
 		void DrawFilters(ModulesPageState& a_state) noexcept
 		{
-			if (!ImGui::BeginTable(
+			if (!dmui::ui::BeginTable(
 					"##module_filters",
 					2,
-					ImGuiTableFlags_SizingStretchProp))
+					dmui::ui::TableFlags::kSizingStretchProp))
 				return;
-			ImGui::TableSetupColumn("Search", ImGuiTableColumnFlags_WidthStretch, 3.0f);
-			ImGui::TableSetupColumn("Outcome", ImGuiTableColumnFlags_WidthStretch, 1.0f);
-			ImGui::TableHeadersRow();
-			ImGui::TableNextRow();
-			(void)ImGui::TableSetColumnIndex(0);
+			dmui::ui::TableSetupColumn("Search", dmui::ui::TableColumnFlags::kWidthStretch, 3.0f);
+			dmui::ui::TableSetupColumn("Outcome", dmui::ui::TableColumnFlags::kWidthStretch, 1.0f);
+			dmui::ui::TableHeadersRow();
+			dmui::ui::TableNextRow();
+			(void)dmui::ui::TableSetColumnIndex(0);
 			(void)Client().DrawSearchInput(
 				"ModuleSearchBar",
 				"Search modules...",
 				a_state.search);
-			(void)ImGui::TableSetColumnIndex(1);
-			ImGui::SetNextItemWidth(-1.0f);
+			(void)dmui::ui::TableSetColumnIndex(1);
+			dmui::ui::SetNextItemWidth(-1.0f);
 			const auto preview = FilterLabel(a_state.filter);
-			if (ImGui::BeginCombo(
+			if (dmui::ui::BeginCombo(
 					"##module_outcome_filter",
 					preview.data()))
 			{
 				for (const auto& option : kModuleOutcomeFilters)
 				{
 					const auto selected = option.filter == a_state.filter;
-					if (ImGui::Selectable(option.label.data(), selected))
+					if (dmui::ui::Selectable(option.label.data(), selected))
 						a_state.filter = option.filter;
 					if (selected)
-						ImGui::SetItemDefaultFocus();
+						dmui::ui::SetItemDefaultFocus();
 				}
-				ImGui::EndCombo();
+				dmui::ui::EndCombo();
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 
 		void DrawModuleName(const ModuleStatusSnapshot& a_status) noexcept
 		{
-			ImGui::TextUnformatted(a_status.name.c_str());
+			dmui::ui::TextUnformatted(a_status.name.c_str());
 			if (!a_status.stage.empty())
 			{
-				ImGui::SameLine();
-				ImGui::TextDisabled("(%s)", a_status.stage.c_str());
+				dmui::ui::SameLine();
+				dmui::ui::TextDisabled("(%s)", a_status.stage.c_str());
 			}
 		}
 
@@ -120,8 +120,8 @@ namespace Addictol::Menu
 		{
 			if (a_status.outcome == ModuleOutcome::kSkipped)
 			{
-				ImGui::TextColored(
-					dmui::ToImVec4(ThemeColors().statusWarning),
+				dmui::ui::TextColored(
+					dmui::ToUIVec4(ThemeColors().statusWarning),
 					"%s",
 					a_status.skipReason.c_str());
 			}
@@ -129,13 +129,13 @@ namespace Addictol::Menu
 			{
 				if (!a_status.settingKey.empty())
 				{
-					ImGui::Text(
+					dmui::ui::Text(
 						"Setting: [%s] %s",
 						a_status.settingSection.c_str(),
 						a_status.settingKey.c_str());
 				}
 				else
-					ImGui::TextUnformatted("Disabled by configuration");
+					dmui::ui::TextUnformatted("Disabled by configuration");
 			}
 		}
 
@@ -143,22 +143,22 @@ namespace Addictol::Menu
 			const std::vector<ModuleStatusSnapshot>& a_statuses,
 			const ModulesPageState& a_state) noexcept
 		{
-			const auto height = (std::max)(ImGui::GetContentRegionAvail().y, 160.0f);
-			if (!ImGui::BeginTable(
+			const auto height = (std::max)(dmui::ui::GetContentRegionAvail().y, 160.0f);
+			if (!dmui::ui::BeginTable(
 					"##modules",
 					3,
-					ImGuiTableFlags_BordersInnerH |
-						ImGuiTableFlags_RowBg |
-						ImGuiTableFlags_ScrollY |
-						ImGuiTableFlags_SizingStretchProp,
+					dmui::ui::TableFlags::kBordersInnerH |
+						dmui::ui::TableFlags::kRowBg |
+						dmui::ui::TableFlags::kScrollY |
+						dmui::ui::TableFlags::kSizingStretchProp,
 					{ 0.0f, height }))
 				return;
 
-			ImGui::TableSetupScrollFreeze(0, 1);
-			ImGui::TableSetupColumn("Module", ImGuiTableColumnFlags_WidthStretch, 2.0f);
-			ImGui::TableSetupColumn("Outcome", ImGuiTableColumnFlags_WidthStretch, 1.0f);
-			ImGui::TableSetupColumn("Reason / detail", ImGuiTableColumnFlags_WidthStretch, 2.0f);
-			ImGui::TableHeadersRow();
+			dmui::ui::TableSetupScrollFreeze(0, 1);
+			dmui::ui::TableSetupColumn("Module", dmui::ui::TableColumnFlags::kWidthStretch, 2.0f);
+			dmui::ui::TableSetupColumn("Outcome", dmui::ui::TableColumnFlags::kWidthStretch, 1.0f);
+			dmui::ui::TableSetupColumn("Reason / detail", dmui::ui::TableColumnFlags::kWidthStretch, 2.0f);
+			dmui::ui::TableHeadersRow();
 
 			size_t visibleCount{ 0 };
 			for (const auto& status : a_statuses)
@@ -170,29 +170,29 @@ namespace Addictol::Menu
 						a_state.filter))
 					continue;
 				++visibleCount;
-				ImGui::PushID(static_cast<int>(visibleCount));
-				ImGui::TableNextRow();
-				(void)ImGui::TableSetColumnIndex(0);
+				dmui::ui::PushID(static_cast<int>(visibleCount));
+				dmui::ui::TableNextRow();
+				(void)dmui::ui::TableSetColumnIndex(0);
 				DrawModuleName(status);
-				(void)ImGui::TableSetColumnIndex(1);
+				(void)dmui::ui::TableSetColumnIndex(1);
 				const auto presentation = ClassifyModuleOutcome(status.outcome);
-				ImGui::TextColored(
+				dmui::ui::TextColored(
 					OutcomeColor(presentation.severity),
 					"%.*s",
 					static_cast<int>(presentation.label.size()),
 					presentation.label.data());
-				(void)ImGui::TableSetColumnIndex(2);
+				(void)dmui::ui::TableSetColumnIndex(2);
 				DrawModuleDetail(status);
-				ImGui::PopID();
+				dmui::ui::PopID();
 			}
 
 			if (visibleCount == 0)
 			{
-				ImGui::TableNextRow();
-				(void)ImGui::TableSetColumnIndex(0);
-				ImGui::TextDisabled("No modules match the current search and outcome filter.");
+				dmui::ui::TableNextRow();
+				(void)dmui::ui::TableSetColumnIndex(0);
+				dmui::ui::TextDisabled("No modules match the current search and outcome filter.");
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 	}
 
@@ -207,9 +207,9 @@ namespace Addictol::Menu
 			"Modules",
 			DearModdingUI::PhosphorGlyph::kPuzzlePiece);
 		DrawSummary(counts);
-		ImGui::Spacing();
+		dmui::ui::Spacing();
 		DrawFilters(state);
-		ImGui::Spacing();
+		dmui::ui::Spacing();
 		DrawModulesTable(statuses, state);
 	}
 }

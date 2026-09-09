@@ -3,7 +3,7 @@
 #include <Core/AdPlugin.h>
 #include <Menu/AdMenu.h>
 
-#include <DearModdingUI/ImGuiForward.h>
+#include <DearModdingUI/UI.h>
 
 #include <array>
 #include <cstdio>
@@ -53,17 +53,17 @@ namespace Addictol::Menu
 		{
 			{
 				const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_TITLE };
-				ImGui::TextUnformatted("Welcome to Addictol");
+				dmui::ui::TextUnformatted("Welcome to Addictol");
 			}
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 			{
 				const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
-				ImGui::TextWrapped(
+				dmui::ui::TextWrapped(
 					"Addictol combines engine fixes, crash fixes, and performance patches "
 					"for Fallout 4 in a single F4SE plugin. Use the pages on the left to "
 					"inspect live diagnostics and runtime behavior.");
 			}
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 			(void)Client().DrawSectionHeader(
 				"Overview",
 				DearModdingUI::FindPhosphorSlugGlyphOrZero("info"));
@@ -74,26 +74,26 @@ namespace Addictol::Menu
 				counts[0] + counts[1] + counts[2] + counts[3] + counts[4];
 			static const auto runtime =
 				REX::FModule::GetExecutingModule().GetFileVersion();
-			ImGui::Text(
+			dmui::ui::Text(
 				"Game runtime: %u.%u.%u.%u",
 				runtime.major(),
 				runtime.minor(),
 				runtime.patch(),
 				runtime.build());
-			ImGui::Text(
+			dmui::ui::Text(
 				"Modules: %llu installed, %llu disabled, %llu skipped",
 				static_cast<unsigned long long>(counts[0]),
 				static_cast<unsigned long long>(counts[1]),
 				static_cast<unsigned long long>(counts[2]));
-			ImGui::TextColored(
+			dmui::ui::TextColored(
 				counts[3] == 0 && counts[4] == 0 ?
-					dmui::ToImVec4(ThemeColors().statusSuccess) :
-					dmui::ToImVec4(ThemeColors().statusError),
+					dmui::ToUIVec4(ThemeColors().statusSuccess) :
+					dmui::ToUIVec4(ThemeColors().statusError),
 				"%llu failed query, %llu failed install (%llu total)",
 				static_cast<unsigned long long>(counts[3]),
 				static_cast<unsigned long long>(counts[4]),
 				static_cast<unsigned long long>(total));
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 		}
 
 		void DrawQuickLinksSection() noexcept
@@ -111,7 +111,7 @@ namespace Addictol::Menu
 					"Menu: project link row failed, result {}."sv,
 					DMUI_ResultToString(result));
 			}
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 		}
 
 		void DrawFaqSection() noexcept
@@ -128,13 +128,13 @@ namespace Addictol::Menu
 				"On the state of F4SE mods",
 				DearModdingUI::PhosphorGlyph::kShieldCheck);
 			const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
-			ImGui::TextWrapped(
+			dmui::ui::TextWrapped(
 				"CommonLibF4 is GPL-3.0. If a plugin links it and ships without "
 				"source, that is a license violation. Not a style disagreement, "
 				"not a preference. A violation. You are entitled to the source. "
 				"Ask for it.");
-			ImGui::Spacing();
-			ImGui::TextWrapped(
+			dmui::ui::Spacing();
+			dmui::ui::TextWrapped(
 				"The rest isn't a legal matter, just bad practice. Code generated "
 				"by a model, understood by nobody, shipped as an engine fix with "
 				"no measurement behind it. Implementations lifted out of other "
@@ -143,26 +143,26 @@ namespace Addictol::Menu
 				"base and handing two mods one more way to conflict. Releases "
 				"shaped for attention and donation points rather than for being "
 				"correct.");
-			ImGui::Spacing();
-			ImGui::TextWrapped("Don't take our word for any of it. Check.");
-			ImGui::Spacing();
+			dmui::ui::Spacing();
+			dmui::ui::TextWrapped("Don't take our word for any of it. Check.");
+			dmui::ui::Spacing();
 
-			ImGui::TextWrapped("Before you install:");
-			ImGui::Indent();
+			dmui::ui::TextWrapped("Before you install:");
+			dmui::ui::Indent();
 			for (const auto& entry : kModChecks)
 			{
 				char text[512]{};
 				std::snprintf(text, sizeof(text), "%s %s", entry.check, entry.detail);
 				(void)Client().DrawBulletText(text);
 			}
-			ImGui::Unindent();
-			ImGui::Spacing();
+			dmui::ui::Unindent();
+			dmui::ui::Spacing();
 
-			ImGui::TextWrapped(
+			dmui::ui::TextWrapped(
 				"New to this? The Midnight Ride is a maintained, opinionated "
 				"guide that gets you to a stable Fallout 4 without guesswork. "
 				"Start there, then add.");
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 		}
 	}
 
@@ -200,6 +200,6 @@ namespace Addictol::Menu
 			static_cast<unsigned long long>(counts[3]),
 			static_cast<unsigned long long>(counts[4]),
 			static_cast<unsigned long long>(total));
-		ImGui::SetClipboardText(summary);
+		dmui::ui::SetClipboardText(summary);
 	}
 }

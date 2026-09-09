@@ -5,7 +5,7 @@
 #include <REX/REX.h>
 
 #include <DearModdingUI/Client.h>
-#include <DearModdingUI/ImGuiForward.h>
+#include <DearModdingUI/UI.h>
 
 #include <cstdint>
 
@@ -15,7 +15,7 @@ namespace Addictol::Menu
 
 	inline constexpr dmui::ClientOptions kClientOptions{
 		.requiredServices = DMUI_HOST_SERVICE_EXTERNAL_OPEN,
-		.minimumForwardingVersion = DMUI_FORWARDING_VERSION_CURRENT
+		.minimumUIAPISize = DMUI_UI_API_PLOT_LINES_SIZE
 	};
 	inline constexpr dmui::CategoryDescriptor kGeneralCategory{
 		.id = "general",
@@ -36,9 +36,13 @@ namespace Addictol::Menu
 		.fontRole = DMUI_FONT_ROLE_SUBTEXT,
 		.tone = dmui::TextTone::kMuted
 	};
-	inline constexpr ImGuiTableFlags kDiagnosticTableFlags =
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg |
-		ImGuiTableFlags_BordersInner | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_ScrollY;
+	inline constexpr dmui::ui::TableFlags kDiagnosticTableFlags =
+		dmui::ui::TableFlags::kResizable | dmui::ui::TableFlags::kRowBg |
+		dmui::ui::TableFlags::kBordersInner | dmui::ui::TableFlags::kBordersOuter | dmui::ui::TableFlags::kScrollY;
+	inline constexpr dmui::ui::TableFlags kStaticDiagnosticTableFlags =
+		static_cast<dmui::ui::TableFlags>(
+			static_cast<uint32_t>(kDiagnosticTableFlags) &
+			~static_cast<uint32_t>(dmui::ui::TableFlags::kScrollY));
 
 	struct Panel
 	{

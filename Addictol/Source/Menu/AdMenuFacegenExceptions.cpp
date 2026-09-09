@@ -6,7 +6,7 @@
 #include <Menu/AdMenuFormatting.h>
 #include <Modules/AdFacegenExceptions.h>
 
-#include <DearModdingUI/ImGuiForward.h>
+#include <DearModdingUI/UI.h>
 
 #include <algorithm>
 #include <array>
@@ -70,9 +70,9 @@ namespace Addictol::Menu
 			const auto style = StyleMetrics();
 			if (!style)
 				return 0.0f;
-			const auto valueWidth = ImGui::CalcTextSize("0x00000000").x;
+			const auto valueWidth = dmui::ui::CalcTextSize("0x00000000").x;
 			const auto headingWidth =
-				ImGui::CalcTextSize(
+				dmui::ui::CalcTextSize(
 					a_heading.data(),
 					a_heading.data() + a_heading.size()).x;
 			return (std::max)(valueWidth, headingWidth) +
@@ -84,8 +84,8 @@ namespace Addictol::Menu
 			const auto style = StyleMetrics();
 			if (!style)
 				return 0.0f;
-			return ImGui::CalcTextSize("Edit").x +
-				ImGui::CalcTextSize("Remove").x +
+			return dmui::ui::CalcTextSize("Edit").x +
+				dmui::ui::CalcTextSize("Remove").x +
 				style->framePadding.x * 4.0f +
 				style->itemSpacing.x +
 				style->cellPadding.x * 2.0f;
@@ -183,23 +183,23 @@ namespace Addictol::Menu
 				pluginName.c_str(),
 				_TRUNCATE);
 
-			ImGui::TextUnformatted("Unique name");
-			ImGui::SetNextItemWidth(-FLT_MIN);
-			if (ImGui::InputText(
+			dmui::ui::TextUnformatted("Unique name");
+			dmui::ui::SetNextItemWidth(-FLT_MIN);
+			if (dmui::ui::InputText(
 					"##facegen_exception_key",
 					keyBuffer.data(),
 					keyBuffer.size()))
 				g_pageState.editor.key = keyBuffer.data();
-			ImGui::TextUnformatted("FormID");
-			ImGui::SetNextItemWidth(-FLT_MIN);
-			if (ImGui::InputText(
+			dmui::ui::TextUnformatted("FormID");
+			dmui::ui::SetNextItemWidth(-FLT_MIN);
+			if (dmui::ui::InputText(
 					"##facegen_exception_formid",
 					formIDBuffer.data(),
 					formIDBuffer.size()))
 				g_pageState.editor.formID = formIDBuffer.data();
-			ImGui::TextUnformatted("Plugin name (optional)");
-			ImGui::SetNextItemWidth(-FLT_MIN);
-			if (ImGui::InputText(
+			dmui::ui::TextUnformatted("Plugin name (optional)");
+			dmui::ui::SetNextItemWidth(-FLT_MIN);
+			if (dmui::ui::InputText(
 					"##facegen_exception_plugin",
 					pluginBuffer.data(),
 					pluginBuffer.size()))
@@ -233,8 +233,8 @@ namespace Addictol::Menu
 				ReportPresentationResult(dmui::DrawStyledText(
 					Client(), validation.message, { .tone = dmui::TextTone::kError }));
 
-			ImGui::BeginDisabled(!validation.valid);
-			if (ImGui::Button(adding ? "Add entry" : "Update entry"))
+			dmui::ui::BeginDisabled(!validation.valid);
+			if (dmui::ui::Button(adding ? "Add entry" : "Update entry"))
 			{
 				auto entry = g_pageState.editor;
 				TrimFacegenExceptionField(entry.key);
@@ -254,23 +254,23 @@ namespace Addictol::Menu
 				g_pageState.editingIndex.reset();
 				g_pageState.editor = {};
 			}
-			ImGui::EndDisabled();
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
+			dmui::ui::EndDisabled();
+			dmui::ui::SameLine();
+			if (dmui::ui::Button("Cancel"))
 			{
 				g_pageState.editingIndex.reset();
 				g_pageState.editor = {};
 			}
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 		}
 
 		void DrawEditActions(const FacegenExceptionSnapshot& a_snapshot)
 		{
-			if (ImGui::Button("Add exception"))
+			if (dmui::ui::Button("Add exception"))
 				BeginAdd();
-			ImGui::SameLine();
-			ImGui::BeginDisabled(!g_pageState.dirty);
-			if (ImGui::Button("Save changes"))
+			dmui::ui::SameLine();
+			dmui::ui::BeginDisabled(!g_pageState.dirty);
+			if (dmui::ui::Button("Save changes"))
 			{
 				const auto result =
 					SaveFacegenExceptions(g_pageState.entries);
@@ -289,15 +289,15 @@ namespace Addictol::Menu
 						result.error.c_str());
 				}
 			}
-			ImGui::EndDisabled();
-			ImGui::SameLine();
-			ImGui::BeginDisabled(!g_pageState.dirty);
-			if (ImGui::Button("Discard changes"))
+			dmui::ui::EndDisabled();
+			dmui::ui::SameLine();
+			dmui::ui::BeginDisabled(!g_pageState.dirty);
+			if (dmui::ui::Button("Discard changes"))
 				RefreshDraft(a_snapshot);
-			ImGui::EndDisabled();
-			ImGui::SameLine();
-			ImGui::BeginDisabled(g_pageState.dirty);
-			if (ImGui::Button("Reload from file"))
+			dmui::ui::EndDisabled();
+			dmui::ui::SameLine();
+			dmui::ui::BeginDisabled(g_pageState.dirty);
+			if (dmui::ui::Button("Reload from file"))
 			{
 				const auto result = ReloadFacegenExceptions();
 				RefreshDraft(GetFacegenExceptionSnapshot());
@@ -315,7 +315,7 @@ namespace Addictol::Menu
 						result.error.c_str());
 				}
 			}
-			ImGui::EndDisabled();
+			dmui::ui::EndDisabled();
 
 			if (g_pageState.dirty)
 				ReportPresentationResult(dmui::DrawStyledText(
@@ -434,28 +434,28 @@ namespace Addictol::Menu
 			ReportPresentationResult(dmui::DrawStyledText(Client(), "Built-in primary exceptions", kHeadingText));
 			ReportPresentationResult(dmui::DrawStyledText(
 				Client(), "These six exceptions are configured without user INI entries.", kMutedText));
-			if (!ImGui::BeginTable(
+			if (!dmui::ui::BeginTable(
 					"##facegen_primary_exceptions",
 					2,
-					kDiagnosticTableFlags & ~ImGuiTableFlags_ScrollY))
+					kStaticDiagnosticTableFlags))
 				return;
 
-			ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, 3.0f);
-			ImGui::TableSetupColumn(
+			dmui::ui::TableSetupColumn("Name", dmui::ui::TableColumnFlags::kWidthStretch, 3.0f);
+			dmui::ui::TableSetupColumn(
 				"FormID",
-				ImGuiTableColumnFlags_WidthFixed,
+				dmui::ui::TableColumnFlags::kWidthFixed,
 				FormIDColumnWidth("FormID"));
-			ImGui::TableHeadersRow();
+			dmui::ui::TableHeadersRow();
 			for (const auto& exception : kFacegenPrimaryExceptions)
 			{
-				ImGui::TableNextRow();
-				(void)ImGui::TableSetColumnIndex(0);
+				dmui::ui::TableNextRow();
+				(void)dmui::ui::TableSetColumnIndex(0);
 				ReportPresentationResult(dmui::DrawStyledText(Client(), exception.name, kBodyText));
-				(void)ImGui::TableSetColumnIndex(1);
+				(void)dmui::ui::TableSetColumnIndex(1);
 				ReportPresentationResult(dmui::DrawStyledText(
 					Client(), MenuUi::Print("0x%08X", exception.formID), kBodyText));
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 
 		void DrawEmptyEntryState(const FacegenExceptionSnapshot& a_snapshot) noexcept
@@ -501,69 +501,69 @@ namespace Addictol::Menu
 			}
 
 			const auto minimumHeight =
-				ImGui::GetTextLineHeightWithSpacing() * 6.0f;
+				dmui::ui::GetTextLineHeightWithSpacing() * 6.0f;
 			const auto height =
-				(std::max)(ImGui::GetContentRegionAvail().y, minimumHeight);
-			if (!ImGui::BeginTable(
+				(std::max)(dmui::ui::GetContentRegionAvail().y, minimumHeight);
+			if (!dmui::ui::BeginTable(
 					"##facegen_user_exceptions",
 					6,
 					kDiagnosticTableFlags,
 					{ 0.0f, height }))
 				return;
 
-			ImGui::TableSetupScrollFreeze(0, 1);
-			ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthStretch, 1.5f);
-			ImGui::TableSetupColumn("FormID", ImGuiTableColumnFlags_WidthStretch, 1.2f);
-			ImGui::TableSetupColumn("Plugin", ImGuiTableColumnFlags_WidthStretch, 1.5f);
-			ImGui::TableSetupColumn(
+			dmui::ui::TableSetupScrollFreeze(0, 1);
+			dmui::ui::TableSetupColumn("Key", dmui::ui::TableColumnFlags::kWidthStretch, 1.5f);
+			dmui::ui::TableSetupColumn("FormID", dmui::ui::TableColumnFlags::kWidthStretch, 1.2f);
+			dmui::ui::TableSetupColumn("Plugin", dmui::ui::TableColumnFlags::kWidthStretch, 1.5f);
+			dmui::ui::TableSetupColumn(
 				"Resolved FormID",
-				ImGuiTableColumnFlags_WidthFixed,
+				dmui::ui::TableColumnFlags::kWidthFixed,
 				FormIDColumnWidth("Resolved FormID"));
-			ImGui::TableSetupColumn("Status", ImGuiTableColumnFlags_WidthStretch, 1.2f);
-			ImGui::TableSetupColumn(
+			dmui::ui::TableSetupColumn("Status", dmui::ui::TableColumnFlags::kWidthStretch, 1.2f);
+			dmui::ui::TableSetupColumn(
 				"Actions",
-				ImGuiTableColumnFlags_WidthFixed,
+				dmui::ui::TableColumnFlags::kWidthFixed,
 				ActionsColumnWidth());
-			ImGui::TableHeadersRow();
+			dmui::ui::TableHeadersRow();
 
 			for (size_t index = 0; index < g_pageState.entries.size(); ++index)
 			{
 				const auto& entry = g_pageState.entries[index];
 				const auto validation =
 					ValidateFacegenException(entry, g_pageState.entries, index);
-				ImGui::PushID(static_cast<int>(index));
-				ImGui::TableNextRow();
-				(void)ImGui::TableSetColumnIndex(0);
+				dmui::ui::PushID(static_cast<int>(index));
+				dmui::ui::TableNextRow();
+				(void)dmui::ui::TableSetColumnIndex(0);
 				ReportPresentationResult(dmui::DrawStyledText(Client(), entry.key, kBodyText));
-				(void)ImGui::TableSetColumnIndex(1);
+				(void)dmui::ui::TableSetColumnIndex(1);
 				ReportPresentationResult(dmui::DrawStyledText(Client(), entry.formID, kBodyText));
-				(void)ImGui::TableSetColumnIndex(2);
+				(void)dmui::ui::TableSetColumnIndex(2);
 				if (entry.pluginName && !entry.pluginName->empty())
 					ReportPresentationResult(dmui::DrawStyledText(Client(), *entry.pluginName, kBodyText));
 				else
 					ReportPresentationResult(dmui::DrawStyledText(Client(), "-", kMutedText));
-				(void)ImGui::TableSetColumnIndex(3);
+				(void)dmui::ui::TableSetColumnIndex(3);
 				if (validation.resolvedFormID)
 					ReportPresentationResult(dmui::DrawStyledText(Client(), MenuUi::Print(
 						"0x%08X",
 						*validation.resolvedFormID), kBodyText));
 				else
 					ReportPresentationResult(dmui::DrawStyledText(Client(), "-", kMutedText));
-				(void)ImGui::TableSetColumnIndex(4);
+				(void)dmui::ui::TableSetColumnIndex(4);
 				DrawStatus(validation.status);
-				(void)ImGui::TableSetColumnIndex(5);
-				if (ImGui::Button("Edit"))
+				(void)dmui::ui::TableSetColumnIndex(5);
+				if (dmui::ui::Button("Edit"))
 					BeginEdit(index);
-				ImGui::SameLine();
-				if (ImGui::Button("Remove"))
+				dmui::ui::SameLine();
+				if (dmui::ui::Button("Remove"))
 				{
 					RemoveEntry(index);
-					ImGui::PopID();
+					dmui::ui::PopID();
 					break;
 				}
-				ImGui::PopID();
+				dmui::ui::PopID();
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 	}
 
@@ -577,11 +577,11 @@ namespace Addictol::Menu
 			"Facegen Exceptions",
 			DearModdingUI::PhosphorGlyph::kFiles);
 		DrawOverview(snapshot, facegenEnabled);
-		ImGui::Spacing();
+		dmui::ui::Spacing();
 		DrawConfigurationState(snapshot, facegenEnabled);
-		ImGui::Spacing();
+		dmui::ui::Spacing();
 		DrawPrimaryExceptions();
-		ImGui::Spacing();
+		dmui::ui::Spacing();
 		DrawUserExceptions(snapshot);
 	}
 }

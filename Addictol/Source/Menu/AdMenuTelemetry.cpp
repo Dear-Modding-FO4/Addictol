@@ -4,7 +4,7 @@
 #include <Menu/AdMenuTelemetry.h>
 #include <Menu/AdMenuFormatting.h>
 
-#include <DearModdingUI/ImGuiForward.h>
+#include <DearModdingUI/UI.h>
 
 #include <array>
 #include <cfloat>
@@ -130,22 +130,22 @@ namespace Addictol
 				s_cache.current.values[a_index] : MetricValue{};
 			const auto display = FormatTelemetryValue(value, descriptor.unit);
 
-			ImGui::TableNextRow();
-			(void)ImGui::TableNextColumn();
-			ImGui::TextUnformatted(a_label.data(), a_label.data() + a_label.size());
-			(void)ImGui::TableNextColumn();
+			dmui::ui::TableNextRow();
+			(void)dmui::ui::TableNextColumn();
+			dmui::ui::TextUnformatted(a_label.data(), a_label.data() + a_label.size());
+			(void)dmui::ui::TableNextColumn();
 			DrawDisplay(display);
-			(void)ImGui::TableNextColumn();
+			(void)dmui::ui::TableNextColumn();
 			if (display.progress)
 			{
 				const auto color = display.fraction >= 0.9f ?
-					dmui::ToImVec4(Menu::ThemeColors().error) :
+					dmui::ToUIVec4(Menu::ThemeColors().error) :
 					display.fraction >= 0.75f ?
-						dmui::ToImVec4(Menu::ThemeColors().warning) :
-						dmui::ToImVec4(Menu::ThemeColors().accentMuted);
-				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
-				ImGui::ProgressBar(display.fraction, ImVec2(-FLT_MIN, 0.0f), "");
-				ImGui::PopStyleColor();
+						dmui::ToUIVec4(Menu::ThemeColors().warning) :
+						dmui::ToUIVec4(Menu::ThemeColors().accentMuted);
+				dmui::ui::PushStyleColor(dmui::ui::Color::kPlotHistogram, color);
+				dmui::ui::ProgressBar(display.fraction, dmui::ui::Vec2(-FLT_MIN, 0.0f), "");
+				dmui::ui::PopStyleColor();
 			}
 			else if (IsCumulativeTelemetryMetric(descriptor.key))
 			{
@@ -166,10 +166,10 @@ namespace Addictol
 				s_cache.current.values[index].valid &&
 				s_cache.current.intervalMs > 0.0;
 
-			ImGui::TableNextRow();
-			(void)ImGui::TableNextColumn();
-			ImGui::TextUnformatted("frame.fps");
-			(void)ImGui::TableNextColumn();
+			dmui::ui::TableNextRow();
+			(void)dmui::ui::TableNextColumn();
+			dmui::ui::TextUnformatted("frame.fps");
+			(void)dmui::ui::TableNextColumn();
 			if (valid)
 			{
 				ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
@@ -179,22 +179,22 @@ namespace Addictol
 			}
 			else
 				ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "-", Menu::kMutedText));
-			(void)ImGui::TableNextColumn();
+			(void)dmui::ui::TableNextColumn();
 		}
 
 		template<class Label>
 		void DrawMetricTable(const char* a_id, Label&& a_label, bool a_fps = false) noexcept
 		{
 			constexpr auto flags =
-				ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg |
-				ImGuiTableFlags_BordersInner | ImGuiTableFlags_BordersOuter;
-			if (!ImGui::BeginTable(a_id, 3, flags))
+				dmui::ui::TableFlags::kResizable | dmui::ui::TableFlags::kRowBg |
+				dmui::ui::TableFlags::kBordersInner | dmui::ui::TableFlags::kBordersOuter;
+			if (!dmui::ui::BeginTable(a_id, 3, flags))
 				return;
 
-			ImGui::TableSetupColumn("Metric", ImGuiTableColumnFlags_WidthStretch, 0.52f);
-			ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, 150.0f);
-			ImGui::TableSetupColumn("Change / usage", ImGuiTableColumnFlags_WidthStretch, 0.30f);
-			ImGui::TableHeadersRow();
+			dmui::ui::TableSetupColumn("Metric", dmui::ui::TableColumnFlags::kWidthStretch, 0.52f);
+			dmui::ui::TableSetupColumn("Value", dmui::ui::TableColumnFlags::kWidthFixed, 150.0f);
+			dmui::ui::TableSetupColumn("Change / usage", dmui::ui::TableColumnFlags::kWidthStretch, 0.30f);
+			dmui::ui::TableHeadersRow();
 			const auto columns = Telemetry::Hub().Columns();
 			if (a_fps)
 				DrawFpsRow(columns);
@@ -204,7 +204,7 @@ namespace Addictol
 				if (!label.empty())
 					DrawMetricRow(index, label, columns);
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 
 		void DrawOverviewMetrics() noexcept
@@ -243,7 +243,7 @@ namespace Addictol
 					Menu::Client(), "No valid frame-time samples are available.", Menu::kMutedText));
 				return;
 			}
-			ImGui::PlotLines(
+			dmui::ui::PlotLines(
 				"##TelemetryFrameTime",
 				s_cache.frameTimes.data(),
 				static_cast<int>(s_cache.frameTimeCount),
@@ -251,7 +251,7 @@ namespace Addictol
 				"Mean frame time (ms)",
 				FLT_MAX,
 				FLT_MAX,
-				ImVec2(0.0f, 100.0f));
+				dmui::ui::Vec2(0.0f, 100.0f));
 		}
 
 		void DrawFrameRecords() noexcept
@@ -268,79 +268,79 @@ namespace Addictol
 			if (!style)
 				return;
 			const auto tableHeight =
-				ImGui::GetTextLineHeightWithSpacing() *
+				dmui::ui::GetTextLineHeightWithSpacing() *
 					static_cast<float>(s_cache.frameRecords.size() + 1) +
 				style->cellPadding.y * 2.0f;
-			if (!ImGui::BeginTable(
+			if (!dmui::ui::BeginTable(
 					"TelemetryFrameRecords",
 					2,
 					Menu::kDiagnosticTableFlags,
-					ImVec2(0.0f, tableHeight)))
+					dmui::ui::Vec2(0.0f, tableHeight)))
 				return;
-			ImGui::TableSetupColumn("QPC time", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn("Frame time", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableHeadersRow();
+			dmui::ui::TableSetupColumn("QPC time", dmui::ui::TableColumnFlags::kWidthStretch);
+			dmui::ui::TableSetupColumn("Frame time", dmui::ui::TableColumnFlags::kWidthFixed);
+			dmui::ui::TableHeadersRow();
 			const auto frequency = Addictol::GetQpcFrequency();
 			for (size_t index = 0; index < s_cache.frameRecordCount; ++index)
 			{
 				const auto& record = s_cache.frameRecords[index];
 				const auto seconds = frequency ?
 					static_cast<double>(record.qpc) / static_cast<double>(frequency) : 0.0;
-				ImGui::TableNextRow();
-				(void)ImGui::TableNextColumn();
+				dmui::ui::TableNextRow();
+				(void)dmui::ui::TableNextColumn();
 				ReportPresentationResult(dmui::DrawStyledText(
 					Menu::Client(), Print("%.3f s", seconds), Menu::kBodyText));
-				(void)ImGui::TableNextColumn();
+				(void)dmui::ui::TableNextColumn();
 				ReportPresentationResult(dmui::DrawStyledText(
 					Menu::Client(), FormatMs(static_cast<double>(record.durationUs) / 1000.0),
 					Menu::kBodyText));
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 
 		void DrawSeries() noexcept
 		{
 			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Zlib series", Menu::kHeadingText));
-			if (!ImGui::BeginTable("TelemetrySeries", 5, Menu::kDiagnosticTableFlags, ImVec2(0.0f, 260.0f)))
+			if (!dmui::ui::BeginTable("TelemetrySeries", 5, Menu::kDiagnosticTableFlags, dmui::ui::Vec2(0.0f, 260.0f)))
 				return;
-			ImGui::TableSetupColumn("Series", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn("Bucket", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn("Calls", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("Ticks", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("Bytes", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableHeadersRow();
+			dmui::ui::TableSetupColumn("Series", dmui::ui::TableColumnFlags::kWidthStretch);
+			dmui::ui::TableSetupColumn("Bucket", dmui::ui::TableColumnFlags::kWidthStretch);
+			dmui::ui::TableSetupColumn("Calls", dmui::ui::TableColumnFlags::kWidthFixed);
+			dmui::ui::TableSetupColumn("Ticks", dmui::ui::TableColumnFlags::kWidthFixed);
+			dmui::ui::TableSetupColumn("Bytes", dmui::ui::TableColumnFlags::kWidthFixed);
+			dmui::ui::TableHeadersRow();
 			for (const auto& sample : s_cache.current.series)
 			{
 				if (!sample.calls)
 					continue;
-				ImGui::TableNextRow();
-				(void)ImGui::TableNextColumn();
-				ImGui::TextUnformatted(
+				dmui::ui::TableNextRow();
+				(void)dmui::ui::TableNextColumn();
+				dmui::ui::TextUnformatted(
 					sample.series.data(), sample.series.data() + sample.series.size());
-				(void)ImGui::TableNextColumn();
-				ImGui::TextUnformatted(
+				(void)dmui::ui::TableNextColumn();
+				dmui::ui::TextUnformatted(
 					sample.bucket.data(), sample.bucket.data() + sample.bucket.size());
-				(void)ImGui::TableNextColumn();
+				(void)dmui::ui::TableNextColumn();
 				ReportPresentationResult(dmui::DrawStyledText(
 					Menu::Client(), FormatCount(sample.calls), Menu::kBodyText));
-				(void)ImGui::TableNextColumn();
+				(void)dmui::ui::TableNextColumn();
 				ReportPresentationResult(dmui::DrawStyledText(
 					Menu::Client(), FormatCount(sample.ticks), Menu::kBodyText));
-				(void)ImGui::TableNextColumn();
+				(void)dmui::ui::TableNextColumn();
 				ReportPresentationResult(dmui::DrawStyledText(
 					Menu::Client(), FormatBytes(sample.bytes), Menu::kBodyText));
 			}
-			ImGui::EndTable();
+			dmui::ui::EndTable();
 		}
 
 		void DrawOverviewStatus() noexcept
 		{
-			ImGui::Text(
+			dmui::ui::Text(
 				"Sample %llu  interval %.3f ms  late %.3f ms",
 				static_cast<unsigned long long>(s_cache.current.sequence),
 				s_cache.current.intervalMs,
 				s_cache.current.latenessMs);
-			ImGui::Text(
+			dmui::ui::Text(
 				"Ring overwrites %llu  skipped %llu  frame-record overflows %llu",
 				static_cast<unsigned long long>(s_cache.stats.overwrittenSamples),
 				static_cast<unsigned long long>(s_cache.stats.skippedSamples),
@@ -349,7 +349,7 @@ namespace Addictol
 
 		void DrawPanelFooter() noexcept
 		{
-			ImGui::Separator();
+			dmui::ui::Separator();
 			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
 				"refresh %.3f ms, cadence %u ms",
 				QpcToMilliseconds(s_cache.refreshTicks, Addictol::GetQpcFrequency()),
@@ -366,7 +366,7 @@ namespace Addictol
 		ReportPresentationResult(dmui::DrawStyledText(
 			Menu::Client(), panel.name, { .fontRole = DMUI_FONT_ROLE_TITLE }));
 		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), panel.description, Menu::kMutedText));
-		ImGui::Separator();
+		dmui::ui::Separator();
 		if (!s_cache.hasData)
 		{
 			ReportPresentationResult(dmui::DrawStyledText(
@@ -378,11 +378,11 @@ namespace Addictol
 		if (panel.panel == TelemetryPanel::kOverview)
 		{
 			DrawOverviewStatus();
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 			DrawFrameHistory();
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 			DrawOverviewMetrics();
-			ImGui::Spacing();
+			dmui::ui::Spacing();
 			DrawFrameRecords();
 		}
 		else
@@ -392,7 +392,7 @@ namespace Addictol
 				if (group.panel != panel.panel)
 					continue;
 				DrawMetricGroup(group);
-				ImGui::Spacing();
+				dmui::ui::Spacing();
 			}
 			if (panel.panel == TelemetryPanel::kDecompression)
 				DrawSeries();
