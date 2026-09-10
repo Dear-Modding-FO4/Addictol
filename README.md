@@ -109,9 +109,9 @@ appearance in the host settings page behind the footer gear (or via `DearModding
 | **Log Control** | Session-only record and flush levels with the live output rate. |
 
 Home, Settings, and Modules appear under **General**. Telemetry, Facegen Exceptions, and Log Control
-appear under **Diagnostics**. Addictol supplies explicit canonical Phosphor glyph names for its
-client, categories, and every page; the client uses the pill glyph. `Pics/logo.png` remains the
-README artwork because custom image navigation branding is not part of the host contract. Home uses
+appear under **Diagnostics**. Addictol uses explicit pill branding, while General uses the host's
+automatic semantic icon. Diagnostics and pages declare their own Phosphor icons. `Pics/logo.png`
+remains the README artwork because custom image navigation branding is not part of the host contract. Home uses
 DMUI's icon-bearing section headers and project-link buttons; GitHub and Nexus Mods open in your
 default browser through the host. Use the header action button to copy a diagnostic summary to the
 clipboard.

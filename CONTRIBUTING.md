@@ -111,10 +111,11 @@ and keep external-link actions host-owned.
 Use the shared `dmui::DrawStyledText`, `DrawLabeledValue`, `FontGuard`, and keyed
 `DrawChoice` helpers for menu presentation. `Menu::ReportPresentationResult`
 reports failed shared drawing calls without duplicating their styling or layout.
-Addictol owns explicit canonical Phosphor names for its client, categories, pages,
-and settings groups; do not infer navigation icons from display names. The client
-uses the `pill` glyph. `Pics/logo.png` remains documentation artwork because the
-host contract does not expose custom image navigation branding.
+The client uses the explicit `pill` glyph for Addictol branding. General leaves
+its icon unset so the host's shared semantic resolver chooses it; do not override
+that shared convention. Diagnostics, pages, and settings groups currently declare
+canonical Phosphor icons. `Pics/logo.png` remains documentation artwork because
+the host contract does not expose custom image navigation branding.
 Addictol retains its page-specific text styles and table flags, while
 `AdMenuFormatting` contains only data formatting. Diagnostic values use the Body
 font; they do not request a separate monospace font. Logging, telemetry, facegen

@@ -23,8 +23,7 @@ namespace Addictol::Menu
 	inline constexpr dmui::CategoryDescriptor kGeneralCategory{
 		.id = "general",
 		.displayName = "General",
-		.sortKey = 0,
-		.iconName = "squares-four"
+		.sortKey = 0
 	};
 	inline constexpr dmui::CategoryDescriptor kDiagnosticsCategory{
 		.id = "diagnostics",

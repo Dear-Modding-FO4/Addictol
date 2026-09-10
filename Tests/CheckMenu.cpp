@@ -152,7 +152,7 @@ namespace vmm_tests
 				"diagnostic tables acquired sorting or lost scrolling");
 		});
 
-		runner.test("menu navigation owns explicit canonical icons", [] {
+		runner.test("menu navigation preserves automatic General and explicit branding", [] {
 			require(
 				std::string_view{ kClientIconName } == "pill" &&
 					DearModdingUI::FindPhosphorIconGlyphOrZero(kClientIconName) != 0,
@@ -168,13 +168,14 @@ namespace vmm_tests
 			require(
 				kGeneralCategory.sortKey < kDiagnosticsCategory.sortKey,
 				"General no longer sorts before Diagnostics");
-			for (const auto& category : { kGeneralCategory, kDiagnosticsCategory })
-			{
-				require(
-					category.iconName &&
-						DearModdingUI::FindPhosphorIconGlyphOrZero(category.iconName) != 0,
-					"menu category has no valid explicit icon");
-			}
+			require(
+				kGeneralCategory.iconName == nullptr,
+				"General overrides the host's automatic semantic icon");
+			require(
+				kDiagnosticsCategory.iconName &&
+					DearModdingUI::FindPhosphorIconGlyphOrZero(
+						kDiagnosticsCategory.iconName) != 0,
+				"Diagnostics has no valid explicit icon");
 
 			const std::array pages{
 				kHomePage,
