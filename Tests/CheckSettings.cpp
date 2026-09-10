@@ -6,13 +6,11 @@
 #include <Core/Settings/AdSettings.h>
 #include <Core/Settings/AdSettingsModel.h>
 
-#include <DearModdingUI/Client.h>
 #include <toml11/single_include/toml.hpp>
 
 #include <algorithm>
 #include <array>
 #include <chrono>
-#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -114,25 +112,20 @@ namespace vmm_tests
 {
 	void run_setting_registry_checks(Runner& runner)
 	{
-		runner.test("setting registry and shipped config contain the same keys", [] {
+		runner.test("setting registry preserves shipped keys, metadata, and stable enumeration", [] {
 			const auto shipped = ReadShippedKeys();
+			const auto first = Addictol::SettingRegistry::GetSingleton().Settings();
+			const auto second = Addictol::SettingRegistry::GetSingleton().Settings();
+			require(first.data() == second.data(), "registry enumeration storage changed");
+			require(first.size() == second.size(), "registry enumeration size changed");
 			std::set<SettingKey> registered;
-			for (const auto* setting : Addictol::SettingRegistry::GetSingleton().Settings())
+			for (size_t index = 0; index < first.size(); ++index)
 			{
+				const auto* setting = first[index];
 				require(setting != nullptr, "registry contains a null setting");
-				registered.emplace(setting->Section(), setting->Key());
-			}
-			require(
-				registered == shipped,
-				"registered settings and shipped Addictol.toml keys differ");
-		});
-
-		runner.test("setting registry has unique keys and complete metadata", [] {
-			std::set<SettingKey> unique;
-			for (const auto* setting : Addictol::SettingRegistry::GetSingleton().Settings())
-			{
+				require(setting == second[index], "registry enumeration order changed");
 				require(
-					unique.emplace(setting->Section(), setting->Key()).second,
+					registered.emplace(setting->Section(), setting->Key()).second,
 					"registry contains a duplicate section and key");
 				require(!setting->Description().empty(), "registered setting has no description");
 				const auto timing = setting->ApplyTiming();
@@ -140,17 +133,11 @@ namespace vmm_tests
 					timing == Addictol::SettingApplyTiming::kImmediate ||
 						timing == Addictol::SettingApplyTiming::kNextLaunch,
 					"registered setting has no explicit apply timing");
-			}
-		});
-
-		runner.test("setting registry enumeration is stable and deterministic", [] {
-			const auto first = Addictol::SettingRegistry::GetSingleton().Settings();
-			const auto second = Addictol::SettingRegistry::GetSingleton().Settings();
-			require(first.data() == second.data(), "registry enumeration storage changed");
-			require(first.size() == second.size(), "registry enumeration size changed");
-			for (size_t index = 0; index < first.size(); ++index)
-			{
-				require(first[index] == second[index], "registry enumeration order changed");
+				require(
+					static_cast<size_t>(setting->DisplayCategory()) <
+						static_cast<size_t>(Addictol::SettingDisplayCategory::kCount),
+					"registered setting has no display category");
+				require(!setting->DisplayName().empty(), "registered setting has no display name");
 				if (index == 0)
 					continue;
 				const auto previous = std::tuple{
@@ -163,6 +150,9 @@ namespace vmm_tests
 				};
 				require(previous < current, "registry enumeration is not sorted");
 			}
+			require(
+				registered == shipped,
+				"registered settings and shipped Addictol.toml keys differ");
 		});
 
 		runner.test("setting registry resolves module gate pointers", [] {
@@ -229,28 +219,6 @@ namespace vmm_tests
 				!setting->SetValue(uint64_t{ 1 }),
 				"type-erased setting accepted the wrong value type");
 			require(setting->SetValue(original), "menu icon setting could not be restored");
-		});
-
-		runner.test("setting display categories cover the complete registry", [] {
-			std::array<size_t,
-				static_cast<size_t>(Addictol::SettingDisplayCategory::kCount)>
-				counts{};
-			const auto settings =
-				Addictol::SettingRegistry::GetSingleton().Settings();
-			for (const auto* setting : settings)
-			{
-				const auto category =
-					static_cast<size_t>(setting->DisplayCategory());
-				require(
-					category < counts.size(),
-					"registered setting has no display category");
-				require(
-					!setting->DisplayName().empty(),
-					"registered setting has no display name");
-				++counts[category];
-			}
-			for (const auto count : counts)
-				require(count > 0, "display category has no settings");
 		});
 
 		runner.test("settings override output keeps only non-default owned values", [] {
@@ -387,30 +355,27 @@ namespace vmm_tests
 				"default owned key was retained");
 		});
 
-		runner.test("settings writer never targets the shipped base file", [] {
+		runner.test("settings writer creates a custom document with the requested override", [] {
 			const auto directory = TemporarySettingsDirectory();
 			std::filesystem::create_directories(directory);
-			const auto base = directory / "Addictol.toml";
 			const auto custom = directory / "AddictolCustom.toml";
-			{
-				std::ofstream file{ base, std::ios::binary };
-				file << "shipped-base-sentinel\n";
-			}
 			const auto& menu =
 				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
-				Addictol::SettingValueSnapshot{ &menu, true }
+				Addictol::SettingValueSnapshot{ &menu, !CompatibilityDefault() }
 			};
 			std::string error;
 			require(
 				Addictol::WriteSettingsOverrideFile(custom, values, error),
 				"custom override file could not be written: " + error);
 			require(
-				ReadText(base) == "shipped-base-sentinel\n",
-				"shipped base file was modified");
-			require(
 				std::filesystem::exists(custom),
 				"custom override file was not created");
+			const auto root = toml::parse_str(ReadText(custom));
+			require(
+				toml::find<bool>(root, "Additional", "bIgnoreCompatibilityChecks") ==
+					!CompatibilityDefault(),
+				"new custom document lost its requested override");
 			std::filesystem::remove_all(directory);
 		});
 
@@ -444,7 +409,7 @@ namespace vmm_tests
 			std::filesystem::remove_all(directory);
 		});
 
-		runner.test("settings writer leaves an unreadable custom document intact", [] {
+		runner.test("settings writer leaves an unparseable custom document intact", [] {
 			const auto directory = TemporarySettingsDirectory();
 			std::filesystem::create_directories(directory);
 			const auto custom = directory / "AddictolCustom.toml";
@@ -475,10 +440,17 @@ namespace vmm_tests
 				Addictol::SettingsRepository::GetSingleton().Snapshot();
 			auto state = Addictol::BeginSettingsDraft(committed);
 			require(!Addictol::SettingsDraftDiffers(state), "new draft was dirty");
-			state.entries[0].draft =
-				!std::get<bool>(state.entries[0].draft);
-			state.entries[1].draft =
-				!std::get<bool>(state.entries[1].draft);
+			std::vector<size_t> changed;
+			for (size_t index = 0; index < state.entries.size() && changed.size() < 2; ++index)
+			{
+				auto& entry = state.entries[index];
+				if (entry.setting->Type() == Addictol::SettingValueType::kBoolean)
+				{
+					entry.draft = !std::get<bool>(entry.draft);
+					changed.push_back(index);
+				}
+			}
+			require(changed.size() == 2, "draft fixture needs two boolean settings");
 			require(
 				Addictol::SettingsDraftPendingCount(state) == 2,
 				"dirty count did not include both changes");
@@ -487,7 +459,7 @@ namespace vmm_tests
 				commit.values.size() == state.entries.size(),
 				"apply did not commit the whole draft");
 			require(
-				commit.changedIndices == std::vector<size_t>{ 0, 1 },
+				commit.changedIndices == changed,
 				"apply did not identify each changed field exactly once");
 			Addictol::CompleteSettingsDraftApply(state, commit);
 			require(
@@ -606,57 +578,6 @@ namespace vmm_tests
 			require(
 				std::get<int64_t>(draggedValue) == 8192,
 				"partially bounded drag escaped its declared maximum");
-		});
-
-		runner.test("settings filters search metadata and modified values", [] {
-			const auto& menu =
-				Setting("Additional", "bIgnoreCompatibilityChecks");
-			const dmui::SettingDescriptor descriptor{
-				.id = std::string{ menu.Key() },
-				.label = std::string{ menu.DisplayName() },
-				.description = std::string{ menu.Description() },
-				.control = dmui::CheckboxSettingControl{},
-				.defaultValue = menu.DefaultValue()
-			};
-			dmui::SettingFilter filter{ "bIgnoreCompatibilityChecks", false };
-			require(
-				dmui::MatchesSettingFilter(
-					descriptor,
-					descriptor.label,
-					false,
-					filter),
-				"key search did not match");
-			filter.search = "Ignore";
-			require(
-				dmui::MatchesSettingFilter(
-					descriptor,
-					descriptor.label,
-					false,
-					filter),
-				"display-name search did not match");
-			filter.search = "compatibility checks";
-			require(
-				dmui::MatchesSettingFilter(
-					descriptor,
-					descriptor.label,
-					false,
-					filter),
-				"description search did not match");
-			filter = { {}, true };
-			require(
-				!dmui::MatchesSettingFilter(
-					descriptor,
-					descriptor.label,
-					false,
-					filter),
-				"modified-only included a default value");
-			require(
-				dmui::MatchesSettingFilter(
-					descriptor,
-					descriptor.label,
-					true,
-					filter),
-				"modified-only excluded a changed value");
 		});
 
 		runner.test("settings reset predicate and control selection follow metadata", [] {

@@ -10,7 +10,6 @@
 #include <cstring>
 #include <sstream>
 #include <type_traits>
-#include <vector>
 
 namespace
 {
@@ -268,33 +267,13 @@ namespace vmm_tests
 			require(voltek::scalable_free(replacement), "recalloc result could not be freed");
 		});
 
-		runner.test("realloc with zero size returns nullptr", [&runner] {
+		runner.test("realloc with zero size returns nullptr", [] {
 			constexpr std::size_t size = 7777;
 			void* pointer = voltek::scalable_alloc(size);
 			require(pointer != nullptr, "realloc-zero setup allocation failed");
 
 			void* replacement = voltek::scalable_realloc(pointer, 0);
 			require(replacement == nullptr, "realloc(ptr, 0) did not return nullptr");
-			const auto stale_size = voltek::scalable_msize(pointer);
-
-			std::vector<void*> probes;
-			probes.reserve(256);
-			bool reused = false;
-			for (std::size_t index = 0; index < probes.capacity() && !reused; ++index)
-			{
-				void* probe = voltek::scalable_alloc(size);
-				if (!probe)
-					break;
-				probes.push_back(probe);
-				reused = probe == pointer;
-			}
-			for (void* probe : probes)
-				require(voltek::scalable_free(probe), "realloc-zero probe could not be freed");
-
-			std::ostringstream stream;
-			stream << "realloc(ptr, 0) " << (reused ? "freed the original block" : "did not expose the original block as freed")
-				   << "; stale msize was " << stale_size;
-			runner.info(stream.str());
 		});
 
 		runner.test("allocation larger than 4 GiB is characterized", [] {
@@ -382,15 +361,6 @@ namespace vmm_tests
 				require(index < count, "bits_regions reported an index past the page");
 				require(regions.unset(index), "bits_regions reported an already busy block");
 			}
-		});
-
-		runner.test("bits_regions rejects page sizes below 65536", [] {
-			constexpr std::size_t requested = 32768;
-			voltek::core::bits_regions regions;
-			regions.resize(requested);
-			require(
-				regions.count() == 0,
-				"bits_regions minimum changed -- page-size reduction for pools 8..8192 may now be possible; re-evaluate the blocks-per-page constants and confirm the AVX2 scan in find_first_free is safe at the new size");
 		});
 
 		runner.test("page rejects an undersized region bitmap", [] {

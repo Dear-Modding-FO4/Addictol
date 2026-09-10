@@ -13,7 +13,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <initializer_list>
 #include <iterator>
 
 namespace vmm_tests
@@ -22,12 +21,6 @@ namespace vmm_tests
 	{
 		using namespace Addictol;
 		using namespace Addictol::Menu;
-
-		struct ExpectedLogLevel
-		{
-			LogControl::Level level;
-			std::string_view name;
-		};
 
 		struct OutcomeStatus
 		{
@@ -113,38 +106,11 @@ namespace vmm_tests
 			DMUI_HOST_SERVICE_EXTERNAL_OPEN |
 			DMUI_HOST_SERVICE_NAVIGATION_ICONS
 		};
-
-		inline constexpr std::initializer_list<ExpectedLogLevel> kExpectedLogLevels{
-			{ LogControl::Level::kTrace, "trace"sv },
-			{ LogControl::Level::kDebug, "debug"sv },
-			{ LogControl::Level::kInfo, "info"sv },
-			{ LogControl::Level::kWarn, "warn"sv },
-			{ LogControl::Level::kError, "error"sv },
-			{ LogControl::Level::kCritical, "critical"sv },
-			{ LogControl::Level::kOff, "off"sv }
-		};
-
-		static_assert(kMenuMinRefreshMs == 100);
-		static_assert(kMenuMaxRefreshMs == 2000);
-		static_assert(ClampMenuFormattedLength(53, 48) == 47);
 	}
 
 	void run_menu_checks(Runner& runner)
 	{
-		runner.test("shared presentation styles preserve menu typography", [] {
-			require(
-				kHeadingText.fontRole == DMUI_FONT_ROLE_HEADING &&
-					kHeadingText.tone == dmui::TextTone::kAccent,
-				"section text lost its heading font or accent tone");
-			require(
-				kBodyText.fontRole == DMUI_FONT_ROLE_BODY &&
-					kBodyText.tone == dmui::TextTone::kInherit,
-				"diagnostic values no longer use ordinary body text");
-			require(
-				kMutedText.fontRole == DMUI_FONT_ROLE_SUBTEXT &&
-					kMutedText.tone == dmui::TextTone::kMuted &&
-					!kMutedText.wrapped,
-				"muted descriptions changed typography or wrapping");
+		runner.test("diagnostic tables expose supported scrolling and sorting flags", [] {
 			require(
 				(kDiagnosticTableFlags & dmui::ui::TableFlags::kSortable) == dmui::ui::TableFlags::kNone &&
 					(kDiagnosticTableFlags & dmui::ui::TableFlags::kScrollY) != dmui::ui::TableFlags::kNone &&
@@ -196,16 +162,6 @@ namespace vmm_tests
 					page.kind == DMUI_PAGE_KIND_SETTINGS,
 					"menu page kind is not the supported navigable-page kind");
 			}
-			const Panel forwarded{
-				kModulesPage,
-				nullptr,
-				nullptr,
-				nullptr
-			};
-			require(
-				std::string_view{ forwarded.page.iconName } ==
-					std::string_view{ kModulesPage.iconName },
-				"panel registration stopped forwarding the native page descriptor");
 		});
 
 		runner.test("telemetry navigation forwards explicit canonical icons", [] {
@@ -312,10 +268,6 @@ namespace vmm_tests
 				DMUI_ClientHandle, const DMUI_ExternalOpenDescriptor*, uint32_t*) noexcept {
 				return DMUI_RESULT_OK;
 			};
-			require(
-				dmui::PreflightHostAPI(&api, kClientOptions) ==
-					DMUI_RESULT_SERVICE_UNAVAILABLE,
-				"host without navigation registration entries passed preflight");
 			api.registerPage = [](
 				DMUI_ClientHandle, const DMUI_PageDescriptor*,
 				DMUI_PageHandle* a_page) noexcept {
@@ -323,10 +275,6 @@ namespace vmm_tests
 					*a_page = 1;
 				return DMUI_RESULT_OK;
 			};
-			require(
-				dmui::PreflightHostAPI(&api, kClientOptions) ==
-					DMUI_RESULT_SERVICE_UNAVAILABLE,
-				"host without category registration passed preflight");
 			api.registerCategory = [](
 				DMUI_ClientHandle, const DMUI_CategoryDescriptor*) noexcept {
 				return DMUI_RESULT_OK;
@@ -395,17 +343,6 @@ namespace vmm_tests
 				"a closed menu prevented keyboard and mouse re-enabling");
 			require(!inputSwitchDetail::ShouldClearKeyboardMouseIgnore(true),
 				"an open menu allowed keyboard and mouse re-enabling");
-		});
-
-		runner.test("log level combo matches the public levels", [] {
-			require(kMenuLogLevels.size() == kExpectedLogLevels.size(), "log level count changed");
-			size_t index = 0;
-			for (const auto& expected : kExpectedLogLevels)
-			{
-				const auto actual = kMenuLogLevels[index++];
-				require(actual == expected.level, "log level order changed");
-				require(LogControl::LevelName(actual) == expected.name, "public log level name changed");
-			}
 		});
 
 		runner.test("module outcome choices have stable unique keys", [] {

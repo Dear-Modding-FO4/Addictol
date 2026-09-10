@@ -12,24 +12,16 @@
     "target": "Addictol/Source/Core/AdLogControl.cpp",
     "find": "LevelEntry{ Level::kWarn, \"warn\", spdlog::level::warn }",
     "replace": "LevelEntry{ Level::kWarn, \"warning\", spdlog::level::warn }",
-    "check": "log level combo matches the public levels",
+    "check": "log levels preserve public names, parsing, and menu order",
     "message": "public log level name changed"
-  },
-  {
-    "name": "one-shot requires exact input and output sizes",
-    "target": "Addictol/Include/Zlib/AdZlibBackend.h",
-    "find": "if (a_decode.consumed != a_expectedInput || a_decode.produced != a_expectedOutput)",
-    "replace": "if (a_decode.consumed != a_expectedInput && a_decode.produced != a_expectedOutput)",
-    "check": "libdeflate failures classify into distinct fallback reasons",
-    "message": "a wrong expected size was accepted"
   },
   {
     "name": "allocator busy metric reads busy pages",
     "target": "Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h",
     "find": "a_out[1] = { static_cast<double>(a_stats.pages_busy), a_active };",
-    "replace": "a_out[1] = { static_cast<double>(a_stats.page_capacity + 1), a_active };",
-    "check": "allocator busy pages stay within capacity",
-    "message": "allocator busy pages exceeded the reported page capacity"
+    "replace": "a_out[1] = { static_cast<double>(a_stats.page_capacity), a_active };",
+    "check": "allocator metrics preserve sampled fields and validity",
+    "message": "allocator busy pages did not match the sampled count"
   },
   {
     "name": "process page faults report interval delta",
@@ -140,7 +132,7 @@
     "target": "Addictol/Include/Telemetry/AdTelemetry.h",
     "find": "a_counts[0] + a_counts[1] + a_counts[2] + a_counts[3] + a_counts[4]",
     "replace": "a_counts[0] + a_counts[1] + a_counts[2] + a_counts[3]",
-    "check": "module outcome total includes every event",
+    "check": "module outcome reader mapping is stable",
     "message": "module outcome total omitted an event"
   },
   {

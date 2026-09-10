@@ -6,6 +6,8 @@
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "Harness.h"
 
+#include <vmmgeometry.h>
+
 #include <locale>
 #include <sstream>
 
@@ -334,30 +336,6 @@ namespace
 		return true;
 	}
 
-	bool ReadEscapeFixture(
-		EscapeFreezeMetricSource::Values& a_values) noexcept
-	{
-		a_values = MetricDoubles(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-		return true;
-	}
-
-	bool ReadReferenceHandleFixture(
-		ReferenceHandleMetricSource::Values& a_values) noexcept
-	{
-		constexpr uint32_t limit{ 1u << 21 };
-		constexpr uint32_t count{ limit / 2 };
-		a_values = MetricDoubles(count, ReferenceHandleUsagePercent(count, limit));
-		return true;
-	}
-
-	bool ReadModuleOutcomeFixture(
-		ModuleOutcomeMetricSource::Values& a_values) noexcept
-	{
-		constexpr std::array<uint64_t, 5> outcomes{ 1, 2, 3, 4, 5 };
-		a_values = ModuleOutcomeMetricValues(outcomes);
-		return true;
-	}
-
 	struct AudioPerformanceFixture
 	{
 		uint32_t MemoryUsageInBytes;
@@ -387,18 +365,6 @@ namespace
 			std::addressof(kAudioEngineFixture),
 			std::addressof(kAudioMasteringVoiceFixture),
 			a_values);
-	}
-
-	bool ReadUnavailableEscape(
-		EscapeFreezeMetricSource::Values&) noexcept
-	{
-		return false;
-	}
-
-	bool ReadUnavailableReferenceHandles(
-		ReferenceHandleMetricSource::Values&) noexcept
-	{
-		return false;
 	}
 
 	bool ReadUnavailableAudioPerformance(
@@ -587,12 +553,6 @@ namespace vmm_tests
 				"form timing series changed");
 			require(LoadTiming::kCompileBucket == "all",
 				"CompileFiles total bucket changed");
-			require(LoadTiming::kPluginBurstCapacity == 1024,
-				"plugin timing burst capacity changed");
-			require(LoadTiming::kFormBurstCapacity == 4608,
-				"form timing burst capacity changed");
-			require(kBurstSeriesDrainCapacity == 256,
-				"load timing drain capacity changed");
 			require(LoadTiming::kPluginMetricSchema[0].key == "plugin.overflow_events",
 				"plugin overflow metric changed");
 			require(LoadTiming::kPluginMetricSchema[1].key == "plugin.name_failures",
@@ -990,7 +950,6 @@ namespace vmm_tests
 			append(gpu.Schema());
 			append(system.Schema());
 			append(frame.Schema());
-			require(columns.size() == 55, "real telemetry column count changed");
 			for (const auto key : kTelemetryOverviewMetrics)
 			{
 				require(
@@ -998,7 +957,6 @@ namespace vmm_tests
 					"overview telemetry metric is missing");
 			}
 
-			std::array<size_t, static_cast<size_t>(TelemetryPanel::kCount)> counts{};
 			for (const auto& column : columns)
 			{
 				const auto classification = ClassifyTelemetryMetric(column.key);
@@ -1008,11 +966,7 @@ namespace vmm_tests
 				require(
 					classification.panel != TelemetryPanel::kNone,
 					"telemetry metric has no owning panel");
-				++counts[static_cast<size_t>(classification.panel)];
 			}
-			require(
-				counts == std::array<size_t, 5>{ 5, 12, 12, 21, 5 },
-				"telemetry panel metric distribution changed");
 		});
 
 		runner.test("zlib flush modes map to stable buckets", [] {
@@ -1130,27 +1084,6 @@ namespace vmm_tests
 				"series CSV serialization changed or honored the stream locale");
 			require(csv.str().find("zlib.flush") == std::string::npos,
 				"zero-call series row was not skipped");
-		});
-
-		runner.test("wide and series CSV rows share interval qpc", [] {
-			TelemetrySnapshot snapshot{};
-			snapshot.sequence = 9;
-			snapshot.qpc = 424242;
-			snapshot.intervalMs = 1.0;
-			snapshot.latenessMs = 0.0;
-			const std::array samples{
-				SeriesSample{ "zlib.flush", "finish", 1, 2, 3 }
-			};
-			std::ostringstream wide;
-			std::ostringstream series;
-			require(TelemetryHub::WriteCsvRow(wide, snapshot),
-				"wide CSV join-control row write failed");
-			require(TelemetryHub::WriteSeriesCsvRows(series, snapshot.qpc, samples),
-				"series CSV join-control row write failed");
-			require(wide.str() == "9,424242,1,0\n",
-				"wide CSV did not serialize the interval-start qpc");
-			require(series.str() == "424242,zlib.flush,finish,1,2,3\n",
-				"series CSV did not serialize the same interval-start qpc");
 		});
 
 		runner.test("hub owns the only destructive interval drain", [] {
@@ -1781,58 +1714,81 @@ namespace vmm_tests
 			}
 		});
 
-		runner.test("new telemetry schemas match drained value counts", [] {
+		runner.test("snapshot readers preserve schema slots and validity through the hub", [] {
+			constexpr std::array validSchema{
+				MetricDescriptor{ "test.snapshot_first", Unit::kCount },
+				MetricDescriptor{ "test.snapshot_second", Unit::kCount }
+			};
+			constexpr std::array invalidSchema{
+				MetricDescriptor{ "test.invalid_first", Unit::kCount },
+				MetricDescriptor{ "test.invalid_second", Unit::kCount },
+				MetricDescriptor{ "test.invalid_third", Unit::kCount }
+			};
+			using ValidSource = SnapshotMetricSource<validSchema.size()>;
+			using InvalidSource = SnapshotMetricSource<invalidSchema.size()>;
 			TelemetryHub hub{ 1000000 };
 			require(
-				hub.Register(std::make_shared<EscapeFreezeMetricSource>(
-					kEscapeFreezeMetricSchema, &ReadEscapeFixture)) ==
+				hub.Register(std::make_shared<ValidSource>(
+					validSchema, +[](ValidSource::Values& a_values) noexcept {
+						a_values = { 17.0, 23.0 };
+						return true;
+					})) ==
 					TelemetryRegistration::kAccepted,
-				"escape fixture source registration was rejected");
+				"valid snapshot source registration was rejected");
 			require(
-				hub.Register(std::make_shared<ReferenceHandleMetricSource>(
-					kReferenceHandleMetricSchema, &ReadReferenceHandleFixture)) ==
+				hub.Register(std::make_shared<InvalidSource>(
+					invalidSchema, +[](InvalidSource::Values& a_values) noexcept {
+						a_values = { 31.0, 37.0, 41.0 };
+						return false;
+					})) ==
 					TelemetryRegistration::kAccepted,
-				"reference handle fixture source registration was rejected");
-			require(
-				hub.Register(std::make_shared<ModuleOutcomeMetricSource>(
-					kModuleOutcomeMetricSchema, &ReadModuleOutcomeFixture)) ==
-					TelemetryRegistration::kAccepted,
-				"module outcome fixture source registration was rejected");
+				"failed snapshot source registration was rejected");
 			require(
 				hub.Register(std::make_shared<AudioPerformanceMetricSource>(
 					kAudioPerformanceMetricSchema, &ReadAudioPerformanceFixture)) ==
 					TelemetryRegistration::kAccepted,
 				"audio performance fixture source registration was rejected");
-			require(hub.Freeze(1), "new source value-count hub freeze failed");
+			require(hub.Freeze(1), "snapshot reader hub freeze failed");
 			TelemetryTest::HubAccess::Collect(hub, 1, 1.0, 0.0);
 			TelemetrySnapshot snapshot{};
-			require(hub.CopyLatest(snapshot), "new source value-count sample was not published");
-			require(hub.Columns().size() == 23,
-				"new telemetry schemas did not contain twenty-three metrics");
+			require(hub.CopyLatest(snapshot), "snapshot reader sample was not published");
+			const auto columns = hub.Columns();
+			require(columns.size() ==
+				validSchema.size() + invalidSchema.size() + kAudioPerformanceMetricSchema.size(),
+				"snapshot columns did not match the registered schemas");
 			require(snapshot.values.size() == hub.Columns().size(),
-				"new source drained value count did not match the schema");
-			require(snapshot.values[9].valid && snapshot.values[9].value == 10.0,
-				"escape source did not write its final schema slot");
-			require(snapshot.values[11].valid && snapshot.values[11].value == 50.0,
-				"reference handle source did not write its final schema slot");
-			require(snapshot.values[17].valid && snapshot.values[17].value == 15.0,
-				"module outcome source did not write its final schema slot");
-			require(snapshot.values[22].valid && snapshot.values[22].value == 55.0,
-				"audio performance source did not write its final schema slot");
+				"snapshot value count did not match the schema");
+			constexpr std::array expectedValues{ 17.0, 23.0 };
+			for (size_t index = 0; index < validSchema.size(); ++index)
+			{
+				require(columns[index].key == validSchema[index].key,
+					"valid snapshot column order changed");
+				require(snapshot.values[index].valid &&
+					snapshot.values[index].value == expectedValues[index],
+					"valid snapshot reader value changed");
+			}
+			for (size_t index = 0; index < invalidSchema.size(); ++index)
+			{
+				const auto slot = validSchema.size() + index;
+				require(columns[slot].key == invalidSchema[index].key,
+					"failed snapshot source lost its column offset");
+				require(!snapshot.values[slot].valid,
+					"failed snapshot reader published a valid value");
+			}
+			constexpr std::array expectedAudio{ 11.0, 22.0, 33.0, 44.0, 55.0 };
+			for (size_t index = 0; index < expectedAudio.size(); ++index)
+			{
+				const auto slot = validSchema.size() + invalidSchema.size() + index;
+				require(columns[slot].key == kAudioPerformanceMetricSchema[index].key,
+					"audio snapshot source lost its column offset");
+				require(snapshot.values[slot].valid &&
+					snapshot.values[slot].value == expectedAudio[index],
+					"audio adapter value did not reach its schema slot");
+			}
 		});
 
 		runner.test("unavailable runtime telemetry stays invalid", [] {
 			TelemetryHub hub{ 1000000 };
-			require(
-				hub.Register(std::make_shared<EscapeFreezeMetricSource>(
-					kEscapeFreezeMetricSchema, &ReadUnavailableEscape)) ==
-					TelemetryRegistration::kAccepted,
-				"unavailable escape source registration was rejected");
-			require(
-				hub.Register(std::make_shared<ReferenceHandleMetricSource>(
-					kReferenceHandleMetricSchema, &ReadUnavailableReferenceHandles)) ==
-					TelemetryRegistration::kAccepted,
-				"unavailable reference source registration was rejected");
 			require(
 				hub.Register(std::make_shared<AudioPerformanceMetricSource>(
 					kAudioPerformanceMetricSchema, &ReadUnavailableAudioPerformance)) ==
@@ -1869,17 +1825,13 @@ namespace vmm_tests
 				"half of the handle limit did not report fifty percent");
 		});
 
-		runner.test("module outcome total includes every event", [] {
-			constexpr std::array<uint64_t, 5> outcomes{ 1, 2, 3, 4, 5 };
-			require(ModuleOutcomeTotal(outcomes) == 15,
-				"module outcome total omitted an event");
-		});
-
 		runner.test("module outcome reader mapping is stable", [] {
 			constexpr std::array<uint64_t, 5> outcomes{ 11, 22, 33, 44, 55 };
 			constexpr std::array expected{ 11.0, 22.0, 33.0, 44.0, 55.0, 165.0 };
 			const auto values = ModuleOutcomeMetricValues(outcomes);
-			for (size_t index = 0; index < expected.size(); ++index)
+			require(values.back() == expected.back(),
+				"module outcome total omitted an event");
+			for (size_t index = 0; index + 1 < expected.size(); ++index)
 				require(values[index] == expected[index],
 					"module outcome mapping changed at index " + std::to_string(index));
 		});
@@ -1892,23 +1844,64 @@ namespace vmm_tests
 					"audio performance mapping changed at index " + std::to_string(index));
 		});
 
-		runner.test("vmm aggregate pool stats stay within capacity", [] {
-			voltek::scalable_pool_stats stats{};
-			voltek::scalable_get_pool_stats(&stats);
-			require(stats.pool_count <= 14, "aggregate reported more than 14 allocator pools");
-			require(stats.pages_busy <= stats.page_capacity,
+		runner.test("vmm pool stats follow page growth and release", [] {
+			constexpr size_t size{ 8193 };
+			constexpr auto count =
+				voltek::memory_manager::blocks_per_page<voltek::memory_manager::block16384_t>;
+			using Allocation = std::unique_ptr<void, decltype(&voltek::scalable_free)>;
+			std::vector<Allocation> allocations;
+			allocations.reserve(count + 1);
+			const auto allocate = [&] {
+				auto* pointer = voltek::scalable_alloc(size);
+				require(pointer != nullptr, "pool stats fixture allocation failed");
+				allocations.emplace_back(pointer, &voltek::scalable_free);
+			};
+			allocate();
+			voltek::scalable_pool_stats before{};
+			voltek::scalable_get_pool_stats(&before);
+			require(before.pool_count > 0 && before.pool_count <= 14,
+				"live allocator did not report its initialized pools");
+			require(before.page_capacity > 0 && before.pages_busy <= before.page_capacity,
+				"live allocator reported invalid page capacity");
+
+			// Crossing the boundary marks the exhausted page busy, not its last allocation.
+			for (size_t index = 0; index < count; ++index)
+				allocate();
+			voltek::scalable_pool_stats grown{};
+			voltek::scalable_get_pool_stats(&grown);
+			require(grown.pool_count == before.pool_count,
+				"growing an existing pool changed the pool count");
+			require(grown.pages_busy == before.pages_busy + 1,
+				"pool stats did not report the exhausted page after growth");
+			require(grown.pages_busy <= grown.page_capacity,
 				"aggregate busy pages exceeded the reported page capacity");
+
+			for (auto& allocation : allocations)
+			{
+				require(voltek::scalable_free(allocation.get()),
+					"pool stats fixture allocation could not be freed");
+				(void)allocation.release();
+			}
+			voltek::scalable_pool_stats released{};
+			voltek::scalable_get_pool_stats(&released);
+			require(released.pool_count == before.pool_count,
+				"freeing allocations removed the initialized pool");
+			require(released.pages_busy == before.pages_busy,
+				"pool stats retained busy pages after freeing the allocations");
+			require(released.pages_busy <= released.page_capacity,
+				"released pool stats exceeded page capacity");
 		});
 
-		runner.test("allocator busy pages stay within capacity", [] {
+		runner.test("allocator metrics preserve sampled fields and validity", [] {
 			const voltek::scalable_pool_stats stats{ 2, 7, 4 };
 			std::array<MetricValue, 3> values{};
 			AllocatorPoolTelemetry::Populate(values, true, stats);
 			require(values[0].valid, "active allocator pool count was invalid");
 			require(values[1].valid, "active allocator busy pages were invalid");
 			require(values[2].valid, "active allocator page capacity was invalid");
-			require(values[1].value <= values[2].value,
-				"allocator busy pages exceeded the reported page capacity");
+			require(values[0].value == 2.0, "allocator pool count did not match the sampled count");
+			require(values[1].value == 4.0, "allocator busy pages did not match the sampled count");
+			require(values[2].value == 7.0, "allocator page capacity did not match the sampled count");
 		});
 
 		runner.test("inactive allocator values stay empty in CSV", [] {

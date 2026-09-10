@@ -519,7 +519,31 @@ Logging is `REX::INFO`, `REX::WARN` and `REX::ERROR` with `{}` placeholders:
 REX::WARN("Module \"{}\": failed verification, the game version may not be supported"sv, mod->GetName());
 ```
 
-## Mutation controls
+## Tests
+
+Run the standalone checks from the repository root:
+
+```powershell
+xmake build -P . -y vmm-tests
+.\.Build\Tests\vmm-tests.exe
+.\Tests\release-tools.tests.ps1
+```
+
+The default C++ runner covers VMM allocation, concurrency and memory shape; production codec serving
+and fallback; settings persistence; logging; telemetry; and menu/state helpers. Allocator shape checks
+run in isolated child processes. SIMD paths depend on CPU support. The runner has no per-suite selector.
+
+The codec checks use Addictol's real libdeflate backend, with the original engine inflate callback
+simulated at the fallback boundary. DMUI host negotiation, Facegen INI round trips and runtime telemetry
+readers also use simulated boundaries; they do not exercise the live host, module save/reload or engine
+hooks. Signature fixtures test drift and rejection logic, not retail address resolution or in-game safety.
+Registry checks enforce shipped keys and metadata, not shipped/default-value parity.
+
+Run `.\.Build\Tests\vmm-tests.exe --bench` for opt-in VMM throughput and latency measurements, written to
+`.Build\Tests\bench.json`. These are not a correctness gate; inspect the reported allocation/free failure
+counts rather than relying on exit status alone. CI runs the default checks, not benchmarks.
+
+### Mutation controls
 
 Run `python Tests/run_mutations.py` from the repository root to prove the named negative controls in
 `Tests/mutations.json`. The runner requires a green baseline, rebuilds and runs `vmm-tests` for each

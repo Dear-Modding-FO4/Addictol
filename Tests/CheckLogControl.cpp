@@ -1,6 +1,7 @@
 #include "../Addictol/Include/Core/AdLogControl.h"
 #include "Harness.h"
 
+#include <Menu/AdMenuTargets.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/null_sink.h>
 #include <spdlog/spdlog.h>
@@ -14,21 +15,31 @@ namespace vmm_tests
 		using Addictol::LogControl::Level;
 		using namespace Addictol::LogControl;
 
-		runner.test("log control levels round-trip through names", [] {
-			require(LevelName(Level::kTrace) == "trace", "trace level has the wrong name");
-			require(LevelName(Level::kDebug) == "debug", "debug level has the wrong name");
-			require(LevelName(Level::kInfo) == "info", "info level has the wrong name");
-			require(LevelName(Level::kWarn) == "warn", "warn level has the wrong name");
-			require(LevelName(Level::kError) == "error", "error level has the wrong name");
-			require(LevelName(Level::kCritical) == "critical", "critical level has the wrong name");
-			require(LevelName(Level::kOff) == "off", "off level has the wrong name");
-			require(ParseLevel("trace") == Level::kTrace, "trace did not parse");
-			require(ParseLevel("debug") == Level::kDebug, "debug did not parse");
-			require(ParseLevel("info") == Level::kInfo, "info did not parse");
-			require(ParseLevel("warn") == Level::kWarn, "warn did not parse");
-			require(ParseLevel("error") == Level::kError, "error did not parse");
-			require(ParseLevel("critical") == Level::kCritical, "critical did not parse");
-			require(ParseLevel("off") == Level::kOff, "off did not parse");
+		runner.test("log levels preserve public names, parsing, and menu order", [] {
+			struct ExpectedLevel
+			{
+				Level level;
+				std::string_view name;
+			};
+			constexpr std::array expected{
+				ExpectedLevel{ Level::kTrace, "trace" },
+				ExpectedLevel{ Level::kDebug, "debug" },
+				ExpectedLevel{ Level::kInfo, "info" },
+				ExpectedLevel{ Level::kWarn, "warn" },
+				ExpectedLevel{ Level::kError, "error" },
+				ExpectedLevel{ Level::kCritical, "critical" },
+				ExpectedLevel{ Level::kOff, "off" }
+			};
+			const auto& menuLevels = Addictol::kMenuLogLevels;
+			require(menuLevels.size() == expected.size(), "log level count changed");
+			for (size_t index = 0; index < expected.size(); ++index)
+			{
+				require(menuLevels[index] == expected[index].level, "log level order changed");
+				require(LevelName(expected[index].level) == expected[index].name,
+					"public log level name changed");
+				require(ParseLevel(expected[index].name) == expected[index].level,
+					"public log level name did not parse");
+			}
 		});
 
 		runner.test("log control parsing is case-insensitive and rejects unknown names", [] {
@@ -53,7 +64,7 @@ namespace vmm_tests
 			SetFlushLevel(Level::kInfo);
 		});
 
-		runner.test("log control counting sink counts writes and flushes", [] {
+		runner.test("log control counts writes and flushes without destructive reads", [] {
 			SetLevel(Level::kInfo);
 			SetFlushLevel(Level::kOff);
 			const auto before = CopyStats();
@@ -66,14 +77,10 @@ namespace vmm_tests
 			const auto afterFlush = CopyStats();
 			require(afterFlush.written == afterWrite.written, "flush unexpectedly counted as a write");
 			require(afterFlush.flushed == afterWrite.flushed + 1, "counting sink missed a flush");
-		});
-
-		runner.test("log control stats copies are non-destructive", [] {
-			const auto first = CopyStats();
-			const auto second = CopyStats();
-			require(first.written > 0, "stats fixture has no counted write");
-			require(second.written == first.written, "reading stats reset the written count");
-			require(second.flushed == first.flushed, "reading stats reset the flushed count");
+			const auto copied = CopyStats();
+			require(afterFlush.written > 0, "stats fixture has no counted write");
+			require(copied.written == afterFlush.written, "reading stats reset the written count");
+			require(copied.flushed == afterFlush.flushed, "reading stats reset the flushed count");
 		});
 	}
 }

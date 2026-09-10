@@ -20,7 +20,7 @@ namespace vmm_tests
 			require(detected.shouldCheckOwner, "candidate did not authorize owner evaluation");
 		});
 
-		runner.test("escape freeze classifies advancing frames as a healthy sampled sequence", [] {
+		runner.test("escape freeze classifies healthy sequences without side effects", [] {
 			WatchState state;
 			(void)Observe(state, 0, 1, 0, 0, 1000);
 			(void)Observe(state, 100, 2, 55, 1, 1000);
@@ -28,19 +28,9 @@ namespace vmm_tests
 			const auto healthy = Observe(state, 1100, 4, 55, 1, 1000);
 			require(healthy.healthySampleSequence, "advancing renderer was not classified as healthy");
 			require(!healthy.stallCandidateStarted, "advancing renderer created a stall candidate");
-			require(!Observe(state, 1200, 5, 55, 1, 1000).healthySampleSequence, "healthy sequence counted twice");
-		});
-
-		runner.test("escape freeze healthy sequence produces no log-worthy event", [] {
-			WatchState state;
-			(void)Observe(state, 0, 1, 0, 0, 1000);
-			(void)Observe(state, 100, 2, 55, 1, 1000);
-			(void)Observe(state, 900, 3, 55, 1, 1000);
-			const auto healthy = Observe(state, 1100, 4, 55, 1, 1000);
-			require(healthy.healthySampleSequence, "test sequence was not healthy");
 			require(!healthy.corruptCountStarted, "healthy sequence produced a corruption event");
-			require(!healthy.stallCandidateStarted, "healthy sequence produced a stall event");
 			require(!healthy.shouldCheckOwner, "healthy sequence requested an owner check");
+			require(!Observe(state, 1200, 5, 55, 1, 1000).healthySampleSequence, "healthy sequence counted twice");
 		});
 
 		runner.test("escape freeze owner check dispatch is independent of logging", [] {
