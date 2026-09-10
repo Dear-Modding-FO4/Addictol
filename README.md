@@ -32,7 +32,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 | **Fallout 4** | OG **1.10.163**, NG **1.10.984**, or AE **1.11.240**. One DLL supports all three. |
 | **[Fallout 4 Script Extender (F4SE)](https://f4se.silverlock.org/)** | Required for the matching game runtime. |
 | **[Address Library for F4SE](https://www.nexusmods.com/fallout4/mods/47327)** | Required for the matching game runtime. Addictol will refuse to load without it. |
-| **[DearModdingUI](https://github.com/Dear-Modding-FO4/DearModdingUI)** | Install the standalone host separately, using `1c5eb35` or later for the current icon catalog and resolver. Addictol negotiates navigation-icon and external-action services plus the UI drawing contract, and continues without an in-game menu when the host is absent. Tagged host v0.1.1 predates the icon update. |
+| **[DearModdingUI](https://github.com/Dear-Modding-FO4/DearModdingUI)** | Install the standalone host separately (`1c5eb35` or later). Addictol continues without an in-game menu when the host is absent. |
 
 ---
 
@@ -109,12 +109,9 @@ appearance in the host settings page behind the footer gear (or via `DearModding
 | **Log Control** | Session-only record and flush levels with the live output rate. |
 
 Home, Settings, and Modules appear under **General**. Telemetry, Facegen Exceptions, and Log Control
-appear under **Diagnostics**. Addictol uses explicit pill branding, while General uses the host's
-automatic semantic icon. Diagnostics and pages declare their own Phosphor icons. `Pics/logo.png`
-remains the README artwork because custom image navigation branding is not part of the host contract. Home uses
-DMUI's icon-bearing section headers and project-link buttons; GitHub and Nexus Mods open in your
-default browser through the host. Use the header action button to copy a diagnostic summary to the
-clipboard.
+appear under **Diagnostics**. Home uses DmUI's icon-bearing section headers and project-link buttons;
+GitHub and Nexus Mods open in your default browser through the host. Use the header action button to
+copy a diagnostic summary to the clipboard.
 
 Shared appearance, accessibility, and toggle-key controls live behind the footer gear. Addictol's
 refresh interval remains under **Settings > Interface**.
