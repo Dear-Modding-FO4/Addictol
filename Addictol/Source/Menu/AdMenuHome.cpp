@@ -13,6 +13,11 @@ namespace Addictol::Menu
 {
 	namespace
 	{
+		constexpr dmui::TextStyle kProseText{
+			.fontRole = DMUI_FONT_ROLE_SUBTEXT,
+			.wrapped = true
+		};
+
 		constexpr std::array kFaqEntries{
 			dmui::FaqEntry{
 				"Which Fallout 4 runtimes are supported?",
@@ -51,22 +56,19 @@ namespace Addictol::Menu
 
 		void DrawWelcomeSection() noexcept
 		{
-			{
-				const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_TITLE };
-				dmui::ui::TextUnformatted("Welcome to Addictol");
-			}
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), "Welcome to Addictol", { .fontRole = DMUI_FONT_ROLE_TITLE }));
 			dmui::ui::Spacing();
-			{
-				const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
-				dmui::ui::TextWrapped(
-					"Addictol combines engine fixes, crash fixes, and performance patches "
-					"for Fallout 4 in a single F4SE plugin. Use the pages on the left to "
-					"inspect live diagnostics and runtime behavior.");
-			}
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(),
+				"Addictol combines engine fixes, crash fixes, and performance patches "
+				"for Fallout 4 in a single F4SE plugin. Use the pages on the left to "
+				"inspect live diagnostics and runtime behavior.",
+				kProseText));
 			dmui::ui::Spacing();
-			(void)Client().DrawSectionHeader(
+			ReportPresentationResult(Client().DrawSectionHeader(
 				"Overview",
-				DearModdingUI::FindPhosphorSlugGlyphOrZero("info"));
+				DearModdingUI::FindPhosphorSlugGlyphOrZero("info")));
 
 			const auto counts =
 				Plugin::GetSingleton()->GetModules().ModuleOutcomeCounts();
@@ -98,9 +100,9 @@ namespace Addictol::Menu
 
 		void DrawQuickLinksSection() noexcept
 		{
-			(void)Client().DrawSectionHeader(
+			ReportPresentationResult(Client().DrawSectionHeader(
 				"Quick Links",
-				DearModdingUI::FindPhosphorSlugGlyphOrZero("link"));
+				DearModdingUI::FindPhosphorSlugGlyphOrZero("link")));
 			if (!Client().DrawLinkRow("Addictol.QuickLinks", kHomeQuickLinks))
 			{
 				const auto result = Client().LastResult();
@@ -116,25 +118,27 @@ namespace Addictol::Menu
 
 		void DrawFaqSection() noexcept
 		{
-			(void)Client().DrawSectionHeader(
+			ReportPresentationResult(Client().DrawSectionHeader(
 				"FAQ",
-				DearModdingUI::PhosphorGlyph::kQuestion);
-			(void)Client().DrawFaq("Addictol.Faq", kFaqEntries);
+				DearModdingUI::PhosphorGlyph::kQuestion));
+			ReportPresentationResult(Client().DrawFaq("Addictol.Faq", kFaqEntries));
 		}
 
 		void DrawModdingStateSection() noexcept
 		{
-			(void)Client().DrawSectionHeader(
+			ReportPresentationResult(Client().DrawSectionHeader(
 				"On the state of F4SE mods",
-				DearModdingUI::PhosphorGlyph::kShieldCheck);
-			const dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
-			dmui::ui::TextWrapped(
+				DearModdingUI::PhosphorGlyph::kShieldCheck));
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(),
 				"CommonLibF4 is GPL-3.0. If a plugin links it and ships without "
 				"source, that is a license violation. Not a style disagreement, "
 				"not a preference. A violation. You are entitled to the source. "
-				"Ask for it.");
+				"Ask for it.",
+				kProseText));
 			dmui::ui::Spacing();
-			dmui::ui::TextWrapped(
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(),
 				"The rest isn't a legal matter, just bad practice. Code generated "
 				"by a model, understood by nobody, shipped as an engine fix with "
 				"no measurement behind it. Implementations lifted out of other "
@@ -142,26 +146,40 @@ namespace Addictol::Menu
 				"that does what an existing one already does, splitting the user "
 				"base and handing two mods one more way to conflict. Releases "
 				"shaped for attention and donation points rather than for being "
-				"correct.");
+				"correct.",
+				kProseText));
 			dmui::ui::Spacing();
-			dmui::ui::TextWrapped("Don't take our word for any of it. Check.");
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), "Don't take our word for any of it. Check.", kProseText));
 			dmui::ui::Spacing();
 
-			dmui::ui::TextWrapped("Before you install:");
-			dmui::ui::Indent();
-			for (const auto& entry : kModChecks)
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), "Before you install:", kProseText));
 			{
-				char text[512]{};
-				std::snprintf(text, sizeof(text), "%s %s", entry.check, entry.detail);
-				(void)Client().DrawBulletText(text);
+				dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_SUBTEXT };
+				if (!font.Pushed())
+				{
+					ReportPresentationResult(false);
+					return;
+				}
+				dmui::ui::Indent();
+				for (const auto& entry : kModChecks)
+				{
+					char text[512]{};
+					std::snprintf(text, sizeof(text), "%s %s", entry.check, entry.detail);
+					ReportPresentationResult(Client().DrawBulletText(text));
+				}
+				dmui::ui::Unindent();
+				ReportPresentationResult(font.End());
 			}
-			dmui::ui::Unindent();
 			dmui::ui::Spacing();
 
-			dmui::ui::TextWrapped(
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(),
 				"New to this? The Midnight Ride is a maintained, opinionated "
 				"guide that gets you to a stable Fallout 4 without guesswork. "
-				"Start there, then add.");
+				"Start there, then add.",
+				kProseText));
 			dmui::ui::Spacing();
 		}
 	}

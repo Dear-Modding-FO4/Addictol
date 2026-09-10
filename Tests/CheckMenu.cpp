@@ -1,10 +1,12 @@
 #include "../Addictol/Include/Menu/AdMenuTargets.h"
 #include "../Addictol/Include/Menu/AdMenuModules.h"
+#include "../Addictol/Include/Menu/AdMenuSettings.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "../Addictol/Include/Modules/AdFacegenExceptions.h"
 #include "../Addictol/Include/Modules/AdModuleInputSwitch.h"
 #include "Harness.h"
 
+#include <Core/Settings/AdSettingsModel.h>
 #include <INI/SimpleIni.h>
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuHome.h>
@@ -106,6 +108,11 @@ namespace vmm_tests
 			.newLine = &UnsupportedUIOperation,
 			.plotLines = &UnsupportedUIOperation
 		};
+		const DMUI_UIAPI* s_mockUI{ &kMockUI };
+		DMUI_HostServices s_mockHostServices{
+			DMUI_HOST_SERVICE_EXTERNAL_OPEN |
+			DMUI_HOST_SERVICE_NAVIGATION_ICONS
+		};
 
 		inline constexpr std::initializer_list<ExpectedLogLevel> kExpectedLogLevels{
 			{ LogControl::Level::kTrace, "trace"sv },
@@ -145,7 +152,11 @@ namespace vmm_tests
 				"diagnostic tables acquired sorting or lost scrolling");
 		});
 
-		runner.test("menu categories place General before Diagnostics", [] {
+		runner.test("menu navigation owns explicit canonical icons", [] {
+			require(
+				std::string_view{ kClientIconName } == "pill" &&
+					DearModdingUI::FindPhosphorIconGlyphOrZero(kClientIconName) != 0,
+				"client navigation branding lost its explicit pill glyph");
 			require(
 				std::string_view{ kGeneralCategory.id } == "general" &&
 					std::string_view{ kGeneralCategory.displayName } == "General",
@@ -157,6 +168,86 @@ namespace vmm_tests
 			require(
 				kGeneralCategory.sortKey < kDiagnosticsCategory.sortKey,
 				"General no longer sorts before Diagnostics");
+			for (const auto& category : { kGeneralCategory, kDiagnosticsCategory })
+			{
+				require(
+					category.iconName &&
+						DearModdingUI::FindPhosphorIconGlyphOrZero(category.iconName) != 0,
+					"menu category has no valid explicit icon");
+			}
+
+			const std::array pages{
+				kHomePage,
+				kSettingsPage,
+				kModulesPage,
+				kFacegenExceptionsPage,
+				kLogControlPage
+			};
+			for (const auto& page : pages)
+			{
+				require(page.id && page.displayName && page.categoryId && page.summary,
+					"menu page descriptor lost required metadata");
+				require(
+					page.iconName &&
+						DearModdingUI::FindPhosphorIconGlyphOrZero(page.iconName) != 0,
+					"menu page has no valid explicit icon");
+				require(
+					page.kind == DMUI_PAGE_KIND_SETTINGS,
+					"menu page kind is not the supported navigable-page kind");
+			}
+			const Panel forwarded{
+				kModulesPage,
+				nullptr,
+				nullptr,
+				nullptr
+			};
+			require(
+				std::string_view{ forwarded.page.iconName } ==
+					std::string_view{ kModulesPage.iconName },
+				"panel registration stopped forwarding the native page descriptor");
+		});
+
+		runner.test("telemetry navigation forwards explicit canonical icons", [] {
+			require(
+				kTelemetryPanels.size() ==
+					static_cast<size_t>(TelemetryPanel::kCount),
+				"telemetry page count no longer matches the public panel enum");
+			for (const auto& panel : kTelemetryPanels)
+			{
+				require(
+					panel.page.id && panel.page.displayName &&
+						panel.page.categoryId && panel.page.summary,
+					"telemetry page descriptor lost required metadata");
+				require(
+					std::string_view{ panel.page.categoryId } ==
+						kDiagnosticsCategory.id,
+					"telemetry page left the Diagnostics category");
+				require(
+					panel.page.kind == DMUI_PAGE_KIND_SETTINGS,
+					"telemetry page kind is not the supported navigable-page kind");
+				require(
+					panel.page.iconName &&
+						DearModdingUI::FindPhosphorIconGlyphOrZero(
+							panel.page.iconName) != 0,
+					"telemetry page has no valid explicit icon");
+			}
+		});
+
+		runner.test("settings groups own explicit canonical icons", [] {
+			for (const auto category : kSettingDisplayCategoryOrder)
+			{
+				const auto iconName =
+					SettingDisplayCategoryIconName(category);
+				require(!iconName.empty(),
+					"settings display category has no explicit icon name");
+				require(
+					DearModdingUI::FindPhosphorIconGlyphOrZero(iconName) != 0,
+					"settings display category icon is not in the canonical catalog");
+			}
+			require(
+				SettingDisplayCategoryIconName(
+					SettingDisplayCategory::kCount).empty(),
+				"invalid settings display category acquired a fallback icon");
 		});
 
 		runner.test("home project links use host browser actions and icons", [] {
@@ -188,7 +279,7 @@ namespace vmm_tests
 				"GitHub link lost its logo");
 		});
 
-		runner.test("menu preflight requires host external-opening support", [] {
+		runner.test("menu preflight requires external actions and navigation icons", [] {
 			DMUI_HostAPI api{};
 			api.structSize = sizeof(api);
 			api.hostAbiVersion = DMUI_HOST_ABI_CURRENT;
@@ -198,7 +289,7 @@ namespace vmm_tests
 				return DMUI_RESULT_OK;
 			};
 			api.queryServices = [](DMUI_HostServicesInfo* a_services) noexcept {
-				a_services->supportedServices = DMUI_HOST_SERVICE_EXTERNAL_OPEN;
+				a_services->supportedServices = s_mockHostServices;
 				return DMUI_RESULT_OK;
 			};
 			api.queryUIAPI = [](
@@ -206,31 +297,96 @@ namespace vmm_tests
 				DMUI_UIAPIInfo* info) noexcept -> DMUI_Result {
 				if (!info || info->structSize < DMUI_UI_API_INFO_1_SIZE)
 					return DMUI_RESULT_STRUCT_TOO_SMALL;
-				if (abi != kMockUI.abiVersion || revision > kMockUI.revision ||
-					tableSize > kMockUI.structSize)
+				if (abi != s_mockUI->abiVersion ||
+					revision > s_mockUI->revision ||
+					tableSize > s_mockUI->structSize)
 					return DMUI_RESULT_UNSUPPORTED_ABI;
-				info->abiVersion = kMockUI.abiVersion;
-				info->revision = kMockUI.revision;
-				info->tableSize = kMockUI.structSize;
-				info->api = &kMockUI;
+				info->abiVersion = s_mockUI->abiVersion;
+				info->revision = s_mockUI->revision;
+				info->tableSize = s_mockUI->structSize;
+				info->api = s_mockUI;
 				return DMUI_RESULT_OK;
 			};
-			require(
-				dmui::PreflightHostAPI(&api, kClientOptions) ==
-					DMUI_RESULT_SERVICE_UNAVAILABLE,
-				"host without an external-opening entry passed preflight");
 			api.openExternal = [](
 				DMUI_ClientHandle, const DMUI_ExternalOpenDescriptor*, uint32_t*) noexcept {
 				return DMUI_RESULT_OK;
 			};
 			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host without navigation registration entries passed preflight");
+			api.registerPage = [](
+				DMUI_ClientHandle, const DMUI_PageDescriptor*,
+				DMUI_PageHandle* a_page) noexcept {
+				if (a_page)
+					*a_page = 1;
+				return DMUI_RESULT_OK;
+			};
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host without category registration passed preflight");
+			api.registerCategory = [](
+				DMUI_ClientHandle, const DMUI_CategoryDescriptor*) noexcept {
+				return DMUI_RESULT_OK;
+			};
+			require(
 				dmui::PreflightHostAPI(&api, kClientOptions) == DMUI_RESULT_OK,
-				"host with external-opening support failed preflight");
+				"host with external actions and navigation icons failed preflight");
+
+			const auto openExternal = api.openExternal;
+			api.openExternal = nullptr;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host missing openExternal passed service preflight");
+			api.openExternal = openExternal;
+			s_mockHostServices = DMUI_HOST_SERVICE_EXTERNAL_OPEN;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host missing the navigation-icons service bit passed preflight");
+			s_mockHostServices =
+				DMUI_HOST_SERVICE_EXTERNAL_OPEN |
+				DMUI_HOST_SERVICE_NAVIGATION_ICONS;
+
+			const auto registerPage = api.registerPage;
+			api.registerPage = nullptr;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host missing registerPage passed navigation preflight");
+			api.registerPage = registerPage;
+			const auto registerCategory = api.registerCategory;
+			api.registerCategory = nullptr;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_SERVICE_UNAVAILABLE,
+				"host missing registerCategory passed navigation preflight");
+			api.registerCategory = registerCategory;
+
+			DMUI_UIAPI missingPlot = kMockUI;
+			missingPlot.plotLines = nullptr;
+			s_mockUI = &missingPlot;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_UNSUPPORTED_ABI,
+				"UI table missing the required plot operation passed preflight");
+			DMUI_UIAPI truncatedUI = kMockUI;
+			truncatedUI.structSize = DMUI_UI_API_PLOT_LINES_SIZE - 1;
+			s_mockUI = &truncatedUI;
+			require(
+				dmui::PreflightHostAPI(&api, kClientOptions) ==
+					DMUI_RESULT_UNSUPPORTED_ABI,
+				"truncated UI table passed preflight");
+			s_mockUI = &kMockUI;
+
 			api.structSize = DMUI_HOST_API_UPDATE_IMAGE_SIZE;
 			require(
 				dmui::PreflightHostAPI(&api, kClientOptions) ==
 					DMUI_RESULT_UNSUPPORTED_ABI,
-				"superseded host API passed preflight");
+				"truncated host API passed preflight");
+			api.structSize = sizeof(api);
 		});
 
 		runner.test("input switching preserves modal keyboard and mouse ownership", [] {
@@ -248,6 +404,23 @@ namespace vmm_tests
 				const auto actual = kMenuLogLevels[index++];
 				require(actual == expected.level, "log level order changed");
 				require(LogControl::LevelName(actual) == expected.name, "public log level name changed");
+			}
+		});
+
+		runner.test("module outcome choices have stable unique keys", [] {
+			for (size_t index = 0; index < kModuleOutcomeFilters.size(); ++index)
+			{
+				const auto& option = kModuleOutcomeFilters[index];
+				require(!option.label.empty(), "module outcome choice lost its label");
+				require(!option.key.empty(), "module outcome choice lost its stable key");
+				for (size_t other = index + 1;
+					other < kModuleOutcomeFilters.size();
+					++other)
+				{
+					require(
+						option.key != kModuleOutcomeFilters[other].key,
+						"module outcome choice keys are not unique");
+				}
 			}
 		});
 
@@ -535,8 +708,12 @@ namespace vmm_tests
 			};
 			for (size_t index = 0; index < kTelemetryPanels.size(); ++index)
 			{
-				require(kTelemetryPanels[index].id == expectedIds[index], "telemetry page ID changed");
-				require(kTelemetryPanels[index].sortKey == static_cast<int32_t>(index * 10),
+				require(
+					kTelemetryPanels[index].page.id == expectedIds[index],
+					"telemetry page ID changed");
+				require(
+					kTelemetryPanels[index].page.sortKey ==
+						static_cast<int32_t>(index * 10),
 					"telemetry page sort order changed");
 			}
 		});

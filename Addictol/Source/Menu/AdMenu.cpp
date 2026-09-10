@@ -23,7 +23,7 @@ namespace Addictol
 			"dear-modding.addictol",
 			"Addictol",
 			dmui::Version{ VERSION_MAJOR, VERSION_MINOR },
-			{},
+			Menu::kClientIconName,
 			{},
 			Menu::kClientOptions
 		};
@@ -48,28 +48,28 @@ namespace Addictol
 			REX::INFO("Menu: client refresh cadence is {} ms."sv, refreshMs);
 		}
 
-		void RefreshThemeColors() noexcept
+		[[nodiscard]] bool RefreshThemeColors() noexcept
 		{
 			if (const auto colors = s_client.GetThemeColors())
+			{
 				s_themeColors = *colors;
+				return true;
+			}
+			Menu::ReportPresentationResult(false);
+			return false;
 		}
 
 		void DrawPanel(Menu::Panel a_panel) noexcept
 		{
-			RefreshThemeColors();
+			if (!RefreshThemeColors())
+				return;
 			a_panel.draw(a_panel.context);
 		}
 
 		[[nodiscard]] bool RegisterPage(const Menu::Panel& a_panel) noexcept
 		{
 			const auto page = s_client.AddPage(
-				{
-					.id = a_panel.id,
-					.displayName = a_panel.name,
-					.categoryId = a_panel.categoryId,
-					.summary = a_panel.summary,
-					.sortKey = a_panel.sortKey
-				},
+				a_panel.page,
 				[a_panel] {
 					DrawPanel(a_panel);
 				});
@@ -77,7 +77,7 @@ namespace Addictol
 			{
 				REX::WARN(
 					"Menu: page \"{}\" rejected, result {}."sv,
-					a_panel.name,
+					a_panel.page.displayName,
 					DMUI_ResultToString(s_client.LastResult()));
 			}
 			return page.has_value();
@@ -99,7 +99,9 @@ namespace Addictol
 		}
 		catch (...)
 		{
-			REX::ERROR("Menu: could not retain page \"{}\" for registration."sv, a_panel.name);
+			REX::ERROR(
+				"Menu: could not retain page \"{}\" for registration."sv,
+				a_panel.page.displayName);
 			return false;
 		}
 	}
@@ -186,7 +188,11 @@ namespace Addictol
 
 		Menu::BeginSettingsPageFrame();
 		if (!s_client.AddFrameObserver([] {
-				Menu::EndSettingsPageFrame(s_client.IsMenuVisible().value_or(false));
+				const auto visible = s_client.IsMenuVisible();
+				if (visible)
+					Menu::EndSettingsPageFrame(*visible);
+				else
+					Menu::ReportPresentationResult(false);
 				Menu::BeginSettingsPageFrame();
 			}))
 		{
@@ -219,11 +225,7 @@ namespace Addictol
 		}
 
 		if (!RegisterPage({
-				"home",
-				"Home",
-				kGeneralCategory.id,
-				"Overview, live module status, project links, and FAQ.",
-				0,
+				kHomePage,
 				&DrawHomePage,
 				nullptr,
 				nullptr
@@ -246,11 +248,7 @@ namespace Addictol
 	void Menu::FinalizeRegistration() noexcept
 	{
 		if (!RegisterPanel({
-				"modules",
-				"Modules",
-				kGeneralCategory.id,
-				"Individual install, disable, skip, and failure outcomes for every module.",
-				200,
+				kModulesPage,
 				&DrawModulesPage,
 				nullptr,
 				nullptr
@@ -258,11 +256,7 @@ namespace Addictol
 			REX::ERROR("Menu: Modules page could not be retained."sv);
 
 		if (!RegisterPanel({
-				"facegen-exceptions",
-				"Facegen Exceptions",
-				kDiagnosticsCategory.id,
-				"Facegen exception coverage, configuration state, and resolution failures.",
-				900,
+				kFacegenExceptionsPage,
 				&DrawFacegenExceptionsPage,
 				nullptr,
 				nullptr
@@ -270,11 +264,7 @@ namespace Addictol
 			REX::ERROR("Menu: Facegen Exceptions page could not be retained."sv);
 
 		if (!RegisterPanel({
-				"log-control",
-				kMenuLogControlPanelName.data(),
-				kDiagnosticsCategory.id,
-				"Runtime logging levels and output statistics.",
-				1000,
+				kLogControlPage,
 				&DrawMenuLogControlPanel,
 				nullptr,
 				nullptr

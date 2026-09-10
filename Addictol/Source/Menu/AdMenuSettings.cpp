@@ -29,9 +29,8 @@ namespace Addictol::Menu
 		[[nodiscard]] char32_t CategoryGlyph(
 			SettingDisplayCategory a_category) noexcept
 		{
-			return DearModdingUI::ResolveIconGlyph(
-				DearModdingUI::IconKind::kCategory,
-				SettingDisplayCategoryName(a_category));
+			return DearModdingUI::ResolveNamedIconGlyphOrZero(
+				SettingDisplayCategoryIconName(a_category));
 		}
 
 		void EnsureDraft()
@@ -368,15 +367,7 @@ namespace Addictol::Menu
 		try
 		{
 			const auto page = Client().AddSettingsPage(
-				{
-					.id = "settings",
-					.displayName = "Settings",
-					.categoryId = kGeneralCategory.id,
-					.summary =
-						"Configure Addictol fixes, performance, visuals, gameplay, "
-						"and diagnostics.",
-					.sortKey = 100
-				},
+				kSettingsPage,
 				MakeSettingsPage());
 			if (!page)
 			{

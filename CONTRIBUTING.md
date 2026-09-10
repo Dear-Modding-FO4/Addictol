@@ -102,12 +102,19 @@ ImGui sources. The host translates the DMUI-owned types and flags to its interna
 renderer; clients do not negotiate an ImGui version or receive its context.
 Use the host ABI and required-service negotiation rather than the product version
 to determine compatibility. This forwarding-only cutover requires a host exposing
-`DMUI_GetAPI`; pre-cutover hosts are unsupported.
-Register categories before pages, reference their stable IDs, and keep external-link actions host-owned.
+`DMUI_GetAPI`; pre-cutover hosts are unsupported. The validated dependency set is
+CommonLibF4 `a728b51` with nested DearModdingUI API `0790ef2`, paired with host
+`1c5eb35` or later; tagged host v0.1.1 predates the current icon catalog and resolver.
+Register categories before pages, reference their stable IDs, require the navigation-icon service,
+and keep external-link actions host-owned.
 
 Use the shared `dmui::DrawStyledText`, `DrawLabeledValue`, `FontGuard`, and keyed
 `DrawChoice` helpers for menu presentation. `Menu::ReportPresentationResult`
 reports failed shared drawing calls without duplicating their styling or layout.
+Addictol owns explicit canonical Phosphor names for its client, categories, pages,
+and settings groups; do not infer navigation icons from display names. The client
+uses the `pill` glyph. `Pics/logo.png` remains documentation artwork because the
+host contract does not expose custom image navigation branding.
 Addictol retains its page-specific text styles and table flags, while
 `AdMenuFormatting` contains only data formatting. Diagnostic values use the Body
 font; they do not request a separate monospace font. Logging, telemetry, facegen

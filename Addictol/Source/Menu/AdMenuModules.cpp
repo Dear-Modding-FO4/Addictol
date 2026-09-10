@@ -40,17 +40,6 @@ namespace Addictol::Menu
 			return dmui::ui::GetStyleColor(dmui::ui::Color::kText);
 		}
 
-		[[nodiscard]] std::string_view FilterLabel(
-			ModuleOutcomeFilter a_filter) noexcept
-		{
-			for (const auto& option : kModuleOutcomeFilters)
-			{
-				if (option.filter == a_filter)
-					return option.label;
-			}
-			return kModuleOutcomeFilters.front().label;
-		}
-
 		void DrawSummary(const ModuleOutcomeTally& a_counts) noexcept
 		{
 			const auto total =
@@ -82,26 +71,36 @@ namespace Addictol::Menu
 			dmui::ui::TableHeadersRow();
 			dmui::ui::TableNextRow();
 			(void)dmui::ui::TableSetColumnIndex(0);
-			(void)Client().DrawSearchInput(
+			const auto search = Client().DrawSearchInput(
 				"ModuleSearchBar",
 				"Search modules...",
 				a_state.search);
+			ReportPresentationResult(search.has_value());
 			(void)dmui::ui::TableSetColumnIndex(1);
 			dmui::ui::SetNextItemWidth(-1.0f);
-			const auto preview = FilterLabel(a_state.filter);
-			if (dmui::ui::BeginCombo(
-					"##module_outcome_filter",
-					preview.data()))
-			{
-				for (const auto& option : kModuleOutcomeFilters)
+			static const auto choices = [] {
+				std::array<
+					dmui::ChoiceOption<ModuleOutcomeFilter>,
+					kModuleOutcomeFilters.size()> result;
+				for (size_t index = 0; index < kModuleOutcomeFilters.size(); ++index)
 				{
-					const auto selected = option.filter == a_state.filter;
-					if (dmui::ui::Selectable(option.label.data(), selected))
-						a_state.filter = option.filter;
-					if (selected)
-						dmui::ui::SetItemDefaultFocus();
+					const auto& option = kModuleOutcomeFilters[index];
+					result[index] = {
+						option.filter,
+						std::string{ option.label },
+						std::string{ option.key }
+					};
 				}
-				dmui::ui::EndCombo();
+				return result;
+			}();
+			const auto selected = dmui::DrawChoice<ModuleOutcomeFilter>(
+				"##module_outcome_filter",
+				a_state.filter,
+				choices,
+				"All outcomes");
+			if (selected.changed && selected.selected)
+			{
+				a_state.filter = *selected.selected;
 			}
 			dmui::ui::EndTable();
 		}
@@ -203,9 +202,9 @@ namespace Addictol::Menu
 			Plugin::GetSingleton()->GetModules().ModuleStatuses();
 		const auto counts = TallyModuleOutcomes(statuses);
 
-		(void)Client().DrawSectionHeader(
+		ReportPresentationResult(Client().DrawSectionHeader(
 			"Modules",
-			DearModdingUI::PhosphorGlyph::kPuzzlePiece);
+			DearModdingUI::PhosphorGlyph::kPuzzlePiece));
 		DrawSummary(counts);
 		dmui::ui::Spacing();
 		DrawFilters(state);

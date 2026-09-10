@@ -364,8 +364,9 @@ namespace Addictol
 		RefreshCache();
 
 		ReportPresentationResult(dmui::DrawStyledText(
-			Menu::Client(), panel.name, { .fontRole = DMUI_FONT_ROLE_TITLE }));
-		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), panel.description, Menu::kMutedText));
+			Menu::Client(), panel.page.displayName, { .fontRole = DMUI_FONT_ROLE_TITLE }));
+		ReportPresentationResult(dmui::DrawStyledText(
+			Menu::Client(), panel.page.summary, Menu::kMutedText));
 		dmui::ui::Separator();
 		if (!s_cache.hasData)
 		{

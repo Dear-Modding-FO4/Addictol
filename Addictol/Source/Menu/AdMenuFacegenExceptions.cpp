@@ -573,9 +573,9 @@ namespace Addictol::Menu
 		const auto facegenEnabled = bPatchesFacegen.GetValue();
 		EnsureDraft(snapshot);
 
-		(void)Client().DrawSectionHeader(
+		ReportPresentationResult(Client().DrawSectionHeader(
 			"Facegen Exceptions",
-			DearModdingUI::PhosphorGlyph::kFiles);
+			DearModdingUI::PhosphorGlyph::kFiles));
 		DrawOverview(snapshot, facegenEnabled);
 		dmui::ui::Spacing();
 		DrawConfigurationState(snapshot, facegenEnabled);

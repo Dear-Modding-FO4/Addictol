@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Menu/AdMenu.h>
 #include <Menu/AdMenuTargets.h>
 #include <Telemetry/AdTelemetry.h>
 
@@ -24,23 +25,70 @@ namespace Addictol
 	struct TelemetryPanelDefinition
 	{
 		TelemetryPanel panel;
-		const char* id;
-		std::string_view name;
-		std::string_view description;
-		int32_t sortKey;
+		dmui::PageDescriptor page;
 	};
 
 	inline constexpr std::array kTelemetryPanels{
-		TelemetryPanelDefinition{ TelemetryPanel::kOverview, "overview", "Overview"sv,
-			"Frame pacing and the signals most likely to need attention."sv, 0 },
-		TelemetryPanelDefinition{ TelemetryPanel::kMemory, "memory", "Memory"sv,
-			"Process, system, video, and allocator memory."sv, 10 },
-		TelemetryPanelDefinition{ TelemetryPanel::kDecompression, "decompression", "Decompression"sv,
-			"Libdeflate interval totals and zlib workload distribution."sv, 20 },
-		TelemetryPanelDefinition{ TelemetryPanel::kStability, "stability", "Stability"sv,
-			"Escape recovery, reference handles, and module outcomes."sv, 30 },
-		TelemetryPanelDefinition{ TelemetryPanel::kAudio, "audio", "Audio"sv,
-			"XAudio2 voice, latency, memory, and glitch telemetry."sv, 40 }
+		TelemetryPanelDefinition{
+			TelemetryPanel::kOverview,
+			{
+				.id = "overview",
+				.displayName = "Overview",
+				.categoryId = Menu::kDiagnosticsCategory.id,
+				.summary = "Frame pacing and the signals most likely to need attention.",
+				.sortKey = 0,
+				.kind = DMUI_PAGE_KIND_SETTINGS,
+				.iconName = "chart-line"
+			}
+		},
+		TelemetryPanelDefinition{
+			TelemetryPanel::kMemory,
+			{
+				.id = "memory",
+				.displayName = "Memory",
+				.categoryId = Menu::kDiagnosticsCategory.id,
+				.summary = "Process, system, video, and allocator memory.",
+				.sortKey = 10,
+				.kind = DMUI_PAGE_KIND_SETTINGS,
+				.iconName = "memory"
+			}
+		},
+		TelemetryPanelDefinition{
+			TelemetryPanel::kDecompression,
+			{
+				.id = "decompression",
+				.displayName = "Decompression",
+				.categoryId = Menu::kDiagnosticsCategory.id,
+				.summary = "Libdeflate interval totals and zlib workload distribution.",
+				.sortKey = 20,
+				.kind = DMUI_PAGE_KIND_SETTINGS,
+				.iconName = "archive"
+			}
+		},
+		TelemetryPanelDefinition{
+			TelemetryPanel::kStability,
+			{
+				.id = "stability",
+				.displayName = "Stability",
+				.categoryId = Menu::kDiagnosticsCategory.id,
+				.summary = "Escape recovery, reference handles, and module outcomes.",
+				.sortKey = 30,
+				.kind = DMUI_PAGE_KIND_SETTINGS,
+				.iconName = "shield-check"
+			}
+		},
+		TelemetryPanelDefinition{
+			TelemetryPanel::kAudio,
+			{
+				.id = "audio",
+				.displayName = "Audio",
+				.categoryId = Menu::kDiagnosticsCategory.id,
+				.summary = "XAudio2 voice, latency, memory, and glitch telemetry.",
+				.sortKey = 40,
+				.kind = DMUI_PAGE_KIND_SETTINGS,
+				.iconName = "speaker-high"
+			}
+		}
 	};
 
 	struct TelemetryMetricGroup

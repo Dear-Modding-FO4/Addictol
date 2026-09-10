@@ -58,16 +58,17 @@ namespace Addictol::Menu
 	{
 		ModuleOutcomeFilter filter;
 		std::string_view label;
+		std::string_view key;
 	};
 
 	inline constexpr std::array kModuleOutcomeFilters{
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kAll, "All outcomes" },
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kPending, "Pending" },
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kInstalled, "Installed" },
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kDisabled, "Disabled" },
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kSkipped, "Skipped" },
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kFailedQuery, "Failed query" },
-		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kFailedInstall, "Failed install" }
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kAll, "All outcomes", "all" },
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kPending, "Pending", "pending" },
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kInstalled, "Installed", "installed" },
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kDisabled, "Disabled", "disabled" },
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kSkipped, "Skipped", "skipped" },
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kFailedQuery, "Failed query", "failed-query" },
+		ModuleOutcomeFilterOption{ ModuleOutcomeFilter::kFailedInstall, "Failed install", "failed-install" }
 	};
 
 	[[nodiscard]] constexpr bool MatchesModuleStatus(

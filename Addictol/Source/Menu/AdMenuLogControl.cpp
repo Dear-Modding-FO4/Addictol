@@ -65,7 +65,7 @@ namespace Addictol
 			}();
 			const auto selected = dmui::DrawChoice<LogControl::Level>(
 				a_label, a_current, choices, "unknown", a_label);
-			if (selected.changed)
+			if (selected.changed && selected.selected)
 			{
 				a_setter(*selected.selected);
 				a_current = *selected.selected;
