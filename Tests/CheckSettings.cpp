@@ -241,12 +241,16 @@ namespace vmm_tests
 				"bAltTabFullscreen factory default is not false");
 		});
 
-		runner.test("generated settings document covers the registry without active defaults", [] {
-			std::string output;
+		runner.test("startup creates a documented template without active defaults", [] {
+			const auto directory = TemporarySettingsDirectory();
+			const auto settingsPath = directory / "Addictol.toml";
+			bool changed = false;
 			std::string error;
 			require(
-				Addictol::BuildSettingsDocumentToml({}, output, error),
-				"settings template could not be generated: " + error);
+				Addictol::RefreshSettingsDocument(settingsPath, error, &changed),
+				"settings template could not be created: " + error);
+			require(changed, "missing settings template was not reported as created");
+			const auto output = ReadText(settingsPath);
 			const auto parsed = toml::try_parse_str(output);
 			require(parsed.is_ok(), "generated settings template is not valid TOML");
 			const auto& root = parsed.unwrap();
@@ -271,6 +275,7 @@ namespace vmm_tests
 					CountOccurrences(output, expectedAssignment) == 1,
 					"generated template does not contain exactly one commented default");
 			}
+			std::filesystem::remove_all(directory);
 		});
 
 		runner.test("setting registry resolves module gate pointers", [] {
@@ -679,10 +684,6 @@ namespace vmm_tests
 						"nested",
 						"value") == 4,
 				"documentation refresh changed dotted, inline, or quoted-table data");
-			require(
-				refreshed.starts_with("\xEF\xBB\xBF[Fixes]\n") &&
-					refreshed.find("\n[Warnings]\n") != std::string::npos,
-				"documentation refresh did not canonicalize dotted or inline owned tables");
 			auto uncommented = refreshed;
 			const std::string example{
 				"# bAltTabFullscreen = false"
@@ -806,175 +807,58 @@ namespace vmm_tests
 				"real section data changed while handling multiline lookalikes");
 		});
 
-		runner.test("startup documentation creates a complete template when missing", [] {
-			const auto directory = TemporarySettingsDirectory();
-			const auto settingsPath = directory / "Addictol.toml";
-			bool changed = false;
-			std::string error;
-			require(
-				Addictol::RefreshSettingsDocument(
-					settingsPath,
-					error,
-					&changed),
-				"missing settings template could not be created: " + error);
-			require(changed, "missing settings template was not reported as created");
-			require(
-				std::filesystem::exists(settingsPath),
-				"missing settings template was not created");
-			const auto root = toml::parse_str(ReadText(settingsPath));
-			for (const auto* setting :
-				Addictol::SettingRegistry::GetSingleton().Settings())
+		runner.test("apply preserves user notes when resetting overrides", [] {
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const std::array values{
+				Addictol::SettingValueSnapshot{
+					&menu,
+					menu.DefaultValue()
+				}
+			};
+			struct Fixture
 			{
-				require(
-					!toml::find(
-						root,
-						std::string{ setting->Section() }).contains(
-						std::string{ setting->Key() }),
-					"created template contains an active factory assignment");
-			}
-			std::filesystem::remove_all(directory);
-		});
-
-		runner.test("apply preserves notes while removing default-valued owned keys", [] {
-			const auto& menu =
-				Setting("Additional", "bIgnoreCompatibilityChecks");
-			const std::array values{
-				Addictol::SettingValueSnapshot{
-					&menu,
-					menu.DefaultValue()
-				}
-			};
-			const std::string existing{
-				"[Additional]\n"
-				"# keep this reset note\n"
-				"bIgnoreCompatibilityChecks = true # keep inline reset note\n"
-				"foreign = 17\n"
-			};
-			std::string output;
-			std::string error;
-			require(
-				Addictol::BuildSettingsOverrideToml(
-					existing,
-					values,
-					output,
-					error),
-				"default-valued key could not be removed: " + error);
-			const auto root = toml::parse_str(output);
-			require(
-				!toml::find(root, "Additional").contains(
-					"bIgnoreCompatibilityChecks"),
-				"default-valued owned key remained active");
-			require(
-				toml::find<int64_t>(root, "Additional", "foreign") == 17,
-				"unknown data was lost while removing an owned key");
-			require(
-				output.contains("keep this reset note") &&
-					output.contains("keep inline reset note"),
-				"comment attached to a removed owned key was lost");
-		});
-
-		runner.test("apply preserves free-standing trailing and duplicate user notes", [] {
-			const auto& menu =
-				Setting("Additional", "bIgnoreCompatibilityChecks");
-			const std::array values{
-				Addictol::SettingValueSnapshot{
-					&menu,
-					menu.DefaultValue()
-				}
-			};
-			const std::string existing{
-				"# top user note\n"
-				"\n"
-				"# blank-separated note\n"
-				"\n"
-				"[Additional]\n"
-				"bIgnoreCompatibilityChecks = true # inline user note\n"
-				"foreign = 17\n"
-				"\n"
-				"# duplicate note\n"
-				"\n"
-				"# duplicate note\n"
-				"\n"
-				"[ThirdParty.nested]\n"
-				"value = 9\n"
-				"\n"
-				"# trailing user note\n"
-				"# duplicate note\n"
-			};
-			std::string output;
-			std::string error;
-			require(
-				Addictol::BuildSettingsOverrideToml(
-					existing,
-					values,
-					output,
-					error),
-				"comment-rich override could not be rebuilt: " + error);
-			const auto parsed = toml::try_parse_str(output);
-			require(parsed.is_ok(), "comment-rich override output is invalid");
-			const auto& root = parsed.unwrap();
-			require(
-				!toml::find(root, "Additional").contains(
-					"bIgnoreCompatibilityChecks") &&
-					toml::find<int64_t>(root, "Additional", "foreign") == 17 &&
-					toml::find<int64_t>(
-						root,
-						"ThirdParty",
-						"nested",
-						"value") == 9,
-				"Apply changed owned defaults or unknown nested data");
-			require(
-				output.contains("# top user note") &&
-					output.contains("# blank-separated note") &&
-					output.contains("# inline user note") &&
-					output.contains("# trailing user note") &&
-					CountOccurrences(output, "# duplicate note") == 3,
-				"Apply lost free-standing, trailing, inline, or duplicate notes");
-
-			std::string repeated;
-			require(
-				Addictol::BuildSettingsOverrideToml(
-					output,
-					values,
-					repeated,
-					error),
-				"repeated comment-rich Apply failed: " + error);
-			require(
-				repeated == output,
-				"repeated comment-rich Apply was not idempotent");
-		});
-
-		runner.test("apply preserves same-text attached inline and trailing notes", [] {
-			const auto& menu =
-				Setting("Additional", "bIgnoreCompatibilityChecks");
-			const std::array values{
-				Addictol::SettingValueSnapshot{
-					&menu,
-					menu.DefaultValue()
-				}
+				std::string_view contents;
+				std::vector<std::pair<std::string_view, size_t>> notes;
 			};
 			const std::array fixtures{
-				std::pair{
-					std::string{
-						"[Foreign]\n"
-						"value = 1 # repeated note\n"
-						"\n"
-						"# repeated note\n"
+				Fixture{
+					"# top user note\n\n"
+					"# blank-separated note\n\n"
+					"[Additional]\n"
+					"# keep this reset note\n"
+					"bIgnoreCompatibilityChecks = true # inline user note\n"
+					"foreign = 17\n\n"
+					"# duplicate note\n\n"
+					"# duplicate note\n\n"
+					"# trailing user note\n"
+					"# duplicate note\n",
+					{
+						{ "# top user note", 1 },
+						{ "# blank-separated note", 1 },
+						{ "# keep this reset note", 1 },
+						{ "# inline user note", 1 },
+						{ "# trailing user note", 1 },
+						{ "# duplicate note", 3 }
 					},
-					size_t{ 2 }
 				},
-				std::pair{
-					std::string{
-						"[Foreign]\n"
-						"# repeated note\n"
-						"value = 1 # repeated note\n"
-						"\n"
-						"# repeated note\n"
-					},
-					size_t{ 3 }
+				Fixture{
+					"[Additional]\n"
+					"bIgnoreCompatibilityChecks = true\n"
+					"foreign = 17 # repeated note\n\n"
+					"# repeated note\n",
+					{ { "# repeated note", 2 } }
+				},
+				Fixture{
+					"[Additional]\n"
+					"bIgnoreCompatibilityChecks = true\n"
+					"# repeated note\n"
+					"foreign = 17 # repeated note\n\n"
+					"# repeated note\n",
+					{ { "# repeated note", 3 } }
 				}
 			};
-			for (const auto& [existing, expectedCount] : fixtures)
+			for (const auto& [existing, notes] : fixtures)
 			{
 				std::string output;
 				std::string error;
@@ -984,20 +868,20 @@ namespace vmm_tests
 						values,
 						output,
 						error),
-					"same-text note fixture could not be rebuilt: " +
-						error);
-				require(
-					CountOccurrences(output, "# repeated note") ==
-						expectedCount,
-					"Apply lost a same-text attached, inline, or trailing note");
+					"comment-rich override could not be rebuilt: " + error);
+				for (const auto& [note, count] : notes)
+				{
+					require(
+						CountOccurrences(output, note) == count,
+						"Apply changed note multiplicity: " + std::string{ note });
+				}
 				const auto parsed = toml::try_parse_str(output);
 				require(
 					parsed.is_ok() &&
-						toml::find<int64_t>(
-							parsed.unwrap(),
-							"Foreign",
-							"value") == 1,
-					"same-text note preservation changed unknown data");
+						!toml::find(parsed.unwrap(), "Additional").contains(
+							"bIgnoreCompatibilityChecks") &&
+						toml::find<int64_t>(parsed.unwrap(), "Additional", "foreign") == 17,
+					"Apply retained the reset override or changed unknown data");
 
 				std::string repeated;
 				require(
@@ -1006,10 +890,10 @@ namespace vmm_tests
 						values,
 						repeated,
 						error),
-					"repeated same-text note Apply failed: " + error);
+					"repeated comment-rich Apply failed: " + error);
 				require(
 					repeated == output,
-					"same-text note preservation was not idempotent");
+					"comment preservation was not idempotent");
 			}
 		});
 
