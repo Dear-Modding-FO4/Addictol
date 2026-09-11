@@ -17,8 +17,8 @@ namespace Addictol
 		"Additional"sv,
 		"bUseNewRedistributable"sv,
 		SettingDisplayCategory::kStability,
-		true,
-		"Replaces the old redistributable with a new one. If option is enabled, reports will include Addictol in case of errors related to copying or comparing memory (needs bMemoryManager)."sv,
+		false,
+		"Redirects OG's imported memory routines to Addictol's CRT; memory faults may be attributed to Addictol (needs bMemoryManager)."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -147,7 +147,7 @@ namespace Addictol
 		"Additional"sv,
 		"nQuitGameDelayMs"sv,
 		SettingDisplayCategory::kStability,
-		2000,
+		1000,
 		"Delay (ms) before the deferred quit-to-desktop flag is set. Lets the UI/menu unwind so cleanup can't deadlock (needs bSafeExit)."sv,
 		SettingApplyTiming::kImmediate
 	};

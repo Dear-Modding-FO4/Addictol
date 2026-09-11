@@ -105,7 +105,7 @@ jobs:
 
           $plugins = (Resolve-Path '.\.Build\F4SE\Plugins').Path
           Get-ChildItem -Recurse -File -Path $plugins `
-            -Include 'Addictol.dll','Addictol.pdb','Addictol.toml','Addictol*.ini' |
+            -Include 'Addictol.dll','Addictol.pdb','Addictol*.ini' |
             ForEach-Object {
               $relative = $_.FullName.Substring($plugins.Length).TrimStart('\')
               $destination = Join-Path "$env:BUNDLE_NAME\f4se\plugins" $relative

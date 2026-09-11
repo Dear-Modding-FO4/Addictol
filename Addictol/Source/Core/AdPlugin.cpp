@@ -1,7 +1,7 @@
 #include <Core/AdPlugin.h>
 #include <Core/AdUtils.h>
-#include <Core/AdConfigValidation.h>
 #include <Core/AdLogControl.h>
+#include <Core/Settings/AdSettingPersistence.h>
 #include <Menu/AdMenu.h>
 #include <Zlib/AdZlibBackend.h>
 #include <Telemetry/AdTelemetryHub.h>
@@ -210,15 +210,9 @@ namespace Addictol
 				trampoline.create(AD_TRAMPOLINE_SIZE);
 
 				// Load the Config
-				const auto config = REX::FTomlSettingStore::GetSingleton();
-				config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
-				config->Load();
+				InitializeSettings();
 				LogControl::Install();
 				InitializeZlibBackendConfig();
-
-				// Validate config keys
-				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName ".toml");
-				ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
 			}
 
@@ -276,15 +270,9 @@ namespace Addictol
 			trampoline.create(AD_TRAMPOLINE_SIZE);
 
 			// Load the Config
-			const auto config = REX::FTomlSettingStore::GetSingleton();
-			config->Init("Data/F4SE/Plugins/" _PluginName ".toml", "Data/F4SE/Plugins/" _PluginName "Custom.toml");
-			config->Load();
+			InitializeSettings();
 			LogControl::Install();
 			InitializeZlibBackendConfig();
-
-			// Validate config keys
-			ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName ".toml");
-			ValidateConfigKeys("Data/F4SE/Plugins/" _PluginName "Custom.toml");
 
 			// Register preload all modules
 			AdRegisterPreloadModules();

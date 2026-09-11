@@ -66,7 +66,7 @@ namespace Addictol::Menu
 					DMUI_STATUS_SEVERITY_ERROR,
 					result.error.c_str());
 				REX::WARN(
-					"Settings: AddictolCustom.toml could not be saved: {}"sv,
+					"Settings: Addictol.toml could not be saved: {}"sv,
 					result.error);
 			}
 		}
@@ -303,7 +303,7 @@ namespace Addictol::Menu
 				},
 				.actionTooltips = {
 					.reset =
-						"Reset loads every Addictol setting's shipped default "
+						"Reset loads every Addictol setting's factory default "
 						"into the draft. Use Apply to save them.",
 					.revert =
 						"Revert discards pending edits and restores saved settings.",
@@ -311,7 +311,7 @@ namespace Addictol::Menu
 						return "Apply saves " + std::to_string(a_pending) +
 							" pending " +
 							(a_pending == 1 ? "change" : "changes") +
-							" to AddictolCustom.toml.";
+							" to Addictol.toml.";
 					}
 				},
 				.filterOptions = {

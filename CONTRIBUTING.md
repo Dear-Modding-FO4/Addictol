@@ -213,8 +213,7 @@ Only do that deliberately, and only if installing twice is harmless.
 
 ## Adding a module
 
-A configurable module touches seven places. The last two produce no compiler error, which is why they
-are the ones people forget.
+A configurable module touches six places:
 
 1. `Addictol/Include/Modules/AdModule<Name>.h`, the class declaration.
 2. `Addictol/Source/Modules/AdModule<Name>.cpp`, the implementation.
@@ -223,9 +222,9 @@ are the ones people forget.
    std::make_shared<...>()`, and the `modules.Register(...)` call.
 5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
 6. `Addictol/Include/Core/Settings/AdSettings.h` and the matching section source under
-   `Addictol/Source/Core/Settings`, declaring the setting and its metadata.
-7. `data/F4SE/Plugins/Addictol.toml`, the key with the same user-facing description under the right
-   section. Registry tests enforce that the shipped file and registered keys match in both directions.
+   `Addictol/Source/Core/Settings`, declaring the setting, factory default, and authoritative
+   user-facing description. Startup generates the documented `Addictol.toml` template from this
+   registry metadata.
 
 ### Worked example
 
@@ -280,11 +279,6 @@ BoolSetting bFixesUnalignedLoad{
 };
 ```
 
-```toml
-# Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
-bUnalignedLoad = true
-```
-
 Note how the module scopes its patch: one address resolved for all runtimes, plus an explicit
 `IsRuntimeOG()` branch for the extra sites only OG needs.
 
@@ -319,18 +313,24 @@ Use `kImmediate` only when writes affect already-installed runtime behavior; oth
 Prefix keys by type: `b` boolean, `n` signed, `u` unsigned, `f` float. The C++ variable name
 conventionally embeds the section too, as in `bFixesUnalignedLoad`.
 
-Give every key a one line, user facing comment in `data/F4SE/Plugins/Addictol.toml` that explains what
-it does in plain language rather than implementation terms:
+Give every key a one-line, user-facing registry description that explains what it does in plain
+language rather than implementation terms:
 
-```toml
-# The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator).
-uScaleformPageSize = 64
+```cpp
+U32Setting uAdditionalScaleformPageSize{
+	"Additional"sv,
+	"uScaleformPageSize"sv,
+	SettingDisplayCategory::kPerformance,
+	64ul,
+	"The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator)."sv,
+	SettingApplyTiming::kNextLaunch,
+	SettingNumericRange{ 64.0, 2048.0 }
+};
 ```
 
-Declare the default in the C++ setting and ship the same value in the TOML, and keep the two in sync.
-The shipped TOML value wins at load time, so a stale C++ default is invisible to users but misleads
-the next person reading the source. Users override settings in their own `AddictolCustom.toml`;
-never expect them to edit the shipped file.
+The C++ initializer is the factory default and the sole maintained default. Addictol creates and
+refreshes managed documentation in the user-owned `Data/F4SE/Plugins/Addictol.toml`; active values
+there are overrides. Do not add a populated TOML under `data/` or load `AddictolCustom.toml`.
 
 Default a new fix to `true` only if you are confident it is safe and well tested. Heuristics,
 anything that changes behaviour rather than fixing an outright bug, and anything you have not
@@ -537,7 +537,8 @@ The codec checks use Addictol's real libdeflate backend, with the original engin
 simulated at the fallback boundary. DMUI host negotiation, Facegen INI round trips and runtime telemetry
 readers also use simulated boundaries; they do not exercise the live host, module save/reload or engine
 hooks. Signature fixtures test drift and rejection logic, not retail address resolution or in-game safety.
-Registry checks enforce shipped keys and metadata, not shipped/default-value parity.
+Settings checks cover registry-derived documentation, factory defaults, override loading,
+comment-preserving persistence, and Reset/Apply/reload behavior.
 
 Run `.\.Build\Tests\vmm-tests.exe --bench` for opt-in VMM throughput and latency measurements, written to
 `.Build\Tests\bench.json`. These are not a correctness gate; inspect the reported allocation/free failure
@@ -570,4 +571,4 @@ anything that could interact with the patch.
 
 Reviewers look for, roughly in order: whether the ids are correct on all three runtimes, whether the
 module fails closed, whether it can fight another module or mod, whether the TOML key is wired
-through all seven places, and only then style.
+through all six places, and only then style.

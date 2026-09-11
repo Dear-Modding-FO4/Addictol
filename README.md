@@ -62,7 +62,7 @@ Install with a mod manager, or extract the release archive into the Fallout 4 `D
 ```text
 Data\
 ├─ F4SE\Plugins\
-│  └─ Addictol.dll, Addictol.toml, Addictol_*.ini
+│  └─ Addictol.dll, Addictol_*.ini
 └─ Scripts\{Addictol,XCELL}.pex
 ```
 
@@ -78,16 +78,27 @@ normal installations. Development prereleases are published from `master` as
 ## Configuration
 
 The central registry exposes 113 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
-`[Telemetry]`, and `[Additional]`. The shipped `Addictol.toml` documents every option inline.
+`[Telemetry]`, and `[Additional]`. On first launch, Addictol creates
+`Data\F4SE\Plugins\Addictol.toml` with every registry description and a commented factory value.
+Addictol refreshes those managed help comments on later launches while preserving active values,
+unknown entries, and personal notes placed outside the marked help blocks.
+Uncomment a generated assignment or add an override to edit settings without DearModdingUI.
+File edits are loaded on the next game launch.
 
 > [!WARNING]
-> Do not edit `Addictol.toml`; updates overwrite it. Put only your overrides in
-> `AddictolCustom.toml` beside it.
+> Existing users must move the old shipped `Addictol.toml` aside, then rename
+> `AddictolCustom.toml` to `Addictol.toml` if they used one. There is no automatic migration.
+> Leaving the old full base file in place makes every active value in it an explicit override.
 
 ```toml
 [Fixes]
 bUnalignedLoad = false
 ```
+
+Only active values that differ from factory defaults are retained when settings are applied through
+the menu. Reset fills the menu draft with C++ factory defaults; Revert restores the last committed
+values. Most changes take effect on the next launch, while settings marked immediate update when
+Apply succeeds.
 
 Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`. It records which modules
 loaded, were disabled, or skipped; check it first when something is not working.

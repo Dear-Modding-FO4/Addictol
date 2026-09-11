@@ -83,7 +83,6 @@ jobs:
           path: |
             .Build/F4SE/Plugins/Addictol.dll
             .Build/F4SE/Plugins/Addictol.pdb
-            .Build/F4SE/Plugins/Addictol.toml
             .Build/F4SE/Plugins/Addictol_*.ini
             .Build/Scripts
           if-no-files-found: error

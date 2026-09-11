@@ -99,7 +99,7 @@ namespace Addictol
 		"nMaxStdIO"sv,
 		SettingDisplayCategory::kPerformance,
 		-1,
-		"Replaces the maximum stdio handles (max 8192, but not for everyone OS)."sv,
+		"Sets the maximum stdio handles. -1 selects 512; the runtime cap is 2048 on OG and 8192 on NG/AE."sv,
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ std::nullopt, 8192.0 }
 	};
@@ -342,8 +342,8 @@ namespace Addictol
 		"Fixes"sv,
 		"bAltTabFullscreen"sv,
 		SettingDisplayCategory::kInterface,
-		true,
-		"Fixes the exclusive-fullscreen Alt-Tab hang by forcing the swap chain to borderless-windowed at creation and blocking DXGI's auto Alt+Enter handler."sv,
+		false,
+		"Forces exclusive-fullscreen swap chains to windowed at creation to avoid Alt-Tab hangs."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -496,7 +496,7 @@ namespace Addictol
 		"bLoadOrder"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes multiple AE Load Order issues when the Creations Platform is enabled. Including Plugins getting disabled, moved around, and inability to toggle certain Plugins in-game."sv,
+		"Fixes multiple AE Load Order issues when the Creations Platform is enabled, including plugins being disabled or moved, inability to toggle some plugins in-game, and a freeze while loading."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

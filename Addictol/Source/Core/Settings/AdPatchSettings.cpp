@@ -125,7 +125,7 @@ namespace Addictol
 		"Patches"sv,
 		"bArchiveLimits"sv,
 		SettingDisplayCategory::kStability,
-		false,
+		true,
 		"Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355."sv,
 		SettingApplyTiming::kNextLaunch
 	};
@@ -134,7 +134,7 @@ namespace Addictol
 		"Patches"sv,
 		"bInputSwitch"sv,
 		SettingDisplayCategory::kInterface,
-		true,
+		false,
 		"Automatically swaps inputs between Keyboard + Mouse / Controller."sv,
 		SettingApplyTiming::kNextLaunch
 	};

@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -24,33 +25,25 @@ namespace
 {
 	using SettingKey = std::pair<std::string, std::string>;
 
-	[[nodiscard]] std::filesystem::path ShippedConfigPath()
+	class RegistryValueGuard
 	{
-		return std::filesystem::path{ __FILE__ }.parent_path().parent_path() /
-			"data/F4SE/Plugins/Addictol.toml";
-	}
-
-	[[nodiscard]] std::set<SettingKey> ReadShippedKeys()
-	{
-		const auto result = toml::try_parse(ShippedConfigPath().string());
-		vmm_tests::require(result.is_ok(), "shipped Addictol.toml could not be parsed");
-		const auto& data = result.unwrap();
-		vmm_tests::require(data.is_table(), "shipped Addictol.toml is not a table");
-
-		std::set<SettingKey> keys;
-		for (const auto& [sectionName, sectionValue] : data.as_table())
+	public:
+		RegistryValueGuard()
 		{
-			vmm_tests::require(
-				sectionValue.is_table(),
-				"shipped Addictol.toml contains a non-table section");
-			for (const auto& [keyName, keyValue] : sectionValue.as_table())
-			{
-				(void)keyValue;
-				keys.emplace(sectionName, keyName);
-			}
+			for (const auto* setting :
+				Addictol::SettingRegistry::GetSingleton().Settings())
+				m_values.push_back({ setting, setting->Value() });
 		}
-		return keys;
-	}
+
+		~RegistryValueGuard()
+		{
+			for (const auto& item : m_values)
+				(void)item.setting->SetValue(item.value);
+		}
+
+	private:
+		std::vector<Addictol::SettingValueSnapshot> m_values;
+	};
 
 	[[nodiscard]] bool MatchesType(
 		Addictol::SettingValueType a_type,
@@ -106,14 +99,84 @@ namespace
 			std::istreambuf_iterator<char>{}
 		};
 	}
+
+	void WriteText(
+		const std::filesystem::path& a_path,
+		std::string_view a_contents)
+	{
+		std::ofstream file{
+			a_path,
+			std::ios::binary | std::ios::trunc
+		};
+		vmm_tests::require(static_cast<bool>(file), "test file could not be created");
+		file << a_contents;
+		vmm_tests::require(static_cast<bool>(file), "test file could not be written");
+	}
+
+	[[nodiscard]] size_t CountOccurrences(
+		std::string_view a_text,
+		std::string_view a_needle)
+	{
+		size_t count = 0;
+		size_t position = 0;
+		while ((position = a_text.find(a_needle, position)) !=
+			std::string_view::npos)
+		{
+			++count;
+			position += a_needle.size();
+		}
+		return count;
+	}
+
+	[[nodiscard]] std::string FormatSettingValue(
+		const Addictol::SettingValue& a_value)
+	{
+		return std::visit(
+			[](const auto& a_item) {
+				using T = std::remove_cvref_t<decltype(a_item)>;
+				if constexpr (std::is_same_v<T, uint64_t>)
+					return toml::format(
+						toml::value{ static_cast<int64_t>(a_item) });
+				else
+					return toml::format(toml::value{ a_item });
+			},
+			a_value);
+	}
+
+	void SetRegistryToFactoryDefaults()
+	{
+		for (const auto* setting :
+			Addictol::SettingRegistry::GetSingleton().Settings())
+		{
+			vmm_tests::require(
+				setting->SetValue(setting->DefaultValue()),
+				"test could not restore a factory setting");
+		}
+	}
+
+	[[nodiscard]] Addictol::SettingValueSnapshot& SnapshotSetting(
+		std::vector<Addictol::SettingValueSnapshot>& a_snapshot,
+		std::string_view a_section,
+		std::string_view a_key)
+	{
+		const auto position = std::ranges::find_if(
+			a_snapshot,
+			[&](const Addictol::SettingValueSnapshot& a_item) {
+				return a_item.setting->Section() == a_section &&
+					a_item.setting->Key() == a_key;
+			});
+		vmm_tests::require(
+			position != a_snapshot.end(),
+			"settings snapshot does not contain the requested key");
+		return *position;
+	}
 }
 
 namespace vmm_tests
 {
 	void run_setting_registry_checks(Runner& runner)
 	{
-		runner.test("setting registry preserves shipped keys, metadata, and stable enumeration", [] {
-			const auto shipped = ReadShippedKeys();
+		runner.test("setting registry preserves metadata and stable enumeration", [] {
 			const auto first = Addictol::SettingRegistry::GetSingleton().Settings();
 			const auto second = Addictol::SettingRegistry::GetSingleton().Settings();
 			require(first.data() == second.data(), "registry enumeration storage changed");
@@ -151,8 +214,63 @@ namespace vmm_tests
 				require(previous < current, "registry enumeration is not sorted");
 			}
 			require(
-				registered == shipped,
-				"registered settings and shipped Addictol.toml keys differ");
+				registered.size() == first.size(),
+				"registered settings were not unique");
+		});
+
+		runner.test("factory defaults match the approved release values", [] {
+			require(
+				!std::get<bool>(
+					Setting("Additional", "bUseNewRedistributable").DefaultValue()),
+				"bUseNewRedistributable factory default is not false");
+			require(
+				std::get<int64_t>(
+					Setting("Additional", "nQuitGameDelayMs").DefaultValue()) == 1000,
+				"nQuitGameDelayMs factory default is not 1000");
+			require(
+				std::get<bool>(
+					Setting("Patches", "bArchiveLimits").DefaultValue()),
+				"bArchiveLimits factory default is not true");
+			require(
+				!std::get<bool>(
+					Setting("Patches", "bInputSwitch").DefaultValue()),
+				"bInputSwitch factory default is not false");
+			require(
+				!std::get<bool>(
+					Setting("Fixes", "bAltTabFullscreen").DefaultValue()),
+				"bAltTabFullscreen factory default is not false");
+		});
+
+		runner.test("generated settings document covers the registry without active defaults", [] {
+			std::string output;
+			std::string error;
+			require(
+				Addictol::BuildSettingsDocumentToml({}, output, error),
+				"settings template could not be generated: " + error);
+			const auto parsed = toml::try_parse_str(output);
+			require(parsed.is_ok(), "generated settings template is not valid TOML");
+			const auto& root = parsed.unwrap();
+			for (const auto* setting :
+				Addictol::SettingRegistry::GetSingleton().Settings())
+			{
+				const auto& section = toml::find(
+					root,
+					std::string{ setting->Section() });
+				require(
+					!section.contains(std::string{ setting->Key() }),
+					"generated template contains an active factory assignment");
+				const auto expectedDescription =
+					"# " + std::string{ setting->Description() };
+				require(
+					output.contains(expectedDescription),
+					"generated template does not contain a registry description");
+				const auto expectedAssignment =
+					"# " + std::string{ setting->Key() } + " = " +
+					FormatSettingValue(setting->DefaultValue());
+				require(
+					CountOccurrences(output, expectedAssignment) == 1,
+					"generated template does not contain exactly one commented default");
+			}
 		});
 
 		runner.test("setting registry resolves module gate pointers", [] {
@@ -330,6 +448,8 @@ namespace vmm_tests
 				"\n"
 				"[ThirdParty]\n"
 				"name = \"keep\"\n"
+				"\n"
+				"[EmptyThirdParty]\n"
 			};
 			std::string output;
 			std::string error;
@@ -350,15 +470,19 @@ namespace vmm_tests
 				toml::find<std::string>(root, "ThirdParty", "name") == "keep",
 				"unknown section was dropped");
 			require(
+				root.contains("EmptyThirdParty") &&
+					toml::find(root, "EmptyThirdParty").as_table().empty(),
+				"empty unknown section was dropped");
+			require(
 				!toml::find(root, "Additional").contains(
 					"bIgnoreCompatibilityChecks"),
 				"default owned key was retained");
 		});
 
-		runner.test("settings writer creates a custom document with the requested override", [] {
+		runner.test("settings writer creates the canonical document with the requested override", [] {
 			const auto directory = TemporarySettingsDirectory();
 			std::filesystem::create_directories(directory);
-			const auto custom = directory / "AddictolCustom.toml";
+			const auto settingsPath = directory / "Addictol.toml";
 			const auto& menu =
 				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
@@ -366,27 +490,26 @@ namespace vmm_tests
 			};
 			std::string error;
 			require(
-				Addictol::WriteSettingsOverrideFile(custom, values, error),
-				"custom override file could not be written: " + error);
+				Addictol::WriteSettingsOverrideFile(settingsPath, values, error),
+				"settings override file could not be written: " + error);
 			require(
-				std::filesystem::exists(custom),
-				"custom override file was not created");
-			const auto root = toml::parse_str(ReadText(custom));
+				std::filesystem::exists(settingsPath),
+				"settings override file was not created");
+			const auto root = toml::parse_str(ReadText(settingsPath));
 			require(
 				toml::find<bool>(root, "Additional", "bIgnoreCompatibilityChecks") ==
 					!CompatibilityDefault(),
-				"new custom document lost its requested override");
+				"new settings document lost its requested override");
 			std::filesystem::remove_all(directory);
 		});
 
-		runner.test("settings writer updates a valid existing custom document", [] {
+		runner.test("settings writer updates a valid existing canonical document", [] {
 			const auto directory = TemporarySettingsDirectory();
 			std::filesystem::create_directories(directory);
-			const auto custom = directory / "AddictolCustom.toml";
-			{
-				std::ofstream file{ custom, std::ios::binary };
-				file << "[Additional]\nbIgnoreCompatibilityChecks = true\nzUnowned = 7\n";
-			}
+			const auto settingsPath = directory / "Addictol.toml";
+			WriteText(
+				settingsPath,
+				"[Additional]\nbIgnoreCompatibilityChecks = true\nzUnowned = 7\n");
 			const auto& menu =
 				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
@@ -394,44 +517,671 @@ namespace vmm_tests
 			};
 			std::string error;
 			require(
-				Addictol::WriteSettingsOverrideFile(custom, values, error),
-				"existing custom document could not be rewritten: " + error);
-			const auto root = toml::parse_str(ReadText(custom));
+				Addictol::WriteSettingsOverrideFile(settingsPath, values, error),
+				"existing settings document could not be rewritten: " + error);
+			const auto root = toml::parse_str(ReadText(settingsPath));
 			require(
 				toml::find<bool>(
 					root,
 					"Additional",
 					"bIgnoreCompatibilityChecks") == !CompatibilityDefault(),
-				"existing custom document lost its override");
+				"existing settings document lost its override");
 			require(
 				toml::find<int64_t>(root, "Additional", "zUnowned") == 7,
-				"existing custom document lost an unowned key");
+				"existing settings document lost an unowned key");
 			std::filesystem::remove_all(directory);
 		});
 
-		runner.test("settings writer leaves an unparseable custom document intact", [] {
+		runner.test("settings writer leaves an unparseable canonical document intact", [] {
 			const auto directory = TemporarySettingsDirectory();
 			std::filesystem::create_directories(directory);
-			const auto custom = directory / "AddictolCustom.toml";
+			const auto settingsPath = directory / "Addictol.toml";
 			const std::string invalid{
 				"[Additional\nbIgnoreCompatibilityChecks = true\n"
 			};
-			{
-				std::ofstream file{ custom, std::ios::binary };
-				file << invalid;
-			}
+			WriteText(settingsPath, invalid);
 			const auto& menu =
 				Setting("Additional", "bIgnoreCompatibilityChecks");
 			const std::array values{
 				Addictol::SettingValueSnapshot{ &menu, true }
 			};
 			std::string error;
+			bool changed = true;
 			require(
-				!Addictol::WriteSettingsOverrideFile(custom, values, error),
-				"invalid custom document was overwritten");
+				!Addictol::RefreshSettingsDocument(
+					settingsPath,
+					error,
+					&changed),
+				"invalid settings document was refreshed");
 			require(
-				ReadText(custom) == invalid,
-				"failed write truncated the existing custom document");
+				!error.empty() && ReadText(settingsPath) == invalid,
+				"documentation failure was not surfaced without modifying the file");
+			require(
+				!Addictol::WriteSettingsOverrideFile(settingsPath, values, error),
+				"invalid settings document was overwritten");
+			require(
+				ReadText(settingsPath) == invalid,
+				"failed write truncated the existing settings document");
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("startup documentation refresh preserves user-owned content and is idempotent", [] {
+			const auto directory = TemporarySettingsDirectory();
+			std::filesystem::create_directories(directory);
+			const auto settingsPath = directory / "Addictol.toml";
+			const std::string existing{
+				"# personal note outside managed help\n"
+				"[Additional]\n"
+				"# >>> Addictol managed help: [Additional]\n"
+				"# stale generated text\n"
+				"bIgnoreCompatibilityChecks = false\n"
+				"# <<< Addictol managed help\n"
+				"# keep this nearby note\n"
+				"foreign = \"quoted\\\\path\\nvalue\"\n"
+				"\n"
+				"[ThirdParty]\n"
+				"enabled = true\n"
+			};
+			WriteText(settingsPath, existing);
+
+			bool changed = false;
+			std::string error;
+			require(
+				Addictol::RefreshSettingsDocument(
+					settingsPath,
+					error,
+					&changed),
+				"settings documentation could not be refreshed: " + error);
+			require(changed, "first documentation refresh reported no change");
+			const auto refreshed = ReadText(settingsPath);
+			const auto root = toml::parse_str(refreshed);
+			require(
+				!toml::find<bool>(
+					root,
+					"Additional",
+					"bIgnoreCompatibilityChecks"),
+				"active assignment inside managed help was discarded");
+			require(
+				toml::find<std::string>(
+					root,
+					"Additional",
+					"foreign") == "quoted\\path\nvalue",
+				"escaped unknown string changed during documentation refresh");
+			require(
+				toml::find<bool>(root, "ThirdParty", "enabled"),
+				"unknown section changed during documentation refresh");
+			require(
+				refreshed.contains("# personal note outside managed help") &&
+					refreshed.contains("# keep this nearby note"),
+				"user comments outside managed help were lost");
+			require(
+				!refreshed.contains("stale generated text"),
+				"stale managed help was retained");
+
+			changed = true;
+			require(
+				Addictol::RefreshSettingsDocument(
+					settingsPath,
+					error,
+					&changed),
+				"second documentation refresh failed: " + error);
+			require(!changed, "identical documentation was rewritten");
+			require(
+				ReadText(settingsPath) == refreshed,
+				"repeated documentation refresh changed output");
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("startup documentation uses parsed table structure for valid TOML forms", [] {
+			const auto directory = TemporarySettingsDirectory();
+			std::filesystem::create_directories(directory);
+			const auto settingsPath = directory / "Addictol.toml";
+			const std::string existing{
+				"\xEF\xBB\xBF"
+				"Fixes.foreign = { nested = 3 }\n"
+				"Warnings = { nested = { value = 4 } }\n"
+				"\n"
+				"[ Additional ]\n"
+				"foreign = 1\n"
+				"\n"
+				"[\"Patches\"]\n"
+				"foreign = 2\n"
+			};
+			WriteText(settingsPath, existing);
+
+			bool changed = false;
+			std::string error;
+			require(
+				Addictol::RefreshSettingsDocument(
+					settingsPath,
+					error,
+					&changed),
+				"valid alternate TOML forms could not be refreshed: " + error);
+			require(changed, "alternate TOML forms reported no documentation change");
+			const auto refreshed = ReadText(settingsPath);
+			require(
+				refreshed.starts_with("\xEF\xBB\xBF"),
+				"UTF-8 BOM was not preserved");
+			const auto parsed = toml::try_parse_str(refreshed);
+			require(parsed.is_ok(), "refreshed alternate TOML forms are invalid");
+			const auto& root = parsed.unwrap();
+			require(
+				toml::find<int64_t>(root, "Additional", "foreign") == 1 &&
+					toml::find<int64_t>(root, "Patches", "foreign") == 2 &&
+					toml::find<int64_t>(
+						root,
+						"Fixes",
+						"foreign",
+						"nested") == 3 &&
+					toml::find<int64_t>(
+						root,
+						"Warnings",
+						"nested",
+						"value") == 4,
+				"documentation refresh changed dotted, inline, or quoted-table data");
+			require(
+				refreshed.starts_with("\xEF\xBB\xBF[Fixes]\n") &&
+					refreshed.find("\n[Warnings]\n") != std::string::npos,
+				"documentation refresh did not canonicalize dotted or inline owned tables");
+			auto uncommented = refreshed;
+			const std::string example{
+				"# bAltTabFullscreen = false"
+			};
+			const auto examplePosition = uncommented.find(example);
+			require(
+				examplePosition != std::string::npos,
+				"canonicalized section did not contain its unqualified example");
+			uncommented.erase(examplePosition, 2);
+			const auto uncommentedRoot = toml::try_parse_str(uncommented);
+			require(
+				uncommentedRoot.is_ok() &&
+					!toml::find<bool>(
+						uncommentedRoot.unwrap(),
+						"Fixes",
+						"bAltTabFullscreen"),
+				"uncommented canonicalized example was not an effective override");
+
+			changed = true;
+			require(
+				Addictol::RefreshSettingsDocument(
+					settingsPath,
+					error,
+					&changed),
+				"second alternate-form refresh failed: " + error);
+			require(!changed, "alternate-form documentation was not idempotent");
+			require(
+				ReadText(settingsPath) == refreshed,
+				"repeated alternate-form refresh changed output");
+
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const std::array values{
+				Addictol::SettingValueSnapshot{
+					&menu,
+					!CompatibilityDefault()
+				}
+			};
+			std::string applied;
+			require(
+				Addictol::BuildSettingsOverrideToml(
+					refreshed,
+					values,
+					applied,
+					error),
+				"alternate TOML forms could not be applied: " + error);
+			require(
+				applied.starts_with("\xEF\xBB\xBF"),
+				"Apply discarded the UTF-8 BOM");
+			const auto appliedRoot = toml::try_parse_str(applied);
+			require(appliedRoot.is_ok(), "applied alternate TOML forms are invalid");
+			require(
+				toml::find<bool>(
+					appliedRoot.unwrap(),
+					"Additional",
+					"bIgnoreCompatibilityChecks") ==
+						!CompatibilityDefault() &&
+					toml::find<int64_t>(
+						appliedRoot.unwrap(),
+						"Fixes",
+						"foreign",
+						"nested") == 3 &&
+					toml::find<int64_t>(
+						appliedRoot.unwrap(),
+						"Warnings",
+						"nested",
+						"value") == 4,
+				"Apply changed alternate-form unknown data or lost the owned override");
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("managed help markers and section lookalikes inside multiline strings are data", [] {
+			const std::string existing{
+				"[ThirdParty]\n"
+				"basic = \"\"\"\n"
+				"[Additional]\n"
+				"# >>> Addictol managed help: [Additional]\n"
+				"# <<< Addictol managed help\n"
+				"\"\"\"\n"
+				"literal = '''\n"
+				"[Patches]\n"
+				"# >>> Addictol managed help: [Patches]\n"
+				"# <<< Addictol managed help\n"
+				"'''\n"
+				"nested = { value = 9 }\n"
+				"\n"
+				"[Additional]\n"
+				"foreign = 17\n"
+			};
+			const auto original = toml::parse_str(existing);
+			std::string output;
+			std::string error;
+			require(
+				Addictol::BuildSettingsDocumentToml(
+					existing,
+					output,
+					error),
+				"multiline lookalike document could not be refreshed: " + error);
+			const auto parsed = toml::try_parse_str(output);
+			require(parsed.is_ok(), "multiline lookalike output is invalid TOML");
+			const auto& root = parsed.unwrap();
+			require(
+				toml::find<std::string>(root, "ThirdParty", "basic") ==
+						toml::find<std::string>(
+							original,
+							"ThirdParty",
+							"basic") &&
+					toml::find<std::string>(root, "ThirdParty", "literal") ==
+						toml::find<std::string>(
+							original,
+							"ThirdParty",
+							"literal") &&
+					toml::find<int64_t>(
+						root,
+						"ThirdParty",
+						"nested",
+						"value") == 9,
+				"multiline string or nested unknown data changed during refresh");
+			require(
+				toml::find<int64_t>(root, "Additional", "foreign") == 17,
+				"real section data changed while handling multiline lookalikes");
+		});
+
+		runner.test("startup documentation creates a complete template when missing", [] {
+			const auto directory = TemporarySettingsDirectory();
+			const auto settingsPath = directory / "Addictol.toml";
+			bool changed = false;
+			std::string error;
+			require(
+				Addictol::RefreshSettingsDocument(
+					settingsPath,
+					error,
+					&changed),
+				"missing settings template could not be created: " + error);
+			require(changed, "missing settings template was not reported as created");
+			require(
+				std::filesystem::exists(settingsPath),
+				"missing settings template was not created");
+			const auto root = toml::parse_str(ReadText(settingsPath));
+			for (const auto* setting :
+				Addictol::SettingRegistry::GetSingleton().Settings())
+			{
+				require(
+					!toml::find(
+						root,
+						std::string{ setting->Section() }).contains(
+						std::string{ setting->Key() }),
+					"created template contains an active factory assignment");
+			}
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("apply preserves notes while removing default-valued owned keys", [] {
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const std::array values{
+				Addictol::SettingValueSnapshot{
+					&menu,
+					menu.DefaultValue()
+				}
+			};
+			const std::string existing{
+				"[Additional]\n"
+				"# keep this reset note\n"
+				"bIgnoreCompatibilityChecks = true # keep inline reset note\n"
+				"foreign = 17\n"
+			};
+			std::string output;
+			std::string error;
+			require(
+				Addictol::BuildSettingsOverrideToml(
+					existing,
+					values,
+					output,
+					error),
+				"default-valued key could not be removed: " + error);
+			const auto root = toml::parse_str(output);
+			require(
+				!toml::find(root, "Additional").contains(
+					"bIgnoreCompatibilityChecks"),
+				"default-valued owned key remained active");
+			require(
+				toml::find<int64_t>(root, "Additional", "foreign") == 17,
+				"unknown data was lost while removing an owned key");
+			require(
+				output.contains("keep this reset note") &&
+					output.contains("keep inline reset note"),
+				"comment attached to a removed owned key was lost");
+		});
+
+		runner.test("apply preserves free-standing trailing and duplicate user notes", [] {
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const std::array values{
+				Addictol::SettingValueSnapshot{
+					&menu,
+					menu.DefaultValue()
+				}
+			};
+			const std::string existing{
+				"# top user note\n"
+				"\n"
+				"# blank-separated note\n"
+				"\n"
+				"[Additional]\n"
+				"bIgnoreCompatibilityChecks = true # inline user note\n"
+				"foreign = 17\n"
+				"\n"
+				"# duplicate note\n"
+				"\n"
+				"# duplicate note\n"
+				"\n"
+				"[ThirdParty.nested]\n"
+				"value = 9\n"
+				"\n"
+				"# trailing user note\n"
+				"# duplicate note\n"
+			};
+			std::string output;
+			std::string error;
+			require(
+				Addictol::BuildSettingsOverrideToml(
+					existing,
+					values,
+					output,
+					error),
+				"comment-rich override could not be rebuilt: " + error);
+			const auto parsed = toml::try_parse_str(output);
+			require(parsed.is_ok(), "comment-rich override output is invalid");
+			const auto& root = parsed.unwrap();
+			require(
+				!toml::find(root, "Additional").contains(
+					"bIgnoreCompatibilityChecks") &&
+					toml::find<int64_t>(root, "Additional", "foreign") == 17 &&
+					toml::find<int64_t>(
+						root,
+						"ThirdParty",
+						"nested",
+						"value") == 9,
+				"Apply changed owned defaults or unknown nested data");
+			require(
+				output.contains("# top user note") &&
+					output.contains("# blank-separated note") &&
+					output.contains("# inline user note") &&
+					output.contains("# trailing user note") &&
+					CountOccurrences(output, "# duplicate note") == 3,
+				"Apply lost free-standing, trailing, inline, or duplicate notes");
+
+			std::string repeated;
+			require(
+				Addictol::BuildSettingsOverrideToml(
+					output,
+					values,
+					repeated,
+					error),
+				"repeated comment-rich Apply failed: " + error);
+			require(
+				repeated == output,
+				"repeated comment-rich Apply was not idempotent");
+		});
+
+		runner.test("apply preserves same-text attached inline and trailing notes", [] {
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const std::array values{
+				Addictol::SettingValueSnapshot{
+					&menu,
+					menu.DefaultValue()
+				}
+			};
+			const std::array fixtures{
+				std::pair{
+					std::string{
+						"[Foreign]\n"
+						"value = 1 # repeated note\n"
+						"\n"
+						"# repeated note\n"
+					},
+					size_t{ 2 }
+				},
+				std::pair{
+					std::string{
+						"[Foreign]\n"
+						"# repeated note\n"
+						"value = 1 # repeated note\n"
+						"\n"
+						"# repeated note\n"
+					},
+					size_t{ 3 }
+				}
+			};
+			for (const auto& [existing, expectedCount] : fixtures)
+			{
+				std::string output;
+				std::string error;
+				require(
+					Addictol::BuildSettingsOverrideToml(
+						existing,
+						values,
+						output,
+						error),
+					"same-text note fixture could not be rebuilt: " +
+						error);
+				require(
+					CountOccurrences(output, "# repeated note") ==
+						expectedCount,
+					"Apply lost a same-text attached, inline, or trailing note");
+				const auto parsed = toml::try_parse_str(output);
+				require(
+					parsed.is_ok() &&
+						toml::find<int64_t>(
+							parsed.unwrap(),
+							"Foreign",
+							"value") == 1,
+					"same-text note preservation changed unknown data");
+
+				std::string repeated;
+				require(
+					Addictol::BuildSettingsOverrideToml(
+						output,
+						values,
+						repeated,
+						error),
+					"repeated same-text note Apply failed: " + error);
+				require(
+					repeated == output,
+					"same-text note preservation was not idempotent");
+			}
+		});
+
+		runner.test("single-file load keeps factory defaults and ignores legacy custom files", [] {
+			RegistryValueGuard restore;
+			SetRegistryToFactoryDefaults();
+			const auto directory = TemporarySettingsDirectory();
+			std::filesystem::create_directories(directory);
+			const auto settingsPath = directory / "Addictol.toml";
+			const auto legacyPath = directory / "AddictolCustom.toml";
+			const auto& canonical =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const auto& legacy = Setting("Patches", "bAchievements");
+			const auto canonicalDefault = canonical.DefaultValue();
+			const auto legacyDefault = legacy.DefaultValue();
+			WriteText(
+				settingsPath,
+				"[Additional]\nbIgnoreCompatibilityChecks = true\n");
+			WriteText(
+				legacyPath,
+				"[Patches]\nbAchievements = false\n");
+
+			Addictol::InitializeSettings(settingsPath);
+			require(
+				canonical.DefaultValue() == canonicalDefault,
+				"single-file user load mutated a factory default");
+			require(
+				std::get<bool>(canonical.Value()),
+				"canonical Addictol.toml override was not loaded");
+			require(
+				legacy.Value() == legacyDefault,
+				"legacy AddictolCustom.toml was loaded");
+			WriteText(
+				settingsPath,
+				"[Additional]\nbIgnoreCompatibilityChecks = false\n");
+			require(
+				canonical.SetValue(true),
+				"path-lifetime fixture could not change the active value");
+			REX::FTomlSettingStore::GetSingleton()->Load();
+			require(
+				!std::get<bool>(canonical.Value()),
+				"settings store path did not survive InitializeSettings");
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("repository apply reset and reload preserve timing semantics", [] {
+			RegistryValueGuard restore;
+			SetRegistryToFactoryDefaults();
+			const auto directory = TemporarySettingsDirectory();
+			std::filesystem::create_directories(directory);
+			const auto settingsPath = directory / "Addictol.toml";
+			WriteText(
+				settingsPath,
+				"# retain this user note\n"
+				"[ThirdParty]\n"
+				"value = 9\n");
+
+			Addictol::SettingsRepository repository{ settingsPath };
+			auto values = repository.Snapshot();
+			auto& immediate = SnapshotSetting(
+				values,
+				"Additional",
+				"nQuitGameDelayMs");
+			auto& nextLaunch = SnapshotSetting(
+				values,
+				"Patches",
+				"bArchiveLimits");
+			immediate.value = int64_t{ 1375 };
+			nextLaunch.value = false;
+
+			const auto firstApply = repository.Apply(values);
+			require(firstApply.success, "settings Apply failed: " + firstApply.error);
+			require(firstApply.changed == 2, "settings Apply reported the wrong change count");
+			require(
+				std::get<int64_t>(immediate.setting->Value()) == 1375,
+				"immediate setting did not update during Apply");
+			require(
+				std::get<bool>(nextLaunch.setting->Value()),
+				"next-launch setting changed before reload");
+			auto root = toml::parse_str(ReadText(settingsPath));
+			require(
+				toml::find<int64_t>(
+					root,
+					"Additional",
+					"nQuitGameDelayMs") == 1375 &&
+					!toml::find<bool>(
+						root,
+						"Patches",
+						"bArchiveLimits"),
+				"Apply did not persist both non-default overrides");
+
+			Addictol::InitializeSettings(settingsPath);
+			require(
+				!std::get<bool>(nextLaunch.setting->Value()),
+				"next-launch setting was not loaded on restart-equivalent initialization");
+			require(
+				nextLaunch.setting->DefaultValue() == Addictol::SettingValue{ true },
+				"restart-equivalent load mutated the next-launch factory default");
+
+			auto draft = Addictol::BeginSettingsDraft(repository.Snapshot());
+			Addictol::ResetSettingsDraftToDefaults(draft);
+			const auto resetCommit = Addictol::PrepareSettingsDraftApply(draft);
+			const auto resetApply = repository.Apply(resetCommit.values);
+			require(resetApply.success, "reset Apply failed: " + resetApply.error);
+			require(
+				std::get<int64_t>(immediate.setting->Value()) == 1000,
+				"reset did not update the immediate setting");
+			require(
+				!std::get<bool>(nextLaunch.setting->Value()),
+				"reset updated a next-launch setting before reload");
+			const auto resetText = ReadText(settingsPath);
+			root = toml::parse_str(resetText);
+			require(
+				!toml::find(root, "Additional").contains("nQuitGameDelayMs") &&
+					!toml::find(root, "Patches").contains("bArchiveLimits"),
+				"reset left factory-valued assignments active");
+			require(
+				resetText.contains("retain this user note") &&
+					toml::find<int64_t>(root, "ThirdParty", "value") == 9,
+				"reset lost user notes or unknown data");
+
+			Addictol::InitializeSettings(settingsPath);
+			require(
+				std::get<bool>(nextLaunch.setting->Value()),
+				"next-launch reset did not take effect after reload");
+			std::filesystem::remove_all(directory);
+		});
+
+		runner.test("settings writes report unchanged output and atomic failures", [] {
+			const auto directory = TemporarySettingsDirectory();
+			std::filesystem::create_directories(directory);
+			const auto settingsPath = directory / "Addictol.toml";
+			const auto& menu =
+				Setting("Additional", "bIgnoreCompatibilityChecks");
+			const std::array values{
+				Addictol::SettingValueSnapshot{
+					&menu,
+					menu.DefaultValue()
+				}
+			};
+			bool changed = false;
+			std::string error;
+			require(
+				Addictol::WriteSettingsOverrideFile(
+					settingsPath,
+					values,
+					error,
+					&changed),
+				"initial settings write failed: " + error);
+			require(changed, "initial settings write reported no change");
+			const auto first = ReadText(settingsPath);
+			changed = true;
+			require(
+				Addictol::WriteSettingsOverrideFile(
+					settingsPath,
+					values,
+					error,
+					&changed),
+				"repeated settings write failed: " + error);
+			require(!changed, "identical settings output was rewritten");
+			require(ReadText(settingsPath) == first, "identical settings output changed");
+
+			const auto blocker = directory / "not-a-directory";
+			WriteText(blocker, "block");
+			const auto impossible = blocker / "Addictol.toml";
+			require(
+				!Addictol::WriteSettingsOverrideFile(
+					impossible,
+					values,
+					error),
+				"writer unexpectedly succeeded through a file parent");
+			require(ReadText(blocker) == "block", "atomic failure modified the blocker file");
 			std::filesystem::remove_all(directory);
 		});
 
