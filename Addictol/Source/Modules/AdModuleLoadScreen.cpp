@@ -42,6 +42,12 @@ namespace Addictol
 	{
 		if (a_msg)
 		{
+			if (!REX::W32::GetModuleHandleA("HighFPSPhysicsFix.dll"))
+			{
+				Skip("High FPS Physics Fix not installed; see https://www.nexusmods.com/fallout4/mods/44798"sv);
+				return false;
+			}
+
 			if (!RELEX::IsRuntimeOG())
 			{
 				//	 We don't override the user's HFPF config.
