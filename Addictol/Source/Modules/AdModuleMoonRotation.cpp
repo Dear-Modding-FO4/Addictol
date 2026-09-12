@@ -81,7 +81,7 @@ namespace Addictol
 	{
 		Moon::Init_orig = reinterpret_cast<Moon::TInitThunk*>(RELEX::TryDetourJump(REL::ID{ 114988, 2208804 }.address(), 
 			reinterpret_cast<uintptr_t>(&Moon::Init), { 0x48, 0x89, 0x5C, 0x24, 0x10 }));
-		if (Moon::Init_orig)
+		if (!Moon::Init_orig)
 		{
 			REX::WARN("Moon Rotation: unexpected bytes at target - skipping to avoid corruption."sv);
 			return false;
