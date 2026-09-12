@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	ModuleInitTints::ModuleInitTints() :
 		Module("Init Tints", &bFixesInitTints)
 	{}
@@ -51,5 +50,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

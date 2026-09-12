@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-
 	namespace detail
 	{
 		namespace bnet
@@ -112,5 +111,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

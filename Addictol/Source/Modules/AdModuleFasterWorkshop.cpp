@@ -16,7 +16,6 @@
 
 namespace Addictol
 {
-
 	namespace fasterWorkshopDetail
 	{
 		// resolved lazily, the id is OG-only and would hard-fail at static init on NG/AE
@@ -390,5 +389,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

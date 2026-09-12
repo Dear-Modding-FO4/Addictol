@@ -32,7 +32,6 @@
 
 namespace Addictol
 {
-
 	// XAudio27
 	namespace AudioSystem
 	{

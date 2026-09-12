@@ -22,7 +22,6 @@ namespace
 
 namespace Addictol
 {
-
 	ModulePluginTiming::ModulePluginTiming() :
 		Module("Plugin Timing", &bTelemetryPluginTiming),
 		PluginTimingSource(LoadTiming::kPluginMetricSchema)

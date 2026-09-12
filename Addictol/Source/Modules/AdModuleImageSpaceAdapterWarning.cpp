@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-
 	namespace imadDetail
 	{
 		struct Patch : Xbyak::CodeGenerator
@@ -66,5 +65,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-
 	namespace loadOrderDetail
 	{
 		static BOOL WINAPI SetFileAttributes(LPCSTR a_fileName, DWORD a_fileAttributes) noexcept
@@ -174,5 +173,4 @@ namespace Addictol
 				loadOrderDetail::DeferRefresh_Refresh::func != 0 &&
 				loadOrderDetail::DeferRefresh_Finish::func != 0;
 	}
-
 }

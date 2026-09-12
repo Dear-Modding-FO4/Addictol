@@ -34,5 +34,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

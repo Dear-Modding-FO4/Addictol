@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	namespace detail
 	{
 		static REX::W32::HRESULT CoInitializeEx([[maybe_unused]] void* pvReserved, [[maybe_unused]] uint32_t dwCoInit);
@@ -47,5 +46,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

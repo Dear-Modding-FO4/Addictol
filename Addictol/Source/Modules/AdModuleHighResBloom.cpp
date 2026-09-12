@@ -6,8 +6,6 @@
 
 namespace Addictol
 {
-
-
 	// Vanilla bloom RT downsample: shr esi, 2; shr r12d, 2 (width >> 2; height >> 2).
 	static constexpr std::array<std::uint8_t, 7> kVanillaPattern{ 0xC1, 0xEE, 0x02, 0x41, 0xC1, 0xEC, 0x02 };
 	static constexpr std::size_t kScanRange = 0x500;
@@ -56,5 +54,4 @@ namespace Addictol
 		REX::INFO("[HighResBloom] Patched bloom RT downsample at 0x{:X} (scale {})."sv, target, scale);
 		return true;
 	}
-
 }

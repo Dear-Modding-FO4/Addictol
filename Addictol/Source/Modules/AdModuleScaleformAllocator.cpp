@@ -7,9 +7,6 @@
 
 namespace Addictol
 {
-
-
-
 	template<typename Heap>
 	class BSScaleformAllocator final : public Scaleform::SysAlloc
 	{
@@ -116,5 +113,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

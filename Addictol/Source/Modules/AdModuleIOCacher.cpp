@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	ModuleIOCacher::ModuleIOCacher() :
 		Module("IO Cacher", &bFixesIOChacher)
 	{}
@@ -29,5 +28,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

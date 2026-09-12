@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	ModuleSprintStutter::ModuleSprintStutter() :
 		Module("Sprint Stutter", &bFixesSprintStutter)
 	{}
@@ -32,5 +31,4 @@ namespace Addictol
 		*CameraSnapThreshold = 1100.0f;
 		return true;
 	}
-
 }

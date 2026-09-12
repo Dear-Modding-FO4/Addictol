@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-
 	namespace detail
 	{
 		static void DoFinish(RE::BSIMusicType* a_self, bool a_immediate)
@@ -35,5 +34,4 @@ namespace Addictol
 
 		return RELEX::DetourVTable(vtable, reinterpret_cast<uintptr_t>(&detail::DoFinish), 3) != 0;
 	}
-
 }

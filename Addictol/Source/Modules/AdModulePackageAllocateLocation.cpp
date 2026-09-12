@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	struct GetPrimitive
 	{
 		[[nodiscard]] inline static RE::BGSPrimitive* ExtraDataList_GetPrimitive(const RE::ExtraDataList* a_this) noexcept
@@ -27,5 +26,4 @@ namespace Addictol
 		GetPrimitive::func = RELEX::DetourClassCall(Target, &GetPrimitive::ExtraDataList_GetPrimitive);
 		return GetPrimitive::func != 0;
 	}
-
 }

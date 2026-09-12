@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-
 	ModuleDuplicateAddonNodeIndex::ModuleDuplicateAddonNodeIndex()
 		: Module("Duplicate Addon Node Index", &bWarningsDuplicateAddonNodeIndex)
 	{}
@@ -73,5 +72,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

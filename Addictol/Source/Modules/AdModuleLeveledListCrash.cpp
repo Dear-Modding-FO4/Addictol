@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	typedef void(AddScriptAddedLeveledObject_Signature)(RE::TESLeveledList*, RE::TESForm*, uint16_t, uint16_t, RE::TESForm*);
 	REL::Relocation<AddScriptAddedLeveledObject_Signature> AddScriptAddedLeveledObject_Original;
 
@@ -59,5 +58,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

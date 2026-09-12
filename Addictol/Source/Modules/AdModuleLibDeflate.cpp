@@ -12,8 +12,6 @@
 
 namespace Addictol
 {
-
-
 	namespace zlibDetail
 	{
 		constexpr static int32_t Z_STREAM_ERROR		= -2;
@@ -271,5 +269,4 @@ namespace Addictol
 		append("zlib.flush", kFlushBucketLabels, m_interval.flush.Drain());
 		return std::min(offset, a_out.size());
 	}
-
 }

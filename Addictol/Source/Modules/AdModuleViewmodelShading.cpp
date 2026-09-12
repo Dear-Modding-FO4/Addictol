@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	using TMove1stPersonToOrigin = void(__fastcall*)();
 	static TMove1stPersonToOrigin OriginalMove1stPersonToOrigin = nullptr;
 
@@ -55,5 +54,4 @@ namespace Addictol
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&HookMove1stPersonToOrigin));
 		return OriginalMove1stPersonToOrigin != nullptr;
 	}
-
 }

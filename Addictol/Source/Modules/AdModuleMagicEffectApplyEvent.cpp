@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace magicEffectApplyDetail
 	{
 		struct ProcessEvent
@@ -31,5 +30,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

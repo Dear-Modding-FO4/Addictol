@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	static void HKGfxSetBGAlpha(Scaleform::GFx::Movie* self, float) noexcept
 	{
 		Scaleform::GFx::Value alpha;
@@ -55,5 +54,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

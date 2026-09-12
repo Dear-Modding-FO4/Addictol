@@ -10,7 +10,6 @@
 
 namespace Addictol
 {
-
 	namespace papyrusGCDetail
 	{
 		[[nodiscard]] static std::uint64_t GetTimer() noexcept
@@ -189,5 +188,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

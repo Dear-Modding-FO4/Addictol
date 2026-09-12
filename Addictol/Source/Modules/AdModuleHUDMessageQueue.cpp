@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	namespace hudMessageQueueDetail
 	{
 		struct PrimaryPatch : Xbyak::CodeGenerator
@@ -127,5 +126,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-
 	struct Sky
 	{
 		// For some reason, the deletion array contains pointers not to REFR, but to some file.
@@ -41,5 +40,4 @@ namespace Addictol
 		*((uintptr_t*)&Sky::LoadGame_orig) = RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&Sky::LoadGame));
 		return Sky::LoadGame_orig != nullptr;
 	}
-
 }

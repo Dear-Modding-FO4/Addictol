@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	ModuleLODDistance::ModuleLODDistance() :
 		Module("LOD Distance", &bFixesLODDistance)
 	{}
@@ -47,5 +46,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

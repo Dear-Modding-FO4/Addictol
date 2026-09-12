@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	namespace encounterZoneResetDetail
 	{
 		class Sink : public RE::BSTEventSink<RE::CellAttachDetachEvent>
@@ -58,5 +57,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

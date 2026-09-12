@@ -7,8 +7,6 @@
 
 namespace Addictol
 {
-
-
 	namespace highResLocalMapsDetail
 	{
 		inline thread_local bool CurrentMapRendererIsCompanion = false;

@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	namespace iniSettingCollectionDetail
 	{
 		struct Open
@@ -30,5 +29,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

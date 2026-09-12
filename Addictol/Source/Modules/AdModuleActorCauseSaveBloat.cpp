@@ -10,7 +10,6 @@
 
 namespace Addictol
 {
-
 	namespace actorCauseSaveBloatDetail
 	{
 		std::vector<RE::TESObjectREFR*> GetProjectilesInCell(RE::TESObjectCELL* a_cell) noexcept
@@ -116,5 +115,4 @@ namespace Addictol
 			
 		return true;
 	}
-
 }

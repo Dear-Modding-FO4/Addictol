@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-
 	namespace combatMusicDetail
 	{
 		static inline constexpr std::array<std::string_view, 9> commands =
@@ -109,5 +108,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

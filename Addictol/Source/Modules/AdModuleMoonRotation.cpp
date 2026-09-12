@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	ModuleMoonRotation::ModuleMoonRotation() :
 		Module("Moon Rotation", &bFixesMoonRotation)
 	{}
@@ -44,5 +43,4 @@ namespace Addictol
 		RELEX::WriteSafe(target, { 0x03 });
 		return true;
 	}
-
 }

@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-
 	namespace pipBoyCursorConstraintsDetail
 	{
 		// Default PipBoy Resolution
@@ -120,5 +119,4 @@ namespace Addictol
 	{
 		return pipBoyCursorConstraintsDetail::UpdatePipBoyCursorConstraints();
 	}
-
 }

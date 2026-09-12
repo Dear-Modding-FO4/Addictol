@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-
 	namespace bsPreCulledObjectsDetail
 	{
 		class BSCullingGroup;
@@ -482,5 +481,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

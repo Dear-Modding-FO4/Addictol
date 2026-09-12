@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-
 	namespace cellInitDetail
 	{
 		[[nodiscard]] inline static RE::BGSLocation* GetLocation(const RE::TESObjectCELL* a_cell) noexcept
@@ -57,5 +56,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

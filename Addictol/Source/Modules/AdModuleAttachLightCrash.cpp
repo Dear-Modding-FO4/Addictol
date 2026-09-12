@@ -23,7 +23,6 @@ namespace RE
 
 namespace Addictol
 {
-
 	namespace attachLightCrashDetail
 	{
 		using ForEachResult = RE::BSContainer::ForEachResult;
@@ -54,5 +53,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

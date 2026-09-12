@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace saveCompDetail
 	{
 		// Engine zlib CompressBuffer, kept as a fallback if a libdeflate compressor can't be allocated.
@@ -64,5 +63,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

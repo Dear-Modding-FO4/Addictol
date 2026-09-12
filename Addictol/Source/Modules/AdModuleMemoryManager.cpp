@@ -23,9 +23,6 @@
 
 namespace Addictol
 {
-
-
-
 	class AutoScrapHeap
 	{
 		AutoScrapHeap(const AutoScrapHeap&) = delete;

@@ -8,7 +8,6 @@
 
 namespace Addictol
 {
-
 	static inline REL::Relocation<void(RE::BSResourceNiBinaryStream* a_self, RE::BSTSmartPointer<RE::BSResource::Stream>& a_stream,
 		bool a_fullReadHint, bool a_useOwnBuffer)> BSResourceNiBinaryStream_ctorFromResourceStream{ REL::ID{ 306612, 2269831 } };
 	static inline REL::Relocation<void(RE::BSGraphics::Renderer* a_self, int8_t a_loadlevel)>
@@ -82,5 +81,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

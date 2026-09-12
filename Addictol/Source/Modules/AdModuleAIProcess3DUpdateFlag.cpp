@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace Detail
 	{
 		// Fixes an error where there is no check for nullptr when AI for a character is disabled.
@@ -87,5 +86,4 @@ namespace Addictol
 			(RELEX::DetourClassJump(targetGet,		&Detail::AIProcess::Get3DUpdateFlag			) != 0) &&
 			(RELEX::DetourClassJump(targetGetAll,	&Detail::AIProcess::GetAll3DUpdateFlags		) != 0);
 	}
-
 }

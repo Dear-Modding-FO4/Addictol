@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	using TD3D11CreateDeviceAndSwapChain = HRESULT(WINAPI *)(
 		IDXGIAdapter *, D3D_DRIVER_TYPE, HMODULE, UINT,
 		const D3D_FEATURE_LEVEL *, UINT, UINT,
@@ -83,5 +82,4 @@ namespace Addictol
 		OriginalCreateInstalling.store(false, std::memory_order_release);
 		return true;
 	}
-
 }

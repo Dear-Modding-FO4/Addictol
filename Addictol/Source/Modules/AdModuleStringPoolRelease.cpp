@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	namespace detail
 	{
 		using BSStringPool__Entry__ReleaseFn = decltype(RE::BSStringPool::Entry::release)*;
@@ -36,5 +35,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	ModuleUnalignedLoad::ModuleUnalignedLoad() :
 		Module("Unaligned Load", &bFixesUnalignedLoad)
 	{}
@@ -37,5 +36,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	struct BGSObjectVisibilityManager
 	{
 		// For some reason, the deletion array contains pointers not to REFR, but to some file.
@@ -33,5 +32,4 @@ namespace Addictol
 
 		return BGSObjectVisibilityManager::RemoveReference_orig != nullptr;
 	}
-
 }

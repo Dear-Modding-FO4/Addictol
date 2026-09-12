@@ -12,7 +12,6 @@
 
 namespace Addictol
 {
-
 	namespace tesObjectREFRGetEncounterZoneDetail
 	{
 		template <class T>
@@ -58,5 +57,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

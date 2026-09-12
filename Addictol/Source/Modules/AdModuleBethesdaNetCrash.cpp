@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	static errno_t __cdecl Hook_wcsrtombs_s(
 		std::size_t*                     pReturnValue,
 		char*                            mbstr,
@@ -86,5 +85,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -7,7 +7,6 @@
 
 namespace Addictol
 {
-
 	namespace stolenPowerArmorOwnershipDetail
 	{
 		// Passing this command without params sets the Player as the owner
@@ -80,5 +79,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

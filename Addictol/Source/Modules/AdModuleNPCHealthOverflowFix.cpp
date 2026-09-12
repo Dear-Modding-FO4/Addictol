@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	namespace npcHealthOverflowFixDetail
 	{
 		// Verified on OG / NG / AE.

@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace actorIsHostileToActorDetail
 	{
 		[[nodiscard]] inline static bool IsHostileToActor(RE::BSScript::IVirtualMachine* a_vm, std::uint32_t a_stackID,
@@ -40,5 +39,4 @@ namespace Addictol
 		REL::WriteSafeFill(target, REL::INT3, size);
 		return RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&actorIsHostileToActorDetail::IsHostileToActor)) != 0;
 	}
-
 }

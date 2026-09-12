@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	namespace detail
 	{
 		// Win10 1703+ context value; declared locally to avoid bumping the Windows SDK floor.
@@ -79,5 +78,4 @@ namespace Addictol
 		// Always succeed; DPI-unaware is the vanilla behavior, not a fatal install error.
 		return true;
 	}
-
 }

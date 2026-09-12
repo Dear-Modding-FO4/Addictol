@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	namespace bgsAIWorldLocationRefRadiusDetail
 	{
 		struct Patch : Xbyak::CodeGenerator
@@ -50,5 +49,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

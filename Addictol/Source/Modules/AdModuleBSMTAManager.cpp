@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace bsMTAManagerDetail
 	{
 		template <std::size_t N, class T>
@@ -162,5 +161,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

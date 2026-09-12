@@ -9,7 +9,6 @@ namespace Addictol
 	constexpr inline static auto MAX_MAXSTDIO = 8 * 1024;
 	constexpr inline static auto MAX_MAXSTDIO_FOR_MAMMONTHS = 2 * 1024;
 
-
 	ModuleMaxStdIO::ModuleMaxStdIO() :
 		Module("MaxStdIO")
 	{}
@@ -58,5 +57,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	ModulePuddleCubemaps::ModulePuddleCubemaps() :
 		Module("Puddle Cubemaps", &bFixesPuddleCubemaps)
 	{}
@@ -44,5 +43,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

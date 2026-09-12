@@ -4,7 +4,6 @@
 
 namespace Addictol
 {
-
 	ModuleMenu::ModuleMenu() :
 		Module("Menu")
 	{}
@@ -13,5 +12,4 @@ namespace Addictol
 	{
 		return Menu::Install();
 	}
-
 }

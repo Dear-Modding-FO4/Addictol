@@ -151,5 +151,4 @@ namespace Addictol
 		return true;
 #endif
 	}
-
 }

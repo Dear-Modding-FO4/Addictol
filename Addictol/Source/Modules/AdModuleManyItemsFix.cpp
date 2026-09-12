@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	using TDropItemIntoWorld = uint32_t* (*)(RE::TESObjectREFR*, uint32_t*, RE::TESBoundObject*, int32_t, RE::TESObjectREFR*,
 		RE::NiPoint3*, RE::NiPoint3*, RE::ExtraDataList*);
 	using TExtraDataList__Ctor = void (*)(RE::ExtraDataList*);
@@ -88,5 +87,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

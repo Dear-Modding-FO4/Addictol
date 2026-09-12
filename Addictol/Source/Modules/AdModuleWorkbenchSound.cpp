@@ -12,7 +12,6 @@
 
 namespace Addictol
 {
-
 	namespace workbenchSoundDetail
 	{
 		static inline const std::unordered_map<RE::TESFormID, std::string_view> furnitureCommandMap =
@@ -147,5 +146,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -67,7 +67,6 @@ namespace Addictol
 {
 	static_assert(offsetof(RE::TESFile, filename) == LoadTiming::kTESFileNameOffset);
 
-
 	ModuleFormLoadTiming::ModuleFormLoadTiming() :
 		Module("Form Load Timing", &bTelemetryFormLoadTiming),
 		FormLoadTimingSource(LoadTiming::kFormMetricSchema)

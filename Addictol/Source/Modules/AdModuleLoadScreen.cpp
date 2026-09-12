@@ -4,7 +4,6 @@
 
 namespace Addictol
 {
-
 	static RE::BSGraphics::RendererData* g_RendererData{ nullptr };
 	static void DrawUILoadScreen(uint32_t a_unk) noexcept;
 	decltype(&DrawUILoadScreen) origDrawUI{ nullptr };
@@ -99,5 +98,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	ModuleToggleGrassCommand::ModuleToggleGrassCommand() :
 		Module("Toggle Grass Command", &bFixesToggleGrassCommand)
 	{}
@@ -27,5 +26,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

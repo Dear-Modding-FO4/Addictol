@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	[[nodiscard]] static BOOL WINAPI HKSetThreadPriority(HANDLE Thread, int Priority) noexcept
 	{
 		// Don't allow a priority below normal - Fallout 4 doesn't have many "idle" threads
@@ -109,5 +108,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

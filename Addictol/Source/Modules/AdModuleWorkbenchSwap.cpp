@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	namespace workbenchSwapDetail
 	{
 		struct Patch : Xbyak::CodeGenerator
@@ -42,5 +41,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

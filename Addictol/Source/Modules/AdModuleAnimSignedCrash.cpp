@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	ModuleAnimSignedCrash::ModuleAnimSignedCrash() :
 		Module("Anim Signed Crash", &bFixesAnimSignedCrash)
 	{}
@@ -23,5 +22,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	static bool hk_nullsub_C30008() noexcept
 	{
 		auto iniDef = RE::INISettingCollection::GetSingleton();
@@ -34,5 +33,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

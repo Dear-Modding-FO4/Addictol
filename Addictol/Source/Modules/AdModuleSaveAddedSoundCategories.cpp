@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-
 	namespace saveAddedSoundCategoriesDetail
 	{
 		// File Name
@@ -146,5 +145,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

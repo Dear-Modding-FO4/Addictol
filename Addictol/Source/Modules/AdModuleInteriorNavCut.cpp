@@ -14,8 +14,6 @@
 
 namespace Addictol
 {
-
-
 	// ---- RE Functions ---- //
 
 	inline bool IsWorkshopItem(const RE::TESObjectREFR* a_refr)
@@ -251,5 +249,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

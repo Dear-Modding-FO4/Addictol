@@ -4,8 +4,6 @@
 
 namespace Addictol
 {
-
-
 	// 0x1268
 	class BSSmallBlockAllocator
 	{
@@ -130,5 +128,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

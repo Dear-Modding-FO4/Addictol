@@ -11,7 +11,6 @@
 
 namespace Addictol
 {
-
 	namespace magicEffectConditionsDetail
 	{
 		using EvaluateConditions_t = void (*)(RE::ActiveEffect *, float, bool);
@@ -115,5 +114,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

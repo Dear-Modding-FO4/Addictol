@@ -26,7 +26,6 @@ namespace RE
 
 namespace Addictol
 {
-
 	namespace companionStrayBulletDetail
 	{
 		// Debounce window: at most one re-equip pass per 300 ms of combat-exit churn.
@@ -278,5 +277,4 @@ namespace Addictol
 		// Fatal only if neither hook could be applied
 		return installed;
 	}
-
 }

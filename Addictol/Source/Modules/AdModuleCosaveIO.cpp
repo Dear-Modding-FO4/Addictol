@@ -17,7 +17,6 @@
 
 namespace Addictol
 {
-
 	namespace cosaveIODetail
 	{
 		constexpr std::uint64_t kMaxCosaveSize = 512ull * 1024ull * 1024ull;
@@ -431,5 +430,4 @@ namespace Addictol
 		REX::INFO("Cosave IO: F4SE co-save read buffering installed."sv);
 		return true;
 	}
-
 }

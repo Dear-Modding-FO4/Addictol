@@ -22,7 +22,6 @@ namespace RE
 
 namespace Addictol
 {
-
 	namespace magicKeywordCrashDetail
 	{
 		struct MatchCondition
@@ -53,5 +52,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

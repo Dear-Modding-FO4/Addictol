@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	namespace utilityShaderDetail
 	{
 		inline static std::uint64_t CreateVertexShaderFromBuffer(void* a_renderer, void* a_buffer, std::uint32_t a_size, std::uint32_t a_flags, std::uint64_t a_a5, std::uint64_t a_a6, std::uint64_t a_a7) noexcept
@@ -155,5 +154,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

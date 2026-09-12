@@ -42,7 +42,6 @@ namespace RE
 
 namespace Addictol
 {
-
 	namespace waterJetpackFixDetail
 	{
 		static void ResetJetpack(RE::Actor* a_actor) noexcept
@@ -128,5 +127,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

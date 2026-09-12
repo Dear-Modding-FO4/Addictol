@@ -10,7 +10,6 @@
 
 namespace Addictol
 {
-
 	namespace craftingMenuFixDetail
 	{
 		struct Candidate

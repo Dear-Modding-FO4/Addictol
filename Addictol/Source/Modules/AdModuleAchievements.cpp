@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace achievementsDetail
 	{
 		struct Patch : Xbyak::CodeGenerator
@@ -41,5 +40,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

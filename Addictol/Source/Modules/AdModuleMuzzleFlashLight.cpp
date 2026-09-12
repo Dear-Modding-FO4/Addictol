@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-
 	using TUpdateLight = void(__fastcall*)(void*, bool);
 	static TUpdateLight OriginalUpdateLight = nullptr;
 
@@ -34,5 +33,4 @@ namespace Addictol
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&HookUpdateLight));
 		return OriginalUpdateLight != nullptr;
 	}
-
 }

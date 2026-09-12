@@ -8,9 +8,6 @@
 
 namespace Addictol
 {
-
-
-
 	namespace fullPrecisionDecalsDetail
 	{
 		using VertexDesc = RE::BSGraphics::VertexDesc;
@@ -1200,5 +1197,4 @@ namespace Addictol
 		fullPrecisionDecalsDetail::Install(sites, installEffectShaders, installMembrane);
 		return true;
 	}
-
 }

@@ -21,9 +21,6 @@
 
 namespace Addictol
 {
-
-
-
 	namespace escapeFreezeDetail
 	{
 		constexpr int32_t kMinSleepMs = 1;
@@ -663,5 +660,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

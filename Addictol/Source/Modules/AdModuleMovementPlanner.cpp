@@ -3,7 +3,6 @@
 
 namespace Addictol
 {
-
 	namespace movementPlannerDetail
 	{
 		struct CanWarpOnPathFailure
@@ -28,5 +27,4 @@ namespace Addictol
 		CanWarpOnPathFailure::func = RELEX::DetourClassCall(Target, &CanWarpOnPathFailure::thunk);
 		return CanWarpOnPathFailure::func != 0;
 	}
-
 }

@@ -10,8 +10,6 @@
 
 namespace Addictol
 {
-
-
 	class hkGetLargestAvailablePage :
 		public REX::Singleton<hkGetLargestAvailablePage>
 	{
@@ -255,5 +253,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }

@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	// Worker takes 5 args (5th at [rsp+0x28]); forward all five or the original loads garbage.
 	// OG arg2 is the effect pointer; NG/AE arg2 is an index into effectList._data (+0x18).
 	using TRenderEffect = void(__fastcall*)(void*, std::uintptr_t, std::int32_t, std::int32_t, void*);
@@ -84,5 +83,4 @@ namespace Addictol
 			RELEX::DetourJump(renderEffectTarget, reinterpret_cast<std::uintptr_t>(&HookRenderEffect));
 		return OriginalRenderEffect != nullptr;
 	}
-
 }

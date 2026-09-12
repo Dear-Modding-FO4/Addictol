@@ -9,7 +9,6 @@
 
 namespace Addictol
 {
-
 	namespace detail
 	{
 		struct Projectile
@@ -43,5 +42,4 @@ namespace Addictol
 		return RELEX::DetourCall(REL::Relocation{ REL::ID{ 1470408, 2236880 }, REL::Offset{ 0x975, 0xCD9 } }.address(),
 			reinterpret_cast<uintptr_t>(&detail::Projectile::Move)) != 0;
 	}
-
 }

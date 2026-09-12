@@ -6,7 +6,6 @@
 
 namespace Addictol
 {
-
 	namespace createD3DAndSwapchainDetail
 	{
 		static ::HRESULT GetDisplayModeList(::IDXGIOutput& a_this, ::DXGI_FORMAT a_enumFormat, 
@@ -57,5 +56,4 @@ namespace Addictol
 		return RELEX::XbyakJump<createD3DAndSwapchainDetail::Patch>(target, target + size,
 			reinterpret_cast<uintptr_t>(&createD3DAndSwapchainDetail::GetDisplayModeList)) != 0;
 	}
-
 }

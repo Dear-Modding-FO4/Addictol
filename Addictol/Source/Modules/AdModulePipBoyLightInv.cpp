@@ -5,7 +5,6 @@
 
 namespace Addictol
 {
-	
 	namespace pipBoyDetail
 	{
 		struct Patch : Xbyak::CodeGenerator
@@ -62,5 +61,4 @@ namespace Addictol
 
 		return true;
 	}
-
 }
