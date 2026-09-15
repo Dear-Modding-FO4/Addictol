@@ -12,6 +12,8 @@
 #define VERSION_PATCH			0
 #define VERSION_REVISION		0
 
+#define IDR_CHANGELOG			101
+
 // CommonLib/F4SE packs major/minor into 8 bits, patch into 12, and revision into 4.
 #if VERSION_MAJOR < 0 || VERSION_MAJOR > 255
 #error VERSION_MAJOR must be in the range 0..255

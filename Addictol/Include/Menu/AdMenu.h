@@ -59,6 +59,15 @@ namespace Addictol::Menu
 		.kind = DMUI_PAGE_KIND_SETTINGS,
 		.iconName = "puzzle-piece"
 	};
+	inline constexpr dmui::PageDescriptor kChangelogPage{
+		.id = "changelog",
+		.displayName = "Changelog",
+		.categoryId = kGeneralCategory.id,
+		.summary = "Release history for Addictol fixes, features, and improvements.",
+		.sortKey = 300,
+		.kind = DMUI_PAGE_KIND_SETTINGS,
+		.iconName = "notebook"
+	};
 	inline constexpr dmui::PageDescriptor kFacegenExceptionsPage{
 		.id = "facegen-exceptions",
 		.displayName = "Facegen Exceptions",

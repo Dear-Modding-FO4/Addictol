@@ -1,4 +1,5 @@
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuChangelog.h>
 #include <Menu/AdMenuFacegenExceptions.h>
 #include <Menu/AdMenuHome.h>
 #include <Menu/AdMenuLogControl.h>
@@ -254,6 +255,14 @@ namespace Addictol
 				nullptr
 			}))
 			REX::ERROR("Menu: Modules page could not be retained."sv);
+
+		if (!RegisterPanel({
+				kChangelogPage,
+				&DrawChangelogPage,
+				nullptr,
+				nullptr
+			}))
+			REX::ERROR("Menu: Changelog page could not be retained."sv);
 
 		if (!RegisterPanel({
 				kFacegenExceptionsPage,

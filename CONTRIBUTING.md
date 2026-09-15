@@ -130,6 +130,13 @@ identity, and exact source commit. Local builds do not claim a CI identity.
 `master` is the only development branch and channel. Stable releases are prepared with the manual
 **Release stable** workflow, followed by a reviewed version-bump pull request back to `master`.
 
+## Changelog
+
+`CHANGELOG.md` is the only maintained release history and the source for the in-game
+**General > Changelog** page. Keep released versions newest first using only the document title,
+`# Changelog`, `## MAJOR.MINOR.PATCH` headings, single-line `- ` bullets, and blank lines.
+Both builds embed the file directly in the DLL through the existing Windows resource script.
+
 ## Releases
 
 Addictol maintains one development branch: `master`.
