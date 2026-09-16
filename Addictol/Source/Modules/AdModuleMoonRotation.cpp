@@ -82,7 +82,7 @@ namespace Addictol
 				auto x = std::cos(angle) * radius;
 				auto z = std::sin(angle) * radius;
 
-				// The moon will be bigger at sunrise and sunset.
+				// The moon will be bigger at moonrise and moonset.
 				auto delta_size = std::fabs(z) - 325.f;
 
 				// We rotate the moon on the y-axis.
