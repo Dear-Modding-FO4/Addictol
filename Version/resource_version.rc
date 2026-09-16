@@ -88,6 +88,8 @@ BEGIN
     END
 END
 
+IDR_CHANGELOG RCDATA "../CHANGELOG.md"
+
 #endif    // Русский (Россия) resources
 /////////////////////////////////////////////////////////////////////////////
 

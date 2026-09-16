@@ -333,6 +333,16 @@ target(plugin_name, function()
         end
     end)
 
+    before_build(function(target)
+        local changelog = project_dir("CHANGELOG.md")
+        local resource_object = target:objectfile("Version/resource_version.rc")
+
+        -- The resource rule does not track RCDATA payload files.
+        if os.isfile(resource_object) and os.mtime(changelog) > os.mtime(resource_object) then
+            os.rm(resource_object)
+        end
+    end)
+
     -- this target carries no commonlib plugin rule, so the mod payload is the whole install
     on_install(function(target)
         import("target.action.install")(target, {

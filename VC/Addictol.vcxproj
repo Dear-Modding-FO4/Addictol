@@ -32,6 +32,7 @@
     <ClCompile Include="..\Addictol\Source\Core\AdModule.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdModuleManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenu.cpp" />
+    <ClCompile Include="..\Addictol\Source\Menu\AdMenuChangelog.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuFacegenExceptions.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuHome.cpp" />
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuModules.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuChangelog.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuFacegenExceptions.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuModules.h" />
@@ -271,6 +273,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Version\resource_version.rc" />
+    <UpToDateCheckInput Include="$(ProjectDir)..\CHANGELOG.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

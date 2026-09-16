@@ -9,6 +9,7 @@
 #include <Core/Settings/AdSettingsModel.h>
 #include <INI/SimpleIni.h>
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuChangelog.h>
 #include <Menu/AdMenuHome.h>
 
 #include <filesystem>
@@ -147,6 +148,7 @@ namespace vmm_tests
 				kHomePage,
 				kSettingsPage,
 				kModulesPage,
+				kChangelogPage,
 				kFacegenExceptionsPage,
 				kLogControlPage
 			};
@@ -368,6 +370,52 @@ namespace vmm_tests
 			require(ClampMenuRefreshMs(250) == 250, "in-range value changed");
 			require(ClampMenuRefreshMs(2000) == 2000, "upper bound moved");
 			require(ClampMenuRefreshMs(5000) == 2000, "above range did not clamp down");
+		});
+
+		runner.test("changelog parser preserves complete authored history", [] {
+			const auto longItem = std::string(4096, 'x') + " final text";
+			const auto parse = [&](std::string_view newline) {
+				const auto text =
+					std::string{ "# Changelog" } + std::string{ newline } +
+					std::string{ newline } + "## 1.6.0" + std::string{ newline } +
+					std::string{ newline } + "- Quotes \" and slash \\" +
+					std::string{ newline } + "- " + longItem +
+					std::string{ newline } + std::string{ newline } +
+					"## 1.5.0" + std::string{ newline } +
+					std::string{ newline } + "- Last line has no terminator";
+				return ParseChangelogHistory(text);
+			};
+
+			for (const auto newline : { "\n"sv, "\r\n"sv })
+			{
+				const auto history = parse(newline);
+				require(history.error.empty(), "valid changelog was rejected");
+				require(
+					history.releases.size() == 2 &&
+						history.releases[0].items.size() == 2 &&
+						history.releases[1].items.size() == 1 &&
+						history.releases[0].version == "1.6.0" &&
+						history.releases[0].items[0] == "Quotes \" and slash \\" &&
+						history.releases[0].items[1] == longItem &&
+						history.releases[1].items[0] == "Last line has no terminator",
+					"valid changelog text was dropped, reordered, or truncated");
+			}
+		});
+
+		runner.test("changelog parser rejects malformed history", [] {
+			const std::array malformed{
+				""sv,
+				"# Changelog\n\n- Bullet before release"sv,
+				"# Changelog\n\n## 1.6.0\n\n## 1.5.0\n\n- Item"sv,
+				"# Changelog\n\n## 1.6.0\n\nunsupported"sv
+			};
+			for (const auto text : malformed)
+			{
+				const auto history = ParseChangelogHistory(text);
+				require(
+					!history.error.empty() && history.releases.empty(),
+					"malformed changelog produced partial display data");
+			}
 		});
 
 		runner.test("formatted text length never exceeds its buffer", [] {

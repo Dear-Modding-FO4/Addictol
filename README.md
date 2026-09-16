@@ -19,7 +19,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](xmake.lua)
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](#building)
 
-<sub>[Requirements](#requirements) · [Features](#features) · [Installation](#installation) · [Configuration](#configuration) · [Menu](#menu) · [Building](#building) · [Contributing](#contributing) · [License](#license)</sub>
+<sub>[Requirements](#requirements) · [Features](#features) · [Changelog](CHANGELOG.md) · [Installation](#installation) · [Configuration](#configuration) · [Menu](#menu) · [Building](#building) · [Contributing](#contributing) · [License](#license)</sub>
 
 </div>
 
@@ -115,12 +115,13 @@ appearance in the host settings page behind the footer gear (or via `DearModding
 | **Home** | Runtime, live module summary, project links, FAQ, and mod evaluation guide. |
 | **Settings** | All 113 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
 | **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
+| **Changelog** | Released versions and their notes from the canonical [changelog](CHANGELOG.md). |
 | **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels (when `[Telemetry] bEnabled = true`). |
 | **Facegen Exceptions** | Facegen exception coverage, configuration state, and resolution failures. |
 | **Log Control** | Session-only record and flush levels with the live output rate. |
 
-Home, Settings, and Modules appear under **General**. Telemetry, Facegen Exceptions, and Log Control
-appear under **Diagnostics**. Home uses DmUI's icon-bearing section headers and project-link buttons;
+Home, Settings, Modules, and Changelog appear under **General**. Telemetry, Facegen Exceptions, and
+Log Control appear under **Diagnostics**. Home uses DmUI's icon-bearing section headers and project-link buttons;
 GitHub and Nexus Mods open in your default browser through the host. Use the header action button to
 copy a diagnostic summary to the clipboard.
 
