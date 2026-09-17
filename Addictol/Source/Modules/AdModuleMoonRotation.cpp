@@ -114,6 +114,7 @@ namespace Addictol
 				root->local.translate.z += 1200.f;
 #else
 				// Place it a little lower so that you don't see how the moon turns at the end of the map.
+				root->local.translate.x -= 120.f;
 				root->local.translate.z -= 120.f;
 #endif
 			}
