@@ -27,20 +27,8 @@ namespace Addictol
 
 		class LunarRotationCalculator
 		{
-			// The Moon rotates exactly 360 degrees in one Sidereal Month (27.321661 days)
-#if 0
-			// FOR TEST
-			const double DAYS_PER_SIDEREAL_MONTH = .00321661;
-#else
-			const double DAYS_PER_SIDEREAL_MONTH = 27.321661;
-#endif
-			const double HOURS_PER_DAY = 24.0;
-
-			// Derived total hours for a single full 360-degree rotation
-			const double HOURS_PER_ROTATION = DAYS_PER_SIDEREAL_MONTH * HOURS_PER_DAY;
-
-			// Degrees the moon rotates in exactly 1 hour (~0.549°/hr)
-			const double DEGREES_PER_HOUR = 360.0 / HOURS_PER_ROTATION;
+			// Degrees the moon rotates in exactly 1 hour (~50 min later every day)
+			const double DEGREES_PER_HOUR = 14.5;
 
 			// The Moon's orbit is tilted at approximately 5.14° relative to Earth's orbital plane (the ecliptic)
 			const float DEGREES_INCLINATION = 5.14f;
@@ -52,7 +40,8 @@ namespace Addictol
 
 			double CalculateRotationDeg(double a_hours, bool a_clampTo360 = true) const noexcept
 			{
-				double totalDegrees = a_hours * DEGREES_PER_HOUR;
+				// 1 day (It was visible, added to 90°)
+				double totalDegrees = a_hours * DEGREES_PER_HOUR + 90.0f;
 
 				if (a_clampTo360)
 				{
