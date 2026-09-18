@@ -1,6 +1,7 @@
 #include <Menu/AdMenu.h>
 #include <Menu/AdMenuChangelog.h>
 #include <Menu/AdMenuFacegenExceptions.h>
+#include <Menu/AdMenuFormatting.h>
 #include <Menu/AdMenuHome.h>
 #include <Menu/AdMenuLogControl.h>
 #include <Menu/AdMenuModules.h>
@@ -139,6 +140,15 @@ namespace Addictol
 		auto metrics = Client().GetStyleMetrics();
 		ReportPresentationResult(metrics.has_value());
 		return metrics;
+	}
+
+	void Menu::DrawRefreshFooter(uint64_t a_refreshTicks) noexcept
+	{
+		dmui::ui::Separator();
+		ReportPresentationResult(dmui::DrawStyledText(Client(), MenuUi::Print(
+			"refresh %.3f ms, cadence %u ms",
+			QpcToMilliseconds(a_refreshTicks, GetQpcFrequency()),
+			RefreshMs()), kMutedText));
 	}
 
 	void Menu::ReportStatus(

@@ -38,6 +38,14 @@ The build stages `.Build/F4SE/Plugins/Addictol.dll` with the authored configurat
 payload from `data/`. Deploy that payload to your game or mod manager. Running the plugin also needs
 [F4SE](https://f4se.silverlock.org/) and the Address Library for your runtime.
 
+Xmake defaults to `release`; `releasedbg` also enables symbols for standalone tests.
+Both modes produce an optimized plugin with a PDB. Configure the validation mode explicitly:
+
+```powershell
+xmake config -P . -m releasedbg
+xmake build -P . Addictol
+```
+
 Set `FO4_DEV_MODS` to your mod manager's mods directory and `xmake install Addictol` deploys that
 payload to an `Addictol - Dev` folder inside it. Without the variable the build still succeeds and
 deploys nothing. Name the target explicitly; a bare `xmake install` also selects the test and library
@@ -554,10 +562,10 @@ counts rather than relying on exit status alone. CI runs the default checks, not
 ### Mutation controls
 
 Run `python Tests/run_mutations.py` from the repository root to prove the named negative controls in
-`Tests/mutations.json`. The runner requires a green baseline, rebuilds and runs `vmm-tests` for each
-mutation, matches the exact named failure and message, restores the target byte-for-byte, then
-requires a green restored suite. It is a deliberate local check, not a CI gate, because every entry
-requires a rebuild.
+`Tests/mutations.json`. The runner preserves the configured xmake mode, requires a green baseline,
+rebuilds and runs `vmm-tests` for each mutation, matches the exact named failure and message, restores
+the target byte-for-byte, then requires a green restored suite. It is a deliberate local check, not
+a CI gate, because every entry requires a rebuild.
 
 To add an entry, provide its unique exact `find` string, `replace` string, production `target`, and
 the exact `check` and `message` printed by the expected `[FAIL]` line. Run the complete manifest

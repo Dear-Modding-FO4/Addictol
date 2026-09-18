@@ -26,7 +26,7 @@ set_project(plugin_name)
 set_license("GPL-3.0")
 set_allowedplats("windows")
 set_allowedarchs("x64")
-set_allowedmodes("release")
+set_allowedmodes("release", "releasedbg")
 set_defaultmode("release")
 set_arch("x64")
 set_languages("c++23")
@@ -39,6 +39,8 @@ set_config("builddir", ".LinkConf/xmake")
 
 -- set policies
 set_policy("build.fence", true)
+
+add_rules("mode.releasedbg")
 
 -- add options
 option("msvc_package_toolchain", function()

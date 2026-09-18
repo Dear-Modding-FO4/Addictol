@@ -346,16 +346,6 @@ namespace Addictol
 				static_cast<unsigned long long>(s_cache.stats.skippedSamples),
 				static_cast<unsigned long long>(s_cache.stats.frameRecordOverflows));
 		}
-
-		void DrawPanelFooter() noexcept
-		{
-			dmui::ui::Separator();
-			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
-				"refresh %.3f ms, cadence %u ms",
-				QpcToMilliseconds(s_cache.refreshTicks, Addictol::GetQpcFrequency()),
-				Menu::RefreshMs()), Menu::kMutedText));
-		}
-
 	}
 
 	void DrawMenuTelemetryPanel(void* a_context) noexcept
@@ -372,7 +362,7 @@ namespace Addictol
 		{
 			ReportPresentationResult(dmui::DrawStyledText(
 				Menu::Client(), "Waiting for the first sample.", Menu::kMutedText));
-			DrawPanelFooter();
+			Menu::DrawRefreshFooter(s_cache.refreshTicks);
 			return;
 		}
 
@@ -398,6 +388,6 @@ namespace Addictol
 			if (panel.panel == TelemetryPanel::kDecompression)
 				DrawSeries();
 		}
-		DrawPanelFooter();
+		Menu::DrawRefreshFooter(s_cache.refreshTicks);
 	}
 }

@@ -118,6 +118,7 @@ namespace Addictol::Menu
 	[[nodiscard]] const DMUI_ThemeColors& ThemeColors() noexcept;
 	void ReportPresentationResult(bool a_succeeded) noexcept;
 	[[nodiscard]] std::optional<DMUI_StyleMetrics> StyleMetrics() noexcept;
+	void DrawRefreshFooter(uint64_t a_refreshTicks) noexcept;
 	void ReportStatus(
 		DMUI_StatusSeverity a_severity,
 		const char* a_message) noexcept;

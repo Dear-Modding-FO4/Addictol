@@ -274,16 +274,16 @@
   {
     "name": "custom settings omit default values",
     "target": "Addictol/Source/Core/Settings/AdSettingPersistence.cpp",
-    "find": "if (item.value == item.setting->DefaultValue())\r\n\t\t\t\t\tcontinue;",
-    "replace": "if (false)\r\n\t\t\t\t\tcontinue;",
+    "find": "if (item.value == item.setting->DefaultValue())",
+    "replace": "if (false)",
     "check": "settings override output keeps only non-default owned values",
     "message": "default-valued setting was written"
   },
   {
     "name": "custom settings remove replaced owned keys",
     "target": "Addictol/Source/Core/Settings/AdSettingPersistence.cpp",
-    "find": "if (!RemoveOwnedSettings(output, a_settings, a_error))\r\n\t\t\t\treturn false;",
-    "replace": "if (false)\r\n\t\t\t\treturn false;",
+    "find": "table.erase(valuePosition);",
+    "replace": "table.erase(valuePosition, valuePosition);",
     "check": "settings override output preserves unknown existing keys",
     "message": "default owned key was retained"
   },

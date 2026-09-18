@@ -108,10 +108,6 @@ namespace Addictol
 			Menu::Client(), "Flushes (session)", FormatCount(s_cache.stats.flushed),
 			{ .valueStyle = Menu::kBodyText }));
 
-		dmui::ui::Separator();
-		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), Print(
-			"refresh %.3f ms, cadence %u ms",
-			QpcToMilliseconds(s_cache.refreshTicks, GetQpcFrequency()),
-			Menu::RefreshMs()), Menu::kMutedText));
+		Menu::DrawRefreshFooter(s_cache.refreshTicks);
 	}
 }
