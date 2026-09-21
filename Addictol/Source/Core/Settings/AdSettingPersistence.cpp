@@ -792,7 +792,7 @@ namespace Addictol
 			if (!MoveFileExW(
 					temporary.c_str(),
 					a_target.c_str(),
-					MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+					MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED))
 			{
 				std::filesystem::remove(temporary, filesystemError);
 				a_error = "could not replace the settings file";
