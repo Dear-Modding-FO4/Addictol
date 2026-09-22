@@ -1,4 +1,5 @@
 #include <Modules/AdModuleControlSamplers.h>
+#include <Modules/AdControlSamplerCache.h>
 #include <Core/AdUtils.h>
 
 #include <comdef.h>
@@ -30,118 +31,54 @@ namespace Addictol
 
 	using namespace Microsoft::WRL;
 
-	static std::unordered_set<REX::W32::ID3D11SamplerState*> g_PassThroughSamplers;
-	static std::unordered_map<REX::W32::ID3D11SamplerState*, ComPtr<REX::W32::ID3D11SamplerState>> g_MappedSamplers;
+	static ControlSamplerCache g_SamplerCache;
 	static RE::BSGraphics::RendererData* g_RendererDataForCS{ nullptr };
-	static REX::W32::ID3D11DeviceContext* g_HookedContext{ nullptr };
+	static ComPtr<REX::W32::ID3D11DeviceContext> g_HookedContext;
+	static ComPtr<REX::W32::ID3D11Device> g_HookedDevice;
 
 	using XXSetSamplers = void (*)(REX::W32::ID3D11DeviceContext*, uint32_t, uint32_t, REX::W32::ID3D11SamplerState* const*) noexcept;
 	static XXSetSamplers g_origSetSamplers[6];
 
 	///////////////////////////////////////////////////////////////////////////////
 
-	static bool CS_CheckAddrState(REX::W32::ID3D11SamplerState* Ptr)
+	[[nodiscard]] static uint32_t ClampMaxAnisotropy(long a_value) noexcept
 	{
-		__try
-		{
-			REX::W32::D3D11_SAMPLER_DESC sd;
-			Ptr->GetDesc(&sd);
-			return true;
-		}
-		__except (1)
-		{
-			return false;
-		}
+		return static_cast<uint32_t>(std::clamp(a_value, 1l, 16l));
 	}
 
 	// Mostly from vrperfkit, thanks to fholger for showing how to do mip lod bias
 	// https://github.com/fholger/vrperfkit/blob/037c09f3168ac045b5775e8d1a0c8ac982b5854f/src/d3d11/d3d11_post_processor.cpp#L76
-	static void PreXSSetSamplers(REX::W32::ID3D11SamplerState** OutSamplers, [[maybe_unused]] uint32_t StartSlot, uint32_t NumSamplers,
-		REX::W32::ID3D11SamplerState* const* Samplers) noexcept
+	template <size_t Index>
+	static void __stdcall HookSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
+		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
 	{
-		memcpy(OutSamplers, Samplers, NumSamplers * sizeof(REX::W32::ID3D11SamplerState*));
-		for (uint32_t i = 0; i < NumSamplers; ++i)
+		if (a_this != g_HookedContext.Get() || !a_samplers ||
+			a_startSlot > REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT ||
+			a_numSamplers > REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT - a_startSlot)
 		{
-			auto orig = OutSamplers[i];
-			if ((orig == nullptr) || g_PassThroughSamplers.contains(orig) || !CS_CheckAddrState(orig))
-				continue;
-
-			if (!g_MappedSamplers.contains(orig))
-			{
-				REX::W32::D3D11_SAMPLER_DESC sd{};
-				orig->GetDesc(&sd);
-
-				if (sd.mipLODBias && !bAdditionalIgnorePreInstallBias.GetValue())
-				{
-					// do not mess with samplers that already have a bias.
-					// should hopefully reduce the chance of causing rendering errors.
-					g_PassThroughSamplers.insert(orig);
-					continue;
-				}
-
-				//REX::INFO("[DBG] Filter: {}, MipLODBias: {}, MaxAnisotropy: {}", (uint32_t)sd.filter, sd.mipLODBias, sd.maxAnisotropy);
-
-				sd.mipLODBias = g_MipBiasSetting.GetFloat();
-				sd.maxAnisotropy = (sd.filter == REX::W32::D3D11_FILTER_ANISOTROPIC) ? (uint32_t)g_MaxAnisotropySetting.GetInt() : 0;
-
-				// Fix getting this weird line with pipboy light. Maybe artifact flashlight texture.
-				//sd.MinLOD = 0;
-				//sd.MaxLOD = REX::W32::D3D11_FLOAT32_MAX;
-
-				g_RendererDataForCS->device->CreateSamplerState(&sd, g_MappedSamplers[orig].GetAddressOf());
-				g_PassThroughSamplers.insert(g_MappedSamplers[orig].Get());
-			}
-
-			OutSamplers[i] = g_MappedSamplers[orig].Get();
+			g_origSetSamplers[Index](a_this, a_startSlot, a_numSamplers, a_samplers);
+			return;
 		}
-	}
 
-	static void __stdcall Hook_PSSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
-		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
-	{
-		REX::W32::ID3D11SamplerState* samplers[REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-		PreXSSetSamplers(samplers, a_startSlot, a_numSamplers, a_samplers);
-		g_origSetSamplers[0](a_this, a_startSlot, a_numSamplers, samplers);
-	}
+		std::array<ControlSamplerCache::Sampler, REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT> ownedSamplers;
+		const ControlSamplerSettings settings{
+			g_MipBiasSetting.GetFloat(),
+			ClampMaxAnisotropy(g_MaxAnisotropySetting.GetInt()),
+			bAdditionalIgnorePreInstallBias.GetValue()
+		};
+		g_SamplerCache.Translate(
+			g_HookedDevice.Get(),
+			settings,
+			std::span{ a_samplers, a_numSamplers },
+			std::span{ ownedSamplers.data(), a_numSamplers },
+			[](const REX::W32::D3D11_SAMPLER_DESC& a_desc, REX::W32::ID3D11SamplerState** a_sampler) {
+				return g_HookedDevice->CreateSamplerState(&a_desc, a_sampler);
+			});
 
-	static void __stdcall Hook_VSSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
-		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
-	{
-		REX::W32::ID3D11SamplerState* samplers[REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-		PreXSSetSamplers(samplers, a_startSlot, a_numSamplers, a_samplers);
-		g_origSetSamplers[1](a_this, a_startSlot, a_numSamplers, samplers);
-	}
-
-	static void __stdcall Hook_GSSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
-		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
-	{
-		REX::W32::ID3D11SamplerState* samplers[REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-		PreXSSetSamplers(samplers, a_startSlot, a_numSamplers, a_samplers);
-		g_origSetSamplers[2](a_this, a_startSlot, a_numSamplers, samplers);
-	}
-
-	static void __stdcall Hook_HSSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
-		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
-	{
-		REX::W32::ID3D11SamplerState* samplers[REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-		PreXSSetSamplers(samplers, a_startSlot, a_numSamplers, a_samplers);
-		g_origSetSamplers[3](a_this, a_startSlot, a_numSamplers, samplers);
-	}
-
-	static void __stdcall Hook_DSSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
-		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
-	{
-		REX::W32::ID3D11SamplerState* samplers[REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-		PreXSSetSamplers(samplers, a_startSlot, a_numSamplers, a_samplers);
-		g_origSetSamplers[4](a_this, a_startSlot, a_numSamplers, samplers);
-	}
-
-	static void __stdcall Hook_CSSetSamplers(REX::W32::ID3D11DeviceContext* a_this, uint32_t a_startSlot, uint32_t a_numSamplers,
-		REX::W32::ID3D11SamplerState* const* a_samplers) noexcept
-	{
-		REX::W32::ID3D11SamplerState* samplers[REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-		PreXSSetSamplers(samplers, a_startSlot, a_numSamplers, a_samplers);
-		g_origSetSamplers[5](a_this, a_startSlot, a_numSamplers, samplers);
+		std::array<REX::W32::ID3D11SamplerState*, REX::W32::D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT> samplers{};
+		for (uint32_t i = 0; i < a_numSamplers; ++i)
+			samplers[i] = ownedSamplers[i].Get();
+		g_origSetSamplers[Index](a_this, a_startSlot, a_numSamplers, samplers.data());
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -160,9 +97,8 @@ namespace Addictol
 			REX::INFO("MIP LOD Bias changed from {} to {}, recreating samplers"sv,
 				static_cast<float>(g_MipBiasSetting.GetFloat()), a_value);
 
-			g_PassThroughSamplers.clear();
-			g_MappedSamplers.clear();
 			g_MipBiasSetting.SetFloat(a_value);
+			g_SamplerCache.Clear();
 
 			WriteINISettingFloat(g_PrefIniFileName.c_str(), MIPBIAS_OPTION_NAMEW, a_value);
 		}
@@ -174,19 +110,18 @@ namespace Addictol
 
 		static long GetMaxAnisotropy([[maybe_unused]] std::monostate a_base) noexcept
 		{
-			return (long)g_MaxAnisotropySetting.GetInt();
+			return static_cast<long>(ClampMaxAnisotropy(g_MaxAnisotropySetting.GetInt()));
 		}
 
 		static void SetMaxAnisotropy([[maybe_unused]] std::monostate a_base, long a_value) noexcept
 		{
-			a_value = std::min(16l, std::max(0l, a_value));
+			a_value = static_cast<long>(ClampMaxAnisotropy(a_value));
 
 			REX::INFO("MAX Anisotropy changed from {} to {}, recreating samplers"sv,
 				static_cast<int>(g_MaxAnisotropySetting.GetInt()), a_value);
 
-			g_PassThroughSamplers.clear();
-			g_MappedSamplers.clear();
 			g_MaxAnisotropySetting.SetInt((int32_t)a_value);
+			g_SamplerCache.Clear();
 
 			WriteINISettingInt(g_PrefIniFileName.c_str(), MAXANISTROPY_OPTION_NAMEW, a_value);
 		}
@@ -228,20 +163,28 @@ namespace Addictol
 			// Some upscalers swap renderer context with a proxy object.
 			// Hook the real immediate context to keep COM vtable indices stable.
 			g_HookedContext = g_RendererDataForCS->context;
-			REX::W32::ID3D11DeviceContext* realContext = nullptr;
-			g_RendererDataForCS->device->GetImmediateContext(&realContext);
+			ComPtr<REX::W32::ID3D11DeviceContext> realContext;
+			g_RendererDataForCS->device->GetImmediateContext(realContext.GetAddressOf());
 
-			if (realContext)
+			if (realContext && realContext.Get() != g_RendererDataForCS->context)
 			{
-				if (realContext != g_RendererDataForCS->context)
-				{
-					REX::WARN("D3D11 device context proxy detected, hooking real immediate context"sv);
-					g_HookedContext = realContext;
-				}
-				realContext->Release();
+				REX::WARN("D3D11 device context proxy detected, hooking real immediate context"sv);
+				g_HookedContext = realContext;
 			}
 
-			auto vtable = *reinterpret_cast<uintptr_t**>(g_HookedContext);
+			if (!g_HookedContext)
+			{
+				REX::WARN("Control Samplers: D3D11 immediate context is unavailable."sv);
+				return false;
+			}
+			g_HookedContext->GetDevice(g_HookedDevice.GetAddressOf());
+			if (!g_HookedDevice)
+			{
+				REX::WARN("Control Samplers: hooked D3D11 context has no device."sv);
+				return false;
+			}
+
+			auto vtable = *reinterpret_cast<uintptr_t**>(g_HookedContext.Get());
 			g_origSetSamplers[0] = reinterpret_cast<XXSetSamplers>(vtable[10]);
 			g_origSetSamplers[1] = reinterpret_cast<XXSetSamplers>(vtable[26]);
 			g_origSetSamplers[2] = reinterpret_cast<XXSetSamplers>(vtable[32]);
@@ -249,12 +192,12 @@ namespace Addictol
 			g_origSetSamplers[4] = reinterpret_cast<XXSetSamplers>(vtable[65]);
 			g_origSetSamplers[5] = reinterpret_cast<XXSetSamplers>(vtable[70]);
 
-			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_PSSetSamplers, 10);
-			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_VSSetSamplers, 26);
-			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_GSSetSamplers, 32);
-			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_HSSetSamplers, 61);
-			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_DSSetSamplers, 65);
-			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&Hook_CSSetSamplers, 70);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&HookSetSamplers<0>, 10);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&HookSetSamplers<1>, 26);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&HookSetSamplers<2>, 32);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&HookSetSamplers<3>, 61);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&HookSetSamplers<4>, 65);
+			RELEX::DetourVTable((uintptr_t)vtable, (uintptr_t)&HookSetSamplers<5>, 70);
 		}
 
 		return true;
@@ -264,8 +207,7 @@ namespace Addictol
 	{
 		if (a_msg && (a_msg->type == F4SE::MessagingInterface::kPostLoadGame))
 		{
-			g_PassThroughSamplers.clear();
-			g_MappedSamplers.clear();
+			g_SamplerCache.Clear();
 		}
 
 		return true;

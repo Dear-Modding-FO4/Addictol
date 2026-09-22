@@ -218,6 +218,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdControlSamplerCache.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCosaveIO.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h" />

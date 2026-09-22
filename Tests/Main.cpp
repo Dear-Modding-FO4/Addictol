@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 	});
 
 	run_allocator_checks(runner);
+	run_control_sampler_checks(runner);
 	run_correctness_checks(runner);
 	run_threading_checks(runner);
 	run_shape_checks(runner);
