@@ -325,6 +325,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleShaderReferenceEffectLifetime.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTESObjectREFRGetEncounterZone.cpp">
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
@@ -419,6 +422,9 @@
       <Filter>Include\Modules\E</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h">
+      <Filter>Include\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\AdDeferredOwnerRegistry.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdGameUtils.h">
@@ -704,6 +710,9 @@
       <Filter>Include\Modules\S</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleShaderReferenceEffectLifetime.h">
       <Filter>Include\Modules\S</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTESObjectREFRGetEncounterZone.h">

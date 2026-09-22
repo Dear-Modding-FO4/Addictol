@@ -51,6 +51,7 @@ int main(int argc, char** argv)
 	run_libdeflate_checks(runner);
 	run_menu_checks(runner);
 	run_setting_registry_checks(runner);
+	run_shader_reference_effect_lifetime_checks(runner);
 	run_escape_freeze_checks(runner);
 	run_log_control_checks(runner);
 	run_telemetry_checks(runner);

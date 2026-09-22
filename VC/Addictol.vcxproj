@@ -66,6 +66,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProcessIcon.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleShaderReferenceEffectLifetime.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicKeywordCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArmorPenetration.cpp" />
@@ -173,6 +174,7 @@
     <ClInclude Include="..\Addictol\Include\Core\AdModule.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModuleOutcome.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h" />
+    <ClInclude Include="..\Addictol\Include\Core\AdDeferredOwnerRegistry.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdFacegenExceptions.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h" />
@@ -197,6 +199,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProcessIcon.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleShaderReferenceEffectLifetime.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicKeywordCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArmorPenetration.h" />

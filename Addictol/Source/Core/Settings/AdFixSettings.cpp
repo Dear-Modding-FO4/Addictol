@@ -401,6 +401,15 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
+	BoolSetting bFixesShaderReferenceEffectLifetime{
+		"Fixes"sv,
+		"bShaderReferenceEffectLifetime"sv,
+		SettingDisplayCategory::kStability,
+		false,
+		"Experimental fix for crashes when an actor with an active effect shader unloads; retains its effect controller through shader teardown."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
 	BoolSetting bFixesMagicKeywordCrash{
 		"Fixes"sv,
 		"bMagicKeywordCrash"sv,

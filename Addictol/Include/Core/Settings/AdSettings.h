@@ -72,6 +72,7 @@ namespace Addictol
 	extern BoolSetting bFixesToggleGrassCommand;
 	extern BoolSetting bFixesTextureLoadCrash;
 	extern BoolSetting bFixesFullPrecisionDecals;
+	extern BoolSetting bFixesShaderReferenceEffectLifetime;
 	extern BoolSetting bFixesMagicKeywordCrash;
 	extern BoolSetting bFixesAttachLightCrash;
 	extern BoolSetting bFixesDownwardAiming;

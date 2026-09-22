@@ -239,6 +239,10 @@ namespace vmm_tests
 				!std::get<bool>(
 					Setting("Fixes", "bAltTabFullscreen").DefaultValue()),
 				"bAltTabFullscreen factory default is not false");
+			require(
+				!std::get<bool>(
+					Setting("Fixes", "bShaderReferenceEffectLifetime").DefaultValue()),
+				"bShaderReferenceEffectLifetime factory default is not false");
 		});
 
 		runner.test("startup creates a documented template without active defaults", [] {
