@@ -13,6 +13,15 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
+	BoolSetting bTelemetryOperationProfiling{
+		"Telemetry"sv,
+		"bOperationProfiling"sv,
+		SettingDisplayCategory::kDiagnostics,
+		false,
+		"Enables sampled operation profiling captures on the next launch."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
 	U32Setting uTelemetrySampleMs{
 		"Telemetry"sv,
 		"uSampleMs"sv,

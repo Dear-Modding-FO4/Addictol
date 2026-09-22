@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Telemetry/AdOperationProfile.h>
 #include <Telemetry/AdTelemetry.h>
 
 #include <array>
@@ -9,6 +10,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -49,6 +51,38 @@ namespace Addictol
 		uint64_t overwrittenSamples{ 0 };
 		uint64_t skippedSamples{ 0 };
 		uint64_t frameRecordOverflows{ 0 };
+		OperationProfileCounters operationProfile{};
+		bool ordinaryTelemetryEnabled{ false };
+		bool operationProfilingEnabled{ false };
+	};
+
+	enum class TelemetryCaptureState : uint8_t
+	{
+		kDisabled,
+		kActive,
+		kComplete,
+		kIncomplete
+	};
+
+	struct TelemetryCaptureStatus
+	{
+		TelemetryCaptureState state{ TelemetryCaptureState::kDisabled };
+		std::string captureId{};
+		std::filesystem::path directory{};
+		uint32_t errorFlags{ 0 };
+		bool instrumented{ false };
+	};
+
+	struct TelemetryStartOptions
+	{
+		uint32_t cadenceMs{ 1000 };
+		std::filesystem::path csvPath{};
+		std::filesystem::path seriesCsvPath{};
+		std::filesystem::path captureRoot{};
+		std::string productVersion{};
+		std::string runtime{};
+		std::string buildIdentity{};
+		bool ordinaryTelemetryEnabled{ false };
 	};
 
 	enum class TelemetryRegistration : uint8_t
@@ -72,6 +106,7 @@ namespace Addictol
 			uint32_t a_cadenceMs,
 			std::filesystem::path a_csvPath = {},
 			std::filesystem::path a_seriesCsvPath = {}) noexcept;
+		[[nodiscard]] bool Start(TelemetryStartOptions a_options) noexcept;
 		void Stop() noexcept;
 		void PushFrameRecord(uint64_t a_qpc, uint32_t a_durationUs) noexcept;
 
@@ -82,6 +117,8 @@ namespace Addictol
 			std::span<MetricValue> a_out) const noexcept;
 		[[nodiscard]] size_t CopyFrameRecords(std::span<FrameRecord> a_out) const noexcept;
 		[[nodiscard]] TelemetryStats Stats() const noexcept;
+		[[nodiscard]] bool CopyCaptureStatus(
+			TelemetryCaptureStatus& a_out) const noexcept;
 
 		static bool WriteCsvHeader(std::ostream& a_stream, std::span<const MetricDescriptor> a_columns);
 		static bool WriteCsvRow(std::ostream& a_stream, const TelemetrySnapshot& a_snapshot);
@@ -96,6 +133,7 @@ namespace Addictol
 		{
 			std::shared_ptr<MetricSource> source;
 			SeriesSource* seriesSource{ nullptr };
+			OperationProfileSource* profileSource{ nullptr };
 			size_t offset{ 0 };
 			size_t count{ 0 };
 			size_t seriesOffset{ 0 };
@@ -105,6 +143,13 @@ namespace Addictol
 		static constexpr size_t kFrameRecordCapacity{ 64 };
 		void Worker() noexcept;
 		void ClearIntervals() noexcept;
+		[[nodiscard]] bool PrepareCapture(
+			const TelemetryStartOptions& a_options) noexcept;
+		[[nodiscard]] bool WriteCaptureMetadata(bool a_complete) noexcept;
+		[[nodiscard]] bool WriteCaptureSnapshot(
+			const TelemetrySnapshot& a_snapshot) noexcept;
+		void FailCapture(uint32_t a_error) noexcept;
+		void FinalizeCapture() noexcept;
 		[[nodiscard]] TelemetrySnapshot& Collect(
 			uint64_t a_qpc,
 			uint64_t a_intervalEndQpc,
@@ -143,6 +188,23 @@ namespace Addictol
 		uint64_t m_workerStartQpc{ 0 };
 		std::filesystem::path m_csvPath{};
 		std::filesystem::path m_seriesCsvPath{};
+		std::ofstream m_captureCsv{};
+		std::ofstream m_captureSeriesCsv{};
+		std::filesystem::path m_captureDirectory{};
+		std::filesystem::path m_captureMetadataPath{};
+		std::string m_captureId{};
+		std::string m_captureStartedUtc{};
+		std::string m_captureCompletedUtc{};
+		std::string m_productVersion{};
+		std::string m_runtime{};
+		std::string m_buildIdentity{};
+		uint64_t m_captureOriginQpc{ 0 };
+		std::atomic<TelemetryCaptureState> m_captureState{
+			TelemetryCaptureState::kDisabled
+		};
+		std::atomic<uint32_t> m_captureErrorFlags{ 0 };
+		bool m_ordinaryTelemetryEnabled{ false };
+		bool m_operationProfilingEnabled{ false };
 	};
 
 	class ProcessMemoryMetricSource final : public MetricSource

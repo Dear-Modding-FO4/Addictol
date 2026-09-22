@@ -7,6 +7,7 @@
 
 #include <REX/REX.h>
 #include <Windows.h>
+#include <resource_version2.h>
 
 #undef ERROR
 
@@ -46,6 +47,17 @@ namespace Addictol
 			a_budget = info->budget;
 			return true;
 		}
+
+		[[nodiscard]] std::string_view RuntimeLabel() noexcept
+		{
+			if (RELEX::IsRuntimeOG())
+				return "OG";
+			if (RELEX::IsRuntimeNG())
+				return "NG";
+			if (RELEX::IsRuntimeAE())
+				return "AE";
+			return "unknown";
+		}
 	}
 
 	TelemetryHub& Telemetry::Hub() noexcept
@@ -59,6 +71,8 @@ namespace Addictol
 		static std::once_flag once;
 		std::call_once(once, [&a_modules] {
 			auto& hub = Hub();
+			const auto telemetryEnabled = bTelemetryEnabled.GetValue();
+			const auto profilingEnabled = bTelemetryOperationProfiling.GetValue();
 			s_moduleManager = &a_modules;
 			auto frameSource = std::make_shared<FrameMetricSource>(
 				hub, Addictol::GetQpcFrequency(),
@@ -90,40 +104,52 @@ namespace Addictol
 			}
 
 			auto panelsRegistered = true;
-			for (const auto& panel : kTelemetryPanels)
+			if (telemetryEnabled || profilingEnabled)
 			{
-				const auto registered = Menu::RegisterPanel({
-					panel.page,
-					&DrawMenuTelemetryPanel,
-					&bTelemetryEnabled,
-					const_cast<TelemetryPanelDefinition*>(&panel)
-				});
-				panelsRegistered = registered && panelsRegistered;
+				for (const auto& panel : kTelemetryPanels)
+				{
+					const auto registered = Menu::RegisterPanel({
+						panel.page,
+						&DrawMenuTelemetryPanel,
+						nullptr,
+						const_cast<TelemetryPanelDefinition*>(&panel)
+					});
+					panelsRegistered = registered && panelsRegistered;
+				}
 			}
 			if (!panelsRegistered)
 				REX::ERROR("Telemetry: one or more menu panels could not be registered."sv);
-			if (!bTelemetryEnabled.GetValue())
+			if (!telemetryEnabled && !profilingEnabled)
 				return;
 
-			std::filesystem::path csvPath;
-			std::filesystem::path seriesCsvPath;
-			if (bTelemetryCsv.GetValue())
+			TelemetryStartOptions options{};
+			options.cadenceMs =
+				(std::max)(uTelemetrySampleMs.GetValue(), 1u);
+			options.ordinaryTelemetryEnabled = telemetryEnabled;
+			if (telemetryEnabled && bTelemetryCsv.GetValue())
 			{
-				csvPath = AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\AddictolTelemetry.csv";
-				seriesCsvPath =
+				options.csvPath =
+					AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\AddictolTelemetry.csv";
+				options.seriesCsvPath =
 					AdGetRuntimeDirectory() + "Data\\F4SE\\Plugins\\AddictolSeries.csv";
 			}
-			if (!hub.Start(
-				(std::max)(uTelemetrySampleMs.GetValue(), 1u),
-				std::move(csvPath),
-				std::move(seriesCsvPath)))
+			if (profilingEnabled)
+			{
+				options.captureRoot =
+					AdGetRuntimeDirectory() +
+					"Data\\F4SE\\Plugins\\Addictol\\Captures";
+				options.productVersion = VER_PRODUCT_VERSION_STR;
+				options.runtime = RuntimeLabel();
+			}
+			if (!hub.Start(std::move(options)))
 				REX::ERROR("Telemetry: worker failed to start"sv);
 		});
 	}
 
 	bool Telemetry::ConnectDearModdingUI(dmui::Client& a_client) noexcept
 	{
-		if (!bTelemetryEnabled.GetValue())
+		if (!bTelemetryEnabled.GetValue() &&
+			!bTelemetryOperationProfiling.GetValue())
 			return true;
 		const auto observer = a_client.AddFrameObserver([] {
 			ObserveFrame();

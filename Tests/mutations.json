@@ -40,9 +40,9 @@
     "message": "second process page-fault sample did not report the interval delta"
   },
   {
-    "name": "frame observation requires enabled telemetry",
+    "name": "frame observation requires an active telemetry hub",
     "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
-    "find": "if (!telemetryEnabled)",
+    "find": "if (!telemetryActive)",
     "replace": "if (false)",
     "check": "disabled telemetry skips the frame clock",
     "message": "disabled frame instrumentation updated count or total duration"

@@ -97,6 +97,7 @@ namespace Addictol
 	extern BoolSetting bWarningsReferenceHandleLimit;
 
 	extern BoolSetting bTelemetryEnabled;
+	extern BoolSetting bTelemetryOperationProfiling;
 	extern U32Setting uTelemetrySampleMs;
 	extern U32Setting uTelemetryFrameRecordMs;
 	extern BoolSetting bTelemetryCsv;

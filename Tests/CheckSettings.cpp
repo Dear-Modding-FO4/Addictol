@@ -243,6 +243,15 @@ namespace vmm_tests
 				std::get<bool>(
 					Setting("Fixes", "bShaderReferenceEffectLifetime").DefaultValue()),
 				"bShaderReferenceEffectLifetime factory default is not true");
+			const auto& operationProfiling =
+				Setting("Telemetry", "bOperationProfiling");
+			require(
+				!std::get<bool>(operationProfiling.DefaultValue()),
+				"bOperationProfiling factory default is not false");
+			require(
+				operationProfiling.ApplyTiming() ==
+					Addictol::SettingApplyTiming::kNextLaunch,
+				"bOperationProfiling is not a next-launch setting");
 		});
 
 		runner.test("startup creates a documented template without active defaults", [] {

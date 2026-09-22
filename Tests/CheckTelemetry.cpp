@@ -1078,12 +1078,13 @@ namespace vmm_tests
 				csv.str() ==
 					"qpc,series,bucket,calls,ticks,bytes\n"
 					"1234567,zlib.served.stock,256-1023,1234,5678,9012\n"
+					"1234567,zlib.flush,finish,0,99,88\n"
 					"1234567,zlib.served.thread,worker,3,4,5\n"
 					"1234567,plugin.load,\"comma,name.dll\",1,7,0\n"
 					"1234567,\"test\"\"series\",\"quote\"\"bucket\",1,8,0\n",
 				"series CSV serialization changed or honored the stream locale");
-			require(csv.str().find("zlib.flush") == std::string::npos,
-				"zero-call series row was not skipped");
+			require(csv.str().find("zlib.flush") != std::string::npos,
+				"nonzero zero-call series payload was discarded");
 		});
 
 		runner.test("hub owns the only destructive interval drain", [] {

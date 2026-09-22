@@ -77,7 +77,7 @@ normal installations. Development prereleases are published from `master` as
 
 ## Configuration
 
-The central registry exposes 113 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
+The central registry exposes 116 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
 `[Telemetry]`, and `[Additional]`. On first launch, Addictol creates
 `Data\F4SE\Plugins\Addictol.toml` with every registry description and a commented factory value.
 Addictol refreshes those managed help comments on later launches while preserving active values,
@@ -103,6 +103,35 @@ Apply succeeds.
 Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`. It records which modules
 loaded, were disabled, or skipped; check it first when something is not working.
 
+### Operation profiling
+
+`[Telemetry] bOperationProfiling = true` enables sampled operation profiling on the next launch,
+independently of `[Telemetry] bEnabled`. Each run writes a unique capture under
+`Data\F4SE\Plugins\Addictol\Captures\<capture-id>\` with `metadata.json`, `telemetry.csv`, and
+`series.csv`. The legacy `AddictolTelemetry.csv` and `AddictolSeries.csv` paths remain controlled by
+`bEnabled` and `bCsv`.
+
+Each consumer owns a shared `OperationProfileSource`, gives it a stable lowercase source ID and
+display name, and registers it through `Telemetry::Hub().Register(source)` before the hub freezes.
+Construction copies descriptors, duration buckets, labels, and source identity into immutable
+source-owned storage. Quality metrics are namespaced as `profile.<source-id>.*`, so allocator,
+codec, and future consumers can coexist without a second registry or global profiler accessor.
+
+`OperationProfileSource::Begin` counts every admitted operation but reads the clock only for
+sampled work; `End(std::move(token))` consumes the move-only token and publishes one coherent
+descriptor/duration/byte tuple. Publication uses explicitly sized preallocated shards and bounded
+`try_lock` producer work; capture metadata reports shard count, capacity, and every rejection.
+`OperationProfileConsumer<false>` supports startup-selected hook specializations with no profiling
+work. Sources must outlive their tokens, and `ScopedOperationProfileSuppression` is only for
+profiler-owned collection/export work.
+
+Duration percentiles are bucket-bounded estimates. Capture metadata reports sampling, capacity,
+contention/capacity loss, unfinished work, QPC calibration, and completion state. Existing
+libdeflate timing remains coupled to ordinary telemetry until its owning instrumentation adopts this
+source; this foundation does not change codec or allocator semantics. A profiling-enabled run with
+no registered consumers still writes context telemetry and explicitly records
+`instrumented_run: false`.
+
 ---
 
 ## Menu
@@ -113,10 +142,10 @@ appearance in the host settings page behind the footer gear (or via `DearModding
 | Page | Contents |
 |---|---|
 | **Home** | Runtime, live module summary, project links, FAQ, and mod evaluation guide. |
-| **Settings** | All 113 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
+| **Settings** | All 116 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
 | **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
 | **Changelog** | Released versions and their notes from the canonical [changelog](CHANGELOG.md). |
-| **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels (when `[Telemetry] bEnabled = true`). |
+| **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels when telemetry or operation profiling is enabled. |
 | **Facegen Exceptions** | Facegen exception coverage, configuration state, and resolution failures. |
 | **Log Control** | Session-only record and flush levels with the live output rate. |
 

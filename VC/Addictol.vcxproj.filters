@@ -67,6 +67,9 @@
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdOperationProfile.cpp">
+      <Filter>Source\Telemetry</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
@@ -453,6 +456,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h">
       <Filter>Include\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdOperationProfile.h">
+      <Filter>Include\Telemetry</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
       <Filter>Include\Telemetry</Filter>

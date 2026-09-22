@@ -22,6 +22,7 @@ namespace Addictol
 			TelemetrySnapshot previous{};
 			TelemetrySnapshot candidate{};
 			TelemetryStats stats{};
+			TelemetryCaptureStatus capture{};
 			std::array<MetricValue, 120> history{};
 			std::array<float, 120> frameTimes{};
 			std::array<FrameRecord, 16> frameRecords{};
@@ -87,6 +88,8 @@ namespace Addictol
 				}
 			}
 			s_cache.stats = hub.Stats();
+			s_cache.capture = {};
+			(void)hub.CopyCaptureStatus(s_cache.capture);
 			s_cache.frameRecordCount = hub.CopyFrameRecords(s_cache.frameRecords);
 
 			const auto finish = Addictol::ReadQpc();
@@ -300,7 +303,7 @@ namespace Addictol
 
 		void DrawSeries() noexcept
 		{
-			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Zlib series", Menu::kHeadingText));
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Series", Menu::kHeadingText));
 			if (!dmui::ui::BeginTable("TelemetrySeries", 5, Menu::kDiagnosticTableFlags, dmui::ui::Vec2(0.0f, 260.0f)))
 				return;
 			dmui::ui::TableSetupColumn("Series", dmui::ui::TableColumnFlags::kWidthStretch);
@@ -311,7 +314,7 @@ namespace Addictol
 			dmui::ui::TableHeadersRow();
 			for (const auto& sample : s_cache.current.series)
 			{
-				if (!sample.calls)
+				if (!sample.calls && !sample.ticks && !sample.bytes)
 					continue;
 				dmui::ui::TableNextRow();
 				(void)dmui::ui::TableNextColumn();
@@ -335,6 +338,24 @@ namespace Addictol
 
 		void DrawOverviewStatus() noexcept
 		{
+			const auto captureState = [&]() noexcept -> const char* {
+				switch (s_cache.capture.state)
+				{
+				case TelemetryCaptureState::kActive:
+					return "active";
+				case TelemetryCaptureState::kComplete:
+					return "complete";
+				case TelemetryCaptureState::kIncomplete:
+					return "incomplete";
+				default:
+					return "disabled";
+				}
+			}();
+			dmui::ui::Text(
+				"Mode telemetry %s  profiling %s  capture %s",
+				s_cache.stats.ordinaryTelemetryEnabled ? "on" : "off",
+				s_cache.stats.operationProfilingEnabled ? "on" : "off",
+				captureState);
 			dmui::ui::Text(
 				"Sample %llu  interval %.3f ms  late %.3f ms",
 				static_cast<unsigned long long>(s_cache.current.sequence),
@@ -345,6 +366,16 @@ namespace Addictol
 				static_cast<unsigned long long>(s_cache.stats.overwrittenSamples),
 				static_cast<unsigned long long>(s_cache.stats.skippedSamples),
 				static_cast<unsigned long long>(s_cache.stats.frameRecordOverflows));
+			const auto& profile = s_cache.stats.operationProfile;
+			dmui::ui::Text(
+				"Profile accepted %llu  capacity %llu  contention %llu  stale %llu  unfinished %llu",
+				static_cast<unsigned long long>(profile.acceptedRecords),
+				static_cast<unsigned long long>(profile.capacityDrops),
+				static_cast<unsigned long long>(
+					profile.admissionContentionDrops +
+					profile.publicationContentionDrops),
+				static_cast<unsigned long long>(profile.staleTokens),
+				static_cast<unsigned long long>(profile.unfinishedOperations));
 		}
 	}
 

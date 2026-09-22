@@ -100,6 +100,7 @@ namespace Addictol
 
 	inline constexpr std::array kTelemetryMetricGroups{
 		TelemetryMetricGroup{ "frame."sv, "Frame"sv, TelemetryPanel::kOverview },
+		TelemetryMetricGroup{ "profile."sv, "Operation profiling"sv, TelemetryPanel::kOverview },
 		TelemetryMetricGroup{ "process."sv, "Process"sv, TelemetryPanel::kMemory },
 		TelemetryMetricGroup{ "system."sv, "System"sv, TelemetryPanel::kMemory },
 		TelemetryMetricGroup{ "gpu."sv, "Video memory"sv, TelemetryPanel::kMemory },
@@ -153,6 +154,7 @@ namespace Addictol
 	{
 		return a_key.starts_with("escape."sv) ||
 			a_key.starts_with("modules."sv) ||
+			a_key.starts_with("profile."sv) ||
 			a_key == "audio.glitches"sv;
 	}
 

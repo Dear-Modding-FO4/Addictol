@@ -21,6 +21,8 @@ int main(int argc, char** argv)
 			voltek::scalable_memory_manager_initialize();
 			return run_benchmarks();
 		}
+		if (argument == "--bench-profile")
+			return run_profile_benchmarks();
 		if (argument == "--oversized-case")
 			return run_oversized_case();
 		if (argument.starts_with(shape_prefix))
@@ -31,7 +33,7 @@ int main(int argc, char** argv)
 	}
 	if (argc != 1)
 	{
-		std::cerr << "usage: vmm-tests [--bench]\n";
+		std::cerr << "usage: vmm-tests [--bench|--bench-profile]\n";
 		return 2;
 	}
 
@@ -56,6 +58,7 @@ int main(int argc, char** argv)
 	run_escape_freeze_checks(runner);
 	run_log_control_checks(runner);
 	run_telemetry_checks(runner);
+	run_operation_profile_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
 	return runner.failures() == 0 ? 0 : 1;

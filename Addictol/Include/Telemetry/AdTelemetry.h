@@ -590,6 +590,7 @@ namespace Addictol
 	namespace Telemetry
 	{
 		[[nodiscard]] bool EnabledRelaxed() noexcept;
+		[[nodiscard]] bool ActiveRelaxed() noexcept;
 		[[nodiscard]] uint32_t RenderThreadIdRelaxed() noexcept;
 		void CaptureRenderThread(uint32_t a_threadId) noexcept;
 		void ObserveZlibCall(
