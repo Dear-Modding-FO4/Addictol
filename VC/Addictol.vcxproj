@@ -109,6 +109,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadOrder.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLocalMapRotation.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectApplyEvent.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicEffectConditions.cpp" />
@@ -243,6 +244,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadOrder.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLocalMapRotation.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectApplyEvent.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicEffectConditions.h" />

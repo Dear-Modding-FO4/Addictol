@@ -562,4 +562,13 @@ namespace Addictol
 		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesLocalMapRotation{
+		"Fixes"sv,
+		"bFixesLocalMapRotation"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		"Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

@@ -232,6 +232,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadScreen.cpp">
       <Filter>Source\Modules\L</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLocalMapRotation.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLODDistance.cpp">
       <Filter>Source\Modules\L</Filter>
     </ClCompile>
@@ -620,6 +623,9 @@
       <Filter>Include\Modules\L</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadScreen.h">
+      <Filter>Include\Modules\L</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLocalMapRotation.h">
       <Filter>Include\Modules\L</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLODDistance.h">

@@ -90,6 +90,7 @@ namespace Addictol
 	extern BoolSetting bFixesAIProcess3DUpdateFlag;
 	extern BoolSetting bFixesNPCHealthOverflowFix;
 	extern BoolSetting bFixesArmorPenetration;
+	extern BoolSetting bFixesLocalMapRotation;
 
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;

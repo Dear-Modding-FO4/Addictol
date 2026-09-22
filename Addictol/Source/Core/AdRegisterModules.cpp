@@ -92,6 +92,7 @@
 #include <Modules/AdModuleMenu.h>
 #include <Modules/AdModuleNPCHealthOverflowFix.h>
 #include <Modules/AdModuleArmorPenetration.h>
+#include <Modules/AdModuleLocalMapRotation.h>
 
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
@@ -186,6 +187,7 @@ static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighR
 static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
 static auto sModuleNPCHealthOverflowFix				= std::make_shared<Addictol::ModuleNPCHealthOverflowFix>();
 static auto sModuleArmorPenetration					= std::make_shared<Addictol::ModuleArmorPenetration>();
+static auto sModuleLocalMapRotation					= std::make_shared<Addictol::ModuleLocalMapRotation>();
 
 void AdRegisterPreloadModules()
 {
@@ -288,6 +290,7 @@ void AdRegisterModules()
 	modules.Register(sModuleWaterJetpackFix);
 	modules.Register(sModuleAIProcess3DUpdateFlag);
 	modules.Register(sModuleHighResLocalMaps);
+	modules.Register(sModuleLocalMapRotation);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
