@@ -33,6 +33,10 @@ namespace voltek
 	// Вернёт постоянный адрес при затребовании памяти равной 0.
 	// Память всегда выровнена.
 	VOLTEK_MM_API void* scalable_alloc(size_t size);
+	// Power-of-two alignment; zero uses the ordinary 16-byte alignment.
+	VOLTEK_MM_API void* scalable_aligned_alloc(size_t size, size_t alignment);
+	// Shares scalable_free/scalable_msize; failure preserves the original block.
+	VOLTEK_MM_API void* scalable_aligned_realloc(const void* ptr, size_t size, size_t alignment);
 	// Выделение памяти нужного размера.
 	// При ошибке вернёт nullptr, это если size равен более 4 гб.
 	// Также вернёт nullptr если память физически кончилась.
@@ -43,6 +47,7 @@ namespace voltek
 	// При ошибке вернёт nullptr, это если size равен 0 или более 4 гб.
 	// Также вернёт nullptr если память физически кончилась.
 	// Память всегда выровнена. Адрес памяти может быть изменён.
+	// Preserves the alignment of blocks returned by scalable_aligned_alloc.
 	VOLTEK_MM_API void* scalable_realloc(const void* ptr, size_t size);
 	// Выделение памяти нужного размера из прошлого указателя на память.
 	// При ошибке вернёт nullptr, это если size равен 0 или более 4 гб.

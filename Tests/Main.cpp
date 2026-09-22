@@ -41,6 +41,7 @@ int main(int argc, char** argv)
 		voltek::scalable_memory_manager_initialize();
 	});
 
+	run_allocator_checks(runner);
 	run_correctness_checks(runner);
 	run_threading_checks(runner);
 	run_shape_checks(runner);

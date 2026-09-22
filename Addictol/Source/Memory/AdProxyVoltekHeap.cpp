@@ -14,9 +14,9 @@ namespace Addictol
 		return CheckPtr(voltek::scalable_alloc(nSize), nSize);
 	}
 
-	void* ProxyVoltekHeap::aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept
+	void* ProxyVoltekHeap::aligned_malloc(size_t nSize, size_t nAlignment) const noexcept
 	{
-		return malloc(nSize);
+		return CheckPtr(voltek::scalable_aligned_alloc(nSize, nAlignment), nSize);
 	}
 
 	void* ProxyVoltekHeap::realloc(void* lpBlock, size_t nNewSize) const noexcept
@@ -27,9 +27,9 @@ namespace Addictol
 		return CheckPtr(ptr, nNewSize);
 	}
 
-	void* ProxyVoltekHeap::aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept
+	void* ProxyVoltekHeap::aligned_realloc(void* lpBlock, size_t nNewSize, size_t nAlignment) const noexcept
 	{
-		return realloc(lpBlock, nNewSize);
+		return CheckPtr(voltek::scalable_aligned_realloc(lpBlock, nNewSize, nAlignment), nNewSize);
 	}
 
 	void ProxyVoltekHeap::free(void* lpBlock) const noexcept

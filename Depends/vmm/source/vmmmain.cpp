@@ -516,6 +516,64 @@ namespace voltek
 			return new_ptr;
 		}
 
+		void* memory_manager::aligned_alloc(size_t size, size_t alignment) noexcept
+		{
+			if (!alignment)
+				alignment = 16;
+			if ((alignment & (alignment - 1)) != 0)
+				return nullptr;
+			if (alignment <= 16)
+				return alloc(size);
+
+			if (alignment - 1 > SIZE_MAX - sizeof(aligned_block))
+				return nullptr;
+			const auto overhead = alignment - 1 + sizeof(aligned_block);
+			if (size > SIZE_MAX - overhead)
+				return nullptr;
+
+			void* base = alloc(size + overhead);
+			if (!base)
+				return nullptr;
+
+			const auto address = (reinterpret_cast<uintptr_t>(base) +
+				sizeof(aligned_block) + alignment - 1) & ~(alignment - 1);
+			auto* block = reinterpret_cast<aligned_block*>(address - sizeof(aligned_block));
+			block->base = base;
+			block->alignment = alignment;
+			create_default_block(&block->header, size);
+			block->header.flags |= flag_block_aligned;
+			return reinterpret_cast<void*>(address);
+		}
+
+		void* memory_manager::aligned_realloc(const void* ptr, size_t size, size_t alignment) noexcept
+		{
+			if (!alignment)
+				alignment = 16;
+			if ((alignment & (alignment - 1)) != 0)
+				return nullptr;
+			if (!ptr)
+				return aligned_alloc(size, alignment);
+			if (!is_valid_ptr(ptr) || !is_valid_pointer(ptr))
+				return nullptr;
+			if (!size)
+			{
+				free(ptr);
+				return nullptr;
+			}
+
+			auto* block = get_block_handle_from_ptr(ptr);
+			if (!is_used_aligned_block(block) && alignment <= 16)
+				return realloc(ptr, size);
+
+			void* replacement = aligned_alloc(size, alignment);
+			if (!replacement)
+				return nullptr;
+			const auto old_size = get_size_from_block(block);
+			memcpy(replacement, ptr, old_size < size ? old_size : size);
+			free(ptr);
+			return replacement;
+		}
+
 		void* memory_manager::realloc(const void* ptr, size_t size) noexcept
 		{
 			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr) /*|| (ULONG_MAX < size)*/)
@@ -525,6 +583,10 @@ namespace voltek
 				free(ptr);
 				return nullptr;
 			}
+
+			auto* original = get_block_handle_from_ptr(ptr);
+			if (is_used_aligned_block(original))
+				return aligned_realloc(ptr, size, get_aligned_block(original)->alignment);
 
 			void* new_ptr = nullptr;	
 
@@ -697,6 +759,10 @@ namespace voltek
 		{
 			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr))
 				return false;
+
+			auto* original = get_block_handle_from_ptr(ptr);
+			if (is_used_aligned_block(original))
+				return free(get_aligned_block(original)->base);
 
 			bool ret = true;
 

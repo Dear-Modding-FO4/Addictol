@@ -31,6 +31,18 @@ namespace voltek
 		return memory_manager::global_memory_manager->alloc(size);
 	}
 
+	VOLTEK_MM_API void* scalable_aligned_alloc(size_t size, size_t alignment)
+	{
+		if (!memory_manager::global_memory_manager) return nullptr;
+		return memory_manager::global_memory_manager->aligned_alloc(size, alignment);
+	}
+
+	VOLTEK_MM_API void* scalable_aligned_realloc(const void* ptr, size_t size, size_t alignment)
+	{
+		if (!memory_manager::global_memory_manager) return nullptr;
+		return memory_manager::global_memory_manager->aligned_realloc(ptr, size, alignment);
+	}
+
 	VOLTEK_MM_API void* scalable_calloc(size_t count, size_t size)
 	{
 		if (count && size > SIZE_MAX / count) return nullptr;

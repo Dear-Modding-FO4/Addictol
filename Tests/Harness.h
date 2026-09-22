@@ -139,6 +139,7 @@ namespace vmm_tests
 	};
 
 	ChildProcessResult run_child_process(std::string_view argument);
+	void run_allocator_checks(Runner& runner);
 	void run_correctness_checks(Runner& runner);
 	void run_escape_freeze_checks(Runner& runner);
 	void run_threading_checks(Runner& runner);

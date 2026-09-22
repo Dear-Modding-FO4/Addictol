@@ -77,6 +77,15 @@ namespace voltek
 		static_assert(sizeof(block_base) == 0x20, "sizeof(block_base) == 0x20");
 #endif
 
+		struct aligned_block
+		{
+			void* base;
+			size_t alignment;
+			block_base header;
+		};
+
+		static_assert(offsetof(aligned_block, header) + sizeof(block_base) == sizeof(aligned_block));
+
 		// Шаблонный фиксируемый блок
 		template<int _size> 
 		struct block_base_t : public block_base
@@ -162,6 +171,8 @@ namespace voltek
 		static constexpr uint16_t flag_block_default_used = 0x2;
 #endif
 
+		static constexpr uint8_t flag_block_aligned = 0x4;
+
 		// Возвращает истину, если блок правильный и пренадлежит менеджеру.
 		inline static bool is_valid_block(const block_base* block)
 		{
@@ -178,6 +189,17 @@ namespace voltek
 		inline static bool is_used_default_block(const block_base* block)
 		{
 			return (block->flags & flag_block_default_used) == flag_block_default_used;
+		}
+
+		inline static bool is_used_aligned_block(const block_base* block)
+		{
+			return (block->flags & flag_block_aligned) != 0;
+		}
+
+		inline static aligned_block* get_aligned_block(block_base* block)
+		{
+			return reinterpret_cast<aligned_block*>(
+				reinterpret_cast<char*>(block) - offsetof(aligned_block, header));
 		}
 
 #if VOLTEK_MM_BLOCK_VERSION == 1

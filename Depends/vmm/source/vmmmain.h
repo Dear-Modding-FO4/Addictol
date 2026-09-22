@@ -47,6 +47,8 @@ namespace voltek
 			// Вернёт nullptr, если память физически закончилась.
 			// Также если размер требуемый объявлен как 0.
 			[[nodiscard]] void* alloc(size_t size) noexcept;
+			[[nodiscard]] void* aligned_alloc(size_t size, size_t alignment) noexcept;
+			[[nodiscard]] void* aligned_realloc(const void* ptr, size_t size, size_t alignment) noexcept;
 			// Выделяет память требуемого размера из предыдущего указателя на память.
 			// Память всегда выровнена.
 			// Вернёт nullptr, если память физически закончилась.

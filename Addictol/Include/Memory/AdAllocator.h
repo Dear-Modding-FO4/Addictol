@@ -63,10 +63,10 @@ namespace Addictol
 		~ProxyVoltekHeap() noexcept = default;
 
 		[[nodiscard]] void* malloc(size_t nSize) const noexcept;
-		[[nodiscard]] void* aligned_malloc(size_t nSize, [[maybe_unused]] size_t nAlignment) const noexcept;
+		[[nodiscard]] void* aligned_malloc(size_t nSize, size_t nAlignment) const noexcept;
 
 		[[nodiscard]] void* realloc(void* lpBlock, size_t nNewSize) const noexcept;
-		[[nodiscard]] void* aligned_realloc(void* lpBlock, size_t nNewSize, [[maybe_unused]] size_t nAlignment) const noexcept;
+		[[nodiscard]] void* aligned_realloc(void* lpBlock, size_t nNewSize, size_t nAlignment) const noexcept;
 
 		void free(void* lpBlock) const noexcept;
 		void aligned_free(void* lpBlock) const noexcept;
