@@ -1,5 +1,13 @@
 [
   {
+    "name": "shader retirement retains its owner through the original destructor",
+    "target": "Addictol/Include/Core/AdDeferredOwnerRegistry.h",
+    "find": "auto owner = Extract(a_key);",
+    "replace": "auto owner = Extract(a_key); owner.reset();",
+    "check": "shader owner retires after final destructor at task boundary",
+    "message": "owner was released before the shader destructor"
+  },
+  {
     "name": "config validation rejects unregistered keys",
     "target": "Addictol/Source/Core/AdConfigValidation.cpp",
     "find": "return SettingRegistry::GetSingleton().Find(a_section, a_key) != nullptr;",

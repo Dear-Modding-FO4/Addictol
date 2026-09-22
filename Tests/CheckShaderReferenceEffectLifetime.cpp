@@ -44,7 +44,10 @@ namespace vmm_tests
 			std::thread::id destroyThread;
 			auto owner = std::make_shared<LifetimeProbe>(destroyed, destroyThread);
 			std::weak_ptr<LifetimeProbe> weakOwner = owner;
-			const auto schedule = [&tasks](Registry::Task a_task) {
+			bool destructorFinished = false;
+			bool scheduledBeforeDestructor = false;
+			const auto schedule = [&](Registry::Task a_task) {
+				scheduledBeforeDestructor = !destructorFinished;
 				tasks.push_back(std::move(a_task));
 			};
 
@@ -60,6 +63,7 @@ namespace vmm_tests
 					0x1000,
 					[&]() {
 						destructorSawOwner = !weakOwner.expired();
+						destructorFinished = true;
 						return 7;
 					},
 					schedule);
@@ -68,6 +72,7 @@ namespace vmm_tests
 
 			require(workerSawOwner, "owner did not survive worker use");
 			require(destructorSawOwner, "owner was released before the shader destructor");
+			require(!scheduledBeforeDestructor, "owner queued before shader destructor completed");
 			require(result == 7, "shader destructor result was not preserved");
 			require(destroyed.load() == 0, "owner released before the queued task");
 			require(registry.RetainedCount() == 0, "retired shader remained registered");
