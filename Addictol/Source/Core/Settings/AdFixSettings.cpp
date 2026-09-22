@@ -405,8 +405,8 @@ namespace Addictol
 		"Fixes"sv,
 		"bShaderReferenceEffectLifetime"sv,
 		SettingDisplayCategory::kStability,
-		false,
-		"Experimental fix for crashes when an actor with an active effect shader unloads; retains its effect controller through shader teardown."sv,
+		true,
+		"Prevents crashes when an actor with an active effect shader unloads by retaining its effect controller through shader teardown."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
