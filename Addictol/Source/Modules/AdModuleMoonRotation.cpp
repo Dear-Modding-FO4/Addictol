@@ -96,7 +96,7 @@ namespace Addictol
 				calc.ApplyInclination(root->local.translate);
 
 				// The moon will be bigger at moonrise and moonset.
-				root->local.scale = std::fmaxf(1.0f - std::fabs(root->local.translate.z) / radius, 0.5f);
+				root->local.scale = std::fmaxf(1.5f - std::fabs(root->local.translate.z) / radius, 1.25f);
 #if 0
 				// FOR TEST
 				root->local.translate.x += 1200.f;
@@ -153,6 +153,45 @@ namespace Addictol
 		const auto targetUpdate = REL::ID{ 4410, 2208806 };
 
 		// Fixed rotation and direction
+
+#if 0
+		struct HookUpdateDirectionPatch : Xbyak::CodeGenerator
+		{
+			HookUpdateDirectionPatch(uintptr_t targetAddr, uintptr_t funcAddr)
+			{
+				// move sky ptr
+				mov(rdx, rdi);
+				// move moon ptr
+				mov(rcx, rsi);
+
+				// call our function
+				sub(rsp, 0x70);
+				movaps(ptr[rsp + 0x20], xmm4);
+				movaps(ptr[rsp + 0x30], xmm5);
+				movaps(ptr[rsp + 0x40], xmm8);
+				movaps(ptr[rsp + 0x50], xmm11);
+				movaps(ptr[rsp + 0x60], xmm6);
+				mov(rax, funcAddr);
+				call(rax);
+				movaps(xmm4, ptr[rsp + 0x20]);
+				movaps(xmm5, ptr[rsp + 0x30]);
+				movaps(xmm8, ptr[rsp + 0x40]);
+				movaps(xmm11, ptr[rsp + 0x50]);
+				movaps(xmm1, xmm8);
+				movaps(xmm6, ptr[rsp + 0x60]);
+				add(rsp, 0x70);
+
+				// return back (ret)
+				jmp(ptr[rip]);
+				dq(targetAddr + 5);
+			}
+		};
+
+		auto target2 = REL::Relocation(targetUpdate, REL::Offset{ 0x337 }).address();
+		RELEX::WriteSafeNop(target2, 0x14);	
+		RELEX::XbyakJump<HookUpdateDirectionPatch>(target2, target2,
+			reinterpret_cast<uintptr_t>(&Moon::HookUpdateDirection));
+#endif
 
 		Moon::Update_orig = (Moon::TUpdateThunk*)RELEX::DetourJump(targetUpdate.address(),
 			reinterpret_cast<uintptr_t>(&Moon::HookUpdateDirection));
