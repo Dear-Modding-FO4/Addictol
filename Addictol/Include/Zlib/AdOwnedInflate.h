@@ -10,8 +10,6 @@
 
 namespace Addictol
 {
-	enum class ZlibOwnedPolicy : uint8_t { Undecided, Streaming, Whole, Buffered, Done };
-
 	struct ZlibOwnedState
 	{
 		inline static constexpr uint64_t MAGIC = 0x4164496E666C6174;
@@ -20,6 +18,9 @@ namespace Addictol
 		const void* implementation{};
 		int32_t windowBits{};
 		ZlibOwnedPolicy policy{ ZlibOwnedPolicy::Undecided };
+		ZlibOwnedPolicy outcomePolicy{ ZlibOwnedPolicy::Streaming };
+		ZlibFallbackReason fallbackReason{ ZlibFallbackReason::None };
+		uint32_t codecResult{ UINT32_MAX };
 		InflateStreamMirror mirror;
 		InflateBuffer output;
 		InflateBuffer input;
@@ -29,13 +30,17 @@ namespace Addictol
 		uint32_t replayOffset{}, replayTotal{};
 		std::optional<OperationProfileToken> profileToken;
 
-		static ZlibOwnedState* Find(const ZlibInflate::Stream* a_stream) noexcept
+		static bool IsTagged(const ZlibInflate::Stream* a_stream) noexcept
 		{
 			if (!a_stream || !a_stream->state)
-				return nullptr;
+				return false;
 			uint64_t tag{};
 			std::memcpy(&tag, a_stream->state, sizeof(tag));
-			if (tag != MAGIC)
+			return tag == MAGIC;
+		}
+		static ZlibOwnedState* Find(const ZlibInflate::Stream* a_stream) noexcept
+		{
+			if (!IsTagged(a_stream))
 				return nullptr;
 			auto* state = static_cast<ZlibOwnedState*>(a_stream->state);
 			return state->owner == a_stream ? state : nullptr;
@@ -68,6 +73,9 @@ namespace Addictol
 		static void ResetView(State& a_state, ZlibInflate::Stream& a_stream) noexcept
 		{
 			a_state.policy = ZlibOwnedPolicy::Undecided;
+			a_state.outcomePolicy = ZlibOwnedPolicy::Streaming;
+			a_state.fallbackReason = WholeInflateDecoder<Whole> ? ZlibFallbackReason::Request : ZlibFallbackReason::NoWhole;
+			a_state.codecResult = UINT32_MAX;
 			a_state.output.Reset();
 			a_state.input.Reset();
 			a_state.produced = a_state.served = a_state.consumed = 0;
@@ -84,19 +92,25 @@ namespace Addictol
 		static void ChoosePolicy(State& a_state, const ZlibInflate::Stream& a_stream, int32_t a_flush) noexcept
 		{
 			a_state.policy = ZlibOwnedPolicy::Streaming;
+			a_state.fallbackReason = ZlibFallbackReason::NoWhole;
 			if constexpr (WholeInflateDecoder<Whole>)
 			{
 				const auto input = std::span{ a_stream.next_in, a_stream.avail_in };
-				if (a_state.windowBits < 0 || a_state.windowBits > 15 || a_flush > 4 ||
-					!a_stream.avail_out || !ZlibInflate::HasZlibHeader(input) ||
+				a_state.fallbackReason = ZlibFallbackReason::Format;
+				if (a_state.windowBits < 0 || a_state.windowBits > 15 || !ZlibInflate::HasZlibHeader(input) ||
 					(a_state.windowBits && (input[0] >> 4) + 8 > a_state.windowBits))
+					return;
+				a_state.fallbackReason = ZlibFallbackReason::Request;
+				if (a_flush > 4 || !a_stream.avail_out)
 					return;
 				size_t capacity = std::clamp<size_t>(a_stream.avail_out, 64 * 1024, InflateBuffer::MAX_CAPACITY);
 				for (;;)
 				{
+					a_state.fallbackReason = ZlibFallbackReason::Allocation;
 					if (!a_state.output.Acquire(capacity))
 						break;
 					const auto result = Whole::Decode(input, a_state.output.Bytes());
+					a_state.codecResult = result.codecResult;
 					if (result.status == ZlibDecodeStatus::Success)
 					{
 						if (result.consumed < 6 || result.consumed > input.size() ||
@@ -107,8 +121,12 @@ namespace Addictol
 						a_state.consumed = result.consumed;
 						a_state.produced = result.produced;
 						a_state.policy = result.produced <= a_stream.avail_out ? ZlibOwnedPolicy::Whole : ZlibOwnedPolicy::Buffered;
+						a_state.outcomePolicy = a_state.policy;
+						a_state.fallbackReason = ZlibFallbackReason::None;
 						return;
 					}
+					a_state.fallbackReason = result.codecResult == UINT32_MAX ? ZlibFallbackReason::Allocation :
+						result.status == ZlibDecodeStatus::InsufficientSpace ? ZlibFallbackReason::Capacity : ZlibFallbackReason::Decode;
 					if (result.status != ZlibDecodeStatus::InsufficientSpace || capacity == InflateBuffer::MAX_CAPACITY)
 						break;
 					capacity = std::min(capacity * 2, InflateBuffer::MAX_CAPACITY);
@@ -148,7 +166,11 @@ namespace Addictol
 		static bool NativeOperation(State& a_state) noexcept
 		{
 			if (a_state.policy == ZlibOwnedPolicy::Undecided)
+			{
 				a_state.policy = ZlibOwnedPolicy::Streaming;
+				a_state.outcomePolicy = ZlibOwnedPolicy::Streaming;
+				a_state.fallbackReason = ZlibFallbackReason::Request;
+			}
 			if (a_state.policy == ZlibOwnedPolicy::Streaming || a_state.materialized)
 				return true;
 			// Reconstruct native history only when a control operation needs the skipped parser state.
@@ -172,6 +194,8 @@ namespace Addictol
 			if (a_state.materialized)
 			{
 				a_state.policy = ZlibOwnedPolicy::Streaming;
+				a_state.outcomePolicy = ZlibOwnedPolicy::Streaming;
+				a_state.fallbackReason = ZlibFallbackReason::Request;
 				a_state.privateInput = result != INFLATE_END;
 				a_state.replayOffset = static_cast<uint32_t>(a_state.consumed - replay.avail_in);
 				a_state.replayTotal = replay.total_in;
@@ -214,7 +238,7 @@ namespace Addictol
 		{
 			if (!a_version || a_version[0] != '1' || a_size != sizeof(ZlibInflate::Stream))
 				return INFLATE_VERSION_ERROR;
-			if (!a_stream || a_stream->state)
+			if (!a_stream)
 				return INFLATE_STREAM_ERROR;
 			auto* state = new (std::nothrow) State{};
 			if (!state)
@@ -292,6 +316,7 @@ namespace Addictol
 				{
 					ResetView(*state, *a_stream);
 					state->policy = ZlibOwnedPolicy::Streaming;
+					state->fallbackReason = ZlibFallbackReason::Request;
 				}
 				return result;
 			}
@@ -316,7 +341,7 @@ namespace Addictol
 			if constexpr (Streaming::capabilities.copy)
 			{
 				auto* source = Find(a_source);
-				if (!source || !a_destination || a_destination->state)
+				if (!source || !a_destination)
 					return INFLATE_STREAM_ERROR;
 				auto* destination = new (std::nothrow) State{};
 				if (!destination)
@@ -340,6 +365,9 @@ namespace Addictol
 				destination->implementation = &s_identity;
 				destination->windowBits = source->windowBits;
 				destination->policy = source->policy;
+				destination->outcomePolicy = source->outcomePolicy;
+				destination->fallbackReason = source->fallbackReason;
+				destination->codecResult = source->codecResult;
 				destination->mirror = source->mirror;
 				destination->produced = source->produced;
 				destination->served = source->served;

@@ -103,6 +103,9 @@ Apply succeeds.
 Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`. It records which modules
 loaded, were disabled, or skipped; check it first when something is not working.
 
+`[Additional] sZlibBackend` selects the decompression backend (needs `[Patches] bLibDeflate`):
+`stock`, `zlib`, `zlib-ng`, `isa-l`, `hybrid-zlib-ng` (default), or `hybrid-isa-l`.
+
 ### Operation profiling
 
 `[Telemetry] bOperationProfiling = true` records sampled allocator and decompression timings on the

@@ -65,6 +65,18 @@ add_requires("unordered_dense v4.8.1")
 -- define targets
 includes("Depends/compression.lua")
 
+target("msdetours-vendored", function()
+    set_kind("static")
+    set_languages("c++14")
+    set_basename("msdetours")
+    set_runtimes("MT")
+    set_targetdir(xmake_library_dir)
+    add_defines("WIN32_LEAN_AND_MEAN")
+    for _, source in ipairs({"detours", "modules", "disasm", "image", "creatwth", "disolx86", "disolx64", "disolia64", "disolarm", "disolarm64"}) do
+        add_files("Depends/ms-detours/src/" .. source .. ".cpp")
+    end
+end)
+
 target("spdlog-vendored", function()
     set_kind("static")
     set_basename("spdlog")
@@ -277,6 +289,7 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
     add_files("Addictol/Source/Zlib/AdZlibBackend.cpp")
     add_files("Addictol/Source/Zlib/AdOwnedInflate.cpp")
+    add_files("Addictol/Source/Zlib/AdZlibInstallation.cpp")
     add_files("Addictol/Source/Zlib/AdInflateBuffer.cpp")
     add_files("Addictol/Source/Zlib/Decoders/**.cpp")
     add_files("Addictol/Source/Zlib/AdZlibOperationProfile.cpp")
@@ -370,6 +383,7 @@ target(plugin_name, function()
 
     -- add dependencies
     add_deps("detours", dependency_interface)
+    add_deps("msdetours-vendored", dependency_interface)
     add_deps("commonlib-shared", dependency_interface)
     add_deps("commonlibf4", dependency_interface)
     add_deps("vmm", dependency_interface)
@@ -384,6 +398,7 @@ target(plugin_name, function()
     add_linkdirs(xmake_library_dir)
     add_links(
         "detours",
+        "msdetours",
         "deflatestatic",
         "commonlibf4",
         "commonlib-shared",

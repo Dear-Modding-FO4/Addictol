@@ -1,311 +1,57 @@
-#include "../Addictol/Include/Zlib/AdZlibBackend.h"
 #include "Harness.h"
-
-#include <array>
-
-namespace
-{
-	using namespace Addictol;
-
-	struct State
-	{
-		uint32_t mode;
-		uint32_t last;
-	};
-
-	struct FakeLibDeflateBackend
-	{
-		inline static constexpr auto kind = ZlibBackendKind::LibDeflate;
-		inline static bool prepared = true;
-		inline static int prepareCalls = 0;
-		inline static int decodeCalls = 0;
-		inline static uint64_t* qpcValue = nullptr;
-		inline static uint64_t prepareQpc = 0;
-		inline static ZlibDecodeResult decodeResult{
-			ZlibDecodeStatus::Success, 8, 4
-		};
-
-		static bool Prepare() noexcept
-		{
-			++prepareCalls;
-			if (qpcValue)
-				*qpcValue += prepareQpc;
-			return prepared;
-		}
-
-		static ZlibDecodeResult Decode(
-			std::span<const uint8_t>,
-			std::span<uint8_t>) noexcept
-		{
-			++decodeCalls;
-			return decodeResult;
-		}
-
-		static void Reset() noexcept
-		{
-			prepared = true;
-			prepareCalls = 0;
-			decodeCalls = 0;
-			qpcValue = nullptr;
-			prepareQpc = 0;
-			decodeResult = { ZlibDecodeStatus::Success, 8, 4 };
-		}
-	};
-
-	struct TestClock
-	{
-		uint64_t value{ 0 };
-		int calls{ 0 };
-
-		uint64_t operator()() noexcept
-		{
-			++calls;
-			value += 10;
-			return value;
-		}
-	};
-
-	ZlibInflate::Stream MakeStream(
-		State& a_state,
-		const uint8_t* a_input,
-		size_t a_inputSize,
-		uint8_t* a_output,
-		size_t a_outputSize)
-	{
-		ZlibInflate::Stream stream{};
-		stream.next_in = a_input;
-		stream.avail_in = static_cast<uint32_t>(a_inputSize);
-		stream.next_out = a_output;
-		stream.avail_out = static_cast<uint32_t>(a_outputSize);
-		stream.state = &a_state;
-		return stream;
-	}
-}
+#include <Zlib/AdZlibInstallation.h>
+#include <Zlib/AdZlibBackendRegistry.h>
 
 namespace vmm_tests
 {
 	void run_zlib_backend_checks(Runner& runner)
 	{
-		runner.test("zlib backend names and parser are complete", [] {
-			require(DEFAULT_ZLIB_BACKEND == ZlibBackendKind::LibDeflate, "default backend changed");
-			require(ParseZlibBackend("stock") == ZlibBackendKind::Stock, "stock did not parse");
-			require(
-				ParseZlibBackend("libdeflate") == ZlibBackendKind::LibDeflate,
-				"libdeflate did not parse");
-			require(!ParseZlibBackend(""), "empty backend parsed");
-			require(!ParseZlibBackend("LibDeflate"), "backend parsing became case-insensitive");
-			require(!ParseZlibBackend("zlib-ng"), "unavailable backend parsed");
-			require(ZlibBackendKindName(ZlibBackendKind::Stock) == "stock", "stock name mismatch");
-			require(
-				ZlibBackendKindName(ZlibBackendKind::LibDeflate) == "libdeflate",
-				"libdeflate name mismatch");
-			require(ZlibBackendRegistryId(ZlibBackendKind::Stock) == 1, "stock registry ID changed");
-			require(
-				ZlibBackendRegistryId(ZlibBackendKind::LibDeflate) == 2,
-				"libdeflate registry ID changed");
-			require(
-				ZlibFallbackReasonRegistryId(ZlibFallbackReason::Commit) == 4,
-				"fallback registry IDs changed");
-			require(
-				ZLIB_BACKEND_NAMES[0].name != ZLIB_BACKEND_NAMES[1].name,
-				"backend names are not unique");
+		using namespace Addictol;
+		runner.test("zlib registry resolves all rows and stale values", [] {
+			for (const auto& row : ZLIB_BACKEND_NAMES)
+			{
+				require(ResolveZlibBackendSelection(row.name) == row.kind, "registry resolution");
+				VisitSelectedZlibBackend([&]<class Backend> { require(Backend::kind == row.kind, "typed row mismatch"); });
+			}
+			for (auto name : { "libdeflate", "unknown", "" })
+				require(ResolveZlibBackendSelection(name) == DEFAULT_ZLIB_BACKEND, "unknown value did not select default");
 		});
-
-		runner.test("selected stock delegates without a codec attempt", [] {
-			std::array<uint8_t, 8> input{};
-			std::array<uint8_t, 8> output{};
-			State state{ ZlibInflate::MODE_HEAD, 0 };
-			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
-			int stockCalls = 0;
-			TestClock clock;
-
-			const auto outcome = ServeZlib<StockZlibBackend>(
-				&stream,
-				2,
-				[&](ZlibInflate::Stream* a_stream, int32_t) noexcept {
-					++stockCalls;
-					a_stream->next_in += 3;
-					a_stream->avail_in -= 3;
-					a_stream->next_out += 5;
-					a_stream->avail_out -= 5;
-					return 0;
-				},
-				true,
-				1'000'000,
-				[&]() noexcept { return clock(); });
-
-			require(stockCalls == 1, "stock backend did not call original inflate");
-			require(outcome.primaryBackendId == 1, "primary stock registry ID mismatch");
-			require(outcome.primaryAttempted, "selected stock was not marked attempted");
-			require(outcome.primaryQpc == 10, "stock primary timing mismatch");
-			require(outcome.fallbackBackendId == 0, "stock reported a fallback backend");
-			require(outcome.fallbackReasonId == 0, "stock reported fallback reason");
-			require(outcome.fallbackQpc == 0, "stock reported fallback timing");
-			require(outcome.servedBackendId == 1, "served stock registry ID mismatch");
-			require(outcome.totalQpc == 30, "stock total timing mismatch");
-			require(outcome.qpcFrequency == 1'000'000, "stock QPC frequency mismatch");
-			require(outcome.consumed == 3 && outcome.produced == 5, "stock byte deltas mismatch");
-		});
-
-		runner.test("libdeflate backend reports a completed serve", [] {
-			const std::array<uint8_t, 8> input{
-				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
+		runner.test("zlib install validates every entry and anchor before committing", [] {
+			std::vector<uint8_t> image(ZLIB_INSTALL_IMAGE_SIZE);
+			for (const auto& entry : ZLIB_ENTRIES)
+				std::copy(entry.prologue.begin(), entry.prologue.end(), image.begin() + entry.offset);
+			using namespace ZlibInflate::Contract;
+			for (auto [offset, bytes] : { std::pair{ size_t{0}, PROLOGUE }, { MODE_LOAD_OFFSET, MODE_LOAD },
+				{ MODE_BOUNDS_OFFSET, MODE_BOUNDS }, { DONE_STORE_OFFSET, DONE_STORE },
+				{ RESET_ZERO_OFFSET, RESET_ZERO }, { RESET_STORE_OFFSET, RESET_STORE } })
+				std::copy(bytes.begin(), bytes.end(), image.begin() + offset);
+			size_t commits{};
+			require(InstallValidatedZlib(image, [&] { ++commits; return true; }) && commits == 1, "valid image rejected");
+			const auto reject = [&](size_t offset) {
+				image[offset] ^= 1;
+				require(!InstallValidatedZlib(image, [&] { ++commits; return true; }) && commits == 1, "invalid image patched");
+				image[offset] ^= 1;
 			};
-			std::array<uint8_t, 8> output{};
-			State state{ ZlibInflate::MODE_HEAD, 0 };
-			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
-			int stockCalls = 0;
-			TestClock clock;
-			FakeLibDeflateBackend::Reset();
-
-			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
-				&stream,
-				2,
-				[&](ZlibInflate::Stream*, int32_t) noexcept {
-					++stockCalls;
-					return 0;
-				},
-				true,
-				1'000'000,
-				[&]() noexcept { return clock(); });
-
-			require(stockCalls == 0, "successful codec called stock");
-			require(FakeLibDeflateBackend::prepareCalls == 1, "codec was not prepared");
-			require(FakeLibDeflateBackend::decodeCalls == 1, "codec was not called");
-			require(outcome.primaryBackendId == 2, "primary libdeflate registry ID mismatch");
-			require(outcome.primaryAttempted, "libdeflate was not marked attempted");
-			require(outcome.primaryQpc == 10, "libdeflate primary timing mismatch");
-			require(outcome.fallbackBackendId == 0, "codec success reported fallback backend");
-			require(outcome.fallbackReasonId == 0, "codec success reported fallback reason");
-			require(outcome.servedBackendId == 2, "codec success service ID mismatch");
-			require(outcome.totalQpc == 30, "libdeflate total timing mismatch");
-			require(outcome.consumed == 8 && outcome.produced == 4, "codec byte counts mismatch");
-			require(state.mode == ZlibInflate::MODE_DONE, "codec success did not commit DONE");
+			for (const auto& entry : ZLIB_ENTRIES) reject(entry.offset);
+			for (auto offset : { size_t{16}, MODE_LOAD_OFFSET, MODE_BOUNDS_OFFSET, DONE_STORE_OFFSET, RESET_ZERO_OFFSET, RESET_STORE_OFFSET })
+				reject(offset);
 		});
-
-		runner.test("libdeflate primary timing includes backend preparation", [] {
-			const std::array<uint8_t, 8> input{
-				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
+		runner.test("zlib routing preserves foreign streams and rejects invalid owned tags", [] {
+			using Owned = OwnedInflate<NoWholeInflateDecoder, ZlibDecoder>;
+			uint64_t foreign{};
+			ZlibInflate::Stream stream{};
+			stream.state = &foreign;
+			size_t originals{}, owned{};
+			const auto route = [&] {
+				return RouteZlibStream<Owned>(&stream, [&] { ++originals; return 123; }, [&] { ++owned; return 456; });
 			};
-			std::array<uint8_t, 8> output{};
-			State state{ ZlibInflate::MODE_HEAD, 0 };
-			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
-			TestClock clock;
-			FakeLibDeflateBackend::Reset();
-			FakeLibDeflateBackend::qpcValue = &clock.value;
-			FakeLibDeflateBackend::prepareQpc = 70;
-
-			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
-				&stream,
-				2,
-				[](ZlibInflate::Stream*, int32_t) noexcept { return 0; },
-				true,
-				1'000'000,
-				[&]() noexcept { return clock(); });
-
-			FakeLibDeflateBackend::Reset();
-			require(outcome.primaryQpc == 80, "primary timing excluded backend preparation");
-			require(outcome.totalQpc == 100, "total timing excluded backend preparation");
-		});
-
-		runner.test("libdeflate state rejection reports stock service", [] {
-			std::array<uint8_t, 8> input{};
-			std::array<uint8_t, 8> output{};
-			State state{ ZlibInflate::MODE_DONE, 1 };
-			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
-			int stockCalls = 0;
-			TestClock clock;
-			FakeLibDeflateBackend::Reset();
-
-			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
-				&stream,
-				2,
-				[&](ZlibInflate::Stream*, int32_t) noexcept {
-					++stockCalls;
-					return ZlibInflate::Z_STREAM_END;
-				},
-				true,
-				1'000'000,
-				[&]() noexcept { return clock(); });
-
-			require(stockCalls == 1, "state rejection did not call stock");
-			require(FakeLibDeflateBackend::prepareCalls == 0, "state rejection prepared codec");
-			require(!outcome.primaryAttempted, "state rejection marked primary attempted");
-			require(outcome.primaryQpc == 0, "state rejection timed primary");
-			require(outcome.fallbackBackendId == 1, "state fallback backend mismatch");
-			require(outcome.fallbackReasonId == 1, "state reason mismatch");
-			require(outcome.fallbackQpc == 10, "state fallback timing mismatch");
-			require(outcome.servedBackendId == 1, "state rejection service mismatch");
-			require(outcome.totalQpc == 30, "state fallback total timing mismatch");
-		});
-
-		runner.test("libdeflate fallback reasons remain distinct", [] {
-			const std::array<uint8_t, 8> input{
-				0x78, 0x9C, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78
-			};
-			std::array<uint8_t, 8> output{};
-
-			const auto run = [&](bool a_prepared, ZlibDecodeResult a_decoded) {
-				State state{ ZlibInflate::MODE_HEAD, 0 };
-				auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
-				FakeLibDeflateBackend::Reset();
-				FakeLibDeflateBackend::prepared = a_prepared;
-				FakeLibDeflateBackend::decodeResult = a_decoded;
-				TestClock clock;
-				return ServeZlib<FakeLibDeflateBackend>(
-					&stream,
-					2,
-					[](ZlibInflate::Stream*, int32_t) noexcept { return 0; },
-					true,
-					1'000'000,
-					[&]() noexcept { return clock(); });
-			};
-
-			const auto allocation = run(false, {});
-			require(allocation.fallbackReasonId == 2, "allocation fallback reason mismatch");
-			require(
-				allocation.primaryQpc == 10 && allocation.fallbackQpc == 10 &&
-					allocation.totalQpc == 50,
-				"allocation timing split mismatch");
-
-			const auto decode = run(true, { ZlibDecodeStatus::Failed });
-			require(decode.fallbackReasonId == 3, "decode fallback reason mismatch");
-			require(
-				decode.primaryQpc == 10 && decode.fallbackQpc == 10 &&
-					decode.totalQpc == 50,
-				"decode timing split mismatch");
-
-			const auto commit = run(true, { ZlibDecodeStatus::Success, 3, 3 });
-			require(commit.fallbackReasonId == 4, "commit fallback reason mismatch");
-			require(
-				commit.primaryQpc == 10 && commit.fallbackQpc == 10 &&
-					commit.totalQpc == 50,
-				"commit timing split mismatch");
-		});
-
-		runner.test("disabled zlib timing leaves raw QPC fields empty", [] {
-			std::array<uint8_t, 8> input{};
-			std::array<uint8_t, 8> output{};
-			State state{ ZlibInflate::MODE_DONE, 1 };
-			auto stream = MakeStream(state, input.data(), input.size(), output.data(), output.size());
-			TestClock clock;
-			FakeLibDeflateBackend::Reset();
-
-			const auto outcome = ServeZlib<FakeLibDeflateBackend>(
-				&stream,
-				2,
-				[](ZlibInflate::Stream*, int32_t) noexcept {
-					return ZlibInflate::Z_STREAM_END;
-				},
-				false,
-				1'000'000,
-				[&]() noexcept { return clock(); });
-
-			require(clock.calls == 0, "disabled timing read QPC");
-			require(
-				outcome.primaryQpc == 0 && outcome.fallbackQpc == 0 &&
-					outcome.totalQpc == 0 && outcome.qpcFrequency == 0,
-				"disabled timing published raw ticks");
+			require(route() == 123 && originals == 1 && owned == 0, "foreign state entered owned decoder");
+			require(Owned::Init(&stream) == INFLATE_OK, "preseeded init rejected");
+			require(route() == 456 && originals == 1 && owned == 1, "owned state reached vanilla");
+			auto copied = stream;
+			require(RouteZlibStream<Owned>(&copied, [&] { ++originals; return 123; }, [] { return 456; }) == INFLATE_STREAM_ERROR &&
+				originals == 1, "invalid tagged state reached vanilla");
+			require(Owned::End(&stream) == INFLATE_OK, "owned end");
 		});
 	}
 }

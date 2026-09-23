@@ -1,4 +1,5 @@
 #include <Core/Settings/AdSettingsModel.h>
+#include <Zlib/AdZlibBackend.h>
 
 #include <algorithm>
 #include <array>
@@ -13,10 +14,12 @@ namespace Addictol
 		inline constexpr std::array<std::string_view, 1> kAllocatorOptions{
 			"voltek"
 		};
-		inline constexpr std::array<std::string_view, 2> kZlibOptions{
-			"libdeflate",
-			"stock"
-		};
+		inline constexpr auto kZlibOptions = [] {
+			std::array<std::string_view, ZLIB_BACKEND_NAMES.size()> options{};
+			for (size_t index = 0; index < options.size(); ++index)
+				options[index] = ZLIB_BACKEND_NAMES[index].name;
+			return options;
+		}();
 		inline constexpr std::array<std::string_view, 7> kLogLevelOptions{
 			"trace",
 			"debug",

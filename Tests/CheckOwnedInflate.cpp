@@ -197,6 +197,8 @@ namespace vmm_tests
 				const auto payload = Payload(4096);
 				auto input = compress_zlib_fixture(payload, 15);
 				OwnedStream source{ engine }, copy{ engine };
+				uint64_t destinationSeed{};
+				copy.stream.state = &destinationSeed;
 				require(engine.init(&source.stream, 15) == INFLATE_OK, "copy init");
 				std::array<uint8_t, 1> first{};
 				source.stream.next_in = input.data();

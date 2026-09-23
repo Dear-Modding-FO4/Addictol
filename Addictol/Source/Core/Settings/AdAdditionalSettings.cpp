@@ -1,4 +1,5 @@
 #include <Core/Settings/AdSettings.h>
+#include <Zlib/AdZlibBackend.h>
 
 namespace Addictol
 {
@@ -35,8 +36,8 @@ namespace Addictol
 		"Additional"sv,
 		"sZlibBackend"sv,
 		SettingDisplayCategory::kPerformance,
-		"libdeflate",
-		"Selects the zlib decompression backend: libdeflate or stock (needs bLibDeflate). One-shot texture decompression requires libdeflate."sv,
+		std::string{ ZlibBackendKindName(DEFAULT_ZLIB_BACKEND) },
+		"Owned decoder: stock (no hooks), zlib, zlib-ng, isa-l, hybrid-zlib-ng (default), or hybrid-isa-l. Hybrid modes add libdeflate whole-input decoding (needs bLibDeflate)."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

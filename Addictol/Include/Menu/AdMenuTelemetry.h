@@ -105,7 +105,7 @@ namespace Addictol
 		TelemetryMetricGroup{ "system."sv, "System"sv, TelemetryPanel::kMemory },
 		TelemetryMetricGroup{ "gpu."sv, "Video memory"sv, TelemetryPanel::kMemory },
 		TelemetryMetricGroup{ "allocator."sv, "Allocator"sv, TelemetryPanel::kMemory },
-		TelemetryMetricGroup{ "libdeflate."sv, "Libdeflate"sv, TelemetryPanel::kDecompression },
+		TelemetryMetricGroup{ "zlib."sv, "Owned decompression"sv, TelemetryPanel::kDecompression },
 		TelemetryMetricGroup{ "escape."sv, "Escape recovery"sv, TelemetryPanel::kStability },
 		TelemetryMetricGroup{ "references."sv, "Reference handles"sv, TelemetryPanel::kStability },
 		TelemetryMetricGroup{ "modules."sv, "Module outcomes"sv, TelemetryPanel::kStability },

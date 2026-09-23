@@ -486,17 +486,16 @@ namespace Addictol
 
 	struct alignas(64) ZlibIntervalCounters
 	{
-		inline static constexpr size_t kFallbackReasonCount{ 7 };
+		inline static constexpr size_t kFallbackReasonCount{ 6 };
 
 		std::atomic<uint64_t> packed{ 0 };
+		std::atomic<uint64_t> buffered{ 0 };
 		std::atomic<uint64_t> bytesIn{ 0 };
 		std::atomic<uint64_t> bytesOut{ 0 };
 		std::atomic<uint64_t> fallbackBytesOut{ 0 };
 		std::array<std::atomic<uint64_t>, kFallbackReasonCount> fallbackReasons{};
-		Histogram<kZlibSizeBuckets.size()> servedLibDeflateOutput{};
-		Histogram<kZlibSizeBuckets.size()> servedStockOutput{};
-		Histogram<kZlibSizeBuckets.size()> servedLibDeflateInput{};
-		Histogram<kZlibSizeBuckets.size()> servedStockInput{};
+		Histogram<kZlibSizeBuckets.size()> servedWholeOutput{}, servedBufferedOutput{}, servedStreamingOutput{};
+		Histogram<kZlibSizeBuckets.size()> servedWholeInput{}, servedBufferedInput{}, servedStreamingInput{};
 		Histogram<2> fallbackThread{};
 		Histogram<2> servedThread{};
 		Histogram<6> flush{};
@@ -504,18 +503,18 @@ namespace Addictol
 		[[nodiscard]] static std::span<const MetricDescriptor> Schema() noexcept
 		{
 			static constexpr std::array schema{
-				MetricDescriptor{ "libdeflate.primary_count", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_count", Unit::kCount },
-				MetricDescriptor{ "libdeflate.bytes_out", Unit::kBytes },
-				MetricDescriptor{ "libdeflate.bytes_in", Unit::kBytes },
-				MetricDescriptor{ "libdeflate.fallback_bytes_out", Unit::kBytes },
-				MetricDescriptor{ "libdeflate.fallback_state", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_allocation", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_decode", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_commit", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_capacity", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_size_mismatch", Unit::kCount },
-				MetricDescriptor{ "libdeflate.fallback_restart", Unit::kCount }
+				MetricDescriptor{ "zlib.whole_count", Unit::kCount },
+				MetricDescriptor{ "zlib.buffered_count", Unit::kCount },
+				MetricDescriptor{ "zlib.streaming_count", Unit::kCount },
+				MetricDescriptor{ "zlib.bytes_out", Unit::kBytes },
+				MetricDescriptor{ "zlib.bytes_in", Unit::kBytes },
+				MetricDescriptor{ "zlib.streaming_bytes_out", Unit::kBytes },
+				MetricDescriptor{ "zlib.streaming_no_whole", Unit::kCount },
+				MetricDescriptor{ "zlib.streaming_format", Unit::kCount },
+				MetricDescriptor{ "zlib.streaming_request", Unit::kCount },
+				MetricDescriptor{ "zlib.streaming_allocation", Unit::kCount },
+				MetricDescriptor{ "zlib.streaming_decode", Unit::kCount },
+				MetricDescriptor{ "zlib.streaming_capacity", Unit::kCount }
 			};
 			return schema;
 		}
@@ -523,10 +522,11 @@ namespace Addictol
 		void Observe(
 			ZlibFallbackReason a_fallbackReason,
 			uint64_t a_bytesIn,
-			uint64_t a_bytesOut) noexcept
+			uint64_t a_bytesOut, bool a_buffered = false) noexcept
 		{
 			const auto reason = std::to_underlying(a_fallbackReason);
-			packed.fetch_add(reason ? (1ull << 32) : 1ull, std::memory_order_relaxed);
+			if (a_buffered) buffered.fetch_add(1, std::memory_order_relaxed);
+			else packed.fetch_add(reason ? (1ull << 32) : 1ull, std::memory_order_relaxed);
 			bytesIn.fetch_add(a_bytesIn, std::memory_order_relaxed);
 			bytesOut.fetch_add(a_bytesOut, std::memory_order_relaxed);
 			if (reason > 0 && reason <= kFallbackReasonCount)
@@ -538,18 +538,18 @@ namespace Addictol
 
 		void ObserveSeries(
 			ZlibFallbackReason a_fallbackReason,
-			bool a_servedByLibDeflate,
+			bool a_servedByWhole,
 			int32_t a_flush,
 			uint32_t a_currentThreadId,
 			uint32_t a_renderThreadId,
 			uint64_t a_bytesIn,
 			uint64_t a_bytesOut,
-			uint64_t a_ticks) noexcept
+			uint64_t a_ticks, bool a_buffered = false) noexcept
 		{
 			auto& output =
-				a_servedByLibDeflate ? servedLibDeflateOutput : servedStockOutput;
+				a_buffered ? servedBufferedOutput : a_servedByWhole ? servedWholeOutput : servedStreamingOutput;
 			auto& input =
-				a_servedByLibDeflate ? servedLibDeflateInput : servedStockInput;
+				a_buffered ? servedBufferedInput : a_servedByWhole ? servedWholeInput : servedStreamingInput;
 			output.Add(ZlibSizeBucketIndex(a_bytesOut), 1, a_ticks, a_bytesOut);
 			input.Add(ZlibSizeBucketIndex(a_bytesIn), 1, a_ticks, a_bytesIn);
 			const auto threadBucket =
@@ -597,11 +597,11 @@ namespace Addictol
 			ZlibIntervalCounters& a_counters,
 			bool a_enabled,
 			ZlibFallbackReason a_fallbackReason,
-			bool a_servedByLibDeflate,
+			bool a_servedByWhole,
 			int32_t a_flush,
 			uint32_t a_currentThreadId,
 			uint64_t a_bytesIn,
 			uint64_t a_bytesOut,
-			uint64_t a_ticks) noexcept;
+			uint64_t a_ticks, bool a_buffered = false) noexcept;
 	}
 }

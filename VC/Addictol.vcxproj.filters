@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\Core\AdDetourBatch.cpp"><Filter>Source\Core</Filter></ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\AdZlibInstallation.cpp"><Filter>Source\Zlib</Filter></ClCompile>
+    <ClInclude Include="..\Addictol\Include\Core\AdDetourBatch.h"><Filter>Include\Core</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInstallation.h"><Filter>Include\Zlib</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibHooks.h"><Filter>Include\Zlib</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackendRegistry.h"><Filter>Include\Zlib</Filter></ClInclude>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp"><Filter>Source\Zlib</Filter></ClCompile>
     <ClCompile Include="..\Addictol\Source\Zlib\AdInflateBuffer.cpp"><Filter>Source\Zlib</Filter></ClCompile>
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdInflateStreamMirror.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>

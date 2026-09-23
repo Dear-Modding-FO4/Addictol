@@ -5,6 +5,7 @@
 #include "../Addictol/Include/Zlib/AdZlibTelemetry.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
 #include "Harness.h"
+#include <Zlib/Decoders/AdNativeZlibDecoder.h>
 
 #include <vmmgeometry.h>
 
@@ -308,11 +309,6 @@ namespace
 	{
 		s_threadIdReads.fetch_add(1, std::memory_order_relaxed);
 		return 77;
-	}
-
-	int32_t ServeStockForGate(ZlibInflate::Stream*, int32_t) noexcept
-	{
-		return 0;
 	}
 
 	bool ReadProcessMemorySample(ProcessMemoryMetricSource::Sample& a_sample) noexcept
@@ -732,7 +728,12 @@ namespace vmm_tests
 			require(!Telemetry::EnabledRelaxed(), "telemetry unexpectedly started enabled");
 			s_frameClockReads.store(0, std::memory_order_relaxed);
 			s_threadIdReads.store(0, std::memory_order_relaxed);
-			auto original = &ServeStockForGate;
+			using Owned = OwnedInflate<NoWholeInflateDecoder, ZlibDecoder>;
+			ZlibInflate::Stream stream{};
+			uint8_t byte{};
+			require(Owned::Init(&stream) == INFLATE_OK, "telemetry stream init");
+			stream.next_out = &byte;
+			stream.avail_out = 1;
 			auto clock = &ReadFrameClock;
 			auto threadId = &ReadThreadId;
 			const auto recorder = [&counters](
@@ -750,8 +751,9 @@ namespace vmm_tests
 					8192,
 					a_outcome.totalQpc);
 			};
-			(void)TelemetryDetail::ServeTelemetryZlib<StockZlibBackend>(
-				nullptr, 4, original, clock, threadId, recorder);
+			(void)TelemetryDetail::ServeTelemetryZlib<Owned>(
+				&stream, 4, clock, threadId, recorder);
+			Owned::End(&stream);
 			require(
 				s_frameClockReads.load(std::memory_order_relaxed) == 0,
 				"disabled zlib instrumentation read the clock");
@@ -778,16 +780,16 @@ namespace vmm_tests
 						std::to_string(index));
 			}
 			require(
-				counters.servedLibDeflateOutput.Total() == HistogramBucket{},
+				counters.servedWholeOutput.Total() == HistogramBucket{},
 				"disabled zlib instrumentation updated libdeflate output buckets");
 			require(
-				counters.servedStockOutput.Total() == HistogramBucket{},
+				counters.servedStreamingOutput.Total() == HistogramBucket{},
 				"disabled zlib instrumentation updated stock output buckets");
 			require(
-				counters.servedLibDeflateInput.Total() == HistogramBucket{},
+				counters.servedWholeInput.Total() == HistogramBucket{},
 				"disabled zlib instrumentation updated libdeflate input buckets");
 			require(
-				counters.servedStockInput.Total() == HistogramBucket{},
+				counters.servedStreamingInput.Total() == HistogramBucket{},
 				"disabled zlib instrumentation updated stock input buckets");
 			require(
 				counters.fallbackThread.Total() == HistogramBucket{},
@@ -807,7 +809,12 @@ namespace vmm_tests
 			ZlibIntervalCounters counters{};
 			s_frameClockReads.store(0, std::memory_order_relaxed);
 			s_threadIdReads.store(0, std::memory_order_relaxed);
-			auto original = &ServeStockForGate;
+			using Owned = OwnedInflate<NoWholeInflateDecoder, ZlibDecoder>;
+			ZlibInflate::Stream stream{};
+			uint8_t byte{};
+			require(Owned::Init(&stream) == INFLATE_OK, "telemetry stream init");
+			stream.next_out = &byte;
+			stream.avail_out = 1;
 			auto clock = &ReadFrameClock;
 			auto threadId = &ReadThreadId;
 			const auto recorder = [&counters](
@@ -825,8 +832,9 @@ namespace vmm_tests
 					8192,
 					a_outcome.totalQpc);
 			};
-			(void)TelemetryDetail::ServeTelemetryZlib<StockZlibBackend>(
-				nullptr, 4, original, clock, threadId, recorder);
+			(void)TelemetryDetail::ServeTelemetryZlib<Owned>(
+				&stream, 4, clock, threadId, recorder);
+			Owned::End(&stream);
 			hub.Stop();
 			require(
 				s_frameClockReads.load(std::memory_order_relaxed) > 0,
@@ -835,10 +843,10 @@ namespace vmm_tests
 				s_threadIdReads.load(std::memory_order_relaxed) == 1,
 				"enabled zlib instrumentation skipped thread attribution");
 			require(
-				counters.packed.load(std::memory_order_relaxed) == 1,
+				counters.packed.load(std::memory_order_relaxed) == (1ull << 32),
 				"enabled zlib instrumentation skipped interval counters");
 			require(
-				counters.servedStockOutput.Total().calls == 1,
+				counters.servedStreamingOutput.Total().calls == 1,
 				"enabled zlib instrumentation skipped stock output buckets");
 			require(
 				counters.servedThread.Total().calls == 1,
@@ -1265,7 +1273,7 @@ namespace vmm_tests
 		runner.test("packed zlib drains keep interval pairs coherent", [] {
 			ZlibIntervalCounters counters{};
 			counters.Observe(ZlibFallbackReason::None, 10, 100);
-			counters.Observe(ZlibFallbackReason::State, 20, 200);
+			counters.Observe(ZlibFallbackReason::Request, 20, 200);
 			const auto first = counters.Drain();
 			require(static_cast<uint32_t>(first) == 1,
 				"primary event left the first packed interval");
@@ -1288,20 +1296,15 @@ namespace vmm_tests
 
 		runner.test("zlib fallback reasons sum to the fallback interval", [] {
 			ZlibIntervalCounters counters{};
-			counters.Observe(ZlibFallbackReason::State, 1, 2);
-			counters.Observe(ZlibFallbackReason::State, 1, 2);
-			counters.Observe(ZlibFallbackReason::Allocation, 1, 2);
-			counters.Observe(ZlibFallbackReason::Decode, 1, 2);
-			counters.Observe(ZlibFallbackReason::Commit, 1, 2);
-			counters.Observe(ZlibFallbackReason::Capacity, 1, 2);
-			counters.Observe(ZlibFallbackReason::SizeMismatch, 1, 2);
-			counters.Observe(ZlibFallbackReason::RequestRestart, 1, 2);
+			for (const auto& reason : ZLIB_FALLBACK_REASONS)
+				if (reason.reason != ZlibFallbackReason::None)
+					counters.Observe(reason.reason, 1, 2);
 			const auto packed = counters.Drain();
 			const auto fallbackCount = static_cast<uint32_t>(packed >> 32);
 			uint64_t reasonCount{ 0 };
 			for (size_t index = 0; index < ZlibIntervalCounters::kFallbackReasonCount; ++index)
 				reasonCount += counters.DrainFallbackReason(index);
-			require(fallbackCount == 8, "fallback interval did not contain all fallback events");
+			require(fallbackCount == ZlibIntervalCounters::kFallbackReasonCount, "fallback interval did not contain all fallback events");
 			require(reasonCount == fallbackCount,
 				"per-reason fallback counts did not sum to fallback_count");
 		});
@@ -1538,26 +1541,26 @@ namespace vmm_tests
 
 			const auto zlibSchema = ZlibIntervalCounters::Schema();
 			constexpr std::array<std::string_view, 12> zlibKeys{
-				"libdeflate.primary_count",
-				"libdeflate.fallback_count",
-				"libdeflate.bytes_out",
-				"libdeflate.bytes_in",
-				"libdeflate.fallback_bytes_out",
-				"libdeflate.fallback_state",
-				"libdeflate.fallback_allocation",
-				"libdeflate.fallback_decode",
-				"libdeflate.fallback_commit",
-				"libdeflate.fallback_capacity",
-				"libdeflate.fallback_size_mismatch",
-				"libdeflate.fallback_restart"
+				"zlib.whole_count",
+				"zlib.buffered_count",
+				"zlib.streaming_count",
+				"zlib.bytes_out",
+				"zlib.bytes_in",
+				"zlib.streaming_bytes_out",
+				"zlib.streaming_no_whole",
+				"zlib.streaming_format",
+				"zlib.streaming_request",
+				"zlib.streaming_allocation",
+				"zlib.streaming_decode",
+				"zlib.streaming_capacity"
 			};
 			constexpr std::array zlibUnits{
 				Unit::kCount,
 				Unit::kCount,
-				Unit::kBytes,
-				Unit::kBytes,
-				Unit::kBytes,
 				Unit::kCount,
+				Unit::kBytes,
+				Unit::kBytes,
+				Unit::kBytes,
 				Unit::kCount,
 				Unit::kCount,
 				Unit::kCount,

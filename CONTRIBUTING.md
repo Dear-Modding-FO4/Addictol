@@ -97,7 +97,7 @@ data/                        authored mod payload
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::`, `F4SE::`
-and DearModdingUI client APIs, plus `detours`, `libdeflate`, `zlib`, `zlib-ng`, `isa-l`, `spdlog`, `toml11` and `INI`)
+and DearModdingUI client APIs, plus `detours`, `ms-detours`, `libdeflate`, `zlib`, `zlib-ng`, `isa-l`, `spdlog`, `toml11` and `INI`)
 and vendored libraries (`vmm`, `xbyak`, `unordered_dense`).
 
 Crash logging is not part of this plugin. It ships separately as

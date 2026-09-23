@@ -26,8 +26,8 @@ namespace Addictol
 		{
 			s_selectedBackend = DEFAULT_ZLIB_BACKEND;
 			REX::WARN(
-				"Unknown or unavailable zlib backend \"{}\"; valid values are: stock, libdeflate; using libdeflate."sv,
-				a_name);
+				"Unknown or unavailable zlib backend \"{}\"; using {}."sv,
+				a_name, ZlibBackendKindName(DEFAULT_ZLIB_BACKEND));
 		}
 
 		return s_selectedBackend;
@@ -38,23 +38,7 @@ namespace Addictol
 		return s_selectedBackend;
 	}
 
-	bool LibDeflateZlibBackend::Prepare() noexcept
-	{
-		return GetThreadDecompressor() != nullptr;
-	}
-
 	ZlibDecodeResult LibDeflateZlibBackend::Decode(
-		std::span<const uint8_t> a_input,
-		std::span<uint8_t> a_output) noexcept
-	{
-		const auto result = DecodeExact(a_input, a_output);
-		const auto status = result.codecResult == ZLIB_CODEC_SUCCESS ? ZlibDecodeStatus::Success :
-			result.codecResult == ZLIB_CODEC_INSUFFICIENT_SPACE ? ZlibDecodeStatus::InsufficientSpace :
-			ZlibDecodeStatus::BadData;
-		return { status, result.consumed, result.produced, result.codecResult };
-	}
-
-	ZlibExactDecode LibDeflateZlibBackend::DecodeExact(
 		std::span<const uint8_t> a_input,
 		std::span<uint8_t> a_output) noexcept
 	{
@@ -67,7 +51,7 @@ namespace Addictol
 		if (!decompressor)
 			return {};
 
-		ZlibExactDecode decode{};
+		ZlibDecodeResult decode{};
 		decode.codecResult = static_cast<uint32_t>(libdeflate_zlib_decompress_ex(
 			decompressor,
 			a_input.data(),
@@ -76,6 +60,8 @@ namespace Addictol
 			a_output.size(),
 			&decode.consumed,
 			&decode.produced));
+		decode.status = decode.codecResult == ZLIB_CODEC_SUCCESS ? ZlibDecodeStatus::Success :
+			decode.codecResult == ZLIB_CODEC_INSUFFICIENT_SPACE ? ZlibDecodeStatus::InsufficientSpace : ZlibDecodeStatus::BadData;
 		return decode;
 	}
 }

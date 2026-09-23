@@ -5,6 +5,7 @@ VisualStudioVersion = 17.10.36631.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Addictol", "Addictol.vcxproj", "{D2D12A6F-D62F-4FBB-A9AC-4DF3378187CF}"
 	ProjectSection(ProjectDependencies) = postProject
+		{603246F5-99C1-4416-89E5-DDBA7E870B02} = {603246F5-99C1-4416-89E5-DDBA7E870B02}
 		{06E30C65-D79A-4FEC-8A60-B36D907E6601} = {06E30C65-D79A-4FEC-8A60-B36D907E6601}
 		{1A04D2B1-EBB3-4569-BD03-915631B4BFB1} = {1A04D2B1-EBB3-4569-BD03-915631B4BFB1}
 		{9E771CA4-04D9-4ED8-80F2-FFD379413688} = {9E771CA4-04D9-4ED8-80F2-FFD379413688}
@@ -40,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spdlog_vc22", "..\Depends\s
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MemoryManager", "..\Depends\vmm\vmm.vcxproj", "{1A04D2B1-EBB3-4569-BD03-915631B4BFB1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msdetours_vc22", "..\Depends\msdetours_vc22.vcxproj", "{603246F5-99C1-4416-89E5-DDBA7E870B02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -48,6 +51,14 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Debug|x64.ActiveCfg = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Debug|x64.Build.0 = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Debug|x86.ActiveCfg = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Debug|x86.Build.0 = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Release|x64.ActiveCfg = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Release|x64.Build.0 = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Release|x86.ActiveCfg = Release|x64
+		{603246F5-99C1-4416-89E5-DDBA7E870B02}.Release|x86.Build.0 = Release|x64
 		{4DD3ECF9-742E-498E-BCA1-84B65E41EC93}.Debug|x64.ActiveCfg = Release|x64
 		{4DD3ECF9-742E-498E-BCA1-84B65E41EC93}.Debug|x64.Build.0 = Release|x64
 		{4DD3ECF9-742E-498E-BCA1-84B65E41EC93}.Debug|x86.ActiveCfg = Release|x64

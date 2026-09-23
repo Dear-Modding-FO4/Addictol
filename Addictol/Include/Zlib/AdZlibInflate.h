@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <initializer_list>
 #include <array>
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -11,12 +10,6 @@
 namespace Addictol::ZlibInflate
 {
 	constexpr int32_t Z_STREAM_END		= 1;
-	constexpr int32_t Z_BLOCK			= 5;
-	constexpr int32_t Z_TREES			= 6;
-
-	constexpr uint32_t MODE_HEAD		= 0;
-	constexpr uint32_t MODE_DONE		= 0x1C;
-	constexpr int32_t DATA_TYPE_DONE	= 64;
 
 	struct Stream
 	{
@@ -103,26 +96,6 @@ namespace Addictol::ZlibInflate
 		};
 	}
 
-	[[nodiscard]] inline volatile uint32_t* ModePointer(const Stream& a_stream) noexcept
-	{
-		return static_cast<volatile uint32_t*>(a_stream.state);
-	}
-
-	[[nodiscard]] inline volatile uint32_t* LastPointer(const Stream& a_stream) noexcept
-	{
-		return ModePointer(a_stream) + 1;
-	}
-
-	[[nodiscard]] inline bool CanAttempt(const Stream* a_stream, int32_t a_flush) noexcept
-	{
-		if (!a_stream || !a_stream->state || !a_stream->next_in || !a_stream->next_out ||
-			!a_stream->avail_in || !a_stream->avail_out || a_stream->total_in || a_stream->total_out ||
-			a_flush == Z_BLOCK || a_flush == Z_TREES)
-			return false;
-
-		return *ModePointer(*a_stream) == MODE_HEAD;
-	}
-
 	[[nodiscard]] constexpr bool IsZlibHeader(uint8_t a_cmf, uint8_t a_flg, bool a_allowDictionary = false) noexcept
 	{
 		return (a_cmf & 0x0F) == 8 &&
@@ -136,47 +109,4 @@ namespace Addictol::ZlibInflate
 		return a_input.size() >= 2 && IsZlibHeader(a_input[0], a_input[1]);
 	}
 
-	[[nodiscard]] inline uint32_t ReadBigEndian32(const uint8_t* a_bytes) noexcept
-	{
-		return (static_cast<uint32_t>(a_bytes[0]) << 24) |
-			(static_cast<uint32_t>(a_bytes[1]) << 16) |
-			(static_cast<uint32_t>(a_bytes[2]) << 8) |
-			static_cast<uint32_t>(a_bytes[3]);
-	}
-
-	[[nodiscard]] inline bool CommitCompletedStream(
-		Stream* a_stream,
-		const void* a_expectedState,
-		size_t a_consumed,
-		size_t a_produced) noexcept
-	{
-		if (!a_stream || !a_expectedState || a_stream->state != a_expectedState ||
-			!a_stream->next_in || !a_stream->next_out ||
-			a_stream->total_in || a_stream->total_out || a_consumed < sizeof(uint32_t) ||
-			a_consumed > a_stream->avail_in || a_produced > a_stream->avail_out)
-			return false;
-
-		auto* mode = ModePointer(*a_stream);
-		if (*mode != MODE_HEAD)
-			return false;
-
-		const auto consumed = static_cast<uint32_t>(a_consumed);
-		const auto produced = static_cast<uint32_t>(a_produced);
-		const auto adler = ReadBigEndian32(a_stream->next_in + consumed - sizeof(uint32_t));
-
-		a_stream->next_in += consumed;
-		a_stream->avail_in -= consumed;
-		a_stream->total_in += consumed;
-		a_stream->next_out += produced;
-		a_stream->avail_out -= produced;
-		a_stream->total_out += produced;
-		a_stream->msg = nullptr;
-		a_stream->adler = adler;
-		a_stream->data_type = DATA_TYPE_DONE;
-
-		*LastPointer(*a_stream) = 1;
-		std::atomic_signal_fence(std::memory_order_release);
-		*mode = MODE_DONE;
-		return true;
-	}
 }

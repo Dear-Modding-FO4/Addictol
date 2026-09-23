@@ -18,7 +18,7 @@ namespace Addictol
 		"bLibDeflate"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Enables the validated zlib decompression hook. Backend selected by sZlibBackend. With libdeflate selected, a validated texture seam decodes complete chunks directly; ineligible or failed requests replay through stock."sv,
+		"Enables owned zlib streams using sZlibBackend. All inflate entry points must validate and install together; conflicts leave stock zlib untouched."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

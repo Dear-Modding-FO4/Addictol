@@ -32,7 +32,7 @@ namespace Addictol
 			"other"
 		};
 		inline static constexpr size_t kSeriesCapacity{
-			kSizeBucketLabels.size() * 4 +
+			kSizeBucketLabels.size() * 6 +
 			kThreadBucketLabels.size() * 2 +
 			kFlushBucketLabels.size()
 		};

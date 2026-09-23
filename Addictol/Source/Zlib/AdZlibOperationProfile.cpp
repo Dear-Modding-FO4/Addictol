@@ -33,7 +33,7 @@ namespace Addictol
 		if (!a_stream || !a_stream->state)
 			return;
 		m_input = ZlibStreamInput::Read(*a_stream);
-		m_follow = a_reason == ZlibFallbackReason::State;
+		m_follow = !m_input.start;
 		if (!m_input.start)
 			return;
 

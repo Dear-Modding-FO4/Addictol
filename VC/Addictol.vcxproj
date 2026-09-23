@@ -30,6 +30,8 @@
     <ClCompile Include="..\Addictol\Source\Memory\AdAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdZlibBackend.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\AdZlibInstallation.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\AdDetourBatch.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdInflateBuffer.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdInflateStreamMirror.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibDecoder.cpp" />
@@ -174,6 +176,10 @@
     <ClInclude Include="..\Addictol\Include\Core\AdAssert.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdOwnedInflate.h" />
+    <ClInclude Include="..\Addictol\Include\Core\AdDetourBatch.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInstallation.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibHooks.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackendRegistry.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdInflateBuffer.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateDecoder.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateStreamMirror.h" />
@@ -358,7 +364,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>detours_vc22.lib;libdeflate_vc22.lib;zlib_vc22.lib;zlibng_vc22.lib;isal_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;Ole32.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msdetours_vc22.lib;detours_vc22.lib;libdeflate_vc22.lib;zlib_vc22.lib;zlibng_vc22.lib;isal_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;Ole32.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

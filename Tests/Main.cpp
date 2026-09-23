@@ -50,9 +50,7 @@ int main(int argc, char** argv)
 	run_shape_checks(runner);
 	run_bits_regions_check(runner);
 	run_zlib_backend_checks(runner);
-	run_zlib_inflate_checks(runner);
 	run_owned_inflate_checks(runner);
-	run_libdeflate_checks(runner);
 	run_menu_checks(runner);
 	run_setting_registry_checks(runner);
 	run_shader_reference_effect_lifetime_checks(runner);

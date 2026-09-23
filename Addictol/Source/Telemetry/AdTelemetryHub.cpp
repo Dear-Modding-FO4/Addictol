@@ -334,25 +334,25 @@ namespace Addictol
 		ZlibIntervalCounters& a_counters,
 		bool a_enabled,
 		ZlibFallbackReason a_fallbackReason,
-		bool a_servedByLibDeflate,
+		bool a_servedByWhole,
 		int32_t a_flush,
 		uint32_t a_currentThreadId,
 		uint64_t a_bytesIn,
 		uint64_t a_bytesOut,
-		uint64_t a_ticks) noexcept
+		uint64_t a_ticks, bool a_buffered) noexcept
 	{
 		if (!a_enabled)
 			return;
-		a_counters.Observe(a_fallbackReason, a_bytesIn, a_bytesOut);
+		a_counters.Observe(a_fallbackReason, a_bytesIn, a_bytesOut, a_buffered);
 		a_counters.ObserveSeries(
 			a_fallbackReason,
-			a_servedByLibDeflate,
+			a_servedByWhole,
 			a_flush,
 			a_currentThreadId,
 			RenderThreadIdRelaxed(),
 			a_bytesIn,
 			a_bytesOut,
-			a_ticks);
+			a_ticks, a_buffered);
 	}
 
 	TelemetryHub::TelemetryHub(uint64_t a_qpcFrequency) noexcept :

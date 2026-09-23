@@ -5,6 +5,7 @@
 #include <Zlib/AdZlibOperationProfile.h>
 #include <Zlib/AdZlibTelemetry.h>
 #include "Harness.h"
+#include <Zlib/AdZlibBackendRegistry.h>
 
 #include <Windows.h>
 
@@ -347,23 +348,17 @@ namespace vmm_tests
 						check(reason, UINT32_MAX, true, "");
 				}
 			};
-			run.template operator()<StockZlibBackend>();
-			run.template operator()<LibDeflateZlibBackend>();
-			uint64_t clockReads{ 0 };
-			const auto served = ServeProfiledZlib<StockZlibBackend, true>(source.get(), [&] {
-				return TelemetryDetail::ServeTelemetryZlib<StockZlibBackend>(
-					nullptr, 0, [](auto*, int32_t) { return -2; },
-					[&] { return ++clockReads; }, [] { return 1u; },
-					[](const auto&, bool enabled, auto) { require(!enabled, "ordinary recorder enabled in profile-only mode"); });
-			});
-			require(clockReads == 0 && served.zlibResult == -2, "profile-only mode enabled legacy codec timing");
+			using StreamingRow = ZlibBackendRow<ZlibBackendKind::Zlib, NoWholeInflateDecoder, ZlibDecoder>;
+			using HybridRow = ZlibBackendRow<ZlibBackendKind::HybridZlibNg, LibDeflateZlibBackend, ZlibNgDecoder>;
+			run.template operator()<StreamingRow>();
+			run.template operator()<HybridRow>();
 			(void)TelemetryTest::OperationProfileAccess::Close(*source);
 			std::vector<MetricValue> metrics(source->Schema().size());
 			std::vector<SeriesSample> series(source->SeriesCapacity());
 			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
 			uint64_t calls{ 0 }, bytes{ 0 };
 			for (const auto& sample : series) { calls += sample.calls; bytes += sample.bytes; }
-			require(calls == expectedSeries.size() + 1 &&
+			require(calls == expectedSeries.size() &&
 				bytes == expectedSeries.size() * 321 &&
 				source->Counters()[OperationProfileQuality::kInvalidResults] == 0, "profile-only zlib records were lost");
 			for (const auto& expected : expectedSeries)
@@ -373,7 +368,7 @@ namespace vmm_tests
 				{
 					if (sample.series == expected) { resultCalls += sample.calls; resultBytes += sample.bytes; }
 				}
-				require(resultCalls == (expected == "zlib.inflate.stock.primary" ? 2 : 1) && resultBytes == 321,
+				require(resultCalls == 1 && resultBytes == 321,
 					"zlib fallback outcomes merged into the wrong duration series");
 			}
 		});

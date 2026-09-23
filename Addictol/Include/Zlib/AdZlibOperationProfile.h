@@ -225,7 +225,7 @@ namespace Addictol
 				return a_serve(observer);
 			}
 			else
-				return a_serve(ZlibStockObserver{});
+				return a_serve(ZlibCallObserver{});
 		});
 	}
 }

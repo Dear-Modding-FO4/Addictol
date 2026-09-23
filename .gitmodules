@@ -26,3 +26,6 @@
 [submodule "Depends/isa-l"]
 	path = Depends/isa-l
 	url = https://github.com/intel/isa-l.git
+[submodule "Depends/ms-detours"]
+	path = Depends/ms-detours
+	url = https://github.com/microsoft/Detours.git
