@@ -1278,7 +1278,7 @@ namespace vmm_tests
 			RemoveTestPath(root);
 		});
 
-		runner.test("unfinished capture cannot produce a clean manifest", [] {
+		runner.test("unfinished work is reported without failing the capture", [] {
 			const auto root = UniqueTestPath("operation-profile-unfinished");
 			RemoveTestPath(root);
 			TelemetryHub hub{ 1'000'000'000 };
@@ -1300,11 +1300,11 @@ namespace vmm_tests
 			TelemetryCaptureStatus status{};
 			require(hub.CopyCaptureStatus(status),
 				"unfinished capture status was unavailable");
-			require(status.state == TelemetryCaptureState::kIncomplete,
-				"unfinished capture was reported complete");
+			require(status.state == TelemetryCaptureState::kComplete,
+				"in-flight work at shutdown failed an otherwise clean capture");
 			const auto metadata = ReadFile(status.directory / "metadata.json");
-			require(metadata.find("\"complete\": false") != std::string::npos,
-				"unfinished capture manifest reported clean success");
+			require(metadata.find("\"complete\": true") != std::string::npos,
+				"in-flight work at shutdown marked the manifest incomplete");
 			require(
 				metadata.find("\"unfinished_operations\": 1") !=
 					std::string::npos,

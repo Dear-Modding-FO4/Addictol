@@ -955,17 +955,8 @@ namespace Addictol
 
 			m_captureCompletedUtc =
 				UtcTimestamp(std::chrono::system_clock::now(), false);
-			OperationProfileCounters counters{};
-			for (const auto& entry : m_sources)
-			{
-				if (entry.profileSource)
-					AddProfileCounters(
-						counters,
-						entry.profileSource->Counters());
-			}
-			const auto clean =
-				!m_captureErrorFlags.load(std::memory_order_relaxed) &&
-				!counters.unfinishedOperations;
+			// In-flight work at shutdown is expected; it is reported, not treated as export failure.
+			const auto clean = !m_captureErrorFlags.load(std::memory_order_relaxed);
 			if (!WriteCaptureMetadata(clean))
 			{
 				m_captureErrorFlags.fetch_or(
