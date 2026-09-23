@@ -4,6 +4,7 @@
 #include <Zlib/AdZlibBackend.h>
 #include <Zlib/AdZlibInflate.h>
 #include <Zlib/AdZlibTelemetry.h>
+#include <Zlib/AdZlibOperationProfile.h>
 #include <Windows.h>
 
 #ifdef ERROR
@@ -30,7 +31,7 @@ namespace Addictol
 
 		namespace Decompression
 		{
-			template<class Backend>
+			template<class Backend, bool Profile>
 			struct Selected
 			{
 				static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
@@ -46,7 +47,8 @@ namespace Addictol
 					};
 					const auto bytesInBefore = a_stream->total_in;
 					const auto bytesOutBefore = a_stream->total_out;
-					const auto outcome = [&] {
+					const auto outcome = ServeProfiledZlib<Backend, Profile>(
+						Profile ? ZlibOperationProfile() : nullptr, [&] {
 						if constexpr (Backend::kind == ZlibBackendKind::LibDeflate)
 						{
 							return TelemetryDetail::ServeTelemetryZlib<Backend>(
@@ -72,7 +74,7 @@ namespace Addictol
 						else
 							return ServeZlib<Backend>(
 								a_stream, a_flush, original, false, 0, clock);
-					}();
+					});
 					return outcome.zlibResult;
 				}
 			};
@@ -136,8 +138,16 @@ namespace Addictol
 			return false;
 		}
 
-		const auto hook = VisitSelectedZlibBackend([]<class Backend>() {
-			return reinterpret_cast<uintptr_t>(&Decompression::Selected<Backend>::Inflate);
+		const auto profiling = bTelemetryOperationProfiling.GetValue() &&
+			InitializeZlibOperationProfile(Telemetry::Hub(), GetSelectedZlibBackendKind());
+		if (bTelemetryOperationProfiling.GetValue() && !profiling)
+			REX::WARN("Zlib operation profiling registration failed; leaving codec dispatch uninstrumented."sv);
+		uintptr_t hook{ 0 };
+		(void)InstallSelectedOperationProfileConsumer(profiling, [&]<bool Profile> {
+			hook = VisitSelectedZlibBackend([]<class Backend>() {
+				return reinterpret_cast<uintptr_t>(&Decompression::Selected<Backend, Profile>::Inflate);
+			});
+			return true;
 		});
 		g_patchState = PatchState::Attempted;
 		OriginalInflate = reinterpret_cast<TInflate>(RELEX::DetourJump(target, hook));

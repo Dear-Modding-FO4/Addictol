@@ -376,6 +376,10 @@ namespace Addictol
 					profile.publicationContentionDrops),
 				static_cast<unsigned long long>(profile.staleTokens),
 				static_cast<unsigned long long>(profile.unfinishedOperations));
+			dmui::ui::Text(
+				"Profile invalid results %llu  producer-capacity drops %llu",
+				static_cast<unsigned long long>(profile.invalidResults),
+				static_cast<unsigned long long>(profile.producerCapacityDrops));
 		}
 	}
 

@@ -1,5 +1,6 @@
 #include <Telemetry/AdOperationProfile.h>
 #include <Core/AdClock.h>
+#include <Telemetry/AdTelemetryHub.h>
 
 #include <algorithm>
 #include <cmath>
@@ -10,7 +11,7 @@ namespace Addictol
 {
 	namespace
 	{
-		inline constexpr std::array<std::string_view, 8> kQualityMetricSuffixes{
+		inline constexpr std::array<std::string_view, 10> kQualityMetricSuffixes{
 			"sampled_admissions",
 			"accepted_records",
 			"admission_contention_drops",
@@ -18,13 +19,17 @@ namespace Addictol
 			"capacity_drops",
 			"stale_tokens",
 			"suppressed_operations",
-			"unfinished_operations"
+			"unfinished_operations",
+			"invalid_results",
+			"producer_capacity_drops"
 		};
 		inline constexpr uint32_t kMaximumPublicationShards{ 16 };
 
 		thread_local uint32_t s_suppressionDepth{ 0 };
 		std::atomic<uint64_t> s_nextCaptureGeneration{ 1 };
 		std::atomic<uint64_t> s_nextThreadSalt{ 1 };
+		inline constexpr size_t kCounterLanes{ OperationProfileSource::kCounterLaneCount };
+		std::array<std::atomic<bool>, kCounterLanes> s_counterLaneOwners{};
 
 		[[nodiscard]] uint64_t Mix64(uint64_t a_value) noexcept
 		{
@@ -51,9 +56,43 @@ namespace Addictol
 			uint64_t threadSalt{
 				Mix64(s_nextThreadSalt.fetch_add(1, std::memory_order_relaxed))
 			};
+			size_t counterLane{ kCounterLanes };
+
+			SamplingState() noexcept
+			{
+				for (size_t index = 0; index < kCounterLanes; ++index)
+				{
+					bool expected{ false };
+					if (s_counterLaneOwners[index].compare_exchange_strong(
+						expected, true, std::memory_order_acquire, std::memory_order_relaxed))
+					{
+						counterLane = index;
+						break;
+					}
+				}
+			}
+
+			~SamplingState()
+			{
+				// Later CRT/TLS destructors must not reuse a lane already returned to another thread.
+				++s_suppressionDepth;
+				if (counterLane < kCounterLanes)
+					s_counterLaneOwners[counterLane].store(false, std::memory_order_release);
+			}
 		};
 
-		thread_local SamplingState s_samplingState{};
+		thread_local SamplingState* s_samplingState{ nullptr };
+
+		[[nodiscard]] SamplingState& ThreadSamplingState() noexcept
+		{
+			if (!s_samplingState)
+			{
+				ScopedOperationProfileSuppression suppression;
+				static thread_local SamplingState state;
+				s_samplingState = &state;
+			}
+			return *s_samplingState;
+		}
 
 		struct SamplingDecision
 		{
@@ -62,15 +101,16 @@ namespace Addictol
 		};
 
 		[[nodiscard]] SamplingDecision ShouldSample(
+			SamplingState& a_state,
 			uint64_t a_sourceSalt,
 			uint64_t a_descriptorSalt,
 			uint64_t a_generation,
 			uint32_t a_period) noexcept
 		{
-			const auto sequence = ++s_samplingState.sequence;
+			const auto sequence = ++a_state.sequence;
 			const auto hash = Mix64(
 				sequence ^
-				s_samplingState.threadSalt ^
+				a_state.threadSalt ^
 				a_sourceSalt ^
 				a_descriptorSalt ^
 				Mix64(a_generation));
@@ -268,7 +308,7 @@ namespace Addictol
 
 			const auto ownedStringCount =
 				2 + kQualityMetricSuffixes.size() +
-				a_configuration.descriptors.size() * 3 +
+				a_configuration.descriptors.size() * 4 +
 				a_configuration.durationBuckets.size() +
 				a_configuration.metadataLabels.size() * 2;
 			m_ownedStrings.reserve(ownedStringCount);
@@ -302,7 +342,8 @@ namespace Addictol
 					series,
 					OwnString(descriptor.label),
 					OwnString(descriptor.allOperationsMetricKey),
-					descriptor.samplingPeriod
+					descriptor.samplingPeriod,
+					OwnString(descriptor.resultGroup)
 				});
 				m_schema.push_back({
 					m_descriptors.back().allOperationsMetricKey,
@@ -330,7 +371,7 @@ namespace Addictol
 			m_publicationShardCount =
 				a_configuration.publicationShardCount;
 			m_allOperations.resize(
-				m_descriptors.size() * kCaptureStateCount);
+				m_descriptors.size() * kCounterLanes);
 			m_records.resize(m_recordCapacity);
 			m_drainRecords.resize(m_recordCapacity);
 			m_intervalBuckets.resize(
@@ -350,11 +391,6 @@ namespace Addictol
 				shard.capacity =
 					baseCapacity + (index < remainder ? 1 : 0);
 				shardOffset += shard.capacity;
-			}
-			for (size_t index = 0; index < m_captureStates.size(); ++index)
-			{
-				m_captureStates[index].operationOffset =
-					index * m_descriptors.size();
 			}
 			m_valid = true;
 		}
@@ -383,6 +419,27 @@ namespace Addictol
 		return m_valid;
 	}
 
+	bool OperationProfileSourceOwner::Register(
+		TelemetryHub& a_hub, OperationProfileConfiguration a_configuration) noexcept
+	{
+		if (m_source)
+			return true;
+		ScopedOperationProfileSuppression suppression;
+		try
+		{
+			auto source = std::make_shared<OperationProfileSource>(a_configuration, GetQpcFrequency());
+			if (a_hub.Register(source) != TelemetryRegistration::kAccepted)
+				return false;
+			m_owner = std::move(source);
+			m_source = m_owner.get();
+			return true;
+		}
+		catch (...)
+		{
+			return false;
+		}
+	}
+
 	OperationProfileToken OperationProfileSource::Begin(
 		uint32_t a_descriptorIndex) noexcept
 	{
@@ -391,51 +448,60 @@ namespace Addictol
 			a_descriptorIndex >= m_descriptors.size() ||
 			!capture->admissionOpen.load(std::memory_order_acquire))
 			return {};
-		capture->activeBegins.fetch_add(1, std::memory_order_relaxed);
-		if (m_currentCapture.load(std::memory_order_relaxed) != capture ||
-			!capture->admissionOpen.load(std::memory_order_relaxed))
-		{
-			capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
-			return {};
-		}
+		const auto generation = capture->generation.load(std::memory_order_relaxed);
 		if (OperationProfileSuppressed())
 		{
-			capture->suppressedOperations.fetch_add(
-				1, std::memory_order_relaxed);
-			capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
+			CapturePin pin{ *capture, generation };
+			if (pin.valid)
+				capture->suppressedOperations.fetch_add(1, std::memory_order_relaxed);
 			return {};
 		}
 
+		// Lane acquisition is once per thread; the steady unsampled path has no RMW.
+		auto& sampling = ThreadSamplingState();
+		if (sampling.counterLane == kCounterLanes)
+		{
+			CapturePin pin{ *capture, generation };
+			if (pin.valid)
+				capture->producerCapacityDrops.fetch_add(1, std::memory_order_relaxed);
+			return {};
+		}
+		auto& counter = m_allOperations[
+			a_descriptorIndex * kCounterLanes + sampling.counterLane];
+		if (counter.generation.load(std::memory_order_relaxed) != generation)
+		{
+			counter.generation.store(0, std::memory_order_relaxed);
+			counter.value.store(1, std::memory_order_relaxed);
+			counter.generation.store(generation, std::memory_order_release);
+		}
+		else
+			counter.value.store(counter.value.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
 		const auto decision = ShouldSample(
+			sampling,
 			m_sourceSalt,
 			m_descriptorSalts[a_descriptorIndex],
-			capture->generation,
+			generation,
 			m_descriptors[a_descriptorIndex].samplingPeriod);
+		if (!decision.selected)
+			return {};
+		CapturePin pin{ *capture, generation };
+		if (!pin.valid)
+			return {};
 		const auto shardIndex = static_cast<uint32_t>(
 			Mix64(decision.hash ^ 0xD1B54A32D192ED03ull) %
 				m_publicationShardCount);
-		m_allOperations[
-			capture->operationOffset + a_descriptorIndex].value.fetch_add(
-				1, std::memory_order_relaxed);
-		if (!decision.selected)
-		{
-			capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
-			return {};
-		}
-
 		auto& shard = m_publicationShards[shardIndex];
 		if (!shard.mutex.try_lock())
 		{
 			capture->admissionContentionDrops.fetch_add(
 				1, std::memory_order_relaxed);
-			capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
 			return {};
 		}
 		if (m_currentCapture.load(std::memory_order_relaxed) != capture ||
+			capture->generation.load(std::memory_order_relaxed) != generation ||
 			!capture->admissionOpen.load(std::memory_order_relaxed))
 		{
 			shard.mutex.unlock();
-			capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
 			return {};
 		}
 
@@ -443,7 +509,6 @@ namespace Addictol
 		capture->sampledAdmissions.fetch_add(1, std::memory_order_relaxed);
 		const auto startQpc = m_clock();
 		shard.mutex.unlock();
-		capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
 		return {
 			this,
 			capture,
@@ -457,12 +522,30 @@ namespace Addictol
 		OperationProfileToken a_token,
 		uint64_t a_bytes) noexcept
 	{
+		const auto descriptor = a_token.descriptorIndex;
+		End(std::move(a_token), a_bytes, descriptor);
+	}
+
+	void OperationProfileSource::End(
+		OperationProfileToken a_token,
+		uint64_t a_bytes,
+		uint32_t a_resultDescriptor) noexcept
+	{
 		if (a_token.source != this || !a_token.captureState)
 			return;
 		auto* capture = static_cast<CaptureState*>(a_token.captureState);
 		if (!capture->admissionOpen.load(std::memory_order_acquire))
 		{
 			capture->staleTokens.fetch_add(1, std::memory_order_relaxed);
+			capture->activeSampled.fetch_sub(1, std::memory_order_relaxed);
+			return;
+		}
+		const auto group = m_descriptors[a_token.descriptorIndex].resultGroup;
+		if (a_resultDescriptor >= m_descriptors.size() ||
+			(a_resultDescriptor != a_token.descriptorIndex &&
+				(group.empty() || group != m_descriptors[a_resultDescriptor].resultGroup)))
+		{
+			capture->invalidResults.fetch_add(1, std::memory_order_relaxed);
 			capture->activeSampled.fetch_sub(1, std::memory_order_relaxed);
 			return;
 		}
@@ -493,7 +576,7 @@ namespace Addictol
 				finishQpc > a_token.startQpc ?
 					finishQpc - a_token.startQpc : 0,
 				a_bytes,
-				a_token.descriptorIndex
+				a_resultDescriptor
 			};
 			capture->acceptedRecords.fetch_add(
 				1, std::memory_order_relaxed);
@@ -559,7 +642,7 @@ namespace Addictol
 	{
 		const auto capture =
 			m_currentCapture.load(std::memory_order_acquire);
-		return capture ? capture->generation : 0;
+		return capture ? capture->generation.load(std::memory_order_relaxed) : 0;
 	}
 
 	uint64_t OperationProfileSource::AllOperationCount(
@@ -567,10 +650,20 @@ namespace Addictol
 	{
 		const auto capture =
 			m_currentCapture.load(std::memory_order_acquire);
-		return capture && a_descriptorIndex < m_descriptors.size() ?
-			m_allOperations[
-				capture->operationOffset + a_descriptorIndex].value.load(
-					std::memory_order_relaxed) : 0;
+		if (!capture || a_descriptorIndex >= m_descriptors.size())
+			return 0;
+		const auto generation = capture->generation.load(std::memory_order_relaxed);
+		uint64_t count{ 0 };
+		for (size_t lane = 0; lane < kCounterLanes; ++lane)
+		{
+			const auto& counter = m_allOperations[a_descriptorIndex * kCounterLanes + lane];
+			if (counter.generation.load(std::memory_order_acquire) != generation)
+				continue;
+			const auto value = counter.value.load(std::memory_order_relaxed);
+			if (counter.generation.load(std::memory_order_acquire) == generation)
+				count += value;
+		}
+		return count;
 	}
 
 	OperationProfileCounters OperationProfileSource::Counters() const noexcept
@@ -587,7 +680,9 @@ namespace Addictol
 			capture->capacityDrops.load(std::memory_order_relaxed),
 			capture->staleTokens.load(std::memory_order_relaxed),
 			capture->suppressedOperations.load(std::memory_order_relaxed),
-			capture->unfinishedOperations.load(std::memory_order_relaxed)
+			capture->unfinishedOperations.load(std::memory_order_relaxed),
+			capture->invalidResults.load(std::memory_order_relaxed),
+			capture->producerCapacityDrops.load(std::memory_order_relaxed)
 		};
 	}
 
@@ -643,7 +738,9 @@ namespace Addictol
 			counters.capacityDrops,
 			counters.staleTokens,
 			counters.suppressedOperations,
-			counters.unfinishedOperations
+			counters.unfinishedOperations,
+			counters.invalidResults,
+			counters.producerCapacityDrops
 		};
 		for (size_t index = 0; index < values.size(); ++index)
 			a_out[index] = { static_cast<double>(values[index]), valid };
@@ -700,9 +797,15 @@ namespace Addictol
 		for (auto& candidate : m_captureStates)
 		{
 			if (!candidate.admissionOpen.load(std::memory_order_relaxed) &&
-				!candidate.activeBegins.load(std::memory_order_relaxed) &&
+				!candidate.activeBegins.load(std::memory_order_seq_cst) &&
 				!candidate.activeSampled.load(std::memory_order_relaxed))
 			{
+				// Invalidate readers before the second pin check; never reset their pin count.
+				candidate.generation.store(
+					s_nextCaptureGeneration.fetch_add(1, std::memory_order_relaxed),
+					std::memory_order_seq_cst);
+				if (candidate.activeBegins.load(std::memory_order_seq_cst))
+					continue;
 				capture = &candidate;
 				break;
 			}
@@ -715,12 +818,6 @@ namespace Addictol
 		}
 
 		ResetCaptureState(*capture);
-		auto generation =
-			s_nextCaptureGeneration.fetch_add(1, std::memory_order_relaxed);
-		if (!generation)
-			generation =
-				s_nextCaptureGeneration.fetch_add(1, std::memory_order_relaxed);
-		capture->generation = generation;
 		for (uint32_t index = 0; index < m_publicationShardCount; ++index)
 		{
 			m_publicationShards[index].count = 0;
@@ -783,13 +880,6 @@ namespace Addictol
 	void OperationProfileSource::ResetCaptureState(
 		CaptureState& a_state) noexcept
 	{
-		for (size_t index = 0; index < m_descriptors.size(); ++index)
-		{
-			m_allOperations[
-				a_state.operationOffset + index].value.store(
-					0, std::memory_order_relaxed);
-		}
-		a_state.activeBegins.store(0, std::memory_order_relaxed);
 		a_state.activeSampled.store(0, std::memory_order_relaxed);
 		a_state.sampledAdmissions.store(0, std::memory_order_relaxed);
 		a_state.acceptedRecords.store(0, std::memory_order_relaxed);
@@ -799,6 +889,8 @@ namespace Addictol
 		a_state.staleTokens.store(0, std::memory_order_relaxed);
 		a_state.suppressedOperations.store(0, std::memory_order_relaxed);
 		a_state.unfinishedOperations.store(0, std::memory_order_relaxed);
+		a_state.invalidResults.store(0, std::memory_order_relaxed);
+		a_state.producerCapacityDrops.store(0, std::memory_order_relaxed);
 		a_state.admissionOpen.store(false, std::memory_order_relaxed);
 	}
 }

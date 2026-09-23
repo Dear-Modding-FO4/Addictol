@@ -68,30 +68,32 @@ namespace Addictol
 		RequestRestart = 7
 	};
 
+	struct ZlibFallbackReasonEntry
+	{
+		std::string_view name;
+		ZlibFallbackReason reason;
+	};
+
+	inline constexpr std::array ZLIB_FALLBACK_REASONS{
+		ZlibFallbackReasonEntry{ "none", ZlibFallbackReason::None },
+		ZlibFallbackReasonEntry{ "state", ZlibFallbackReason::State },
+		ZlibFallbackReasonEntry{ "allocation", ZlibFallbackReason::Allocation },
+		ZlibFallbackReasonEntry{ "decode", ZlibFallbackReason::Decode },
+		ZlibFallbackReasonEntry{ "commit", ZlibFallbackReason::Commit },
+		ZlibFallbackReasonEntry{ "capacity", ZlibFallbackReason::Capacity },
+		ZlibFallbackReasonEntry{ "size-mismatch", ZlibFallbackReason::SizeMismatch },
+		ZlibFallbackReasonEntry{ "request-restart", ZlibFallbackReason::RequestRestart }
+	};
+
 	[[nodiscard]] constexpr std::string_view ZlibFallbackReasonName(
 		ZlibFallbackReason a_reason) noexcept
 	{
-		switch (a_reason)
+		for (const auto& entry : ZLIB_FALLBACK_REASONS)
 		{
-		case ZlibFallbackReason::None:
-			return "none";
-		case ZlibFallbackReason::State:
-			return "state";
-		case ZlibFallbackReason::Allocation:
-			return "allocation";
-		case ZlibFallbackReason::Decode:
-			return "decode";
-		case ZlibFallbackReason::Commit:
-			return "commit";
-		case ZlibFallbackReason::Capacity:
-			return "capacity";
-		case ZlibFallbackReason::SizeMismatch:
-			return "size-mismatch";
-		case ZlibFallbackReason::RequestRestart:
-			return "request-restart";
-		default:
-			return "unknown";
+			if (entry.reason == a_reason)
+				return entry.name;
 		}
+		return "unknown";
 	}
 
 	[[nodiscard]] constexpr uint32_t ZlibBackendRegistryId(

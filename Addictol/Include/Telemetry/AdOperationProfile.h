@@ -5,6 +5,7 @@
 #include <array>
 #include <atomic>
 #include <limits>
+#include <memory>
 #include <memory_resource>
 #include <mutex>
 #include <span>
@@ -30,6 +31,8 @@ namespace Addictol
 		std::string_view label;
 		std::string_view allOperationsMetricKey;
 		uint32_t samplingPeriod{ 1 };
+		// Empty means only this descriptor; otherwise End may classify within this group.
+		std::string_view resultGroup{};
 	};
 
 	struct OperationProfileDurationBucket
@@ -99,6 +102,8 @@ namespace Addictol
 		uint64_t staleTokens{ 0 };
 		uint64_t suppressedOperations{ 0 };
 		uint64_t unfinishedOperations{ 0 };
+		uint64_t invalidResults{ 0 };
+		uint64_t producerCapacityDrops{ 0 };
 	};
 
 	struct OperationProfilePercentile
@@ -177,6 +182,7 @@ namespace Addictol
 		public SeriesSource
 	{
 	public:
+		static constexpr size_t kCounterLaneCount{ 256 };
 		explicit OperationProfileSource(
 			OperationProfileConfiguration a_configuration,
 			uint64_t a_qpcFrequency,
@@ -186,6 +192,7 @@ namespace Addictol
 		[[nodiscard]] bool IsValid() const noexcept;
 		[[nodiscard]] OperationProfileToken Begin(uint32_t a_descriptorIndex) noexcept;
 		void End(OperationProfileToken a_token, uint64_t a_bytes = 0) noexcept;
+		void End(OperationProfileToken a_token, uint64_t a_bytes, uint32_t a_resultDescriptor) noexcept;
 		[[nodiscard]] std::span<const MetricDescriptor> Schema() const noexcept override;
 		[[nodiscard]] size_t SeriesCapacity() const noexcept override;
 		[[nodiscard]] std::string_view SourceId() const noexcept;
@@ -204,19 +211,22 @@ namespace Addictol
 		static constexpr size_t kCaptureStateCount{ 8 };
 		static constexpr size_t kMaximumPublicationShards{ 16 };
 
-		struct AtomicCounter
+		struct alignas(64) AtomicCounter
 		{
 			std::atomic<uint64_t> value{ 0 };
+			std::atomic<uint64_t> generation{ 0 };
 
 			AtomicCounter() noexcept = default;
 			AtomicCounter(AtomicCounter&& a_other) noexcept :
-				value(a_other.value.load(std::memory_order_relaxed))
+				value(a_other.value.load(std::memory_order_relaxed)),
+				generation(a_other.generation.load(std::memory_order_relaxed))
 			{}
 			AtomicCounter& operator=(AtomicCounter&& a_other) noexcept
 			{
 				value.store(
 					a_other.value.load(std::memory_order_relaxed),
 					std::memory_order_relaxed);
+				generation.store(a_other.generation.load(std::memory_order_relaxed), std::memory_order_relaxed);
 				return *this;
 			}
 			AtomicCounter(const AtomicCounter&) = delete;
@@ -235,9 +245,10 @@ namespace Addictol
 			std::atomic<uint64_t> staleTokens{ 0 };
 			std::atomic<uint64_t> suppressedOperations{ 0 };
 			std::atomic<uint64_t> unfinishedOperations{ 0 };
+			std::atomic<uint64_t> invalidResults{ 0 };
+			std::atomic<uint64_t> producerCapacityDrops{ 0 };
 			std::atomic<bool> admissionOpen{ false };
-			uint64_t generation{ 0 };
-			size_t operationOffset{ 0 };
+			std::atomic<uint64_t> generation{ 0 };
 		};
 
 		struct Record
@@ -245,6 +256,26 @@ namespace Addictol
 			uint64_t durationTicks{ 0 };
 			uint64_t bytes{ 0 };
 			uint32_t descriptorIndex{ 0 };
+		};
+
+		struct CapturePin
+		{
+			CaptureState& state;
+			bool valid;
+
+			CapturePin(CaptureState& a_state, uint64_t a_generation) noexcept :
+				state(a_state)
+			{
+				state.activeBegins.fetch_add(1, std::memory_order_seq_cst);
+				valid = state.generation.load(std::memory_order_seq_cst) == a_generation &&
+					state.admissionOpen.load(std::memory_order_relaxed);
+			}
+			~CapturePin()
+			{
+				state.activeBegins.fetch_sub(1, std::memory_order_seq_cst);
+			}
+			CapturePin(const CapturePin&) = delete;
+			CapturePin& operator=(const CapturePin&) = delete;
 		};
 
 		struct PublicationShard
@@ -296,6 +327,22 @@ namespace Addictol
 	template<bool Enabled>
 	class OperationProfileConsumer;
 
+	// Install-time owner keeps a hooked consumer valid through hub teardown.
+	class OperationProfileSourceOwner
+	{
+	public:
+		OperationProfileSourceOwner() = default;
+		OperationProfileSourceOwner(const OperationProfileSourceOwner&) = delete;
+		OperationProfileSourceOwner& operator=(const OperationProfileSourceOwner&) = delete;
+		~OperationProfileSourceOwner() { m_source = nullptr; }
+		[[nodiscard]] OperationProfileSource* Get() const noexcept { return m_source; }
+		[[nodiscard]] bool Register(TelemetryHub& a_hub, OperationProfileConfiguration a_configuration) noexcept;
+
+	private:
+		std::shared_ptr<OperationProfileSource> m_owner;
+		OperationProfileSource* m_source{ nullptr };
+	};
+
 	template<>
 	class OperationProfileConsumer<false>
 	{
@@ -303,6 +350,7 @@ namespace Addictol
 		explicit OperationProfileConsumer(OperationProfileSource* = nullptr) noexcept {}
 		[[nodiscard]] OperationProfileToken Begin(uint32_t) const noexcept { return {}; }
 		void End(OperationProfileToken, uint64_t = 0) const noexcept {}
+		void End(OperationProfileToken, uint64_t, uint32_t) const noexcept {}
 	};
 
 	template<>
@@ -322,6 +370,12 @@ namespace Addictol
 		{
 			if (m_source)
 				m_source->End(std::move(a_token), a_bytes);
+		}
+
+		void End(OperationProfileToken a_token, uint64_t a_bytes, uint32_t a_resultDescriptor) const noexcept
+		{
+			if (m_source)
+				m_source->End(std::move(a_token), a_bytes, a_resultDescriptor);
 		}
 
 	private:

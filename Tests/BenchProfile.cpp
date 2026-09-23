@@ -1,6 +1,7 @@
 #include "../Addictol/Include/Core/AdClock.h"
 #include "../Addictol/Include/Telemetry/AdOperationProfile.h"
 #include "../Addictol/Include/Telemetry/AdTelemetryHub.h"
+#include <Memory/AdProfiledHeap.h>
 #include "Harness.h"
 
 #include <Windows.h>
@@ -108,6 +109,8 @@ namespace
 		double maximumNanoseconds{ 0.0 };
 		uint64_t collectorProgress{ 0 };
 		OperationProfileCounters losses{};
+		uint32_t samplingPeriod{ 0 };
+		size_t recordCapacity{ 0 };
 	};
 
 	class CadenceCollector
@@ -214,7 +217,9 @@ namespace
 			a_after.capacityDrops - a_before.capacityDrops,
 			a_after.staleTokens - a_before.staleTokens,
 			a_after.suppressedOperations - a_before.suppressedOperations,
-			a_after.unfinishedOperations - a_before.unfinishedOperations
+			a_after.unfinishedOperations - a_before.unfinishedOperations,
+			a_after.invalidResults - a_before.invalidResults,
+			a_after.producerCapacityDrops - a_before.producerCapacityDrops
 		};
 	}
 
@@ -224,7 +229,7 @@ namespace
 		return a_counters.admissionContentionDrops +
 			a_counters.publicationContentionDrops +
 			a_counters.capacityDrops +
-			a_counters.staleTokens;
+			a_counters.staleTokens + a_counters.invalidResults + a_counters.producerCapacityDrops;
 	}
 
 	template<class Operation>
@@ -323,7 +328,9 @@ namespace
 			Percentile(combined, 0.999),
 			combined.empty() ? 0.0 : combined.back(),
 			a_progress() - a_progressBefore,
-			losses
+			losses,
+			a_source ? a_source->Descriptors().front().samplingPeriod : 0,
+			a_source ? a_source->RecordCapacity() : 0
 		};
 	}
 
@@ -415,6 +422,8 @@ namespace
 			" average_read_ns=" << a_calibration.averageReadNanoseconds <<
 			" pair_min_ns=" << a_calibration.minimumPairNanoseconds <<
 			" pair_median_ns=" << a_calibration.medianPairNanoseconds << '\n';
+		std::cout << "Voltek operation = malloc(64) + free; sampling=1/" << kHeapProfileSamplingPeriod <<
+			" capacity=" << kHeapProfileRecordCapacity << "; ns/op = threads * 1e9 / throughput\n";
 		std::cout << std::setw(22) << "mode" <<
 			std::setw(8) << "thr" <<
 			std::setw(8) << "run" <<
@@ -449,6 +458,7 @@ namespace
 	[[nodiscard]] bool WriteResults(
 		std::span<const ProfileBenchmarkResult> a_results,
 		const TelemetryCaptureStatus& a_capture,
+		const TelemetryCaptureStatus& a_heapCapture,
 		const PerformanceClock& a_clock,
 		const QpcCalibration& a_calibration)
 	{
@@ -479,6 +489,7 @@ namespace
 				a_calibration.medianPairNanoseconds << "},\n"
 			"  \"capture_directory\": \"" <<
 				a_capture.directory.generic_string() <<
+			"\",\n  \"heap_capture_directory\": \"" << a_heapCapture.directory.generic_string() <<
 			"\",\n  \"results\": [\n";
 		for (size_t index = 0; index < a_results.size(); ++index)
 		{
@@ -493,6 +504,9 @@ namespace
 				", \"seconds\": " << result.seconds <<
 				", \"operations_per_second\": " <<
 					result.operationsPerSecond <<
+				", \"nanoseconds_per_operation\": " << result.threads * 1'000'000'000.0 / result.operationsPerSecond <<
+				", \"sampling_period\": " << result.samplingPeriod <<
+				", \"record_capacity\": " << result.recordCapacity <<
 				", \"latency_samples\": " << result.latencySamples <<
 				", \"median_ns\": " << result.medianNanoseconds <<
 				", \"p99_ns\": " << result.p99Nanoseconds <<
@@ -511,6 +525,8 @@ namespace
 					result.losses.capacityDrops <<
 				", \"stale_tokens\": " <<
 					result.losses.staleTokens <<
+				", \"invalid_results\": " << result.losses.invalidResults <<
+				", \"producer_capacity_drops\": " << result.losses.producerCapacityDrops <<
 				", \"capacity_saturated\": " <<
 					(result.losses.capacityDrops ? "true" : "false") <<
 				", \"rejection_bias\": " <<
@@ -580,8 +596,14 @@ namespace vmm_tests
 			return 1;
 		}
 		TelemetryHub hub{ Addictol::GetQpcFrequency() };
+		constexpr std::array unsampledDescriptor{
+			OperationProfileDescriptor{ "benchmark.unsampled", "Unsampled path", "profile.benchmark_unsampled", UINT32_MAX }
+		};
+		configuration.sourceId = "benchmark_unsampled";
+		configuration.descriptors = unsampledDescriptor;
+		auto unsampledSource = std::make_shared<OperationProfileSource>(configuration, GetQpcFrequency());
 		if (hub.Register(source) != TelemetryRegistration::kAccepted ||
-			!hub.Freeze(8))
+			hub.Register(unsampledSource) != TelemetryRegistration::kAccepted || !hub.Freeze(8))
 		{
 			std::cerr << "profiling benchmark hub setup failed\n";
 			return 1;
@@ -622,10 +644,64 @@ namespace vmm_tests
 			instrumented,
 			profileProgress,
 			source.get());
+		const auto unsampled = [&](uint32_t, uint64_t) noexcept {
+			auto token = unsampledSource->Begin(0);
+			if (token)
+				unsampledSource->End(std::move(token), 64);
+		};
+		RunCase(results, clock, "unsampled+collector", 1, unsampled, profileProgress, unsampledSource.get());
+		RunCase(results, clock, "unsampled+collector", 8, unsampled, profileProgress, unsampledSource.get());
 		hub.Stop();
 
 		TelemetryCaptureStatus capture{};
 		(void)hub.CopyCaptureStatus(capture);
+		TelemetryHub heapHub{ Addictol::GetQpcFrequency() };
+		if (!InitializeHeapOperationProfile(heapHub, "voltek", "visper", "voltek") || !heapHub.Freeze(8))
+			return 1;
+		TelemetryStartOptions heapOptions{};
+		heapOptions.cadenceMs = kCollectorCadenceMs;
+		heapOptions.captureRoot = ".Build\\Tests\\profiling-benchmark-captures";
+		heapOptions.productVersion = "benchmark";
+		heapOptions.runtime = "test";
+		if (!heapHub.Start(std::move(heapOptions)))
+			return 1;
+		const std::function heapProgress{ [&heapHub] { return HubProgress(heapHub); } };
+		std::atomic<uint64_t> allocationFailures{ 0 };
+		const auto heapCase = [&]<class Heap>(std::string_view mode, OperationProfileSource* profileSource) {
+			const auto operation = [&](uint32_t, uint64_t) noexcept {
+				auto* heap = Heap::GetSingleton();
+				auto* block = heap->malloc(64);
+				if (!block)
+					allocationFailures.fetch_add(1, std::memory_order_relaxed);
+				heap->free(block);
+			};
+			RunCase(results, clock, mode, 1, operation, heapProgress, profileSource);
+			RunCase(results, clock, mode, 8, operation, heapProgress, profileSource);
+		};
+		heapCase.template operator()<ProxyVoltekHeap>("voltek-raw", nullptr);
+		heapCase.template operator()<ProfiledHeap<ProxyVoltekHeap, HeapProfileSite::CRT>>(
+			"voltek-profiled", HeapOperationProfile());
+		heapHub.Stop();
+		TelemetryCaptureStatus heapCapture{};
+		(void)heapHub.CopyCaptureStatus(heapCapture);
+		std::cout << "Voltek capture: " << heapCapture.directory << "; allocation failures=" << allocationFailures.load() << '\n';
+		if (allocationFailures.load())
+			return 1;
+		for (const auto threads : { 1u, 8u })
+		{
+			double raw{ 0 }, profiled{ 0 };
+			for (const auto& result : results)
+			{
+				if (result.threads != threads)
+					continue;
+				if (result.mode == "voltek-raw")
+					raw += threads * 1'000'000'000.0 / result.operationsPerSecond / kRepeats;
+				if (result.mode == "voltek-profiled")
+					profiled += threads * 1'000'000'000.0 / result.operationsPerSecond / kRepeats;
+			}
+			std::cout << "Voltek " << threads << " threads: raw=" << raw << " ns/pair profiled=" << profiled <<
+				" ns/pair overhead=" << profiled - raw << " ns (" << (profiled / raw - 1) * 100 << "%)\n";
+		}
 		PrintResults(results, clock, calibration);
 		for (const auto& result : results)
 		{
@@ -636,7 +712,7 @@ namespace vmm_tests
 				return 1;
 			}
 		}
-		if (!WriteResults(results, capture, clock, calibration))
+		if (!WriteResults(results, capture, heapCapture, clock, calibration))
 		{
 			std::cerr << "profiling benchmark JSON was not written\n";
 			return 1;

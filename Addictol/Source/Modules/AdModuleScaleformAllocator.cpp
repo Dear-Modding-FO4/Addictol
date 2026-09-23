@@ -1,4 +1,5 @@
 #include <Modules/AdModuleScaleformAllocator.h>
+#include <Memory/AdProfiledHeap.h>
 #include <Memory/AdAllocator.h>
 #include <Core/AdUtils.h>
 
@@ -109,8 +110,9 @@ namespace Addictol
 
 	bool ModuleScaleformAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		BSScaleformAllocator<ProxyCurrentHeap>::Install();
-
-		return true;
+		return InstallSelectedProfiledHeap<ProxyCurrentHeap, HeapProfileSite::Scaleform>([]<class Heap>() {
+			BSScaleformAllocator<Heap>::Install();
+			return true;
+		});
 	}
 }

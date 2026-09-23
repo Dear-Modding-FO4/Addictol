@@ -1,5 +1,6 @@
 #include <Modules/AdModuleMemoryManager.h>
 #include <Telemetry/AdAllocatorPoolTelemetry.h>
+#include <Memory/AdProfiledHeap.h>
 #include <Core/AdAssert.h>
 #include <Memory/AdAllocator.h>
 #include <Core/AdUtils.h>
@@ -428,16 +429,28 @@ namespace Addictol
 		}
 
 		VisitSelectedHeap([base]<typename Heap>() {
-			MemoryManager<Heap>::Install();
-			ScrapHeap<Heap>::Install();
-			bhkThreadMemorySource<Heap>::Install();
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<Heap>::realloc);
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<Heap>::calloc);
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<Heap>::aligned_malloc);
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<Heap>::malloc);
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<Heap>::aligned_free);
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<Heap>::free);
-			RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<Heap>::msize);
+			(void)InstallSelectedProfiledHeap<Heap, HeapProfileSite::MemoryManager>([]<class Selected>() {
+				MemoryManager<Selected>::Install();
+				return true;
+			});
+			(void)InstallSelectedProfiledHeap<Heap, HeapProfileSite::Scrap>([]<class Selected>() {
+				ScrapHeap<Selected>::Install();
+				return true;
+			});
+			(void)InstallSelectedProfiledHeap<Heap, HeapProfileSite::Havok>([]<class Selected>() {
+				bhkThreadMemorySource<Selected>::Install();
+				return true;
+			});
+			(void)InstallSelectedProfiledHeap<Heap, HeapProfileSite::CRT>([base]<class Selected>() {
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "realloc",			(uintptr_t)&StdStuff<Selected>::realloc);
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc",			(uintptr_t)&StdStuff<Selected>::calloc);
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc",	(uintptr_t)&StdStuff<Selected>::aligned_malloc);
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc",			(uintptr_t)&StdStuff<Selected>::malloc);
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free",	(uintptr_t)&StdStuff<Selected>::aligned_free);
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free",			(uintptr_t)&StdStuff<Selected>::free);
+				RELEX::DetourIAT(base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize",			(uintptr_t)&StdStuff<Selected>::msize);
+				return true;
+			});
 		});
 
 		/////////////////////////////////////////////////////////////////////

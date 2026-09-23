@@ -70,6 +70,12 @@
     <ClCompile Include="..\Addictol\Source\Telemetry\AdOperationProfile.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Memory\AdProfiledHeap.cpp">
+      <Filter>Source\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\AdZlibOperationProfile.cpp">
+      <Filter>Source\Zlib</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
@@ -459,6 +465,15 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdOperationProfile.h">
       <Filter>Include\Telemetry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdOperationProfileTable.h">
+      <Filter>Include\Telemetry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Memory\AdProfiledHeap.h">
+      <Filter>Include\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibOperationProfile.h">
+      <Filter>Include\Zlib</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h">
       <Filter>Include\Telemetry</Filter>

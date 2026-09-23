@@ -1,6 +1,9 @@
 #include "../Addictol/Include/Telemetry/AdOperationProfile.h"
 #include "../Addictol/Include/Telemetry/AdTelemetryHub.h"
 #include "../Addictol/Include/Menu/AdMenuTelemetry.h"
+#include <Memory/AdProfiledHeap.h>
+#include <Zlib/AdZlibOperationProfile.h>
+#include <Zlib/AdZlibTelemetry.h>
 #include "Harness.h"
 
 #include <Windows.h>
@@ -63,10 +66,17 @@ namespace Addictol::TelemetryTest
 		{
 			auto* capture = static_cast<
 				OperationProfileSource::CaptureState*>(a_captureState);
-			a_source.m_allOperations[
-				capture->operationOffset + a_descriptorIndex].value.fetch_add(
-					1, std::memory_order_relaxed);
-			capture->activeBegins.fetch_sub(1, std::memory_order_relaxed);
+			(void)a_source;
+			(void)a_descriptorIndex;
+			capture->activeBegins.fetch_sub(1, std::memory_order_seq_cst);
+		}
+
+		[[nodiscard]] static bool PinGeneration(OperationProfileSource& a_source, uint64_t a_generation)
+		{
+			OperationProfileSource::CapturePin pin{
+				*a_source.m_currentCapture.load(), a_generation
+			};
+			return pin.valid;
 		}
 	};
 }
@@ -101,6 +111,31 @@ namespace
 
 	thread_local uint64_t s_profileClock{ 0 };
 	std::atomic<uint64_t> s_clockReads{ 0 };
+
+	struct ForwardingHeap
+	{
+		inline static std::array<uint64_t, 2> storage{};
+		inline static void* next{ storage.data() };
+		inline static void* input{ nullptr };
+		inline static size_t size{ 0 };
+		inline static size_t alignment{ 0 };
+		inline static uint32_t operation{ 0 };
+		inline static uint64_t calls{ 0 };
+		static ForwardingHeap* GetSingleton() { static ForwardingHeap heap; return &heap; }
+		static void Record(uint32_t a_operation, void* a_input, size_t a_size, size_t a_alignment)
+		{
+			operation = a_operation; input = a_input; size = a_size; alignment = a_alignment; ++calls;
+		}
+		void* malloc(size_t a_size) { Record(0, nullptr, a_size, 0); return next; }
+		void* aligned_malloc(size_t a_size, size_t a_alignment) { Record(1, nullptr, a_size, a_alignment); return next; }
+		void* realloc(void* a_input, size_t a_size) { Record(2, a_input, a_size, 0); return next; }
+		void* aligned_realloc(void* a_input, size_t a_size, size_t a_alignment) { Record(3, a_input, a_size, a_alignment); return next; }
+		void free(void* a_input) { Record(4, a_input, 0, 0); }
+		void aligned_free(void* a_input) { Record(5, a_input, 0, 0); }
+		size_t msize(void* a_input) { Record(6, a_input, 0, 0); return 123; }
+		size_t aligned_msize(void* a_input, size_t a_alignment) { Record(7, a_input, 0, a_alignment); return 456; }
+		void* CheckPtr(void* a_input, size_t a_size) { Record(8, a_input, a_size, 0); return a_input; }
+	};
 
 	uint64_t ReadProfileClock() noexcept
 	{
@@ -150,7 +185,8 @@ namespace
 		std::pmr::memory_resource* a_resource =
 			std::pmr::get_default_resource(),
 		std::string_view a_sourceId = "test",
-		std::string_view a_sourceName = "Test operations")
+		std::string_view a_sourceName = "Test operations",
+		uint32_t a_shards = 4)
 	{
 		OperationProfileConfiguration configuration{};
 		configuration.sourceId = a_sourceId;
@@ -159,7 +195,7 @@ namespace
 		configuration.durationBuckets = kTestBuckets;
 		configuration.recordCapacity = a_capacity;
 		configuration.publicationShardCount = static_cast<uint32_t>(
-			(std::min)(a_capacity, size_t{ 4 }));
+			(std::min)(a_capacity, static_cast<size_t>(a_shards)));
 		configuration.clock = &ReadProfileClock;
 		return std::make_shared<OperationProfileSource>(
 			configuration,
@@ -195,6 +231,169 @@ namespace vmm_tests
 {
 	void run_operation_profile_checks(Runner& runner)
 	{
+		runner.test("result classification rejects foreign groups without losing admission totals", [] {
+			constexpr std::array descriptors{
+				OperationProfileDescriptor{ "test.request", "request", "profile.test_request", 1, "test.group" },
+				OperationProfileDescriptor{ "test.result", "result", "profile.test_result", 1, "test.group" },
+				OperationProfileDescriptor{ "test.foreign", "foreign", "profile.test_foreign", 1, "other.group" }
+			};
+			auto source = MakeProfileSource(16, descriptors);
+			require(TelemetryTest::OperationProfileAccess::Start(*source), "capture did not start");
+			source->End(source->Begin(0), 42, 1);
+			source->End(source->Begin(0), 100, 2);
+			source->End(source->Begin(0), 100, UINT32_MAX);
+			require(source->Counters().invalidResults == 2 &&
+				source->Counters().acceptedRecords == 1 &&
+				source->AllOperationCount(0) == 3 && source->AllOperationCount(1) == 0,
+				"invalid classification polluted samples or moved admission totals");
+			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "rejected results leaked active tokens");
+			std::vector<MetricValue> metrics(source->Schema().size());
+			std::vector<SeriesSample> series(source->SeriesCapacity());
+			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+			uint64_t calls{ 0 }, bytes{ 0 };
+			for (const auto& sample : series)
+			{
+				if (sample.calls)
+					require(sample.series == "test.result", "result published to admission series");
+				calls += sample.calls; bytes += sample.bytes;
+			}
+			require(calls == 1 && bytes == 42, "classification lost its coherent record");
+		});
+
+		runner.test("profiled heap preserves forwarding and classifies realloc without size probes", [] {
+			using Heap = ProfiledHeap<ForwardingHeap, HeapProfileSite::CRT>;
+			static_assert(std::is_same_v<SelectedProfiledHeap<false, ForwardingHeap, HeapProfileSite::CRT>, ForwardingHeap>);
+			require(InstallSelectedProfiledHeap<ForwardingHeap, HeapProfileSite::CRT>(false, []<class Selected> {
+				return std::is_same_v<Selected, ForwardingHeap>;
+			}), "disabled startup visitor did not select the raw heap");
+			TelemetryHub hub;
+			require(InitializeHeapOperationProfile(hub, "fake", "visper", "fake"), "heap source registration failed");
+			auto* source = HeapOperationProfile();
+			require(TelemetryTest::OperationProfileAccess::Start(*source), "heap capture did not start");
+			auto* heap = Heap::GetSingleton();
+			void* block = ForwardingHeap::storage.data();
+			ForwardingHeap::next = block;
+			const auto call = [&](uint32_t operation, void* input, size_t size, size_t alignment, auto&& invoke) {
+				const auto before = ForwardingHeap::calls;
+				invoke();
+				require(ForwardingHeap::calls == before + 1 && ForwardingHeap::operation == operation &&
+					ForwardingHeap::input == input && ForwardingHeap::size == size && ForwardingHeap::alignment == alignment,
+					"heap forwarding changed arguments, pairing, or called an extra heap operation");
+			};
+			call(0, nullptr, 17, 0, [&] { require(heap->malloc(17) == block, "malloc pointer changed"); });
+			call(1, nullptr, 81, 64, [&] { require(heap->aligned_malloc(81, 64) == block, "aligned pointer changed"); });
+			call(2, block, 1000, 0, [&] { require(heap->realloc(block, 1000) == block, "in-place pointer changed"); });
+			call(3, block, 1001, 128, [&] { require(heap->aligned_realloc(block, 1001, 128) == block, "aligned realloc pointer changed"); });
+			call(4, nullptr, 0, 0, [&] { heap->free(nullptr); });
+			call(5, block, 0, 0, [&] { heap->aligned_free(block); });
+			call(6, block, 0, 0, [&] { require(heap->msize(block) == 123, "msize result changed"); });
+			call(7, block, 0, 256, [&] { require(heap->aligned_msize(block, 256) == 456, "aligned size result changed"); });
+			call(8, block, 19, 0, [&] { require(heap->CheckPtr(block, 19) == block, "CheckPtr changed"); });
+			call(2, nullptr, 1000, 0, [&] { require(heap->realloc(nullptr, 1000) == block, "null realloc input changed"); });
+			ForwardingHeap::next = nullptr;
+			call(2, block, 0, 0, [&] { require(!heap->realloc(block, 0), "zero-size realloc result changed"); });
+			call(3, block, 1001, 128, [&] { require(!heap->aligned_realloc(block, 1001, 128), "aligned realloc failure changed"); });
+			for (uint32_t repeat = 0; repeat < 8192; ++repeat)
+			{
+				ForwardingHeap::next = block;
+				require(heap->realloc(block, 1000) == block, "in-place realloc changed");
+				ForwardingHeap::next = &ForwardingHeap::storage[1];
+				require(heap->realloc(block, 1000) == ForwardingHeap::next, "moved realloc changed");
+				ForwardingHeap::next = nullptr;
+				call(2, block, 1000, 0, [&] { require(!heap->realloc(block, 1000), "failed realloc was replaced"); });
+				call(1, nullptr, 81, 64, [&] { require(!heap->aligned_malloc(81, 64), "failed allocation was replaced"); });
+			}
+			const auto allBefore = source->AllOperationCount(HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Allocate, 17));
+			{
+				ScopedOperationProfileSuppression suppression;
+				(void)heap->malloc(17);
+			}
+			require(source->Counters().suppressedOperations == 1 &&
+				source->AllOperationCount(HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Allocate, 17)) == allBefore,
+				"profiler-owned heap work recursed into operation recording");
+			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "heap profile leaked tokens");
+			std::vector<MetricValue> metrics(source->Schema().size());
+			std::vector<SeriesSample> series(source->SeriesCapacity());
+			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+			for (const auto result : { HeapProfileResult::InPlace, HeapProfileResult::Moved, HeapProfileResult::Failed })
+			{
+				const auto descriptor = HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Reallocate, 1000, result);
+				uint64_t count{ 0 };
+				for (const auto& sample : series)
+				{
+					if (sample.series == kHeapProfileDescriptors[descriptor].series)
+						count += sample.calls;
+				}
+				require(count > 0, "realloc outcome was not classified");
+			}
+			uint64_t failedAllocations{ 0 };
+			const auto failedAllocation = HeapProfileDescriptor(
+				HeapProfileSite::CRT, HeapProfileOperation::AlignedAllocate, 81, HeapProfileResult::Failed);
+			for (const auto& sample : series)
+			{
+				if (sample.series == kHeapProfileDescriptors[failedAllocation].series)
+					failedAllocations += sample.calls;
+			}
+			require(failedAllocations > 0, "failed allocation was recorded as success");
+		});
+
+		runner.test("zlib profile-only dispatch maps primary and every registered fallback", [] {
+			auto source = MakeProfileSource(128, kZlibProfileDescriptors);
+			require(TelemetryTest::OperationProfileAccess::Start(*source), "zlib profile did not start");
+			require(!Telemetry::EnabledRelaxed(), "fixture unexpectedly enabled ordinary telemetry");
+			std::vector<std::string> expectedSeries;
+			const auto run = [&]<class Backend>() {
+				for (const auto& reason : ZLIB_FALLBACK_REASONS)
+				{
+					const auto outcome = ServeProfiledZlib<Backend, true>(source.get(), [&] {
+						ZlibInflateOutcome result{};
+						result.fallbackReasonId = ZlibFallbackReasonRegistryId(reason.reason);
+						result.produced = 321;
+						result.zlibResult = -3;
+						return result;
+					});
+					require(outcome.zlibResult == -3 && outcome.produced == 321, "profiling changed codec outcome");
+					const auto result = ZlibProfileResult(Backend::kind, outcome);
+					auto expected = std::string{ "zlib.inflate." } + std::string{ ZlibBackendKindName(Backend::kind) };
+					expected += reason.reason == ZlibFallbackReason::None ?
+						".primary" : ".fallback." + std::string{ reason.name };
+					std::replace(expected.begin(), expected.end(), '-', '_');
+					require(result < kZlibProfileDescriptors.size() &&
+						kZlibProfileDescriptors[result].series == expected,
+						"fallback descriptor mapping failed");
+					expectedSeries.push_back(std::move(expected));
+				}
+			};
+			run.template operator()<StockZlibBackend>();
+			run.template operator()<LibDeflateZlibBackend>();
+			uint64_t clockReads{ 0 };
+			const auto served = ServeProfiledZlib<StockZlibBackend, true>(source.get(), [&] {
+				return TelemetryDetail::ServeTelemetryZlib<StockZlibBackend>(
+					nullptr, 0, [](auto*, int32_t) { return -2; },
+					[&] { return ++clockReads; }, [] { return 1u; },
+					[](const auto&, bool enabled, auto) { require(!enabled, "ordinary recorder enabled in profile-only mode"); });
+			});
+			require(clockReads == 0 && served.zlibResult == -2, "profile-only mode enabled legacy codec timing");
+			(void)TelemetryTest::OperationProfileAccess::Close(*source);
+			std::vector<MetricValue> metrics(source->Schema().size());
+			std::vector<SeriesSample> series(source->SeriesCapacity());
+			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+			uint64_t calls{ 0 }, bytes{ 0 };
+			for (const auto& sample : series) { calls += sample.calls; bytes += sample.bytes; }
+			require(calls == 2 * ZLIB_FALLBACK_REASONS.size() + 1 &&
+				bytes == 2 * ZLIB_FALLBACK_REASONS.size() * 321 &&
+				source->Counters().invalidResults == 0, "profile-only zlib records were lost");
+			for (const auto& expected : expectedSeries)
+			{
+				uint64_t resultCalls{ 0 }, resultBytes{ 0 };
+				for (const auto& sample : series)
+				{
+					if (sample.series == expected) { resultCalls += sample.calls; resultBytes += sample.bytes; }
+				}
+				require(resultCalls == (expected == "zlib.inflate.stock.primary" ? 2 : 1) && resultBytes == 321,
+					"zlib fallback outcomes merged into the wrong duration series");
+			}
+		});
 		runner.test("aggregate drains conserve independently exchanged fields", [] {
 			constexpr uint64_t producerCount{ 4 };
 			constexpr uint64_t iterations{ 50000 };
@@ -392,7 +591,8 @@ namespace vmm_tests
 		});
 
 		runner.test("bounded profile capacity drops without overwriting live tuples", [] {
-			auto source = MakeProfileSource(2);
+			auto source = MakeProfileSource(2, kTestDescriptors,
+				std::pmr::get_default_resource(), "test", "Test operations", 1);
 			require(TelemetryTest::OperationProfileAccess::Start(*source),
 				"profile source did not start");
 			for (uint64_t bytes : { 11ull, 11ull, 11ull })
@@ -602,6 +802,17 @@ namespace vmm_tests
 			source->End(std::move(current), 22);
 			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0,
 				"stale completion changed the new capture active count");
+			for (uint32_t restart = 0; restart < 32; ++restart)
+			{
+				const auto observedGeneration = source->CaptureGeneration();
+				require(TelemetryTest::OperationProfileAccess::Start(*source), "capture state could not be reused");
+				require(!TelemetryTest::OperationProfileAccess::PinGeneration(*source, observedGeneration),
+					"delayed sampled Begin pinned a recycled generation");
+				require(source->AllOperationCount(0) == 0, "old counter lane leaked into a reused capture");
+				source->End(source->Begin(0), 1);
+				require(source->AllOperationCount(0) == 1, "counter lane did not reset on its owner's next generation");
+				require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "reused capture leaked pins");
+			}
 		});
 
 		runner.test("two profile sources survive one capture independently", [] {

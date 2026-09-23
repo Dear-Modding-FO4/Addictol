@@ -111,26 +111,38 @@ independently of `[Telemetry] bEnabled`. Each run writes a unique capture under
 `series.csv`. The legacy `AddictolTelemetry.csv` and `AddictolSeries.csv` paths remain controlled by
 `bEnabled` and `bCsv`.
 
-Each consumer owns a shared `OperationProfileSource`, gives it a stable lowercase source ID and
-display name, and registers it through `Telemetry::Hub().Register(source)` before the hub freezes.
-Construction copies descriptors, duration buckets, labels, and source identity into immutable
-source-owned storage. Quality metrics are namespaced as `profile.<source-id>.*`, so allocator,
-codec, and future consumers can coexist without a second registry or global profiler accessor.
+Installed allocator hooks share one source across MemoryManager, scrap, Havok, CRT, small-block,
+and Scaleform sites. `ProfiledHeap<Heap, Site>` decorates the selected heap; disabled profiling
+selects the original type, without per-call settings checks. Existing heap choices and module
+gates are unchanged, including Visper small-block and the dormant Scaleform replacement.
+Descriptors cover operation families and allocation/reallocation request sizes (≤64 B, ≤1 KiB,
+≤64 KiB, larger), plus failure and realloc in-place/moved results. Free never probes allocation size.
+Sampling is 1/256 with 262,144 records (roughly one second at 67 million heap operations/sec).
 
-`OperationProfileSource::Begin` counts every admitted operation but reads the clock only for
-sampled work; `End(std::move(token))` consumes the move-only token and publishes one coherent
-descriptor/duration/byte tuple. Publication uses explicitly sized preallocated shards and bounded
-`try_lock` producer work; capture metadata reports shard count, capacity, and every rejection.
-`OperationProfileConsumer<false>` supports startup-selected hook specializations with no profiling
-work. Sources must outlive their tokens, and `ScopedOperationProfileSuppression` is only for
-profiler-owned collection/export work.
+Zlib profiling surrounds backend dispatch, not codec implementations. It records total inflate
+duration and output bytes for primary service or stock fallback by reason, including selected stock.
+It samples every call with 16,384 records. This works with ordinary telemetry off; ordinary
+telemetry's existing counters and internal codec timing remain unchanged. Effective backend
+labels and all sampling/storage limits are exported.
 
-Duration percentiles are bucket-bounded estimates. Capture metadata reports sampling, capacity,
-contention/capacity loss, unfinished work, QPC calibration, and completion state. Existing
-libdeflate timing remains coupled to ordinary telemetry until its owning instrumentation adopts this
-source; this foundation does not change codec or allocator semantics. A profiling-enabled run with
-no registered consumers still writes context telemetry and explicitly records
-`instrumented_run: false`.
+Consumers register immutable `OperationProfileSource` descriptors through `Telemetry::Hub().Register`
+before collection starts. `Begin(admission)` counts calls; `End(std::move(token), bytes, result)`
+publishes a coherent sampled record. Results must share the admission's nonempty `resultGroup`
+(or be the admission itself); invalid classifications are rejected and counted. All-operation
+counts remain on admission descriptors, while durations go to result descriptors. Metadata exports
+these groups. Sources must outlive their move-only, generation-bound tokens.
+
+After one-time TLS lane acquisition, unsampled calls use thread-local sampling and relaxed
+loads/stores to exclusively owned, cache-line-padded counters: no shared atomic RMW, clock read,
+or allocation. There are 256 concurrent producer lanes, returned at thread exit; an unassigned
+thread rejects and counts operations for its remaining lifetime. Sampled admission/publication
+is bounded and capture-safe. Collector/exporter work uses `ScopedOperationProfileSuppression`.
+
+Percentiles are bucket-bounded estimates, sampled bytes are not exact heap accounting, and timings
+are inclusive (nested codec/allocator durations must not be added). Counter snapshots have approximate
+interval boundaries. Saturation/contention losses bias retained samples and must be inspected;
+metadata also reports invalid results, producer-capacity loss, unfinished work and capture completion.
+There is no thread-class/BSJobs dimension yet and no in-game performance or hook-safety proof.
 
 ---
 

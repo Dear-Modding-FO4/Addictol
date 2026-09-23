@@ -289,6 +289,8 @@ namespace Addictol
 				a_value.publicationContentionDrops);
 			AddSaturated(a_target.capacityDrops, a_value.capacityDrops);
 			AddSaturated(a_target.staleTokens, a_value.staleTokens);
+			AddSaturated(a_target.invalidResults, a_value.invalidResults);
+			AddSaturated(a_target.producerCapacityDrops, a_value.producerCapacityDrops);
 			AddSaturated(
 				a_target.suppressedOperations,
 				a_value.suppressedOperations);
@@ -301,6 +303,12 @@ namespace Addictol
 	bool Telemetry::EnabledRelaxed() noexcept
 	{
 		return s_ordinaryEnabled.load(std::memory_order_relaxed);
+	}
+
+	TelemetryHub& Telemetry::Hub() noexcept
+	{
+		static TelemetryHub hub{ Addictol::GetQpcFrequency() };
+		return hub;
 	}
 
 	bool Telemetry::ActiveRelaxed() noexcept
@@ -743,6 +751,7 @@ namespace Addictol
 						source->RecordCapacity() <<
 						", \"publication_shards\": " <<
 						source->PublicationShardCount() <<
+						", \"counter_lanes\": " << OperationProfileSource::kCounterLaneCount <<
 						", \"capture_generation\": " <<
 						source->CaptureGeneration() <<
 						", \"labels\": [";
@@ -778,7 +787,10 @@ namespace Addictol
 						metadata << ", \"sampling_period\": " <<
 							descriptor.samplingPeriod <<
 							", \"all_operations\": " <<
-							source->AllOperationCount(index) << '}';
+							source->AllOperationCount(index) << ", \"result_group\": ";
+						if (!WriteJsonString(metadata, descriptor.resultGroup))
+							return false;
+						metadata << '}';
 					}
 					metadata << "], \"duration_buckets\": [";
 					uint64_t lower{ 0 };
@@ -810,6 +822,8 @@ namespace Addictol
 							counters.publicationContentionDrops <<
 						", \"capacity_drops\": " << counters.capacityDrops <<
 						", \"stale_tokens\": " << counters.staleTokens <<
+						", \"invalid_results\": " << counters.invalidResults <<
+						", \"producer_capacity_drops\": " << counters.producerCapacityDrops <<
 						", \"suppressed_operations\": " <<
 							counters.suppressedOperations <<
 						", \"unfinished_operations\": " <<
@@ -831,6 +845,8 @@ namespace Addictol
 						aggregateCounters.capacityDrops <<
 					", \"stale_tokens\": " <<
 						aggregateCounters.staleTokens <<
+					", \"invalid_results\": " << aggregateCounters.invalidResults <<
+					", \"producer_capacity_drops\": " << aggregateCounters.producerCapacityDrops <<
 					", \"suppressed_operations\": " <<
 						aggregateCounters.suppressedOperations <<
 					", \"unfinished_operations\": " <<

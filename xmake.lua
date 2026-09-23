@@ -268,9 +268,11 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Core/Settings/**.cpp")
     add_files("Addictol/Source/Memory/AdAllocator.cpp")
     add_files("Addictol/Source/Memory/AdProxyVoltekHeap.cpp")
+    add_files("Addictol/Source/Memory/AdProfiledHeap.cpp")
     add_files("Addictol/Source/Telemetry/AdOperationProfile.cpp")
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
     add_files("Addictol/Source/Zlib/AdZlibBackend.cpp")
+    add_files("Addictol/Source/Zlib/AdZlibOperationProfile.cpp")
 
     -- add include directories
     add_includedirs(

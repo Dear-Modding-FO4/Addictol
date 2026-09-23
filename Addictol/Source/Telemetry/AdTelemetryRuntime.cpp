@@ -60,12 +60,6 @@ namespace Addictol
 		}
 	}
 
-	TelemetryHub& Telemetry::Hub() noexcept
-	{
-		static TelemetryHub hub{ Addictol::GetQpcFrequency() };
-		return hub;
-	}
-
 	void Telemetry::Initialize(const ModuleManager& a_modules) noexcept
 	{
 		static std::once_flag once;
