@@ -126,14 +126,6 @@ namespace Addictol
 		{
 			return Observe<HeapProfileOperation::Size>([&] { return Heap::GetSingleton()->msize(a_block); });
 		}
-		[[nodiscard]] size_t aligned_msize(void* a_block, size_t a_alignment) const noexcept
-		{
-			return Observe<HeapProfileOperation::AlignedSize>([&] { return Heap::GetSingleton()->aligned_msize(a_block, a_alignment); });
-		}
-		[[nodiscard]] void* CheckPtr(void* a_block, size_t a_size) const noexcept
-		{
-			return Heap::GetSingleton()->CheckPtr(a_block, a_size);
-		}
 
 	private:
 		template<HeapProfileOperation Operation, class F>

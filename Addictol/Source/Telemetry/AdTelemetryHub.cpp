@@ -279,24 +279,23 @@ namespace Addictol
 			OperationProfileCounters& a_target,
 			const OperationProfileCounters& a_value) noexcept
 		{
-			AddSaturated(a_target.sampledAdmissions, a_value.sampledAdmissions);
-			AddSaturated(a_target.acceptedRecords, a_value.acceptedRecords);
-			AddSaturated(
-				a_target.admissionContentionDrops,
-				a_value.admissionContentionDrops);
-			AddSaturated(
-				a_target.publicationContentionDrops,
-				a_value.publicationContentionDrops);
-			AddSaturated(a_target.capacityDrops, a_value.capacityDrops);
-			AddSaturated(a_target.staleTokens, a_value.staleTokens);
-			AddSaturated(a_target.invalidResults, a_value.invalidResults);
-			AddSaturated(a_target.producerCapacityDrops, a_value.producerCapacityDrops);
-			AddSaturated(
-				a_target.suppressedOperations,
-				a_value.suppressedOperations);
-			AddSaturated(
-				a_target.unfinishedOperations,
-				a_value.unfinishedOperations);
+			for (size_t index = 0; index < a_target.values.size(); ++index)
+				AddSaturated(a_target.values[index], a_value.values[index]);
+		}
+
+		void WriteProfileCounters(
+			std::ostream& a_stream,
+			const OperationProfileCounters& a_counters)
+		{
+			a_stream << '{';
+			for (size_t index = 0; index < kOperationProfileQualityNames.size(); ++index)
+			{
+				if (index)
+					a_stream << ", ";
+				a_stream << '"' << kOperationProfileQualityNames[index] << "\": " <<
+					a_counters.values[index];
+			}
+			a_stream << '}';
 		}
 	}
 
@@ -499,7 +498,6 @@ namespace Addictol
 			m_seriesCsvPath = std::move(a_options.seriesCsvPath);
 			m_productVersion = std::move(a_options.productVersion);
 			m_runtime = std::move(a_options.runtime);
-			m_buildIdentity = std::move(a_options.buildIdentity);
 			m_ordinaryTelemetryEnabled = a_options.ordinaryTelemetryEnabled;
 			m_operationProfilingEnabled = !a_options.captureRoot.empty();
 			m_captureState.store(
@@ -719,11 +717,6 @@ namespace Addictol
 				metadata << ", \"runtime\": ";
 				if (!WriteJsonString(metadata, m_runtime))
 					return false;
-				metadata << ", \"build_identity\": ";
-				if (m_buildIdentity.empty())
-					metadata << "null";
-				else if (!WriteJsonString(metadata, m_buildIdentity))
-					return false;
 				metadata << "},\n  \"instrumented_run\": " <<
 					(profileSourceCount ? "true" : "false") <<
 					",\n  \"outputs\": {\"telemetry\": \"telemetry.csv\", "
@@ -813,45 +806,15 @@ namespace Addictol
 							std::numeric_limits<uint64_t>::max())
 							lower = buckets[index].upperNanoseconds + 1;
 					}
-					metadata << "], \"quality\": {"
-						"\"sampled_admissions\": " << counters.sampledAdmissions <<
-						", \"accepted_records\": " << counters.acceptedRecords <<
-						", \"admission_contention_drops\": " <<
-							counters.admissionContentionDrops <<
-						", \"publication_contention_drops\": " <<
-							counters.publicationContentionDrops <<
-						", \"capacity_drops\": " << counters.capacityDrops <<
-						", \"stale_tokens\": " << counters.staleTokens <<
-						", \"invalid_results\": " << counters.invalidResults <<
-						", \"producer_capacity_drops\": " << counters.producerCapacityDrops <<
-						", \"suppressed_operations\": " <<
-							counters.suppressedOperations <<
-						", \"unfinished_operations\": " <<
-							counters.unfinishedOperations <<
-						"}}";
+					metadata << "], \"quality\": ";
+					WriteProfileCounters(metadata, counters);
+					metadata << '}';
 				}
 				if (profileSourceCount)
 					metadata << '\n' << "  ";
-				metadata << "],\n  \"quality\": {"
-					"\"sampled_admissions\": " <<
-						aggregateCounters.sampledAdmissions <<
-					", \"accepted_records\": " <<
-						aggregateCounters.acceptedRecords <<
-					", \"admission_contention_drops\": " <<
-						aggregateCounters.admissionContentionDrops <<
-					", \"publication_contention_drops\": " <<
-						aggregateCounters.publicationContentionDrops <<
-					", \"capacity_drops\": " <<
-						aggregateCounters.capacityDrops <<
-					", \"stale_tokens\": " <<
-						aggregateCounters.staleTokens <<
-					", \"invalid_results\": " << aggregateCounters.invalidResults <<
-					", \"producer_capacity_drops\": " << aggregateCounters.producerCapacityDrops <<
-					", \"suppressed_operations\": " <<
-						aggregateCounters.suppressedOperations <<
-					", \"unfinished_operations\": " <<
-						aggregateCounters.unfinishedOperations <<
-					"},\n  \"errors\": ";
+				metadata << "],\n  \"quality\": ";
+				WriteProfileCounters(metadata, aggregateCounters);
+				metadata << ",\n  \"errors\": ";
 				WriteCaptureErrors(metadata, errors);
 				metadata << "\n}\n";
 				metadata << std::flush;
@@ -1126,7 +1089,6 @@ namespace Addictol
 		try
 		{
 			a_out.state = m_captureState.load(std::memory_order_acquire);
-			a_out.captureId = m_captureId;
 			a_out.directory = m_captureDirectory;
 			a_out.errorFlags =
 				m_captureErrorFlags.load(std::memory_order_relaxed);

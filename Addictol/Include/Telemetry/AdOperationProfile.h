@@ -92,18 +92,48 @@ namespace Addictol
 		OperationProfileClock clock{ nullptr };
 	};
 
+	enum class OperationProfileQuality : size_t
+	{
+		kSampledAdmissions,
+		kAcceptedRecords,
+		kAdmissionContentionDrops,
+		kPublicationContentionDrops,
+		kCapacityDrops,
+		kStaleTokens,
+		kSuppressedOperations,
+		kUnfinishedOperations,
+		kInvalidResults,
+		kProducerCapacityDrops,
+		kCount
+	};
+
+	inline constexpr std::array kOperationProfileQualityNames{
+		std::string_view{ "sampled_admissions" },
+		std::string_view{ "accepted_records" },
+		std::string_view{ "admission_contention_drops" },
+		std::string_view{ "publication_contention_drops" },
+		std::string_view{ "capacity_drops" },
+		std::string_view{ "stale_tokens" },
+		std::string_view{ "suppressed_operations" },
+		std::string_view{ "unfinished_operations" },
+		std::string_view{ "invalid_results" },
+		std::string_view{ "producer_capacity_drops" }
+	};
+	static_assert(kOperationProfileQualityNames.size() == static_cast<size_t>(OperationProfileQuality::kCount));
+
 	struct OperationProfileCounters
 	{
-		uint64_t sampledAdmissions{ 0 };
-		uint64_t acceptedRecords{ 0 };
-		uint64_t admissionContentionDrops{ 0 };
-		uint64_t publicationContentionDrops{ 0 };
-		uint64_t capacityDrops{ 0 };
-		uint64_t staleTokens{ 0 };
-		uint64_t suppressedOperations{ 0 };
-		uint64_t unfinishedOperations{ 0 };
-		uint64_t invalidResults{ 0 };
-		uint64_t producerCapacityDrops{ 0 };
+		std::array<uint64_t, kOperationProfileQualityNames.size()> values{};
+
+		[[nodiscard]] uint64_t& operator[](OperationProfileQuality a_quality) noexcept
+		{
+			return values[static_cast<size_t>(a_quality)];
+		}
+
+		[[nodiscard]] uint64_t operator[](OperationProfileQuality a_quality) const noexcept
+		{
+			return values[static_cast<size_t>(a_quality)];
+		}
 	};
 
 	class OperationProfileSource;
@@ -227,18 +257,14 @@ namespace Addictol
 		{
 			std::atomic<uint64_t> activeBegins{ 0 };
 			std::atomic<uint64_t> activeSampled{ 0 };
-			std::atomic<uint64_t> sampledAdmissions{ 0 };
-			std::atomic<uint64_t> acceptedRecords{ 0 };
-			std::atomic<uint64_t> admissionContentionDrops{ 0 };
-			std::atomic<uint64_t> publicationContentionDrops{ 0 };
-			std::atomic<uint64_t> capacityDrops{ 0 };
-			std::atomic<uint64_t> staleTokens{ 0 };
-			std::atomic<uint64_t> suppressedOperations{ 0 };
-			std::atomic<uint64_t> unfinishedOperations{ 0 };
-			std::atomic<uint64_t> invalidResults{ 0 };
-			std::atomic<uint64_t> producerCapacityDrops{ 0 };
+			std::array<std::atomic<uint64_t>, kOperationProfileQualityNames.size()> counters{};
 			std::atomic<bool> admissionOpen{ false };
 			std::atomic<uint64_t> generation{ 0 };
+
+			[[nodiscard]] std::atomic<uint64_t>& operator[](OperationProfileQuality a_quality) noexcept
+			{
+				return counters[static_cast<size_t>(a_quality)];
+			}
 		};
 
 		struct Record

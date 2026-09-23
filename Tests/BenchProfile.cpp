@@ -207,29 +207,21 @@ namespace
 		const OperationProfileCounters& a_after,
 		const OperationProfileCounters& a_before) noexcept
 	{
-		return {
-			a_after.sampledAdmissions - a_before.sampledAdmissions,
-			a_after.acceptedRecords - a_before.acceptedRecords,
-			a_after.admissionContentionDrops -
-				a_before.admissionContentionDrops,
-			a_after.publicationContentionDrops -
-				a_before.publicationContentionDrops,
-			a_after.capacityDrops - a_before.capacityDrops,
-			a_after.staleTokens - a_before.staleTokens,
-			a_after.suppressedOperations - a_before.suppressedOperations,
-			a_after.unfinishedOperations - a_before.unfinishedOperations,
-			a_after.invalidResults - a_before.invalidResults,
-			a_after.producerCapacityDrops - a_before.producerCapacityDrops
-		};
+		OperationProfileCounters delta{};
+		for (size_t index = 0; index < delta.values.size(); ++index)
+			delta.values[index] = a_after.values[index] - a_before.values[index];
+		return delta;
 	}
 
 	[[nodiscard]] uint64_t Rejected(
 		const OperationProfileCounters& a_counters) noexcept
 	{
-		return a_counters.admissionContentionDrops +
-			a_counters.publicationContentionDrops +
-			a_counters.capacityDrops +
-			a_counters.staleTokens + a_counters.invalidResults + a_counters.producerCapacityDrops;
+		return a_counters[OperationProfileQuality::kAdmissionContentionDrops] +
+			a_counters[OperationProfileQuality::kPublicationContentionDrops] +
+			a_counters[OperationProfileQuality::kCapacityDrops] +
+			a_counters[OperationProfileQuality::kStaleTokens] +
+			a_counters[OperationProfileQuality::kInvalidResults] +
+			a_counters[OperationProfileQuality::kProducerCapacityDrops];
 	}
 
 	template<class Operation>
@@ -308,10 +300,10 @@ namespace
 			CounterDelta(a_source->Counters(), a_before) :
 			OperationProfileCounters{};
 		const auto selected = a_source ?
-			losses.sampledAdmissions +
-				losses.admissionContentionDrops : operations;
+			losses[OperationProfileQuality::kSampledAdmissions] +
+				losses[OperationProfileQuality::kAdmissionContentionDrops] : operations;
 		const auto accepted = a_source ?
-			losses.acceptedRecords : operations;
+			losses[OperationProfileQuality::kAcceptedRecords] : operations;
 		return {
 			std::move(a_mode),
 			a_threads,
@@ -514,21 +506,21 @@ namespace
 				", \"max_ns\": " << result.maximumNanoseconds <<
 				", \"collector_progress\": " << result.collectorProgress <<
 				", \"sampled_admissions\": " <<
-					result.losses.sampledAdmissions <<
+					result.losses[OperationProfileQuality::kSampledAdmissions] <<
 				", \"accepted_records\": " <<
-					result.losses.acceptedRecords <<
+					result.losses[OperationProfileQuality::kAcceptedRecords] <<
 				", \"admission_contention_drops\": " <<
-					result.losses.admissionContentionDrops <<
+					result.losses[OperationProfileQuality::kAdmissionContentionDrops] <<
 				", \"publication_contention_drops\": " <<
-					result.losses.publicationContentionDrops <<
+					result.losses[OperationProfileQuality::kPublicationContentionDrops] <<
 				", \"capacity_drops\": " <<
-					result.losses.capacityDrops <<
+					result.losses[OperationProfileQuality::kCapacityDrops] <<
 				", \"stale_tokens\": " <<
-					result.losses.staleTokens <<
-				", \"invalid_results\": " << result.losses.invalidResults <<
-				", \"producer_capacity_drops\": " << result.losses.producerCapacityDrops <<
+					result.losses[OperationProfileQuality::kStaleTokens] <<
+				", \"invalid_results\": " << result.losses[OperationProfileQuality::kInvalidResults] <<
+				", \"producer_capacity_drops\": " << result.losses[OperationProfileQuality::kProducerCapacityDrops] <<
 				", \"capacity_saturated\": " <<
-					(result.losses.capacityDrops ? "true" : "false") <<
+					(result.losses[OperationProfileQuality::kCapacityDrops] ? "true" : "false") <<
 				", \"rejection_bias\": " <<
 					(result.rejected ?
 						"\"accepted sample excludes rejected operations\"" :

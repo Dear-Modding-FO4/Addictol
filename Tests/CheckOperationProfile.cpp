@@ -133,8 +133,6 @@ namespace
 		void free(void* a_input) { Record(4, a_input, 0, 0); }
 		void aligned_free(void* a_input) { Record(5, a_input, 0, 0); }
 		size_t msize(void* a_input) { Record(6, a_input, 0, 0); return 123; }
-		size_t aligned_msize(void* a_input, size_t a_alignment) { Record(7, a_input, 0, a_alignment); return 456; }
-		void* CheckPtr(void* a_input, size_t a_size) { Record(8, a_input, a_size, 0); return a_input; }
 	};
 
 	uint64_t ReadProfileClock() noexcept
@@ -258,8 +256,6 @@ namespace vmm_tests
 			call(4, nullptr, 0, 0, [&] { heap->free(nullptr); });
 			call(5, block, 0, 0, [&] { heap->aligned_free(block); });
 			call(6, block, 0, 0, [&] { require(heap->msize(block) == 123, "msize result changed"); });
-			call(7, block, 0, 256, [&] { require(heap->aligned_msize(block, 256) == 456, "aligned size result changed"); });
-			call(8, block, 19, 0, [&] { require(heap->CheckPtr(block, 19) == block, "CheckPtr changed"); });
 			call(2, nullptr, 1000, 0, [&] { require(heap->realloc(nullptr, 1000) == block, "null realloc input changed"); });
 			ForwardingHeap::next = nullptr;
 			call(2, block, 0, 0, [&] { require(!heap->realloc(block, 0), "zero-size realloc result changed"); });
@@ -279,7 +275,7 @@ namespace vmm_tests
 				ScopedOperationProfileSuppression suppression;
 				(void)heap->malloc(17);
 			}
-			require(source->Counters().suppressedOperations == 1 &&
+			require(source->Counters()[OperationProfileQuality::kSuppressedOperations] == 1 &&
 				source->AllOperationCount(HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Allocate, 17)) == allBefore,
 				"profiler-owned heap work recursed into operation recording");
 			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "heap profile leaked tokens");
@@ -369,7 +365,7 @@ namespace vmm_tests
 			for (const auto& sample : series) { calls += sample.calls; bytes += sample.bytes; }
 			require(calls == expectedSeries.size() + 1 &&
 				bytes == expectedSeries.size() * 321 &&
-				source->Counters().invalidResults == 0, "profile-only zlib records were lost");
+				source->Counters()[OperationProfileQuality::kInvalidResults] == 0, "profile-only zlib records were lost");
 			for (const auto& expected : expectedSeries)
 			{
 				uint64_t resultCalls{ 0 }, resultBytes{ 0 };
@@ -560,7 +556,7 @@ namespace vmm_tests
 			require(token, "normal operation remained suppressed");
 			source->End(std::move(token), 11);
 			const auto counters = source->Counters();
-			require(counters.suppressedOperations == 1,
+			require(counters[OperationProfileQuality::kSuppressedOperations] == 1,
 				"suppressed operation was not counted");
 			require(source->AllOperationCount(0) == 1,
 				"suppressed profiler work entered application operation totals");
@@ -586,9 +582,9 @@ namespace vmm_tests
 				metrics,
 				series);
 			const auto counters = source->Counters();
-			require(counters.acceptedRecords == 2,
+			require(counters[OperationProfileQuality::kAcceptedRecords] == 2,
 				"profile capacity lost an in-capacity record");
-			require(counters.capacityDrops == 1,
+			require(counters[OperationProfileQuality::kCapacityDrops] == 1,
 				"profile capacity overflow was not counted");
 			uint64_t calls{ 0 };
 			uint64_t ticks{ 0 };
@@ -684,20 +680,20 @@ namespace vmm_tests
 			const auto attempted =
 				static_cast<uint64_t>(threadCount) * iterations;
 			require(
-				counters.sampledAdmissions +
-					counters.admissionContentionDrops == attempted,
+				counters[OperationProfileQuality::kSampledAdmissions] +
+					counters[OperationProfileQuality::kAdmissionContentionDrops] == attempted,
 				"sampled admission loss was not explicitly accounted");
 			require(
-				counters.acceptedRecords +
-					counters.publicationContentionDrops +
-					counters.capacityDrops +
-					counters.staleTokens +
-					counters.unfinishedOperations ==
-				counters.sampledAdmissions,
+				counters[OperationProfileQuality::kAcceptedRecords] +
+					counters[OperationProfileQuality::kPublicationContentionDrops] +
+					counters[OperationProfileQuality::kCapacityDrops] +
+					counters[OperationProfileQuality::kStaleTokens] +
+					counters[OperationProfileQuality::kUnfinishedOperations] ==
+				counters[OperationProfileQuality::kSampledAdmissions],
 				"admitted operation completion loss was not explicitly accounted");
 			require(
 				totals[0].calls + totals[1].calls ==
-					counters.acceptedRecords,
+					counters[OperationProfileQuality::kAcceptedRecords],
 				"collector lost an accepted profile record");
 			require(
 				totals[0].ticks == totals[0].calls &&
@@ -737,7 +733,7 @@ namespace vmm_tests
 			const auto counters = source->Counters();
 			require(TelemetryTest::OperationProfileAccess::Active(*source) == 1,
 				"stale completion decremented the restarted capture");
-			require(counters.acceptedRecords == 0,
+			require(counters[OperationProfileQuality::kAcceptedRecords] == 0,
 				"stale completion published a record after restart");
 			source->End(std::move(current), 22);
 			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0,
@@ -824,7 +820,7 @@ namespace vmm_tests
 
 			const auto stats = hub.Stats();
 			require(
-				stats.operationProfile.acceptedRecords == 2,
+				stats.operationProfile[OperationProfileQuality::kAcceptedRecords] == 2,
 				"hub did not aggregate independent profile counters");
 			const auto columns = hub.Columns();
 			const auto hasFirstQuality = std::ranges::any_of(

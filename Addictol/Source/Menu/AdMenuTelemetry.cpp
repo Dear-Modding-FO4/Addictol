@@ -338,24 +338,27 @@ namespace Addictol
 
 		void DrawOverviewStatus() noexcept
 		{
-			const auto captureState = [&]() noexcept -> const char* {
-				switch (s_cache.capture.state)
-				{
-				case TelemetryCaptureState::kActive:
-					return "active";
-				case TelemetryCaptureState::kComplete:
-					return "complete";
-				case TelemetryCaptureState::kIncomplete:
-					return "incomplete";
-				default:
-					return "disabled";
-				}
-			}();
-			dmui::ui::Text(
-				"Mode telemetry %s  profiling %s  capture %s",
-				s_cache.stats.ordinaryTelemetryEnabled ? "on" : "off",
-				s_cache.stats.operationProfilingEnabled ? "on" : "off",
-				captureState);
+			if (s_cache.stats.operationProfilingEnabled)
+			{
+				const auto captureState = [&]() noexcept -> const char* {
+					switch (s_cache.capture.state)
+					{
+					case TelemetryCaptureState::kActive:
+						return "active";
+					case TelemetryCaptureState::kComplete:
+						return "complete";
+					case TelemetryCaptureState::kIncomplete:
+						return "incomplete";
+					default:
+						return "disabled";
+					}
+				}();
+				dmui::ui::Text(
+					"Mode telemetry %s  profiling %s  capture %s",
+					s_cache.stats.ordinaryTelemetryEnabled ? "on" : "off",
+					s_cache.stats.operationProfilingEnabled ? "on" : "off",
+					captureState);
+			}
 			dmui::ui::Text(
 				"Sample %llu  interval %.3f ms  late %.3f ms",
 				static_cast<unsigned long long>(s_cache.current.sequence),
@@ -366,20 +369,23 @@ namespace Addictol
 				static_cast<unsigned long long>(s_cache.stats.overwrittenSamples),
 				static_cast<unsigned long long>(s_cache.stats.skippedSamples),
 				static_cast<unsigned long long>(s_cache.stats.frameRecordOverflows));
-			const auto& profile = s_cache.stats.operationProfile;
-			dmui::ui::Text(
-				"Profile accepted %llu  capacity %llu  contention %llu  stale %llu  unfinished %llu",
-				static_cast<unsigned long long>(profile.acceptedRecords),
-				static_cast<unsigned long long>(profile.capacityDrops),
-				static_cast<unsigned long long>(
-					profile.admissionContentionDrops +
-					profile.publicationContentionDrops),
-				static_cast<unsigned long long>(profile.staleTokens),
-				static_cast<unsigned long long>(profile.unfinishedOperations));
-			dmui::ui::Text(
-				"Profile invalid results %llu  producer-capacity drops %llu",
-				static_cast<unsigned long long>(profile.invalidResults),
-				static_cast<unsigned long long>(profile.producerCapacityDrops));
+			if (s_cache.stats.operationProfilingEnabled)
+			{
+				const auto& profile = s_cache.stats.operationProfile;
+				dmui::ui::Text(
+					"Profile accepted %llu  capacity %llu  contention %llu  stale %llu  unfinished %llu",
+					static_cast<unsigned long long>(profile[OperationProfileQuality::kAcceptedRecords]),
+					static_cast<unsigned long long>(profile[OperationProfileQuality::kCapacityDrops]),
+					static_cast<unsigned long long>(
+						profile[OperationProfileQuality::kAdmissionContentionDrops] +
+						profile[OperationProfileQuality::kPublicationContentionDrops]),
+					static_cast<unsigned long long>(profile[OperationProfileQuality::kStaleTokens]),
+					static_cast<unsigned long long>(profile[OperationProfileQuality::kUnfinishedOperations]));
+				dmui::ui::Text(
+					"Profile invalid results %llu  producer-capacity drops %llu",
+					static_cast<unsigned long long>(profile[OperationProfileQuality::kInvalidResults]),
+					static_cast<unsigned long long>(profile[OperationProfileQuality::kProducerCapacityDrops]));
+			}
 		}
 	}
 

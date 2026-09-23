@@ -11,18 +11,6 @@ namespace Addictol
 {
 	namespace
 	{
-		inline constexpr std::array<std::string_view, 10> kQualityMetricSuffixes{
-			"sampled_admissions",
-			"accepted_records",
-			"admission_contention_drops",
-			"publication_contention_drops",
-			"capacity_drops",
-			"stale_tokens",
-			"suppressed_operations",
-			"unfinished_operations",
-			"invalid_results",
-			"producer_capacity_drops"
-		};
 		inline constexpr uint32_t kMaximumPublicationShards{ 16 };
 
 		thread_local uint32_t s_suppressionDepth{ 0 };
@@ -260,7 +248,7 @@ namespace Addictol
 				return;
 
 			const auto ownedStringCount =
-				2 + kQualityMetricSuffixes.size() +
+				2 + kOperationProfileQualityNames.size() +
 				a_configuration.descriptors.size() * 4 +
 				a_configuration.durationBuckets.size() +
 				a_configuration.metadataLabels.size() * 2;
@@ -269,7 +257,7 @@ namespace Addictol
 			m_durationBuckets.reserve(a_configuration.durationBuckets.size());
 			m_metadataLabels.reserve(a_configuration.metadataLabels.size());
 			m_schema.reserve(
-				kQualityMetricSuffixes.size() +
+				kOperationProfileQualityNames.size() +
 				a_configuration.descriptors.size());
 			m_descriptorSalts.reserve(a_configuration.descriptors.size());
 
@@ -277,7 +265,7 @@ namespace Addictol
 			m_sourceName = OwnString(a_configuration.sourceName);
 			m_sourceSalt = HashString(m_sourceId);
 
-			for (const auto suffix : kQualityMetricSuffixes)
+			for (const auto suffix : kOperationProfileQualityNames)
 			{
 				std::string key{ "profile." };
 				key.append(m_sourceId);
@@ -406,7 +394,7 @@ namespace Addictol
 		{
 			CapturePin pin{ *capture, generation };
 			if (pin.valid)
-				capture->suppressedOperations.fetch_add(1, std::memory_order_relaxed);
+				(*capture)[OperationProfileQuality::kSuppressedOperations].fetch_add(1, std::memory_order_relaxed);
 			return {};
 		}
 
@@ -416,7 +404,7 @@ namespace Addictol
 		{
 			CapturePin pin{ *capture, generation };
 			if (pin.valid)
-				capture->producerCapacityDrops.fetch_add(1, std::memory_order_relaxed);
+				(*capture)[OperationProfileQuality::kProducerCapacityDrops].fetch_add(1, std::memory_order_relaxed);
 			return {};
 		}
 		auto& counter = m_allOperations[
@@ -446,7 +434,7 @@ namespace Addictol
 		auto& shard = m_publicationShards[shardIndex];
 		if (!shard.mutex.try_lock())
 		{
-			capture->admissionContentionDrops.fetch_add(
+			(*capture)[OperationProfileQuality::kAdmissionContentionDrops].fetch_add(
 				1, std::memory_order_relaxed);
 			return {};
 		}
@@ -459,7 +447,7 @@ namespace Addictol
 		}
 
 		capture->activeSampled.fetch_add(1, std::memory_order_relaxed);
-		capture->sampledAdmissions.fetch_add(1, std::memory_order_relaxed);
+		(*capture)[OperationProfileQuality::kSampledAdmissions].fetch_add(1, std::memory_order_relaxed);
 		const auto startQpc = m_clock();
 		shard.mutex.unlock();
 		return {
@@ -498,7 +486,7 @@ namespace Addictol
 		auto* capture = static_cast<CaptureState*>(a_token.captureState);
 		if (!capture->admissionOpen.load(std::memory_order_acquire))
 		{
-			capture->staleTokens.fetch_add(1, std::memory_order_relaxed);
+			(*capture)[OperationProfileQuality::kStaleTokens].fetch_add(1, std::memory_order_relaxed);
 			capture->activeSampled.fetch_sub(1, std::memory_order_relaxed);
 			return;
 		}
@@ -507,7 +495,7 @@ namespace Addictol
 			(a_resultDescriptor != a_token.descriptorIndex &&
 				(group.empty() || group != m_descriptors[a_resultDescriptor].resultGroup)))
 		{
-			capture->invalidResults.fetch_add(1, std::memory_order_relaxed);
+			(*capture)[OperationProfileQuality::kInvalidResults].fetch_add(1, std::memory_order_relaxed);
 			capture->activeSampled.fetch_sub(1, std::memory_order_relaxed);
 			return;
 		}
@@ -516,7 +504,7 @@ namespace Addictol
 		auto& shard = m_publicationShards[a_token.shardIndex];
 		if (!shard.mutex.try_lock())
 		{
-			capture->publicationContentionDrops.fetch_add(
+			(*capture)[OperationProfileQuality::kPublicationContentionDrops].fetch_add(
 				1, std::memory_order_relaxed);
 			capture->activeSampled.fetch_sub(1, std::memory_order_relaxed);
 			return;
@@ -524,14 +512,14 @@ namespace Addictol
 		if (m_currentCapture.load(std::memory_order_relaxed) != capture ||
 			!capture->admissionOpen.load(std::memory_order_relaxed))
 		{
-			capture->staleTokens.fetch_add(1, std::memory_order_relaxed);
+			(*capture)[OperationProfileQuality::kStaleTokens].fetch_add(1, std::memory_order_relaxed);
 			shard.mutex.unlock();
 			capture->activeSampled.fetch_sub(1, std::memory_order_relaxed);
 			return;
 		}
 
 		if (shard.count == shard.capacity)
-			capture->capacityDrops.fetch_add(1, std::memory_order_relaxed);
+			(*capture)[OperationProfileQuality::kCapacityDrops].fetch_add(1, std::memory_order_relaxed);
 		else
 		{
 			m_records[shard.offset + shard.count++] = {
@@ -540,7 +528,7 @@ namespace Addictol
 				a_bytes,
 				a_resultDescriptor
 			};
-			capture->acceptedRecords.fetch_add(
+			(*capture)[OperationProfileQuality::kAcceptedRecords].fetch_add(
 				1, std::memory_order_relaxed);
 		}
 		shard.mutex.unlock();
@@ -634,18 +622,10 @@ namespace Addictol
 			m_currentCapture.load(std::memory_order_acquire);
 		if (!capture)
 			return {};
-		return {
-			capture->sampledAdmissions.load(std::memory_order_relaxed),
-			capture->acceptedRecords.load(std::memory_order_relaxed),
-			capture->admissionContentionDrops.load(std::memory_order_relaxed),
-			capture->publicationContentionDrops.load(std::memory_order_relaxed),
-			capture->capacityDrops.load(std::memory_order_relaxed),
-			capture->staleTokens.load(std::memory_order_relaxed),
-			capture->suppressedOperations.load(std::memory_order_relaxed),
-			capture->unfinishedOperations.load(std::memory_order_relaxed),
-			capture->invalidResults.load(std::memory_order_relaxed),
-			capture->producerCapacityDrops.load(std::memory_order_relaxed)
-		};
+		OperationProfileCounters counters{};
+		for (size_t index = 0; index < counters.values.size(); ++index)
+			counters.values[index] = capture->counters[index].load(std::memory_order_relaxed);
+		return counters;
 	}
 
 	void OperationProfileSource::Drain(std::span<MetricValue> a_out) noexcept
@@ -692,23 +672,11 @@ namespace Addictol
 
 		const auto counters = Counters();
 		const auto valid = CaptureGeneration() != 0;
-		const std::array values{
-			counters.sampledAdmissions,
-			counters.acceptedRecords,
-			counters.admissionContentionDrops,
-			counters.publicationContentionDrops,
-			counters.capacityDrops,
-			counters.staleTokens,
-			counters.suppressedOperations,
-			counters.unfinishedOperations,
-			counters.invalidResults,
-			counters.producerCapacityDrops
-		};
-		for (size_t index = 0; index < values.size(); ++index)
-			a_out[index] = { static_cast<double>(values[index]), valid };
+		for (size_t index = 0; index < counters.values.size(); ++index)
+			a_out[index] = { static_cast<double>(counters.values[index]), valid };
 		for (size_t index = 0; index < m_descriptors.size(); ++index)
 		{
-			a_out[kQualityMetricSuffixes.size() + index] = {
+			a_out[kOperationProfileQualityNames.size() + index] = {
 				static_cast<double>(AllOperationCount(index)),
 				valid
 			};
@@ -805,7 +773,7 @@ namespace Addictol
 			return 0;
 		if (!capture->admissionOpen.exchange(
 				false, std::memory_order_acq_rel))
-			return capture->unfinishedOperations.load(
+			return (*capture)[OperationProfileQuality::kUnfinishedOperations].load(
 				std::memory_order_relaxed);
 
 		for (uint32_t index = 0; index < m_publicationShardCount; ++index)
@@ -815,7 +783,7 @@ namespace Addictol
 
 		const auto unfinished =
 			capture->activeSampled.load(std::memory_order_relaxed);
-		capture->unfinishedOperations.store(
+		(*capture)[OperationProfileQuality::kUnfinishedOperations].store(
 			unfinished, std::memory_order_relaxed);
 		return unfinished;
 	}
@@ -843,16 +811,8 @@ namespace Addictol
 		CaptureState& a_state) noexcept
 	{
 		a_state.activeSampled.store(0, std::memory_order_relaxed);
-		a_state.sampledAdmissions.store(0, std::memory_order_relaxed);
-		a_state.acceptedRecords.store(0, std::memory_order_relaxed);
-		a_state.admissionContentionDrops.store(0, std::memory_order_relaxed);
-		a_state.publicationContentionDrops.store(0, std::memory_order_relaxed);
-		a_state.capacityDrops.store(0, std::memory_order_relaxed);
-		a_state.staleTokens.store(0, std::memory_order_relaxed);
-		a_state.suppressedOperations.store(0, std::memory_order_relaxed);
-		a_state.unfinishedOperations.store(0, std::memory_order_relaxed);
-		a_state.invalidResults.store(0, std::memory_order_relaxed);
-		a_state.producerCapacityDrops.store(0, std::memory_order_relaxed);
+		for (auto& counter : a_state.counters)
+			counter.store(0, std::memory_order_relaxed);
 		a_state.admissionOpen.store(false, std::memory_order_relaxed);
 	}
 }

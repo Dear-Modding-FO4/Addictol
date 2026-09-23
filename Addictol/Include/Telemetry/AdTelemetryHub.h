@@ -67,7 +67,6 @@ namespace Addictol
 	struct TelemetryCaptureStatus
 	{
 		TelemetryCaptureState state{ TelemetryCaptureState::kDisabled };
-		std::string captureId{};
 		std::filesystem::path directory{};
 		uint32_t errorFlags{ 0 };
 		bool instrumented{ false };
@@ -81,7 +80,6 @@ namespace Addictol
 		std::filesystem::path captureRoot{};
 		std::string productVersion{};
 		std::string runtime{};
-		std::string buildIdentity{};
 		bool ordinaryTelemetryEnabled{ false };
 	};
 
@@ -197,7 +195,6 @@ namespace Addictol
 		std::string m_captureCompletedUtc{};
 		std::string m_productVersion{};
 		std::string m_runtime{};
-		std::string m_buildIdentity{};
 		uint64_t m_captureOriginQpc{ 0 };
 		std::atomic<TelemetryCaptureState> m_captureState{
 			TelemetryCaptureState::kDisabled
