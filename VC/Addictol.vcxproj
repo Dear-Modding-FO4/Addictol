@@ -29,6 +29,12 @@
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryRuntime.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdZlibBackend.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\AdInflateBuffer.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdInflateStreamMirror.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibDecoder.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibNgDecoder.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdIsalDecoder.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdAssert.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdGameUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdMain.cpp" />
@@ -167,6 +173,13 @@
     <ClInclude Include="..\Addictol\Include\Telemetry\AdAllocatorPoolTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdAssert.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\AdOwnedInflate.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\AdInflateBuffer.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateDecoder.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateStreamMirror.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdNativeZlibDecoder.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdIsalDecoder.h" />
+    <ClInclude Include="..\Addictol\Source\Zlib\Decoders\AdNativeZlibDecoder.inl" />
     <ClInclude Include="..\Addictol\Include\Core\AdRegistration.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenu.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuChangelog.h" />

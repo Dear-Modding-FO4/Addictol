@@ -119,7 +119,9 @@ namespace Addictol
 	enum class ZlibDecodeStatus : uint8_t
 	{
 		Success,
-		Failed
+		Failed,
+		BadData = Failed,
+		InsufficientSpace
 	};
 
 	struct ZlibDecodeResult

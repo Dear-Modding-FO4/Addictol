@@ -47,20 +47,11 @@ namespace Addictol
 		std::span<const uint8_t> a_input,
 		std::span<uint8_t> a_output) noexcept
 	{
-		size_t consumed = 0;
-		size_t produced = 0;
-		const auto result = libdeflate_zlib_decompress_ex(
-			GetThreadDecompressor(),
-			a_input.data(),
-			a_input.size(),
-			a_output.data(),
-			a_output.size(),
-			&consumed,
-			&produced);
-		if (result != LIBDEFLATE_SUCCESS)
-			return { ZlibDecodeStatus::Failed, 0, 0, static_cast<uint32_t>(result) };
-
-		return { ZlibDecodeStatus::Success, consumed, produced, static_cast<uint32_t>(result) };
+		const auto result = DecodeExact(a_input, a_output);
+		const auto status = result.codecResult == ZLIB_CODEC_SUCCESS ? ZlibDecodeStatus::Success :
+			result.codecResult == ZLIB_CODEC_INSUFFICIENT_SPACE ? ZlibDecodeStatus::InsufficientSpace :
+			ZlibDecodeStatus::BadData;
+		return { status, result.consumed, result.produced, result.codecResult };
 	}
 
 	ZlibExactDecode LibDeflateZlibBackend::DecodeExact(

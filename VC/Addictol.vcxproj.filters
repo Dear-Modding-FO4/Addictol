@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp"><Filter>Source\Zlib</Filter></ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\AdInflateBuffer.cpp"><Filter>Source\Zlib</Filter></ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdInflateStreamMirror.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibDecoder.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibNgDecoder.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
+    <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdIsalDecoder.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
     <ClCompile Include="..\Addictol\Source\Memory\AdAllocator.cpp">
       <Filter>Source\Memory</Filter>
     </ClCompile>
@@ -990,5 +996,16 @@
     <Filter Include="Source\Menu">
       <UniqueIdentifier>{9d41b7e8-2c65-4f38-b0a7-e51d93c6a284}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdOwnedInflate.h"><Filter>Include\Zlib</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\AdInflateBuffer.h"><Filter>Include\Zlib</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateDecoder.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateStreamMirror.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdNativeZlibDecoder.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdIsalDecoder.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>
+    <ClInclude Include="..\Addictol\Source\Zlib\Decoders\AdNativeZlibDecoder.inl"><Filter>Source\Zlib\Decoders</Filter></ClInclude>
+    <Filter Include="Source\Zlib\Decoders"><UniqueIdentifier>{F0FE98DC-EA85-44B4-911B-3436A7C7E62F}</UniqueIdentifier></Filter>
+    <Filter Include="Include\Zlib\Decoders"><UniqueIdentifier>{CFC57E66-9663-4D17-BD49-EA02E9241196}</UniqueIdentifier></Filter>
   </ItemGroup>
 </Project>

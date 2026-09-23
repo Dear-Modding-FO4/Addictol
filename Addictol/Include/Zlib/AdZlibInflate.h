@@ -123,11 +123,11 @@ namespace Addictol::ZlibInflate
 		return *ModePointer(*a_stream) == MODE_HEAD;
 	}
 
-	[[nodiscard]] constexpr bool IsZlibHeader(uint8_t a_cmf, uint8_t a_flg) noexcept
+	[[nodiscard]] constexpr bool IsZlibHeader(uint8_t a_cmf, uint8_t a_flg, bool a_allowDictionary = false) noexcept
 	{
 		return (a_cmf & 0x0F) == 8 &&
 			((a_cmf >> 4) & 0x0F) <= 7 &&
-			(a_flg & 0x20) == 0 &&
+			(a_allowDictionary || (a_flg & 0x20) == 0) &&
 			((static_cast<uint32_t>(a_cmf) << 8 | a_flg) % 31) == 0;
 	}
 
