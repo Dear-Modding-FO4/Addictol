@@ -27,6 +27,7 @@ namespace Addictol
 		configuration.sourceName = "Zlib inflate operations";
 		configuration.descriptors = kZlibProfileDescriptors;
 		configuration.metadataLabels = labels;
+		configuration.recordCapacity = kZlibProfileRecordCapacity;
 		return s_zlibProfile.Register(a_hub, configuration);
 	}
 }

@@ -35,6 +35,8 @@ namespace Addictol
 	}
 
 	inline constexpr auto kZlibProfileDescriptors = MakeOperationProfileDescriptors(ZlibProfileDetail::kNames, 1);
+	// Load bursts reached ~87k inflates within one collection interval.
+	inline constexpr size_t kZlibProfileRecordCapacity{ 131072 };
 
 	[[nodiscard]] constexpr uint32_t ZlibProfileAdmission(ZlibBackendKind a_backend) noexcept
 	{
