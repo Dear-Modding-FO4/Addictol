@@ -1,0 +1,100 @@
+name: Crash / CTD
+description: The game crashes, freezes, or closes and you suspect Addictol.
+title: "[Crash] "
+labels: ["crash"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Crash reports without a crash log usually cannot be diagnosed. Install
+        [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger) (or Buffout 4)
+        and attach the log it writes after the crash.
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Before reporting
+      options:
+        - label: I searched existing issues, including closed ones.
+          required: true
+        - label: I am on the latest Addictol release, or I name the release below and explain why.
+          required: true
+        - label: My Address Library and F4SE match my game runtime.
+          required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Game runtime
+      options:
+        - OG 1.10.163
+        - NG 1.10.984
+        - AE 1.11.x
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: addictol-version
+    attributes:
+      label: Addictol version
+      placeholder: "1.6.0"
+    validations:
+      required: true
+  - type: input
+    id: f4se-version
+    attributes:
+      label: F4SE version
+      placeholder: "0.7.2"
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you were doing when the game crashed.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Load a save in Sanctuary
+        2. Open the workshop menu
+        3. Close it
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time
+        - Sometimes
+        - Once
+    validations:
+      required: true
+  - type: dropdown
+    id: isolation
+    attributes:
+      label: Does it still crash with the suspected Addictol setting disabled in Addictol.toml?
+      options:
+        - "No, disabling it stops the crash"
+        - "Yes, it still crashes"
+        - Not tested
+        - I don't know which setting is involved
+    validations:
+      required: true
+  - type: textarea
+    id: crash-log
+    attributes:
+      label: Crash log
+      description: Drag the crash log file here, or paste a Pastebin/Gist link.
+    validations:
+      required: true
+  - type: textarea
+    id: addictol-log
+    attributes:
+      label: Addictol.log
+      description: From `Documents\My Games\Fallout4\F4SE\`. Drag the file here or paste a link.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Load order and other details
+      description: Modlist or collection name, plugin count, and any mods that touch the same system.

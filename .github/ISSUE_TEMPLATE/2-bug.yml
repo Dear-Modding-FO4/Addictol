@@ -1,0 +1,65 @@
+name: Bug / regression
+description: Something Addictol does is wrong or broke after an update, without crashing.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Before reporting
+      options:
+        - label: I searched existing issues, including closed ones.
+          required: true
+        - label: My Address Library and F4SE match my game runtime.
+          required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Game runtime
+      options:
+        - OG 1.10.163
+        - NG 1.10.984
+        - AE 1.11.x
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: addictol-version
+    attributes:
+      label: Addictol version
+      placeholder: "1.6.0"
+    validations:
+      required: true
+  - type: input
+    id: last-working
+    attributes:
+      label: Last version that worked
+      description: Leave empty if it never worked or you have not checked.
+      placeholder: "1.5.2"
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Related Addictol settings
+      description: The Addictol.toml keys you changed or suspect, and whether toggling them changes the result.
+  - type: textarea
+    id: addictol-log
+    attributes:
+      label: Addictol.log
+      description: From `Documents\My Games\Fallout4\F4SE\`. Drag the file here or paste a link.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Load order and other details
+      description: Modlist or collection name, plugin count, screenshots, or video.

@@ -1,0 +1,50 @@
+name: Vanilla fix request
+description: An engine bug in Fallout 4 itself that Addictol could fix.
+title: "[Vanilla Fix] "
+labels: ["vanilla-fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for bugs that happen without Addictol installed. If Addictol causes the problem,
+        use the Crash or Bug form instead.
+  - type: dropdown
+    id: runtimes
+    attributes:
+      label: Runtimes where you have seen it
+      multiple: true
+      options:
+        - OG 1.10.163
+        - NG 1.10.984
+        - AE 1.11.x
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: The bug
+      description: What goes wrong, and the crash address or symptom if you know it.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: cause
+    attributes:
+      label: Suspected cause
+      description: Any analysis of the engine code or data involved.
+  - type: textarea
+    id: prior-art
+    attributes:
+      label: Existing fixes or workarounds
+      description: Mods that already patch this, or settings you tried that did or did not help.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs and references
+      description: Crash logs, videos, forum threads. Credit the original reporter if this was reported elsewhere.

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Crash logger
+    url: https://github.com/Dear-Modding-FO4/AddictolCrashLogger
+    about: Install this first so crash reports include a usable log.
+  - name: Latest release
+    url: https://github.com/Dear-Modding-FO4/Addictol/releases/latest
+    about: Check that the problem still happens on the latest release.
+  - name: Contributing guide
+    url: https://github.com/Dear-Modding-FO4/Addictol/blob/master/CONTRIBUTING.md
+    about: Building, adding modules, and submitting pull requests.

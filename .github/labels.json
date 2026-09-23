@@ -1,0 +1,29 @@
+[
+  { "name": "crash", "color": "b60205", "description": "Game crash or CTD" },
+  { "name": "bug", "color": "d73a4a", "description": "Something isn't working" },
+  { "name": "vanilla-fix", "color": "e99695", "description": "Engine bug Addictol should fix" },
+  { "name": "enhancement", "color": "a2eeef", "description": "New feature or request" },
+  { "name": "performance", "color": "fbca04", "description": "Speed, stutter, or memory improvement" },
+  { "name": "documentation", "color": "0075ca", "description": "Improvements or additions to documentation" },
+
+  { "name": "runtime:og", "color": "c5def5", "description": "Fallout 4 1.10.163" },
+  { "name": "runtime:ng", "color": "bfd4f2", "description": "Fallout 4 1.10.984" },
+  { "name": "runtime:ae", "color": "b4c7e7", "description": "Fallout 4 1.11.x" },
+
+  { "name": "needs-info", "color": "d876e3", "description": "Waiting on logs, versions, or details from the reporter" },
+  { "name": "needs-repro", "color": "c2a0e8", "description": "Not yet reproduced by a maintainer" },
+  { "name": "confirmed", "color": "0e8a16", "description": "Reproduced and attributed to Addictol or the engine" },
+  { "name": "third-party", "color": "7057ff", "description": "Caused by another mod, not Addictol", "aliases": ["Bugs another mods"] },
+  { "name": "duplicate", "color": "cfd3d7", "description": "This issue or pull request already exists" },
+  { "name": "wontfix", "color": "ffffff", "description": "This will not be worked on" },
+  { "name": "invalid", "color": "e4e669", "description": "This doesn't seem right" },
+
+  { "name": "good first issue", "color": "7057ff", "description": "Good for newcomers" },
+  { "name": "help wanted", "color": "008672", "description": "Extra attention is needed" },
+
+  { "name": "area:memory", "color": "5319e7", "description": "Allocators, memory manager, and budgets" },
+  { "name": "area:rendering", "color": "1d76db", "description": "D3D, shaders, textures, and effects" },
+  { "name": "area:papyrus", "color": "006b75", "description": "Papyrus VM and scripts" },
+  { "name": "area:save", "color": "0052cc", "description": "Save, load, cosave, and compression" },
+  { "name": "area:ui", "color": "5ebeff", "description": "Menus, HUD, Scaleform, and the in-game menu" }
+]

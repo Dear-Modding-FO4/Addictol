@@ -1,0 +1,35 @@
+name: Suggestion
+description: A new feature, performance improvement, or setting.
+title: "[Suggestion] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - New feature
+        - Performance improvement
+        - New or changed setting
+        - Port from another mod
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is missing or slow today, and who it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What Addictol should do.
+    validations:
+      required: true
+  - type: textarea
+    id: prior-art
+    attributes:
+      label: Prior art
+      description: Mods or tools that already do this, with links and license if you know it.

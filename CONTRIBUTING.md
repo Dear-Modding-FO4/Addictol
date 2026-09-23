@@ -589,3 +589,9 @@ anything that could interact with the patch.
 Reviewers look for, roughly in order: whether the ids are correct on all three runtimes, whether the
 module fails closed, whether it can fight another module or mod, whether the TOML key is wired
 through all six places, and only then style.
+
+## Issue labels
+
+`.github/labels.json` is the label source of truth. After editing it, run
+`.\.github\scripts\sync-labels.ps1` (add `-WhatIf` to preview); it creates or updates labels, renames
+listed `aliases` so tagged issues keep them, and never deletes unlisted labels.
