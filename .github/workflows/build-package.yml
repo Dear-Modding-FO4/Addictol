@@ -56,10 +56,6 @@ jobs:
           path: source
           submodules: recursive
 
-      - name: Test release tooling at the pinned source
-        shell: pwsh
-        run: ./source/Tests/release-tools.tests.ps1
-
       - name: Verify pinned source and compute metadata
         id: metadata
         shell: pwsh

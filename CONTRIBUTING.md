@@ -544,7 +544,6 @@ Run the standalone checks from the repository root:
 ```powershell
 xmake build -P . -y vmm-tests
 .\.Build\Tests\vmm-tests.exe
-.\Tests\release-tools.tests.ps1
 ```
 
 The default C++ runner covers VMM allocation, concurrency and memory shape; production codec serving

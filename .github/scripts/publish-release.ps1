@@ -142,3 +142,12 @@ if ($assetNames -notcontains $assetName) {
 } else {
     Write-Host "Asset $assetName already exists; preserving it without replacement."
 }
+
+if ($Channel -eq 'development') {
+    foreach ($release in @($releases | Where-Object { $_.prerelease -and -not $_.draft -and $_.tag_name -ne $tag })) {
+        $oldTag = [string]$release.tag_name
+        $null = Invoke-GitHubApi -Endpoint "repos/$Repository/releases/$($release.id)" -Method DELETE -AllowNotFound
+        $null = Invoke-GitHubApi -Endpoint "repos/$Repository/git/refs/tags/$(ConvertTo-UrlComponent $oldTag)" -Method DELETE -AllowNotFound
+        Write-Host "Removed superseded prerelease $oldTag."
+    }
+}
