@@ -26,10 +26,10 @@ namespace vmm_tests
 				{ RESET_ZERO_OFFSET, RESET_ZERO }, { RESET_STORE_OFFSET, RESET_STORE } })
 				std::copy(bytes.begin(), bytes.end(), image.begin() + offset);
 			size_t commits{};
-			require(InstallValidatedZlib(image, [&] { ++commits; return true; }) && commits == 1, "valid image rejected");
+			require(!InstallValidatedZlib(image, [&] { ++commits; return true; }) && commits == 1, "valid image rejected");
 			const auto reject = [&](size_t offset) {
 				image[offset] ^= 1;
-				require(!InstallValidatedZlib(image, [&] { ++commits; return true; }) && commits == 1, "invalid image patched");
+				require(InstallValidatedZlib(image, [&] { ++commits; return true; }) && commits == 1, "invalid image patched");
 				image[offset] ^= 1;
 			};
 			for (const auto& entry : ZLIB_ENTRIES) reject(entry.offset);

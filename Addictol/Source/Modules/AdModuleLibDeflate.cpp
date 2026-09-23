@@ -36,8 +36,6 @@ namespace Addictol
 			return fail("unsupported runtime");
 		const auto anchor = REL::ID{ 224011, 2168026, 2168026 }.address();
 		const auto image = std::span{ reinterpret_cast<const uint8_t*>(anchor), ZLIB_INSTALL_IMAGE_SIZE };
-		if (const auto rejected = ValidateZlibInstallation(image))
-			return fail(*rejected);
 		for (size_t index = 0; index < ZLIB_ENTRIES.size(); ++index)
 		{
 			const auto& entry = ZLIB_ENTRIES[index];
@@ -47,27 +45,27 @@ namespace Addictol
 			ZlibHooks::targets[index].original = reinterpret_cast<void*>(address);
 			ZlibHooks::targets[index].expected = { entry.prologue.begin(), entry.prologue.size() };
 		}
-		const bool profiling = bTelemetryOperationProfiling.GetValue() &&
-			InitializeZlibOperationProfile(Telemetry::Hub(), GetSelectedZlibBackendKind());
-		if (bTelemetryOperationProfiling.GetValue() && !profiling)
-			REX::WARN("Owned zlib: operation profiling registration failed; hooks remain uninstrumented.");
-		VisitSelectedZlibBackend([&]<class Backend> {
-			if constexpr (Backend::kind != ZlibBackendKind::Stock)
-			{
-				(void)InstallSelectedOperationProfileConsumer(profiling, []<bool Profile> {
-					ZlibHooks::Selected<Backend, Profile>::Select();
-					return true;
-				});
-			}
-		});
-		const bool installed = InstallValidatedZlib(image, [&] {
+		const auto rejected = InstallValidatedZlib(image, [&] {
+			const bool profiling = bTelemetryOperationProfiling.GetValue() &&
+				InitializeZlibOperationProfile(Telemetry::Hub(), GetSelectedZlibBackendKind());
+			if (bTelemetryOperationProfiling.GetValue() && !profiling)
+				REX::WARN("Owned zlib: operation profiling registration failed; hooks remain uninstrumented.");
+			VisitSelectedZlibBackend([&]<class Backend> {
+				if constexpr (Backend::kind != ZlibBackendKind::Stock)
+				{
+					(void)InstallSelectedOperationProfileConsumer(profiling, []<bool Profile> {
+						ZlibHooks::Selected<Backend, Profile>::Select();
+						return true;
+					});
+				}
+			});
 			const auto result = RELEX::DetourBatch(ZlibHooks::targets);
 			if (!result)
 				REX::ERROR("Owned zlib: Detours transaction error {} at target {}.", result.error, result.target);
 			return static_cast<bool>(result);
 		});
-		if (!installed)
-			return fail("transaction rejected");
+		if (rejected)
+			return fail(*rejected);
 		m_active.store(true, std::memory_order_relaxed);
 		REX::INFO("Owned zlib: all 15 entries installed transactionally; backend {}.", ZlibBackendKindName(GetSelectedZlibBackendKind()));
 		return true;

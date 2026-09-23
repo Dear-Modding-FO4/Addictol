@@ -9,8 +9,6 @@
 
 namespace Addictol::ZlibInflate
 {
-	constexpr int32_t Z_STREAM_END		= 1;
-
 	struct Stream
 	{
 		const uint8_t* next_in;

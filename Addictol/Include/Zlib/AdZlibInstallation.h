@@ -41,10 +41,15 @@ namespace Addictol
 			return "inflate anchor contract";
 		return std::nullopt;
 	}
+	// Returns the rejection reason; empty means every entry and anchor matched and the commit succeeded.
 	template<class Commit>
-	bool InstallValidatedZlib(std::span<const uint8_t> a_image, Commit&& a_commit)
+	std::optional<std::string_view> InstallValidatedZlib(std::span<const uint8_t> a_image, Commit&& a_commit)
 	{
-		return !ValidateZlibInstallation(a_image) && a_commit();
+		if (const auto rejected = ValidateZlibInstallation(a_image))
+			return rejected;
+		if (!a_commit())
+			return "transaction rejected";
+		return std::nullopt;
 	}
 	void LogInvalidOwnedZlibState() noexcept;
 	template<class Owned, class Original, class Function>
