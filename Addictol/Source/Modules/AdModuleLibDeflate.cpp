@@ -89,7 +89,8 @@ namespace Addictol
 	{
 		if (a_out.size() != Schema().size()) return;
 		const auto packed = m_interval.Drain();
-		const auto active = m_active.load(std::memory_order_relaxed);
+		// Counters only record with ordinary telemetry; profiling-only captures must not report them as zero.
+		const auto active = m_active.load(std::memory_order_relaxed) && Telemetry::EnabledRelaxed();
 		a_out[0] = { static_cast<double>(static_cast<uint32_t>(packed)), active };
 		a_out[1] = { static_cast<double>(packed >> 32), active };
 		a_out[2] = { static_cast<double>(m_interval.DrainBytesOut()), active };
