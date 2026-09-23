@@ -489,13 +489,12 @@ namespace Addictol
 		inline static constexpr size_t kFallbackReasonCount{ 6 };
 
 		std::atomic<uint64_t> packed{ 0 };
-		std::atomic<uint64_t> buffered{ 0 };
 		std::atomic<uint64_t> bytesIn{ 0 };
 		std::atomic<uint64_t> bytesOut{ 0 };
 		std::atomic<uint64_t> fallbackBytesOut{ 0 };
 		std::array<std::atomic<uint64_t>, kFallbackReasonCount> fallbackReasons{};
-		Histogram<kZlibSizeBuckets.size()> servedWholeOutput{}, servedBufferedOutput{}, servedStreamingOutput{};
-		Histogram<kZlibSizeBuckets.size()> servedWholeInput{}, servedBufferedInput{}, servedStreamingInput{};
+		Histogram<kZlibSizeBuckets.size()> servedWholeOutput{}, servedStreamingOutput{};
+		Histogram<kZlibSizeBuckets.size()> servedWholeInput{}, servedStreamingInput{};
 		Histogram<2> fallbackThread{};
 		Histogram<2> servedThread{};
 		Histogram<6> flush{};
@@ -504,7 +503,6 @@ namespace Addictol
 		{
 			static constexpr std::array schema{
 				MetricDescriptor{ "zlib.whole_count", Unit::kCount },
-				MetricDescriptor{ "zlib.buffered_count", Unit::kCount },
 				MetricDescriptor{ "zlib.streaming_count", Unit::kCount },
 				MetricDescriptor{ "zlib.bytes_out", Unit::kBytes },
 				MetricDescriptor{ "zlib.bytes_in", Unit::kBytes },
@@ -522,11 +520,10 @@ namespace Addictol
 		void Observe(
 			ZlibFallbackReason a_fallbackReason,
 			uint64_t a_bytesIn,
-			uint64_t a_bytesOut, bool a_buffered = false) noexcept
+			uint64_t a_bytesOut) noexcept
 		{
 			const auto reason = std::to_underlying(a_fallbackReason);
-			if (a_buffered) buffered.fetch_add(1, std::memory_order_relaxed);
-			else packed.fetch_add(reason ? (1ull << 32) : 1ull, std::memory_order_relaxed);
+			packed.fetch_add(reason ? (1ull << 32) : 1ull, std::memory_order_relaxed);
 			bytesIn.fetch_add(a_bytesIn, std::memory_order_relaxed);
 			bytesOut.fetch_add(a_bytesOut, std::memory_order_relaxed);
 			if (reason > 0 && reason <= kFallbackReasonCount)
@@ -544,12 +541,12 @@ namespace Addictol
 			uint32_t a_renderThreadId,
 			uint64_t a_bytesIn,
 			uint64_t a_bytesOut,
-			uint64_t a_ticks, bool a_buffered = false) noexcept
+			uint64_t a_ticks) noexcept
 		{
 			auto& output =
-				a_buffered ? servedBufferedOutput : a_servedByWhole ? servedWholeOutput : servedStreamingOutput;
+				a_servedByWhole ? servedWholeOutput : servedStreamingOutput;
 			auto& input =
-				a_buffered ? servedBufferedInput : a_servedByWhole ? servedWholeInput : servedStreamingInput;
+				a_servedByWhole ? servedWholeInput : servedStreamingInput;
 			output.Add(ZlibSizeBucketIndex(a_bytesOut), 1, a_ticks, a_bytesOut);
 			input.Add(ZlibSizeBucketIndex(a_bytesIn), 1, a_ticks, a_bytesIn);
 			const auto threadBucket =
@@ -602,6 +599,6 @@ namespace Addictol
 			uint32_t a_currentThreadId,
 			uint64_t a_bytesIn,
 			uint64_t a_bytesOut,
-			uint64_t a_ticks, bool a_buffered = false) noexcept;
+			uint64_t a_ticks) noexcept;
 	}
 }

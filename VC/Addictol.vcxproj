@@ -31,7 +31,6 @@
     <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdZlibInstallation.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdDetourBatch.cpp" />
-    <ClCompile Include="..\Addictol\Source\Zlib\AdInflateBuffer.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdInflateStreamMirror.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibDecoder.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibNgDecoder.cpp" />
@@ -178,7 +177,6 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInstallation.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibHooks.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackendRegistry.h" />
-    <ClInclude Include="..\Addictol\Include\Zlib\AdInflateBuffer.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateDecoder.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateStreamMirror.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdNativeZlibDecoder.h" />

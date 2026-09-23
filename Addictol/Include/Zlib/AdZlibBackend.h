@@ -55,7 +55,7 @@ namespace Addictol
 	ZlibBackendKind GetSelectedZlibBackendKind() noexcept;
 	void InitializeZlibBackendConfig() noexcept;
 
-	enum class ZlibOwnedPolicy : uint8_t { Undecided, Streaming, Whole, Buffered, Done };
+	enum class ZlibOwnedPolicy : uint8_t { Undecided, Streaming, Whole, Done };
 	enum class ZlibFallbackReason : uint8_t { None, NoWhole, Format, Request, Allocation, Decode, Capacity };
 	struct ZlibFallbackReasonEntry { std::string_view name; ZlibFallbackReason reason; };
 	inline constexpr std::array ZLIB_FALLBACK_REASONS{

@@ -12,6 +12,18 @@ namespace
 	using Stream = ZlibInflate::Stream;
 	using vmm_tests::require;
 
+	struct ObservedWholeDecoder
+	{
+		inline static size_t calls{};
+		inline static uint8_t* output{};
+		static ZlibDecodeResult Decode(std::span<const uint8_t> a_input, std::span<uint8_t> a_output) noexcept
+		{
+			++calls;
+			output = a_output.data();
+			return LibDeflateZlibBackend::Decode(a_input, a_output);
+		}
+	};
+
 	struct Engine
 	{
 		const char* name;
@@ -43,8 +55,8 @@ namespace
 		MakeEngine<NoWholeInflateDecoder, ZlibDecoder>("zlib"),
 		MakeEngine<NoWholeInflateDecoder, ZlibNgDecoder>("zlib-ng"),
 		MakeEngine<NoWholeInflateDecoder, IsalDecoder>("isa-l"),
-		MakeEngine<LibDeflateZlibBackend, ZlibNgDecoder>("hybrid-zlib-ng"),
-		MakeEngine<LibDeflateZlibBackend, IsalDecoder>("hybrid-isa-l")
+		MakeEngine<ObservedWholeDecoder, ZlibNgDecoder>("hybrid-zlib-ng"),
+		MakeEngine<ObservedWholeDecoder, IsalDecoder>("hybrid-isa-l")
 	};
 
 	struct OwnedStream
@@ -85,6 +97,7 @@ namespace
 		uint32_t outputChunk{ UINT32_MAX }, inputChunk{ UINT32_MAX };
 		bool reset{}, peek{}, corrupt{}, repeated{};
 		size_t size{ 2 * 1024 * 1024 };
+		bool skipWhole{};
 	};
 
 	void RunPattern(const Engine& a_engine, const Pattern& a_pattern, size_t a_size)
@@ -102,6 +115,7 @@ namespace
 		vmm_tests::ZlibOracle oracle(a_pattern.bits);
 		for (int reuse = 0; reuse < (a_pattern.reset ? 2 : 1); ++reuse)
 		{
+			const auto wholeCalls = ObservedWholeDecoder::calls;
 			std::vector<uint8_t> actual(payload.size() + 16, 0xCC), reference(actual);
 			auto& stream = owned.stream;
 			auto& expected = oracle.stream;
@@ -139,6 +153,21 @@ namespace
 				expected.avail_out = referenceCount;
 				const auto referenceResult = oracle.Inflate(a_pattern.flush);
 				result = a_engine.inflate(&stream, a_pattern.flush);
+				if (calls == 1)
+				{
+					if (ObservedWholeDecoder::calls != wholeCalls)
+						require(ObservedWholeDecoder::calls == wholeCalls + 1 && ObservedWholeDecoder::output == actual.data(),
+							context + " whole decode was retried or used a private output buffer");
+					if (a_pattern.skipWhole)
+					{
+						require(outputCount < firstInput, context + " skip fixture does not exceed the output window");
+						require(ObservedWholeDecoder::calls == wholeCalls, context + " whole decoder was not skipped");
+						const auto* state = ZlibOwnedState::Find(&stream);
+						require(state->outcomePolicy == ZlibOwnedPolicy::Streaming &&
+							(state->fallbackReason == ZlibFallbackReason::Capacity || state->fallbackReason == ZlibFallbackReason::NoWhole),
+							context + " wrong window-limited policy");
+					}
+				}
 				require(result == referenceResult, context + " return code actual=" + std::to_string(result) + " oracle=" + std::to_string(referenceResult));
 				require(std::equal(actual.begin(), actual.begin() + stream.total_out, payload.begin()), context + " output bytes");
 				require(!(previousEmpty && !refilled && stream.total_out > before), context + " output arrived after empty input accounting");
@@ -154,6 +183,7 @@ namespace
 				require(result == INFLATE_DATA_ERROR, "corrupt trailer accepted");
 			if (!a_pattern.peek && !a_pattern.corrupt)
 				require(stream.total_out == payload.size(), "incomplete output");
+			require(ObservedWholeDecoder::calls <= wholeCalls + 1, "whole decode retried after streaming selection");
 			require(std::all_of(actual.begin() + payload.size(), actual.end(), [](uint8_t b) { return b == 0xCC; }), "output guard changed");
 			if (a_pattern.reset)
 				require(a_engine.reset(&stream) == oracle.Reset(), "reset result");
@@ -167,9 +197,9 @@ namespace vmm_tests
 	{
 		constexpr std::array patterns{
 			Pattern{ "one-shot finish", 15, 4 },
-			Pattern{ "166 KiB windows", 15, 0, 166 * 1024 },
-			Pattern{ "finish with limited output", 15, 4, 166 * 1024 },
-			Pattern{ "258 KiB windows", 15, 0, 258 * 1024 },
+			Pattern{ .name = "166 KiB windows", .outputChunk = 166 * 1024, .skipWhole = true },
+			Pattern{ "finish with limited output", 15, 4, 166 * 1024, UINT32_MAX, false, false, false, true },
+			Pattern{ .name = "258 KiB windows", .outputChunk = 258 * 1024, .skipWhole = true },
 			Pattern{ "64 KiB input refills", 15, 0, UINT32_MAX, 64 * 1024 },
 			Pattern{ "reset and reuse", 15, 4, UINT32_MAX, UINT32_MAX, true },
 			Pattern{ "sync-flush save peek", 15, 2, 2, UINT32_MAX, false, true },
@@ -179,8 +209,7 @@ namespace vmm_tests
 			Pattern{ "corrupt trailer fallback", 15, 4, UINT32_MAX, UINT32_MAX, false, false, true },
 			Pattern{ "corrupt gzip checksum", 31, 4, UINT32_MAX, UINT32_MAX, false, false, true },
 			Pattern{ "pending output accounting", -15, 0, 2 * 1024 * 1024 - 1, UINT32_MAX, false, false, false, true },
-			Pattern{ "split wrapper headers", 47, 0, UINT32_MAX, 1, false, false, false, false, 1024 },
-			Pattern{ "capped whole-buffer fallback", 15, 4, UINT32_MAX, UINT32_MAX, false, false, false, true, InflateBuffer::MAX_CAPACITY + 1 }
+			Pattern{ "split wrapper headers", 47, 0, UINT32_MAX, 1, false, false, false, false, 1024 }
 		};
 		for (const auto& pattern : patterns)
 		{
@@ -250,7 +279,7 @@ namespace vmm_tests
 			}
 		});
 
-		runner.test("owned native controls reconstruct buffered decoder history", [] {
+		runner.test("owned streaming controls preserve decoder history", [] {
 			const auto payload = Payload(4096);
 			const auto zlib = compress_zlib_fixture(payload, 15);
 			const auto gzip = compress_zlib_fixture(payload, 31);
@@ -270,11 +299,11 @@ namespace vmm_tests
 				int32_t result = INFLATE_OK;
 				while (result == INFLATE_OK)
 				{
-					require(stream.avail_in != 0, "replay lost pending input");
+					require(stream.avail_in != 0, "streaming lost pending input");
 					stream.avail_out = std::min<uint32_t>(127, static_cast<uint32_t>(payload.size()) - stream.total_out);
 					result = engine.inflate(&stream, 0);
 				}
-				require(result == INFLATE_END && output == payload, std::string(engine.name) + " replay finish");
+				require(result == INFLATE_END && output == payload, std::string(engine.name) + " streaming finish");
 				const auto kept = engine.resetKeep(&stream);
 				require(kept == (engine.controls ? INFLATE_OK : INFLATE_STREAM_ERROR), "resetKeep capability");
 				require(engine.reset2(&stream, 31) == INFLATE_OK, "gzip reset2");

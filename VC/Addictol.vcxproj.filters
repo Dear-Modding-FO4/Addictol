@@ -10,7 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp"><Filter>Source\Zlib</Filter></ClCompile>
-    <ClCompile Include="..\Addictol\Source\Zlib\AdInflateBuffer.cpp"><Filter>Source\Zlib</Filter></ClCompile>
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdInflateStreamMirror.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibDecoder.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
     <ClCompile Include="..\Addictol\Source\Zlib\Decoders\AdZlibNgDecoder.cpp"><Filter>Source\Zlib\Decoders</Filter></ClCompile>
@@ -1001,7 +1000,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Addictol\Include\Zlib\AdOwnedInflate.h"><Filter>Include\Zlib</Filter></ClInclude>
-    <ClInclude Include="..\Addictol\Include\Zlib\AdInflateBuffer.h"><Filter>Include\Zlib</Filter></ClInclude>
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateDecoder.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdInflateStreamMirror.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>
     <ClInclude Include="..\Addictol\Include\Zlib\Decoders\AdNativeZlibDecoder.h"><Filter>Include\Zlib\Decoders</Filter></ClInclude>

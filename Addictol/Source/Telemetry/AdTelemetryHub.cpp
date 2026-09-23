@@ -339,11 +339,11 @@ namespace Addictol
 		uint32_t a_currentThreadId,
 		uint64_t a_bytesIn,
 		uint64_t a_bytesOut,
-		uint64_t a_ticks, bool a_buffered) noexcept
+		uint64_t a_ticks) noexcept
 	{
 		if (!a_enabled)
 			return;
-		a_counters.Observe(a_fallbackReason, a_bytesIn, a_bytesOut, a_buffered);
+		a_counters.Observe(a_fallbackReason, a_bytesIn, a_bytesOut);
 		a_counters.ObserveSeries(
 			a_fallbackReason,
 			a_servedByWhole,
@@ -352,7 +352,7 @@ namespace Addictol
 			RenderThreadIdRelaxed(),
 			a_bytesIn,
 			a_bytesOut,
-			a_ticks, a_buffered);
+			a_ticks);
 	}
 
 	TelemetryHub::TelemetryHub(uint64_t a_qpcFrequency) noexcept :

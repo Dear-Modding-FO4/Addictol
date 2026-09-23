@@ -7,7 +7,7 @@ namespace Addictol
 {
 	namespace ZlibProfileDetail
 	{
-		inline constexpr size_t kDescriptorsPerBackend = 3 + ZLIB_FALLBACK_REASONS.size() - 1;
+		inline constexpr size_t kDescriptorsPerBackend = 2 + ZLIB_FALLBACK_REASONS.size() - 1;
 		inline constexpr auto kNames = [] {
 			std::array<OperationProfileNames, ZLIB_BACKEND_NAMES.size() * kDescriptorsPerBackend> names{};
 			size_t index{};
@@ -18,7 +18,6 @@ namespace Addictol
 				group.Append(backend.name);
 				names[index++] = MakeOperationProfileNames(group, "requested");
 				names[index++] = MakeOperationProfileNames(group, "whole");
-				names[index++] = MakeOperationProfileNames(group, "buffered");
 				for (const auto& reason : ZLIB_FALLBACK_REASONS)
 				{
 					if (reason.reason == ZlibFallbackReason::None)
@@ -51,8 +50,7 @@ namespace Addictol
 		if (admission == UINT32_MAX)
 			return UINT32_MAX;
 		if (a_policy == ZlibOwnedPolicy::Whole) return admission + 1;
-		if (a_policy == ZlibOwnedPolicy::Buffered) return admission + 2;
-		auto result = admission + 3;
+		auto result = admission + 2;
 		for (const auto& reason : ZLIB_FALLBACK_REASONS)
 		{
 			if (reason.reason == ZlibFallbackReason::None) continue;

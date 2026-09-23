@@ -317,8 +317,8 @@ namespace vmm_tests
 			using Owned = OwnedInflate<LibDeflateZlibBackend, ZlibNgDecoder, Profile>;
 			const std::vector<uint8_t> payload(4096, 'a');
 			const auto compressed = compress_zlib_fixture(payload, 15);
-			enum class Terminal { Complete, CompleteBuffered, Reset, Reset2, ResetKeep, End, Error };
-			for (const auto terminal : { Terminal::Complete, Terminal::CompleteBuffered, Terminal::Reset, Terminal::Reset2, Terminal::ResetKeep, Terminal::End, Terminal::Error })
+			enum class Terminal { Complete, CompleteStreaming, Reset, Reset2, ResetKeep, End, Error };
+			for (const auto terminal : { Terminal::Complete, Terminal::CompleteStreaming, Terminal::Reset, Terminal::Reset2, Terminal::ResetKeep, Terminal::End, Terminal::Error })
 			{
 				auto source = MakeProfileSource(16, kZlibProfileDescriptors);
 				TestZlibProfileSource::source = source.get();
@@ -341,13 +341,13 @@ namespace vmm_tests
 				{
 					require(result == INFLATE_OK && TelemetryTest::OperationProfileAccess::Active(*source) == 1,
 						"first window prematurely completed its profile");
-					stream.avail_out = terminal == Terminal::CompleteBuffered ? static_cast<uint32_t>(output.size()) - stream.total_out : 1;
+					stream.avail_out = terminal == Terminal::CompleteStreaming ? static_cast<uint32_t>(output.size()) - stream.total_out : 1;
 					result = Owned::Inflate(&stream, 0);
 					++inflateCalls;
 				}
 				s_profileClock += 10000;
 				const auto bytes = stream.total_out;
-				const bool completed = terminal == Terminal::Complete || terminal == Terminal::CompleteBuffered;
+				const bool completed = terminal == Terminal::Complete || terminal == Terminal::CompleteStreaming;
 				require(result == (completed ? INFLATE_END :
 					terminal == Terminal::Error ? INFLATE_DATA_ERROR : INFLATE_OK), "profile changed inflate result");
 				auto* state = ZlibOwnedState::Find(&stream);
@@ -374,7 +374,7 @@ namespace vmm_tests
 				std::vector<SeriesSample> series(source->SeriesCapacity());
 				TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
 				const auto expected = terminal == Terminal::Complete ? "zlib.stream.hybrid_zlib_ng.whole" :
-					terminal == Terminal::Error ? "zlib.stream.hybrid_zlib_ng.streaming.decode" : "zlib.stream.hybrid_zlib_ng.buffered";
+					terminal == Terminal::Error ? "zlib.stream.hybrid_zlib_ng.streaming.decode" : "zlib.stream.hybrid_zlib_ng.streaming.capacity";
 				uint64_t calls{}, recordedBytes{}, recordedTicks{};
 				for (const auto& sample : series)
 				{

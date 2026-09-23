@@ -1540,9 +1540,8 @@ namespace vmm_tests
 				"system commit usage unit changed");
 
 			const auto zlibSchema = ZlibIntervalCounters::Schema();
-			constexpr std::array<std::string_view, 12> zlibKeys{
+			constexpr std::array<std::string_view, 11> zlibKeys{
 				"zlib.whole_count",
-				"zlib.buffered_count",
 				"zlib.streaming_count",
 				"zlib.bytes_out",
 				"zlib.bytes_in",
@@ -1555,7 +1554,6 @@ namespace vmm_tests
 				"zlib.streaming_capacity"
 			};
 			constexpr std::array zlibUnits{
-				Unit::kCount,
 				Unit::kCount,
 				Unit::kCount,
 				Unit::kBytes,

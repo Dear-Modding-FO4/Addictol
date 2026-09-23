@@ -82,24 +82,21 @@ namespace Addictol
 		if (!a_enabled || !s_instance) return;
 		Telemetry::ObserveZlibCall(s_instance->m_interval, a_enabled,
 			static_cast<ZlibFallbackReason>(a_outcome.fallbackReasonId),
-			a_outcome.policy != ZlibOwnedPolicy::Streaming, a_flush, a_thread, a_input, a_output, a_outcome.totalQpc,
-			a_outcome.policy == ZlibOwnedPolicy::Buffered);
+			a_outcome.policy == ZlibOwnedPolicy::Whole, a_flush, a_thread, a_input, a_output, a_outcome.totalQpc);
 	}
 
 	void ModuleLibDeflate::Drain(std::span<MetricValue> a_out) noexcept
 	{
 		if (a_out.size() != Schema().size()) return;
 		const auto packed = m_interval.Drain();
-		const auto buffered = m_interval.buffered.exchange(0, std::memory_order_relaxed);
 		const auto active = m_active.load(std::memory_order_relaxed);
 		a_out[0] = { static_cast<double>(static_cast<uint32_t>(packed)), active };
-		a_out[1] = { static_cast<double>(buffered), active };
-		a_out[2] = { static_cast<double>(packed >> 32), active };
-		a_out[3] = { static_cast<double>(m_interval.DrainBytesOut()), active };
-		a_out[4] = { static_cast<double>(m_interval.DrainBytesIn()), active };
-		a_out[5] = { static_cast<double>(m_interval.DrainFallbackBytesOut()), active };
+		a_out[1] = { static_cast<double>(packed >> 32), active };
+		a_out[2] = { static_cast<double>(m_interval.DrainBytesOut()), active };
+		a_out[3] = { static_cast<double>(m_interval.DrainBytesIn()), active };
+		a_out[4] = { static_cast<double>(m_interval.DrainFallbackBytesOut()), active };
 		for (size_t index = 0; index < ZlibIntervalCounters::kFallbackReasonCount; ++index)
-			a_out[index + 6] = { static_cast<double>(m_interval.DrainFallbackReason(index)), active };
+			a_out[index + 5] = { static_cast<double>(m_interval.DrainFallbackReason(index)), active };
 	}
 
 	size_t ModuleLibDeflate::DrainSeries(std::span<SeriesSample> a_out) noexcept
@@ -113,10 +110,8 @@ namespace Addictol
 					break;
 		};
 		append("zlib.served.whole", kSizeBucketLabels, m_interval.servedWholeOutput.Drain());
-		append("zlib.served.buffered", kSizeBucketLabels, m_interval.servedBufferedOutput.Drain());
 		append("zlib.served.streaming", kSizeBucketLabels, m_interval.servedStreamingOutput.Drain());
 		append("zlib.input.whole", kSizeBucketLabels, m_interval.servedWholeInput.Drain());
-		append("zlib.input.buffered", kSizeBucketLabels, m_interval.servedBufferedInput.Drain());
 		append("zlib.input.streaming", kSizeBucketLabels, m_interval.servedStreamingInput.Drain());
 		append("zlib.streaming.thread", kThreadBucketLabels, m_interval.fallbackThread.Drain());
 		append("zlib.served.thread", kThreadBucketLabels, m_interval.servedThread.Drain());

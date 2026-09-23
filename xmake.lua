@@ -290,7 +290,6 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Zlib/AdZlibBackend.cpp")
     add_files("Addictol/Source/Zlib/AdOwnedInflate.cpp")
     add_files("Addictol/Source/Zlib/AdZlibInstallation.cpp")
-    add_files("Addictol/Source/Zlib/AdInflateBuffer.cpp")
     add_files("Addictol/Source/Zlib/Decoders/**.cpp")
     add_files("Addictol/Source/Zlib/AdZlibOperationProfile.cpp")
 
