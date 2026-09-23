@@ -293,7 +293,6 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Zlib/AdInflateBuffer.cpp")
     add_files("Addictol/Source/Zlib/Decoders/**.cpp")
     add_files("Addictol/Source/Zlib/AdZlibOperationProfile.cpp")
-    add_files("Addictol/Source/Zlib/AdZlibStreamTracker.cpp")
 
     -- add include directories
     add_includedirs(

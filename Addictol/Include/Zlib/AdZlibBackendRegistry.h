@@ -17,7 +17,7 @@ namespace Addictol
 	{
 		switch (GetSelectedZlibBackendKind())
 		{
-#define ZLIB_VISIT(Kind, Name, Whole, Streaming) \
+#define ZLIB_VISIT(Kind, Name, Whole, Streaming, WholeName, StreamingName) \
 		case ZlibBackendKind::Kind: return a_function.template operator()<ZlibBackendRow<ZlibBackendKind::Kind, Whole, Streaming>>();
 			ADDICTOL_ZLIB_BACKENDS(ZLIB_VISIT)
 #undef ZLIB_VISIT

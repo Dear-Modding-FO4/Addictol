@@ -22,7 +22,6 @@ namespace Addictol::TelemetryDetail
 		{
 			outcome.policy = state->outcomePolicy;
 			outcome.fallbackReasonId = ZlibFallbackReasonRegistryId(state->fallbackReason);
-			outcome.primaryCodecResult = state->codecResult;
 		}
 		const bool record = enabled && Telemetry::EnabledRelaxed();
 		a_recorder(outcome, record, record ? a_threadReader() : 0);

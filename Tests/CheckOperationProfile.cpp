@@ -5,6 +5,7 @@
 #include <Zlib/AdZlibOperationProfile.h>
 #include <Zlib/AdZlibTelemetry.h>
 #include "Harness.h"
+#include "ZlibOracle.h"
 #include <Zlib/AdZlibBackendRegistry.h>
 
 #include <Windows.h>
@@ -85,6 +86,12 @@ namespace Addictol::TelemetryTest
 namespace
 {
 	using namespace Addictol;
+
+	struct TestZlibProfileSource
+	{
+		inline static OperationProfileSource* source{};
+		static OperationProfileSource* Get() noexcept { return source; }
+	};
 
 	inline constexpr std::array kTestDescriptors{
 		OperationProfileDescriptor{
@@ -305,122 +312,65 @@ namespace vmm_tests
 			require(failedAllocations > 0, "failed allocation was recorded as success");
 		});
 
-		runner.test("zlib profile-only dispatch maps primary and every registered fallback", [] {
-			auto source = MakeProfileSource(128, kZlibProfileDescriptors);
-			require(TelemetryTest::OperationProfileAccess::Start(*source), "zlib profile did not start");
-			require(!Telemetry::EnabledRelaxed(), "fixture unexpectedly enabled ordinary telemetry");
-			std::vector<std::string> expectedSeries;
-			const auto run = [&]<class Backend>() {
-				const auto check = [&](const ZlibFallbackReasonEntry& reason,
-					uint32_t codecResult, bool hasZlibHeader, std::string_view suffix) {
-					const auto outcome = ServeProfiledZlib<Backend, true>(source.get(), [&] {
-						ZlibInflateOutcome result{};
-						result.fallbackReasonId = ZlibFallbackReasonRegistryId(reason.reason);
-						result.primaryCodecResult = codecResult;
-						result.hasZlibHeader = hasZlibHeader;
-						result.produced = 321;
-						result.zlibResult = -3;
-						return result;
-					});
-					require(outcome.zlibResult == -3 && outcome.produced == 321, "profiling changed codec outcome");
-					const auto result = ZlibProfileResult(Backend::kind, outcome);
-					auto expected = std::string{ "zlib.inflate." } + std::string{ ZlibBackendKindName(Backend::kind) };
-					expected += reason.reason == ZlibFallbackReason::None ?
-						".primary" : ".fallback." + std::string{ reason.name };
-					expected += suffix;
-					std::replace(expected.begin(), expected.end(), '-', '_');
-					require(result < kZlibProfileDescriptors.size() &&
-						kZlibProfileDescriptors[result].series == expected,
-						"fallback descriptor mapping failed");
-					expectedSeries.push_back(std::move(expected));
-				};
-				for (const auto& reason : ZLIB_FALLBACK_REASONS)
-				{
-					if (reason.reason == ZlibFallbackReason::Decode)
-					{
-						check(reason, ZLIB_CODEC_BAD_DATA, false, ".bad_header");
-						check(reason, ZLIB_CODEC_BAD_DATA, true, ".bad_data");
-						check(reason, ZLIB_CODEC_INSUFFICIENT_SPACE, true, ".insufficient_space");
-						check(reason, ZLIB_CODEC_SHORT_OUTPUT, true, ".short_output");
-						check(reason, UINT32_MAX, true, ".other");
-					}
-					else
-						check(reason, UINT32_MAX, true, "");
-				}
-			};
-			using StreamingRow = ZlibBackendRow<ZlibBackendKind::Zlib, NoWholeInflateDecoder, ZlibDecoder>;
-			using HybridRow = ZlibBackendRow<ZlibBackendKind::HybridZlibNg, LibDeflateZlibBackend, ZlibNgDecoder>;
-			run.template operator()<StreamingRow>();
-			run.template operator()<HybridRow>();
-			(void)TelemetryTest::OperationProfileAccess::Close(*source);
-			std::vector<MetricValue> metrics(source->Schema().size());
-			std::vector<SeriesSample> series(source->SeriesCapacity());
-			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
-			uint64_t calls{ 0 }, bytes{ 0 };
-			for (const auto& sample : series) { calls += sample.calls; bytes += sample.bytes; }
-			require(calls == expectedSeries.size() &&
-				bytes == expectedSeries.size() * 321 &&
-				source->Counters()[OperationProfileQuality::kInvalidResults] == 0, "profile-only zlib records were lost");
-			for (const auto& expected : expectedSeries)
+		runner.test("owned stream profiles complete exactly once on every terminal path", [] {
+			using Profile = OwnedZlibStreamProfile<ZlibBackendKind::HybridZlibNg, TestZlibProfileSource>;
+			using Owned = OwnedInflate<LibDeflateZlibBackend, ZlibNgDecoder, Profile>;
+			const std::vector<uint8_t> payload(4096, 'a');
+			const auto compressed = compress_zlib_fixture(payload, 15);
+			enum class Terminal { Complete, Reset, Reset2, ResetKeep, End, Error };
+			for (const auto terminal : { Terminal::Complete, Terminal::Reset, Terminal::Reset2, Terminal::ResetKeep, Terminal::End, Terminal::Error })
 			{
-				uint64_t resultCalls{ 0 }, resultBytes{ 0 };
+				auto source = MakeProfileSource(16, kZlibProfileDescriptors);
+				TestZlibProfileSource::source = source.get();
+				require(TelemetryTest::OperationProfileAccess::Start(*source), "zlib profile did not start");
+				require(!Telemetry::EnabledRelaxed(), "ordinary telemetry unexpectedly enabled");
+				ZlibInflate::Stream stream{};
+				require(Owned::Init(&stream) == INFLATE_OK, "profile stream init");
+				auto input = compressed;
+				if (terminal == Terminal::Error) input.back() ^= 0x80;
+				std::vector<uint8_t> output(payload.size());
+				stream.next_in = input.data();
+				stream.avail_in = static_cast<uint32_t>(input.size());
+				stream.next_out = output.data();
+				stream.avail_out = terminal == Terminal::Complete || terminal == Terminal::Error ? static_cast<uint32_t>(output.size()) : 1;
+				const auto result = Owned::Inflate(&stream, 0);
+				const auto bytes = stream.total_out;
+				require(result == (terminal == Terminal::Complete ? INFLATE_END :
+					terminal == Terminal::Error ? INFLATE_DATA_ERROR : INFLATE_OK), "profile changed inflate result");
+				auto* state = ZlibOwnedState::Find(&stream);
+				require(state->profileToken.has_value(), "first inflate did not begin a lifetime");
+				require(TelemetryTest::OperationProfileAccess::Active(*source) ==
+					(terminal == Terminal::Complete || terminal == Terminal::Error ? 0 : 1),
+					"lifetime ended before its terminal path");
+				if (terminal == Terminal::Reset) require(Owned::Reset(&stream) == INFLATE_OK, "profile reset");
+				if (terminal == Terminal::Reset2) require(Owned::Reset2(&stream, 15) == INFLATE_OK, "profile reset2");
+				if (terminal == Terminal::ResetKeep) require(Owned::ResetKeep(&stream) == INFLATE_OK, "profile resetKeep");
+				if (terminal == Terminal::Reset || terminal == Terminal::Reset2 || terminal == Terminal::ResetKeep)
+					require(!state->profileToken, "reset did not rearm lifetime admission");
+				if (terminal == Terminal::Complete || terminal == Terminal::Error)
+				{
+					require(!*state->profileToken, "terminal inflate kept its token");
+					(void)Owned::Inflate(&stream, 0);
+				}
+				require(Owned::End(&stream) == INFLATE_OK, "profile end");
+				require(TelemetryTest::OperationProfileAccess::Active(*source) == 0, "terminal path leaked a token");
+				require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "unfinished lifetime");
+				std::vector<MetricValue> metrics(source->Schema().size());
+				std::vector<SeriesSample> series(source->SeriesCapacity());
+				TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+				const auto expected = terminal == Terminal::Complete ? "zlib.stream.hybrid_zlib_ng.whole" :
+					terminal == Terminal::Error ? "zlib.stream.hybrid_zlib_ng.streaming.decode" : "zlib.stream.hybrid_zlib_ng.buffered";
+				uint64_t calls{}, recordedBytes{};
 				for (const auto& sample : series)
 				{
-					if (sample.series == expected) { resultCalls += sample.calls; resultBytes += sample.bytes; }
+					calls += sample.calls;
+					recordedBytes += sample.bytes;
+					if (sample.calls) require(sample.series == expected, "wrong lifetime policy");
 				}
-				require(resultCalls == 1 && resultBytes == 321,
-					"zlib fallback outcomes merged into the wrong duration series");
+				require(calls == 1 && recordedBytes == bytes, "lifetime recorded twice or lost output bytes");
+				require(source->Counters()[OperationProfileQuality::kInvalidResults] == 0, "invalid policy result");
+				TestZlibProfileSource::source = nullptr;
 			}
-		});
-		runner.test("bounded zlib stream tracking classifies refills and retires", [] {
-			ZlibStreamTracker<uint32_t, 2> tracker;
-			std::array<uint32_t, 3> states{};
-			ZlibStreamInput first{ &states[0], 100, 100, true };
-			const ZlibStreamInput second{ &states[1], 200, 100, true };
-			const ZlibStreamInput third{ &states[2], 300, 100, true };
-			struct Retirement
-			{
-				uint32_t id;
-				ZlibStreamResult result;
-				uint64_t bytes;
-			};
-			std::array<Retirement, 7> retired{};
-			size_t count{ 0 };
-			const auto retire = [&](uint32_t& a_id, const ZlibStreamProgress& a_progress, ZlibStreamResult a_result) {
-				if (count < retired.size())
-					retired[count] = { a_id, a_result, a_progress.totalOutput };
-				++count;
-			};
-			{
-				tracker.Start(first, 1, retire);
-				++first.end;
-				tracker.FinishCall(first, 30, 128, -5, retire);
-				--first.end;
-				tracker.FinishCall(first, 90, 256, ZlibInflate::Z_STREAM_END, retire);
-				tracker.Start(first, 2, retire);
-				tracker.FinishCall(first, 101, 512, ZlibInflate::Z_STREAM_END, retire);
-				tracker.Start(first, 3, retire);
-				tracker.FinishCall(first, 100, 1024, ZlibInflate::Z_STREAM_END, retire);
-				tracker.Start(first, 4, retire);
-				tracker.FinishCall(first, 50, 400, 0, retire);
-				tracker.Start(first, 5, retire);
-				tracker.Start(second, 6, retire);
-				tracker.Start(third, 7, retire);
-				tracker.FinishCall(second, 80, 2048, ZlibInflate::Z_STREAM_END, retire);
-				tracker.Clear(retire);
-			}
-			require(count == retired.size(), "a stream was lost or retired twice");
-			require(retired[0].result == ZlibStreamResult::InputRefilled &&
-				retired[1].result == ZlibStreamResult::InputRefilled &&
-				retired[2].result == ZlibStreamResult::InputComplete,
-				"refill history or total-input bound was ignored");
-			require(retired[3].id == 4 && retired[3].result == ZlibStreamResult::Abandoned &&
-				retired[3].bytes == 400 && retired[4].id == 5 &&
-				retired[4].result == ZlibStreamResult::Evicted,
-				"state reuse did not abandon or table overflow did not evict oldest");
-			require(retired[5].id == 6 && retired[5].result == ZlibStreamResult::InputComplete &&
-				retired[5].bytes == 2048 && retired[6].result == ZlibStreamResult::Abandoned,
-				"eviction damaged another stream or clear lost an abandoned stream");
 		});
 
 		runner.test("disabled and unsampled profiling avoid clocks and hot allocations", [] {

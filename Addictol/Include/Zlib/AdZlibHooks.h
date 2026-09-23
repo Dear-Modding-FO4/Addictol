@@ -22,7 +22,8 @@ namespace Addictol::ZlibHooks
 	template<class Backend, bool Profile>
 	struct Selected
 	{
-		using Owned = OwnedInflate<typename Backend::Whole, typename Backend::Streaming>;
+		using Owned = OwnedInflate<typename Backend::Whole, typename Backend::Streaming,
+			std::conditional_t<Profile, OwnedZlibStreamProfile<Backend::kind>, NoZlibStreamProfile>>;
 		using Stream = ZlibInflate::Stream;
 
 		template<ZlibEntry Entry, auto Function, class... Args>
@@ -37,13 +38,11 @@ namespace Addictol::ZlibHooks
 		static int32_t Inflate(Stream* a_stream, int32_t a_flush) noexcept
 		{
 			return RouteZlibStream<Owned>(a_stream, [&] { return Original<ZlibEntry::Inflate>(a_stream, a_flush); }, [&] {
-				return ServeProfiledZlib<Backend, Profile>(Profile ? ZlibOperationProfile() : nullptr, [&] {
-					return TelemetryDetail::ServeTelemetryZlib<Owned>(a_stream, a_flush,
-						[] { return ReadQpc(); }, [] { return GetCurrentThreadId(); },
-						[&](const ZlibInflateOutcome& a_outcome, bool a_enabled, uint32_t a_thread) {
-							ModuleLibDeflate::Record(a_outcome, a_enabled, a_flush, a_thread, a_outcome.consumed, a_outcome.produced);
-						});
-				}).zlibResult;
+				return TelemetryDetail::ServeTelemetryZlib<Owned>(a_stream, a_flush,
+					[] { return ReadQpc(); }, [] { return GetCurrentThreadId(); },
+					[&](const ZlibInflateOutcome& a_outcome, bool a_enabled, uint32_t a_thread) {
+						ModuleLibDeflate::Record(a_outcome, a_enabled, a_flush, a_thread, a_outcome.consumed, a_outcome.produced);
+					}).zlibResult;
 			});
 		}
 		static int32_t Copy(Stream* a_destination, Stream* a_source) noexcept

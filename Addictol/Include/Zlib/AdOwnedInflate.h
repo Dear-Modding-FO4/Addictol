@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Telemetry/AdOperationProfile.h>
+#include <Zlib/AdZlibOperationProfile.h>
 #include <Zlib/AdInflateBuffer.h>
 #include <Zlib/Decoders/AdInflateStreamMirror.h>
 #include <algorithm>
@@ -20,7 +20,6 @@ namespace Addictol
 		ZlibOwnedPolicy policy{ ZlibOwnedPolicy::Undecided };
 		ZlibOwnedPolicy outcomePolicy{ ZlibOwnedPolicy::Streaming };
 		ZlibFallbackReason fallbackReason{ ZlibFallbackReason::None };
-		uint32_t codecResult{ UINT32_MAX };
 		InflateStreamMirror mirror;
 		InflateBuffer output;
 		InflateBuffer input;
@@ -29,6 +28,7 @@ namespace Addictol
 		bool privateInput{};
 		uint32_t replayOffset{}, replayTotal{};
 		std::optional<OperationProfileToken> profileToken;
+		OperationProfileSource* profileSource{};
 
 		static bool IsTagged(const ZlibInflate::Stream* a_stream) noexcept
 		{
@@ -47,7 +47,7 @@ namespace Addictol
 		}
 	};
 
-	template<class Whole, StreamingInflateDecoder Streaming>
+	template<class Whole, StreamingInflateDecoder Streaming, class Profile = NoZlibStreamProfile>
 		requires (WholeInflateDecoder<Whole> || std::same_as<Whole, NoWholeInflateDecoder>)
 	struct OwnedInflate
 	{
@@ -72,10 +72,15 @@ namespace Addictol
 
 		static void ResetView(State& a_state, ZlibInflate::Stream& a_stream) noexcept
 		{
+			if constexpr (Profile::enabled)
+			{
+				Profile::End(a_state, a_stream.total_out);
+				a_state.profileToken.reset();
+				a_state.profileSource = nullptr;
+			}
 			a_state.policy = ZlibOwnedPolicy::Undecided;
 			a_state.outcomePolicy = ZlibOwnedPolicy::Streaming;
 			a_state.fallbackReason = WholeInflateDecoder<Whole> ? ZlibFallbackReason::Request : ZlibFallbackReason::NoWhole;
-			a_state.codecResult = UINT32_MAX;
 			a_state.output.Reset();
 			a_state.input.Reset();
 			a_state.produced = a_state.served = a_state.consumed = 0;
@@ -110,7 +115,6 @@ namespace Addictol
 					if (!a_state.output.Acquire(capacity))
 						break;
 					const auto result = Whole::Decode(input, a_state.output.Bytes());
-					a_state.codecResult = result.codecResult;
 					if (result.status == ZlibDecodeStatus::Success)
 					{
 						if (result.consumed < 6 || result.consumed > input.size() ||
@@ -225,6 +229,29 @@ namespace Addictol
 			return result;
 		}
 
+		static int32_t Complete(State* a_state, const ZlibInflate::Stream* a_stream, int32_t a_result) noexcept
+		{
+			if constexpr (Profile::enabled)
+				if (a_state && (a_result == INFLATE_END || (a_result < 0 && a_result != INFLATE_BUF_ERROR)))
+					Profile::End(*a_state, a_stream->total_out);
+			return a_result;
+		}
+
+		template<bool Supported, class Function>
+		static int32_t Control(ZlibInflate::Stream* a_stream, Function&& a_function) noexcept
+		{
+			auto* state = Find(a_stream);
+			if constexpr (Supported)
+			{
+				if (state && NativeOperation(*state))
+				{
+					const auto result = a_function(*state);
+					return result < 0 ? Complete(state, a_stream, result) : result;
+				}
+			}
+			return Complete(state, a_stream, INFLATE_STREAM_ERROR);
+		}
+
 	public:
 		static bool IsOwned(const ZlibInflate::Stream* a_stream) noexcept { return Find(a_stream) != nullptr; }
 
@@ -261,14 +288,16 @@ namespace Addictol
 		static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
 		{
 			auto* state = Find(a_stream);
+			if constexpr (Profile::enabled)
+				if (state) Profile::Begin(*state);
 			if (!state || a_flush < 0 || a_flush > 6 || !a_stream->next_out ||
 				(a_stream->avail_in && !a_stream->next_in))
-				return INFLATE_STREAM_ERROR;
+				return Complete(state, a_stream, INFLATE_STREAM_ERROR);
 			if (state->policy == ZlibOwnedPolicy::Undecided)
 				ChoosePolicy(*state, *a_stream, a_flush);
 			if (state->policy != ZlibOwnedPolicy::Streaming && a_flush > 4 && !NativeOperation(*state))
-				return INFLATE_STREAM_ERROR;
-			return state->mirror.Invoke(*a_stream, [&](ZlibInflate::Stream& a_view) {
+				return Complete(state, a_stream, INFLATE_STREAM_ERROR);
+			const auto result = state->mirror.Invoke(*a_stream, [&](ZlibInflate::Stream& a_view) {
 				return state->policy == ZlibOwnedPolicy::Streaming ?
 					InvokeDecoder(*state, a_view, [&](ZlibInflate::Stream& a_nativeView) {
 						return Streaming::Inflate(state->decoder, a_nativeView, a_flush);
@@ -277,6 +306,7 @@ namespace Addictol
 				return state->policy == ZlibOwnedPolicy::Streaming ?
 					state->privateInput || Streaming::HasPendingOutput(state->decoder) : state->served < state->produced;
 			});
+			return Complete(state, a_stream, result);
 		}
 
 		static int32_t Reset(ZlibInflate::Stream* a_stream) noexcept
@@ -287,7 +317,7 @@ namespace Addictol
 			const auto result = Streaming::Reset(state->decoder);
 			if (result == INFLATE_OK)
 				ResetView(*state, *a_stream);
-			return result;
+			return Complete(state, a_stream, result);
 		}
 
 		static int32_t Reset2(ZlibInflate::Stream* a_stream, int32_t a_windowBits) noexcept
@@ -301,14 +331,16 @@ namespace Addictol
 				state->windowBits = a_windowBits;
 				ResetView(*state, *a_stream);
 			}
-			return result;
+			return Complete(state, a_stream, result);
 		}
 
 		static int32_t ResetKeep(ZlibInflate::Stream* a_stream) noexcept
 		{
+			auto* state = Find(a_stream);
+			if constexpr (Profile::enabled)
+				if (state) Profile::End(*state, a_stream->total_out);
 			if constexpr (Streaming::capabilities.resetKeep)
 			{
-				auto* state = Find(a_stream);
 				if (!state || !NativeOperation(*state))
 					return INFLATE_STREAM_ERROR;
 				const auto result = Streaming::ResetKeep(state->decoder);
@@ -329,6 +361,8 @@ namespace Addictol
 			if (!state)
 				return INFLATE_STREAM_ERROR;
 			const auto result = Streaming::End(state->decoder);
+			if constexpr (Profile::enabled)
+				Profile::End(*state, a_stream->total_out);
 			state->decoderLive = false;
 			state->magic = 0;
 			delete state;
@@ -367,7 +401,6 @@ namespace Addictol
 				destination->policy = source->policy;
 				destination->outcomePolicy = source->outcomePolicy;
 				destination->fallbackReason = source->fallbackReason;
-				destination->codecResult = source->codecResult;
 				destination->mirror = source->mirror;
 				destination->produced = source->produced;
 				destination->served = source->served;
@@ -386,35 +419,25 @@ namespace Addictol
 
 		static int32_t SetDictionary(ZlibInflate::Stream* a_stream, std::span<const uint8_t> a_dictionary) noexcept
 		{
-			if constexpr (Streaming::capabilities.setDictionary)
-			{
-				auto* state = Find(a_stream);
-				if (state && NativeOperation(*state))
-					return Streaming::SetDictionary(state->decoder, a_dictionary);
-			}
-			return INFLATE_STREAM_ERROR;
+			return Control<Streaming::capabilities.setDictionary>(a_stream, [&]<class S>(S& a_state) {
+				return Streaming::SetDictionary(a_state.decoder, a_dictionary);
+			});
 		}
 
 		static int32_t GetHeader(ZlibInflate::Stream* a_stream, InflateHeader* a_header) noexcept
 		{
-			if constexpr (Streaming::capabilities.getHeader)
-			{
-				auto* state = Find(a_stream);
-				if (state && a_header && NativeOperation(*state))
-					return Streaming::GetHeader(state->decoder, *a_header);
-			}
-			return INFLATE_STREAM_ERROR;
+			if (!a_header)
+				return Complete(Find(a_stream), a_stream, INFLATE_STREAM_ERROR);
+			return Control<Streaming::capabilities.getHeader>(a_stream, [&]<class S>(S& a_state) {
+				return Streaming::GetHeader(a_state.decoder, *a_header);
+			});
 		}
 
 		static int32_t Prime(ZlibInflate::Stream* a_stream, int32_t a_bits, int32_t a_value) noexcept
 		{
-			if constexpr (Streaming::capabilities.prime)
-			{
-				auto* state = Find(a_stream);
-				if (state && NativeOperation(*state))
-					return Streaming::Prime(state->decoder, a_bits, a_value);
-			}
-			return INFLATE_STREAM_ERROR;
+			return Control<Streaming::capabilities.prime>(a_stream, [&]<class S>(S& a_state) {
+				return Streaming::Prime(a_state.decoder, a_bits, a_value);
+			});
 		}
 
 		static int32_t Mark(ZlibInflate::Stream* a_stream) noexcept
@@ -425,47 +448,35 @@ namespace Addictol
 				if (state && NativeOperation(*state))
 					return Streaming::Mark(state->decoder);
 			}
-			return INFLATE_STREAM_ERROR;
+			return Complete(Find(a_stream), a_stream, INFLATE_STREAM_ERROR);
 		}
 
 		static int32_t Sync(ZlibInflate::Stream* a_stream) noexcept
 		{
-			if constexpr (Streaming::capabilities.sync)
-			{
-				auto* state = Find(a_stream);
-				if (state && NativeOperation(*state))
-					return state->mirror.Invoke(*a_stream, [&](ZlibInflate::Stream& a_view) {
-						return InvokeDecoder(*state, a_view, [&](ZlibInflate::Stream& a_nativeView) {
-							const auto result = Streaming::Sync(state->decoder, a_nativeView);
-							if (result == INFLATE_OK)
-								state->mirror.AfterSync(a_nativeView.adler);
-							return result;
-						});
-					}, [] { return false; }, false);
-			}
-			return INFLATE_STREAM_ERROR;
+			return Control<Streaming::capabilities.sync>(a_stream, [&]<class S>(S& a_state) {
+				return a_state.mirror.Invoke(*a_stream, [&](ZlibInflate::Stream& a_view) {
+					return InvokeDecoder(a_state, a_view, [&](ZlibInflate::Stream& a_nativeView) {
+						const auto result = Streaming::Sync(a_state.decoder, a_nativeView);
+						if (result == INFLATE_OK)
+							a_state.mirror.AfterSync(a_nativeView.adler);
+						return result;
+					});
+				}, [] { return false; }, false);
+			});
 		}
 
 		static int32_t SyncPoint(ZlibInflate::Stream* a_stream) noexcept
 		{
-			if constexpr (Streaming::capabilities.syncPoint)
-			{
-				auto* state = Find(a_stream);
-				if (state && NativeOperation(*state))
-					return Streaming::SyncPoint(state->decoder);
-			}
-			return INFLATE_STREAM_ERROR;
+			return Control<Streaming::capabilities.syncPoint>(a_stream, [&]<class S>(S& a_state) {
+				return Streaming::SyncPoint(a_state.decoder);
+			});
 		}
 
 		static int32_t Undermine(ZlibInflate::Stream* a_stream, int32_t a_allow) noexcept
 		{
-			if constexpr (Streaming::capabilities.undermine)
-			{
-				auto* state = Find(a_stream);
-				if (state && NativeOperation(*state))
-					return Streaming::Undermine(state->decoder, a_allow);
-			}
-			return INFLATE_STREAM_ERROR;
+			return Control<Streaming::capabilities.undermine>(a_stream, [&]<class S>(S& a_state) {
+				return Streaming::Undermine(a_state.decoder, a_allow);
+			});
 		}
 	};
 }

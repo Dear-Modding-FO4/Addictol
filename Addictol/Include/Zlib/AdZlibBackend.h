@@ -8,18 +8,18 @@
 #include <Zlib/AdZlibInflate.h>
 
 #define ADDICTOL_ZLIB_BACKENDS(X) \
-	X(Stock, "stock", NoWholeInflateDecoder, void) \
-	X(Zlib, "zlib", NoWholeInflateDecoder, ZlibDecoder) \
-	X(ZlibNg, "zlib-ng", NoWholeInflateDecoder, ZlibNgDecoder) \
-	X(Isal, "isa-l", NoWholeInflateDecoder, IsalDecoder) \
-	X(HybridZlibNg, "hybrid-zlib-ng", LibDeflateZlibBackend, ZlibNgDecoder) \
-	X(HybridIsal, "hybrid-isa-l", LibDeflateZlibBackend, IsalDecoder)
+	X(Stock, "stock", NoWholeInflateDecoder, void, "none", "vanilla") \
+	X(Zlib, "zlib", NoWholeInflateDecoder, ZlibDecoder, "none", "zlib") \
+	X(ZlibNg, "zlib-ng", NoWholeInflateDecoder, ZlibNgDecoder, "none", "zlib-ng") \
+	X(Isal, "isa-l", NoWholeInflateDecoder, IsalDecoder, "none", "isa-l") \
+	X(HybridZlibNg, "hybrid-zlib-ng", LibDeflateZlibBackend, ZlibNgDecoder, "libdeflate", "zlib-ng") \
+	X(HybridIsal, "hybrid-isa-l", LibDeflateZlibBackend, IsalDecoder, "libdeflate", "isa-l")
 
 namespace Addictol
 {
 	enum class ZlibBackendKind : uint8_t
 	{
-#define ZLIB_KIND(Kind, Name, Whole, Streaming) Kind,
+#define ZLIB_KIND(Kind, Name, Whole, Streaming, WholeName, StreamingName) Kind,
 		ADDICTOL_ZLIB_BACKENDS(ZLIB_KIND)
 #undef ZLIB_KIND
 	};
@@ -30,7 +30,7 @@ namespace Addictol
 		std::string_view whole, streaming;
 	};
 	inline constexpr std::array ZLIB_BACKEND_NAMES{
-#define ZLIB_NAME(Kind, Name, Whole, Streaming) ZlibBackendName{ Name, ZlibBackendKind::Kind, #Whole, #Streaming },
+#define ZLIB_NAME(Kind, Name, Whole, Streaming, WholeName, StreamingName) ZlibBackendName{ Name, ZlibBackendKind::Kind, WholeName, StreamingName },
 		ADDICTOL_ZLIB_BACKENDS(ZLIB_NAME)
 #undef ZLIB_NAME
 	};
@@ -82,43 +82,16 @@ namespace Addictol
 		uint32_t codecResult{ UINT32_MAX };
 	};
 	inline constexpr uint32_t ZLIB_CODEC_SUCCESS = 0, ZLIB_CODEC_BAD_DATA = 1, ZLIB_CODEC_SHORT_OUTPUT = 2, ZLIB_CODEC_INSUFFICIENT_SPACE = 3;
-	enum class ZlibDecodeFailure : uint8_t { BadHeader, BadData, InsufficientSpace, ShortOutput, Other };
-	struct ZlibDecodeFailureEntry { std::string_view name; ZlibDecodeFailure failure; };
-	inline constexpr std::array ZLIB_DECODE_FAILURES{
-		ZlibDecodeFailureEntry{ "bad_header", ZlibDecodeFailure::BadHeader },
-		ZlibDecodeFailureEntry{ "bad_data", ZlibDecodeFailure::BadData },
-		ZlibDecodeFailureEntry{ "insufficient_space", ZlibDecodeFailure::InsufficientSpace },
-		ZlibDecodeFailureEntry{ "short_output", ZlibDecodeFailure::ShortOutput },
-		ZlibDecodeFailureEntry{ "other", ZlibDecodeFailure::Other }
-	};
-	constexpr ZlibDecodeFailure ClassifyZlibDecodeFailure(uint32_t a_result, bool a_header) noexcept
-	{
-		if (!a_header) return ZlibDecodeFailure::BadHeader;
-		switch (a_result)
-		{
-		case ZLIB_CODEC_BAD_DATA: return ZlibDecodeFailure::BadData;
-		case ZLIB_CODEC_INSUFFICIENT_SPACE: return ZlibDecodeFailure::InsufficientSpace;
-		case ZLIB_CODEC_SHORT_OUTPUT: return ZlibDecodeFailure::ShortOutput;
-		default: return ZlibDecodeFailure::Other;
-		}
-	}
 	struct ZlibInflateOutcome
 	{
 		uint32_t fallbackReasonId{};
 		int32_t zlibResult{};
 		uint64_t totalQpc{};
 		size_t consumed{}, produced{};
-		uint32_t primaryCodecResult{ UINT32_MAX };
-		bool hasZlibHeader{ true };
 		ZlibOwnedPolicy policy{ ZlibOwnedPolicy::Streaming };
 	};
 	struct LibDeflateZlibBackend
 	{
 		static ZlibDecodeResult Decode(std::span<const uint8_t>, std::span<uint8_t>) noexcept;
-	};
-	struct ZlibCallObserver
-	{
-		void Before(const ZlibInflate::Stream*, ZlibFallbackReason, const ZlibInflateOutcome&) const noexcept {}
-		void After(const ZlibInflate::Stream*, int32_t) const noexcept {}
 	};
 }
