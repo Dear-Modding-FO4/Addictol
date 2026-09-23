@@ -105,46 +105,9 @@ loaded, were disabled, or skipped; check it first when something is not working.
 
 ### Operation profiling
 
-`[Telemetry] bOperationProfiling = true` enables sampled operation profiling on the next launch,
-independently of `[Telemetry] bEnabled`. Each run writes a unique capture under
-`Data\F4SE\Plugins\Addictol\Captures\<capture-id>\` with `metadata.json`, `telemetry.csv`, and
-`series.csv`. The legacy `AddictolTelemetry.csv` and `AddictolSeries.csv` paths remain controlled by
-`bEnabled` and `bCsv`.
-
-Installed allocator hooks share one source across MemoryManager, scrap, Havok, CRT, small-block,
-and Scaleform sites. `ProfiledHeap<Heap, Site>` decorates the selected heap; disabled profiling
-selects the original type, without per-call settings checks. Existing heap choices and module
-gates are unchanged, including Visper small-block and the dormant Scaleform replacement.
-Descriptors cover operation families and allocation/reallocation request sizes (≤64 B, ≤1 KiB,
-≤64 KiB, larger), plus failure and realloc in-place/moved results. Free never probes allocation size.
-Sampling is 1/256 with 262,144 records (roughly one second at 67 million heap operations/sec).
-
-Zlib profiling surrounds backend dispatch, not codec implementations. It records total inflate
-duration and output bytes for primary service or stock fallback by reason, including selected stock,
-with decode failures split by bad header, bad data, insufficient space, short output, or other.
-Window-limited and bad-data fallback streams also report lifetime/output and whether the first call held all input, input was refilled, or tracking ended by abandonment/eviction.
-It samples every call with 131,072 records, sized for in-game load bursts. This works with ordinary telemetry off; ordinary
-telemetry's existing counters and internal codec timing remain unchanged. Effective backend
-labels and all sampling/storage limits are exported.
-
-Consumers register immutable `OperationProfileSource` descriptors through `Telemetry::Hub().Register`
-before collection starts. `Begin(admission)` counts calls; `End(std::move(token), bytes, result)`
-publishes a coherent sampled record. Results must share the admission's nonempty `resultGroup`
-(or be the admission itself); invalid classifications are rejected and counted. All-operation
-counts remain on admission descriptors, while durations go to result descriptors. Metadata exports
-these groups. Sources must outlive their move-only, generation-bound tokens.
-
-After one-time TLS lane acquisition, unsampled calls use thread-local sampling and relaxed
-loads/stores to exclusively owned, cache-line-padded counters: no shared atomic RMW, clock read,
-or allocation. There are 256 concurrent producer lanes, returned at thread exit; an unassigned
-thread rejects and counts operations for its remaining lifetime. Sampled admission/publication
-is bounded and capture-safe. Collector/exporter work uses `ScopedOperationProfileSuppression`.
-
-Percentiles are bucket-bounded estimates, sampled bytes are not exact heap accounting, and timings
-are inclusive (nested codec/allocator durations must not be added). Counter snapshots have approximate
-interval boundaries. Saturation/contention losses bias retained samples and must be inspected;
-metadata also reports invalid results, producer-capacity loss, unfinished work and capture completion.
-There is no thread-class/BSJobs dimension yet and no in-game performance or hook-safety proof.
+`[Telemetry] bOperationProfiling = true` records sampled allocator and decompression timings on the
+next launch, independently of `bEnabled`. Each run writes a capture to
+`Data\F4SE\Plugins\Addictol\Captures\<capture-id>\`. Profiling adds overhead; leave it off for normal play.
 
 ---
 

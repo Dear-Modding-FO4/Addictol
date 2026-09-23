@@ -106,14 +106,6 @@ namespace Addictol
 		uint64_t producerCapacityDrops{ 0 };
 	};
 
-	struct OperationProfilePercentile
-	{
-		uint64_t lowerNanoseconds{ 0 };
-		uint64_t upperNanoseconds{ 0 };
-		bool valid{ false };
-		bool overflow{ false };
-	};
-
 	class OperationProfileSource;
 
 	struct OperationProfileToken
@@ -172,10 +164,6 @@ namespace Addictol
 	[[nodiscard]] uint64_t QpcTicksToNanosecondsSaturated(
 		uint64_t a_ticks,
 		uint64_t a_qpcFrequency) noexcept;
-	[[nodiscard]] OperationProfilePercentile EstimateOperationProfilePercentile(
-		std::span<const HistogramBucket> a_distribution,
-		std::span<const OperationProfileDurationBucket> a_buckets,
-		double a_percentile) noexcept;
 
 	class OperationProfileSource final :
 		public MetricSource,

@@ -236,53 +236,6 @@ namespace Addictol
 		return static_cast<uint64_t>(std::ceil(nanoseconds));
 	}
 
-	OperationProfilePercentile EstimateOperationProfilePercentile(
-		std::span<const HistogramBucket> a_distribution,
-		std::span<const OperationProfileDurationBucket> a_buckets,
-		double a_percentile) noexcept
-	{
-		if (a_distribution.size() != a_buckets.size() ||
-			a_distribution.empty() || !(a_percentile > 0.0) ||
-			a_percentile > 1.0)
-			return {};
-
-		uint64_t total{ 0 };
-		for (const auto& bucket : a_distribution)
-		{
-			if (bucket.calls > std::numeric_limits<uint64_t>::max() - total)
-				total = std::numeric_limits<uint64_t>::max();
-			else
-				total += bucket.calls;
-		}
-		if (!total)
-			return {};
-
-		const auto rankValue = std::ceil(
-			static_cast<long double>(total) * a_percentile);
-		const auto rank = rankValue >= static_cast<long double>(total) ?
-			total : (std::max)(uint64_t{ 1 }, static_cast<uint64_t>(rankValue));
-		uint64_t cumulative{ 0 };
-		for (size_t index = 0; index < a_distribution.size(); ++index)
-		{
-			const auto calls = a_distribution[index].calls;
-			cumulative = calls > std::numeric_limits<uint64_t>::max() - cumulative ?
-				std::numeric_limits<uint64_t>::max() : cumulative + calls;
-			if (cumulative < rank)
-				continue;
-			const auto upper = a_buckets[index].upperNanoseconds;
-			const auto lower = index && a_buckets[index - 1].upperNanoseconds !=
-				std::numeric_limits<uint64_t>::max() ?
-				a_buckets[index - 1].upperNanoseconds + 1 : 0;
-			return {
-				lower,
-				upper,
-				true,
-				upper == std::numeric_limits<uint64_t>::max()
-			};
-		}
-		return {};
-	}
-
 	OperationProfileSource::OperationProfileSource(
 		OperationProfileConfiguration a_configuration,
 		uint64_t a_qpcFrequency,

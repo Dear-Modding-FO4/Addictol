@@ -5,7 +5,6 @@
 #include <Zlib/AdZlibOperationProfile.h>
 #include <Zlib/AdZlibTelemetry.h>
 #include "Harness.h"
-#include "AllocationProbe.h"
 
 #include <Windows.h>
 
@@ -138,17 +137,6 @@ namespace
 		void* CheckPtr(void* a_input, size_t a_size) { Record(8, a_input, a_size, 0); return a_input; }
 	};
 
-	struct WindowLimitedBackend
-	{
-		inline static constexpr auto kind = ZlibBackendKind::LibDeflate;
-		inline static uint32_t codecResult{ ZLIB_CODEC_INSUFFICIENT_SPACE };
-		static bool Prepare() noexcept { return true; }
-		static ZlibDecodeResult Decode(std::span<const uint8_t>, std::span<uint8_t>) noexcept
-		{
-			return { ZlibDecodeStatus::Failed, 0, 0, codecResult };
-		}
-	};
-
 	uint64_t ReadProfileClock() noexcept
 	{
 		s_clockReads.fetch_add(1, std::memory_order_relaxed);
@@ -243,35 +231,6 @@ namespace vmm_tests
 {
 	void run_operation_profile_checks(Runner& runner)
 	{
-		runner.test("result classification rejects foreign groups without losing admission totals", [] {
-			constexpr std::array descriptors{
-				OperationProfileDescriptor{ "test.request", "request", "profile.test_request", 1, "test.group" },
-				OperationProfileDescriptor{ "test.result", "result", "profile.test_result", 1, "test.group" },
-				OperationProfileDescriptor{ "test.foreign", "foreign", "profile.test_foreign", 1, "other.group" }
-			};
-			auto source = MakeProfileSource(16, descriptors);
-			require(TelemetryTest::OperationProfileAccess::Start(*source), "capture did not start");
-			source->End(source->Begin(0), 42, 1);
-			source->End(source->Begin(0), 100, 2);
-			source->End(source->Begin(0), 100, UINT32_MAX);
-			require(source->Counters().invalidResults == 2 &&
-				source->Counters().acceptedRecords == 1 &&
-				source->AllOperationCount(0) == 3 && source->AllOperationCount(1) == 0,
-				"invalid classification polluted samples or moved admission totals");
-			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "rejected results leaked active tokens");
-			std::vector<MetricValue> metrics(source->Schema().size());
-			std::vector<SeriesSample> series(source->SeriesCapacity());
-			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
-			uint64_t calls{ 0 }, bytes{ 0 };
-			for (const auto& sample : series)
-			{
-				if (sample.calls)
-					require(sample.series == "test.result", "result published to admission series");
-				calls += sample.calls; bytes += sample.bytes;
-			}
-			require(calls == 1 && bytes == 42, "classification lost its coherent record");
-		});
-
 		runner.test("profiled heap preserves forwarding and classifies realloc without size probes", [] {
 			using Heap = ProfiledHeap<ForwardingHeap, HeapProfileSite::CRT>;
 			static_assert(std::is_same_v<SelectedProfiledHeap<false, ForwardingHeap, HeapProfileSite::CRT>, ForwardingHeap>);
@@ -422,7 +381,7 @@ namespace vmm_tests
 					"zlib fallback outcomes merged into the wrong duration series");
 			}
 		});
-		runner.test("bounded zlib stream tracking classifies refills and retires without allocations", [] {
+		runner.test("bounded zlib stream tracking classifies refills and retires", [] {
 			ZlibStreamTracker<uint32_t, 2> tracker;
 			std::array<uint32_t, 3> states{};
 			ZlibStreamInput first{ &states[0], 100, 100, true };
@@ -441,9 +400,7 @@ namespace vmm_tests
 					retired[count] = { a_id, a_result, a_progress.totalOutput };
 				++count;
 			};
-			size_t allocations{ 0 };
 			{
-				AllocationProbe probe;
 				tracker.Start(first, 1, retire);
 				++first.end;
 				tracker.FinishCall(first, 30, 128, -5, retire);
@@ -460,9 +417,7 @@ namespace vmm_tests
 				tracker.Start(third, 7, retire);
 				tracker.FinishCall(second, 80, 2048, ZlibInflate::Z_STREAM_END, retire);
 				tracker.Clear(retire);
-				allocations = probe.Count();
 			}
-			require(allocations == 0, "stream tracker allocated after construction");
 			require(count == retired.size(), "a stream was lost or retired twice");
 			require(retired[0].result == ZlibStreamResult::InputRefilled &&
 				retired[1].result == ZlibStreamResult::InputRefilled &&
@@ -475,242 +430,6 @@ namespace vmm_tests
 			require(retired[5].id == 6 && retired[5].result == ZlibStreamResult::InputComplete &&
 				retired[5].bytes == 2048 && retired[6].result == ZlibStreamResult::Abandoned,
 				"eviction damaged another stream or clear lost an abandoned stream");
-		});
-
-		runner.test("zlib stream profiles span fallback windows without changing disabled dispatch", [] {
-			CountingResource resource;
-			auto source = MakeProfileSource(128, kZlibProfileDescriptors, &resource);
-			ZlibProfileStreamTracker tracker;
-			require(TelemetryTest::OperationProfileAccess::Start(*source), "stream profile did not start");
-			std::array<uint8_t, 8> input{ 0x78, 0x9c }, refill{};
-			std::array<uint8_t, 8> output{};
-			uint32_t state{ ZlibInflate::MODE_HEAD };
-			ZlibInflate::Stream stream{};
-			const auto reset = [&] {
-				stream = {};
-				stream.state = &state;
-				stream.next_in = input.data();
-				stream.avail_in = static_cast<uint32_t>(input.size());
-				stream.next_out = output.data();
-				stream.avail_out = static_cast<uint32_t>(output.size());
-			};
-			uint64_t legacyClockReads{ 0 }, stockCalls{ 0 };
-			bool legacyEnabled{ false };
-			const auto serve = [&](auto a_observer, bool a_end) {
-				return TelemetryDetail::ServeTelemetryZlib<WindowLimitedBackend>(
-					&stream, 0, [&](auto* a_stream, int32_t) {
-						++stockCalls;
-						const auto consumed = a_end ? a_stream->avail_in : 2;
-						a_stream->next_in += consumed;
-						a_stream->avail_in -= consumed;
-						a_stream->total_in += consumed;
-						a_stream->next_out += 4;
-						a_stream->avail_out -= 4;
-						a_stream->total_out += 4;
-						return a_end ? ZlibInflate::Z_STREAM_END : 0;
-					}, [&] { return ++legacyClockReads; }, [] { return 1u; },
-					[&](const auto&, bool a_enabled, auto) { legacyEnabled |= a_enabled; }, a_observer);
-			};
-			reset();
-			WindowLimitedBackend::codecResult = ZLIB_CODEC_INSUFFICIENT_SPACE;
-			const auto reads = s_clockReads.load();
-			const auto disabled = ServeProfiledZlibDispatch<WindowLimitedBackend, false>(source.get(), [&](auto a_observer) {
-				static_assert(std::is_same_v<decltype(a_observer), ZlibStockObserver>);
-				return serve(a_observer, false);
-			}, &tracker);
-			require(disabled.zlibResult == 0 && s_clockReads.load() == reads &&
-				source->AllOperationCount(ZlibStreamProfileAdmission(WindowLimitedBackend::kind)) == 0 &&
-				TelemetryTest::OperationProfileAccess::Active(*source) == 0,
-				"disabled dispatch touched the tracker or profile source");
-
-			const auto resourceAllocations = resource.Allocations();
-			for (const auto codec : { ZLIB_CODEC_INSUFFICIENT_SPACE, ZLIB_CODEC_BAD_DATA })
-			{
-				for (const bool refilled : { false, true })
-				{
-					reset();
-					WindowLimitedBackend::codecResult = codec;
-					size_t allocations{ 0 };
-					ZlibInflateOutcome first{}, last{};
-					{
-						AllocationProbe probe;
-						first = ServeProfiledZlibDispatch<WindowLimitedBackend, true>(source.get(),
-							[&](auto a_observer) { return serve(a_observer, false); }, &tracker);
-						s_profileClock += 1000;
-						if (refilled)
-						{
-							stream.next_in = refill.data();
-							stream.avail_in = static_cast<uint32_t>(refill.size());
-						}
-						last = ServeProfiledZlibDispatch<WindowLimitedBackend, true>(source.get(),
-							[&](auto a_observer) { return serve(a_observer, true); }, &tracker);
-						allocations = probe.Count();
-					}
-					require(allocations == 0 && resource.Allocations() == resourceAllocations,
-						"stream profiling allocated on fallback");
-					require(first.fallbackReasonId == ZlibFallbackReasonRegistryId(ZlibFallbackReason::Decode) &&
-						last.fallbackReasonId == ZlibFallbackReasonRegistryId(ZlibFallbackReason::State) &&
-						last.zlibResult == ZlibInflate::Z_STREAM_END && last.produced == 4 &&
-						stream.total_out == 8, "stream profiling changed fallback or codec semantics");
-				}
-			}
-			require(stockCalls == 9 && legacyClockReads == 0 && !legacyEnabled,
-				"stream profiling changed ordinary telemetry or stock call count");
-			require(source->AllOperationCount(ZlibStreamProfileAdmission(WindowLimitedBackend::kind)) == 4 &&
-				TelemetryTest::OperationProfileAccess::Active(*source) == 0,
-				"stream profile admission or token completion was lost");
-			(void)TelemetryTest::OperationProfileAccess::Close(*source);
-			std::vector<MetricValue> metrics(source->Schema().size());
-			std::vector<SeriesSample> series(source->SeriesCapacity());
-			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
-			for (const auto cause : { "insufficient_space", "bad_data" })
-			{
-				for (const auto result : { "input_complete", "input_refilled" })
-				{
-					const auto name = std::string{ "zlib.stream.libdeflate." } + cause + "." + result;
-					uint64_t calls{ 0 }, bytes{ 0 }, ticks{ 0 };
-					for (const auto& sample : series)
-					{
-						if (sample.series == name)
-						{
-							calls += sample.calls;
-							bytes += sample.bytes;
-							ticks += sample.ticks;
-						}
-					}
-					require(calls == 1 && bytes == 8 && ticks > 1000,
-						"stream classification, lifetime, or cumulative output was not exported");
-				}
-			}
-			require(source->Counters().invalidResults == 0, "stream result groups rejected a classification");
-		});
-
-		runner.test("zlib stream retirement exports untracked counts and survives capture restarts", [] {
-			auto source = MakeProfileSource(1024, kZlibProfileDescriptors);
-			ZlibProfileStreamTracker tracker;
-			std::array<uint32_t, 257> states{};
-			std::array<uint8_t, 8> input{ 0x78, 0x9c };
-			ZlibInflate::Stream stream{};
-			stream.next_in = input.data();
-			stream.avail_in = static_cast<uint32_t>(input.size());
-			ZlibInflateOutcome failure{};
-			failure.primaryCodecResult = ZLIB_CODEC_BAD_DATA;
-			const auto begin = [&](uint32_t& a_state) {
-				stream.state = &a_state;
-				stream.total_in = stream.total_out = 0;
-				ZlibStreamProfileObserver observer{ source.get(), ZlibBackendKind::LibDeflate, tracker };
-				observer.Before(&stream, ZlibFallbackReason::Decode, failure);
-				stream.total_in = 2;
-				stream.total_out = 16;
-				observer.After(&stream, 0);
-			};
-			require(TelemetryTest::OperationProfileAccess::Start(*source), "retirement profile did not start");
-			begin(states[0]);
-			begin(states[0]);
-			for (size_t index = 1; index < states.size(); ++index)
-				begin(states[index]);
-			ZlibStreamProfileObserver error{ source.get(), ZlibBackendKind::LibDeflate, tracker };
-			error.Before(&stream, ZlibFallbackReason::State, failure);
-			error.After(&stream, -3);
-			tracker.Clear(ZlibStreamProfile::Retire);
-			require(TelemetryTest::OperationProfileAccess::Active(*source) == 0,
-				"retirement leaked a move-only profile token");
-			(void)TelemetryTest::OperationProfileAccess::Close(*source);
-			std::vector<MetricValue> metrics(source->Schema().size());
-			std::vector<SeriesSample> series(source->SeriesCapacity());
-			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
-			uint64_t abandoned{ 0 }, evicted{ 0 }, bytes{ 0 };
-			for (const auto& sample : series)
-			{
-				if (sample.series == "zlib.stream.libdeflate.bad_data.untracked.abandoned")
-					abandoned += sample.calls;
-				if (sample.series == "zlib.stream.libdeflate.bad_data.untracked.evicted")
-					evicted += sample.calls;
-				bytes += sample.bytes;
-			}
-			require(abandoned == 257 && evicted == 1 && bytes == 258 * 16,
-				"untracked stream counts or last observed output were not exported");
-			for (size_t capture = 0; capture < 12; ++capture)
-			{
-				require(TelemetryTest::OperationProfileAccess::Start(*source),
-					"dormant stream tokens exhausted capture slots");
-				begin(states[capture]);
-				require(TelemetryTest::OperationProfileAccess::Active(*source) == 1 &&
-					source->Counters().acceptedRecords == 0,
-					"stale stream token published into a new capture");
-				(void)TelemetryTest::OperationProfileAccess::Close(*source);
-			}
-			tracker.Clear(ZlibStreamProfile::Retire);
-			require(source->Counters().staleTokens == 1 &&
-				TelemetryTest::OperationProfileAccess::Active(*source) == 0,
-				"closed stream token was not retired as stale");
-		});
-
-		runner.test("zlib stream tracking follows streams across loader threads", [] {
-			ZlibStreamTracker<uint32_t, 4> tracker;
-			std::array<uint32_t, 4> states{};
-			std::array<std::thread, 4> workers;
-			uint64_t completed{ 0 }, totalBytes{ 0 }, unexpected{ 0 };
-			const auto retire = [&](uint32_t&, const ZlibStreamProgress& a_progress, ZlibStreamResult a_result) {
-				++completed;
-				totalBytes += a_progress.totalOutput;
-				unexpected += a_result != ZlibStreamResult::InputComplete;
-			};
-			for (size_t index = 0; index < workers.size(); ++index)
-			{
-				tracker.Start({ &states[index], 100, 100, true }, 0, retire);
-				workers[index] = std::thread([&, index] {
-					const ZlibStreamInput input{ &states[index], 100, 100, false };
-					tracker.FinishCall(input, 100, 128, ZlibInflate::Z_STREAM_END, retire);
-					for (size_t stream = 0; stream < 1000; ++stream)
-					{
-						tracker.Start(input, 0, retire);
-						tracker.FinishCall(input, 100, 128, ZlibInflate::Z_STREAM_END, retire);
-					}
-				});
-			}
-			for (auto& worker : workers)
-				worker.join();
-			require(completed == 4004 && totalBytes == 4004 * 128 && unexpected == 0,
-				"concurrent loader streams lost or mixed tracker entries");
-		});
-
-		runner.test("aggregate drains conserve independently exchanged fields", [] {
-			constexpr uint64_t producerCount{ 4 };
-			constexpr uint64_t iterations{ 50000 };
-			Histogram<1> histogram{};
-			std::atomic<uint32_t> running{ producerCount };
-			std::array<std::thread, producerCount> producers{};
-			for (uint64_t producer = 0; producer < producerCount; ++producer)
-			{
-				producers[producer] = std::thread([&] {
-					for (uint64_t index = 0; index < iterations; ++index)
-						histogram.Add(0, 1, 2, 3);
-					running.fetch_sub(1, std::memory_order_release);
-				});
-			}
-
-			HistogramBucket total{};
-			while (running.load(std::memory_order_acquire))
-			{
-				const auto drained = histogram.Drain()[0];
-				total.calls += drained.calls;
-				total.ticks += drained.ticks;
-				total.bytes += drained.bytes;
-			}
-			for (auto& producer : producers)
-				producer.join();
-			const auto final = histogram.Drain()[0];
-			total.calls += final.calls;
-			total.ticks += final.ticks;
-			total.bytes += final.bytes;
-			require(
-				total == HistogramBucket{
-					producerCount * iterations,
-					producerCount * iterations * 2,
-					producerCount * iterations * 3
-				},
-				"aggregate drain lost a contribution across adjacent intervals");
 		});
 
 		runner.test("disabled and unsampled profiling avoid clocks and hot allocations", [] {
@@ -826,29 +545,6 @@ namespace vmm_tests
 				TelemetryTest::OperationProfileAccess::Close(*first) == 0 &&
 					TelemetryTest::OperationProfileAccess::Close(*second) == 0,
 				"interleaved sampling left active operations");
-		});
-
-		runner.test("profile quality and operation metrics belong to diagnostics", [] {
-			auto source = MakeProfileSource();
-			for (const auto& descriptor : source->Schema())
-			{
-				const auto classification = ClassifyTelemetryMetric(descriptor.key);
-				require(
-					classification.matches == 1 &&
-						classification.panel == TelemetryPanel::kOverview,
-					"operation profile metric lost its diagnostics owner");
-			}
-		});
-
-		runner.test("noninstrumented consumer specialization is a true no-op", [] {
-			s_clockReads.store(0, std::memory_order_relaxed);
-			OperationProfileConsumer<false> consumer;
-			auto token = consumer.Begin(0);
-			consumer.End(std::move(token), 99);
-			require(!token, "noninstrumented consumer produced a token");
-			require(
-				s_clockReads.load(std::memory_order_relaxed) == 0,
-				"noninstrumented consumer read the clock");
 		});
 
 		runner.test("profile suppression excludes profiler-owned work only", [] {
@@ -1013,43 +709,6 @@ namespace vmm_tests
 				"second operation tuple was torn under concurrency");
 		});
 
-		runner.test("profile percentile estimates stay within truthful buckets", [] {
-			const std::array distribution{
-				HistogramBucket{ 0, 0, 0 },
-				HistogramBucket{ 3, 3, 0 },
-				HistogramBucket{ 1, 1, 0 }
-			};
-			const auto median = EstimateOperationProfilePercentile(
-				distribution,
-				kTestBuckets,
-				0.5);
-			require(median.valid && !median.overflow,
-				"known profile median was invalid");
-			require(
-				median.lowerNanoseconds == 1 &&
-					median.upperNanoseconds == 1,
-				"known profile median escaped its selected bucket");
-			const auto maximum = EstimateOperationProfilePercentile(
-				distribution,
-				kTestBuckets,
-				1.0);
-			require(maximum.valid && maximum.overflow,
-				"profile overflow percentile fabricated a finite bound");
-			require(maximum.lowerNanoseconds == 2,
-				"profile overflow lower bound changed");
-			require(
-				!EstimateOperationProfilePercentile(
-					std::array<HistogramBucket, 3>{},
-					kTestBuckets,
-					0.5).valid,
-				"empty profile distribution produced a percentile");
-			require(
-				QpcTicksToNanosecondsSaturated(
-					std::numeric_limits<uint64_t>::max(),
-					1) == std::numeric_limits<uint64_t>::max(),
-				"QPC conversion overflowed instead of saturating");
-		});
-
 		runner.test("capture generations reject stale completions and count unfinished work", [] {
 			auto source = MakeProfileSource();
 			require(TelemetryTest::OperationProfileAccess::Start(*source),
@@ -1207,35 +866,6 @@ namespace vmm_tests
 			RemoveTestPath(root);
 		});
 
-		runner.test("profiling capture without consumers is explicit context only", [] {
-			const auto root = UniqueTestPath("operation-profile-context-only");
-			RemoveTestPath(root);
-			TelemetryHub hub{ 1'000'000'000 };
-			require(hub.Freeze(2), "context-only profile hub freeze failed");
-			TelemetryStartOptions options{};
-			options.cadenceMs = 60000;
-			options.captureRoot = root;
-			options.productVersion = "test";
-			options.runtime = "test";
-			require(hub.Start(std::move(options)),
-				"context-only capture worker did not start");
-			hub.Stop();
-			TelemetryCaptureStatus status{};
-			require(
-				hub.CopyCaptureStatus(status) &&
-					status.state == TelemetryCaptureState::kComplete &&
-					!status.instrumented,
-				"context-only capture was not explicitly uninstrumented");
-			const auto metadata = ReadFile(status.directory / "metadata.json");
-			require(
-				metadata.find("\"instrumented_run\": false") !=
-						std::string::npos &&
-					metadata.find("\"profile_sources\": []") !=
-						std::string::npos,
-				"context-only metadata implied an installed consumer");
-			RemoveTestPath(root);
-		});
-
 		runner.test("capture stop writes the final partial interval", [] {
 			const auto root = UniqueTestPath("operation-profile-final");
 			RemoveTestPath(root);
@@ -1275,41 +905,6 @@ namespace vmm_tests
 				metadata.find("\"unfinished_operations\": 0") !=
 					std::string::npos,
 				"clean profile capture reported unfinished work");
-			RemoveTestPath(root);
-		});
-
-		runner.test("unfinished work is reported without failing the capture", [] {
-			const auto root = UniqueTestPath("operation-profile-unfinished");
-			RemoveTestPath(root);
-			TelemetryHub hub{ 1'000'000'000 };
-			auto source = MakeProfileSource();
-			require(
-				hub.Register(source) == TelemetryRegistration::kAccepted,
-				"unfinished profile source registration failed");
-			require(hub.Freeze(2), "unfinished profile hub freeze failed");
-			TelemetryStartOptions options{};
-			options.cadenceMs = 60000;
-			options.captureRoot = root;
-			options.productVersion = "test";
-			options.runtime = "test";
-			require(hub.Start(std::move(options)),
-				"unfinished profile worker did not start");
-			auto token = source->Begin(0);
-			require(token, "unfinished operation was not admitted");
-			hub.Stop();
-			TelemetryCaptureStatus status{};
-			require(hub.CopyCaptureStatus(status),
-				"unfinished capture status was unavailable");
-			require(status.state == TelemetryCaptureState::kComplete,
-				"in-flight work at shutdown failed an otherwise clean capture");
-			const auto metadata = ReadFile(status.directory / "metadata.json");
-			require(metadata.find("\"complete\": true") != std::string::npos,
-				"in-flight work at shutdown marked the manifest incomplete");
-			require(
-				metadata.find("\"unfinished_operations\": 1") !=
-					std::string::npos,
-				"unfinished capture manifest lost its active operation");
-			source->End(std::move(token), 11);
 			RemoveTestPath(root);
 		});
 

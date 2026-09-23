@@ -559,13 +559,7 @@ Run `.\.Build\Tests\vmm-tests.exe --bench` for opt-in VMM throughput and latency
 `.Build\Tests\bench.json`. These are not a correctness gate; inspect the reported allocation/free failure
 counts rather than relying on exit status alone. CI runs the default checks, not benchmarks.
 
-Run `.\.Build\Tests\vmm-tests.exe --bench-profile` for the independently selected profiling-overhead
-benchmark. It compares no-op, aggregate telemetry, and sampled profiling paths under single- and
-multi-threaded load with matched collector cadence, warmup, and three sustained 750 ms measurements.
-It writes `.Build\Tests\profile-bench.json` and its capture under
-`.Build\Tests\profiling-benchmark-captures`, reporting QPC calibration, sampling period, capacity,
-attempts, accepted and rejected work, bounded latency samples, collector progress, and saturation
-bias without enforcing performance thresholds.
+`--bench-profile` measures profiling overhead and writes `.Build\Tests\profile-bench.json`.
 
 ### Mutation controls
 
