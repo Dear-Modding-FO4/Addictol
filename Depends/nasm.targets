@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <NasmExecutable Condition="'$(NasmExecutable)'=='' and '$(NASM_PATH)'!=''">$(NASM_PATH)\nasm.exe</NasmExecutable>
+    <NasmExecutable Condition="'$(NasmExecutable)'==''">nasm.exe</NasmExecutable>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <CustomBuild>
+      <Command>"$(NasmExecutable)" -f win64 -I"$(ProjectDir)isa-l/" -I"$(ProjectDir)isa-l/include/" -I"%(RootDir)%(Directory)/" "%(FullPath)" -o "$(IntDir)%(Filename).obj"</Command>
+      <Message>Assembling %(Filename) with NASM</Message>
+      <Outputs>$(IntDir)%(Filename).obj</Outputs>
+      <LinkObjects>true</LinkObjects>
+    </CustomBuild>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Update="@(CustomBuild)">
+      <AdditionalInputs>@(NasmInclude);$(MSBuildThisFileFullPath);%(AdditionalInputs)</AdditionalInputs>
+    </CustomBuild>
+  </ItemGroup>
+  <Target Name="CheckNasm" BeforeTargets="CustomBuild">
+    <Exec Command="&quot;$(NasmExecutable)&quot; -v" IgnoreExitCode="true" StandardOutputImportance="Low" StandardErrorImportance="Low">
+      <Output TaskParameter="ExitCode" PropertyName="NasmExitCode" />
+    </Exec>
+    <Error Condition="'$(NasmExitCode)'!='0'" Text="NASM is required for ISA-L. Add nasm.exe to PATH, set NASM_PATH to its directory, or set the NasmExecutable MSBuild property to its full path." />
+  </Target>
+</Project>

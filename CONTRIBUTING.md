@@ -25,6 +25,9 @@ project pins `PlatformToolset v143`. Newer Visual Studio releases ship v145 and 
 ("The build tools for v143 cannot be found"); install the v143 build tools or override the toolset
 with `-p:PlatformToolset=...` on the command line. Do not edit the pin in the tracked project file.
 
+ISA-L requires NASM on `PATH`, or `NASM_PATH` set to the directory containing `nasm.exe`.
+MSBuild also accepts `-p:NasmExecutable=C:\path\to\nasm.exe`.
+
 ```powershell
 git clone --recurse-submodules https://github.com/Dear-Modding-FO4/Addictol.git
 cd Addictol
@@ -94,7 +97,7 @@ data/                        authored mod payload
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::`, `F4SE::`
-and DearModdingUI client APIs, plus `detours`, `libdeflate`, `spdlog`, `toml11` and `INI`)
+and DearModdingUI client APIs, plus `detours`, `libdeflate`, `zlib`, `zlib-ng`, `isa-l`, `spdlog`, `toml11` and `INI`)
 and vendored libraries (`vmm`, `xbyak`, `unordered_dense`).
 
 Crash logging is not part of this plugin. It ships separately as

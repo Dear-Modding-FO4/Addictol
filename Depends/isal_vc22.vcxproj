@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{A770988F-BECE-47BC-BC88-4E047AAFD033}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>isal</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="compression.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>x86_64;ISAL_DEPRECATED_INTERNAL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)isa-l\include;$(ProjectDir)isa-l;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <!-- Keep upstream igzip/CRC dispatch groups intact; exclude unrelated ISA-L modules. -->
+  <ItemGroup>
+    <ClCompile Include="isa-l\igzip\igzip.c" />
+    <ClCompile Include="isa-l\igzip\hufftables_c.c" />
+    <ClCompile Include="isa-l\igzip\igzip_base.c" />
+    <ClCompile Include="isa-l\igzip\igzip_icf_base.c" />
+    <ClCompile Include="isa-l\igzip\adler32_base.c" />
+    <ClCompile Include="isa-l\igzip\flatten_ll.c" />
+    <ClCompile Include="isa-l\igzip\encode_df.c" />
+    <ClCompile Include="isa-l\igzip\igzip_icf_body.c" />
+    <ClCompile Include="isa-l\igzip\huff_codes.c" />
+    <ClCompile Include="isa-l\igzip\igzip_inflate.c" />
+    <ClCompile Include="isa-l\crc\crc_base.c" />
+    <ClCompile Include="isa-l\crc\crc64_base.c" />
+    <CustomBuild Include="isa-l\igzip\igzip_body.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_finish.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_icf_body_h1_gr_bt.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_icf_finish.asm" />
+    <CustomBuild Include="isa-l\igzip\rfc1951_lookup.asm" />
+    <CustomBuild Include="isa-l\igzip\adler32_sse.asm" />
+    <CustomBuild Include="isa-l\igzip\adler32_avx2_4.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_multibinary.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_update_histogram_01.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_update_histogram_04.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_decode_block_stateless_01.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_decode_block_stateless_04.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_inflate_multibinary.asm" />
+    <CustomBuild Include="isa-l\igzip\encode_df_04.asm" />
+    <CustomBuild Include="isa-l\igzip\encode_df_06.asm" />
+    <CustomBuild Include="isa-l\igzip\proc_heap.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_deflate_hash.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_gen_icf_map_lh1_06.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_gen_icf_map_lh1_04.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_set_long_icf_fg_04.asm" />
+    <CustomBuild Include="isa-l\igzip\igzip_set_long_icf_fg_06.asm" />
+    <CustomBuild Include="isa-l\crc\crc_const.asm" />
+    <CustomBuild Include="isa-l\crc\crc16_t10dif_01.asm" />
+    <CustomBuild Include="isa-l\crc\crc16_t10dif_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc16_t10dif_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc16_t10dif_copy_by4.asm" />
+    <CustomBuild Include="isa-l\crc\crc16_t10dif_copy_by4_02.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_ieee_01.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_ieee_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_ieee_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_iscsi_01.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_iscsi_by8_02.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_iscsi_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_iscsi_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc_multibinary.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_ecma_refl_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_ecma_refl_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_ecma_refl_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_ecma_norm_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_ecma_norm_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_ecma_norm_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_iso_refl_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_iso_refl_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_iso_refl_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_iso_norm_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_iso_norm_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_iso_norm_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_jones_refl_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_jones_refl_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_jones_refl_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_jones_norm_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_jones_norm_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_jones_norm_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_rocksoft_refl_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_rocksoft_refl_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_rocksoft_refl_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_rocksoft_norm_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_rocksoft_norm_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc64_rocksoft_norm_by16_10.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_gzip_refl_by8.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_gzip_refl_avx2.asm" />
+    <CustomBuild Include="isa-l\crc\crc32_gzip_refl_by16_10.asm" />
+    <NasmInclude Include="isa-l\include\*.asm;isa-l\include\*.inc;isa-l\igzip\*.asm;isa-l\crc\*.asm" />
+  </ItemGroup>
+  <Import Project="nasm.targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

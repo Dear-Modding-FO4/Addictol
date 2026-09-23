@@ -86,6 +86,11 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v3
 
+      - name: Set up NASM
+        uses: ilammy/setup-nasm@v1
+        with:
+          version: '3.02'
+
       - name: Build
         working-directory: source
         run: msbuild /m /p:Configuration=Release /p:Platform=x64 .\VC

@@ -59,9 +59,12 @@ set_config("commonlib_xbyak", true)
 
 -- add requires
 add_requires("libdeflate v1.25", { configs = { shared = false } })
+add_requires("zlib-ng 2.3.3", { configs = { shared = false, runtimes = "MT", zlib_compat = false } })
 add_requires("unordered_dense v4.8.1")
 
 -- define targets
+includes("Depends/compression.lua")
+
 target("spdlog-vendored", function()
     set_kind("static")
     set_basename("spdlog")
@@ -254,11 +257,12 @@ target("vmm-tests", function()
     set_dependir(".LinkConf/xmake/vmm-tests/deps")
 
     -- add dependencies
-    add_deps("vmm", "spdlog-vendored")
+    add_deps("vmm", "spdlog-vendored", "zlib-prefixed", "isa-l")
     add_deps("commonlib-shared", dependency_interface)
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
+    add_packages("zlib-ng")
 
     -- add source files
     add_files("Tests/**.cpp")
@@ -366,10 +370,12 @@ target(plugin_name, function()
     add_deps("commonlib-shared", dependency_interface)
     add_deps("commonlibf4", dependency_interface)
     add_deps("vmm", dependency_interface)
+    add_deps("zlib-prefixed", "isa-l")
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
     add_packages("unordered_dense", { sysincludedirs = {}, defines = {} })
+    add_packages("zlib-ng")
 
     -- add libraries
     add_linkdirs(xmake_library_dir)

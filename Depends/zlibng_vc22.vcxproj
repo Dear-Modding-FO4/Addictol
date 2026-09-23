@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{315C628A-95C0-45C6-8C10-C81BF00A6612}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>zlibng</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="compression.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>HAVE_BUILTIN_ASSUME_ALIGNED;HAVE_CPUID_MS;NO_FSEEKO;WITH_GZFILEOP;WITH_OPTIM;X86_AVX2;X86_AVX512;X86_AVX512VNNI;X86_FEATURES;X86_HAVE_XSAVE_INTRIN;X86_PCLMULQDQ_CRC;X86_SSE2;X86_SSE41;X86_SSE42;X86_SSSE3;X86_VPCLMULQDQ_CRC;ZLIBNG_NATIVE_API;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)zlibng-config;$(ProjectDir)zlib-ng;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4206;4054;4324;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <!-- Match zlib-ng 2.3.3 CMake on MSVC x64; dispatch code stays baseline. -->
+  <ItemGroup>
+    <ClCompile Include="zlib-ng\adler32.c" />
+    <ClCompile Include="zlib-ng\compress.c" />
+    <ClCompile Include="zlib-ng\crc32.c" />
+    <ClCompile Include="zlib-ng\crc32_braid_comb.c" />
+    <ClCompile Include="zlib-ng\deflate.c" />
+    <ClCompile Include="zlib-ng\deflate_fast.c" />
+    <ClCompile Include="zlib-ng\deflate_huff.c" />
+    <ClCompile Include="zlib-ng\deflate_medium.c" />
+    <ClCompile Include="zlib-ng\deflate_quick.c" />
+    <ClCompile Include="zlib-ng\deflate_rle.c" />
+    <ClCompile Include="zlib-ng\deflate_slow.c" />
+    <ClCompile Include="zlib-ng\deflate_stored.c" />
+    <ClCompile Include="zlib-ng\functable.c" />
+    <ClCompile Include="zlib-ng\infback.c" />
+    <ClCompile Include="zlib-ng\inflate.c" />
+    <ClCompile Include="zlib-ng\inftrees.c" />
+    <ClCompile Include="zlib-ng\insert_string.c" />
+    <ClCompile Include="zlib-ng\insert_string_roll.c" />
+    <ClCompile Include="zlib-ng\trees.c" />
+    <ClCompile Include="zlib-ng\uncompr.c" />
+    <ClCompile Include="zlib-ng\zutil.c" />
+    <ClCompile Include="zlib-ng\cpu_features.c" />
+    <ClCompile Include="zlib-ng\gzlib.c" />
+    <ClCompile Include="zlib-ng\gzread.c" />
+    <ClCompile Include="zlib-ng\gzwrite.c" />
+    <ClCompile Include="zlib-ng\arch\generic\adler32_c.c" />
+    <ClCompile Include="zlib-ng\arch\generic\adler32_fold_c.c" />
+    <ClCompile Include="zlib-ng\arch\generic\crc32_braid_c.c" />
+    <ClCompile Include="zlib-ng\arch\generic\crc32_fold_c.c" />
+    <ClCompile Include="zlib-ng\arch\generic\compare256_c.c" />
+    <ClCompile Include="zlib-ng\arch\generic\crc32_chorba_c.c" />
+    <ClCompile Include="zlib-ng\arch\x86\x86_features.c" />
+    <ClCompile Include="zlib-ng\arch\x86\chunkset_sse2.c" />
+    <ClCompile Include="zlib-ng\arch\x86\chorba_sse2.c" />
+    <ClCompile Include="zlib-ng\arch\x86\compare256_sse2.c" />
+    <ClCompile Include="zlib-ng\arch\x86\slide_hash_sse2.c" />
+    <ClCompile Include="zlib-ng\arch\x86\adler32_ssse3.c" />
+    <ClCompile Include="zlib-ng\arch\x86\chunkset_ssse3.c" />
+    <ClCompile Include="zlib-ng\arch\x86\chorba_sse41.c" />
+    <ClCompile Include="zlib-ng\arch\x86\adler32_sse42.c" />
+    <ClCompile Include="zlib-ng\arch\x86\crc32_pclmulqdq.c" />
+    <ClCompile Include="zlib-ng\arch\x86\slide_hash_avx2.c;zlib-ng\arch\x86\chunkset_avx2.c;zlib-ng\arch\x86\compare256_avx2.c;zlib-ng\arch\x86\adler32_avx2.c">
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="zlib-ng\arch\x86\adler32_avx512.c;zlib-ng\arch\x86\chunkset_avx512.c;zlib-ng\arch\x86\compare256_avx512.c;zlib-ng\arch\x86\adler32_avx512_vnni.c;zlib-ng\arch\x86\crc32_vpclmulqdq.c">
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="zlibng-config\*.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

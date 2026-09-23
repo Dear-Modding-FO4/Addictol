@@ -17,3 +17,12 @@
 	path = Depends/commonlibf4
 	url = https://github.com/Dear-Modding-FO4/commonlibf4.git
 	branch = main
+[submodule "Depends/zlib"]
+	path = Depends/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "Depends/zlib-ng"]
+	path = Depends/zlib-ng
+	url = https://github.com/zlib-ng/zlib-ng.git
+[submodule "Depends/isa-l"]
+	path = Depends/isa-l
+	url = https://github.com/intel/isa-l.git
