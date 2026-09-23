@@ -29,6 +29,7 @@ namespace Addictol
 		uint32_t replayOffset{}, replayTotal{};
 		std::optional<OperationProfileToken> profileToken;
 		OperationProfileSource* profileSource{};
+		uint64_t profileElapsedQpc{};
 
 		static bool IsTagged(const ZlibInflate::Stream* a_stream) noexcept
 		{
@@ -77,6 +78,7 @@ namespace Addictol
 				Profile::End(a_state, a_stream.total_out);
 				a_state.profileToken.reset();
 				a_state.profileSource = nullptr;
+				a_state.profileElapsedQpc = 0;
 			}
 			a_state.policy = ZlibOwnedPolicy::Undecided;
 			a_state.outcomePolicy = ZlibOwnedPolicy::Streaming;
@@ -288,25 +290,27 @@ namespace Addictol
 		static int32_t Inflate(ZlibInflate::Stream* a_stream, int32_t a_flush) noexcept
 		{
 			auto* state = Find(a_stream);
+			const auto inflate = [&] {
+				if (!state || a_flush < 0 || a_flush > 6 || !a_stream->next_out ||
+					(a_stream->avail_in && !a_stream->next_in))
+					return INFLATE_STREAM_ERROR;
+				if (state->policy == ZlibOwnedPolicy::Undecided)
+					ChoosePolicy(*state, *a_stream, a_flush);
+				if (state->policy != ZlibOwnedPolicy::Streaming && a_flush > 4 && !NativeOperation(*state))
+					return INFLATE_STREAM_ERROR;
+				return state->mirror.Invoke(*a_stream, [&](ZlibInflate::Stream& a_view) {
+					return state->policy == ZlibOwnedPolicy::Streaming ?
+						InvokeDecoder(*state, a_view, [&](ZlibInflate::Stream& a_nativeView) {
+							return Streaming::Inflate(state->decoder, a_nativeView, a_flush);
+						}) : ServeBuffer(*state, a_view, a_flush);
+				}, [&] {
+					return state->policy == ZlibOwnedPolicy::Streaming ?
+						state->privateInput || Streaming::HasPendingOutput(state->decoder) : state->served < state->produced;
+				});
+			};
 			if constexpr (Profile::enabled)
-				if (state) Profile::Begin(*state);
-			if (!state || a_flush < 0 || a_flush > 6 || !a_stream->next_out ||
-				(a_stream->avail_in && !a_stream->next_in))
-				return Complete(state, a_stream, INFLATE_STREAM_ERROR);
-			if (state->policy == ZlibOwnedPolicy::Undecided)
-				ChoosePolicy(*state, *a_stream, a_flush);
-			if (state->policy != ZlibOwnedPolicy::Streaming && a_flush > 4 && !NativeOperation(*state))
-				return Complete(state, a_stream, INFLATE_STREAM_ERROR);
-			const auto result = state->mirror.Invoke(*a_stream, [&](ZlibInflate::Stream& a_view) {
-				return state->policy == ZlibOwnedPolicy::Streaming ?
-					InvokeDecoder(*state, a_view, [&](ZlibInflate::Stream& a_nativeView) {
-						return Streaming::Inflate(state->decoder, a_nativeView, a_flush);
-					}) : ServeBuffer(*state, a_view, a_flush);
-			}, [&] {
-				return state->policy == ZlibOwnedPolicy::Streaming ?
-					state->privateInput || Streaming::HasPendingOutput(state->decoder) : state->served < state->produced;
-			});
-			return Complete(state, a_stream, result);
+				if (state) return Complete(state, a_stream, Profile::Measure(*state, inflate));
+			return Complete(state, a_stream, inflate());
 		}
 
 		static int32_t Reset(ZlibInflate::Stream* a_stream) noexcept

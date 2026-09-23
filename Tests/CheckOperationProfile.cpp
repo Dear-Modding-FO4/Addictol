@@ -317,8 +317,8 @@ namespace vmm_tests
 			using Owned = OwnedInflate<LibDeflateZlibBackend, ZlibNgDecoder, Profile>;
 			const std::vector<uint8_t> payload(4096, 'a');
 			const auto compressed = compress_zlib_fixture(payload, 15);
-			enum class Terminal { Complete, Reset, Reset2, ResetKeep, End, Error };
-			for (const auto terminal : { Terminal::Complete, Terminal::Reset, Terminal::Reset2, Terminal::ResetKeep, Terminal::End, Terminal::Error })
+			enum class Terminal { Complete, CompleteBuffered, Reset, Reset2, ResetKeep, End, Error };
+			for (const auto terminal : { Terminal::Complete, Terminal::CompleteBuffered, Terminal::Reset, Terminal::Reset2, Terminal::ResetKeep, Terminal::End, Terminal::Error })
 			{
 				auto source = MakeProfileSource(16, kZlibProfileDescriptors);
 				TestZlibProfileSource::source = source.get();
@@ -333,26 +333,41 @@ namespace vmm_tests
 				stream.avail_in = static_cast<uint32_t>(input.size());
 				stream.next_out = output.data();
 				stream.avail_out = terminal == Terminal::Complete || terminal == Terminal::Error ? static_cast<uint32_t>(output.size()) : 1;
-				const auto result = Owned::Inflate(&stream, 0);
+				const auto clockReads = s_clockReads.load(std::memory_order_relaxed);
+				auto result = Owned::Inflate(&stream, 0);
+				uint64_t inflateCalls = 1;
+				s_profileClock += 10000;
+				if (terminal != Terminal::Complete && terminal != Terminal::Error)
+				{
+					require(result == INFLATE_OK && TelemetryTest::OperationProfileAccess::Active(*source) == 1,
+						"first window prematurely completed its profile");
+					stream.avail_out = terminal == Terminal::CompleteBuffered ? static_cast<uint32_t>(output.size()) - stream.total_out : 1;
+					result = Owned::Inflate(&stream, 0);
+					++inflateCalls;
+				}
+				s_profileClock += 10000;
 				const auto bytes = stream.total_out;
-				require(result == (terminal == Terminal::Complete ? INFLATE_END :
+				const bool completed = terminal == Terminal::Complete || terminal == Terminal::CompleteBuffered;
+				require(result == (completed ? INFLATE_END :
 					terminal == Terminal::Error ? INFLATE_DATA_ERROR : INFLATE_OK), "profile changed inflate result");
 				auto* state = ZlibOwnedState::Find(&stream);
 				require(state->profileToken.has_value(), "first inflate did not begin a lifetime");
 				require(TelemetryTest::OperationProfileAccess::Active(*source) ==
-					(terminal == Terminal::Complete || terminal == Terminal::Error ? 0 : 1),
+					(completed || terminal == Terminal::Error ? 0 : 1),
 					"lifetime ended before its terminal path");
 				if (terminal == Terminal::Reset) require(Owned::Reset(&stream) == INFLATE_OK, "profile reset");
 				if (terminal == Terminal::Reset2) require(Owned::Reset2(&stream, 15) == INFLATE_OK, "profile reset2");
 				if (terminal == Terminal::ResetKeep) require(Owned::ResetKeep(&stream) == INFLATE_OK, "profile resetKeep");
 				if (terminal == Terminal::Reset || terminal == Terminal::Reset2 || terminal == Terminal::ResetKeep)
-					require(!state->profileToken, "reset did not rearm lifetime admission");
-				if (terminal == Terminal::Complete || terminal == Terminal::Error)
+					require(!state->profileToken && state->profileElapsedQpc == 0, "reset did not rearm decode timing");
+				if (completed || terminal == Terminal::Error)
 				{
 					require(!*state->profileToken, "terminal inflate kept its token");
 					(void)Owned::Inflate(&stream, 0);
 				}
 				require(Owned::End(&stream) == INFLATE_OK, "profile end");
+				require(s_clockReads.load(std::memory_order_relaxed) - clockReads == inflateCalls * 2,
+					"profile read the clock outside sampled inflate calls");
 				require(TelemetryTest::OperationProfileAccess::Active(*source) == 0, "terminal path leaked a token");
 				require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "unfinished lifetime");
 				std::vector<MetricValue> metrics(source->Schema().size());
@@ -360,14 +375,16 @@ namespace vmm_tests
 				TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
 				const auto expected = terminal == Terminal::Complete ? "zlib.stream.hybrid_zlib_ng.whole" :
 					terminal == Terminal::Error ? "zlib.stream.hybrid_zlib_ng.streaming.decode" : "zlib.stream.hybrid_zlib_ng.buffered";
-				uint64_t calls{}, recordedBytes{};
+				uint64_t calls{}, recordedBytes{}, recordedTicks{};
 				for (const auto& sample : series)
 				{
 					calls += sample.calls;
 					recordedBytes += sample.bytes;
+					recordedTicks += sample.ticks;
 					if (sample.calls) require(sample.series == expected, "wrong lifetime policy");
 				}
 				require(calls == 1 && recordedBytes == bytes, "lifetime recorded twice or lost output bytes");
+				require(recordedTicks == inflateCalls, "decode duration included inter-call or retirement time");
 				require(source->Counters()[OperationProfileQuality::kInvalidResults] == 0, "invalid policy result");
 				TestZlibProfileSource::source = nullptr;
 			}

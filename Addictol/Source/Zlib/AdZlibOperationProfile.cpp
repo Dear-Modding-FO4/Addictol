@@ -25,7 +25,7 @@ namespace Addictol
 			};
 			OperationProfileConfiguration configuration{};
 			configuration.sourceId = "decompression";
-			configuration.sourceName = "Owned zlib stream lifetimes";
+			configuration.sourceName = "Owned zlib stream decode time";
 			configuration.descriptors = kZlibProfileDescriptors;
 			configuration.metadataLabels = labels;
 			configuration.recordCapacity = kZlibProfileRecordCapacity;

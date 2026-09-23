@@ -88,14 +88,27 @@ namespace Addictol
 				return;
 			a_state.profileSource = Source::Get();
 			a_state.profileToken.emplace(a_state.profileSource ?
-				a_state.profileSource->Begin(ZlibProfileAdmission(Backend)) : OperationProfileToken{});
+				a_state.profileSource->BeginAccumulated(ZlibProfileAdmission(Backend)) : OperationProfileToken{});
+		}
+
+		template<class State, class Function>
+		static int32_t Measure(State& a_state, Function&& a_inflate) noexcept
+		{
+			Begin(a_state);
+			if (!*a_state.profileToken)
+				return a_inflate();
+			const auto start = a_state.profileSource->ReadClock();
+			const auto result = a_inflate();
+			const auto finish = a_state.profileSource->ReadClock();
+			a_state.profileElapsedQpc += finish > start ? finish - start : 0;
+			return result;
 		}
 
 		template<class State>
 		static void End(State& a_state, uint64_t a_bytes) noexcept
 		{
 			if (a_state.profileToken && *a_state.profileToken)
-				a_state.profileSource->End(std::move(*a_state.profileToken), a_bytes,
+				a_state.profileSource->EndWithDuration(std::move(*a_state.profileToken), a_state.profileElapsedQpc, a_bytes,
 					ZlibProfileResult(Backend, a_state.outcomePolicy, a_state.fallbackReason));
 		}
 	};

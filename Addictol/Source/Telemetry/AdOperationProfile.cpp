@@ -384,6 +384,18 @@ namespace Addictol
 	OperationProfileToken OperationProfileSource::Begin(
 		uint32_t a_descriptorIndex) noexcept
 	{
+		return Begin(a_descriptorIndex, true);
+	}
+
+	OperationProfileToken OperationProfileSource::BeginAccumulated(
+		uint32_t a_descriptorIndex) noexcept
+	{
+		return Begin(a_descriptorIndex, false);
+	}
+
+	OperationProfileToken OperationProfileSource::Begin(
+		uint32_t a_descriptorIndex, bool a_measureLifetime) noexcept
+	{
 		auto* capture = m_currentCapture.load(std::memory_order_acquire);
 		if (!m_valid || !capture ||
 			a_descriptorIndex >= m_descriptors.size() ||
@@ -448,7 +460,7 @@ namespace Addictol
 
 		capture->activeSampled.fetch_add(1, std::memory_order_relaxed);
 		(*capture)[OperationProfileQuality::kSampledAdmissions].fetch_add(1, std::memory_order_relaxed);
-		const auto startQpc = m_clock();
+		const auto startQpc = a_measureLifetime ? m_clock() : 0;
 		shard.mutex.unlock();
 		return {
 			this,
@@ -481,6 +493,20 @@ namespace Addictol
 		uint64_t a_bytes,
 		uint32_t a_resultDescriptor) noexcept
 	{
+		Publish(std::move(a_token), a_bytes, a_resultDescriptor, std::nullopt);
+	}
+
+	void OperationProfileSource::EndWithDuration(
+		OperationProfileToken a_token, uint64_t a_elapsedQpc,
+		uint64_t a_bytes, uint32_t a_resultDescriptor) noexcept
+	{
+		Publish(std::move(a_token), a_bytes, a_resultDescriptor, a_elapsedQpc);
+	}
+
+	void OperationProfileSource::Publish(
+		OperationProfileToken a_token, uint64_t a_bytes,
+		uint32_t a_resultDescriptor, std::optional<uint64_t> a_elapsedQpc) noexcept
+	{
 		if (a_token.source != this || !a_token.captureState)
 			return;
 		auto* capture = static_cast<CaptureState*>(a_token.captureState);
@@ -500,7 +526,11 @@ namespace Addictol
 			return;
 		}
 
-		const auto finishQpc = m_clock();
+		if (!a_elapsedQpc)
+		{
+			const auto finishQpc = m_clock();
+			a_elapsedQpc = finishQpc > a_token.startQpc ? finishQpc - a_token.startQpc : 0;
+		}
 		auto& shard = m_publicationShards[a_token.shardIndex];
 		if (!shard.mutex.try_lock())
 		{
@@ -523,8 +553,7 @@ namespace Addictol
 		else
 		{
 			m_records[shard.offset + shard.count++] = {
-				finishQpc > a_token.startQpc ?
-					finishQpc - a_token.startQpc : 0,
+				*a_elapsedQpc,
 				a_bytes,
 				a_resultDescriptor
 			};

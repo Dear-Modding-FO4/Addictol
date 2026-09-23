@@ -8,6 +8,7 @@
 #include <memory>
 #include <memory_resource>
 #include <mutex>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -209,10 +210,14 @@ namespace Addictol
 
 		[[nodiscard]] bool IsValid() const noexcept;
 		[[nodiscard]] OperationProfileToken Begin(uint32_t a_descriptorIndex) noexcept;
+		[[nodiscard]] OperationProfileToken BeginAccumulated(uint32_t a_descriptorIndex) noexcept;
+		[[nodiscard]] uint64_t ReadClock() const noexcept { return m_clock(); }
 		// Long-lived consumers can retire stale tokens without pinning old capture slots.
 		[[nodiscard]] bool IsCurrent(const OperationProfileToken& a_token) const noexcept;
 		void End(OperationProfileToken a_token, uint64_t a_bytes = 0) noexcept;
 		void End(OperationProfileToken a_token, uint64_t a_bytes, uint32_t a_resultDescriptor) noexcept;
+		void EndWithDuration(OperationProfileToken a_token, uint64_t a_elapsedQpc,
+			uint64_t a_bytes, uint32_t a_resultDescriptor) noexcept;
 		[[nodiscard]] std::span<const MetricDescriptor> Schema() const noexcept override;
 		[[nodiscard]] size_t SeriesCapacity() const noexcept override;
 		[[nodiscard]] std::string_view SourceId() const noexcept;
@@ -228,6 +233,10 @@ namespace Addictol
 		[[nodiscard]] OperationProfileCounters Counters() const noexcept;
 
 	private:
+		[[nodiscard]] OperationProfileToken Begin(uint32_t a_descriptorIndex, bool a_measureLifetime) noexcept;
+		void Publish(OperationProfileToken a_token, uint64_t a_bytes,
+			uint32_t a_resultDescriptor, std::optional<uint64_t> a_elapsedQpc) noexcept;
+
 		static constexpr size_t kCaptureStateCount{ 8 };
 		static constexpr size_t kMaximumPublicationShards{ 16 };
 
