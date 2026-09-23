@@ -127,6 +127,7 @@ namespace Addictol
 		ZlibDecodeStatus status{ ZlibDecodeStatus::Failed };
 		size_t consumed{ 0 };
 		size_t produced{ 0 };
+		uint32_t codecResult{ UINT32_MAX };
 	};
 
 	// Mirrored so the classifier stays independent of the codec header.
@@ -134,6 +135,47 @@ namespace Addictol
 	inline constexpr uint32_t ZLIB_CODEC_BAD_DATA{ 1 };
 	inline constexpr uint32_t ZLIB_CODEC_SHORT_OUTPUT{ 2 };
 	inline constexpr uint32_t ZLIB_CODEC_INSUFFICIENT_SPACE{ 3 };
+
+	enum class ZlibDecodeFailure : uint8_t
+	{
+		BadHeader,
+		BadData,
+		InsufficientSpace,
+		ShortOutput,
+		Other
+	};
+
+	struct ZlibDecodeFailureEntry
+	{
+		std::string_view name;
+		ZlibDecodeFailure failure;
+	};
+
+	inline constexpr std::array ZLIB_DECODE_FAILURES{
+		ZlibDecodeFailureEntry{ "bad_header", ZlibDecodeFailure::BadHeader },
+		ZlibDecodeFailureEntry{ "bad_data", ZlibDecodeFailure::BadData },
+		ZlibDecodeFailureEntry{ "insufficient_space", ZlibDecodeFailure::InsufficientSpace },
+		ZlibDecodeFailureEntry{ "short_output", ZlibDecodeFailure::ShortOutput },
+		ZlibDecodeFailureEntry{ "other", ZlibDecodeFailure::Other }
+	};
+
+	[[nodiscard]] constexpr ZlibDecodeFailure ClassifyZlibDecodeFailure(
+		uint32_t a_codecResult, bool a_hasZlibHeader) noexcept
+	{
+		if (!a_hasZlibHeader)
+			return ZlibDecodeFailure::BadHeader;
+		switch (a_codecResult)
+		{
+		case ZLIB_CODEC_BAD_DATA:
+			return ZlibDecodeFailure::BadData;
+		case ZLIB_CODEC_INSUFFICIENT_SPACE:
+			return ZlibDecodeFailure::InsufficientSpace;
+		case ZLIB_CODEC_SHORT_OUTPUT:
+			return ZlibDecodeFailure::ShortOutput;
+		default:
+			return ZlibDecodeFailure::Other;
+		}
+	}
 
 	enum class ZlibExactStatus : uint8_t
 	{
@@ -203,6 +245,8 @@ namespace Addictol
 		uint64_t qpcFrequency{ 0 };
 		size_t consumed{ 0 };
 		size_t produced{ 0 };
+		uint32_t primaryCodecResult{ UINT32_MAX };
+		bool hasZlibHeader{ true };
 	};
 
 	struct StockZlibBackend
@@ -347,6 +391,9 @@ namespace Addictol
 					{
 						const auto primaryEnd = ReadZlibQpc(a_timingEnabled, clock);
 						outcome.primaryQpc = primaryEnd - prepareStart;
+						outcome.primaryCodecResult = decoded.codecResult;
+						outcome.hasZlibHeader = ZlibInflate::HasZlibHeader(
+							{ a_stream->next_in, a_stream->avail_in });
 						// Raw and gzip streams fail the zlib probe without reading private wrap.
 						ServeStockZlib(
 							outcome,

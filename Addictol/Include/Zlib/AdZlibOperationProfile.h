@@ -7,7 +7,9 @@ namespace Addictol
 {
 	namespace ZlibProfileDetail
 	{
-		inline constexpr size_t kDescriptorsPerBackend{ 1 + ZLIB_FALLBACK_REASONS.size() };
+		inline constexpr size_t kDescriptorsPerBackend{
+			1 + ZLIB_FALLBACK_REASONS.size() - 1 + ZLIB_DECODE_FAILURES.size()
+		};
 		inline constexpr auto kNames = [] {
 			std::array<OperationProfileNames, ZLIB_BACKEND_NAMES.size() * kDescriptorsPerBackend> names{};
 			size_t index{ 0 };
@@ -27,7 +29,18 @@ namespace Addictol
 						result.Append("fallback.");
 						result.Append(reason.name);
 					}
-					names[index++] = MakeOperationProfileNames(group, result.View());
+					if (reason.reason == ZlibFallbackReason::Decode)
+					{
+						for (const auto& failure : ZLIB_DECODE_FAILURES)
+						{
+							auto decodeResult = result;
+							decodeResult.Append(".");
+							decodeResult.Append(failure.name);
+							names[index++] = MakeOperationProfileNames(group, decodeResult.View());
+						}
+					}
+					else
+						names[index++] = MakeOperationProfileNames(group, result.View());
 				}
 			}
 			return names;
@@ -54,10 +67,27 @@ namespace Addictol
 		const auto admission = ZlibProfileAdmission(a_backend);
 		if (admission == UINT32_MAX)
 			return UINT32_MAX;
-		for (size_t index = 0; index < ZLIB_FALLBACK_REASONS.size(); ++index)
+		auto result = admission + 1;
+		for (const auto& reason : ZLIB_FALLBACK_REASONS)
 		{
-			if (ZlibFallbackReasonRegistryId(ZLIB_FALLBACK_REASONS[index].reason) == a_outcome.fallbackReasonId)
-				return admission + 1 + static_cast<uint32_t>(index);
+			const auto matches = ZlibFallbackReasonRegistryId(reason.reason) == a_outcome.fallbackReasonId;
+			if (reason.reason == ZlibFallbackReason::Decode)
+			{
+				const auto failure = ClassifyZlibDecodeFailure(
+					a_outcome.primaryCodecResult, a_outcome.hasZlibHeader);
+				for (const auto& entry : ZLIB_DECODE_FAILURES)
+				{
+					if (matches && entry.failure == failure)
+						return result;
+					++result;
+				}
+			}
+			else
+			{
+				if (matches)
+					return result;
+				++result;
+			}
 		}
 		return UINT32_MAX;
 	}

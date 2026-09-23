@@ -58,9 +58,9 @@ namespace Addictol
 			&consumed,
 			&produced);
 		if (result != LIBDEFLATE_SUCCESS)
-			return { ZlibDecodeStatus::Failed };
+			return { ZlibDecodeStatus::Failed, 0, 0, static_cast<uint32_t>(result) };
 
-		return { ZlibDecodeStatus::Success, consumed, produced };
+		return { ZlibDecodeStatus::Success, consumed, produced, static_cast<uint32_t>(result) };
 	}
 
 	ZlibExactDecode LibDeflateZlibBackend::DecodeExact(

@@ -343,11 +343,13 @@ namespace vmm_tests
 			require(!Telemetry::EnabledRelaxed(), "fixture unexpectedly enabled ordinary telemetry");
 			std::vector<std::string> expectedSeries;
 			const auto run = [&]<class Backend>() {
-				for (const auto& reason : ZLIB_FALLBACK_REASONS)
-				{
+				const auto check = [&](const ZlibFallbackReasonEntry& reason,
+					uint32_t codecResult, bool hasZlibHeader, std::string_view suffix) {
 					const auto outcome = ServeProfiledZlib<Backend, true>(source.get(), [&] {
 						ZlibInflateOutcome result{};
 						result.fallbackReasonId = ZlibFallbackReasonRegistryId(reason.reason);
+						result.primaryCodecResult = codecResult;
+						result.hasZlibHeader = hasZlibHeader;
 						result.produced = 321;
 						result.zlibResult = -3;
 						return result;
@@ -357,11 +359,25 @@ namespace vmm_tests
 					auto expected = std::string{ "zlib.inflate." } + std::string{ ZlibBackendKindName(Backend::kind) };
 					expected += reason.reason == ZlibFallbackReason::None ?
 						".primary" : ".fallback." + std::string{ reason.name };
+					expected += suffix;
 					std::replace(expected.begin(), expected.end(), '-', '_');
 					require(result < kZlibProfileDescriptors.size() &&
 						kZlibProfileDescriptors[result].series == expected,
 						"fallback descriptor mapping failed");
 					expectedSeries.push_back(std::move(expected));
+				};
+				for (const auto& reason : ZLIB_FALLBACK_REASONS)
+				{
+					if (reason.reason == ZlibFallbackReason::Decode)
+					{
+						check(reason, ZLIB_CODEC_BAD_DATA, false, ".bad_header");
+						check(reason, ZLIB_CODEC_BAD_DATA, true, ".bad_data");
+						check(reason, ZLIB_CODEC_INSUFFICIENT_SPACE, true, ".insufficient_space");
+						check(reason, ZLIB_CODEC_SHORT_OUTPUT, true, ".short_output");
+						check(reason, UINT32_MAX, true, ".other");
+					}
+					else
+						check(reason, UINT32_MAX, true, "");
 				}
 			};
 			run.template operator()<StockZlibBackend>();
@@ -380,8 +396,8 @@ namespace vmm_tests
 			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
 			uint64_t calls{ 0 }, bytes{ 0 };
 			for (const auto& sample : series) { calls += sample.calls; bytes += sample.bytes; }
-			require(calls == 2 * ZLIB_FALLBACK_REASONS.size() + 1 &&
-				bytes == 2 * ZLIB_FALLBACK_REASONS.size() * 321 &&
+			require(calls == expectedSeries.size() + 1 &&
+				bytes == expectedSeries.size() * 321 &&
 				source->Counters().invalidResults == 0, "profile-only zlib records were lost");
 			for (const auto& expected : expectedSeries)
 			{
