@@ -18,7 +18,7 @@ namespace Addictol
 		"bLibDeflate"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Enables owned zlib streams using sZlibBackend. All inflate entry points must validate and install together; conflicts leave stock zlib untouched."sv,
+		"Replaces the game's zlib decompression with the backend selected by sZlibBackend. If another mod already patches zlib, the game's zlib is left untouched."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

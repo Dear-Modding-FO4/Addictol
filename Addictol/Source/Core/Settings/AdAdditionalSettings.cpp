@@ -37,7 +37,7 @@ namespace Addictol
 		"sZlibBackend"sv,
 		SettingDisplayCategory::kPerformance,
 		std::string{ ZlibBackendKindName(DEFAULT_ZLIB_BACKEND) },
-		"Owned decoder: stock (no hooks), zlib, zlib-ng, isa-l, hybrid-zlib-ng (default), or hybrid-isa-l. Hybrid modes add libdeflate whole-input decoding (needs bLibDeflate)."sv,
+		"Selects the zlib decompression backend: stock, zlib, zlib-ng, isa-l, hybrid-zlib-ng, or hybrid-isa-l. Hybrid modes try libdeflate first when a stream fits in one call (needs bLibDeflate)."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
