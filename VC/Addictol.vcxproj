@@ -24,6 +24,7 @@
     <ClCompile Include="..\Addictol\Source\Telemetry\AdOperationProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdProfiledHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdZlibOperationProfile.cpp" />
+    <ClCompile Include="..\Addictol\Source\Zlib\AdZlibStreamTracker.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryHub.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryRuntime.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdAllocator.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="..\Addictol\Include\Telemetry\AdOperationProfileTable.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdProfiledHeap.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibOperationProfile.h" />
+    <ClInclude Include="..\Addictol\Include\Zlib\AdZlibStreamTracker.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdLoadTiming.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetryHub.h" />

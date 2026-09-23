@@ -283,7 +283,13 @@ namespace Addictol
 		return a_timingEnabled ? a_clock() : 0;
 	}
 
-	template<class Original, class Clock>
+	struct ZlibStockObserver
+	{
+		void Before(const ZlibInflate::Stream*, ZlibFallbackReason, const ZlibInflateOutcome&) const noexcept {}
+		void After(const ZlibInflate::Stream*, int32_t) const noexcept {}
+	};
+
+	template<class Original, class Clock, class Observer = ZlibStockObserver>
 	void ServeStockZlib(
 		ZlibInflateOutcome& a_outcome,
 		bool a_isFallback,
@@ -292,13 +298,16 @@ namespace Addictol
 		int32_t a_flush,
 		Original& a_original,
 		bool a_timingEnabled,
-		Clock& a_clock) noexcept
+		Clock& a_clock,
+		Observer a_observer = {}) noexcept
 	{
 		const auto inputBefore = a_stream ? a_stream->avail_in : 0;
 		const auto outputBefore = a_stream ? a_stream->avail_out : 0;
+		a_observer.Before(a_stream, a_fallbackReason, a_outcome);
 		const auto start = ReadZlibQpc(a_timingEnabled, a_clock);
 		const auto result = a_original(a_stream, a_flush);
 		const auto end = ReadZlibQpc(a_timingEnabled, a_clock);
+		a_observer.After(a_stream, result);
 		const auto inputAfter = a_stream ? a_stream->avail_in : inputBefore;
 		const auto outputAfter = a_stream ? a_stream->avail_out : outputBefore;
 
@@ -320,14 +329,15 @@ namespace Addictol
 		a_outcome.produced = (outputAfter <= outputBefore) ? outputBefore - outputAfter : 0;
 	}
 
-	template<class Backend, class Original, class Clock>
+	template<class Backend, class Original, class Clock, class Observer = ZlibStockObserver>
 	ZlibInflateOutcome ServeZlib(
 		ZlibInflate::Stream* a_stream,
 		int32_t a_flush,
 		Original&& a_original,
 		bool a_timingEnabled,
 		uint64_t a_qpcFrequency,
-		Clock&& a_clock) noexcept
+		Clock&& a_clock,
+		Observer a_observer = {}) noexcept
 	{
 		ZlibInflateOutcome outcome{};
 		outcome.primaryBackendId = ZlibBackendRegistryId(Backend::kind);
@@ -346,7 +356,7 @@ namespace Addictol
 				a_flush,
 				original,
 				a_timingEnabled,
-				clock);
+				clock, a_observer);
 		}
 		else
 		{
@@ -360,7 +370,7 @@ namespace Addictol
 					a_flush,
 					original,
 					a_timingEnabled,
-					clock);
+					clock, a_observer);
 			}
 			else
 			{
@@ -379,7 +389,7 @@ namespace Addictol
 						a_flush,
 						original,
 						a_timingEnabled,
-						clock);
+						clock, a_observer);
 				}
 				else
 				{
@@ -403,7 +413,7 @@ namespace Addictol
 							a_flush,
 							original,
 							a_timingEnabled,
-							clock);
+							clock, a_observer);
 					}
 					else
 					{
@@ -423,7 +433,7 @@ namespace Addictol
 								a_flush,
 								original,
 								a_timingEnabled,
-								clock);
+								clock, a_observer);
 						}
 						else
 						{

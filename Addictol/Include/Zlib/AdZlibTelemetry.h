@@ -6,14 +6,16 @@
 
 namespace Addictol::TelemetryDetail
 {
-	template<class Backend, class Original, class Clock, class ThreadReader, class Recorder>
+	template<class Backend, class Original, class Clock, class ThreadReader, class Recorder,
+		class Observer = ZlibStockObserver>
 	[[nodiscard]] ZlibInflateOutcome ServeTelemetryZlib(
 		ZlibInflate::Stream* a_stream,
 		int32_t a_flush,
 		Original&& a_original,
 		Clock&& a_clock,
 		ThreadReader&& a_threadReader,
-		Recorder&& a_recorder) noexcept
+		Recorder&& a_recorder,
+		Observer a_observer = {}) noexcept
 	{
 		const auto telemetryEnabled = Telemetry::EnabledRelaxed();
 		auto&& original = a_original;
@@ -24,7 +26,7 @@ namespace Addictol::TelemetryDetail
 			original,
 			telemetryEnabled,
 			telemetryEnabled ? Addictol::GetQpcFrequency() : 0,
-			clock);
+			clock, a_observer);
 		const auto recordEnabled =
 			telemetryEnabled && Telemetry::EnabledRelaxed();
 		auto&& threadReader = a_threadReader;

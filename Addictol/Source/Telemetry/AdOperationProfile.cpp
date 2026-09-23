@@ -518,6 +518,15 @@ namespace Addictol
 		};
 	}
 
+	bool OperationProfileSource::IsCurrent(const OperationProfileToken& a_token) const noexcept
+	{
+		if (a_token.source != this || !a_token.captureState)
+			return false;
+		const auto* capture = static_cast<const CaptureState*>(a_token.captureState);
+		return m_currentCapture.load(std::memory_order_acquire) == capture &&
+			capture->admissionOpen.load(std::memory_order_acquire);
+	}
+
 	void OperationProfileSource::End(
 		OperationProfileToken a_token,
 		uint64_t a_bytes) noexcept

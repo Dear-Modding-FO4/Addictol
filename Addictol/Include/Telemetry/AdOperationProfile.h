@@ -191,6 +191,8 @@ namespace Addictol
 
 		[[nodiscard]] bool IsValid() const noexcept;
 		[[nodiscard]] OperationProfileToken Begin(uint32_t a_descriptorIndex) noexcept;
+		// Long-lived consumers can retire stale tokens without pinning old capture slots.
+		[[nodiscard]] bool IsCurrent(const OperationProfileToken& a_token) const noexcept;
 		void End(OperationProfileToken a_token, uint64_t a_bytes = 0) noexcept;
 		void End(OperationProfileToken a_token, uint64_t a_bytes, uint32_t a_resultDescriptor) noexcept;
 		[[nodiscard]] std::span<const MetricDescriptor> Schema() const noexcept override;

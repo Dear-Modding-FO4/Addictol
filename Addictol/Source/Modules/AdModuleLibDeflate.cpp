@@ -47,8 +47,8 @@ namespace Addictol
 					};
 					const auto bytesInBefore = a_stream->total_in;
 					const auto bytesOutBefore = a_stream->total_out;
-					const auto outcome = ServeProfiledZlib<Backend, Profile>(
-						Profile ? ZlibOperationProfile() : nullptr, [&] {
+					const auto outcome = ServeProfiledZlibDispatch<Backend, Profile>(
+						Profile ? ZlibOperationProfile() : nullptr, [&](auto a_observer) {
 						if constexpr (Backend::kind == ZlibBackendKind::LibDeflate)
 						{
 							return TelemetryDetail::ServeTelemetryZlib<Backend>(
@@ -69,11 +69,11 @@ namespace Addictol
 											a_stream->total_in - bytesInBefore),
 										static_cast<uint32_t>(
 											a_stream->total_out - bytesOutBefore));
-								});
+								}, a_observer);
 						}
 						else
 							return ServeZlib<Backend>(
-								a_stream, a_flush, original, false, 0, clock);
+								a_stream, a_flush, original, false, 0, clock, a_observer);
 					});
 					return outcome.zlibResult;
 				}

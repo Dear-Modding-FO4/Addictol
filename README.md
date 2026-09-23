@@ -122,6 +122,7 @@ Sampling is 1/256 with 262,144 records (roughly one second at 67 million heap op
 Zlib profiling surrounds backend dispatch, not codec implementations. It records total inflate
 duration and output bytes for primary service or stock fallback by reason, including selected stock,
 with decode failures split by bad header, bad data, insufficient space, short output, or other.
+Window-limited and bad-data fallback streams also report lifetime/output and whether the first call held all input, input was refilled, or tracking ended by abandonment/eviction.
 It samples every call with 131,072 records, sized for in-game load bursts. This works with ordinary telemetry off; ordinary
 telemetry's existing counters and internal codec timing remain unchanged. Effective backend
 labels and all sampling/storage limits are exported.

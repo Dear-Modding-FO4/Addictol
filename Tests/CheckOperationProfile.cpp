@@ -5,6 +5,7 @@
 #include <Zlib/AdZlibOperationProfile.h>
 #include <Zlib/AdZlibTelemetry.h>
 #include "Harness.h"
+#include "AllocationProbe.h"
 
 #include <Windows.h>
 
@@ -135,6 +136,17 @@ namespace
 		size_t msize(void* a_input) { Record(6, a_input, 0, 0); return 123; }
 		size_t aligned_msize(void* a_input, size_t a_alignment) { Record(7, a_input, 0, a_alignment); return 456; }
 		void* CheckPtr(void* a_input, size_t a_size) { Record(8, a_input, a_size, 0); return a_input; }
+	};
+
+	struct WindowLimitedBackend
+	{
+		inline static constexpr auto kind = ZlibBackendKind::LibDeflate;
+		inline static uint32_t codecResult{ ZLIB_CODEC_INSUFFICIENT_SPACE };
+		static bool Prepare() noexcept { return true; }
+		static ZlibDecodeResult Decode(std::span<const uint8_t>, std::span<uint8_t>) noexcept
+		{
+			return { ZlibDecodeStatus::Failed, 0, 0, codecResult };
+		}
 	};
 
 	uint64_t ReadProfileClock() noexcept
@@ -410,6 +422,259 @@ namespace vmm_tests
 					"zlib fallback outcomes merged into the wrong duration series");
 			}
 		});
+		runner.test("bounded zlib stream tracking classifies refills and retires without allocations", [] {
+			ZlibStreamTracker<uint32_t, 2> tracker;
+			std::array<uint32_t, 3> states{};
+			ZlibStreamInput first{ &states[0], 100, 100, true };
+			const ZlibStreamInput second{ &states[1], 200, 100, true };
+			const ZlibStreamInput third{ &states[2], 300, 100, true };
+			struct Retirement
+			{
+				uint32_t id;
+				ZlibStreamResult result;
+				uint64_t bytes;
+			};
+			std::array<Retirement, 7> retired{};
+			size_t count{ 0 };
+			const auto retire = [&](uint32_t& a_id, const ZlibStreamProgress& a_progress, ZlibStreamResult a_result) {
+				if (count < retired.size())
+					retired[count] = { a_id, a_result, a_progress.totalOutput };
+				++count;
+			};
+			size_t allocations{ 0 };
+			{
+				AllocationProbe probe;
+				tracker.Start(first, 1, retire);
+				++first.end;
+				tracker.FinishCall(first, 30, 128, -5, retire);
+				--first.end;
+				tracker.FinishCall(first, 90, 256, ZlibInflate::Z_STREAM_END, retire);
+				tracker.Start(first, 2, retire);
+				tracker.FinishCall(first, 101, 512, ZlibInflate::Z_STREAM_END, retire);
+				tracker.Start(first, 3, retire);
+				tracker.FinishCall(first, 100, 1024, ZlibInflate::Z_STREAM_END, retire);
+				tracker.Start(first, 4, retire);
+				tracker.FinishCall(first, 50, 400, 0, retire);
+				tracker.Start(first, 5, retire);
+				tracker.Start(second, 6, retire);
+				tracker.Start(third, 7, retire);
+				tracker.FinishCall(second, 80, 2048, ZlibInflate::Z_STREAM_END, retire);
+				tracker.Clear(retire);
+				allocations = probe.Count();
+			}
+			require(allocations == 0, "stream tracker allocated after construction");
+			require(count == retired.size(), "a stream was lost or retired twice");
+			require(retired[0].result == ZlibStreamResult::InputRefilled &&
+				retired[1].result == ZlibStreamResult::InputRefilled &&
+				retired[2].result == ZlibStreamResult::InputComplete,
+				"refill history or total-input bound was ignored");
+			require(retired[3].id == 4 && retired[3].result == ZlibStreamResult::Abandoned &&
+				retired[3].bytes == 400 && retired[4].id == 5 &&
+				retired[4].result == ZlibStreamResult::Evicted,
+				"state reuse did not abandon or table overflow did not evict oldest");
+			require(retired[5].id == 6 && retired[5].result == ZlibStreamResult::InputComplete &&
+				retired[5].bytes == 2048 && retired[6].result == ZlibStreamResult::Abandoned,
+				"eviction damaged another stream or clear lost an abandoned stream");
+		});
+
+		runner.test("zlib stream profiles span fallback windows without changing disabled dispatch", [] {
+			CountingResource resource;
+			auto source = MakeProfileSource(128, kZlibProfileDescriptors, &resource);
+			ZlibProfileStreamTracker tracker;
+			require(TelemetryTest::OperationProfileAccess::Start(*source), "stream profile did not start");
+			std::array<uint8_t, 8> input{ 0x78, 0x9c }, refill{};
+			std::array<uint8_t, 8> output{};
+			uint32_t state{ ZlibInflate::MODE_HEAD };
+			ZlibInflate::Stream stream{};
+			const auto reset = [&] {
+				stream = {};
+				stream.state = &state;
+				stream.next_in = input.data();
+				stream.avail_in = static_cast<uint32_t>(input.size());
+				stream.next_out = output.data();
+				stream.avail_out = static_cast<uint32_t>(output.size());
+			};
+			uint64_t legacyClockReads{ 0 }, stockCalls{ 0 };
+			bool legacyEnabled{ false };
+			const auto serve = [&](auto a_observer, bool a_end) {
+				return TelemetryDetail::ServeTelemetryZlib<WindowLimitedBackend>(
+					&stream, 0, [&](auto* a_stream, int32_t) {
+						++stockCalls;
+						const auto consumed = a_end ? a_stream->avail_in : 2;
+						a_stream->next_in += consumed;
+						a_stream->avail_in -= consumed;
+						a_stream->total_in += consumed;
+						a_stream->next_out += 4;
+						a_stream->avail_out -= 4;
+						a_stream->total_out += 4;
+						return a_end ? ZlibInflate::Z_STREAM_END : 0;
+					}, [&] { return ++legacyClockReads; }, [] { return 1u; },
+					[&](const auto&, bool a_enabled, auto) { legacyEnabled |= a_enabled; }, a_observer);
+			};
+			reset();
+			WindowLimitedBackend::codecResult = ZLIB_CODEC_INSUFFICIENT_SPACE;
+			const auto reads = s_clockReads.load();
+			const auto disabled = ServeProfiledZlibDispatch<WindowLimitedBackend, false>(source.get(), [&](auto a_observer) {
+				static_assert(std::is_same_v<decltype(a_observer), ZlibStockObserver>);
+				return serve(a_observer, false);
+			}, &tracker);
+			require(disabled.zlibResult == 0 && s_clockReads.load() == reads &&
+				source->AllOperationCount(ZlibStreamProfileAdmission(WindowLimitedBackend::kind)) == 0 &&
+				TelemetryTest::OperationProfileAccess::Active(*source) == 0,
+				"disabled dispatch touched the tracker or profile source");
+
+			const auto resourceAllocations = resource.Allocations();
+			for (const auto codec : { ZLIB_CODEC_INSUFFICIENT_SPACE, ZLIB_CODEC_BAD_DATA })
+			{
+				for (const bool refilled : { false, true })
+				{
+					reset();
+					WindowLimitedBackend::codecResult = codec;
+					size_t allocations{ 0 };
+					ZlibInflateOutcome first{}, last{};
+					{
+						AllocationProbe probe;
+						first = ServeProfiledZlibDispatch<WindowLimitedBackend, true>(source.get(),
+							[&](auto a_observer) { return serve(a_observer, false); }, &tracker);
+						s_profileClock += 1000;
+						if (refilled)
+						{
+							stream.next_in = refill.data();
+							stream.avail_in = static_cast<uint32_t>(refill.size());
+						}
+						last = ServeProfiledZlibDispatch<WindowLimitedBackend, true>(source.get(),
+							[&](auto a_observer) { return serve(a_observer, true); }, &tracker);
+						allocations = probe.Count();
+					}
+					require(allocations == 0 && resource.Allocations() == resourceAllocations,
+						"stream profiling allocated on fallback");
+					require(first.fallbackReasonId == ZlibFallbackReasonRegistryId(ZlibFallbackReason::Decode) &&
+						last.fallbackReasonId == ZlibFallbackReasonRegistryId(ZlibFallbackReason::State) &&
+						last.zlibResult == ZlibInflate::Z_STREAM_END && last.produced == 4 &&
+						stream.total_out == 8, "stream profiling changed fallback or codec semantics");
+				}
+			}
+			require(stockCalls == 9 && legacyClockReads == 0 && !legacyEnabled,
+				"stream profiling changed ordinary telemetry or stock call count");
+			require(source->AllOperationCount(ZlibStreamProfileAdmission(WindowLimitedBackend::kind)) == 4 &&
+				TelemetryTest::OperationProfileAccess::Active(*source) == 0,
+				"stream profile admission or token completion was lost");
+			(void)TelemetryTest::OperationProfileAccess::Close(*source);
+			std::vector<MetricValue> metrics(source->Schema().size());
+			std::vector<SeriesSample> series(source->SeriesCapacity());
+			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+			for (const auto cause : { "insufficient_space", "bad_data" })
+			{
+				for (const auto result : { "input_complete", "input_refilled" })
+				{
+					const auto name = std::string{ "zlib.stream.libdeflate." } + cause + "." + result;
+					uint64_t calls{ 0 }, bytes{ 0 }, ticks{ 0 };
+					for (const auto& sample : series)
+					{
+						if (sample.series == name)
+						{
+							calls += sample.calls;
+							bytes += sample.bytes;
+							ticks += sample.ticks;
+						}
+					}
+					require(calls == 1 && bytes == 8 && ticks > 1000,
+						"stream classification, lifetime, or cumulative output was not exported");
+				}
+			}
+			require(source->Counters().invalidResults == 0, "stream result groups rejected a classification");
+		});
+
+		runner.test("zlib stream retirement exports untracked counts and survives capture restarts", [] {
+			auto source = MakeProfileSource(1024, kZlibProfileDescriptors);
+			ZlibProfileStreamTracker tracker;
+			std::array<uint32_t, 257> states{};
+			std::array<uint8_t, 8> input{ 0x78, 0x9c };
+			ZlibInflate::Stream stream{};
+			stream.next_in = input.data();
+			stream.avail_in = static_cast<uint32_t>(input.size());
+			ZlibInflateOutcome failure{};
+			failure.primaryCodecResult = ZLIB_CODEC_BAD_DATA;
+			const auto begin = [&](uint32_t& a_state) {
+				stream.state = &a_state;
+				stream.total_in = stream.total_out = 0;
+				ZlibStreamProfileObserver observer{ source.get(), ZlibBackendKind::LibDeflate, tracker };
+				observer.Before(&stream, ZlibFallbackReason::Decode, failure);
+				stream.total_in = 2;
+				stream.total_out = 16;
+				observer.After(&stream, 0);
+			};
+			require(TelemetryTest::OperationProfileAccess::Start(*source), "retirement profile did not start");
+			begin(states[0]);
+			begin(states[0]);
+			for (size_t index = 1; index < states.size(); ++index)
+				begin(states[index]);
+			ZlibStreamProfileObserver error{ source.get(), ZlibBackendKind::LibDeflate, tracker };
+			error.Before(&stream, ZlibFallbackReason::State, failure);
+			error.After(&stream, -3);
+			tracker.Clear(ZlibStreamProfile::Retire);
+			require(TelemetryTest::OperationProfileAccess::Active(*source) == 0,
+				"retirement leaked a move-only profile token");
+			(void)TelemetryTest::OperationProfileAccess::Close(*source);
+			std::vector<MetricValue> metrics(source->Schema().size());
+			std::vector<SeriesSample> series(source->SeriesCapacity());
+			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+			uint64_t abandoned{ 0 }, evicted{ 0 }, bytes{ 0 };
+			for (const auto& sample : series)
+			{
+				if (sample.series == "zlib.stream.libdeflate.bad_data.untracked.abandoned")
+					abandoned += sample.calls;
+				if (sample.series == "zlib.stream.libdeflate.bad_data.untracked.evicted")
+					evicted += sample.calls;
+				bytes += sample.bytes;
+			}
+			require(abandoned == 257 && evicted == 1 && bytes == 258 * 16,
+				"untracked stream counts or last observed output were not exported");
+			for (size_t capture = 0; capture < 12; ++capture)
+			{
+				require(TelemetryTest::OperationProfileAccess::Start(*source),
+					"dormant stream tokens exhausted capture slots");
+				begin(states[capture]);
+				require(TelemetryTest::OperationProfileAccess::Active(*source) == 1 &&
+					source->Counters().acceptedRecords == 0,
+					"stale stream token published into a new capture");
+				(void)TelemetryTest::OperationProfileAccess::Close(*source);
+			}
+			tracker.Clear(ZlibStreamProfile::Retire);
+			require(source->Counters().staleTokens == 1 &&
+				TelemetryTest::OperationProfileAccess::Active(*source) == 0,
+				"closed stream token was not retired as stale");
+		});
+
+		runner.test("zlib stream tracking follows streams across loader threads", [] {
+			ZlibStreamTracker<uint32_t, 4> tracker;
+			std::array<uint32_t, 4> states{};
+			std::array<std::thread, 4> workers;
+			uint64_t completed{ 0 }, totalBytes{ 0 }, unexpected{ 0 };
+			const auto retire = [&](uint32_t&, const ZlibStreamProgress& a_progress, ZlibStreamResult a_result) {
+				++completed;
+				totalBytes += a_progress.totalOutput;
+				unexpected += a_result != ZlibStreamResult::InputComplete;
+			};
+			for (size_t index = 0; index < workers.size(); ++index)
+			{
+				tracker.Start({ &states[index], 100, 100, true }, 0, retire);
+				workers[index] = std::thread([&, index] {
+					const ZlibStreamInput input{ &states[index], 100, 100, false };
+					tracker.FinishCall(input, 100, 128, ZlibInflate::Z_STREAM_END, retire);
+					for (size_t stream = 0; stream < 1000; ++stream)
+					{
+						tracker.Start(input, 0, retire);
+						tracker.FinishCall(input, 100, 128, ZlibInflate::Z_STREAM_END, retire);
+					}
+				});
+			}
+			for (auto& worker : workers)
+				worker.join();
+			require(completed == 4004 && totalBytes == 4004 * 128 && unexpected == 0,
+				"concurrent loader streams lost or mixed tracker entries");
+		});
+
 		runner.test("aggregate drains conserve independently exchanged fields", [] {
 			constexpr uint64_t producerCount{ 4 };
 			constexpr uint64_t iterations{ 50000 };

@@ -273,6 +273,7 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
     add_files("Addictol/Source/Zlib/AdZlibBackend.cpp")
     add_files("Addictol/Source/Zlib/AdZlibOperationProfile.cpp")
+    add_files("Addictol/Source/Zlib/AdZlibStreamTracker.cpp")
 
     -- add include directories
     add_includedirs(
