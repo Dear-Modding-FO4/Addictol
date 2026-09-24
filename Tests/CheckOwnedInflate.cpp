@@ -345,7 +345,9 @@ namespace vmm_tests
 				}
 				require(synced == oracle.Sync() && synced == INFLATE_OK, "sync recovery");
 				require(engine.inflate(&stream, 4) == oracle.Inflate(4), "post-sync return");
-				require(stream.total_out == payload.size() / 2 && output == reference, "post-sync output");
+				require(stream.total_out == payload.size() / 2 &&
+					std::equal(output.begin(), output.begin() + stream.total_out, payload.begin() + payload.size() / 2),
+					std::string(engine.name) + " post-sync output");
 				SameEnd(stream, expected, output.data(), reference.data(), engine.name);
 			}
 		});
