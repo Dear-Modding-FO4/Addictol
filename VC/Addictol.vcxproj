@@ -52,7 +52,9 @@
     <ClCompile Include="..\Addictol\Source\Menu\AdMenuTelemetry.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdPlugin.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdProxyVisperHeap.cpp" />
-    <ClCompile Include="..\Addictol\Source\Memory\AdProxyVoltekHeap.cpp" />
+    <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdMimallocHeap.cpp" />
+    <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdRpmallocHeap.cpp" />
+    <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdClock.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdUtils.cpp" />
@@ -169,6 +171,10 @@
     <ClInclude Include="..\Addictol\Include\Telemetry\AdTelemetryHub.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdAllocator.h" />
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdHeapBackend.h" />
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdMimallocHeap.h" />
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdRpmallocHeap.h" />
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdVoltekHeap.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdAllocatorPoolTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdAssert.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
@@ -349,7 +355,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\spdlog\include;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Depends\commonlibf4\lib\dearmoddingui-api\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;$(SolutionDir)..\Depends\vmm\source;$(SolutionDir)..\Depends\zlibng-config;$(SolutionDir)..\Depends\isa-l\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Depends\commonlibf4\include;$(SolutionDir)..\Depends;$(SolutionDir)..\Depends\spdlog\include;$(SolutionDir)..\Depends\detours;$(SolutionDir)..\Depends\commonlibf4\lib\commonlib-shared\include;$(SolutionDir)..\Depends\commonlibf4\lib\dearmoddingui-api\include;$(SolutionDir)..\Version;$(SolutionDir)..\Addictol\Include;$(SolutionDir)..\Depends\vmm\include;$(SolutionDir)..\Depends\vmm\source;$(SolutionDir)..\Depends\zlibng-config;$(SolutionDir)..\Depends\isa-l\include;$(SolutionDir)..\Depends\mimalloc\include;$(SolutionDir)..\Depends\rpmalloc\rpmalloc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>FastCall</CallingConvention>
       <DisableSpecificWarnings>4200;4996;26444;26495;4806</DisableSpecificWarnings>
       <ForcedIncludeFiles>Core\AdPCH.h</ForcedIncludeFiles>
@@ -360,7 +366,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>msdetours_vc22.lib;detours_vc22.lib;libdeflate_vc22.lib;zlib_vc22.lib;zlibng_vc22.lib;isal_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;Ole32.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msdetours_vc22.lib;detours_vc22.lib;libdeflate_vc22.lib;zlib_vc22.lib;zlibng_vc22.lib;isal_vc22.lib;mimalloc_vc22.lib;rpmalloc_vc22.lib;commonlibf4_vc22.lib;commonlib-shared_vc22.lib;spdlog_vc22.lib;Advapi32.lib;Bcrypt.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;Ole32.lib;ws2_32.lib;version.lib;Dbghelp.lib;shlwapi.lib;winhttp.lib;VoltekLib.MemoryManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

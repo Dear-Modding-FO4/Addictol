@@ -24,12 +24,12 @@
     "message": "public log level name changed"
   },
   {
-    "name": "allocator busy metric reads busy pages",
+    "name": "allocator metrics keep schema order",
     "target": "Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h",
-    "find": "a_out[1] = { static_cast<double>(a_stats.pages_busy), a_active };",
-    "replace": "a_out[1] = { static_cast<double>(a_stats.page_capacity), a_active };",
-    "check": "allocator metrics preserve sampled fields and validity",
-    "message": "allocator busy pages did not match the sampled count"
+    "find": "a_stats.poolCount, a_stats.pagesBusy, a_stats.pageCapacity,",
+    "replace": "a_stats.poolCount, a_stats.pageCapacity, a_stats.pagesBusy,",
+    "check": "allocator metrics export only the fields a backend reports",
+    "message": "allocator fields did not serialize in schema order with unreported cells empty"
   },
   {
     "name": "process page faults report interval delta",

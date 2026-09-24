@@ -97,7 +97,7 @@ data/                        authored mod payload
 ```
 
 `Depends/` holds submodules (`commonlibf4`, which provides the `RE::`, `REL::`, `REX::`, `F4SE::`
-and DearModdingUI client APIs, plus `detours`, `ms-detours`, `libdeflate`, `zlib`, `zlib-ng`, `isa-l`, `spdlog`, `toml11` and `INI`)
+and DearModdingUI client APIs, plus `detours`, `ms-detours`, `libdeflate`, `zlib`, `zlib-ng`, `isa-l`, `mimalloc`, `rpmalloc`, `spdlog`, `toml11` and `INI`)
 and vendored libraries (`vmm`, `xbyak`, `unordered_dense`).
 
 Crash logging is not part of this plugin. It ships separately as
@@ -557,9 +557,10 @@ hooks. Signature fixtures test drift and rejection logic, not retail address res
 Settings checks cover registry-derived documentation, factory defaults, override loading,
 comment-preserving persistence, and Reset/Apply/reload behavior.
 
-Run `.\.Build\Tests\vmm-tests.exe --bench` for opt-in VMM throughput and latency measurements, written to
-`.Build\Tests\bench.json`. These are not a correctness gate; inspect the reported allocation/free failure
-counts rather than relying on exit status alone. CI runs the default checks, not benchmarks.
+Run `.\.Build\Tests\vmm-tests.exe --bench=<backend>` (`voltek`, `mimalloc` or `rpmalloc`) for opt-in heap throughput,
+latency and churn-footprint measurements, written to `.Build\Tests\bench-<backend>.json`. Run one backend per
+process; `--bench` runs all of them, which skews footprint figures. These are not a correctness gate; inspect
+the reported allocation failure counts rather than relying on exit status alone. CI runs the default checks, not benchmarks.
 
 `--bench-profile` measures profiling overhead and writes `.Build\Tests\profile-bench.json`.
 

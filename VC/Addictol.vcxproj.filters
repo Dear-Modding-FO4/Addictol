@@ -95,8 +95,14 @@
     <ClCompile Include="..\Addictol\Source\Telemetry\AdTelemetryRuntime.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Memory\AdProxyVoltekHeap.cpp">
-      <Filter>Source\Memory</Filter>
+    <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdMimallocHeap.cpp">
+      <Filter>Source\Memory\Heaps</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdRpmallocHeap.cpp">
+      <Filter>Source\Memory\Heaps</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdVoltekHeap.cpp">
+      <Filter>Source\Memory\Heaps</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Memory\AdVisperMemoryAllocator.cpp">
       <Filter>Source\Memory</Filter>
@@ -436,6 +442,18 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Memory\AdAllocator.h">
       <Filter>Include\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdHeapBackend.h">
+      <Filter>Include\Memory\Heaps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdMimallocHeap.h">
+      <Filter>Include\Memory\Heaps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdRpmallocHeap.h">
+      <Filter>Include\Memory\Heaps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Memory\Heaps\AdVoltekHeap.h">
+      <Filter>Include\Memory\Heaps</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInflate.h">
       <Filter>Include\Zlib</Filter>
@@ -849,6 +867,12 @@
     </Filter>
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{62cf36df-9933-4419-a1b8-f8fe3b3e1486}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Memory\Heaps">
+      <UniqueIdentifier>{a3d5c1e7-4b2f-4e8a-9c61-2f7b8d0e4a15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Memory\Heaps">
+      <UniqueIdentifier>{c7e2a9b4-1d3f-4a6c-8e52-6b9f0d2c7e38}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Zlib">
       <UniqueIdentifier>{a536877f-a989-43d4-a362-e9a9c0f69270}</UniqueIdentifier>

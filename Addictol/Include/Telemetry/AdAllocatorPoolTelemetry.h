@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Memory/Heaps/AdHeapBackend.h>
 #include <Telemetry/AdTelemetry.h>
-#include <Voltek.MemoryManager.h>
 
 namespace Addictol::AllocatorPoolTelemetry
 {
@@ -10,20 +10,22 @@ namespace Addictol::AllocatorPoolTelemetry
 		static constexpr std::array schema{
 			MetricDescriptor{ "allocator.pool_count", Unit::kCount },
 			MetricDescriptor{ "allocator.pages_busy", Unit::kCount },
-			MetricDescriptor{ "allocator.page_capacity", Unit::kCount }
+			MetricDescriptor{ "allocator.page_capacity", Unit::kCount },
+			MetricDescriptor{ "allocator.committed_bytes", Unit::kBytes },
+			MetricDescriptor{ "allocator.reserved_bytes", Unit::kBytes }
 		};
 		return schema;
 	}
 
-	inline void Populate(
-		std::span<MetricValue> a_out,
-		bool a_active,
-		const voltek::scalable_pool_stats& a_stats) noexcept
+	inline void Populate(std::span<MetricValue> a_out, const HeapStatistics& a_stats) noexcept
 	{
-		if (a_out.size() != 3)
+		const std::array fields{
+			a_stats.poolCount, a_stats.pagesBusy, a_stats.pageCapacity,
+			a_stats.committedBytes, a_stats.reservedBytes
+		};
+		if (a_out.size() != fields.size())
 			return;
-		a_out[0] = { static_cast<double>(a_stats.pool_count), a_active };
-		a_out[1] = { static_cast<double>(a_stats.pages_busy), a_active };
-		a_out[2] = { static_cast<double>(a_stats.page_capacity), a_active };
+		for (size_t index = 0; index < fields.size(); ++index)
+			a_out[index] = { static_cast<double>(fields[index].value_or(0)), fields[index].has_value() };
 	}
 }

@@ -231,8 +231,7 @@ namespace
 	class TestAllocatorPoolSource final : public MetricSource
 	{
 	public:
-		TestAllocatorPoolSource(bool a_active, voltek::scalable_pool_stats a_stats) :
-			m_active(a_active),
+		explicit TestAllocatorPoolSource(HeapStatistics a_stats) :
 			m_stats(a_stats)
 		{}
 
@@ -244,11 +243,10 @@ namespace
 	private:
 		void Drain(std::span<MetricValue> a_out) noexcept override
 		{
-			AllocatorPoolTelemetry::Populate(a_out, m_active, m_stats);
+			AllocatorPoolTelemetry::Populate(a_out, m_stats);
 		}
 
-		bool m_active;
-		voltek::scalable_pool_stats m_stats;
+		HeapStatistics m_stats;
 	};
 
 	template<class T>
@@ -1894,53 +1892,32 @@ namespace vmm_tests
 				"released pool stats exceeded page capacity");
 		});
 
-		runner.test("allocator metrics preserve sampled fields and validity", [] {
-			const voltek::scalable_pool_stats stats{ 2, 7, 4 };
-			std::array<MetricValue, 3> values{};
-			AllocatorPoolTelemetry::Populate(values, true, stats);
-			require(values[0].valid, "active allocator pool count was invalid");
-			require(values[1].valid, "active allocator busy pages were invalid");
-			require(values[2].valid, "active allocator page capacity was invalid");
-			require(values[0].value == 2.0, "allocator pool count did not match the sampled count");
-			require(values[1].value == 4.0, "allocator busy pages did not match the sampled count");
-			require(values[2].value == 7.0, "allocator page capacity did not match the sampled count");
-		});
-
-		runner.test("inactive allocator values stay empty in CSV", [] {
+		runner.test("allocator metrics export only the fields a backend reports", [] {
+			HeapStatistics stats{};
+			stats.poolCount = 2;
+			stats.pagesBusy = 4;
+			stats.pageCapacity = 7;
+			stats.committedBytes = 4096;
 			TelemetryHub hub{ 1000000 };
-			const voltek::scalable_pool_stats stats{ 2, 7, 4 };
 			require(
-				hub.Register(std::make_shared<TestAllocatorPoolSource>(false, stats)) ==
+				hub.Register(std::make_shared<TestAllocatorPoolSource>(stats)) ==
 					TelemetryRegistration::kAccepted,
-				"inactive allocator source registration was rejected");
-			require(hub.Freeze(2), "inactive allocator hub freeze failed");
+				"allocator source registration was rejected");
+			require(hub.Freeze(2), "allocator hub freeze failed");
 			TelemetryTest::HubAccess::Collect(hub, 10, 1.0, 0.0);
 			TelemetrySnapshot snapshot{};
-			require(hub.CopyLatest(snapshot), "inactive allocator snapshot was not published");
-			require(!snapshot.values[0].valid, "inactive allocator pool count was valid");
-			require(!snapshot.values[1].valid, "inactive allocator busy pages were valid");
-			require(!snapshot.values[2].valid, "inactive allocator page capacity was valid");
+			require(hub.CopyLatest(snapshot), "allocator snapshot was not published");
 			std::ostringstream csv;
 			require(TelemetryHub::WriteCsvHeader(csv, hub.Columns()),
-				"inactive allocator CSV header write failed");
+				"allocator CSV header write failed");
 			require(TelemetryHub::WriteCsvRow(csv, snapshot),
-				"inactive allocator CSV row write failed");
+				"allocator CSV row write failed");
 			require(
 				csv.str() ==
 					"sequence,qpc,interval_ms,lateness_ms,allocator.pool_count,"
-					"allocator.pages_busy,allocator.page_capacity\n1,10,1,0,,,\n",
-				"inactive allocator metrics did not serialize as empty CSV cells");
-		});
-
-		runner.test("allocator schema is stable", [] {
-			const auto schema = AllocatorPoolTelemetry::Schema();
-			require(schema.size() == 3, "allocator schema did not contain exactly three metrics");
-			require(schema[0].key == "allocator.pool_count", "allocator pool count key changed");
-			require(schema[0].unit == Unit::kCount, "allocator pool count unit changed");
-			require(schema[1].key == "allocator.pages_busy", "allocator busy pages key changed");
-			require(schema[1].unit == Unit::kCount, "allocator busy pages unit changed");
-			require(schema[2].key == "allocator.page_capacity", "allocator page capacity key changed");
-			require(schema[2].unit == Unit::kCount, "allocator page capacity unit changed");
+					"allocator.pages_busy,allocator.page_capacity,allocator.committed_bytes,"
+					"allocator.reserved_bytes\n1,10,1,0,2,4,7,4096,\n",
+				"allocator fields did not serialize in schema order with unreported cells empty");
 		});
 	}
 }

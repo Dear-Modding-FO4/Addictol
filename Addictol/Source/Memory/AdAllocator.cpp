@@ -24,7 +24,14 @@ namespace Addictol
 			}
 		}
 
-		REX::WARN("Unknown or unavailable allocator backend \"{}\"; valid values are: voltek", a_name);
+		std::string valid;
+		for (const auto& heap : HEAP_NAMES)
+		{
+			if (!valid.empty())
+				valid.append(", ");
+			valid.append(heap.name);
+		}
+		REX::WARN("Unknown or unavailable allocator backend \"{}\"; valid values are: {}", a_name, valid);
 		return false;
 	}
 

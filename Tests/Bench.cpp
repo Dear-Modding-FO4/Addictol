@@ -1,5 +1,7 @@
 #include "Harness.h"
 
+#include <Memory/AdAllocator.h>
+
 #include <Windows.h>
 
 #include <algorithm>
@@ -10,6 +12,8 @@
 #include <fstream>
 #include <iomanip>
 #include <numeric>
+#include <psapi.h>
+#include <random>
 #include <system_error>
 #include <thread>
 #include <vector>
@@ -114,18 +118,22 @@ namespace
 		double max_ns;
 	};
 
+	template<class Heap>
 	bool alloc_free(std::size_t size)
 	{
-		void* pointer = voltek::scalable_alloc(size);
+		auto* heap = Heap::GetSingleton();
+		void* pointer = heap->malloc(size);
 		if (!pointer)
 			return false;
-		return voltek::scalable_free(pointer);
+		heap->free(pointer);
+		return true;
 	}
 
+	template<class Heap>
 	void warm_up()
 	{
 		for (std::size_t iteration = 0; iteration < 2000; ++iteration)
-			alloc_free(benchmark_sizes[iteration % benchmark_sizes.size()]);
+			alloc_free<Heap>(benchmark_sizes[iteration % benchmark_sizes.size()]);
 	}
 
 	std::uint64_t single_iterations(std::size_t size)
@@ -139,6 +147,7 @@ namespace
 		return 20000;
 	}
 
+	template<class Heap>
 	std::vector<SingleResult> measure_single_thread(const PerformanceClock& clock)
 	{
 		std::vector<SingleResult> results;
@@ -147,19 +156,20 @@ namespace
 		for (const auto size : benchmark_sizes)
 		{
 			for (std::size_t iteration = 0; iteration < 1000; ++iteration)
-				alloc_free(size);
+				alloc_free<Heap>(size);
 
 			const auto operations = single_iterations(size);
 			std::uint64_t failures = 0;
 			const auto start = clock.now();
 			for (std::uint64_t operation = 0; operation < operations; ++operation)
-				failures += alloc_free(size) ? 0 : 1;
+				failures += alloc_free<Heap>(size) ? 0 : 1;
 			const auto elapsed = clock.seconds(clock.now() - start);
 			results.push_back({ size, operations, failures, elapsed, operations / elapsed });
 		}
 		return results;
 	}
 
+	template<class Heap>
 	ScalingResult measure_scaling(const PerformanceClock& clock, unsigned thread_count)
 	{
 		struct ThreadResult
@@ -186,7 +196,7 @@ namespace
 				while (clock.now() < deadline)
 				{
 					const auto size = benchmark_sizes[(operations + thread_index) % benchmark_sizes.size()];
-					failures += alloc_free(size) ? 0 : 1;
+					failures += alloc_free<Heap>(size) ? 0 : 1;
 					++operations;
 				}
 				const auto finish = clock.now();
@@ -225,6 +235,7 @@ namespace
 		return sorted[std::min(sorted.size() - 1, std::max<std::size_t>(1, rank) - 1)];
 	}
 
+	template<class Heap>
 	LatencyResult measure_paced_latency(const PerformanceClock& clock, double target_rate)
 	{
 		constexpr unsigned thread_count = 8;
@@ -253,7 +264,7 @@ namespace
 
 					const auto before = clock.now();
 					const auto size = benchmark_sizes[sequence % benchmark_sizes.size()];
-					const bool succeeded = alloc_free(size);
+					const bool succeeded = alloc_free<Heap>(size);
 					const auto after = clock.now();
 					latencies[thread_index][sample] = clock.nanoseconds(after - before);
 					local_failures += succeeded ? 0 : 1;
@@ -289,10 +300,114 @@ namespace
 		};
 	}
 
-	void print_results(
-		const std::vector<SingleResult>& single,
+	struct ChurnResult
+	{
+		unsigned threads;
+		std::uint64_t operations;
+		std::uint64_t failures;
+		double operations_per_second;
+		std::uint64_t live_bytes;
+		std::uint64_t private_growth_bytes;
+		std::uint64_t retained_bytes;
+	};
+
+	[[nodiscard]] std::uint64_t private_bytes()
+	{
+		PROCESS_MEMORY_COUNTERS_EX counters{};
+		GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters));
+		return counters.PrivateUsage;
+	}
+
+	// Skewed toward small blocks with occasional large ones, like engine traffic.
+	[[nodiscard]] std::size_t churn_size(std::mt19937_64& a_random)
+	{
+		const auto roll = a_random() % 100;
+		if (roll < 70)
+			return 8 + a_random() % 57;
+		if (roll < 90)
+			return 65 + a_random() % 960;
+		if (roll < 98)
+			return 1025 + a_random() % 15360;
+		return 16385 + a_random() % 245760;
+	}
+
+	// Slots are shared, so most frees release a block another thread allocated.
+	template<class Heap>
+	ChurnResult measure_churn(const PerformanceClock& clock, unsigned thread_count)
+	{
+		constexpr std::size_t slot_count = 65536;
+		auto* heap = Heap::GetSingleton();
+		std::vector<std::atomic<std::size_t*>> slots(slot_count);
+		const auto before = private_bytes();
+		std::atomic<std::int64_t> live{ 0 };
+		std::vector<std::uint64_t> operations(thread_count);
+		std::vector<std::uint64_t> failures(thread_count);
+		std::vector<std::thread> threads;
+		std::barrier start_barrier{ static_cast<std::ptrdiff_t>(thread_count + 1) };
+		std::int64_t deadline = 0;
+		for (unsigned thread_index = 0; thread_index < thread_count; ++thread_index)
+		{
+			threads.emplace_back([&, thread_index] {
+				std::mt19937_64 random{ 0x5EED0000ull + thread_index };
+				std::int64_t local_live = 0;
+				start_barrier.arrive_and_wait();
+				while (clock.now() < deadline)
+				{
+					for (unsigned batch = 0; batch < 256; ++batch)
+					{
+						const auto size = churn_size(random);
+						auto* block = static_cast<std::size_t*>(heap->malloc(size));
+						if (!block)
+						{
+							++failures[thread_index];
+							continue;
+						}
+						*block = size;
+						local_live += static_cast<std::int64_t>(size);
+						if (auto* old = slots[random() % slot_count].exchange(block, std::memory_order_acq_rel))
+						{
+							local_live -= static_cast<std::int64_t>(*old);
+							heap->free(old);
+						}
+						++operations[thread_index];
+					}
+				}
+				live.fetch_add(local_live, std::memory_order_relaxed);
+			});
+		}
+		const auto start = clock.now();
+		deadline = start + clock.frequency() * 2;
+		start_barrier.arrive_and_wait();
+		for (auto& thread : threads)
+			thread.join();
+		const auto elapsed = clock.seconds(clock.now() - start);
+		const auto grown = private_bytes();
+		for (auto& slot : slots)
+		{
+			if (auto* block = slot.exchange(nullptr, std::memory_order_relaxed))
+				heap->free(block);
+		}
+		// Deferred purging runs on later allocator activity, as it would in a running game.
+		Sleep(1000);
+		for (std::size_t iteration = 0; iteration < 100000; ++iteration)
+			alloc_free<Heap>(benchmark_sizes[iteration % benchmark_sizes.size()]);
+		const auto released = private_bytes();
+		const auto total = std::accumulate(operations.begin(), operations.end(), std::uint64_t{});
+		return {
+			thread_count,
+			total,
+			std::accumulate(failures.begin(), failures.end(), std::uint64_t{}),
+			total / elapsed,
+			static_cast<std::uint64_t>(live.load()),
+			grown > before ? grown - before : 0,
+			released > before ? released - before : 0
+		};
+	}
+
+	void print_results(		const std::vector<SingleResult>& single,
 		const std::vector<ScalingResult>& scaling,
-		const std::vector<LatencyResult>& latency)
+		const std::vector<LatencyResult>& latency,
+		const std::vector<ChurnResult>& churn)
 	{
 		std::cout << "\nSingle-threaded alloc+free throughput\n";
 		std::cout << std::setw(12) << "size" << std::setw(18) << "ops/sec" << std::setw(12) << "failures" << '\n';
@@ -323,12 +438,25 @@ namespace
 					  << std::setw(12) << result.p99_ns / 1000.0 << std::setw(12) << result.p999_ns / 1000.0
 					  << std::setw(12) << result.max_ns / 1000.0 << std::setw(12) << result.failures << '\n';
 		}
+
+		std::cout << "\nShared-slot churn (cross-thread frees)\n";
+		std::cout << std::setw(10) << "threads" << std::setw(18) << "ops/sec" << std::setw(14) << "live MiB"
+				  << std::setw(14) << "growth MiB" << std::setw(14) << "retained MiB" << std::setw(12) << "failures" << '\n';
+		for (const auto& result : churn)
+		{
+			std::cout << std::setw(10) << result.threads << std::setw(18) << std::fixed << std::setprecision(0)
+					  << result.operations_per_second << std::setw(14) << std::setprecision(1) << result.live_bytes / 1048576.0
+					  << std::setw(14) << result.private_growth_bytes / 1048576.0 << std::setw(14)
+					  << result.retained_bytes / 1048576.0 << std::setw(12) << result.failures << '\n';
+		}
 	}
 
 	bool write_json(
+		std::string_view backend,
 		const std::vector<SingleResult>& single,
 		const std::vector<ScalingResult>& scaling,
-		const std::vector<LatencyResult>& latency)
+		const std::vector<LatencyResult>& latency,
+		const std::vector<ChurnResult>& churn)
 	{
 		std::error_code error;
 		std::filesystem::create_directories(".Build/Tests", error);
@@ -338,15 +466,16 @@ namespace
 			return false;
 		}
 
-		std::ofstream output{ ".Build/Tests/bench.json", std::ios::trunc };
+		const auto path = ".Build/Tests/bench-" + std::string{ backend } + ".json";
+		std::ofstream output{ path, std::ios::trunc };
 		if (!output)
 		{
-			std::cerr << "failed to open .Build/Tests/bench.json\n";
+			std::cerr << "failed to open " << path << '\n';
 			return false;
 		}
 
 		output << std::fixed << std::setprecision(3);
-		output << "{\n  \"single_thread\": [\n";
+		output << "{\n  \"backend\": \"" << backend << "\",\n  \"single_thread\": [\n";
 		for (std::size_t index = 0; index < single.size(); ++index)
 		{
 			const auto& result = single[index];
@@ -374,6 +503,15 @@ namespace
 				   << ", \"p999_ns\": " << result.p999_ns << ", \"max_ns\": " << result.max_ns << "}"
 				   << (index + 1 == latency.size() ? "\n" : ",\n");
 		}
+		output << "  ],\n  \"churn\": [\n";
+		for (std::size_t index = 0; index < churn.size(); ++index)
+		{
+			const auto& result = churn[index];
+			output << "    {\"threads\": " << result.threads << ", \"operations\": " << result.operations
+				   << ", \"failures\": " << result.failures << ", \"operations_per_second\": " << result.operations_per_second
+				   << ", \"live_bytes\": " << result.live_bytes << ", \"private_growth_bytes\": " << result.private_growth_bytes
+				   << ", \"retained_bytes\": " << result.retained_bytes << "}" << (index + 1 == churn.size() ? "\n" : ",\n");
+		}
 		output << "  ]\n}\n";
 		return output.good();
 	}
@@ -381,35 +519,60 @@ namespace
 
 namespace vmm_tests
 {
-	int run_benchmarks()
+	namespace
 	{
-		const PerformanceClock clock;
-		warm_up();
-
-		const auto single = measure_single_thread(clock);
-		std::vector<ScalingResult> scaling;
-		scaling.reserve(scaling_threads.size());
-		for (const auto thread_count : scaling_threads)
-			scaling.push_back(measure_scaling(clock, thread_count));
-		const auto baseline = scaling.front().operations_per_second;
-		for (auto& result : scaling)
-			result.scaling = result.operations_per_second / baseline;
-
-		std::vector<LatencyResult> latency;
-		latency.reserve(paced_rates.size());
-		for (const auto rate : paced_rates)
+		template<class Heap>
+		int run_backend_benchmarks()
 		{
-			warm_up();
-			latency.push_back(measure_paced_latency(clock, rate));
+			const std::string_view backend = Heap::BackendType::kName;
+			std::cout << "\n=== " << backend << " ===\n";
+			const PerformanceClock clock;
+			// Runs first so its footprint starts from a fresh heap.
+			std::vector<ChurnResult> churn{ measure_churn<Heap>(clock, 8) };
+			warm_up<Heap>();
+
+			const auto single = measure_single_thread<Heap>(clock);
+			std::vector<ScalingResult> scaling;
+			scaling.reserve(scaling_threads.size());
+			for (const auto thread_count : scaling_threads)
+				scaling.push_back(measure_scaling<Heap>(clock, thread_count));
+			const auto baseline = scaling.front().operations_per_second;
+			for (auto& result : scaling)
+				result.scaling = result.operations_per_second / baseline;
+
+			std::vector<LatencyResult> latency;
+			latency.reserve(paced_rates.size());
+			for (const auto rate : paced_rates)
+			{
+				warm_up<Heap>();
+				latency.push_back(measure_paced_latency<Heap>(clock, rate));
+			}
+
+			print_results(single, scaling, latency, churn);
+			if (!write_json(backend, single, scaling, latency, churn))
+			{
+				std::cerr << "benchmark JSON was not written\n";
+				return 1;
+			}
+			std::cout << "\nJSON written to .Build/Tests/bench-" << backend << ".json\n";
+			return 0;
 		}
+	}
 
-		print_results(single, scaling, latency);
-		if (!write_json(single, scaling, latency))
+	// Footprint figures are only meaningful when each backend runs in its own process.
+	int run_benchmarks(std::string_view a_backend)
+	{
+		int result = 0;
+		bool matched = false;
+		[&]<class... Backends>(Addictol::HeapBackendList<Backends...>) {
+			((a_backend.empty() || a_backend == Backends::kName ?
+				(matched = true, result |= run_backend_benchmarks<Addictol::ProxyHeap<Backends>>()) : 0), ...);
+		}(Addictol::HeapBackends{});
+		if (!matched)
 		{
-			std::cerr << "benchmark JSON was not written\n";
+			std::cerr << "unknown benchmark backend " << a_backend << '\n';
 			return 1;
 		}
-		std::cout << "\nJSON written to .Build/Tests/bench.json\n";
-		return 0;
+		return result;
 	}
 }

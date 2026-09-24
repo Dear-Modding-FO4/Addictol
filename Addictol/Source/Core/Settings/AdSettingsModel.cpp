@@ -1,4 +1,5 @@
 #include <Core/Settings/AdSettingsModel.h>
+#include <Memory/AdAllocator.h>
 #include <Zlib/AdZlibBackend.h>
 
 #include <algorithm>
@@ -11,9 +12,12 @@ namespace Addictol
 {
 	namespace
 	{
-		inline constexpr std::array<std::string_view, 1> kAllocatorOptions{
-			"voltek"
-		};
+		inline constexpr auto kAllocatorOptions = [] {
+			std::array<std::string_view, HEAP_NAMES.size()> options{};
+			for (size_t index = 0; index < options.size(); ++index)
+				options[index] = HEAP_NAMES[index].name;
+			return options;
+		}();
 		inline constexpr auto kZlibOptions = [] {
 			std::array<std::string_view, ZLIB_BACKEND_NAMES.size()> options{};
 			for (size_t index = 0; index < options.size(); ++index)

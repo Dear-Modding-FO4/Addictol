@@ -4,7 +4,6 @@
 #include <Core/AdAssert.h>
 #include <Memory/AdAllocator.h>
 #include <Core/AdUtils.h>
-#include <Voltek.MemoryManager.h>
 #include <string.h>
 #include <stdio.h>
 #include <xbyak/xbyak.h>
@@ -419,14 +418,7 @@ namespace Addictol
 
 		auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
 
-		for (const auto& heap : HEAP_NAMES)
-		{
-			if (heap.kind == GetSelectedHeapKind())
-			{
-				REX::INFO("Memory allocator backend: {}"sv, heap.name);
-				break;
-			}
-		}
+		REX::INFO("Memory allocator backend: {}"sv, HeapKindName(GetSelectedHeapKind()));
 
 		VisitSelectedHeap([base]<typename Heap>() {
 			(void)InstallSelectedProfiledHeap<Heap, HeapProfileSite::MemoryManager>([]<class Selected>() {
@@ -471,9 +463,7 @@ namespace Addictol
 			}
 		}
 
-		m_active.store(
-			GetSelectedHeapKind() == HeapKind::Voltek,
-			std::memory_order_relaxed);
+		m_active.store(true, std::memory_order_relaxed);
 		return true;
 	}
 
@@ -484,11 +474,10 @@ namespace Addictol
 
 	void ModuleMemoryManager::Drain(std::span<MetricValue> a_out) noexcept
 	{
-		const auto active = m_active.load(std::memory_order_relaxed);
-		voltek::scalable_pool_stats stats{};
-		if (active)
-			voltek::scalable_get_pool_stats(&stats);
-		AllocatorPoolTelemetry::Populate(a_out, active, stats);
+		HeapStatistics stats{};
+		if (m_active.load(std::memory_order_relaxed))
+			stats = VisitSelectedHeap([]<class Heap>() { return Heap::GetSingleton()->Statistics(); });
+		AllocatorPoolTelemetry::Populate(a_out, stats);
 	}
 
 	bool ModuleMemoryManager::HasProcessDefender() noexcept

@@ -879,7 +879,7 @@ namespace voltek
 
 		size_t memory_manager::msize(const void* ptr) const noexcept
 		{
-			if (!ptr || !is_valid_pointer(ptr)) return 0;
+			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr)) return 0;
 			// Получение размера.
 			return (size_t)get_size_from_ptr(ptr);
 		}

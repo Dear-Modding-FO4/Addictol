@@ -156,6 +156,6 @@ namespace vmm_tests
 	void run_operation_profile_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
-	int run_benchmarks();
+	int run_benchmarks(std::string_view a_backend);
 	int run_profile_benchmarks();
 }

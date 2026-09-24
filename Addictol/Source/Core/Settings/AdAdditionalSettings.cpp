@@ -28,7 +28,7 @@ namespace Addictol
 		"sAllocator"sv,
 		SettingDisplayCategory::kPerformance,
 		"voltek",
-		"Selects the allocator backend: voltek."sv,
+		"Selects the allocator backend: voltek, mimalloc, or rpmalloc."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

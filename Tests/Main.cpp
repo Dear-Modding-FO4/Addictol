@@ -6,6 +6,7 @@
 namespace
 {
 	constexpr std::string_view shape_prefix = "--shape-case=";
+	constexpr std::string_view bench_prefix = "--bench=";
 }
 
 int main(int argc, char** argv)
@@ -17,10 +18,9 @@ int main(int argc, char** argv)
 	{
 		const std::string_view argument{ argv[1] };
 		if (argument == "--bench")
-		{
-			voltek::scalable_memory_manager_initialize();
-			return run_benchmarks();
-		}
+			return run_benchmarks({});
+		if (argument.starts_with(bench_prefix))
+			return run_benchmarks(argument.substr(bench_prefix.size()));
 		if (argument == "--bench-profile")
 			return run_profile_benchmarks();
 		if (argument == "--oversized-case")
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	}
 	if (argc != 1)
 	{
-		std::cerr << "usage: vmm-tests [--bench|--bench-profile]\n";
+		std::cerr << "usage: vmm-tests [--bench[=backend]|--bench-profile]\n";
 		return 2;
 	}
 
