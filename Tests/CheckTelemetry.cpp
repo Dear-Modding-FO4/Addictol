@@ -1847,7 +1847,7 @@ namespace vmm_tests
 		runner.test("vmm pool stats follow page growth and release", [] {
 			constexpr size_t size{ 8193 };
 			constexpr auto count =
-				voltek::memory_manager::blocks_per_page<voltek::memory_manager::block16384_t>;
+				voltek::memory_manager::class_geometries[voltek::memory_manager::pool_class_of(size)].count;
 			using Allocation = std::unique_ptr<void, decltype(&voltek::scalable_free)>;
 			std::vector<Allocation> allocations;
 			allocations.reserve(count + 1);
@@ -1859,7 +1859,7 @@ namespace vmm_tests
 			allocate();
 			voltek::scalable_pool_stats before{};
 			voltek::scalable_get_pool_stats(&before);
-			require(before.pool_count > 0 && before.pool_count <= 14,
+			require(before.pool_count > 0 && before.pool_count <= voltek::memory_manager::pool_count,
 				"live allocator did not report its initialized pools");
 			require(before.page_capacity > 0 && before.pages_busy <= before.page_capacity,
 				"live allocator reported invalid page capacity");

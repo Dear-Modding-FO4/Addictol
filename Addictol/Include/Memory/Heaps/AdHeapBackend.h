@@ -37,16 +37,13 @@ namespace Addictol
 		uint64_t allocatedBytes{ 0 };
 		uint64_t pagesCreated{ 0 };
 		uint64_t pagesReleased{ 0 };
-		uint64_t scanWords{ 0 };
 		uint64_t lockContended{ 0 };
 		uint64_t lockWaitTicks{ 0 };
 	};
 
-	inline constexpr size_t kMaxHeapClasses{ 32 };
+	inline constexpr size_t kMaxHeapClasses{ 64 };
 
-	// Initialize reports whether the backend can serve; hooks install only after it succeeds.
-	// Free, Size, and Reallocate must tolerate pointers the backend does not own: ignore, zero, and null.
-	// kTailPadding bytes are requested past every block and hidden from Size.
+	// Hooks install only after Initialize succeeds; Free, Size and Reallocate must ignore unowned pointers.
 	template<class T>
 	concept HeapBackend = requires(void* a_block, size_t a_size, size_t a_alignment)
 	{
@@ -65,7 +62,6 @@ namespace Addictol
 
 	inline constexpr size_t kNaturalHeapAlignment{ 16 };
 
-	// Engine code (Havok cloth, at least) reads a few bytes past a block's end. Backends without an
-	// inline header after each block pad by this much so a block ending at a commit boundary cannot fault.
+	// Havok cloth reads past block ends; header-less backends pad so a block at a commit boundary cannot fault.
 	inline constexpr size_t kOverreadPadding{ 16 };
 }

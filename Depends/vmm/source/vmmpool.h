@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "vbits.h"
 #include "vmmgeometry.h"
 #include "vmmpage.h"
 #include "vsimplelock.h"
@@ -16,8 +17,7 @@ namespace voltek
 {
 	namespace memory_manager
 	{
-		// Cumulative per-pool counters. Fields other than resized_bytes change only under the pool lock,
-		// so they use plain load and store, keeping atomic read-modify-writes off the hot path.
+		// Cache hits update user counters without the pool lock.
 		struct pool_counters
 		{
 			std::atomic<uint64_t> live_blocks{ 0 };
@@ -28,22 +28,19 @@ namespace voltek
 			std::atomic<uint64_t> allocated_bytes{ 0 };
 			std::atomic<uint64_t> pages_created{ 0 };
 			std::atomic<uint64_t> pages_released{ 0 };
-			std::atomic<uint64_t> scan_words{ 0 };
 			voltek::core::_internal::lock_counters lock{};
 
 			static void add(std::atomic<uint64_t>& a_counter, uint64_t a_value) noexcept
 			{
-				a_counter.store(a_counter.load(std::memory_order_relaxed) + a_value, std::memory_order_relaxed);
+				a_counter.fetch_add(a_value, std::memory_order_relaxed);
 			}
 			static void bump(std::atomic<uint64_t>& a_counter) noexcept { add(a_counter, 1); }
 
-			void allocated(size_t a_requested, size_t a_index) noexcept
+			void allocated(size_t a_requested) noexcept
 			{
 				add(live_blocks, 1);
 				add(allocations, 1);
 				add(allocated_bytes, a_requested);
-				// The bitmap scan starts at the front, so the found index approximates how far it went.
-				add(scan_words, a_index / 64 + 1);
 				add(requested_bytes, a_requested);
 			}
 
@@ -60,27 +57,16 @@ namespace voltek
 			}
 		};
 
-		// Шаблонный класс пула страниц памяти.
-		template<typename _type, typename _page, size_t _blocks_in_page = blocks_per_page<_type>>
 		class pool_t : public voltek::core::base
 		{
 		public:
-			// Битовые карты не имеют хвостового прохода — кратность 256 обязана быть точной.
-			static_assert((_blocks_in_page & 255) == 0,
-				"_blocks_in_page must be a multiple of 256");
-			// A partial 2048-bit chunk lets the AVX2 scan read past the bitmap and report an index outside the page.
-			static_assert(is_valid_block_count(_blocks_in_page),
-				"_blocks_in_page must be under 2048 or a multiple of 2048");
 			// Тип страницы.
-			using pageobj_t = _page;
+			using pageobj_t = page_t;
 			// Тип указателя на страницу.
 			using pageptr_t = pageobj_t*;
-			using block_type = _type;
-			// Конструктор по умолчанию.
-			pool_t() noexcept = default;
 			// Конструктор.
-			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
-			pool_t(size_t count, voltek::core::mapper* mapper) noexcept : _mapper(mapper)
+			pool_t(size_t count, const class_geometry& geometry, voltek::core::mapper* mapper) noexcept :
+				_mapper(mapper), _geometry(geometry)
 			{
 				set_size(count);
 			}
@@ -97,20 +83,14 @@ namespace voltek
 			}
 			// Задаёт кол-во допустимых страниц для пула.
 			// Одноразовая, не для расширения пула.
-			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
 			void set_size(size_t count)
 			{
 				// Блокируем. Снятие блокировки будет заботить компилятор.
 				voltek::core::_internal::simple_scope_lock scope_lock(lock);
 
-				// Число должно быть кратное 256, округляем в меньшую сторону.
-				// Это необходимо, учитывая, что bits_regions размер минимум от 65536.
-				// Использование SIMD инструкций является приоритетом, а "хвоста" должно 
-				// быть немного, а лучше небыло вовсе.
-				count = (count >> 8) << 8;
-
 				map.clear();
-				map.resize(count);
+				// Only the bitmap needs padding; directories track the mapper's actual slot count.
+				map.resize((std::max)(size_t{ 65536 }, (count + 255) & ~size_t{ 255 }));
 
 				_pages = voltek::core::_internal::aligned_talloc<pageptr_t>(count, 0x10);
 				if (!_pages)
@@ -121,8 +101,9 @@ namespace voltek
 				else
 				{
 					_count = count;
-					// Размещаем везде единицы, 1 - свободная страница, 0 - занят.
-					map.all_set();
+					// A set bit marks an existing page with room; slots without a page stay clear.
+					map.all_unset();
+					_free_indices.reserve(count);
 				}
 			}
 			// Возвращает допольнительную информацию, что привязана к пулу.
@@ -150,8 +131,8 @@ namespace voltek
 			[[nodiscard]] inline size_t count() const noexcept { return _count; }
 			// Возвращает кол-во свободных страниц.
 			[[nodiscard]] inline size_t free_count() const noexcept { return map.get_sets_count(); }
-			// Возвращает кол-во знятых страниц.
-			[[nodiscard]] inline size_t busy_count() const noexcept { return map.get_unsets_count(); }
+			// Existing pages with no room left.
+			[[nodiscard]] inline size_t full_count() const noexcept { return _page_count - map.get_sets_count(); }
 			// Возвращает страницу за указанным индексом. Константа.
 			[[nodiscard]] inline pageptr_t c_at(size_t index) const noexcept { return _pages[index]; }
 			// Возвращает страницу за указанным индексом.
@@ -172,7 +153,7 @@ namespace voltek
 
 #ifndef VMMDLL_EXPORTS
 				voltek::core::_internal::memory_to_file(filename, (void*)_pages,
-					voltek::core::_internal::aligned_msize(_pages), _blocks_in_page >> 3);
+					voltek::core::_internal::aligned_msize(_pages), _geometry.count >> 3);
 #endif // !VMMDLL_EXPORTS
 			}
 			// Возвращает истину в случаи нахождения свободного блока.
@@ -180,20 +161,49 @@ namespace voltek
 			// Эти данные понадобиться для освобождения блока у пула.
 			// Блок указывается как занятый в последствии.
 			// Counts the block only when asked, so disabled statistics cost one branch.
-			[[nodiscard]] bool get_free_block(_type*& block, pageptr_t& page, size_t& index_block, size_t requested, bool counted) noexcept
+			[[nodiscard]] block_base* allocate(size_t requested, uint8_t pool_id, bool counted) noexcept
 			{
 				voltek::core::_internal::measured_scope_lock scope_lock(lock, counted ? &_counters.lock : nullptr);
-				if (!get_free_block_locked(block, page, index_block))
-					return false;
+				auto* block = prepare_block_locked(requested, pool_id,
+					flag_block_pool_used | (counted ? flag_block_counted : 0));
+				if (!block)
+					return nullptr;
 				if (counted)
-					_counters.allocated(requested, index_block);
-				return true;
+					_counters.allocated(requested);
+				return block;
 			}
+			size_t refill(block_base** blocks, size_t count, uint8_t pool_id, bool measured) noexcept
+			{
+				voltek::core::_internal::measured_scope_lock scope_lock(lock, measured ? &_counters.lock : nullptr);
+				size_t filled = 0;
+				while (filled < count)
+				{
+					auto* block = prepare_block_locked(0, pool_id, flag_block_pool_used | flag_block_cached);
+					if (!block)
+						break;
+					blocks[filled++] = block;
+				}
+				return filled;
+			}
+
+			void flush(block_base* const* blocks, size_t count, bool measured) noexcept
+			{
+				voltek::core::_internal::measured_scope_lock scope_lock(lock, measured ? &_counters.lock : nullptr);
+				for (size_t index = 0; index < count; ++index)
+				{
+					const auto* block = blocks[index];
+					const bool released = release_block_locked(_pages[block->page_id], block->block_id, true);
+					_vassert(released);
+				}
+			}
+
+			void cache_allocated(size_t requested) noexcept { _counters.allocated(requested); }
+			void cache_released(size_t requested) noexcept { _counters.released(requested); }
 			// Освобождает блок. Возвращает истину, если всё успешно освободилось.
-			bool release_block(pageptr_t page, size_t index_block, size_t requested, bool counted) noexcept
+			bool release_block(size_t page_id, size_t index_block, size_t requested, bool counted) noexcept
 			{
 				voltek::core::_internal::measured_scope_lock scope_lock(lock, counted ? &_counters.lock : nullptr);
-				if (!release_block_locked(page, index_block))
+				if (!release_block_locked(_pages[page_id], index_block))
 					return false;
 				if (counted)
 					_counters.released(requested);
@@ -206,49 +216,49 @@ namespace voltek
 			}
 			[[nodiscard]] const pool_counters& counters() const noexcept { return _counters; }
 		private:
-			[[nodiscard]] bool get_free_block_locked(_type*& block, pageptr_t& page, size_t& index_block) noexcept
+			block_base* prepare_block_locked(size_t requested, uint8_t pool_id, uint8_t flags) noexcept
 			{
 				if (!_current)
 				{
 				find_free_page_label:
-					// Поиск свободной страницы
-
+					// Existing pages with room come first, so a pool reuses what it holds before growing.
 					size_t index = 0;
-					if (!get_first_free_page_index(index))
+					if (get_first_free_page_index(index))
+						_current = _pages[index];
+					else
 					{
-						_vassert_msg(true, "No free page");
-						return false;
-					}
-
-					// Если страницы за таким индексом не существует, надо создать.
-					if (!_pages[index])
-					{
-						// Объём одной страницы _blocks_in_page
-						_current = new pageobj_t(_blocks_in_page, _mapper);
-						if (!_current)
+						if (!_free_indices.empty())
 						{
-							_vassert_msg(true, "Failed new free page");
-							return false;
+							index = _free_indices.back();
+							_free_indices.pop_back();
 						}
-						if (_current->empty())
+						else if (_next_index < _count)
+							index = _next_index++;
+						else
+						{
+							_vassert_msg(true, "No free page");
+							return nullptr;
+						}
+						_current = new pageobj_t(_geometry, _mapper);
+						if (!_current || _current->empty())
 						{
 							delete _current;
 							_current = nullptr;
-							return false;
+							_free_indices.push_back(static_cast<uint32_t>(index));
+							return nullptr;
 						}
 						// Привязываем индекс, как дополнитульную информацию.
 						_current->set_user_data(static_cast<uintptr_t>(index));
-
 						_pages[index] = _current;
+						set_page_free(index);
+						++_page_count;
 						pool_counters::bump(_counters.pages_created);
 					}
-					else
-						_current = _pages[index];
 				}
-
-				index_block = 0;
+				size_t index_block = 0;
+				const bool retained = _current->retained;
 				// Если страница закончилась, то надо искать новую.
-				if (!_current->get_first_free_block_index(index_block))
+				if (!_current->get_first_free_block_index(index_block, static_cast<uint32_t>(requested), pool_id, flags))
 				{
 					// Получаем индекс страницы и занимаем её.
 					set_page_busy(static_cast<size_t>(_current->get_user_data()));
@@ -257,32 +267,37 @@ namespace voltek
 					goto find_free_page_label;
 				}
 
-				// Получаем блок по текущему индексу
-				block = &(_current->at(index_block));
-				// Передаём страницу
-				page = _current;
-				// Занять индекс блока, более он не доступен.
-				_current->set_block_busy(index_block);
+				if (retained)
+				{
+					_current->retained = false;
+					--_retained_pages;
+				}
 
-				return true;
+				return &_current->at(index_block);
 			}
 
-			[[nodiscard]] bool release_block_locked(pageptr_t page, size_t index_block) noexcept
+			[[nodiscard]] bool release_block_locked(pageptr_t page, size_t index_block, bool cached = false) noexcept
 			{
-				// Фактический размер страницы, а не константа шаблона: он округляется вниз.
 				if (!page || (index_block >= page->count()))
 					return false;
 
 				// Попытка освободить в этой странице блок.
-				if (!page->set_block_free(index_block))
+				if (!page->set_block_free(index_block, cached))
 					return false;
 
 				// Освободить страницу, так как один блок в ней свободен.
 				auto index_page = static_cast<size_t>(page->get_user_data());
 				set_page_free(index_page);
 
-				// Если страница пуста и она не первая, освободить память.
-				if (page->is_all_blocks_free() && (index_page > 0))
+				if (!page->is_all_blocks_free())
+					return true;
+				// Keep the page object and free-list state to avoid recreation and lock churn at page boundaries.
+				if (_retained_pages < _geometry.retained_pages)
+				{
+					page->retained = true;
+					++_retained_pages;
+				}
+				else
 				{
 					if (_current == page)
 						_current = nullptr;
@@ -290,6 +305,9 @@ namespace voltek
 					delete page;
 
 					_pages[index_page] = nullptr;
+					set_page_busy(index_page);
+					--_page_count;
+					_free_indices.push_back(static_cast<uint32_t>(index_page));
 					pool_counters::bump(_counters.pages_released);
 				}
 
@@ -315,7 +333,14 @@ namespace voltek
 			voltek::core::_internal::simple_lock lock{};
 			// Карта памяти, из которой берутся страницы.
 			voltek::core::mapper* _mapper{ nullptr };
+			const class_geometry _geometry;
 			pool_counters _counters{};
+			// Empty pages kept committed; bounded by the class's retention budget.
+			size_t _retained_pages{ 0 };
+			size_t _page_count{ 0 };
+			// Page indices never used, then indices of released pages for reuse.
+			size_t _next_index{ 0 };
+			std::vector<uint32_t> _free_indices;
 		};
 	}
 }

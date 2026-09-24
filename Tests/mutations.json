@@ -1,5 +1,45 @@
 [
   {
+    "name": "voltek smaller retained slots trim excess commit",
+    "target": "Depends/vmm/source/vmapper.cpp",
+    "find": "else if (pages < previous_pages)",
+    "replace": "else if (false && pages < previous_pages)",
+    "check": "large slots reuse committed memory within a shared budget",
+    "message": "smaller reuse did not trim its excess committed pages"
+  },
+  {
+    "name": "voltek page links stay below the bump frontier",
+    "target": "Depends/vmm/source/vmmpage.h",
+    "find": "(next != none && next >= _bump) || ",
+    "replace": "",
+    "check": "a corrupted free-list link is not followed",
+    "message": "a block with a corrupted page link was consumed"
+  },
+  {
+    "name": "voltek large slots retain committed memory",
+    "target": "Depends/vmm/source/vmapper.cpp",
+    "find": "if (_retention && _retained_count < _retained_indices.size() && _retention->try_acquire(bytes))",
+    "replace": "if (false && _retention && _retained_count < _retained_indices.size() && _retention->try_acquire(bytes))",
+    "check": "large slots reuse committed memory within a shared budget",
+    "message": "large free did not retain its committed slot"
+  },
+  {
+    "name": "voltek thread exit flushes cached blocks",
+    "target": "Depends/vmm/source/vmmmain.cpp",
+    "find": "global_memory_manager->flush_thread_cache();",
+    "replace": "(void)global_memory_manager;",
+    "check": "thread exit returns cached blocks to the pool",
+    "message": "exited thread kept its cached blocks"
+  },
+  {
+    "name": "voltek lookup rounds requests up to a fitting class",
+    "target": "Depends/vmm/source/vmmclasses.h",
+    "find": "large_pool_lookup[(size + 255) >> 8]",
+    "replace": "large_pool_lookup[(size + 127) >> 8]",
+    "check": "pool lookup selects the smallest fitting class",
+    "message": "pool lookup did not select the smallest fitting class"
+  },
+  {
     "name": "shader retirement retains its owner through the original destructor",
     "target": "Addictol/Include/Core/AdDeferredOwnerRegistry.h",
     "find": "auto owner = Extract(a_key);",
@@ -22,6 +62,14 @@
     "replace": "LevelEntry{ Level::kWarn, \"warning\", spdlog::level::warn }",
     "check": "log levels preserve public names, parsing, and menu order",
     "message": "public log level name changed"
+  },
+  {
+    "name": "voltek rejects a second free of one block",
+    "target": "Depends/vmm/source/vmmblock.h",
+    "find": "if (!(flags & flag_block_pool_used) || (flags & (flag_block_free | flag_block_cached)))",
+    "replace": "if (!(flags & flag_block_pool_used))",
+    "check": "a block freed twice is handed out once",
+    "message": "a concurrent double free was accepted twice or not at all"
   },
   {
     "name": "voltek class statistics release requested bytes",
@@ -374,5 +422,13 @@
     "replace": "++tally[3];",
     "check": "per-module outcome tally equals ModuleOutcomeCounts",
     "message": "per-module outcomes disagreed with ModuleOutcomeCounts"
+  },
+  {
+    "name": "voltek reuses existing pages before creating one",
+    "target": "Depends/vmm/source/vmmpool.h",
+    "find": "if (get_first_free_page_index(index))",
+    "replace": "if (false && get_first_free_page_index(index))",
+    "check": "a shrunken pool reuses retained pages",
+    "message": "alloc and free of one block kept creating pages after the pool shrank"
   }
 ]

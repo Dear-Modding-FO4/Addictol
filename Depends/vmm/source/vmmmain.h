@@ -7,7 +7,7 @@
 #include "Voltek.MemoryManager.h"
 #include "vbase.h"
 #include "vmapper.h"
-#include "vmmblock.h"
+#include "vmmclasses.h"
 #include "vmmpool.h"
 #include "vsimplelock.h"
 #include <array>
@@ -17,28 +17,10 @@ namespace voltek
 {
 	namespace memory_manager
 	{
-		enum class pool_type : uint8_t
-		{
-			pool_8 = 0,
-			pool_16,
-			pool_32,
-			pool_64,
-			pool_128,
-			pool_256,
-			pool_512,
-			pool_1024,
-			pool_4096,
-			pool_8192,
-			pool_16384,
-			pool_32768,
-			pool_65536,
-			pool_131072,
-			MAX
-		};
-
 		// Blocks above the largest pool live in power-of-two slots from 256 KiB to 4 GiB.
 		inline constexpr size_t large_slot_minimum = 256ull * 1024;
 		inline constexpr size_t large_class_count = 15;
+		inline constexpr size_t large_retention_budget_bytes = 64ull * 1024 * 1024;
 
 		// Менеджер памяти.
 		class memory_manager : public voltek::core::base
@@ -69,6 +51,7 @@ namespace voltek
 			[[nodiscard]] size_t msize(const void* ptr) const noexcept;
 			[[nodiscard]] bool ready() const noexcept { return zero_size_request_block && pools; }
 			void pool_stats(scalable_pool_stats& out) const noexcept;
+			void flush_thread_cache() noexcept;
 			// Fills one entry per pool class, then one for large blocks; returns the count written.
 			size_t class_stats(scalable_class_stats* out, size_t capacity) const noexcept;
 			// Вывод дампа битовой карты указанного пула
@@ -88,11 +71,12 @@ namespace voltek
 		private:
 			// Блок памяти, если запрашивают 0 размер.
 			block_base* zero_size_request_block{ nullptr };
+			core::retention_budget large_retention{ large_retention_budget_bytes };
 			// Источники страниц пулов и крупных блоков внутри зарезервированного диапазона.
-			std::array<core::mapper, std::to_underlying(pool_type::MAX)> page_sources;
+			std::array<core::mapper, pool_count> page_sources;
 			std::array<core::mapper, large_class_count> large_sources;
 			// Массив пулов.
-			void** pools{ nullptr };
+			pool_t** pools{ nullptr };
 			// Large blocks share one counter set; only the counters pools also keep are used.
 			pool_counters large_counters{};
 		};

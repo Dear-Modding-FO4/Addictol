@@ -3,9 +3,13 @@
 #include <vbits.h>
 #include <vmmblock.h>
 #include <vmmgeometry.h>
+#include <vmmmain.h>
 #include <vmmpage.h>
 
 #include <algorithm>
+#include <thread>
+#include <barrier>
+#include <atomic>
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -21,91 +25,25 @@ namespace
 
 	namespace mm = voltek::memory_manager;
 
-	struct GeometryCase
-	{
-		std::string_view name;
-		std::size_t count;
-		std::size_t body_bytes;
-	};
-
-	template <class Block>
-	constexpr GeometryCase geometry_case(std::string_view name)
-	{
-		using geometry = mm::page_geometry<Block>;
-		return GeometryCase{ name, geometry::count, geometry::body_bytes };
-	}
-
-	constexpr std::array configured_geometry{
-		geometry_case<mm::block8_t>("pool8"),
-		geometry_case<mm::block16_t>("pool16"),
-		geometry_case<mm::block32_t>("pool32"),
-		geometry_case<mm::block64_t>("pool64"),
-		geometry_case<mm::block128_t>("pool128"),
-		geometry_case<mm::block256_t>("pool256"),
-		geometry_case<mm::block512_t>("pool512"),
-		geometry_case<mm::block1024_t>("pool1024"),
-		geometry_case<mm::block4096_t>("pool4096"),
-		geometry_case<mm::block8192_t>("pool8192"),
-		geometry_case<mm::block16384_t>("pool16384"),
-		geometry_case<mm::block32768_t>("pool32768"),
-		geometry_case<mm::block65536_t>("pool65536"),
-		geometry_case<mm::block131072_t>("pool131072")
-	};
-
-	static_assert(mm::blocks_per_page<mm::block8_t> == 131072, "pool8 block count moved");
-	static_assert(mm::blocks_per_page<mm::block16_t> == 131072, "pool16 block count moved");
-	static_assert(mm::blocks_per_page<mm::block32_t> == 88064, "pool32 block count moved");
-	static_assert(mm::blocks_per_page<mm::block64_t> == 53248, "pool64 block count moved");
-	static_assert(mm::blocks_per_page<mm::block128_t> == 28672, "pool128 block count moved");
-	static_assert(mm::blocks_per_page<mm::block256_t> == 16384, "pool256 block count moved");
-	static_assert(mm::blocks_per_page<mm::block512_t> == 8192, "pool512 block count moved");
-	static_assert(mm::blocks_per_page<mm::block1024_t> == 4096, "pool1024 block count moved");
-	static_assert(mm::blocks_per_page<mm::block4096_t> == 1024, "pool4096 block count moved");
-	static_assert(mm::blocks_per_page<mm::block8192_t> == 512, "pool8192 block count moved");
-	static_assert(mm::blocks_per_page<mm::block16384_t> == 256, "pool16384 block count moved");
-	static_assert(mm::blocks_per_page<mm::block32768_t> == 256, "pool32768 block count moved");
-	static_assert(mm::blocks_per_page<mm::block65536_t> == 256, "pool65536 block count moved");
-	static_assert(mm::blocks_per_page<mm::block131072_t> == 256, "pool131072 block count moved");
-	static_assert(mm::uses_region_page_map<mm::block8_t>, "pool8 lost its region map");
-	static_assert(mm::uses_region_page_map<mm::block16_t>, "pool16 lost its region map");
-	static_assert(!mm::uses_region_page_map<mm::block32_t>, "pool32 region map is not scan-safe");
-	static_assert(!mm::uses_region_page_map<mm::block64_t>, "pool64 is below the region-map minimum");
-	static_assert(std::is_same_v<mm::page_map<mm::block8_t>, voltek::core::bits_regions>);
-	static_assert(std::is_same_v<mm::page_map<mm::block16_t>, voltek::core::bits_regions>);
-	static_assert(std::is_same_v<mm::page_map<mm::block32_t>, voltek::core::bits>);
-	static_assert(mm::is_region_page_map_safe(mm::blocks_per_page<mm::block8_t>));
-	static_assert(mm::is_region_page_map_safe(mm::blocks_per_page<mm::block16_t>));
-	static_assert(mm::blocks_per_page<mm::block8_t> >= mm::region_page_map_minimum);
-	static_assert(mm::blocks_per_page<mm::block16_t> >= mm::region_page_map_minimum);
-
-	// Re-derived here rather than reused from the policy, so a loosened policy cannot hide a regression.
-	constexpr bool every_count_is_scan_safe()
-	{
-		for (const auto& item : configured_geometry)
-		{
-			if (item.count < 256 || (item.count % 256) != 0)
+	static_assert([] {
+		for (const auto& item : mm::class_geometries)
+			if (item.count < mm::minimum_blocks_per_page ||
+				(item.body_bytes > mm::page_body_target_bytes && item.count != mm::minimum_blocks_per_page) ||
+				item.retained_pages != 1)
 				return false;
-			if (item.count >= 2048 && (item.count % 2048) != 0)
-				return false;
-		}
 		return true;
-	}
+	}());
 
 	constexpr std::size_t summed_page_bodies()
 	{
 		std::size_t total = 0;
-		for (const auto& item : configured_geometry)
+		for (const auto& item : mm::class_geometries)
 			total += item.body_bytes;
 		return total;
 	}
 
-	static_assert(every_count_is_scan_safe(),
-		"a configured block count would let the bitmap scan read past the page");
 	static_assert(summed_page_bodies() == mm::all_page_bodies_bytes,
 		"the configured table and the geometry policy disagree");
-	// 100.5078125 MiB of one-page bodies across all fourteen size classes.
-	static_assert(mm::all_page_bodies_bytes == 100u * mebibyte + 532480u,
-		"aggregate one-page commit moved");
 	// These bounds guard the over-read; the runtime test below covers only the scalar handover.
 	static_assert(voltek::core::_internal::complete_simd_word_count(2048, 2048) == 32);
 	static_assert(voltek::core::_internal::complete_simd_word_count(2305, 2048) == 32);
@@ -152,6 +90,155 @@ namespace vmm_tests
 {
 	void run_correctness_checks(Runner& runner)
 	{
+		runner.test("pool lookup selects the smallest fitting class", [] {
+			for (size_t size = 1; size <= mm::pool_limit_maximum; ++size)
+			{
+				const auto found = std::find_if(mm::pool_limits.begin(), mm::pool_limits.end(),
+					[size](size_t limit) { return size <= limit; });
+				require(mm::pool_class_of(size) == static_cast<size_t>(found - mm::pool_limits.begin()),
+					"pool lookup did not select the smallest fitting class");
+			}
+		});
+
+		runner.test("large slots reuse committed memory within a shared budget", [] {
+			const auto sample = [] {
+				std::array<voltek::scalable_class_stats, mm::pool_count + 1> classes{};
+				voltek::scalable_get_class_stats(classes.data(), classes.size());
+				return classes.back();
+			};
+			constexpr size_t small = 300 * 1024;
+			constexpr size_t grown = 400 * 1024;
+			auto* other_slot = voltek::scalable_alloc(600 * 1024);
+			require(other_slot != nullptr, "large reuse anchor allocation failed");
+			auto* pointer = voltek::scalable_alloc(small);
+			require(pointer != nullptr, "large reuse fixture allocation failed");
+			std::memset(pointer, 0xA5, small);
+			const auto committed = sample().committed_bytes;
+			require(voltek::scalable_free(pointer), "large reuse fixture free failed");
+			require(sample().committed_bytes == committed, "large free did not retain its committed slot");
+			require(!voltek::scalable_free(pointer) && voltek::scalable_msize(pointer) == 0 &&
+				voltek::scalable_realloc(pointer, small) == nullptr, "retained large block was treated as live");
+			auto* reused = voltek::scalable_alloc(small);
+			require(reused == pointer && sample().committed_bytes == committed,
+				"large reuse changed its pointer or committed bytes");
+			std::atomic<size_t> accepted{ 0 };
+			std::barrier start{ 2 };
+			const auto release = [&] {
+				start.arrive_and_wait();
+				accepted.fetch_add(voltek::scalable_free(pointer) ? 1 : 0);
+			};
+			std::thread other{ release };
+			release();
+			other.join();
+			require(accepted.load() == 1, "large concurrent double free changed ownership twice");
+			auto* larger = static_cast<uint8_t*>(voltek::scalable_alloc(grown));
+			require(larger == pointer && sample().committed_bytes == committed + grown - small,
+				"retained slot growth did not commit only its missing tail");
+			require(std::all_of(larger, larger + small, [](uint8_t value) { return value == 0xA5; }),
+				"retained slot growth discarded its committed prefix");
+			larger[grown - 1] = 0x5A;
+			const auto grown_commit = sample().committed_bytes;
+			require(voltek::scalable_free(larger), "grown large block free failed");
+			auto* smaller = static_cast<uint8_t*>(voltek::scalable_calloc(1, small));
+			require(smaller == pointer && sample().committed_bytes == grown_commit - (grown - small),
+				"smaller reuse did not trim its excess committed pages");
+			constexpr size_t small_commit = (small + sizeof(mm::block_base) + voltek::core::region::commit_granularity - 1) &
+				~(voltek::core::region::commit_granularity - 1);
+			MEMORY_BASIC_INFORMATION tail{};
+			require(VirtualQuery(reinterpret_cast<char*>(mm::get_block_handle_from_ptr(smaller)) + small_commit,
+				&tail, sizeof(tail)) == sizeof(tail) && tail.State == MEM_RESERVE,
+				"smaller reuse left its excess tail committed");
+			require(std::all_of(smaller, smaller + small, [](uint8_t value) { return value == 0; }),
+				"calloc did not clear reused large memory");
+			require(voltek::scalable_free(smaller), "smaller large block free failed");
+			require(sample().committed_bytes == committed, "smaller slot release restored its old committed extent");
+			require(voltek::scalable_free(other_slot), "large reuse anchor free failed");
+
+			std::array<void*, 10> first{}, second{};
+			for (size_t index = 0; index < first.size(); ++index)
+			{
+				first[index] = voltek::scalable_alloc(4 * mebibyte);
+				second[index] = voltek::scalable_alloc(8 * mebibyte);
+				require(first[index] && second[index], "retention budget fixture allocation failed");
+			}
+			const auto all_live = sample().committed_bytes;
+			for (auto* block : first)
+				require(voltek::scalable_free(block), "first retention class free failed");
+			constexpr size_t first_extent = 4 * mebibyte + voltek::core::region::commit_granularity;
+			require(sample().committed_bytes <= all_live - 2 * first_extent,
+				"one large class retained more than eight slots");
+			for (auto* block : second)
+				require(voltek::scalable_free(block), "second retention class free failed");
+			const auto retained = sample();
+			require(retained.live_blocks == 0 && retained.requested_bytes == 0 &&
+				retained.committed_bytes <= mm::large_retention_budget_bytes,
+				"large classes exceeded their shared retention budget");
+
+			auto* oversized = voltek::scalable_alloc(mm::large_retention_budget_bytes + mebibyte);
+			require(oversized != nullptr, "over-budget retention fixture allocation failed");
+			require(voltek::scalable_free(oversized), "over-budget retention fixture free failed");
+			require(sample().committed_bytes == retained.committed_bytes,
+				"a slot larger than the entire budget was retained");
+		});
+
+		runner.test("thread exit returns cached blocks to the pool", [] {
+			constexpr size_t size = 3072;
+			std::array<void*, 2> released{};
+			std::array<void*, 2> reused{};
+			bool released_ok = true;
+			bool reused_ok = true;
+			bool late_free_ok = false;
+			std::thread producer{ [&] {
+				struct late_free
+				{
+					bool& success;
+					~late_free()
+					{
+						auto* keep = voltek::scalable_alloc(16);
+						auto* pointer = voltek::scalable_alloc(16);
+						success = keep && pointer && voltek::scalable_free(pointer);
+						if (success)
+							success = !(mm::block_lifecycle::load(mm::get_block_handle_from_ptr(pointer)) & mm::flag_block_cached);
+						if (keep)
+							success = voltek::scalable_free(keep) && success;
+					}
+				};
+				thread_local late_free after_cache{ late_free_ok };
+				(void)after_cache;
+				for (auto& pointer : released)
+					pointer = voltek::scalable_alloc(size);
+				for (auto* pointer : released)
+					released_ok = pointer && voltek::scalable_free(pointer) && released_ok;
+			} };
+			producer.join();
+			require(late_free_ok, "late TLS destructor reused a dead cache");
+			std::thread consumer{ [&] {
+				for (auto& pointer : reused)
+					pointer = voltek::scalable_alloc(size);
+				for (auto* pointer : reused)
+					reused_ok = pointer && voltek::scalable_free(pointer) && reused_ok;
+			} };
+			consumer.join();
+			require(released_ok && reused_ok, "thread-exit fixture allocation or free failed");
+			std::sort(released.begin(), released.end());
+			std::sort(reused.begin(), reused.end());
+			require(released == reused, "exited thread kept its cached blocks");
+		});
+
+		runner.test("cached frees reject stale access", [] {
+			for (const size_t size : { 1, 100, 4096 })
+			{
+				auto* pointer = voltek::scalable_alloc(size);
+				require(pointer && voltek::scalable_msize(pointer) == size, "cache allocation lost the requested size");
+				require(voltek::scalable_free(pointer), "cache free failed");
+				require(voltek::scalable_msize(pointer) == 0 &&
+					voltek::scalable_realloc(pointer, size) == nullptr &&
+					voltek::scalable_aligned_realloc(pointer, size, 32) == nullptr,
+					"cached block was treated as live");
+				require(!voltek::scalable_free(pointer), "cached double free was accepted");
+			}
+		});
+
 		runner.test("all size-class boundaries round trip", [] {
 			for (const auto& allocation : allocation_cases)
 			{
@@ -238,6 +325,10 @@ namespace vmm_tests
 			constexpr std::size_t count = 257;
 			constexpr std::size_t element_size = 4097;
 			constexpr std::size_t size = count * element_size;
+			auto* dirty = voltek::scalable_alloc(size);
+			require(dirty != nullptr, "calloc dirty-slot fixture allocation failed");
+			std::memset(dirty, 0xA5, size);
+			require(voltek::scalable_free(dirty), "calloc dirty-slot fixture free failed");
 			void* pointer = voltek::scalable_calloc(count, element_size);
 			require(pointer != nullptr, "calloc failed");
 
@@ -331,31 +422,31 @@ namespace vmm_tests
 		});
 
 		runner.test("bits scan reports no index outside a configured page", [] {
-			for (const auto& item : configured_geometry)
+			for (const auto& item : mm::class_geometries)
 			{
 				voltek::core::bits map;
 				map.resize(item.count);
-				require(map.count() == item.count, std::string("bits refused the count configured for ") + std::string(item.name));
+				require(map.count() == item.count, size_message("bits refused the configured count", item.limit));
 
 				map.all_set();
 				for (std::size_t remaining = item.count; remaining > 0; --remaining)
 				{
 					std::size_t index = SIZE_MAX;
-					require(map.find_first_set_bit(index), std::string("bits lost a free block in ") + std::string(item.name));
-					require(index < item.count, std::string("bits reported an index past the page in ") + std::string(item.name));
-					require(map.unset(index), std::string("bits reported an already busy block in ") + std::string(item.name));
+					require(map.find_first_set_bit(index), size_message("bits lost a free block", item.limit));
+					require(index < item.count, size_message("bits reported an index past the page", item.limit));
+					require(map.unset(index), size_message("bits reported an already busy block", item.limit));
 				}
 
 				std::size_t index = 0;
-				require(!map.find_first_set_bit(index), std::string("an exhausted page still reported a free block in ") + std::string(item.name));
+				require(!map.find_first_set_bit(index), size_message("an exhausted page still reported a free block", item.limit));
 			}
 		});
 
-		runner.test("selected region maps report no index outside a configured page", [] {
+		runner.test("pool page maps report no index outside the pool", [] {
 			voltek::core::bits_regions regions;
-			constexpr auto count = mm::blocks_per_page<mm::block8_t>;
+			constexpr std::size_t count = 64 * 1024;
 			regions.resize(count);
-			require(regions.count() == count, "bits_regions refused the selected pool8 count");
+			require(regions.count() == count, "bits_regions refused the pool page count");
 			regions.all_set();
 			for (std::size_t remaining = count; remaining > 0; --remaining)
 			{
@@ -380,29 +471,191 @@ namespace vmm_tests
 			VirtualFree(page, 0, MEM_RELEASE);
 		});
 
+		runner.test("cache refills never publish a live intermediate block", [] {
+			constexpr size_t size = 100;
+			constexpr auto geometry = mm::class_geometries[mm::pool_class_of(size)];
+			mm::global_memory_manager->flush_thread_cache();
+			void* keep = voltek::scalable_alloc(size);
+			require(keep != nullptr, "refill race anchor allocation failed");
+			mm::global_memory_manager->flush_thread_cache();
+			std::barrier phase{ 2 };
+			std::atomic<bool> refilled{ false };
+			bool done = false;
+			void* target = nullptr;
+			void* stolen = nullptr;
+			std::thread duplicate_free{ [&] {
+				for (;;)
+				{
+					phase.arrive_and_wait();
+					if (done)
+						break;
+					bool accepted = false;
+					while (!refilled.load(std::memory_order_acquire))
+					{
+						if (voltek::scalable_free(target))
+						{
+							accepted = true;
+							break;
+						}
+					}
+					phase.arrive_and_wait();
+					stolen = accepted ? voltek::scalable_alloc(size) : nullptr;
+					phase.arrive_and_wait();
+				}
+			} };
+			bool unique = true;
+			bool fixture = true;
+			bool rejected = true;
+			for (size_t round = 0; round < 20000 && unique && fixture && rejected; ++round)
+			{
+				std::array<void*, geometry.cache_batch + 1> blocks{};
+				for (size_t index = 0; index < geometry.cache_batch; ++index)
+				{
+					blocks[index] = voltek::scalable_alloc(size);
+					fixture &= blocks[index] && mm::get_page_id_from_ptr(blocks[index]) == mm::get_page_id_from_ptr(keep);
+				}
+				target = blocks[geometry.cache_batch - 1];
+				for (size_t index = 0; index < geometry.cache_batch; ++index)
+					fixture &= voltek::scalable_free(blocks[index]);
+				mm::global_memory_manager->flush_thread_cache();
+				refilled.store(false, std::memory_order_relaxed);
+				phase.arrive_and_wait();
+				// The head enters the bottom of the refill bin, never a live allocation while free spins.
+				blocks[0] = voltek::scalable_alloc(size);
+				refilled.store(true, std::memory_order_release);
+				phase.arrive_and_wait();
+				phase.arrive_and_wait();
+				fixture &= blocks[0] && blocks[0] != target;
+				for (size_t index = 1; index < geometry.cache_batch; ++index)
+					blocks[index] = voltek::scalable_alloc(size);
+				blocks.back() = stolen;
+				rejected &= stolen == nullptr;
+				std::sort(blocks.begin(), blocks.end(), std::less<void*>{});
+				const auto first = std::find_if(blocks.begin(), blocks.end(), [](void* block) { return block != nullptr; });
+				unique &= std::adjacent_find(first, blocks.end()) == blocks.end();
+				const auto end = std::unique(first, blocks.end());
+				for (auto it = first; it != end; ++it)
+					voltek::scalable_free(*it);
+				mm::global_memory_manager->flush_thread_cache();
+			}
+			done = true;
+			phase.arrive_and_wait();
+			duplicate_free.join();
+			voltek::scalable_free(keep);
+			require(fixture, "refill race did not keep the target on its anchored page and out of live allocations");
+			require(unique && rejected, "a refill block was acquired by the duplicate-free thread");
+		});
+
+		// The game double-frees; the second free must not put a live block on the free list twice.
+		runner.test("a block freed twice is handed out once", [] {
+			void* keep = voltek::scalable_alloc(100);
+			for (int round = 0; round < 1000; ++round)
+			{
+				void* block = voltek::scalable_alloc(100);
+				std::atomic<int> accepted{ 0 };
+				std::barrier start{ 2 };
+				const auto release = [&] {
+					start.arrive_and_wait();
+					accepted.fetch_add(voltek::scalable_free(block) ? 1 : 0);
+				};
+				std::thread other{ release };
+				release();
+				other.join();
+				require(accepted.load() == 1, "a concurrent double free was accepted twice or not at all");
+				void* first = voltek::scalable_alloc(100);
+				void* second = voltek::scalable_alloc(100);
+				require(first != second, "a double-freed block was handed out twice");
+				voltek::scalable_free(first);
+				voltek::scalable_free(second);
+			}
+			voltek::scalable_free(keep);
+		});
+
+		// A use-after-free write can overwrite a free block's link; allocation must not follow it.
+		runner.test("a corrupted free-list link is not followed", [] {
+			for (const size_t size : { 100, 8193 })
+			{
+				void* keep = nullptr;
+				void* b = nullptr;
+				bool setup = false;
+				std::thread producer{ [&] {
+					keep = voltek::scalable_alloc(size);
+					void* a = voltek::scalable_alloc(size);
+					b = voltek::scalable_alloc(size);
+					setup = keep && a && b && voltek::scalable_free(a) && voltek::scalable_free(b);
+				} };
+				producer.join();
+				require(setup && (mm::block_lifecycle::load(mm::get_block_handle_from_ptr(b)) & mm::flag_block_free),
+					"setup did not flush the corrupted block to the page free list");
+				const auto& geometry = mm::class_geometries[mm::pool_class_of(size)];
+				// Stay inside committed memory so removing the guard yields a named failure, not an access violation.
+				*static_cast<uint32_t*>(b) = static_cast<uint32_t>(geometry.count - 1);
+				std::vector<void*> blocks;
+				std::thread consumer{ [&] {
+					for (size_t index = 0; index < (std::max)(size_t{ 4 }, geometry.cache_batch); ++index)
+						blocks.push_back(voltek::scalable_alloc(size));
+				} };
+				consumer.join();
+				const bool skipped = std::find(blocks.begin(), blocks.end(), b) == blocks.end();
+				for (auto* block : blocks)
+				{
+					require(block != nullptr && voltek::scalable_msize(block) == size, "allocation after a corrupted link failed");
+					std::memset(block, 0x5A, size);
+				}
+				std::sort(blocks.begin(), blocks.end());
+				require(std::adjacent_find(blocks.begin(), blocks.end()) == blocks.end(), "a corrupted link handed out one block twice");
+				for (auto* block : blocks)
+					voltek::scalable_free(block);
+				voltek::scalable_free(keep);
+				require(skipped, "a block with a corrupted page link was consumed");
+			}
+		});
+
+		// A pool that grew and shrank must reuse the pages it kept, not create one per allocation.
+		runner.test("a shrunken pool reuses retained pages", [] {
+			constexpr std::size_t size = 8193;
+			constexpr std::size_t pool = mm::pool_class_of(size);
+			constexpr std::size_t blocks = mm::class_geometries[pool].count * 8;
+			voltek::scalable_enable_statistics();
+			std::vector<void*> grown;
+			for (std::size_t index = 0; index < blocks; ++index)
+				grown.push_back(voltek::scalable_alloc(size));
+			for (auto* block : grown)
+				voltek::scalable_free(block);
+			std::array<voltek::scalable_class_stats, mm::pool_count + 1> before{};
+			voltek::scalable_get_class_stats(before.data(), before.size());
+			for (int round = 0; round < 1000; ++round)
+				voltek::scalable_free(voltek::scalable_alloc(size));
+			std::array<voltek::scalable_class_stats, mm::pool_count + 1> after{};
+			voltek::scalable_get_class_stats(after.data(), after.size());
+			require(after[pool].pages_created == before[pool].pages_created,
+				"alloc and free of one block kept creating pages after the pool shrank");
+		});
+
 		// The phase-by-phase evaluation reads these counters; drift would misattribute memory.
 		runner.test("class statistics return to baseline after blocks are freed", [] {
 			const auto sample = [] {
-				std::array<voltek::scalable_class_stats, 15> classes{};
+				std::array<voltek::scalable_class_stats, mm::pool_count + 1> classes{};
 				require(voltek::scalable_get_class_stats(classes.data(), classes.size()) == classes.size(),
 					"class statistics did not cover every class");
 				return classes;
 			};
-			constexpr std::size_t pooled = 4;
-			constexpr std::size_t large = 14;
+			constexpr std::size_t pooled = mm::pool_class_of(100);
+			constexpr std::size_t large = mm::pool_count;
 			voltek::scalable_enable_statistics();
 			const auto before = sample();
 			std::vector<void*> blocks;
 			for (std::size_t index = 0; index < 1000; ++index)
 				blocks.push_back(voltek::scalable_alloc(100));
 			for (std::size_t index = 0; index < 10; ++index)
-				require(voltek::scalable_realloc(blocks[index], 120) == blocks[index], "in-class realloc moved the block");
+				require(voltek::scalable_realloc(blocks[index], 110) == blocks[index], "in-class realloc moved the block");
 			void* big = voltek::scalable_alloc(300000);
 			const auto during = sample();
 			require(during[pooled].live_blocks == before[pooled].live_blocks + 1000 &&
-				during[pooled].requested_bytes == before[pooled].requested_bytes + 1000 * 100 + 10 * 20,
+				during[pooled].requested_bytes == before[pooled].requested_bytes + 1000 * 100 + 10 * 10,
 				"pooled class statistics missed live blocks or resized bytes");
-			require(during[large].live_blocks == before[large].live_blocks + 1 && during[large].committed_bytes > before[large].committed_bytes,
+			require(during[large].live_blocks == before[large].live_blocks + 1 &&
+				during[large].requested_bytes == before[large].requested_bytes + 300000 + sizeof(mm::block_base),
 				"large block statistics missed a live block");
 			for (auto* block : blocks)
 				require(voltek::scalable_free(block), "pooled block free failed");
@@ -412,17 +665,8 @@ namespace vmm_tests
 				after[pooled].requested_bytes == before[pooled].requested_bytes &&
 				after[large].live_blocks == before[large].live_blocks &&
 				after[large].requested_bytes == before[large].requested_bytes &&
-				after[large].committed_bytes == before[large].committed_bytes,
+				after[large].committed_bytes <= mm::large_retention_budget_bytes,
 				"class statistics did not return to baseline");
-		});
-
-		runner.test("page rejects an undersized region bitmap", [] {
-			using RegionPage = voltek::memory_manager::page_t<
-				voltek::memory_manager::block8_t,
-				voltek::core::bits_regions>;
-			RegionPage page{ 32768, nullptr };
-			require(page.empty(), "page accepted a body after its region bitmap rejected the size");
-			require(page.count() == 0, "page recorded a size its region bitmap rejected");
 		});
 	}
 

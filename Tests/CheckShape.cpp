@@ -9,6 +9,7 @@
 #include <array>
 #include <iomanip>
 #include <sstream>
+#include <span>
 #include <vector>
 
 namespace
@@ -16,30 +17,26 @@ namespace
 	namespace mm = voltek::memory_manager;
 
 	constexpr std::uint64_t mebibyte = 1024ull * 1024;
-	constexpr std::array eager_pool_sizes{
-		std::size_t{ 8 },
-		std::size_t{ 16 },
-		std::size_t{ 32 },
-		std::size_t{ 64 }
-	};
+	constexpr auto eager_pool_sizes = std::span(mm::pool_limits).first(mm::pool_class_of(64) + 1);
 
 	// Registry array, bitmaps and the free-block cache reservation a single pool commits alongside its page.
-	constexpr std::uint64_t pool_overhead_allowance = 3 * mebibyte;
-	constexpr std::uint64_t working_set_bookkeeping_allowance = 1 * mebibyte;
+	constexpr std::uint64_t pool_overhead_allowance = mebibyte / 4;
 
-	constexpr std::uint64_t eager_page_bodies =
-		mm::page_geometry<mm::block8_t>::body_bytes +
-		mm::page_geometry<mm::block16_t>::body_bytes +
-		mm::page_geometry<mm::block32_t>::body_bytes +
-		mm::page_geometry<mm::block64_t>::body_bytes;
+	constexpr std::uint64_t eager_page_bodies = [] {
+		std::uint64_t bytes = 0;
+		for (size_t index = 0; index < eager_pool_sizes.size(); ++index)
+			bytes += mm::class_geometries[index].body_bytes;
+		return bytes;
+	}();
 
-	// The four eagerly created pools commit one page body each plus their own bookkeeping.
+	// Initialization also commits mapper metadata for the entire reserved region.
 	constexpr std::uint64_t eager_pool_ceiling =
-		eager_page_bodies + eager_pool_sizes.size() * pool_overhead_allowance;
+		eager_page_bodies + eager_pool_sizes.size() * pool_overhead_allowance + 3 * mebibyte;
 
 	// The sample starts after eager pools are primed, so it measures only lazy pools and bookkeeping.
 	constexpr std::uint64_t total_retained_ceiling =
-		mm::all_page_bodies_bytes - eager_page_bodies + 20 * mebibyte;
+		mm::all_page_bodies_bytes - eager_page_bodies +
+		(mm::pool_count - eager_pool_sizes.size()) * pool_overhead_allowance;
 
 	struct MemorySample
 	{
@@ -54,32 +51,23 @@ namespace
 		std::uint64_t ceiling;
 	};
 
-	template <class Block>
+	template <size_t Size>
 	constexpr std::uint64_t first_touch_ceiling()
 	{
-		return mm::page_geometry<Block>::body_bytes + pool_overhead_allowance;
-	}
-
-	template <class Block>
-	constexpr std::uint64_t eager_zeroing_ceiling()
-	{
-		constexpr auto body = mm::page_geometry<Block>::body_bytes;
-		constexpr auto ceiling = body / 2 + working_set_bookkeeping_allowance;
-		static_assert(ceiling < body, "eager-zeroing ceiling must reject a fully touched page body");
-		return ceiling;
+		return mm::class_geometries[mm::pool_class_of(Size)].body_bytes + pool_overhead_allowance;
 	}
 
 	constexpr std::array first_touch_cases{
-		FirstTouchCase{ "first-touch-128", 128, first_touch_ceiling<mm::block128_t>() },
-		FirstTouchCase{ "first-touch-256", 256, first_touch_ceiling<mm::block256_t>() },
-		FirstTouchCase{ "first-touch-512", 512, first_touch_ceiling<mm::block512_t>() },
-		FirstTouchCase{ "first-touch-1024", 1024, first_touch_ceiling<mm::block1024_t>() },
-		FirstTouchCase{ "first-touch-1025", 1025, first_touch_ceiling<mm::block4096_t>() },
-		FirstTouchCase{ "first-touch-4097", 4097, first_touch_ceiling<mm::block8192_t>() },
-		FirstTouchCase{ "first-touch-8193", 8193, first_touch_ceiling<mm::block16384_t>() },
-		FirstTouchCase{ "first-touch-16385", 16385, first_touch_ceiling<mm::block32768_t>() },
-		FirstTouchCase{ "first-touch-32769", 32769, first_touch_ceiling<mm::block65536_t>() },
-		FirstTouchCase{ "first-touch-65537", 65537, first_touch_ceiling<mm::block131072_t>() },
+		FirstTouchCase{ "first-touch-128", 128, first_touch_ceiling<128>() },
+		FirstTouchCase{ "first-touch-256", 256, first_touch_ceiling<256>() },
+		FirstTouchCase{ "first-touch-512", 512, first_touch_ceiling<512>() },
+		FirstTouchCase{ "first-touch-1024", 1024, first_touch_ceiling<1024>() },
+		FirstTouchCase{ "first-touch-1025", 1025, first_touch_ceiling<1025>() },
+		FirstTouchCase{ "first-touch-4097", 4097, first_touch_ceiling<4097>() },
+		FirstTouchCase{ "first-touch-8193", 8193, first_touch_ceiling<8193>() },
+		FirstTouchCase{ "first-touch-16385", 16385, first_touch_ceiling<16385>() },
+		FirstTouchCase{ "first-touch-32769", 32769, first_touch_ceiling<32769>() },
+		FirstTouchCase{ "first-touch-65537", 65537, first_touch_ceiling<65537>() },
 		// Beyond the largest size class, so this one never reaches a pool.
 		FirstTouchCase{ "first-touch-131073", 131073, 4 * mebibyte }
 	};
@@ -163,10 +151,10 @@ namespace
 		prime_eager_pools();
 		const auto before = sample_memory();
 		std::vector<void*> pointers;
-		pointers.reserve(first_touch_cases.size());
-		for (const auto& test_case : first_touch_cases)
+		pointers.reserve(mm::pool_count - eager_pool_sizes.size());
+		for (const auto size : std::span(mm::pool_limits).subspan(eager_pool_sizes.size()))
 		{
-			void* pointer = voltek::scalable_alloc(test_case.size);
+			void* pointer = voltek::scalable_alloc(size);
 			vmm_tests::require(pointer != nullptr, "environment could not satisfy total-retained allocation");
 			static_cast<volatile std::uint8_t*>(pointer)[0] = 0x5A;
 			pointers.push_back(pointer);
@@ -182,35 +170,47 @@ namespace
 			vmm_tests::require(voltek::scalable_free(pointer), "total-retained allocation could not be freed");
 	}
 
-	template <class Block>
-	void check_working_set(std::size_t size)
+	// Counts resident pages directly, so pool bookkeeping cannot mask a page body touched in full.
+	std::size_t resident_pages(const void* a_begin, std::size_t a_bytes)
 	{
+		constexpr std::size_t page = 4096;
+		const auto first = reinterpret_cast<std::uintptr_t>(a_begin) & ~(page - 1);
+		std::vector<PSAPI_WORKING_SET_EX_INFORMATION> pages((a_bytes + page - 1) / page);
+		for (std::size_t index = 0; index < pages.size(); ++index)
+			pages[index].VirtualAddress = reinterpret_cast<void*>(first + index * page);
+		vmm_tests::require(QueryWorkingSetEx(GetCurrentProcess(), pages.data(),
+			static_cast<DWORD>(pages.size() * sizeof(pages[0]))) != FALSE, "QueryWorkingSetEx failed");
+		std::size_t resident = 0;
+		for (const auto& entry : pages)
+			resident += entry.VirtualAttributes.Valid;
+		return resident;
+	}
+
+	template <size_t Size>
+	void check_working_set()
+	{
+		constexpr auto size = Size;
 		prime_eager_pools();
-		vmm_tests::require(EmptyWorkingSet(GetCurrentProcess()) != FALSE, "EmptyWorkingSet failed");
-		const auto before = sample_memory();
 		void* pointer = voltek::scalable_alloc(size);
 		vmm_tests::require(pointer != nullptr, "environment could not satisfy working-set allocation");
 		vmm_tests::fill_pattern(pointer, size, 0xEA6E200ull);
-		const auto after = sample_memory();
-
-		const auto commit = increase(after.private_bytes, before.private_bytes);
-		const auto working_set = increase(after.working_set, before.working_set);
-		std::ostringstream label;
-		label << "working-set-" << size;
-		std::cout << "[SHAPE] " << shape_measurement(label.str(), commit, working_set) << '\n';
-		vmm_tests::require(
-			working_set <= eager_zeroing_ceiling<Block>(),
-			"first allocation eagerly touched its entire backing page");
+		// The first block of a fresh page sits at the page body's start.
+		const auto* body = static_cast<const std::uint8_t*>(pointer) - sizeof(mm::block_base);
+		constexpr auto body_bytes = mm::class_geometries[mm::pool_class_of(Size)].body_bytes;
+		const auto resident = resident_pages(body, body_bytes);
+		const auto total = (body_bytes + 4095) / 4096;
+		std::cout << "[SHAPE] working-set-" << size << ": " << resident << " of " << total << " page-body pages resident\n";
+		vmm_tests::require(resident <= total / 2, "first allocation eagerly touched its entire backing page");
 		vmm_tests::require(voltek::scalable_free(pointer), "working-set allocation could not be freed");
 	}
-
 	void check_page_release()
 	{
-		// 8193 lands in pool16384, whose configured page holds exactly this many blocks.
 		constexpr std::size_t size = 8193;
-		constexpr std::size_t blocks_per_page = mm::blocks_per_page<mm::block16384_t>;
-		constexpr std::uint64_t page_body = mm::page_geometry<mm::block16384_t>::body_bytes;
-		constexpr std::size_t pages = 6;
+		constexpr auto geometry = mm::class_geometries[mm::pool_class_of(size)];
+		constexpr std::size_t blocks_per_page = geometry.count;
+		constexpr std::uint64_t page_body = geometry.body_bytes;
+		constexpr std::size_t retained_pages = geometry.retained_pages;
+		constexpr std::size_t pages = retained_pages + 6;
 		constexpr std::size_t block_count = blocks_per_page * (pages - 1) + 1;
 		std::vector<void*> pointers;
 		pointers.reserve(block_count);
@@ -241,11 +241,11 @@ namespace
 		std::cout << "[SHAPE] " << summary.str() << '\n';
 		vmm_tests::require(all_freed, "page-release free failed");
 		vmm_tests::require(rise >= pages * page_body, "allocations did not create every expected backing page");
-		vmm_tests::require(drop >= (pages - 1) * page_body, "empty backing pages did not release their commit");
-		// Page 0 is retained by design; every later page must be gone, not merely most of them.
+		vmm_tests::require(drop >= (pages - retained_pages) * page_body, "empty backing pages did not release their commit");
+		// Retention keeps a bounded number of empty pages; everything beyond it must be gone.
 		vmm_tests::require(
-			retained <= page_body + pool_overhead_allowance,
-			"a backing page beyond page 0 stayed committed after every block was freed");
+			retained <= retained_pages * page_body + pool_overhead_allowance,
+			"empty pages beyond the retention budget stayed committed after every block was freed");
 	}
 
 	void run_shape_child(std::string_view name)
@@ -306,12 +306,12 @@ namespace vmm_tests
 			}
 			if (name == "working-set-1025")
 			{
-				check_working_set<mm::block4096_t>(1025);
+				check_working_set<1025>();
 				return 0;
 			}
 			if (name == "working-set-4097")
 			{
-				check_working_set<mm::block8192_t>(4097);
+				check_working_set<4097>();
 				return 0;
 			}
 			if (name == "page-release")

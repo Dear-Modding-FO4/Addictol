@@ -11,7 +11,8 @@
 #include "vmmpool.h"
 
 #include <atomic>
-#include <bit>
+#include <type_traits>
+#include <Windows.h>
 
 #include <limits.h>
 #include <string.h>
@@ -32,107 +33,84 @@ namespace voltek
 		// Detailed class statistics cost a few nanoseconds per call, so they run only while telemetry reads them.
 		std::atomic<bool> statistics_enabled{ false };
 
-		typedef page_t<block8_t> page8_t;
-		typedef page_t<block16_t> page16_t;
-		typedef page_t<block32_t> page32_t;
-		typedef page_t<block64_t> page64_t;
-		typedef page_t<block128_t> page128_t;
-		typedef page_t<block256_t> page256_t;
-		typedef page_t<block512_t> page512_t;
-		typedef page_t<block1024_t> page1024_t;
-		typedef page_t<block4096_t> page4096_t;
-		typedef page_t<block8192_t> page8192_t;
-		typedef page_t<block16384_t> page16384_t;
-		typedef page_t<block32768_t> page32768_t;
-		typedef page_t<block65536_t> page65536_t;
-		typedef page_t<block131072_t> page131072_t;
-		typedef pool_t<block8_t, page8_t> pool8_t;
-		typedef pool_t<block16_t, page16_t> pool16_t;
-		typedef pool_t<block32_t, page32_t> pool32_t;
-		typedef pool_t<block64_t, page64_t> pool64_t;
-		typedef pool_t<block128_t, page128_t> pool128_t;
-		typedef pool_t<block256_t, page256_t> pool256_t;
-		typedef pool_t<block512_t, page512_t> pool512_t;
-		typedef pool_t<block1024_t, page1024_t> pool1024_t;
-		typedef pool_t<block4096_t, page4096_t> pool4096_t;
-		typedef pool_t<block8192_t, page8192_t> pool8192_t;
-		typedef pool_t<block16384_t, page16384_t> pool16384_t;
-		typedef pool_t<block32768_t, page32768_t> pool32768_t;
-		typedef pool_t<block65536_t, page65536_t> pool65536_t;
-		typedef pool_t<block131072_t, page131072_t> pool131072_t;
-
-		inline constexpr size_t pool_count = std::to_underlying(pool_type::MAX);
-
-		// Largest request each pool class serves; a larger realloc moves the block.
-		inline constexpr std::array<size_t, pool_count> pool_limits{
-			8, 16, 32, 64, 128, 256, 512, 1024, 4096, 8192, 16384, 32768, 65536, 131072
-		};
-		inline constexpr size_t pool_limit_maximum = pool_limits.back();
-
-		[[nodiscard]] constexpr pool_type pool_class_of(size_t size) noexcept
+		struct cache_bin
 		{
-			if (size <= 8)
-				return pool_type::pool_8;
-			if (size <= 1024)
-				return static_cast<pool_type>(std::bit_width(size - 1) - 3);
-			if (size <= 4096)
-				return pool_type::pool_4096;
-			return static_cast<pool_type>(std::bit_width(size - 1) - 4);
+			block_base* slots[64];
+			uint8_t count;
+		};
+
+		struct thread_cache
+		{
+			cache_bin bins[cached_pool_count];
+			uint8_t state;
+		};
+
+		static_assert(std::is_trivially_destructible_v<thread_cache>);
+		static constinit thread_local thread_cache local_cache{};
+		using shutdown_check = BOOLEAN (NTAPI*)();
+		static shutdown_check dll_shutdown_in_progress = nullptr;
+
+		struct cache_sentinel
+		{
+			~cache_sentinel()
+			{
+				if ((!dll_shutdown_in_progress || !dll_shutdown_in_progress()) && global_memory_manager)
+					global_memory_manager->flush_thread_cache();
+				local_cache.state = 2;
+			}
+		};
+
+		[[nodiscard]] static thread_cache* current_cache() noexcept
+		{
+			if (local_cache.state == 2)
+				return nullptr;
+			if (!local_cache.state)
+			{
+				thread_local cache_sentinel sentinel;
+				(void)sentinel;
+				local_cache.state = 1;
+			}
+			return &local_cache;
 		}
 
-		static_assert(pool_class_of(8) == pool_type::pool_8 && pool_class_of(9) == pool_type::pool_16);
-		static_assert(pool_class_of(1024) == pool_type::pool_1024 && pool_class_of(1025) == pool_type::pool_4096);
-		static_assert(pool_class_of(4097) == pool_type::pool_8192 && pool_class_of(131072) == pool_type::pool_131072);
-
-		// One dispatch from a runtime class to its pool type, shared by every per-class operation.
-		template<typename F>
-		static decltype(auto) visit_pool(pool_type id, F&& f)
+		[[nodiscard]] static pool_t* loaded_pool(pool_t* const* pools, size_t id) noexcept
 		{
-			switch (id)
+			return std::atomic_ref<pool_t*>(const_cast<pool_t*&>(pools[id])).load(std::memory_order_acquire);
+		}
+
+		static void flush_bin(cache_bin& bin, pool_t& pool, size_t count) noexcept
+		{
+			pool.flush(bin.slots, count, statistics_enabled.load(std::memory_order_relaxed));
+			bin.count -= static_cast<uint8_t>(count);
+			memmove(bin.slots, bin.slots + count, bin.count * sizeof(bin.slots[0]));
+		}
+
+		void memory_manager::flush_thread_cache() noexcept
+		{
+			for (size_t id = 0; id < cached_pool_count; ++id)
 			{
-			case pool_type::pool_8: return f.template operator()<pool8_t>();
-			case pool_type::pool_16: return f.template operator()<pool16_t>();
-			case pool_type::pool_32: return f.template operator()<pool32_t>();
-			case pool_type::pool_64: return f.template operator()<pool64_t>();
-			case pool_type::pool_128: return f.template operator()<pool128_t>();
-			case pool_type::pool_256: return f.template operator()<pool256_t>();
-			case pool_type::pool_512: return f.template operator()<pool512_t>();
-			case pool_type::pool_1024: return f.template operator()<pool1024_t>();
-			case pool_type::pool_4096: return f.template operator()<pool4096_t>();
-			case pool_type::pool_8192: return f.template operator()<pool8192_t>();
-			case pool_type::pool_16384: return f.template operator()<pool16384_t>();
-			case pool_type::pool_32768: return f.template operator()<pool32768_t>();
-			case pool_type::pool_65536: return f.template operator()<pool65536_t>();
-			default: return f.template operator()<pool131072_t>();
+				auto& bin = local_cache.bins[id];
+				if (bin.count)
+					flush_bin(bin, *loaded_pool(pools, id), bin.count);
 			}
 		}
 
-		template<typename Pool>
-		[[nodiscard]] static Pool* loaded_pool(void* const* pools, pool_type id) noexcept
-		{
-			return reinterpret_cast<Pool*>(std::atomic_ref<void*>(const_cast<void*&>(pools[std::to_underlying(id)])).load(std::memory_order_acquire));
-		}
-
-		static size_t POOL_SIZE = 64 * 1024;
-
-		// Page bodies per pool class; a class that fills its slots falls back to large blocks.
-		inline constexpr size_t page_slots_per_pool = 2048;
+		// Address space per pool class; a class that fills its slots falls back to large blocks.
+		inline constexpr size_t pool_class_budget = 8ull * 1024 * 1024 * 1024;
 		// Address space per large class; a full class spills into the next larger one.
 		inline constexpr size_t large_class_budget = 16ull * 1024 * 1024 * 1024;
-		inline constexpr std::array<size_t, pool_count> page_body_sizes{
-			page_geometry<block8_t>::body_bytes, page_geometry<block16_t>::body_bytes,
-			page_geometry<block32_t>::body_bytes, page_geometry<block64_t>::body_bytes,
-			page_geometry<block128_t>::body_bytes, page_geometry<block256_t>::body_bytes,
-			page_geometry<block512_t>::body_bytes, page_geometry<block1024_t>::body_bytes,
-			page_geometry<block4096_t>::body_bytes, page_geometry<block8192_t>::body_bytes,
-			page_geometry<block16384_t>::body_bytes, page_geometry<block32768_t>::body_bytes,
-			page_geometry<block65536_t>::body_bytes, page_geometry<block131072_t>::body_bytes
-		};
 
 		[[nodiscard]] constexpr size_t round_up(size_t value, size_t alignment) noexcept
 		{
 			return (value + alignment - 1) & ~(alignment - 1);
 		}
+
+		static_assert([] {
+			for (const auto& geometry : class_geometries)
+				if (pool_class_budget / round_up(geometry.body_bytes, core::region::granularity) > UINT16_MAX)
+					return false;
+			return true;
+		}(), "page counts must fit the block header");
 
 		[[nodiscard]] constexpr size_t large_slot_size(size_t index) noexcept
 		{
@@ -145,30 +123,31 @@ namespace voltek
 		}
 
 		// Two threads can create a lazy pool at once: publish exactly one, or a block gets released through the wrong pool.
-		template<typename _type>
-		static _type* acquire_pool(void** pools, pool_type id, core::mapper* mapper) noexcept
+		static pool_t* acquire_pool(pool_t** pools, size_t id, core::mapper* mapper) noexcept
 		{
-			std::atomic_ref<void*> slot(pools[std::to_underlying(id)]);
+			std::atomic_ref<pool_t*> slot(pools[id]);
 			if (auto* existing = slot.load(std::memory_order_acquire))
-				return reinterpret_cast<_type*>(existing);
+				return existing;
 
-			auto* created = new _type(POOL_SIZE, mapper);
-			void* expected = nullptr;
-			if (slot.compare_exchange_strong(expected, reinterpret_cast<void*>(created),
+			auto* created = new pool_t(mapper->slot_count(), class_geometries[id], mapper);
+			pool_t* expected = nullptr;
+			if (slot.compare_exchange_strong(expected, created,
 				std::memory_order_acq_rel, std::memory_order_acquire))
 				return created;
 
 			delete created;
-			return reinterpret_cast<_type*>(expected);
+			return expected;
 		}
 
 		memory_manager::memory_manager()
 		{
 			core::initialize();
+			// Resolve before taking pool locks; thread-detach cleanup never enters the loader.
+			static const auto shutdown = reinterpret_cast<shutdown_check>(
+				GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlDllShutdownInProgress"));
+			dll_shutdown_in_progress = shutdown;
 
-			size_t reserve = core::region::granularity;
-			for (const auto body : page_body_sizes)
-				reserve += round_up(body, core::region::granularity) * page_slots_per_pool;
+			size_t reserve = core::region::granularity + pool_count * pool_class_budget;
 			for (size_t index = 0; index < large_class_count; ++index)
 				reserve += large_slot_size(index) * large_slot_count(index);
 			auto* cursor = core::region::reserve(reserve);
@@ -182,25 +161,21 @@ namespace voltek
 			cursor += core::region::granularity;
 			for (size_t index = 0; index < page_sources.size(); ++index)
 			{
-				const auto slot = round_up(page_body_sizes[index], core::region::granularity);
-				page_sources[index].assign(cursor, slot, page_slots_per_pool);
-				cursor += slot * page_slots_per_pool;
+				const auto slot = round_up(class_geometries[index].body_bytes, core::region::granularity);
+				page_sources[index].assign(cursor, slot, pool_class_budget / slot);
+				cursor += pool_class_budget;
 			}
 			for (size_t index = 0; index < large_sources.size(); ++index)
 			{
-				large_sources[index].assign(cursor, large_slot_size(index), large_slot_count(index));
+				large_sources[index].assign(cursor, large_slot_size(index), large_slot_count(index), &large_retention);
 				cursor += large_slot_size(index) * large_slot_count(index);
 			}
 
-			pools = voltek::core::_internal::aligned_talloc<void*>(pool_count, 0x10);
+			pools = voltek::core::_internal::aligned_talloc<pool_t*>(pool_count, 0x10);
 			if (pools)
 			{
-				for (const auto id : { pool_type::pool_8, pool_type::pool_16, pool_type::pool_32, pool_type::pool_64 })
-				{
-					visit_pool(id, [&]<typename Pool>() {
-						(void)acquire_pool<Pool>(pools, id, &page_sources[std::to_underlying(id)]);
-					});
-				}
+				for (size_t id = 0; id < pool_count && pool_limits[id] <= 64; ++id)
+					(void)acquire_pool(pools, id, &page_sources[id]);
 			}
 		}
 
@@ -253,23 +228,32 @@ namespace voltek
 			if (pools && size <= pool_limit_maximum)
 			{
 				const auto id = pool_class_of(size);
-				auto* pooled = visit_pool(id, [&]<typename Pool>() -> void* {
-					auto* pool = acquire_pool<Pool>(pools, id, &page_sources[std::to_underlying(id)]);
-					typename Pool::pageptr_t page = nullptr;
-					typename Pool::block_type* block = nullptr;
-					size_t index_block = 0;
-					const auto counted = statistics_enabled.load(std::memory_order_relaxed);
-					if (!pool || !pool->get_free_block(block, page, index_block, size, counted))
-						return nullptr;
-					create_pool_block(block, static_cast<uint32_t>(size), static_cast<uint16_t>(page->get_user_data()),
-						static_cast<uint32_t>(index_block), static_cast<uint8_t>(id));
-					if (counted)
-						block->flags |= flag_block_counted;
+				auto* pool = acquire_pool(pools, id, &page_sources[id]);
+				block_base* block = nullptr;
+				const auto counted = statistics_enabled.load(std::memory_order_relaxed);
+				auto* cache = id < cached_pool_count ? current_cache() : nullptr;
+				if (pool && cache)
+				{
+					auto& bin = cache->bins[id];
+					if (!bin.count)
+						bin.count = static_cast<uint8_t>(pool->refill(bin.slots, class_geometries[id].cache_batch,
+							static_cast<uint8_t>(id), counted));
+					if (bin.count)
+					{
+						block = bin.slots[--bin.count];
+						block->size = static_cast<uint32_t>(size);
+						block_lifecycle::uncache(block, counted);
+						if (counted)
+							pool->cache_allocated(size);
+					}
+				}
+				else if (pool)
+					block = pool->allocate(size, static_cast<uint8_t>(id), counted);
+				if (block)
+				{
 					return get_ptr_from_block_handle(block);
-				});
+				}
 				// A pool that cannot grow falls through to a large block.
-				if (pooled)
-					return pooled;
 			}
 
 			if (size > SIZE_MAX - sizeof(block_base))
@@ -307,7 +291,7 @@ namespace voltek
 			block->base = base;
 			block->alignment = alignment;
 			create_default_block(&block->header, size);
-			block->header.flags |= flag_block_aligned;
+			block_lifecycle::store(&block->header, flag_block_default_used | flag_block_aligned);
 			return reinterpret_cast<void*>(address);
 		}
 
@@ -319,7 +303,7 @@ namespace voltek
 				return nullptr;
 			if (!ptr)
 				return aligned_alloc(size, alignment);
-			if (!owns(ptr))
+			if (!owns(ptr) || !block_lifecycle::live(get_block_handle_from_ptr(ptr)))
 				return nullptr;
 			if (!size)
 			{
@@ -342,7 +326,7 @@ namespace voltek
 
 		void* memory_manager::realloc(const void* ptr, size_t size) noexcept
 		{
-			if (!ptr || !owns(ptr))
+			if (!ptr || !owns(ptr) || !block_lifecycle::live(get_block_handle_from_ptr(ptr)))
 				return nullptr;
 			if (!size)
 			{
@@ -357,13 +341,11 @@ namespace voltek
 			// A pooled block keeps its slot while the new size still fits its class.
 			if (is_used_pool_block(block) && block->pool_id < pool_count && size <= pool_limits[block->pool_id] && pools)
 			{
-				const auto id = static_cast<pool_type>(block->pool_id);
-				if (block->flags & flag_block_counted)
+				const size_t id = block->pool_id;
+				if (block_lifecycle::load(block) & flag_block_counted)
 				{
-					visit_pool(id, [&]<typename Pool>() {
-						if (auto* pool = loaded_pool<Pool>(pools, id))
-							pool->resize_requested(block->size, size);
-					});
+					if (auto* pool = loaded_pool(pools, id))
+						pool->resize_requested(block->size, size);
 				}
 				block->size = static_cast<uint32_t>(size);
 				return const_cast<void*>(ptr);
@@ -391,19 +373,44 @@ namespace voltek
 			if (is_used_default_block(block))
 			{
 				// The zero-size block is never released.
-				if (const auto size = get_size_from_block(block))
-					large_free(block, size + sizeof(block_base));
+				if (block == zero_size_request_block)
+					return true;
+				const auto size = get_size_from_block(block);
+				if (!size || !block_lifecycle::try_free_default(block))
+					return false;
+				large_free(block, size + sizeof(block_base));
 				return true;
 			}
 
 			if (!pools || block->pool_id >= pool_count)
 				return false;
-			const auto id = static_cast<pool_type>(block->pool_id);
-			return visit_pool(id, [&]<typename Pool>() {
-				auto* pool = loaded_pool<Pool>(pools, id);
-				return pool && pool->release_block((*pool)[block->page_id], block->block_id, block->size,
-					(block->flags & flag_block_counted) != 0);
-			});
+			const size_t id = block->pool_id;
+			auto* pool = loaded_pool(pools, id);
+			if (!pool)
+				return false;
+			if (id < cached_pool_count)
+			{
+				if (auto* cache = current_cache())
+				{
+					const auto flags = block_lifecycle::try_cache(block);
+					if (!flags)
+						return false;
+					if (flags & flag_block_counted)
+						pool->cache_released(block->size);
+					auto& bin = cache->bins[id];
+					const auto& geometry = class_geometries[id];
+					// Flush before the push so the fixed stack never needs a sixty-fifth slot.
+					if (bin.count == geometry.cache_cap)
+						flush_bin(bin, *pool, geometry.cache_batch);
+					bin.slots[bin.count++] = block;
+					return true;
+				}
+			}
+			const auto flags = block_lifecycle::load(block);
+			if (flags & (flag_block_free | flag_block_cached))
+				return false;
+			return pool->release_block(block->page_id, block->block_id, block->size,
+				(flags & flag_block_counted) != 0);
 		}
 
 		size_t memory_manager::msize(const void* ptr) const noexcept
@@ -418,11 +425,8 @@ namespace voltek
 #ifndef VMMDLL_EXPORTS
 			if (pool_id >= pool_count || !filename || !pools)
 				return;
-			const auto id = static_cast<pool_type>(pool_id);
-			visit_pool(id, [&]<typename Pool>() {
-				if (auto* pool = loaded_pool<Pool>(pools, id))
-					pool->dump_map(filename);
-			});
+			if (auto* pool = loaded_pool(pools, pool_id))
+				pool->dump_map(filename);
 #endif // !VMMDLL_EXPORTS
 		}
 
@@ -431,11 +435,8 @@ namespace voltek
 #ifndef VMMDLL_EXPORTS
 			if (pool_id >= pool_count || !filename || !pools)
 				return;
-			const auto id = static_cast<pool_type>(pool_id);
-			visit_pool(id, [&]<typename Pool>() {
-				if (auto* pool = loaded_pool<Pool>(pools, id))
-					pool->dump(filename);
-			});
+			if (auto* pool = loaded_pool(pools, pool_id))
+				pool->dump(filename);
 #endif // !VMMDLL_EXPORTS
 		}
 
@@ -446,16 +447,13 @@ namespace voltek
 				return;
 			for (size_t index = 0; index < pool_count; ++index)
 			{
-				const auto id = static_cast<pool_type>(index);
-				visit_pool(id, [&]<typename Pool>() {
-					auto* pool = loaded_pool<Pool>(pools, id);
-					if (!pool)
-						return;
-					// Unlocked maintained counters may produce a marginally stale sample.
-					out.pool_count += !pool->empty();
-					out.page_capacity += pool->count();
-					out.pages_busy += pool->busy_count();
-				});
+				auto* pool = loaded_pool(pools, index);
+				if (!pool)
+					continue;
+				// Unlocked maintained counters may produce a marginally stale sample.
+				out.pool_count += !pool->empty();
+				out.page_capacity += pool->count();
+				out.pages_busy += pool->full_count();
 			}
 		}
 
@@ -471,23 +469,19 @@ namespace voltek
 				entry.committed_bytes = page_sources[index].committed_bytes();
 				if (!pools)
 					continue;
-				const auto id = static_cast<pool_type>(index);
-				visit_pool(id, [&]<typename Pool>() {
-					auto* pool = loaded_pool<Pool>(pools, id);
-					if (!pool)
-						return;
-					const auto& counters = pool->counters();
-					entry.block_stride = sizeof(typename Pool::block_type);
-					entry.live_blocks = read(counters.live_blocks);
-					entry.requested_bytes = counters.live_requested_bytes();
-					entry.allocations = read(counters.allocations);
-					entry.allocated_bytes = read(counters.allocated_bytes);
-					entry.pages_created = read(counters.pages_created);
-					entry.pages_released = read(counters.pages_released);
-					entry.scan_words = read(counters.scan_words);
-					entry.lock_contended = read(counters.lock.contended);
-					entry.lock_wait_ticks = read(counters.lock.wait_ticks);
-				});
+				auto* pool = loaded_pool(pools, index);
+				if (!pool)
+					continue;
+				const auto& counters = pool->counters();
+				entry.block_stride = class_geometries[index].stride;
+				entry.live_blocks = read(counters.live_blocks);
+				entry.requested_bytes = counters.live_requested_bytes();
+				entry.allocations = read(counters.allocations);
+				entry.allocated_bytes = read(counters.allocated_bytes);
+				entry.pages_created = read(counters.pages_created);
+				entry.pages_released = read(counters.pages_released);
+				entry.lock_contended = read(counters.lock.contended);
+				entry.lock_wait_ticks = read(counters.lock.wait_ticks);
 			}
 			if (count < capacity)
 			{

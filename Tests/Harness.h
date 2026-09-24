@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Voltek.MemoryManager.h>
+#include <vmmclasses.h>
 
 #include <array>
 #include <cstddef>
@@ -75,39 +76,19 @@ namespace vmm_tests
 		uint8_t pool;
 	};
 
-	inline constexpr std::array allocation_cases{
-		AllocationCase{ 1, 0 },
-		AllocationCase{ 8, 0 },
-		AllocationCase{ 9, 1 },
-		AllocationCase{ 16, 1 },
-		AllocationCase{ 17, 2 },
-		AllocationCase{ 32, 2 },
-		AllocationCase{ 33, 3 },
-		AllocationCase{ 64, 3 },
-		AllocationCase{ 65, 4 },
-		AllocationCase{ 128, 4 },
-		AllocationCase{ 129, 5 },
-		AllocationCase{ 256, 5 },
-		AllocationCase{ 257, 6 },
-		AllocationCase{ 512, 6 },
-		AllocationCase{ 513, 7 },
-		AllocationCase{ 1024, 7 },
-		AllocationCase{ 1025, 8 },
-		AllocationCase{ 4096, 8 },
-		AllocationCase{ 4097, 9 },
-		AllocationCase{ 8192, 9 },
-		AllocationCase{ 8193, 10 },
-		AllocationCase{ 16384, 10 },
-		AllocationCase{ 16385, 11 },
-		AllocationCase{ 32768, 11 },
-		AllocationCase{ 32769, 12 },
-		AllocationCase{ 65536, 12 },
-		AllocationCase{ 65537, 13 },
-		AllocationCase{ 131072, 13 },
-		AllocationCase{ 131073, 0xFF },
-		AllocationCase{ 1024 * 1024, 0xFF },
-		AllocationCase{ 16 * 1024 * 1024, 0xFF }
-	};
+	inline constexpr auto allocation_cases = [] {
+		namespace mm = voltek::memory_manager;
+		std::array<AllocationCase, mm::pool_count * 2 + 3> cases{};
+		for (size_t index = 0; index < mm::pool_count; ++index)
+		{
+			cases[index * 2] = { index ? mm::pool_limits[index - 1] + 1 : 1, static_cast<uint8_t>(index) };
+			cases[index * 2 + 1] = { mm::pool_limits[index], static_cast<uint8_t>(index) };
+		}
+		cases[mm::pool_count * 2] = { mm::pool_limit_maximum + 1, 0xFF };
+		cases[mm::pool_count * 2 + 1] = { 1024 * 1024, 0xFF };
+		cases[mm::pool_count * 2 + 2] = { 16 * 1024 * 1024, 0xFF };
+		return cases;
+	}();
 
 	inline uint8_t pattern_byte(size_t index, size_t size, uint64_t seed)
 	{

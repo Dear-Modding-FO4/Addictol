@@ -77,7 +77,6 @@ namespace voltek
 		uint64_t allocated_bytes;	// cumulative
 		uint64_t pages_created;		// cumulative
 		uint64_t pages_released;	// cumulative
-		uint64_t scan_words;		// cumulative bitmap words scanned by allocation
 		uint64_t lock_contended;	// cumulative acquisitions that had to wait
 		uint64_t lock_wait_ticks;	// cumulative QPC ticks spent waiting
 	};

@@ -37,11 +37,13 @@ namespace voltek
 			VirtualFree(ptr, size, MEM_DECOMMIT);
 		}
 
-		void mapper::assign(char* base, size_t slot_size, size_t slot_count)
+		void mapper::assign(char* base, size_t slot_size, size_t slot_count, retention_budget* retention)
 		{
+			_internal::simple_scope_lock scope_lock(_lock);
 			_base = base;
 			_slot_size = slot_size;
 			_slot_count = slot_count;
+			_retention = retention;
 			_used.assign((slot_count + 63) / 64, 0);
 			_committed_pages.assign(slot_count, 0);
 			// Bits past the last slot read as used so the scan never hands them out.
@@ -55,8 +57,12 @@ namespace voltek
 				return nullptr;
 
 			size_t index = 0;
+			_internal::simple_scope_lock scope_lock(_lock);
+			const bool retained = _retained_count != 0;
+			if (retained)
+				index = _retained_indices[_retained_count - 1];
+			else
 			{
-				_internal::simple_scope_lock scope_lock(_lock);
 				size_t word = _hint;
 				while (word < _used.size() && _used[word] == ~0ull)
 					++word;
@@ -64,34 +70,57 @@ namespace voltek
 					return nullptr;
 				unsigned long bit = 0;
 				_BitScanForward64(&bit, ~_used[word]);
-				_used[word] |= 1ull << bit;
-				_hint = word;
-				++_used_count;
 				index = word * 64 + bit;
 			}
 
 			auto* slot = _base + index * _slot_size;
 			const auto pages = (commit_size + region::commit_granularity - 1) / region::commit_granularity;
-			if (region::commit(slot, commit_size))
+			const auto previous_pages = _committed_pages[index];
+			if (pages > previous_pages)
 			{
+				const auto extra = (pages - previous_pages) * region::commit_granularity;
+				if (!region::commit(slot + previous_pages * region::commit_granularity, extra))
+					return nullptr;
 				_committed_pages[index] = static_cast<uint32_t>(pages);
-				_committed.fetch_add(pages * region::commit_granularity, std::memory_order_relaxed);
-				return slot;
+				_committed.fetch_add(extra, std::memory_order_relaxed);
 			}
-
-			release(slot);
-			return nullptr;
+			else if (pages < previous_pages)
+			{
+				const auto excess = (previous_pages - pages) * region::commit_granularity;
+				region::decommit(slot + pages * region::commit_granularity, excess);
+				_committed_pages[index] = static_cast<uint32_t>(pages);
+				_committed.fetch_sub(excess, std::memory_order_relaxed);
+			}
+			if (retained)
+			{
+				--_retained_count;
+				_retention->release(previous_pages * region::commit_granularity);
+			}
+			else
+			{
+				_used[index / 64] |= 1ull << (index % 64);
+				_hint = index / 64;
+			}
+			++_used_count;
+			return slot;
 		}
 
 		void mapper::release(const void* slot) noexcept
 		{
+			_internal::simple_scope_lock scope_lock(_lock);
 			const auto index = static_cast<size_t>(static_cast<const char*>(slot) - _base) / _slot_size;
+			const auto bytes = static_cast<size_t>(_committed_pages[index]) * region::commit_granularity;
+			if (_retention && _retained_count < _retained_indices.size() && _retention->try_acquire(bytes))
+			{
+				_retained_indices[_retained_count++] = index;
+				--_used_count;
+				return;
+			}
 			// Decommit before the slot becomes reusable, or a new owner's commit could be undone.
 			region::decommit(_base + index * _slot_size, _slot_size);
-			_committed.fetch_sub(static_cast<uint64_t>(_committed_pages[index]) * region::commit_granularity, std::memory_order_relaxed);
+			_committed.fetch_sub(bytes, std::memory_order_relaxed);
 			_committed_pages[index] = 0;
 
-			_internal::simple_scope_lock scope_lock(_lock);
 			_used[index / 64] &= ~(1ull << (index % 64));
 			--_used_count;
 			if (index / 64 < _hint)

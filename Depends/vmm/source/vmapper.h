@@ -7,6 +7,7 @@
 #include "vsimplelock.h"
 
 #include <atomic>
+#include <array>
 #include <stddef.h>
 #include <stdint.h>
 #include <vector>
@@ -35,7 +36,25 @@ namespace voltek
 			inline static size_t _size{ 0 };
 		};
 
-		// Equal-size slots over a slice of the region; each slot commits only what its user asks for.
+		class retention_budget
+		{
+		public:
+			explicit retention_budget(size_t limit) noexcept : _limit(limit) {}
+			[[nodiscard]] bool try_acquire(size_t bytes) noexcept
+			{
+				auto retained = _retained.load(std::memory_order_relaxed);
+				while (bytes <= _limit - retained)
+					if (_retained.compare_exchange_weak(retained, retained + bytes, std::memory_order_relaxed))
+						return true;
+				return false;
+			}
+			void release(size_t bytes) noexcept { _retained.fetch_sub(bytes, std::memory_order_relaxed); }
+		private:
+			const size_t _limit;
+			std::atomic<size_t> _retained{ 0 };
+		};
+
+		// Equal-size slots over a slice of the region, optionally retaining committed extents for reuse.
 		class mapper
 		{
 		public:
@@ -43,7 +62,7 @@ namespace voltek
 			mapper(const mapper&) = delete;
 			mapper& operator=(const mapper&) = delete;
 
-			void assign(char* base, size_t slot_size, size_t slot_count);
+			void assign(char* base, size_t slot_size, size_t slot_count, retention_budget* retention = nullptr);
 			[[nodiscard]] void* allocate(size_t commit_size) noexcept;
 			void release(const void* slot) noexcept;
 			[[nodiscard]] bool contains(const void* ptr) const noexcept
@@ -61,7 +80,11 @@ namespace voltek
 			size_t _used_count{ 0 };
 			size_t _hint{ 0 };
 			std::vector<uint64_t> _used;
-			// Committed extent per slot, in commit pages; release decommits and accounts exactly this.
+			// Retained slots stay marked used in the bitmap until popped, so scans cannot claim them.
+			std::array<size_t, 8> _retained_indices{};
+			size_t _retained_count{ 0 };
+			retention_budget* _retention{ nullptr };
+			// Committed extent per slot, including retained slots, in commit pages.
 			std::vector<uint32_t> _committed_pages;
 			std::atomic<uint64_t> _committed{ 0 };
 			_internal::simple_lock _lock;

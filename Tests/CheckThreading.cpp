@@ -477,9 +477,9 @@ namespace vmm_tests
 		runner.test("concurrent allocation grows a pool without losing blocks", [] {
 			constexpr size_t threadCount = 8;
 			constexpr size_t allocationSize = 8193;
-			constexpr size_t poolIndex = 10;
+			constexpr size_t poolIndex = voltek::memory_manager::pool_class_of(allocationSize);
 			constexpr size_t blocksPerPage =
-				voltek::memory_manager::blocks_per_page<voltek::memory_manager::block16384_t>;
+				voltek::memory_manager::class_geometries[poolIndex].count;
 			constexpr size_t blocksPerThread = blocksPerPage / threadCount + 1;
 
 			FailureLog failures;

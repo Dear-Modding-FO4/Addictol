@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <string>
 
 namespace Addictol::Heaps
 {
@@ -100,16 +101,22 @@ namespace Addictol::Heaps
 
 	size_t Voltek::ClassStatistics(std::span<HeapClassStatistics> a_out) noexcept
 	{
-		static constexpr std::array<std::string_view, 15> labels{
-			"8", "16", "32", "64", "128", "256", "512", "1k", "4k", "8k", "16k", "32k", "64k", "128k", "large"
-		};
-		std::array<voltek::scalable_class_stats, labels.size()> classes{};
-		const auto count = (std::min)({ voltek::scalable_get_class_stats(classes.data(), classes.size()), a_out.size(), labels.size() });
+		std::array<voltek::scalable_class_stats, kMaxHeapClasses> classes{};
+		const auto available = voltek::scalable_get_class_stats(classes.data(), classes.size());
+		if (!available)
+			return 0;
+		static const auto labels = [&] {
+			std::array<std::string, kMaxHeapClasses> result{};
+			for (size_t index = 0; index < available; ++index)
+				result[index] = classes[index].request_limit ? std::to_string(classes[index].request_limit) : "large";
+			return result;
+		}();
+		const auto count = (std::min)(available, a_out.size());
 		for (size_t index = 0; index < count; ++index)
 		{
 			const auto& source = classes[index];
 			a_out[index] = { labels[index], source.allocations, source.allocated_bytes, source.pages_created,
-				source.pages_released, source.scan_words, source.lock_contended, source.lock_wait_ticks };
+				source.pages_released, source.lock_contended, source.lock_wait_ticks };
 		}
 		return count;
 	}

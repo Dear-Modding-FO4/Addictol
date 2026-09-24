@@ -28,6 +28,7 @@
     <ClInclude Include="source\vbase.h" />
     <ClInclude Include="source\vbits.h" />
     <ClInclude Include="source\vmmgeometry.h" />
+    <ClInclude Include="source\vmmclasses.h" />
     <ClInclude Include="source\vintrin.h" />
     <ClInclude Include="source\vio.h" />
     <ClInclude Include="source\vmmblock.h" />

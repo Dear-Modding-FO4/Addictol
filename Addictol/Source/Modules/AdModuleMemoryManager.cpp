@@ -706,7 +706,7 @@ namespace Addictol
 
 	size_t ModuleMemoryManager::SeriesCapacity() const noexcept
 	{
-		return kMaxHeapClasses * 5;
+		return kMaxHeapClasses * 4;
 	}
 
 	size_t ModuleMemoryManager::DrainSeries(std::span<SeriesSample> a_out) noexcept
@@ -727,7 +727,6 @@ namespace Addictol
 			append("allocator.class.allocations"sv, now.label, now.allocations - before.allocations, 0, now.allocatedBytes - before.allocatedBytes);
 			append("allocator.class.page_creates"sv, now.label, now.pagesCreated - before.pagesCreated, 0, 0);
 			append("allocator.class.page_releases"sv, now.label, now.pagesReleased - before.pagesReleased, 0, 0);
-			append("allocator.class.scan_words"sv, now.label, now.scanWords - before.scanWords, 0, 0);
 			append("allocator.class.lock_waits"sv, now.label, now.lockContended - before.lockContended, now.lockWaitTicks - before.lockWaitTicks, 0);
 			m_previousClasses[index] = now;
 		}
