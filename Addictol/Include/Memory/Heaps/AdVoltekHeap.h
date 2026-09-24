@@ -19,5 +19,7 @@ namespace Addictol::Heaps
 		static void Free(void* a_block) noexcept;
 		[[nodiscard]] static size_t Size(void* a_block) noexcept;
 		[[nodiscard]] static HeapStatistics Statistics() noexcept;
+		static void EnableClassStatistics() noexcept;
+		[[nodiscard]] static size_t ClassStatistics(std::span<HeapClassStatistics> a_out) noexcept;
 	};
 }

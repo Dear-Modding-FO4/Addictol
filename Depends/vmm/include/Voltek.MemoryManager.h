@@ -6,6 +6,7 @@
 
 #include "vmmconfig.h"
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -63,6 +64,37 @@ namespace voltek
 	// Вернёт 0 при ошибке, что значит, указатель на память не пренадлежит менеджеру.
 	VOLTEK_MM_API size_t scalable_msize(const void* ptr);
 	VOLTEK_MM_API void scalable_get_pool_stats(scalable_pool_stats* out);
+
+	// Per size class; cumulative counters only grow, the rest are current values.
+	struct scalable_class_stats
+	{
+		size_t request_limit;		// largest request served; 0 for the large-block entry
+		size_t block_stride;		// bytes per block including its header; 0 when not pooled
+		uint64_t live_blocks;
+		uint64_t requested_bytes;
+		uint64_t committed_bytes;
+		uint64_t allocations;		// cumulative
+		uint64_t allocated_bytes;	// cumulative
+		uint64_t pages_created;		// cumulative
+		uint64_t pages_released;	// cumulative
+		uint64_t scan_words;		// cumulative bitmap words scanned by allocation
+		uint64_t lock_contended;	// cumulative acquisitions that had to wait
+		uint64_t lock_wait_ticks;	// cumulative QPC ticks spent waiting
+	};
+
+	struct scalable_memory_stats
+	{
+		size_t reserved_bytes;
+		uint64_t committed_bytes;
+		uint64_t live_blocks;
+		uint64_t requested_bytes;
+	};
+
+	// Per-class counters and lock timing start with blocks allocated after this call.
+	VOLTEK_MM_API void scalable_enable_statistics();
+	// Writes one entry per pool class and a final large-block entry; returns the count written.
+	VOLTEK_MM_API size_t scalable_get_class_stats(scalable_class_stats* out, size_t capacity);
+	VOLTEK_MM_API void scalable_get_memory_stats(scalable_memory_stats* out);
 }
 
 #ifdef __cplusplus

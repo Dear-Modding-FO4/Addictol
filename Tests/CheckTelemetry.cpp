@@ -1916,7 +1916,7 @@ namespace vmm_tests
 				csv.str() ==
 					"sequence,qpc,interval_ms,lateness_ms,allocator.pool_count,"
 					"allocator.pages_busy,allocator.page_capacity,allocator.committed_bytes,"
-					"allocator.reserved_bytes\n1,10,1,0,2,4,7,4096,\n",
+					"allocator.reserved_bytes,allocator.live_blocks,allocator.requested_bytes\n1,10,1,0,2,4,7,4096,,,\n",
 				"allocator fields did not serialize in schema order with unreported cells empty");
 		});
 	}

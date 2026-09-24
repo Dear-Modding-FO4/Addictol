@@ -172,6 +172,8 @@ namespace voltek
 #endif
 
 		static constexpr uint8_t flag_block_aligned = 0x4;
+		// Allocated while statistics were on, so its release is counted too.
+		static constexpr uint8_t flag_block_counted = 0x8;
 
 		// Возвращает истину, если блок правильный и пренадлежит менеджеру.
 		inline static bool is_valid_block(const block_base* block)

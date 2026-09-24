@@ -1,6 +1,9 @@
 #include <Memory/Heaps/AdVoltekHeap.h>
 #include <Voltek.MemoryManager.h>
 
+#include <algorithm>
+#include <array>
+
 namespace Addictol::Heaps
 {
 	bool Voltek::Initialize() noexcept
@@ -75,12 +78,39 @@ namespace Addictol::Heaps
 
 	HeapStatistics Voltek::Statistics() noexcept
 	{
-		voltek::scalable_pool_stats stats{};
-		voltek::scalable_get_pool_stats(&stats);
+		voltek::scalable_pool_stats pools{};
+		voltek::scalable_get_pool_stats(&pools);
+		voltek::scalable_memory_stats memory{};
+		voltek::scalable_get_memory_stats(&memory);
 		HeapStatistics result{};
-		result.poolCount = stats.pool_count;
-		result.pagesBusy = stats.pages_busy;
-		result.pageCapacity = stats.page_capacity;
+		result.poolCount = pools.pool_count;
+		result.pagesBusy = pools.pages_busy;
+		result.pageCapacity = pools.page_capacity;
+		result.committedBytes = memory.committed_bytes;
+		result.reservedBytes = memory.reserved_bytes;
+		result.liveBlocks = memory.live_blocks;
+		result.requestedBytes = memory.requested_bytes;
 		return result;
+	}
+
+	void Voltek::EnableClassStatistics() noexcept
+	{
+		voltek::scalable_enable_statistics();
+	}
+
+	size_t Voltek::ClassStatistics(std::span<HeapClassStatistics> a_out) noexcept
+	{
+		static constexpr std::array<std::string_view, 15> labels{
+			"8", "16", "32", "64", "128", "256", "512", "1k", "4k", "8k", "16k", "32k", "64k", "128k", "large"
+		};
+		std::array<voltek::scalable_class_stats, labels.size()> classes{};
+		const auto count = (std::min)({ voltek::scalable_get_class_stats(classes.data(), classes.size()), a_out.size(), labels.size() });
+		for (size_t index = 0; index < count; ++index)
+		{
+			const auto& source = classes[index];
+			a_out[index] = { labels[index], source.allocations, source.allocated_bytes, source.pages_created,
+				source.pages_released, source.scan_words, source.lock_contended, source.lock_wait_ticks };
+		}
+		return count;
 	}
 }

@@ -24,6 +24,14 @@
     "message": "public log level name changed"
   },
   {
+    "name": "voltek class statistics release requested bytes",
+    "target": "Depends/vmm/source/vmmpool.h",
+    "find": "add(requested_bytes, static_cast<uint64_t>(0) - a_requested);",
+    "replace": "add(requested_bytes, 0);",
+    "check": "class statistics return to baseline after blocks are freed",
+    "message": "class statistics did not return to baseline"
+  },
+  {
     "name": "voltek ownership requires the reserved range",
     "target": "Depends/vmm/source/vmmmain.cpp",
     "find": "return core::region::contains(header) && is_valid_block(header);",

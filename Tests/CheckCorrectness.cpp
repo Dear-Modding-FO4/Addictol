@@ -6,10 +6,12 @@
 #include <vmmpage.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
 #include <type_traits>
+#include <vector>
 #include <windows.h>
 
 namespace
@@ -376,6 +378,42 @@ namespace vmm_tests
 			require(!voltek::scalable_free(forged), "free accepted a forged header");
 			require(voltek::scalable_realloc(forged, 128) == nullptr, "realloc accepted a forged header");
 			VirtualFree(page, 0, MEM_RELEASE);
+		});
+
+		// The phase-by-phase evaluation reads these counters; drift would misattribute memory.
+		runner.test("class statistics return to baseline after blocks are freed", [] {
+			const auto sample = [] {
+				std::array<voltek::scalable_class_stats, 15> classes{};
+				require(voltek::scalable_get_class_stats(classes.data(), classes.size()) == classes.size(),
+					"class statistics did not cover every class");
+				return classes;
+			};
+			constexpr std::size_t pooled = 4;
+			constexpr std::size_t large = 14;
+			voltek::scalable_enable_statistics();
+			const auto before = sample();
+			std::vector<void*> blocks;
+			for (std::size_t index = 0; index < 1000; ++index)
+				blocks.push_back(voltek::scalable_alloc(100));
+			for (std::size_t index = 0; index < 10; ++index)
+				require(voltek::scalable_realloc(blocks[index], 120) == blocks[index], "in-class realloc moved the block");
+			void* big = voltek::scalable_alloc(300000);
+			const auto during = sample();
+			require(during[pooled].live_blocks == before[pooled].live_blocks + 1000 &&
+				during[pooled].requested_bytes == before[pooled].requested_bytes + 1000 * 100 + 10 * 20,
+				"pooled class statistics missed live blocks or resized bytes");
+			require(during[large].live_blocks == before[large].live_blocks + 1 && during[large].committed_bytes > before[large].committed_bytes,
+				"large block statistics missed a live block");
+			for (auto* block : blocks)
+				require(voltek::scalable_free(block), "pooled block free failed");
+			require(voltek::scalable_free(big), "large block free failed");
+			const auto after = sample();
+			require(after[pooled].live_blocks == before[pooled].live_blocks &&
+				after[pooled].requested_bytes == before[pooled].requested_bytes &&
+				after[large].live_blocks == before[large].live_blocks &&
+				after[large].requested_bytes == before[large].requested_bytes &&
+				after[large].committed_bytes == before[large].committed_bytes,
+				"class statistics did not return to baseline");
 		});
 
 		runner.test("page rejects an undersized region bitmap", [] {

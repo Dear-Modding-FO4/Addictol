@@ -43,6 +43,7 @@ namespace voltek
 			_slot_size = slot_size;
 			_slot_count = slot_count;
 			_used.assign((slot_count + 63) / 64, 0);
+			_committed_pages.assign(slot_count, 0);
 			// Bits past the last slot read as used so the scan never hands them out.
 			if (const auto tail = slot_count % 64)
 				_used.back() = ~0ull << tail;
@@ -70,8 +71,13 @@ namespace voltek
 			}
 
 			auto* slot = _base + index * _slot_size;
+			const auto pages = (commit_size + region::commit_granularity - 1) / region::commit_granularity;
 			if (region::commit(slot, commit_size))
+			{
+				_committed_pages[index] = static_cast<uint32_t>(pages);
+				_committed.fetch_add(pages * region::commit_granularity, std::memory_order_relaxed);
 				return slot;
+			}
 
 			release(slot);
 			return nullptr;
@@ -82,6 +88,8 @@ namespace voltek
 			const auto index = static_cast<size_t>(static_cast<const char*>(slot) - _base) / _slot_size;
 			// Decommit before the slot becomes reusable, or a new owner's commit could be undone.
 			region::decommit(_base + index * _slot_size, _slot_size);
+			_committed.fetch_sub(static_cast<uint64_t>(_committed_pages[index]) * region::commit_granularity, std::memory_order_relaxed);
+			_committed_pages[index] = 0;
 
 			_internal::simple_scope_lock scope_lock(_lock);
 			_used[index / 64] &= ~(1ull << (index % 64));

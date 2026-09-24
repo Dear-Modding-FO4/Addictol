@@ -119,6 +119,22 @@ namespace Addictol
 		[[nodiscard]] HeapStatistics Statistics() const noexcept { return Backend::Statistics(); }
 		[[nodiscard]] bool Ready() const noexcept { return m_ready; }
 
+		// Class statistics cost per-call time, so they start only when telemetry will read them.
+		void EnableClassStatistics() const noexcept
+		{
+			if constexpr (requires { Backend::EnableClassStatistics(); })
+				Backend::EnableClassStatistics();
+		}
+
+		// Only backends with size classes report them.
+		[[nodiscard]] size_t ClassStatistics(std::span<HeapClassStatistics> a_out) const noexcept
+		{
+			if constexpr (requires { { Backend::ClassStatistics(a_out) } noexcept -> std::same_as<size_t>; })
+				return Backend::ClassStatistics(a_out);
+			else
+				return 0;
+		}
+
 	private:
 		bool m_ready;
 

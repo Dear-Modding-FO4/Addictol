@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <optional>
+#include <span>
 #include <stddef.h>
 #include <stdint.h>
 #include <string_view>
@@ -24,7 +25,24 @@ namespace Addictol
 		std::optional<uint64_t> poolCount;
 		std::optional<uint64_t> pagesBusy;
 		std::optional<uint64_t> pageCapacity;
+		std::optional<uint64_t> liveBlocks;
+		std::optional<uint64_t> requestedBytes;
 	};
+
+	// Cumulative counters for one size class; telemetry reports their interval deltas.
+	struct HeapClassStatistics
+	{
+		std::string_view label;
+		uint64_t allocations{ 0 };
+		uint64_t allocatedBytes{ 0 };
+		uint64_t pagesCreated{ 0 };
+		uint64_t pagesReleased{ 0 };
+		uint64_t scanWords{ 0 };
+		uint64_t lockContended{ 0 };
+		uint64_t lockWaitTicks{ 0 };
+	};
+
+	inline constexpr size_t kMaxHeapClasses{ 32 };
 
 	// Initialize reports whether the backend can serve; hooks install only after it succeeds.
 	// Free, Size, and Reallocate must tolerate pointers the backend does not own: ignore, zero, and null.

@@ -8,17 +8,58 @@
 #include "vmmpage.h"
 #include "vsimplelock.h"
 #include <algorithm>
+#include <atomic>
 #include <utility>
 #include <vector>
-
-#define USE_MULTITHREADS 0
-
-#define __VMM_POOL_CONFIG_CACHE_SIZE 8ull * 1024
 
 namespace voltek
 {
 	namespace memory_manager
 	{
+		// Cumulative per-pool counters. Fields other than resized_bytes change only under the pool lock,
+		// so they use plain load and store, keeping atomic read-modify-writes off the hot path.
+		struct pool_counters
+		{
+			std::atomic<uint64_t> live_blocks{ 0 };
+			std::atomic<uint64_t> requested_bytes{ 0 };
+			// In-place realloc growth, changed without the lock; live requested bytes are the sum of both.
+			std::atomic<int64_t> resized_bytes{ 0 };
+			std::atomic<uint64_t> allocations{ 0 };
+			std::atomic<uint64_t> allocated_bytes{ 0 };
+			std::atomic<uint64_t> pages_created{ 0 };
+			std::atomic<uint64_t> pages_released{ 0 };
+			std::atomic<uint64_t> scan_words{ 0 };
+			voltek::core::_internal::lock_counters lock{};
+
+			static void add(std::atomic<uint64_t>& a_counter, uint64_t a_value) noexcept
+			{
+				a_counter.store(a_counter.load(std::memory_order_relaxed) + a_value, std::memory_order_relaxed);
+			}
+			static void bump(std::atomic<uint64_t>& a_counter) noexcept { add(a_counter, 1); }
+
+			void allocated(size_t a_requested, size_t a_index) noexcept
+			{
+				add(live_blocks, 1);
+				add(allocations, 1);
+				add(allocated_bytes, a_requested);
+				// The bitmap scan starts at the front, so the found index approximates how far it went.
+				add(scan_words, a_index / 64 + 1);
+				add(requested_bytes, a_requested);
+			}
+
+			[[nodiscard]] uint64_t live_requested_bytes() const noexcept
+			{
+				return requested_bytes.load(std::memory_order_relaxed) +
+					static_cast<uint64_t>(resized_bytes.load(std::memory_order_relaxed));
+			}
+
+			void released(size_t a_requested) noexcept
+			{
+				add(live_blocks, static_cast<uint64_t>(-1));
+				add(requested_bytes, static_cast<uint64_t>(0) - a_requested);
+			}
+		};
+
 		// Шаблонный класс пула страниц памяти.
 		template<typename _type, typename _page, size_t _blocks_in_page = blocks_per_page<_type>>
 		class pool_t : public voltek::core::base
@@ -34,20 +75,13 @@ namespace voltek
 			using pageobj_t = _page;
 			// Тип указателя на страницу.
 			using pageptr_t = pageobj_t*;
+			using block_type = _type;
 			// Конструктор по умолчанию.
-			pool_t() noexcept
-			{
-#if USE_MULTITHREADS
-				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
-#endif
-			}
+			pool_t() noexcept = default;
 			// Конструктор.
 			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
 			pool_t(size_t count, voltek::core::mapper* mapper) noexcept : _mapper(mapper)
 			{
-#if USE_MULTITHREADS
-				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
-#endif
 				set_size(count);
 			}
 			// Деструктор
@@ -145,29 +179,35 @@ namespace voltek
 			// Передаёт сам блок, страницу где был найден блок и его индекс.
 			// Эти данные понадобиться для освобождения блока у пула.
 			// Блок указывается как занятый в последствии.
-			[[nodiscard]] bool get_free_block(_type*& block, pageptr_t& page, size_t& index_block) noexcept
+			// Counts the block only when asked, so disabled statistics cost one branch.
+			[[nodiscard]] bool get_free_block(_type*& block, pageptr_t& page, size_t& index_block, size_t requested, bool counted) noexcept
 			{
-				// Блокируем. Снятие блокировки будет заботить компилятор.
-				voltek::core::_internal::simple_scope_lock scope_lock(lock);
-
-#if USE_MULTITHREADS
-				if (!free_stack_blocks.empty())
-				{
-					// Получить из стека
-					auto& item = free_stack_blocks.back();
-					// Передаём индекс блока
-					index_block = item.second;
-					// Передаём страницу
-					page = item.first;
-					// Получаем блок по текущему индексу
-					block = &(page->at(index_block));
-					// Удалить из стека
-					free_stack_blocks.pop_back();
-
-					return true;
-				}
-#endif
-
+				voltek::core::_internal::measured_scope_lock scope_lock(lock, counted ? &_counters.lock : nullptr);
+				if (!get_free_block_locked(block, page, index_block))
+					return false;
+				if (counted)
+					_counters.allocated(requested, index_block);
+				return true;
+			}
+			// Освобождает блок. Возвращает истину, если всё успешно освободилось.
+			bool release_block(pageptr_t page, size_t index_block, size_t requested, bool counted) noexcept
+			{
+				voltek::core::_internal::measured_scope_lock scope_lock(lock, counted ? &_counters.lock : nullptr);
+				if (!release_block_locked(page, index_block))
+					return false;
+				if (counted)
+					_counters.released(requested);
+				return true;
+			}
+			// In-place realloc changes a live block's size outside the pool lock.
+			void resize_requested(size_t old_size, size_t new_size) noexcept
+			{
+				_counters.resized_bytes.fetch_add(static_cast<int64_t>(new_size) - static_cast<int64_t>(old_size), std::memory_order_relaxed);
+			}
+			[[nodiscard]] const pool_counters& counters() const noexcept { return _counters; }
+		private:
+			[[nodiscard]] bool get_free_block_locked(_type*& block, pageptr_t& page, size_t& index_block) noexcept
+			{
 				if (!_current)
 				{
 				find_free_page_label:
@@ -200,6 +240,7 @@ namespace voltek
 						_current->set_user_data(static_cast<uintptr_t>(index));
 
 						_pages[index] = _current;
+						pool_counters::bump(_counters.pages_created);
 					}
 					else
 						_current = _pages[index];
@@ -225,80 +266,35 @@ namespace voltek
 
 				return true;
 			}
-			// Освобождает блок. Возвращает истину, если всё успешно освободилось.
-			bool release_block(pageptr_t page, size_t index_block) noexcept
-			{
-				// Блокируем. Снятие блокировки будет заботить компилятор.
-				voltek::core::_internal::simple_scope_lock scope_lock(lock);
 
+			[[nodiscard]] bool release_block_locked(pageptr_t page, size_t index_block) noexcept
+			{
 				// Фактический размер страницы, а не константа шаблона: он округляется вниз.
 				if (!page || (index_block >= page->count()))
 					return false;
 
 				// Попытка освободить в этой странице блок.
-				if (page->set_block_free(index_block))
+				if (!page->set_block_free(index_block))
+					return false;
+
+				// Освободить страницу, так как один блок в ней свободен.
+				auto index_page = static_cast<size_t>(page->get_user_data());
+				set_page_free(index_page);
+
+				// Если страница пуста и она не первая, освободить память.
+				if (page->is_all_blocks_free() && (index_page > 0))
 				{
-					// Освободить страницу, так как один блок в ней свободен.
-					auto index_page = static_cast<size_t>(page->get_user_data());
-					set_page_free(index_page);
+					if (_current == page)
+						_current = nullptr;
 
-					// Если страница пуста и она не первая, освободить память.
-					if (page->is_all_blocks_free() && (index_page > 0))
-					{
-						if (_current == page)
-							_current = nullptr;
+					delete page;
 
-#if USE_MULTITHREADS
-						std::erase_if(free_stack_blocks, [page](const auto& e) { return e.first == page; });
-#endif
-
-						delete page;
-
-						_pages[index_page] = nullptr;
-					}
-#if USE_MULTITHREADS
-					// Only worth reserving blocks while a consumer pops them; otherwise the cache pins pages forever.
-					else if (free_stack_blocks.size() < __VMM_POOL_CONFIG_CACHE_SIZE)
-					{
-						// Занять индекс блока, более он не доступен.
-						page->set_block_busy(index_block);
-						// добавить в стэк
-						free_stack_blocks.push_back({ page, static_cast<uint32_t>(index_block) });
-					}
-#endif
-
-					return true;
+					_pages[index_page] = nullptr;
+					pool_counters::bump(_counters.pages_released);
 				}
 
-				return false;
+				return true;
 			}
-
-#if USE_MULTITHREADS
-			bool push_free_block_to_cache() noexcept
-			{
-				if (free_stack_blocks.size() < __VMM_POOL_CONFIG_CACHE_SIZE)
-				{
-					// Блокируем. Снятие блокировки будет заботить компилятор.
-					voltek::core::_internal::simple_scope_lock scope_lock(lock);
-
-					pageptr_t page = nullptr;
-					_type* block = nullptr;
-					size_t index_block = 0;
-
-					if (get_free_block(block, page, index_block))
-					{
-						// Занять индекс блока, более он не доступен.
-						page->set_block_busy(index_block);
-						// добавить в стэк
-						free_stack_blocks.push_back({ page, static_cast<uint32_t>(index_block) });
-						return true;
-					}
-				}
-
-				return false;
-			}
-#endif
-		private:
 			pool_t(const pool_t&) = delete;
 			pool_t(pool_t&&) = delete;
 			pool_t& operator=(pool_t&&) = delete;
@@ -311,8 +307,6 @@ namespace voltek
 			pageptr_t _current{ nullptr };
 			// Кол-во доступных страниц.
 			size_t _count{ 0 };
-			// Стек свободных блоков
-			std::vector<std::pair<pageptr_t, uint32_t>> free_stack_blocks{};
 			// Дополнительная информация.
 			uintptr_t _user_data{ 0 };
 			// Битовая карта.
@@ -321,6 +315,7 @@ namespace voltek
 			voltek::core::_internal::simple_lock lock{};
 			// Карта памяти, из которой берутся страницы.
 			voltek::core::mapper* _mapper{ nullptr };
+			pool_counters _counters{};
 		};
 	}
 }

@@ -136,16 +136,6 @@ namespace
 			alloc_free<Heap>(benchmark_sizes[iteration % benchmark_sizes.size()]);
 	}
 
-	std::uint64_t single_iterations(std::size_t size)
-	{
-		if (size <= 1024)
-			return 200000;
-		if (size <= 8192)
-			return 100000;
-		if (size <= 32768)
-			return 50000;
-		return 20000;
-	}
 
 	template<class Heap>
 	std::vector<SingleResult> measure_single_thread(const PerformanceClock& clock)
@@ -158,11 +148,17 @@ namespace
 			for (std::size_t iteration = 0; iteration < 1000; ++iteration)
 				alloc_free<Heap>(size);
 
-			const auto operations = single_iterations(size);
+			// A fixed duration per size keeps timer and frequency noise small next to the measured work.
+			std::uint64_t operations = 0;
 			std::uint64_t failures = 0;
 			const auto start = clock.now();
-			for (std::uint64_t operation = 0; operation < operations; ++operation)
-				failures += alloc_free<Heap>(size) ? 0 : 1;
+			const auto deadline = start + clock.frequency() / 4;
+			do
+			{
+				for (unsigned batch = 0; batch < 1024; ++batch)
+					failures += alloc_free<Heap>(size) ? 0 : 1;
+				operations += 1024;
+			} while (clock.now() < deadline);
 			const auto elapsed = clock.seconds(clock.now() - start);
 			results.push_back({ size, operations, failures, elapsed, operations / elapsed });
 		}

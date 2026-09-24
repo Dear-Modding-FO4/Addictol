@@ -12,7 +12,9 @@ namespace Addictol::AllocatorPoolTelemetry
 			MetricDescriptor{ "allocator.pages_busy", Unit::kCount },
 			MetricDescriptor{ "allocator.page_capacity", Unit::kCount },
 			MetricDescriptor{ "allocator.committed_bytes", Unit::kBytes },
-			MetricDescriptor{ "allocator.reserved_bytes", Unit::kBytes }
+			MetricDescriptor{ "allocator.reserved_bytes", Unit::kBytes },
+			MetricDescriptor{ "allocator.live_blocks", Unit::kCount },
+			MetricDescriptor{ "allocator.requested_bytes", Unit::kBytes }
 		};
 		return schema;
 	}
@@ -21,7 +23,7 @@ namespace Addictol::AllocatorPoolTelemetry
 	{
 		const std::array fields{
 			a_stats.poolCount, a_stats.pagesBusy, a_stats.pageCapacity,
-			a_stats.committedBytes, a_stats.reservedBytes
+			a_stats.committedBytes, a_stats.reservedBytes, a_stats.liveBlocks, a_stats.requestedBytes
 		};
 		if (a_out.size() != fields.size())
 			return;

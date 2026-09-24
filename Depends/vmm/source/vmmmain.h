@@ -8,10 +8,10 @@
 #include "vbase.h"
 #include "vmapper.h"
 #include "vmmblock.h"
+#include "vmmpool.h"
 #include "vsimplelock.h"
 #include <array>
 #include <stddef.h>
-#include <thread>
 
 namespace voltek
 {
@@ -68,6 +68,9 @@ namespace voltek
 			// Вернёт 0, что значит ошибка.
 			[[nodiscard]] size_t msize(const void* ptr) const noexcept;
 			[[nodiscard]] bool ready() const noexcept { return zero_size_request_block && pools; }
+			void pool_stats(scalable_pool_stats& out) const noexcept;
+			// Fills one entry per pool class, then one for large blocks; returns the count written.
+			size_t class_stats(scalable_class_stats* out, size_t capacity) const noexcept;
 			// Вывод дампа битовой карты указанного пула
 			void dump_map(size_t pool_id, const char* filename) const noexcept;
 			// Вывод дампа памяти указанного пула
@@ -81,7 +84,7 @@ namespace voltek
 			// Принадлежит ли указатель менеджеру: заголовок внутри зарезервированного диапазона и прошёл проверку.
 			[[nodiscard]] static bool owns(const void* ptr) noexcept;
 			[[nodiscard]] block_base* large_alloc(size_t size) noexcept;
-			void large_free(block_base* block) noexcept;
+			void large_free(block_base* block, size_t size) noexcept;
 		private:
 			// Блок памяти, если запрашивают 0 размер.
 			block_base* zero_size_request_block{ nullptr };
@@ -90,14 +93,8 @@ namespace voltek
 			std::array<core::mapper, large_class_count> large_sources;
 			// Массив пулов.
 			void** pools{ nullptr };
-			friend void ::voltek::scalable_get_pool_stats(::voltek::scalable_pool_stats* out);
-			// Блокировщик для работы с множеством потоков.
-			//voltek::core::_internal::simple_lock lock;
-			// События для потока кеширования, чтобы можно выйти
-			void* event_close{ nullptr };
-			void* event_close_w{ nullptr };
-			// Поток для кеширования
-			std::thread* thread{ nullptr };
+			// Large blocks share one counter set; only the counters pools also keep are used.
+			pool_counters large_counters{};
 		};
 
 		// Глобальный менеджер памяти, который требует инициализации.
