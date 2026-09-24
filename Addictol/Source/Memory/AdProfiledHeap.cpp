@@ -45,6 +45,7 @@ namespace Addictol
 		configuration.sourceId = "allocator";
 		configuration.sourceName = "Allocator operations";
 		configuration.descriptors = kHeapProfileDescriptors;
+		configuration.durationBuckets = kHeapProfileDurationBuckets;
 		configuration.metadataLabels = labels;
 		configuration.recordCapacity = kHeapProfileRecordCapacity;
 		return s_heapProfile.Register(a_hub, configuration);
