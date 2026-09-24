@@ -3,6 +3,7 @@
 #include <Memory/AdProfiledHeap.h>
 #include <Core/AdAssert.h>
 #include <Memory/AdAllocator.h>
+#include <Core/AdDetourBatch.h>
 #include <Core/AdUtils.h>
 #include <string.h>
 #include <stdio.h>
@@ -17,6 +18,7 @@
 #define AD_NO_EMPTYPOINTERS 1
 
 #undef MEM_RELEASE
+#undef ERROR
 
 #include <RE/M/MemoryManager.h>
 #include <RE/B/BSThreadEvent.h>
@@ -399,8 +401,210 @@ namespace Addictol
 		}
 	};
 
-	ModuleMemoryManager::ModuleMemoryManager() :
-		Module("Memory Manager", &bPatchesMemoryManager)
+	// Times the game's own allocators without replacing them; Havok's private pool stays unobserved.
+	class StockHeapObserver
+	{
+		enum Target : size_t { kAllocate, kDeallocate, kReallocate, kSize, kScrapAllocate, kScrapDeallocate, kCount };
+
+		using Prologue = std::array<uint8_t, 16>;
+		struct Entry
+		{
+			REL::VariantID id;
+			Prologue og;
+			Prologue ngae;
+			void* replacement;
+		};
+
+		inline static std::array<RELEX::DetourTarget, kCount> s_targets{};
+
+		struct Crt
+		{
+			const char* name;
+			uintptr_t replacement;
+			uintptr_t* original;
+		};
+		inline static uintptr_t s_malloc{}, s_calloc{}, s_realloc{}, s_alignedMalloc{}, s_free{}, s_alignedFree{}, s_msize{};
+
+		template<Target T, class R, class... Args>
+		[[nodiscard]] static R Original(Args... a_args) noexcept
+		{
+			return reinterpret_cast<R (*)(Args...)>(s_targets[T].original)(a_args...);
+		}
+
+		template<class R, class... Args>
+		[[nodiscard]] static R Call(uintptr_t a_function, Args... a_args) noexcept
+		{
+			return reinterpret_cast<R (*)(Args...)>(a_function)(a_args...);
+		}
+
+		static void* Allocate(void* a_self, size_t a_size, uint32_t a_align, bool a_aligned) noexcept
+		{
+			const auto call = [&] { return Original<kAllocate, void*>(a_self, a_size, a_align, a_aligned); };
+			return a_aligned ?
+				ProfileHeapAllocation<HeapProfileSite::MemoryManager, HeapProfileOperation::AlignedAllocate>(nullptr, a_size, call) :
+				ProfileHeapAllocation<HeapProfileSite::MemoryManager, HeapProfileOperation::Allocate>(nullptr, a_size, call);
+		}
+
+		static void* Reallocate(void* a_self, void* a_block, size_t a_size, uint32_t a_align, bool a_aligned) noexcept
+		{
+			const auto call = [&] { return Original<kReallocate, void*>(a_self, a_block, a_size, a_align, a_aligned); };
+			return a_aligned ?
+				ProfileHeapAllocation<HeapProfileSite::MemoryManager, HeapProfileOperation::AlignedReallocate>(a_block, a_size, call) :
+				ProfileHeapAllocation<HeapProfileSite::MemoryManager, HeapProfileOperation::Reallocate>(a_block, a_size, call);
+		}
+
+		static void Deallocate(void* a_self, void* a_block, bool a_aligned) noexcept
+		{
+			const auto call = [&] { Original<kDeallocate, void>(a_self, a_block, a_aligned); };
+			if (a_aligned)
+				ProfileHeapCall<HeapProfileSite::MemoryManager, HeapProfileOperation::AlignedFree>(call);
+			else
+				ProfileHeapCall<HeapProfileSite::MemoryManager, HeapProfileOperation::Free>(call);
+		}
+
+		static size_t Size(void* a_self, void* a_block) noexcept
+		{
+			return ProfileHeapCall<HeapProfileSite::MemoryManager, HeapProfileOperation::Size>([&] {
+				return Original<kSize, size_t>(a_self, a_block);
+			});
+		}
+
+		static void* ScrapAllocate(void* a_self, size_t a_size, size_t a_align) noexcept
+		{
+			return ProfileHeapAllocation<HeapProfileSite::Scrap, HeapProfileOperation::AlignedAllocate>(nullptr, a_size, [&] {
+				return Original<kScrapAllocate, void*>(a_self, a_size, a_align);
+			});
+		}
+
+		static void ScrapDeallocate(void* a_self, void* a_block) noexcept
+		{
+			ProfileHeapCall<HeapProfileSite::Scrap, HeapProfileOperation::AlignedFree>([&] {
+				Original<kScrapDeallocate, void>(a_self, a_block);
+			});
+		}
+
+		static void* CrtMalloc(size_t a_size) noexcept
+		{
+			return ProfileHeapAllocation<HeapProfileSite::CRT, HeapProfileOperation::Allocate>(nullptr, a_size, [&] {
+				return Call<void*>(s_malloc, a_size);
+			});
+		}
+
+		static void* CrtCalloc(size_t a_count, size_t a_size) noexcept
+		{
+			const auto total = a_count && a_size > SIZE_MAX / a_count ? SIZE_MAX : a_count * a_size;
+			return ProfileHeapAllocation<HeapProfileSite::CRT, HeapProfileOperation::Allocate>(nullptr, total, [&] {
+				return Call<void*>(s_calloc, a_count, a_size);
+			});
+		}
+
+		static void* CrtRealloc(void* a_block, size_t a_size) noexcept
+		{
+			return ProfileHeapAllocation<HeapProfileSite::CRT, HeapProfileOperation::Reallocate>(a_block, a_size, [&] {
+				return Call<void*>(s_realloc, a_block, a_size);
+			});
+		}
+
+		static void* CrtAlignedMalloc(size_t a_size, size_t a_alignment) noexcept
+		{
+			return ProfileHeapAllocation<HeapProfileSite::CRT, HeapProfileOperation::AlignedAllocate>(nullptr, a_size, [&] {
+				return Call<void*>(s_alignedMalloc, a_size, a_alignment);
+			});
+		}
+
+		static void CrtFree(void* a_block) noexcept
+		{
+			ProfileHeapCall<HeapProfileSite::CRT, HeapProfileOperation::Free>([&] { Call<void>(s_free, a_block); });
+		}
+
+		static void CrtAlignedFree(void* a_block) noexcept
+		{
+			ProfileHeapCall<HeapProfileSite::CRT, HeapProfileOperation::AlignedFree>([&] { Call<void>(s_alignedFree, a_block); });
+		}
+
+		static size_t CrtMsize(void* a_block) noexcept
+		{
+			return ProfileHeapCall<HeapProfileSite::CRT, HeapProfileOperation::Size>([&] { return Call<size_t>(s_msize, a_block); });
+		}
+
+	public:
+		[[nodiscard]] static bool Install(uintptr_t a_base) noexcept
+		{
+			// Retail prologues; NG and AE are byte-identical here.
+			static const std::array<Entry, kCount> entries{
+				Entry{ RE::ID::MemoryManager::Allocate,
+					{ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C, 0x24, 0x18, 0x48, 0x89, 0x74, 0x24, 0x20, 0x57 },
+					{ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x6C, 0x24, 0x18, 0x48, 0x89, 0x74, 0x24, 0x20, 0x57 },
+					reinterpret_cast<void*>(&Allocate) },
+				Entry{ RE::ID::MemoryManager::Deallocate,
+					{ 0x48, 0x85, 0xD2, 0x0F, 0x84, 0x0A, 0x01, 0x00, 0x00, 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89 },
+					{ 0x48, 0x85, 0xD2, 0x0F, 0x84, 0x0A, 0x01, 0x00, 0x00, 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89 },
+					reinterpret_cast<void*>(&Deallocate) },
+				Entry{ RE::ID::MemoryManager::Reallocate,
+					{ 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x41 },
+					{ 0x40, 0x53, 0x55, 0x57, 0x41, 0x54, 0x48, 0x83, 0xEC, 0x28, 0x33, 0xED, 0x41, 0x8B, 0xC1, 0x4D },
+					reinterpret_cast<void*>(&Reallocate) },
+				Entry{ RE::ID::MemoryManager::Size,
+					{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xF9, 0x48, 0x8B, 0x89 },
+					{ 0x40, 0x53, 0x56, 0x48, 0x83, 0xEC, 0x28, 0x48, 0x8B, 0xD9, 0x48, 0x8B, 0xF2, 0x48, 0x8B, 0x89 },
+					reinterpret_cast<void*>(&Size) },
+				Entry{ RE::ID::ScrapHeap::Allocate,
+					{ 0x4C, 0x89, 0x44, 0x24, 0x18, 0x48, 0x89, 0x54, 0x24, 0x10, 0x48, 0x89, 0x4C, 0x24, 0x08, 0x53 },
+					{ 0x4C, 0x89, 0x44, 0x24, 0x18, 0x48, 0x89, 0x54, 0x24, 0x10, 0x53, 0x55, 0x56, 0x57, 0x41, 0x54 },
+					reinterpret_cast<void*>(&ScrapAllocate) },
+				Entry{ RE::ID::ScrapHeap::Deallocate,
+					{ 0x48, 0x85, 0xD2, 0x0F, 0x84, 0x39, 0x01, 0x00, 0x00, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B },
+					{ 0x48, 0x85, 0xD2, 0x0F, 0x84, 0x34, 0x01, 0x00, 0x00, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B },
+					reinterpret_cast<void*>(&ScrapDeallocate) }
+			};
+
+			const auto og = RELEX::IsRuntimeOG();
+			for (size_t index = 0; index < kCount; ++index)
+			{
+				const auto& entry = entries[index];
+				const auto& prologue = og ? entry.og : entry.ngae;
+				s_targets[index] = { reinterpret_cast<void*>(entry.id.address()), entry.replacement, prologue };
+			}
+
+			// Resolve CRT originals before the IAT is live so a concurrent call never sees a null target.
+			const auto crt = REX::W32::GetModuleHandleA("API-MS-WIN-CRT-HEAP-L1-1-0.DLL");
+			const std::array imports{
+				Crt{ "malloc", reinterpret_cast<uintptr_t>(&CrtMalloc), &s_malloc },
+				Crt{ "calloc", reinterpret_cast<uintptr_t>(&CrtCalloc), &s_calloc },
+				Crt{ "realloc", reinterpret_cast<uintptr_t>(&CrtRealloc), &s_realloc },
+				Crt{ "_aligned_malloc", reinterpret_cast<uintptr_t>(&CrtAlignedMalloc), &s_alignedMalloc },
+				Crt{ "free", reinterpret_cast<uintptr_t>(&CrtFree), &s_free },
+				Crt{ "_aligned_free", reinterpret_cast<uintptr_t>(&CrtAlignedFree), &s_alignedFree },
+				Crt{ "_msize", reinterpret_cast<uintptr_t>(&CrtMsize), &s_msize }
+			};
+			for (const auto& import : imports)
+			{
+				*import.original = crt ? reinterpret_cast<uintptr_t>(REX::W32::GetProcAddress(crt, import.name)) : 0;
+				if (!*import.original)
+				{
+					REX::ERROR("Stock allocator profiling: {} is not exported; engine allocators left unobserved."sv, import.name);
+					return false;
+				}
+			}
+
+			const auto result = RELEX::DetourBatch(s_targets);
+			if (!result)
+			{
+				REX::ERROR("Stock allocator profiling: Detours error {} at target {}; engine allocators left unobserved."sv,
+					result.error, result.target);
+				return false;
+			}
+			for (const auto& import : imports)
+			{
+				if (const auto previous = RELEX::DetourIAT(a_base, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", import.name, import.replacement))
+					*import.original = previous;
+			}
+			REX::INFO("Stock allocator profiling: observing the memory manager, scrap heap, and CRT heap imports."sv);
+			return true;
+		}
+	};
+
+	ModuleMemoryManager::ModuleMemoryManager() :		Module("Memory Manager", &bPatchesMemoryManager)
 	{}
 
 	bool ModuleMemoryManager::DoQuery() const noexcept
@@ -410,17 +614,47 @@ namespace Addictol
 
 	bool ModuleMemoryManager::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		AutoScrapHeap::Install();
-
-		/////////////////////////////////////////////////////////////////////
-		// Replacement of all functions of the standard allocator
-		/////////////////////////////////////////////////////////////////////
-
 		auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
 
 		REX::INFO("Memory allocator backend: {}"sv, HeapKindName(GetSelectedHeapKind()));
 
-		VisitSelectedHeap([base]<typename Heap>() {
+		if (GetSelectedHeapKind() == HeapKind::Stock)
+		{
+			if (PrepareHeapOperationProfile())
+				(void)StockHeapObserver::Install(base);
+		}
+		else
+		{
+			InstallReplacementHeap(base);
+			m_active.store(true, std::memory_order_relaxed);
+		}
+
+		/////////////////////////////////////////////////////////////////////
+		// Replacing memory manipulation functions with newer and more productive ones
+		/////////////////////////////////////////////////////////////////////
+
+		if (bAdditionalUseNewRedistributable.GetValue())
+		{
+			RELEX::DetourIAT(base, "msvcr110.dll", "memcmp", (uintptr_t)&memcmp);
+			RELEX::DetourIAT(base, "msvcr110.dll", "memmove", (uintptr_t)&memmove);
+			RELEX::DetourIAT(base, "msvcr110.dll", "memcpy", (uintptr_t)&memcpy);
+			RELEX::DetourIAT(base, "msvcr110.dll", "memset", (uintptr_t)&memset);
+
+			if (RELEX::IsRuntimeOG())
+			{
+				RELEX::DetourIAT(base, "msvcr110.dll", "memmove_s", (uintptr_t)&memmove_s);
+				RELEX::DetourIAT(base, "msvcr110.dll", "memcpy_s", (uintptr_t)&memcpy_s);
+			}
+		}
+
+		return true;
+	}
+
+	void ModuleMemoryManager::InstallReplacementHeap(uintptr_t a_base) noexcept
+	{
+		AutoScrapHeap::Install();
+
+		VisitSelectedHeap([base = a_base]<typename Heap>() {
 			(void)InstallSelectedProfiledHeap<Heap, HeapProfileSite::MemoryManager>([]<class Selected>() {
 				MemoryManager<Selected>::Install();
 				return true;
@@ -444,28 +678,8 @@ namespace Addictol
 				return true;
 			});
 		});
-
-		/////////////////////////////////////////////////////////////////////
-		// Replacing memory manipulation functions with newer and more productive ones
-		/////////////////////////////////////////////////////////////////////
-
-		if (bAdditionalUseNewRedistributable.GetValue())
-		{
-			RELEX::DetourIAT(base, "msvcr110.dll", "memcmp", (uintptr_t)&memcmp);
-			RELEX::DetourIAT(base, "msvcr110.dll", "memmove", (uintptr_t)&memmove);
-			RELEX::DetourIAT(base, "msvcr110.dll", "memcpy", (uintptr_t)&memcpy);
-			RELEX::DetourIAT(base, "msvcr110.dll", "memset", (uintptr_t)&memset);
-
-			if (RELEX::IsRuntimeOG())
-			{
-				RELEX::DetourIAT(base, "msvcr110.dll", "memmove_s", (uintptr_t)&memmove_s);
-				RELEX::DetourIAT(base, "msvcr110.dll", "memcpy_s", (uintptr_t)&memcpy_s);
-			}
-		}
-
-		m_active.store(true, std::memory_order_relaxed);
-		return true;
 	}
+
 
 	std::span<const MetricDescriptor> ModuleMemoryManager::Schema() const noexcept
 	{

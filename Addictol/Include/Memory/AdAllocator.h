@@ -20,7 +20,7 @@ namespace Addictol
 	struct HeapBackendList
 	{};
 
-	// Selection order; the first entry is the default.
+	// Selection order after stock; the first entry is the default.
 	using HeapBackends = HeapBackendList<Heaps::Voltek, Heaps::Mimalloc, Heaps::Rpmalloc>;
 
 	struct HeapName
@@ -30,7 +30,8 @@ namespace Addictol
 	};
 
 	inline constexpr auto HEAP_NAMES = []<class... Backends>(HeapBackendList<Backends...>) {
-		return std::array{ HeapName{ Backends::kName, Backends::kKind }... };
+		// Stock keeps the game's own allocators, so it has no backend.
+		return std::array{ HeapName{ "stock", HeapKind::Stock }, HeapName{ Backends::kName, Backends::kKind }... };
 	}(HeapBackends{});
 
 	[[nodiscard]] inline constexpr std::string_view HeapKindName(HeapKind a_kind) noexcept
@@ -174,6 +175,7 @@ namespace Addictol
 		}
 	}
 
+	// Stock has no heap to visit; callers handle it first.
 	template<class F>
 	decltype(auto) VisitHeap(HeapKind a_kind, F&& a_fn)
 	{

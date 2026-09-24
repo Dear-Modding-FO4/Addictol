@@ -22,6 +22,7 @@ namespace Addictol
 
 	private:
 		void Drain(std::span<MetricValue> a_out) noexcept override;
+		static void InstallReplacementHeap(uintptr_t a_base) noexcept;
 
 		std::atomic<bool> m_active{ false };
 	};

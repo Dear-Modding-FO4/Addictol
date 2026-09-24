@@ -143,6 +143,13 @@ namespace
 		size_t msize(void* a_input) { Record(6, a_input, 0, 0); return 123; }
 	};
 
+	// Mirrors a stock engine allocator that allocates through another observed allocator.
+	struct NestingHeap
+	{
+		static NestingHeap* GetSingleton() { static NestingHeap heap; return &heap; }
+		void* malloc(size_t a_size) { return ProfiledHeap<ForwardingHeap, HeapProfileSite::SmallBlock>::GetSingleton()->malloc(a_size); }
+	};
+
 	uint64_t ReadProfileClock() noexcept
 	{
 		s_clockReads.fetch_add(1, std::memory_order_relaxed);
@@ -278,6 +285,14 @@ namespace vmm_tests
 				call(2, block, 1000, 0, [&] { require(!heap->realloc(block, 1000), "failed realloc was replaced"); });
 				call(1, nullptr, 81, 64, [&] { require(!heap->aligned_malloc(81, 64), "failed allocation was replaced"); });
 			}
+			const auto outer = HeapProfileDescriptor(HeapProfileSite::MemoryManager, HeapProfileOperation::Allocate, 17);
+			const auto inner = HeapProfileDescriptor(HeapProfileSite::SmallBlock, HeapProfileOperation::Allocate, 17);
+			const auto outerBefore = source->AllOperationCount(outer);
+			const auto innerBefore = source->AllOperationCount(inner);
+			ForwardingHeap::next = block;
+			require(ProfiledHeap<NestingHeap, HeapProfileSite::MemoryManager>::GetSingleton()->malloc(17) == block, "nested heap pointer changed");
+			require(source->AllOperationCount(outer) == outerBefore + 1 && source->AllOperationCount(inner) == innerBefore,
+				"nested heap call was recorded separately from the outer call");
 			const auto allBefore = source->AllOperationCount(HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Allocate, 17));
 			{
 				ScopedOperationProfileSuppression suppression;

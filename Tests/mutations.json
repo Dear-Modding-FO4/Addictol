@@ -24,6 +24,14 @@
     "message": "public log level name changed"
   },
   {
+    "name": "nested heap calls fold into the outer call",
+    "target": "Addictol/Include/Memory/AdProfiledHeap.h",
+    "find": "bool outermost{ !t_inProfiledCall };",
+    "replace": "bool outermost{ true };",
+    "check": "profiled heap preserves forwarding and classifies realloc without size probes",
+    "message": "nested heap call was recorded separately from the outer call"
+  },
+  {
     "name": "allocator metrics keep schema order",
     "target": "Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h",
     "find": "a_stats.poolCount, a_stats.pagesBusy, a_stats.pageCapacity,",

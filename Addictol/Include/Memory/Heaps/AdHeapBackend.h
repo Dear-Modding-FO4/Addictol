@@ -10,6 +10,7 @@ namespace Addictol
 {
 	enum class HeapKind
 	{
+		Stock,
 		Voltek,
 		Mimalloc,
 		Rpmalloc

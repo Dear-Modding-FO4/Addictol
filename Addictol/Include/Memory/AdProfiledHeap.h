@@ -132,6 +132,65 @@ namespace Addictol
 		TelemetryHub& a_hub, std::string_view a_selectedHeap, std::string_view a_smallBlockHeap,
 		std::string_view a_scaleformHeap) noexcept;
 
+	namespace HeapProfileDetail
+	{
+		inline thread_local bool t_inProfiledCall{ false };
+
+		// Stock engine allocators call each other; nested calls fold into the outermost one's time.
+		struct OutermostCall
+		{
+			bool outermost{ !t_inProfiledCall };
+			OutermostCall() noexcept { t_inProfiledCall = true; }
+			~OutermostCall() noexcept { t_inProfiledCall = !outermost; }
+		};
+	}
+
+	template<HeapProfileSite Site, HeapProfileOperation Operation, class F>
+	[[nodiscard]] void* ProfileHeapAllocation(void* a_block, size_t a_size, F&& a_call) noexcept
+	{
+		HeapProfileDetail::OutermostCall call;
+		if (!call.outermost)
+			return a_call();
+		OperationProfileConsumer<true> profile{ HeapOperationProfile() };
+		const auto descriptor = HeapProfileDescriptor(Site, Operation, a_size, HeapProfileResult::Requested, CurrentHeapProfileThread());
+		auto token = profile.Begin(descriptor);
+		auto* result = a_call();
+		if (token)
+		{
+			auto classification = HeapProfileResult::Succeeded;
+			if (!result && a_size)
+				classification = HeapProfileResult::Failed;
+			else if constexpr (Operation == HeapProfileOperation::Reallocate || Operation == HeapProfileOperation::AlignedReallocate)
+			{
+				if (result)
+					classification = result == a_block ? HeapProfileResult::InPlace : HeapProfileResult::Moved;
+			}
+			profile.End(std::move(token), a_size, descriptor + static_cast<uint32_t>(classification));
+		}
+		return result;
+	}
+
+	template<HeapProfileSite Site, HeapProfileOperation Operation, class F>
+	decltype(auto) ProfileHeapCall(F&& a_call) noexcept
+	{
+		HeapProfileDetail::OutermostCall call;
+		if (!call.outermost)
+			return a_call();
+		OperationProfileConsumer<true> profile{ HeapOperationProfile() };
+		auto token = profile.Begin(HeapProfileDescriptor(Site, Operation, 0, HeapProfileResult::Requested, CurrentHeapProfileThread()));
+		if constexpr (std::is_void_v<decltype(a_call())>)
+		{
+			a_call();
+			profile.End(std::move(token));
+		}
+		else
+		{
+			auto result = a_call();
+			profile.End(std::move(token));
+			return result;
+		}
+	}
+
 	template<class Heap, HeapProfileSite Site>
 	class ProfiledHeap
 	{
@@ -144,75 +203,33 @@ namespace Addictol
 
 		[[nodiscard]] void* malloc(size_t a_size) const noexcept
 		{
-			return Allocate<HeapProfileOperation::Allocate>(nullptr, a_size, [&] { return Heap::GetSingleton()->malloc(a_size); });
+			return ProfileHeapAllocation<Site, HeapProfileOperation::Allocate>(nullptr, a_size, [&] { return Heap::GetSingleton()->malloc(a_size); });
 		}
 		[[nodiscard]] void* aligned_malloc(size_t a_size, size_t a_alignment) const noexcept
 		{
-			return Allocate<HeapProfileOperation::AlignedAllocate>(nullptr, a_size, [&] { return Heap::GetSingleton()->aligned_malloc(a_size, a_alignment); });
+			return ProfileHeapAllocation<Site, HeapProfileOperation::AlignedAllocate>(nullptr, a_size, [&] { return Heap::GetSingleton()->aligned_malloc(a_size, a_alignment); });
 		}
 		[[nodiscard]] void* realloc(void* a_block, size_t a_size) const noexcept
 		{
-			return Allocate<HeapProfileOperation::Reallocate>(a_block, a_size, [&] { return Heap::GetSingleton()->realloc(a_block, a_size); });
+			return ProfileHeapAllocation<Site, HeapProfileOperation::Reallocate>(a_block, a_size, [&] { return Heap::GetSingleton()->realloc(a_block, a_size); });
 		}
 		[[nodiscard]] void* aligned_realloc(void* a_block, size_t a_size, size_t a_alignment) const noexcept
 		{
-			return Allocate<HeapProfileOperation::AlignedReallocate>(a_block, a_size, [&] { return Heap::GetSingleton()->aligned_realloc(a_block, a_size, a_alignment); });
+			return ProfileHeapAllocation<Site, HeapProfileOperation::AlignedReallocate>(a_block, a_size, [&] { return Heap::GetSingleton()->aligned_realloc(a_block, a_size, a_alignment); });
 		}
 		void free(void* a_block) const noexcept
 		{
-			Observe<HeapProfileOperation::Free>([&] { Heap::GetSingleton()->free(a_block); });
+			ProfileHeapCall<Site, HeapProfileOperation::Free>([&] { Heap::GetSingleton()->free(a_block); });
 		}
 		void aligned_free(void* a_block) const noexcept
 		{
-			Observe<HeapProfileOperation::AlignedFree>([&] { Heap::GetSingleton()->aligned_free(a_block); });
+			ProfileHeapCall<Site, HeapProfileOperation::AlignedFree>([&] { Heap::GetSingleton()->aligned_free(a_block); });
 		}
 		[[nodiscard]] size_t msize(void* a_block) const noexcept
 		{
-			return Observe<HeapProfileOperation::Size>([&] { return Heap::GetSingleton()->msize(a_block); });
-		}
-
-	private:
-		template<HeapProfileOperation Operation, class F>
-		[[nodiscard]] static void* Allocate(void* a_block, size_t a_size, F&& a_call) noexcept
-		{
-			OperationProfileConsumer<true> profile{ HeapOperationProfile() };
-			const auto descriptor = HeapProfileDescriptor(Site, Operation, a_size, HeapProfileResult::Requested, CurrentHeapProfileThread());
-			auto token = profile.Begin(descriptor);
-			auto* result = a_call();
-			if (token)
-			{
-				auto classification = HeapProfileResult::Succeeded;
-				if (!result && a_size)
-					classification = HeapProfileResult::Failed;
-				else if constexpr (Operation == HeapProfileOperation::Reallocate || Operation == HeapProfileOperation::AlignedReallocate)
-				{
-					if (result)
-						classification = result == a_block ? HeapProfileResult::InPlace : HeapProfileResult::Moved;
-				}
-				profile.End(std::move(token), a_size, descriptor + static_cast<uint32_t>(classification));
-			}
-			return result;
-		}
-
-		template<HeapProfileOperation Operation, class F>
-		static decltype(auto) Observe(F&& a_call) noexcept
-		{
-			OperationProfileConsumer<true> profile{ HeapOperationProfile() };
-			auto token = profile.Begin(HeapProfileDescriptor(Site, Operation, 0, HeapProfileResult::Requested, CurrentHeapProfileThread()));
-			if constexpr (std::is_void_v<decltype(a_call())>)
-			{
-				a_call();
-				profile.End(std::move(token));
-			}
-			else
-			{
-				auto result = a_call();
-				profile.End(std::move(token));
-				return result;
-			}
+			return ProfileHeapCall<Site, HeapProfileOperation::Size>([&] { return Heap::GetSingleton()->msize(a_block); });
 		}
 	};
-
 	template<bool Enabled, class Heap, HeapProfileSite Site>
 	using SelectedProfiledHeap = std::conditional_t<Enabled, ProfiledHeap<Heap, Site>, Heap>;
 

@@ -123,6 +123,11 @@ namespace Addictol
 		};
 		if (bPatchesSmallBlockAllocatorUseSelectedHeap.GetValue())
 		{
+			if (GetSelectedHeapKind() == HeapKind::Stock)
+			{
+				REX::INFO("Smallblock Allocator: the selected heap is stock; leaving the game's pools in place."sv);
+				return true;
+			}
 			(void)VisitSelectedHeap(install);
 			REX::INFO("Smallblock Allocator: routed to the selected heap instead of Visper."sv);
 			return true;

@@ -111,6 +111,7 @@ loaded, were disabled, or skipped; check it first when something is not working.
 `[Telemetry] bOperationProfiling = true` records sampled allocator and decompression timings on the
 next launch, independently of `bEnabled`. Each run writes a capture to
 `Data\F4SE\Plugins\Addictol\Captures\<capture-id>\`. Profiling adds overhead; leave it off for normal play.
+With `[Additional] sAllocator = "stock"`, it times the game's own allocators instead of a replacement.
 
 ---
 
