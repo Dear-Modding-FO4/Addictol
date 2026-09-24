@@ -9,8 +9,6 @@
 #	include <windows.h>
 #endif
 
-#include <intrin.h>
-
 namespace voltek
 {
 	namespace core
@@ -44,11 +42,12 @@ namespace voltek
 			_slot_size = slot_size;
 			_slot_count = slot_count;
 			_retention = retention;
-			_used.assign((slot_count + 63) / 64, 0);
+			_available.resize((slot_count + 2047) & ~size_t{ 2047 });
+			_available.all_unset();
+			// Padding stays unavailable so SIMD scans cannot hand out a nonexistent slot.
+			for (size_t index = 0; index < slot_count; ++index)
+				_available.set(index);
 			_committed_pages.assign(slot_count, 0);
-			// Bits past the last slot read as used so the scan never hands them out.
-			if (const auto tail = slot_count % 64)
-				_used.back() = ~0ull << tail;
 		}
 
 		void* mapper::allocate(size_t commit_size) noexcept
@@ -61,17 +60,8 @@ namespace voltek
 			const bool retained = _retained_count != 0;
 			if (retained)
 				index = _retained_indices[_retained_count - 1];
-			else
-			{
-				size_t word = _hint;
-				while (word < _used.size() && _used[word] == ~0ull)
-					++word;
-				if (word == _used.size())
-					return nullptr;
-				unsigned long bit = 0;
-				_BitScanForward64(&bit, ~_used[word]);
-				index = word * 64 + bit;
-			}
+			else if (!_available.find_first_set_bit(index))
+				return nullptr;
 
 			auto* slot = _base + index * _slot_size;
 			const auto pages = (commit_size + region::commit_granularity - 1) / region::commit_granularity;
@@ -97,10 +87,7 @@ namespace voltek
 				_retention->release(previous_pages * region::commit_granularity);
 			}
 			else
-			{
-				_used[index / 64] |= 1ull << (index % 64);
-				_hint = index / 64;
-			}
+				_available.unset(index);
 			++_used_count;
 			return slot;
 		}
@@ -121,10 +108,8 @@ namespace voltek
 			_committed.fetch_sub(bytes, std::memory_order_relaxed);
 			_committed_pages[index] = 0;
 
-			_used[index / 64] &= ~(1ull << (index % 64));
+			_available.set(index);
 			--_used_count;
-			if (index / 64 < _hint)
-				_hint = index / 64;
 		}
 	}
 }

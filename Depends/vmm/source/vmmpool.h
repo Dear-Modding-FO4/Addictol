@@ -168,6 +168,7 @@ namespace voltek
 					flag_block_pool_used | (counted ? flag_block_counted : 0));
 				if (!block)
 					return nullptr;
+				++_held_blocks;
 				if (counted)
 					_counters.allocated(requested);
 				return block;
@@ -183,18 +184,22 @@ namespace voltek
 						break;
 					blocks[filled++] = block;
 				}
+				_held_blocks += filled;
 				return filled;
 			}
 
 			void flush(block_base* const* blocks, size_t count, bool measured) noexcept
 			{
 				voltek::core::_internal::measured_scope_lock scope_lock(lock, measured ? &_counters.lock : nullptr);
+				size_t released_count = 0;
 				for (size_t index = 0; index < count; ++index)
 				{
 					const auto* block = blocks[index];
 					const bool released = release_block_locked(_pages[block->page_id], block->block_id, true);
 					_vassert(released);
+					released_count += released;
 				}
+				_held_blocks -= released_count;
 			}
 
 			void cache_allocated(size_t requested) noexcept { _counters.allocated(requested); }
@@ -205,6 +210,7 @@ namespace voltek
 				voltek::core::_internal::measured_scope_lock scope_lock(lock, counted ? &_counters.lock : nullptr);
 				if (!release_block_locked(_pages[page_id], index_block))
 					return false;
+				--_held_blocks;
 				if (counted)
 					_counters.released(requested);
 				return true;
@@ -215,6 +221,11 @@ namespace voltek
 				_counters.resized_bytes.fetch_add(static_cast<int64_t>(new_size) - static_cast<int64_t>(old_size), std::memory_order_relaxed);
 			}
 			[[nodiscard]] const pool_counters& counters() const noexcept { return _counters; }
+			[[nodiscard]] uint64_t held_blocks() noexcept
+			{
+				voltek::core::_internal::simple_scope_lock scope_lock(lock);
+				return _held_blocks;
+			}
 		private:
 			block_base* prepare_block_locked(size_t requested, uint8_t pool_id, uint8_t flags) noexcept
 			{
@@ -335,6 +346,7 @@ namespace voltek
 			voltek::core::mapper* _mapper{ nullptr };
 			const class_geometry _geometry;
 			pool_counters _counters{};
+			uint64_t _held_blocks{ 0 };
 			// Empty pages kept committed; bounded by the class's retention budget.
 			size_t _retained_pages{ 0 };
 			size_t _page_count{ 0 };

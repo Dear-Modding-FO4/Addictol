@@ -5,6 +5,33 @@
 
 namespace Addictol::AllocatorPoolTelemetry
 {
+	inline constexpr size_t kSeriesPerClass{ 6 };
+
+	inline size_t PopulateSeries(std::span<SeriesSample> a_out,
+		std::span<const HeapClassStatistics> a_current, std::span<HeapClassStatistics> a_previous) noexcept
+	{
+		size_t offset = 0;
+		for (size_t index = 0; index < a_current.size() && index < a_previous.size(); ++index)
+		{
+			const auto& now = a_current[index];
+			const auto& before = a_previous[index];
+			const auto append = [&](std::string_view a_series, uint64_t a_calls, uint64_t a_ticks, uint64_t a_bytes) {
+				if (a_calls || a_ticks || a_bytes)
+					(void)AppendSeriesSample(a_out, offset, { a_series, now.label, a_calls, a_ticks, a_bytes });
+			};
+			append("allocator.class.allocations", now.allocations - before.allocations, 0, now.allocatedBytes - before.allocatedBytes);
+			append("allocator.class.page_creates", now.pagesCreated - before.pagesCreated, 0, 0);
+			append("allocator.class.page_releases", now.pagesReleased - before.pagesReleased, 0, 0);
+			append("allocator.class.lock_waits", now.lockContended - before.lockContended, now.lockWaitTicks - before.lockWaitTicks, 0);
+			if (now.heldBlocks != before.heldBlocks || now.committedBytes != before.committedBytes)
+				(void)AppendSeriesSample(a_out, offset, { "allocator.class.committed", now.label, now.heldBlocks, 0, now.committedBytes, true });
+			if (now.liveBlocks != before.liveBlocks || now.requestedBytes != before.requestedBytes)
+				(void)AppendSeriesSample(a_out, offset, { "allocator.class.live", now.label, now.liveBlocks, 0, now.requestedBytes, true });
+			a_previous[index] = now;
+		}
+		return offset;
+	}
+
 	[[nodiscard]] inline std::span<const MetricDescriptor> Schema() noexcept
 	{
 		static constexpr std::array schema{

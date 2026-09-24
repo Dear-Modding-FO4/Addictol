@@ -144,24 +144,35 @@ namespace voltek
 				store(block, flag_block_pool_used | (counted ? flag_block_counted : 0));
 			}
 
-			static bool try_free(block_base* block, bool cached) noexcept
+			static bool try_free(block_base* block) noexcept
 			{
 				auto flags = load(block);
-				if (!(flags & flag_block_pool_used) || (flags & flag_block_free) ||
-					((flags & flag_block_cached) != 0) != cached)
+				if (!(flags & flag_block_pool_used) || (flags & flag_block_free) || (flags & flag_block_cached))
 					return false;
+				// An allocated block can still race a lock-free cache admission.
 				return std::atomic_ref<uint8_t>(block->flags).compare_exchange_strong(flags,
 					flag_block_pool_used | flag_block_free, std::memory_order_acq_rel, std::memory_order_acquire);
 			}
 
-			static bool try_pop(block_base* block, uint32_t requested, uint8_t target_flags) noexcept
+			static bool free_cached_under_lock(block_base* block) noexcept
+			{
+				const auto flags = load(block);
+				if (!(flags & flag_block_pool_used) || !(flags & flag_block_cached) || (flags & flag_block_free))
+					return false;
+				// Only the owning bin can return a cached block, under the pool lock.
+				store(block, flag_block_pool_used | flag_block_free);
+				return true;
+			}
+
+			static bool pop_under_lock(block_base* block, uint32_t requested, uint8_t target_flags) noexcept
 			{
 				auto flags = load(block);
 				if (!(flags & flag_block_free))
 					return false;
 				block->size = requested;
-				return std::atomic_ref<uint8_t>(block->flags).compare_exchange_strong(
-					flags, target_flags, std::memory_order_acq_rel, std::memory_order_acquire);
+				// Free blocks cannot be cached until the pool-lock holder publishes their final state.
+				store(block, target_flags);
+				return true;
 			}
 
 			static bool try_free_default(block_base* block) noexcept
