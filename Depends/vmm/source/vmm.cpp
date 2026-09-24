@@ -10,10 +10,11 @@
 
 namespace voltek
 {
-	VOLTEK_MM_API void scalable_memory_manager_initialize()
+	VOLTEK_MM_API bool scalable_memory_manager_initialize()
 	{
 		if (!memory_manager::global_memory_manager)
 			memory_manager::global_memory_manager = new memory_manager::memory_manager();
+		return memory_manager::global_memory_manager->ready();
 	}
 
 	VOLTEK_MM_API void scalable_memory_manager_shutdown()

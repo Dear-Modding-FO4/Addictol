@@ -40,8 +40,6 @@ namespace voltek
 	{
 		memory_manager* global_memory_manager = nullptr;
 
-		constexpr size_t MAX_BLOCK_SIZE = 1ull * 1024 * 1024 * 1024;
-
 		typedef page_t<block8_t> page8_t;
 		typedef page_t<block16_t> page16_t;
 		typedef page_t<block32_t> page32_t;
@@ -91,30 +89,6 @@ namespace voltek
 			(accumulate_pool_stats<Pools>(pools[index++], out), ...);
 		}
 
-		// Проверка на допустимость памяти
-		// Только Windows: Если произошло исключение, то вернёт false, иначе true.
-		static bool is_valid_pointer(const void* ptr)
-		{
-			if (!ptr) return false;
-
-#if (defined(_WIN32) || defined(_WIN64))	
-			__try
-			{
-				// Попытка что-то разыменовать и записать...
-				if (*((char*)(ptr)) != 0)
-					*(char*)(ptr) = *(char*)(ptr);
-
-				return true;
-			}
-			__except (1)
-			{
-				return false;
-			}
-#else
-			return true;
-#endif
-		}
-
 #if USE_MULTITHREADS
 		class std_event
 		{
@@ -155,15 +129,44 @@ namespace voltek
 
 		static size_t POOL_SIZE = 64 * 1024;
 
+		// Page bodies per pool class; a class that fills its slots falls back to large blocks.
+		inline constexpr size_t page_slots_per_pool = 2048;
+		// Address space per large class; a full class spills into the next larger one.
+		inline constexpr size_t large_class_budget = 16ull * 1024 * 1024 * 1024;
+		inline constexpr std::array<size_t, std::to_underlying(pool_type::MAX)> page_body_sizes{
+			page_geometry<block8_t>::body_bytes, page_geometry<block16_t>::body_bytes,
+			page_geometry<block32_t>::body_bytes, page_geometry<block64_t>::body_bytes,
+			page_geometry<block128_t>::body_bytes, page_geometry<block256_t>::body_bytes,
+			page_geometry<block512_t>::body_bytes, page_geometry<block1024_t>::body_bytes,
+			page_geometry<block4096_t>::body_bytes, page_geometry<block8192_t>::body_bytes,
+			page_geometry<block16384_t>::body_bytes, page_geometry<block32768_t>::body_bytes,
+			page_geometry<block65536_t>::body_bytes, page_geometry<block131072_t>::body_bytes
+		};
+
+		[[nodiscard]] constexpr size_t round_up(size_t value, size_t alignment) noexcept
+		{
+			return (value + alignment - 1) & ~(alignment - 1);
+		}
+
+		[[nodiscard]] constexpr size_t large_slot_size(size_t index) noexcept
+		{
+			return large_slot_minimum << index;
+		}
+
+		[[nodiscard]] constexpr size_t large_slot_count(size_t index) noexcept
+		{
+			return large_class_budget / large_slot_size(index) < 4 ? 4 : large_class_budget / large_slot_size(index);
+		}
+
 		// Two threads can create a lazy pool at once: publish exactly one, or a block gets released through the wrong pool.
 		template<typename _type>
-		static _type* acquire_pool(void** pools, pool_type id) noexcept
+		static _type* acquire_pool(void** pools, pool_type id, core::mapper* mapper) noexcept
 		{
 			std::atomic_ref<void*> slot(pools[std::to_underlying(id)]);
 			if (auto* existing = slot.load(std::memory_order_acquire))
 				return reinterpret_cast<_type*>(existing);
 
-			auto* created = new _type(POOL_SIZE);
+			auto* created = new _type(POOL_SIZE, mapper);
 			void* expected = nullptr;
 			if (slot.compare_exchange_strong(expected, reinterpret_cast<void*>(created),
 				std::memory_order_acq_rel, std::memory_order_acquire))
@@ -176,7 +179,32 @@ namespace voltek
 		memory_manager::memory_manager() : pools(nullptr), thread(nullptr)
 		{
 			core::initialize();
-			create_default_block(&zero_size_request_block, 0);
+
+			size_t reserve = core::region::granularity;
+			for (const auto body : page_body_sizes)
+				reserve += round_up(body, core::region::granularity) * page_slots_per_pool;
+			for (size_t index = 0; index < large_class_count; ++index)
+				reserve += large_slot_size(index) * large_slot_count(index);
+			auto* cursor = core::region::reserve(reserve);
+			if (!cursor || !core::region::commit(cursor, sizeof(block_base)))
+			{
+				_vassert(!cursor);
+				return;
+			}
+			// The zero-size block sits in the region too, so every pointer handed out passes the range check.
+			zero_size_request_block = create_default_block(reinterpret_cast<block_base*>(cursor), 0);
+			cursor += core::region::granularity;
+			for (size_t index = 0; index < page_sources.size(); ++index)
+			{
+				const auto slot = round_up(page_body_sizes[index], core::region::granularity);
+				page_sources[index].assign(cursor, slot, page_slots_per_pool);
+				cursor += slot * page_slots_per_pool;
+			}
+			for (size_t index = 0; index < large_sources.size(); ++index)
+			{
+				large_sources[index].assign(cursor, large_slot_size(index), large_slot_count(index));
+				cursor += large_slot_size(index) * large_slot_count(index);
+			}
 			
 #if USE_MULTITHREADS
 			event_close = new std_event();
@@ -193,10 +221,10 @@ namespace voltek
 			pools = voltek::core::_internal::aligned_talloc<void*>(std::to_underlying(pool_type::MAX), 0x10);
 			if (pools)
 			{
-				pools[std::to_underlying(pool_type::pool_8)] = reinterpret_cast<void*>(new pool8_t(POOL_SIZE));
-				pools[std::to_underlying(pool_type::pool_16)] = reinterpret_cast<void*>(new pool16_t(POOL_SIZE));
-				pools[std::to_underlying(pool_type::pool_32)] = reinterpret_cast<void*>(new pool32_t(POOL_SIZE));
-				pools[std::to_underlying(pool_type::pool_64)] = reinterpret_cast<void*>(new pool64_t(POOL_SIZE));
+				pools[std::to_underlying(pool_type::pool_8)] = reinterpret_cast<void*>(new pool8_t(POOL_SIZE, &page_sources[std::to_underlying(pool_type::pool_8)]));
+				pools[std::to_underlying(pool_type::pool_16)] = reinterpret_cast<void*>(new pool16_t(POOL_SIZE, &page_sources[std::to_underlying(pool_type::pool_16)]));
+				pools[std::to_underlying(pool_type::pool_32)] = reinterpret_cast<void*>(new pool32_t(POOL_SIZE, &page_sources[std::to_underlying(pool_type::pool_32)]));
+				pools[std::to_underlying(pool_type::pool_64)] = reinterpret_cast<void*>(new pool64_t(POOL_SIZE, &page_sources[std::to_underlying(pool_type::pool_64)]));
 			}
 
 #if USE_MULTITHREADS
@@ -277,13 +305,42 @@ namespace voltek
 #endif
 		}
 
-		void* memory_manager::alloc(size_t size) noexcept
+		bool memory_manager::owns(const void* ptr) noexcept
 		{
+			const auto* header = get_block_handle_from_ptr(ptr);
+			return core::region::contains(header) && is_valid_block(header);
+		}
+
+		block_base* memory_manager::large_alloc(size_t size) noexcept
+		{
+			for (size_t index = 0; index < large_sources.size(); ++index)
+			{
+				if (large_slot_size(index) < size)
+					continue;
+				if (auto* block = large_sources[index].allocate(size))
+					return static_cast<block_base*>(block);
+			}
+			return nullptr;
+		}
+
+		void memory_manager::large_free(block_base* block) noexcept
+		{
+			for (auto& source : large_sources)
+			{
+				if (source.contains(block))
+				{
+					source.release(block);
+					return;
+				}
+			}
+		}
+
+		void* memory_manager::alloc(size_t size) noexcept		{
 			//if (ULONG_MAX < size)
 			//	return nullptr;
 
 			if (!size)
-				return get_ptr_from_block_handle(&zero_size_request_block);
+				return zero_size_request_block ? get_ptr_from_block_handle(zero_size_request_block) : nullptr;
 
 			// Проблемы с пулами? или размер больше фиксируемых блоков?
 			// Тогда выделим память простым способом.
@@ -295,11 +352,8 @@ namespace voltek
 				if (size > SIZE_MAX - sizeof(block_base))
 					return nullptr;
 				
-				if (size >= MAX_BLOCK_SIZE)
-					new_block = (block_base*)voltek::core::_internal::page_alloc(size + sizeof(block_base));
-				else
-					new_block = (block_base*)voltek::core::_internal::aligned_malloc(size + sizeof(block_base), 0x10);
-	
+				new_block = large_alloc(size + sizeof(block_base));
+
 				if (new_block)
 				{
 					create_default_block(new_block, size);
@@ -314,7 +368,7 @@ namespace voltek
 	
 			if (size > 65536)
 			{
-				auto pool = acquire_pool<pool131072_t>(pools, pool_type::pool_131072);
+				auto pool = acquire_pool<pool131072_t>(pools, pool_type::pool_131072, &page_sources[std::to_underlying(pool_type::pool_131072)]);
 				page131072_t* page = nullptr;
 				block131072_t* block = nullptr;
 				size_t index_block = 0;
@@ -328,7 +382,7 @@ namespace voltek
 			}
 			else if (size > 32768)
 			{
-				auto pool = acquire_pool<pool65536_t>(pools, pool_type::pool_65536);
+				auto pool = acquire_pool<pool65536_t>(pools, pool_type::pool_65536, &page_sources[std::to_underlying(pool_type::pool_65536)]);
 				page65536_t* page = nullptr;
 				block65536_t* block = nullptr;
 				size_t index_block = 0;
@@ -342,7 +396,7 @@ namespace voltek
 			}
 			else if (size > 16384)
 			{
-				auto pool = acquire_pool<pool32768_t>(pools, pool_type::pool_32768);
+				auto pool = acquire_pool<pool32768_t>(pools, pool_type::pool_32768, &page_sources[std::to_underlying(pool_type::pool_32768)]);
 				page32768_t* page = nullptr;
 				block32768_t* block = nullptr;
 				size_t index_block = 0;
@@ -356,7 +410,7 @@ namespace voltek
 			}
 			else if (size > 8192)
 			{
-				auto pool = acquire_pool<pool16384_t>(pools, pool_type::pool_16384);
+				auto pool = acquire_pool<pool16384_t>(pools, pool_type::pool_16384, &page_sources[std::to_underlying(pool_type::pool_16384)]);
 				page16384_t* page = nullptr;
 				block16384_t* block = nullptr;
 				size_t index_block = 0;
@@ -370,7 +424,7 @@ namespace voltek
 			}
 			else if (size > 4096)
 			{
-				auto pool = acquire_pool<pool8192_t>(pools, pool_type::pool_8192);
+				auto pool = acquire_pool<pool8192_t>(pools, pool_type::pool_8192, &page_sources[std::to_underlying(pool_type::pool_8192)]);
 				page8192_t* page = nullptr;
 				block8192_t* block = nullptr;
 				size_t index_block = 0;
@@ -384,7 +438,7 @@ namespace voltek
 			}
 			else if (size > 1024)
 			{
-				auto pool = acquire_pool<pool4096_t>(pools, pool_type::pool_4096);
+				auto pool = acquire_pool<pool4096_t>(pools, pool_type::pool_4096, &page_sources[std::to_underlying(pool_type::pool_4096)]);
 				page4096_t* page = nullptr;
 				block4096_t* block = nullptr;
 				size_t index_block = 0;
@@ -398,7 +452,7 @@ namespace voltek
 			}
 			else if (size > 512)
 			{
-				auto pool = acquire_pool<pool1024_t>(pools, pool_type::pool_1024);
+				auto pool = acquire_pool<pool1024_t>(pools, pool_type::pool_1024, &page_sources[std::to_underlying(pool_type::pool_1024)]);
 				page1024_t* page = nullptr;
 				block1024_t* block = nullptr;
 				size_t index_block = 0;
@@ -412,7 +466,7 @@ namespace voltek
 			}
 			else if (size > 256)
 			{
-				auto pool = acquire_pool<pool512_t>(pools, pool_type::pool_512);
+				auto pool = acquire_pool<pool512_t>(pools, pool_type::pool_512, &page_sources[std::to_underlying(pool_type::pool_512)]);
 				page512_t* page = nullptr;
 				block512_t* block = nullptr;
 				size_t index_block = 0;
@@ -426,7 +480,7 @@ namespace voltek
 			}
 			else if (size > 128)
 			{
-				auto pool = acquire_pool<pool256_t>(pools, pool_type::pool_256);
+				auto pool = acquire_pool<pool256_t>(pools, pool_type::pool_256, &page_sources[std::to_underlying(pool_type::pool_256)]);
 				page256_t* page = nullptr;
 				block256_t* block = nullptr;
 				size_t index_block = 0;
@@ -440,7 +494,7 @@ namespace voltek
 			}
 			else if (size > 64)
 			{
-				auto pool = acquire_pool<pool128_t>(pools, pool_type::pool_128);
+				auto pool = acquire_pool<pool128_t>(pools, pool_type::pool_128, &page_sources[std::to_underlying(pool_type::pool_128)]);
 				page128_t* page = nullptr;
 				block128_t* block = nullptr;
 				size_t index_block = 0;
@@ -454,7 +508,7 @@ namespace voltek
 			}
 			else if (size > 32)
 			{
-				auto pool = acquire_pool<pool64_t>(pools, pool_type::pool_64);
+				auto pool = acquire_pool<pool64_t>(pools, pool_type::pool_64, &page_sources[std::to_underlying(pool_type::pool_64)]);
 				page64_t* page = nullptr;
 				block64_t* block = nullptr;
 				size_t index_block = 0;
@@ -468,7 +522,7 @@ namespace voltek
 			}
 			else if (size > 16)
 			{
-				auto pool = acquire_pool<pool32_t>(pools, pool_type::pool_32);
+				auto pool = acquire_pool<pool32_t>(pools, pool_type::pool_32, &page_sources[std::to_underlying(pool_type::pool_32)]);
 				page32_t* page = nullptr;
 				block32_t* block = nullptr;
 				size_t index_block = 0;
@@ -482,7 +536,7 @@ namespace voltek
 			}
 			else if (size > 8)
 			{
-				auto pool = acquire_pool<pool16_t>(pools, pool_type::pool_16);
+				auto pool = acquire_pool<pool16_t>(pools, pool_type::pool_16, &page_sources[std::to_underlying(pool_type::pool_16)]);
 				page16_t* page = nullptr;
 				block16_t* block = nullptr;
 				size_t index_block = 0;
@@ -496,7 +550,7 @@ namespace voltek
 			}
 			else
 			{
-				auto pool = acquire_pool<pool8_t>(pools, pool_type::pool_8);
+				auto pool = acquire_pool<pool8_t>(pools, pool_type::pool_8, &page_sources[std::to_underlying(pool_type::pool_8)]);
 				page8_t* page = nullptr;
 				block8_t* block = nullptr;
 				size_t index_block = 0;
@@ -553,7 +607,7 @@ namespace voltek
 				return nullptr;
 			if (!ptr)
 				return aligned_alloc(size, alignment);
-			if (!is_valid_ptr(ptr) || !is_valid_pointer(ptr))
+			if (!owns(ptr))
 				return nullptr;
 			if (!size)
 			{
@@ -576,7 +630,7 @@ namespace voltek
 
 		void* memory_manager::realloc(const void* ptr, size_t size) noexcept
 		{
-			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr) /*|| (ULONG_MAX < size)*/)
+			if (!ptr || !owns(ptr))
 				return nullptr;
 			if (!size)
 			{
@@ -757,7 +811,7 @@ namespace voltek
 
 		bool memory_manager::free(const void* ptr) noexcept
 		{
-			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr))
+			if (!ptr || !owns(ptr))
 				return false;
 
 			auto* original = get_block_handle_from_ptr(ptr);
@@ -771,12 +825,7 @@ namespace voltek
 				auto block = get_block_handle_from_ptr(ptr);
 				size_t block_size = get_size_from_block(block);
 				if (block_size > 0)
-				{
-					if (block_size >= MAX_BLOCK_SIZE)
-						voltek::core::_internal::page_free(block);
-					else 
-						voltek::core::_internal::aligned_free(block);
-				}
+					large_free(block);
 			}
 			else
 			{
@@ -879,7 +928,7 @@ namespace voltek
 
 		size_t memory_manager::msize(const void* ptr) const noexcept
 		{
-			if (!ptr || !is_valid_ptr(ptr) || !is_valid_pointer(ptr)) return 0;
+			if (!ptr || !owns(ptr)) return 0;
 			// Получение размера.
 			return (size_t)get_size_from_ptr(ptr);
 		}

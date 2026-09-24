@@ -4,12 +4,13 @@
 
 namespace Addictol::Heaps
 {
-	void Mimalloc::Initialize() noexcept
+	bool Mimalloc::Initialize() noexcept
 	{
 		// A failed frame-loop allocation reports immediately instead of stalling 400 ms.
 		mi_option_set(mi_option_retry_on_oom, 0);
 		mi_option_set(mi_option_show_errors, 0);
 		mi_process_init();
+		return true;
 	}
 
 	void* Mimalloc::Allocate(size_t a_size) noexcept

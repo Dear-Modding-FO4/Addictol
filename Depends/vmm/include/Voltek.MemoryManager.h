@@ -22,7 +22,8 @@ namespace voltek
 	};
 
 	// Инициализация менеджера памяти.
-	VOLTEK_MM_API void scalable_memory_manager_initialize();
+	// Returns false when the address reservation failed; no allocation can succeed then.
+	VOLTEK_MM_API bool scalable_memory_manager_initialize();
 	// Освобождение менеджера памяти.
 	// Чисто символически, использовать её не рекомендуется.
 	// Но если очень хочется, почему бы и нет.

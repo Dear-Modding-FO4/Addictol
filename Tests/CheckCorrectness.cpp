@@ -10,6 +10,7 @@
 #include <cstring>
 #include <sstream>
 #include <type_traits>
+#include <windows.h>
 
 namespace
 {
@@ -363,11 +364,25 @@ namespace vmm_tests
 			}
 		});
 
+		// The engine hands foreign blocks to free and msize; a lookalike header must not be trusted or touched.
+		runner.test("ownership rejects a forged header outside the reservation", [] {
+			auto* page = static_cast<char*>(VirtualAlloc(nullptr, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
+			require(page != nullptr, "forged header page allocation failed");
+			auto* header = mm::create_default_block(reinterpret_cast<mm::block_base*>(page), 64);
+			DWORD previous = 0;
+			require(VirtualProtect(page, 65536, PAGE_READONLY, &previous) != 0, "forged header page could not be protected");
+			void* forged = mm::get_ptr_from_block_handle(header);
+			require(voltek::scalable_msize(forged) == 0, "size query trusted a forged header");
+			require(!voltek::scalable_free(forged), "free accepted a forged header");
+			require(voltek::scalable_realloc(forged, 128) == nullptr, "realloc accepted a forged header");
+			VirtualFree(page, 0, MEM_RELEASE);
+		});
+
 		runner.test("page rejects an undersized region bitmap", [] {
 			using RegionPage = voltek::memory_manager::page_t<
 				voltek::memory_manager::block8_t,
 				voltek::core::bits_regions>;
-			RegionPage page{ 32768 };
+			RegionPage page{ 32768, nullptr };
 			require(page.empty(), "page accepted a body after its region bitmap rejected the size");
 			require(page.count() == 0, "page recorded a size its region bitmap rejected");
 		});

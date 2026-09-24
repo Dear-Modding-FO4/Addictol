@@ -6,8 +6,10 @@
 
 #include "Voltek.MemoryManager.h"
 #include "vbase.h"
+#include "vmapper.h"
 #include "vmmblock.h"
 #include "vsimplelock.h"
+#include <array>
 #include <stddef.h>
 #include <thread>
 
@@ -33,6 +35,10 @@ namespace voltek
 			pool_131072,
 			MAX
 		};
+
+		// Blocks above the largest pool live in power-of-two slots from 256 KiB to 4 GiB.
+		inline constexpr size_t large_slot_minimum = 256ull * 1024;
+		inline constexpr size_t large_class_count = 15;
 
 		// Менеджер памяти.
 		class memory_manager : public voltek::core::base
@@ -61,6 +67,7 @@ namespace voltek
 			// Возвращает размер выделенной памяти под указатель.
 			// Вернёт 0, что значит ошибка.
 			[[nodiscard]] size_t msize(const void* ptr) const noexcept;
+			[[nodiscard]] bool ready() const noexcept { return zero_size_request_block && pools; }
 			// Вывод дампа битовой карты указанного пула
 			void dump_map(size_t pool_id, const char* filename) const noexcept;
 			// Вывод дампа памяти указанного пула
@@ -71,8 +78,16 @@ namespace voltek
 			memory_manager& operator=(memory_manager&&) = delete;
 			memory_manager& operator=(const memory_manager&) = delete;
 		private:
+			// Принадлежит ли указатель менеджеру: заголовок внутри зарезервированного диапазона и прошёл проверку.
+			[[nodiscard]] static bool owns(const void* ptr) noexcept;
+			[[nodiscard]] block_base* large_alloc(size_t size) noexcept;
+			void large_free(block_base* block) noexcept;
+		private:
 			// Блок памяти, если запрашивают 0 размер.
-			block8_t zero_size_request_block{ 0 };
+			block_base* zero_size_request_block{ nullptr };
+			// Источники страниц пулов и крупных блоков внутри зарезервированного диапазона.
+			std::array<core::mapper, std::to_underlying(pool_type::MAX)> page_sources;
+			std::array<core::mapper, large_class_count> large_sources;
 			// Массив пулов.
 			void** pools{ nullptr };
 			friend void ::voltek::scalable_get_pool_stats(::voltek::scalable_pool_stats* out);

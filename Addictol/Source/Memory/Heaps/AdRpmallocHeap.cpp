@@ -102,11 +102,11 @@ namespace Addictol::Heaps
 		rpmalloc_interface_t s_interface{ &Map, &Commit, &Decommit, &Unmap, nullptr, nullptr };
 	}
 
-	void Rpmalloc::Initialize() noexcept
+	bool Rpmalloc::Initialize() noexcept
 	{
 		if (const auto kernel = GetModuleHandleW(L"kernelbase.dll"))
 			s_virtualAlloc2 = reinterpret_cast<VirtualAlloc2Function>(GetProcAddress(kernel, "VirtualAlloc2"));
-		rpmalloc_initialize(&s_interface);
+		return rpmalloc_initialize(&s_interface) == 0;
 	}
 
 	void* Rpmalloc::Allocate(size_t a_size) noexcept

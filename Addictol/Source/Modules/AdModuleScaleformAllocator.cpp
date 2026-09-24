@@ -110,6 +110,11 @@ namespace Addictol
 
 	bool ModuleScaleformAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
+		if (!ProxyCurrentHeap::GetSingleton()->Ready())
+		{
+			REX::ERROR("Scaleform Allocator: its heap failed to initialize; keeping the game's allocator."sv);
+			return false;
+		}
 		return InstallSelectedProfiledHeap<ProxyCurrentHeap, HeapProfileSite::Scaleform>([]<class Heap>() {
 			BSScaleformAllocator<Heap>::Install();
 			return true;

@@ -1,4 +1,4 @@
-// Copyright © 2023 aka perchik71. All rights reserved.
+﻿// Copyright © 2023 aka perchik71. All rights reserved.
 // Contacts: <email:timencevaleksej@gmail.com>
 // License: https://www.gnu.org/licenses/lgpl-3.0.html
 
@@ -43,7 +43,7 @@ namespace voltek
 			}
 			// Конструктор.
 			// Внимание кол-во допустимых страниц будет округлено до кратности 256.
-			pool_t(size_t count) noexcept
+			pool_t(size_t count, voltek::core::mapper* mapper) noexcept : _mapper(mapper)
 			{
 #if USE_MULTITHREADS
 				free_stack_blocks.reserve(__VMM_POOL_CONFIG_CACHE_SIZE);
@@ -59,10 +59,6 @@ namespace voltek
 					voltek::core::_internal::aligned_free(_pages);
 					_pages = nullptr;
 					_count = 0;
-
-#ifdef MAPPER_USE
-					delete _mapper;
-#endif
 				}
 			}
 			// Задаёт кол-во допустимых страниц для пула.
@@ -93,12 +89,6 @@ namespace voltek
 					_count = count;
 					// Размещаем везде единицы, 1 - свободная страница, 0 - занят.
 					map.all_set();
-
-#ifdef MAPPER_USE
-					size_t blocksize = sizeof(_type) * _blocks_in_page;
-					_mapper = new voltek::core::mapper(blocksize << 4, blocksize);
-					_vassert(!_mapper);
-#endif
 				}
 			}
 			// Возвращает допольнительную информацию, что привязана к пулу.
@@ -194,11 +184,7 @@ namespace voltek
 					if (!_pages[index])
 					{
 						// Объём одной страницы _blocks_in_page
-#ifdef MAPPER_USE
 						_current = new pageobj_t(_blocks_in_page, _mapper);
-#else
-						_current = new pageobj_t(_blocks_in_page);
-#endif
 						if (!_current)
 						{
 							_vassert_msg(true, "Failed new free page");
@@ -333,10 +319,8 @@ namespace voltek
 			voltek::core::bits_regions map{};
 			// Блокировщик для работы с множеством потоков.
 			voltek::core::_internal::simple_lock lock{};
-#ifdef MAPPER_USE
-			// Карта памяти.
-			voltek::core::mapper* _mapper;
-#endif
+			// Карта памяти, из которой берутся страницы.
+			voltek::core::mapper* _mapper{ nullptr };
 		};
 	}
 }

@@ -3,9 +3,9 @@
 
 namespace Addictol::Heaps
 {
-	void Voltek::Initialize() noexcept
+	bool Voltek::Initialize() noexcept
 	{
-		voltek::scalable_memory_manager_initialize();
+		return voltek::scalable_memory_manager_initialize();
 	}
 
 	void* Voltek::Allocate(size_t a_size) noexcept
@@ -18,7 +18,7 @@ namespace Addictol::Heaps
 		return voltek::scalable_aligned_alloc(a_size, a_alignment);
 	}
 
-	// VMM validates a block by reading its header, which faults for a foreign block at a page start.
+	// A stale pointer into a released slot faults on its header read; treat it as foreign.
 	void* Voltek::Reallocate(void* a_block, size_t a_size) noexcept
 	{
 		__try

@@ -69,7 +69,7 @@ namespace Addictol
 	public:
 		using BackendType = Backend;
 
-		ProxyHeap() noexcept { Backend::Initialize(); }
+		ProxyHeap() noexcept : m_ready(Backend::Initialize()) {}
 		~ProxyHeap() noexcept = default;
 
 		[[nodiscard]] void* malloc(size_t nSize) const noexcept
@@ -117,8 +117,11 @@ namespace Addictol
 		}
 
 		[[nodiscard]] HeapStatistics Statistics() const noexcept { return Backend::Statistics(); }
+		[[nodiscard]] bool Ready() const noexcept { return m_ready; }
 
 	private:
+		bool m_ready;
+
 		[[nodiscard]] static constexpr bool Overflows(size_t a_size) noexcept
 		{
 			return a_size > SIZE_MAX - Backend::kTailPadding;

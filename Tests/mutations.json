@@ -24,6 +24,14 @@
     "message": "public log level name changed"
   },
   {
+    "name": "voltek ownership requires the reserved range",
+    "target": "Depends/vmm/source/vmmmain.cpp",
+    "find": "return core::region::contains(header) && is_valid_block(header);",
+    "replace": "return is_valid_block(header);",
+    "check": "ownership rejects a forged header outside the reservation",
+    "message": "size query trusted a forged header"
+  },
+  {
     "name": "nested heap calls fold into the outer call",
     "target": "Addictol/Include/Memory/AdProfiledHeap.h",
     "find": "bool outermost{ !t_inProfiledCall };",

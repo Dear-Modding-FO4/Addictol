@@ -26,6 +26,7 @@ namespace Addictol
 		std::optional<uint64_t> pageCapacity;
 	};
 
+	// Initialize reports whether the backend can serve; hooks install only after it succeeds.
 	// Free, Size, and Reallocate must tolerate pointers the backend does not own: ignore, zero, and null.
 	// kTailPadding bytes are requested past every block and hidden from Size.
 	template<class T>
@@ -34,7 +35,7 @@ namespace Addictol
 		{ T::kKind } -> std::convertible_to<HeapKind>;
 		{ T::kName } -> std::convertible_to<std::string_view>;
 		{ T::kTailPadding } -> std::convertible_to<size_t>;
-		{ T::Initialize() } noexcept;
+		{ T::Initialize() } noexcept -> std::same_as<bool>;
 		{ T::Allocate(a_size) } noexcept -> std::same_as<void*>;
 		{ T::AllocateAligned(a_size, a_alignment) } noexcept -> std::same_as<void*>;
 		{ T::Reallocate(a_block, a_size) } noexcept -> std::same_as<void*>;

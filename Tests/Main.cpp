@@ -39,8 +39,8 @@ int main(int argc, char** argv)
 
 	Runner runner;
 	runner.test("memory manager initialization is idempotent", [] {
-		voltek::scalable_memory_manager_initialize();
-		voltek::scalable_memory_manager_initialize();
+		require(voltek::scalable_memory_manager_initialize(), "memory manager reservation failed");
+		require(voltek::scalable_memory_manager_initialize(), "repeated initialization lost the reservation");
 	});
 
 	run_allocator_checks(runner);

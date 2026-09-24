@@ -128,6 +128,11 @@ namespace Addictol
 				REX::INFO("Smallblock Allocator: the selected heap is stock; leaving the game's pools in place."sv);
 				return true;
 			}
+			if (!VisitSelectedHeap([]<class Heap>() { return Heap::GetSingleton()->Ready(); }))
+			{
+				REX::ERROR("Smallblock Allocator: the selected heap failed to initialize; keeping the game's pools."sv);
+				return false;
+			}
 			(void)VisitSelectedHeap(install);
 			REX::INFO("Smallblock Allocator: routed to the selected heap instead of Visper."sv);
 			return true;

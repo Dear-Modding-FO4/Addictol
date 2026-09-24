@@ -616,6 +616,14 @@ namespace Addictol
 	{
 		auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
 
+		if (GetSelectedHeapKind() != HeapKind::Stock &&
+			!VisitSelectedHeap([]<class Heap>() { return Heap::GetSingleton()->Ready(); }))
+		{
+			REX::ERROR("Memory allocator backend {} failed to initialize; keeping the game's allocators."sv,
+				HeapKindName(GetSelectedHeapKind()));
+			(void)ResolveHeapSelection("stock");
+		}
+
 		REX::INFO("Memory allocator backend: {}"sv, HeapKindName(GetSelectedHeapKind()));
 
 		if (GetSelectedHeapKind() == HeapKind::Stock)
