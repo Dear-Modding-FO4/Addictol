@@ -107,6 +107,46 @@ namespace
 		double scaling;
 	};
 
+	struct BulkResult
+	{
+		std::size_t size;
+		std::size_t blocks;
+		double alloc_ns;
+		double free_ns;
+		std::uint64_t failures;
+	};
+
+	template<class Heap>
+	std::vector<BulkResult> measure_bulk(const PerformanceClock& clock)
+	{
+		std::vector<BulkResult> results;
+		auto* heap = Heap::GetSingleton();
+		for (const auto size : benchmark_sizes)
+		{
+			const auto count = std::min<std::size_t>(1'000'000, 256 * 1024 * 1024 / size);
+			std::vector<void*> blocks(count);
+			std::array<double, 3> allocations{}, frees{};
+			std::uint64_t failures = 0;
+			for (std::size_t round = 0; round < allocations.size(); ++round)
+			{
+				const auto start = clock.now();
+				for (auto& block : blocks)
+					block = heap->malloc(size);
+				const auto allocated = clock.now();
+				for (auto* block : blocks)
+					heap->free(block);
+				const auto freed = clock.now();
+				failures += std::count(blocks.begin(), blocks.end(), nullptr);
+				allocations[round] = clock.nanoseconds(allocated - start) / count;
+				frees[round] = clock.nanoseconds(freed - allocated) / count;
+			}
+			std::sort(allocations.begin(), allocations.end());
+			std::sort(frees.begin(), frees.end());
+			results.push_back({ size, count, allocations[1], frees[1], failures });
+		}
+		return results;
+	}
+
 	struct LatencyResult
 	{
 		double target_rate;
@@ -403,8 +443,17 @@ namespace
 	void print_results(		const std::vector<SingleResult>& single,
 		const std::vector<ScalingResult>& scaling,
 		const std::vector<LatencyResult>& latency,
-		const std::vector<ChurnResult>& churn)
+		const std::vector<ChurnResult>& churn,
+		const std::vector<BulkResult>& bulk)
 	{
+		std::cout << "\nBulk allocation then FIFO free (median of 3 rounds)\n";
+		std::cout << std::setw(12) << "size" << std::setw(12) << "blocks" << std::setw(14) << "alloc ns"
+				  << std::setw(14) << "free ns" << std::setw(12) << "failures" << '\n';
+		for (const auto& result : bulk)
+			std::cout << std::setw(12) << result.size << std::setw(12) << result.blocks << std::fixed
+					  << std::setprecision(2) << std::setw(14) << result.alloc_ns << std::setw(14)
+					  << result.free_ns << std::setw(12) << result.failures << '\n';
+
 		std::cout << "\nSingle-threaded alloc+free throughput\n";
 		std::cout << std::setw(12) << "size" << std::setw(18) << "ops/sec" << std::setw(12) << "failures" << '\n';
 		for (const auto& result : single)
@@ -452,7 +501,8 @@ namespace
 		const std::vector<SingleResult>& single,
 		const std::vector<ScalingResult>& scaling,
 		const std::vector<LatencyResult>& latency,
-		const std::vector<ChurnResult>& churn)
+		const std::vector<ChurnResult>& churn,
+		const std::vector<BulkResult>& bulk)
 	{
 		std::error_code error;
 		std::filesystem::create_directories(".Build/Tests", error);
@@ -508,6 +558,14 @@ namespace
 				   << ", \"live_bytes\": " << result.live_bytes << ", \"private_growth_bytes\": " << result.private_growth_bytes
 				   << ", \"retained_bytes\": " << result.retained_bytes << "}" << (index + 1 == churn.size() ? "\n" : ",\n");
 		}
+		output << "  ],\n  \"bulk\": [\n";
+		for (std::size_t index = 0; index < bulk.size(); ++index)
+		{
+			const auto& result = bulk[index];
+			output << "    {\"size\": " << result.size << ", \"blocks\": " << result.blocks
+				   << ", \"alloc_ns\": " << result.alloc_ns << ", \"free_ns\": " << result.free_ns
+				   << ", \"failures\": " << result.failures << "}" << (index + 1 == bulk.size() ? "\n" : ",\n");
+		}
 		output << "  ]\n}\n";
 		return output.good();
 	}
@@ -544,8 +602,9 @@ namespace vmm_tests
 				latency.push_back(measure_paced_latency<Heap>(clock, rate));
 			}
 
-			print_results(single, scaling, latency, churn);
-			if (!write_json(backend, single, scaling, latency, churn))
+			const auto bulk = measure_bulk<Heap>(clock);
+			print_results(single, scaling, latency, churn, bulk);
+			if (!write_json(backend, single, scaling, latency, churn, bulk))
 			{
 				std::cerr << "benchmark JSON was not written\n";
 				return 1;

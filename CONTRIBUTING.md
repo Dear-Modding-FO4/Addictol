@@ -564,6 +564,8 @@ the reported allocation failure counts rather than relying on exit status alone.
 
 `--bench-profile` measures profiling overhead and writes `.Build\Tests\profile-bench.json`.
 
+The heap benchmark also reports bulk allocation and FIFO free separately (three rounds per size).
+
 ### Mutation controls
 
 Run `python Tests/run_mutations.py` from the repository root to prove the named negative controls in
