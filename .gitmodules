@@ -29,3 +29,9 @@
 [submodule "Depends/ms-detours"]
 	path = Depends/ms-detours
 	url = https://github.com/microsoft/Detours.git
+[submodule "Depends/mimalloc"]
+	path = Depends/mimalloc
+	url = https://github.com/microsoft/mimalloc.git
+[submodule "Depends/rpmalloc"]
+	path = Depends/rpmalloc
+	url = https://github.com/mjansson/rpmalloc.git

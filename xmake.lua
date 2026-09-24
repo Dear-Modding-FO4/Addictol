@@ -64,6 +64,7 @@ add_requires("unordered_dense v4.8.1")
 
 -- define targets
 includes("Depends/compression.lua")
+includes("Depends/allocators.lua")
 
 target("msdetours-vendored", function()
     set_kind("static")
@@ -269,7 +270,7 @@ target("vmm-tests", function()
     set_dependir(".LinkConf/xmake/vmm-tests/deps")
 
     -- add dependencies
-    add_deps("vmm", "spdlog-vendored", "zlib-prefixed", "isa-l")
+    add_deps("vmm", "mimalloc", "rpmalloc", "spdlog-vendored", "zlib-prefixed", "isa-l")
     add_deps("commonlib-shared", dependency_interface)
 
     -- add packages
@@ -385,7 +386,7 @@ target(plugin_name, function()
     add_deps("commonlib-shared", dependency_interface)
     add_deps("commonlibf4", dependency_interface)
     add_deps("vmm", dependency_interface)
-    add_deps("zlib-prefixed", "isa-l")
+    add_deps("zlib-prefixed", "isa-l", "mimalloc", "rpmalloc")
 
     -- add packages
     add_packages("libdeflate", { links = {}, sysincludedirs = {}, defines = {} })
