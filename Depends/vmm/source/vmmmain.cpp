@@ -33,6 +33,8 @@ namespace voltek
 		// Detailed class statistics cost a few nanoseconds per call, so they run only while telemetry reads them.
 		std::atomic<bool> statistics_enabled{ false };
 
+		constexpr static auto SIZE_LIMIT = std::numeric_limits<int32_t>::max();
+
 		struct cache_bin
 		{
 			block_base* slots[64];
@@ -256,7 +258,7 @@ namespace voltek
 				// A pool that cannot grow falls through to a large block.
 			}
 
-			if (size > SIZE_MAX - sizeof(block_base))
+			if (size > (SIZE_LIMIT - sizeof(block_base)))
 				return nullptr;
 			if (auto* block = large_alloc(size + sizeof(block_base)))
 			{
@@ -275,10 +277,10 @@ namespace voltek
 			if (alignment <= 16)
 				return alloc(size);
 
-			if (alignment - 1 > SIZE_MAX - sizeof(aligned_block))
+			if (alignment - 1 > SIZE_LIMIT - sizeof(aligned_block))
 				return nullptr;
 			const auto overhead = alignment - 1 + sizeof(aligned_block);
-			if (size > SIZE_MAX - overhead)
+			if (size > SIZE_LIMIT - overhead)
 				return nullptr;
 
 			void* base = alloc(size + overhead);
