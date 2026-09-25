@@ -58,7 +58,7 @@ namespace voltek
 					auto& block = at(_free_head);
 					const auto next = *static_cast<const uint32_t*>(get_ptr_from_block_handle(&block));
 					// A use-after-free write can corrupt the link; abandon the list rather than follow it.
-					if ((next != none && next >= _bump) || !block_lifecycle::try_pop(&block, requested, flags))
+					if ((next != none && next >= _bump) || !block_lifecycle::pop_under_lock(&block, requested, flags))
 						_free_head = none;
 					else
 					{
@@ -92,7 +92,7 @@ namespace voltek
 				if (index >= _bump)
 					return false;
 				auto& block = at(index);
-				if (!block_lifecycle::try_free(&block, cached))
+				if (!(cached ? block_lifecycle::free_cached_under_lock(&block) : block_lifecycle::try_free(&block)))
 					return false;
 				if (!--_busy)
 				{

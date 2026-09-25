@@ -100,6 +100,27 @@ namespace vmm_tests
 			}
 		});
 
+		runner.test("mapper skips padding and reuses the lowest free slot", [] {
+			constexpr size_t count = 2051;
+			constexpr size_t stride = voltek::core::region::commit_granularity;
+			auto* base = static_cast<char*>(VirtualAlloc(nullptr, count * stride, MEM_RESERVE, PAGE_READWRITE));
+			require(base != nullptr, "mapper reservation failed");
+			voltek::core::mapper mapper;
+			mapper.assign(base, stride, count);
+			for (size_t index = 0; index < count; ++index)
+				require(mapper.allocate(stride) == base + index * stride, "mapper did not select the lowest free slot");
+			require(mapper.allocate(stride) == nullptr && mapper.committed_bytes() == count * stride,
+				"mapper handed out padding or miscounted committed bytes");
+			mapper.release(base + 2049 * stride);
+			mapper.release(base + 7 * stride);
+			require(mapper.allocate(stride) == base + 7 * stride && mapper.allocate(stride) == base + 2049 * stride,
+				"mapper did not reuse released slots in address order");
+			for (size_t index = 0; index < count; ++index)
+				mapper.release(base + index * stride);
+			require(mapper.committed_bytes() == 0, "mapper retained decommitted bytes");
+			VirtualFree(base, 0, MEM_RELEASE);
+		});
+
 		runner.test("large slots reuse committed memory within a shared budget", [] {
 			const auto sample = [] {
 				std::array<voltek::scalable_class_stats, mm::pool_count + 1> classes{};
@@ -508,14 +529,14 @@ namespace vmm_tests
 			bool rejected = true;
 			for (size_t round = 0; round < 20000 && unique && fixture && rejected; ++round)
 			{
-				std::array<void*, geometry.cache_batch + 1> blocks{};
-				for (size_t index = 0; index < geometry.cache_batch; ++index)
+				std::array<void*, geometry.cache_cap + 1> blocks{};
+				for (size_t index = 0; index < geometry.cache_cap; ++index)
 				{
 					blocks[index] = voltek::scalable_alloc(size);
 					fixture &= blocks[index] && mm::get_page_id_from_ptr(blocks[index]) == mm::get_page_id_from_ptr(keep);
 				}
-				target = blocks[geometry.cache_batch - 1];
-				for (size_t index = 0; index < geometry.cache_batch; ++index)
+				target = blocks[geometry.cache_cap - 1];
+				for (size_t index = 0; index < geometry.cache_cap; ++index)
 					fixture &= voltek::scalable_free(blocks[index]);
 				mm::global_memory_manager->flush_thread_cache();
 				refilled.store(false, std::memory_order_relaxed);
@@ -526,7 +547,7 @@ namespace vmm_tests
 				phase.arrive_and_wait();
 				phase.arrive_and_wait();
 				fixture &= blocks[0] && blocks[0] != target;
-				for (size_t index = 1; index < geometry.cache_batch; ++index)
+				for (size_t index = 1; index < geometry.cache_cap; ++index)
 					blocks[index] = voltek::scalable_alloc(size);
 				blocks.back() = stolen;
 				rejected &= stolen == nullptr;
@@ -641,8 +662,10 @@ namespace vmm_tests
 				return classes;
 			};
 			constexpr std::size_t pooled = mm::pool_class_of(100);
+			constexpr std::size_t uncached = mm::pool_class_of(8192);
 			constexpr std::size_t large = mm::pool_count;
 			voltek::scalable_enable_statistics();
+			mm::global_memory_manager->flush_thread_cache();
 			const auto before = sample();
 			std::vector<void*> blocks;
 			for (std::size_t index = 0; index < 1000; ++index)
@@ -650,6 +673,8 @@ namespace vmm_tests
 			for (std::size_t index = 0; index < 10; ++index)
 				require(voltek::scalable_realloc(blocks[index], 110) == blocks[index], "in-class realloc moved the block");
 			void* big = voltek::scalable_alloc(300000);
+			void* direct = voltek::scalable_alloc(8192);
+			require(big && direct, "statistics fixture allocation failed");
 			const auto during = sample();
 			require(during[pooled].live_blocks == before[pooled].live_blocks + 1000 &&
 				during[pooled].requested_bytes == before[pooled].requested_bytes + 1000 * 100 + 10 * 10,
@@ -657,10 +682,26 @@ namespace vmm_tests
 			require(during[large].live_blocks == before[large].live_blocks + 1 &&
 				during[large].requested_bytes == before[large].requested_bytes + 300000 + sizeof(mm::block_base),
 				"large block statistics missed a live block");
+			const auto batch = mm::class_geometries[pooled].cache_cap;
+			require(during[pooled].held_blocks == before[pooled].held_blocks + (1000 + batch - 1) / batch * batch &&
+				during[large].held_blocks == during[large].live_blocks,
+				"held statistics did not include cache refills and large live blocks");
+			require(during[uncached].held_blocks == before[uncached].held_blocks + 1,
+				"held statistics missed an uncached allocation");
 			for (auto* block : blocks)
 				require(voltek::scalable_free(block), "pooled block free failed");
 			require(voltek::scalable_free(big), "large block free failed");
+			require(voltek::scalable_free(direct), "uncached block free failed");
 			const auto after = sample();
+			require(after[pooled].held_blocks > before[pooled].held_blocks &&
+				after[pooled].held_blocks <= before[pooled].held_blocks + mm::class_geometries[pooled].cache_cap &&
+				after[large].held_blocks == before[large].held_blocks,
+				"held statistics did not retain only cached blocks");
+			require(after[uncached].held_blocks == before[uncached].held_blocks,
+				"held statistics retained an uncached release");
+			mm::global_memory_manager->flush_thread_cache();
+			require(sample()[pooled].held_blocks == before[pooled].held_blocks,
+				"cache flush did not return held statistics to baseline");
 			require(after[pooled].live_blocks == before[pooled].live_blocks &&
 				after[pooled].requested_bytes == before[pooled].requested_bytes &&
 				after[large].live_blocks == before[large].live_blocks &&

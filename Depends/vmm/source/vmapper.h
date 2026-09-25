@@ -5,6 +5,7 @@
 #pragma once
 
 #include "vsimplelock.h"
+#include "vbits.h"
 
 #include <atomic>
 #include <array>
@@ -78,9 +79,8 @@ namespace voltek
 			size_t _slot_size{ 0 };
 			size_t _slot_count{ 0 };
 			size_t _used_count{ 0 };
-			size_t _hint{ 0 };
-			std::vector<uint64_t> _used;
-			// Retained slots stay marked used in the bitmap until popped, so scans cannot claim them.
+			bits _available;
+			// Retained slots stay unavailable in the bitmap until popped, so scans cannot claim them.
 			std::array<size_t, 8> _retained_indices{};
 			size_t _retained_count{ 0 };
 			retention_budget* _retention{ nullptr };

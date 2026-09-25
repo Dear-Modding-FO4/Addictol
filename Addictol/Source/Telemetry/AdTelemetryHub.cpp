@@ -1150,7 +1150,7 @@ namespace Addictol
 	{
 		for (const auto& sample : a_samples)
 		{
-			if (!sample.calls && !sample.ticks && !sample.bytes)
+			if (!sample.gauge && !sample.calls && !sample.ticks && !sample.bytes)
 				continue;
 			if (!WriteUnsigned(a_stream, a_qpc))
 				return false;

@@ -1072,7 +1072,9 @@ namespace vmm_tests
 				SeriesSample{ "zlib.flush", "finish", 0, 99, 88 },
 				SeriesSample{ "zlib.served.thread", "worker", 3, 4, 5 },
 				SeriesSample{ "plugin.load", "comma,name.dll", 1, 7, 0 },
-				SeriesSample{ "test\"series", "quote\"bucket", 1, 8, 0 }
+				SeriesSample{ "test\"series", "quote\"bucket", 1, 8, 0 },
+				SeriesSample{ "zlib.served.whole", "le4k", 0, 0, 0 },
+				SeriesSample{ "allocator.class.live", "128", 0, 0, 0, true }
 			};
 			std::ostringstream csv;
 			csv.imbue(std::locale{ std::locale::classic(), new GroupedNumberPunct });
@@ -1087,10 +1089,41 @@ namespace vmm_tests
 					"1234567,zlib.flush,finish,0,99,88\n"
 					"1234567,zlib.served.thread,worker,3,4,5\n"
 					"1234567,plugin.load,\"comma,name.dll\",1,7,0\n"
-					"1234567,\"test\"\"series\",\"quote\"\"bucket\",1,8,0\n",
+					"1234567,\"test\"\"series\",\"quote\"\"bucket\",1,8,0\n"
+					"1234567,allocator.class.live,128,0,0,0\n",
 				"series CSV serialization changed or honored the stream locale");
 			require(csv.str().find("zlib.flush") != std::string::npos,
 				"nonzero zero-call series payload was discarded");
+		});
+
+		runner.test("allocator class series preserve changed absolute gauges", [] {
+			std::array<HeapClassStatistics, 1> previous{};
+			std::array<HeapClassStatistics, 1> current{};
+			auto& stats = current[0];
+			stats.label = "128";
+			stats.allocations = 10;
+			stats.allocatedBytes = 1200;
+			stats.liveBlocks = 10;
+			stats.requestedBytes = 1200;
+			stats.heldBlocks = 32;
+			stats.committedBytes = 1048576;
+			std::array<SeriesSample, AllocatorPoolTelemetry::kSeriesPerClass> rows{};
+			require(AllocatorPoolTelemetry::PopulateSeries(rows, current, previous) == 3,
+				"initial class counters and gauges were not emitted");
+			require(AllocatorPoolTelemetry::PopulateSeries(rows, current, previous) == 0,
+				"unchanged class gauges were emitted");
+			stats.liveBlocks = 4;
+			stats.requestedBytes = 400;
+			stats.heldBlocks = 16;
+			stats.committedBytes = 524288;
+			require(AllocatorPoolTelemetry::PopulateSeries(rows, current, previous) == 2 &&
+				rows[0].series == "allocator.class.committed" && rows[0].calls == 16 && rows[0].bytes == 524288 &&
+				rows[1].series == "allocator.class.live" && rows[1].calls == 4 && rows[1].bytes == 400,
+				"changed class gauges were not absolute values");
+			stats.liveBlocks = stats.requestedBytes = stats.heldBlocks = stats.committedBytes = 0;
+			require(AllocatorPoolTelemetry::PopulateSeries(rows, current, previous) == 2 &&
+				rows[0].calls == 0 && rows[0].bytes == 0 && rows[1].calls == 0 && rows[1].bytes == 0,
+				"class gauges suppressed their return to zero");
 		});
 
 		runner.test("hub owns the only destructive interval drain", [] {

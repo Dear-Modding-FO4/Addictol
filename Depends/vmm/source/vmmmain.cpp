@@ -238,7 +238,7 @@ namespace voltek
 				{
 					auto& bin = cache->bins[id];
 					if (!bin.count)
-						bin.count = static_cast<uint8_t>(pool->refill(bin.slots, class_geometries[id].cache_batch,
+						bin.count = static_cast<uint8_t>(pool->refill(bin.slots, class_geometries[id].cache_cap,
 							static_cast<uint8_t>(id), counted));
 					if (bin.count)
 					{
@@ -401,7 +401,7 @@ namespace voltek
 						pool->cache_released(block->size);
 					auto& bin = cache->bins[id];
 					const auto& geometry = class_geometries[id];
-					// Flush before the push so the fixed stack never needs a sixty-fifth slot.
+					// Flush before the push so the fixed stack never overflows.
 					if (bin.count == geometry.cache_cap)
 						flush_bin(bin, *pool, geometry.cache_batch);
 					bin.slots[bin.count++] = block;
@@ -477,6 +477,7 @@ namespace voltek
 				const auto& counters = pool->counters();
 				entry.block_stride = class_geometries[index].stride;
 				entry.live_blocks = read(counters.live_blocks);
+				entry.held_blocks = pool->held_blocks();
 				entry.requested_bytes = counters.live_requested_bytes();
 				entry.allocations = read(counters.allocations);
 				entry.allocated_bytes = read(counters.allocated_bytes);
@@ -492,6 +493,7 @@ namespace voltek
 				for (const auto& source : large_sources)
 					entry.committed_bytes += source.committed_bytes();
 				entry.live_blocks = read(large_counters.live_blocks);
+				entry.held_blocks = entry.live_blocks;
 				entry.requested_bytes = read(large_counters.requested_bytes);
 				entry.allocations = read(large_counters.allocations);
 				entry.allocated_bytes = read(large_counters.allocated_bytes);

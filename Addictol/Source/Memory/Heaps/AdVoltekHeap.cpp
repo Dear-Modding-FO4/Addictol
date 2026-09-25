@@ -116,7 +116,8 @@ namespace Addictol::Heaps
 		{
 			const auto& source = classes[index];
 			a_out[index] = { labels[index], source.allocations, source.allocated_bytes, source.pages_created,
-				source.pages_released, source.lock_contended, source.lock_wait_ticks };
+				source.pages_released, source.lock_contended, source.lock_wait_ticks,
+				source.live_blocks, source.requested_bytes, source.committed_bytes, source.held_blocks };
 		}
 		return count;
 	}

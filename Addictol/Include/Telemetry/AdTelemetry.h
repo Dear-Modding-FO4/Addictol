@@ -163,6 +163,8 @@ namespace Addictol
 		uint64_t calls;
 		uint64_t ticks;
 		uint64_t bytes;
+		// Gauges carry absolute values, so an all-zero gauge row is data rather than an empty delta.
+		bool gauge{ false };
 	};
 
 	[[nodiscard]] inline bool AppendSeriesSample(

@@ -79,6 +79,7 @@ namespace voltek
 		uint64_t pages_released;	// cumulative
 		uint64_t lock_contended;	// cumulative acquisitions that had to wait
 		uint64_t lock_wait_ticks;	// cumulative QPC ticks spent waiting
+		uint64_t held_blocks;		// includes thread caches, even before statistics are enabled
 	};
 
 	struct scalable_memory_stats

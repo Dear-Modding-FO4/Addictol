@@ -430,5 +430,37 @@
     "replace": "if (false && get_first_free_page_index(index))",
     "check": "a shrunken pool reuses retained pages",
     "message": "alloc and free of one block kept creating pages after the pool shrank"
+  },
+  {
+    "name": "voltek held blocks include pool handouts",
+    "target": "Depends/vmm/source/vmmpool.h",
+    "find": "_held_blocks += filled;",
+    "replace": "(void)_held_blocks;",
+    "check": "class statistics return to baseline after blocks are freed",
+    "message": "held statistics did not include cache refills and large live blocks"
+  },
+  {
+    "name": "voltek mapper returns released slots to vbits",
+    "target": "Depends/vmm/source/vmapper.cpp",
+    "find": "_available.set(index);\n\t\t\t--_used_count;",
+    "replace": "_available.unset(index);\n\t\t\t--_used_count;",
+    "check": "mapper skips padding and reuses the lowest free slot",
+    "message": "mapper did not reuse released slots in address order"
+  },
+  {
+    "name": "allocator committed series is an absolute gauge",
+    "target": "Addictol/Include/Telemetry/AdAllocatorPoolTelemetry.h",
+    "find": "now.heldBlocks, 0, now.committedBytes",
+    "replace": "now.heldBlocks - before.heldBlocks, 0, now.committedBytes - before.committedBytes",
+    "check": "allocator class series preserve changed absolute gauges",
+    "message": "changed class gauges were not absolute values"
+  },
+  {
+    "name": "series CSV preserves named zero gauges",
+    "target": "Addictol/Source/Telemetry/AdTelemetryHub.cpp",
+    "find": "if (!sample.gauge && !sample.calls && !sample.ticks && !sample.bytes)",
+    "replace": "if (!sample.calls && !sample.ticks && !sample.bytes)",
+    "check": "series CSV is exact and locale independent",
+    "message": "series CSV serialization changed or honored the stream locale"
   }
 ]

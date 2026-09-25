@@ -706,7 +706,7 @@ namespace Addictol
 
 	size_t ModuleMemoryManager::SeriesCapacity() const noexcept
 	{
-		return kMaxHeapClasses * 4;
+		return kMaxHeapClasses * AllocatorPoolTelemetry::kSeriesPerClass;
 	}
 
 	size_t ModuleMemoryManager::DrainSeries(std::span<SeriesSample> a_out) noexcept
@@ -715,22 +715,7 @@ namespace Addictol
 			return 0;
 		std::array<HeapClassStatistics, kMaxHeapClasses> current{};
 		const auto count = VisitSelectedHeap([&]<class Heap>() { return Heap::GetSingleton()->ClassStatistics(current); });
-		size_t offset = 0;
-		const auto append = [&](std::string_view a_series, std::string_view a_bucket, uint64_t a_calls, uint64_t a_ticks, uint64_t a_bytes) {
-			if (a_calls || a_ticks || a_bytes)
-				(void)AppendSeriesSample(a_out, offset, { a_series, a_bucket, a_calls, a_ticks, a_bytes });
-		};
-		for (size_t index = 0; index < count; ++index)
-		{
-			const auto& now = current[index];
-			const auto& before = m_previousClasses[index];
-			append("allocator.class.allocations"sv, now.label, now.allocations - before.allocations, 0, now.allocatedBytes - before.allocatedBytes);
-			append("allocator.class.page_creates"sv, now.label, now.pagesCreated - before.pagesCreated, 0, 0);
-			append("allocator.class.page_releases"sv, now.label, now.pagesReleased - before.pagesReleased, 0, 0);
-			append("allocator.class.lock_waits"sv, now.label, now.lockContended - before.lockContended, now.lockWaitTicks - before.lockWaitTicks, 0);
-			m_previousClasses[index] = now;
-		}
-		return offset;
+		return AllocatorPoolTelemetry::PopulateSeries(a_out, std::span(current).first(count), m_previousClasses);
 	}
 
 	bool ModuleMemoryManager::HasProcessDefender() noexcept

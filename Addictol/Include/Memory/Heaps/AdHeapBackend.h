@@ -29,7 +29,7 @@ namespace Addictol
 		std::optional<uint64_t> requestedBytes;
 	};
 
-	// Cumulative counters for one size class; telemetry reports their interval deltas.
+	// Counters and footprint gauges share the allocator's size-class labels.
 	struct HeapClassStatistics
 	{
 		std::string_view label;
@@ -39,6 +39,10 @@ namespace Addictol
 		uint64_t pagesReleased{ 0 };
 		uint64_t lockContended{ 0 };
 		uint64_t lockWaitTicks{ 0 };
+		uint64_t liveBlocks{ 0 };
+		uint64_t requestedBytes{ 0 };
+		uint64_t committedBytes{ 0 };
+		uint64_t heldBlocks{ 0 };
 	};
 
 	inline constexpr size_t kMaxHeapClasses{ 64 };
