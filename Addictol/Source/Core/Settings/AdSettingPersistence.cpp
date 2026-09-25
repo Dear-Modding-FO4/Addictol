@@ -12,7 +12,6 @@
 #include <fstream>
 #include <iterator>
 #include <limits>
-#include <map>
 #include <system_error>
 #include <type_traits>
 #include <utility>
@@ -63,15 +62,15 @@ namespace Addictol
 			return false;
 		}
 
-		[[nodiscard]] toml::value ToTomlValue(const SettingValue& a_value)
+		[[nodiscard]] toml::ordered_value ToTomlValue(const SettingValue& a_value)
 		{
 			return std::visit(
-				[](const auto& a_item) -> toml::value {
+				[](const auto& a_item) -> toml::ordered_value {
 					using T = std::remove_cvref_t<decltype(a_item)>;
 					if constexpr (std::is_same_v<T, uint64_t>)
-						return toml::value{ static_cast<int64_t>(a_item) };
+						return toml::ordered_value{ static_cast<int64_t>(a_item) };
 					else
-						return toml::value{ a_item };
+						return toml::ordered_value{ a_item };
 				},
 				a_value);
 		}
@@ -120,7 +119,7 @@ namespace Addictol
 		}
 
 		void MarkMultilineStringLines(
-			const toml::value& a_value,
+			const toml::ordered_value& a_value,
 			std::vector<bool>& a_lines)
 		{
 			if (a_value.is_string())
@@ -158,7 +157,7 @@ namespace Addictol
 		}
 
 		[[nodiscard]] std::vector<bool> MultilineStringLines(
-			const toml::value& a_root,
+			const toml::ordered_value& a_root,
 			size_t a_lineCount)
 		{
 			std::vector<bool> lines(a_lineCount, false);
@@ -168,7 +167,7 @@ namespace Addictol
 
 		[[nodiscard]] std::vector<std::string> StripManagedHelp(
 			std::string_view a_text,
-			const toml::value& a_root)
+			const toml::ordered_value& a_root)
 		{
 			auto lines = SplitLines(a_text);
 			const auto multilineStrings =
@@ -213,304 +212,9 @@ namespace Addictol
 			return toml::format(ToTomlValue(a_setting.DefaultValue()));
 		}
 
-		[[nodiscard]] std::vector<std::string> BuildManagedHelp(
-			std::string_view a_section,
-			std::span<const SettingEntry* const> a_settings,
-			bool a_qualifiedAssignments)
-		{
-			std::vector<std::string> lines;
-			lines.push_back(
-				std::string{ kManagedHelpBegin } + " [" +
-				std::string{ a_section } + "]");
-			lines.push_back(
-				"# Generated from the C++ registry. Edit active assignments, not these comments.");
-			lines.push_back(
-				"# Put personal notes outside this block; uncomment an assignment to override its factory default.");
-			for (const auto* setting : a_settings)
-			{
-				if (setting->Section() != a_section)
-					continue;
-				const auto key = a_qualifiedAssignments ?
-					std::string{ a_section } + "." +
-						std::string{ setting->Key() } :
-					std::string{ setting->Key() };
-				lines.emplace_back("#");
-				lines.push_back("# " + std::string{ setting->Description() });
-				lines.push_back(
-					"# " + key + " = " +
-					FormatDefault(*setting));
-			}
-			lines.push_back(std::string{ kManagedHelpEnd });
-			return lines;
-		}
-
-		void AppendManagedHelp(
-			std::vector<std::string>& a_output,
-			std::string_view a_section,
-			std::span<const SettingEntry* const> a_settings,
-			bool a_qualifiedAssignments)
-		{
-			auto managed = BuildManagedHelp(
-				a_section,
-				a_settings,
-				a_qualifiedAssignments);
-			a_output.insert(
-				a_output.end(),
-				std::make_move_iterator(managed.begin()),
-				std::make_move_iterator(managed.end()));
-		}
-
-		[[nodiscard]] std::string AddManagedHelp(
-			std::string_view a_text,
-			const toml::value& a_root)
-		{
-			const auto settings = SettingRegistry::GetSingleton().Settings();
-			std::map<std::string, std::vector<const SettingEntry*>> sections;
-			for (const auto* setting : settings)
-				sections[std::string{ setting->Section() }].push_back(setting);
-
-			auto lines = SplitLines(a_text);
-			std::map<size_t, std::vector<std::string>> insertions;
-			std::vector<std::string> newSections;
-			std::vector<std::string> qualifiedHelp;
-			const auto& root = a_root.as_table();
-			for (const auto& [section, entries] : sections)
-			{
-				(void)entries;
-				const auto position = root.find(section);
-				if (position != root.end() &&
-					position->second.is_table() &&
-					position->second.as_table_fmt().fmt ==
-						toml::table_format::multiline)
-				{
-					const auto location = position->second.location();
-					if (location.is_ok() &&
-						location.last_line_number() <= lines.size())
-					{
-						AppendManagedHelp(
-							insertions[location.last_line_number()],
-							section,
-							settings,
-							false);
-						continue;
-					}
-				}
-
-				if (position == root.end())
-				{
-					if (!newSections.empty() &&
-						!newSections.back().empty())
-						newSections.emplace_back();
-					newSections.push_back("[" + section + "]");
-					AppendManagedHelp(
-						newSections,
-						section,
-						settings,
-						false);
-				}
-				else
-				{
-					if (!qualifiedHelp.empty() &&
-						!qualifiedHelp.back().empty())
-						qualifiedHelp.emplace_back();
-					AppendManagedHelp(
-						qualifiedHelp,
-						section,
-						settings,
-						true);
-				}
-			}
-
-			std::vector<std::string> output;
-			for (size_t index = 0; index < lines.size(); ++index)
-			{
-				output.push_back(std::move(lines[index]));
-				const auto insertion = insertions.find(index + 1);
-				if (insertion != insertions.end())
-				{
-					output.insert(
-						output.end(),
-						insertion->second.begin(),
-						insertion->second.end());
-				}
-			}
-
-			const auto appendTrailing =
-				[&output](std::vector<std::string>& a_trailing) {
-					if (a_trailing.empty())
-						return;
-					while (!output.empty() && output.back().empty())
-						output.pop_back();
-					if (!output.empty())
-						output.emplace_back();
-					output.insert(
-						output.end(),
-						std::make_move_iterator(a_trailing.begin()),
-						std::make_move_iterator(a_trailing.end()));
-				};
-			appendTrailing(newSections);
-			appendTrailing(qualifiedHelp);
-			return JoinLines(output);
-		}
-
-		void CollectInlineComments(
-			const toml::value& a_value,
-			const std::vector<std::string>& a_lines,
-			std::map<std::pair<size_t, size_t>, std::string>& a_comments)
-		{
-			const auto location = a_value.location();
-			if (location.is_ok() &&
-				location.last_line_number() != 0 &&
-				location.last_line_number() <= a_lines.size() &&
-				!a_value.comments().empty())
-			{
-				const auto lineIndex =
-					location.last_line_number() - 1;
-				const auto& line = a_lines[lineIndex];
-				const auto searchStart = (std::min)(
-					location.last_column_number() - 1,
-					line.size());
-				const auto commentPosition =
-					line.find('#', searchStart);
-				if (commentPosition != std::string::npos)
-				{
-					const auto comment = Trim(
-						std::string_view{ line }.substr(
-							commentPosition));
-					const auto owned = std::ranges::find_if(
-						a_value.comments(),
-						[&](const auto& a_item) {
-							return Trim(a_item) == comment;
-						});
-					if (owned != a_value.comments().end())
-					{
-						a_comments.emplace(
-							std::pair{ lineIndex, commentPosition },
-							comment);
-					}
-				}
-			}
-
-			if (a_value.is_array())
-			{
-				for (const auto& item : a_value.as_array())
-					CollectInlineComments(item, a_lines, a_comments);
-			}
-			else if (a_value.is_table())
-			{
-				for (const auto& [key, item] : a_value.as_table())
-				{
-					(void)key;
-					CollectInlineComments(item, a_lines, a_comments);
-				}
-			}
-		}
-
-		[[nodiscard]] std::vector<std::string> CollectAllComments(
-			std::string_view a_text,
-			const toml::value& a_root)
-		{
-			const auto lines = SplitLines(a_text);
-			const auto multilineStrings =
-				MultilineStringLines(a_root, lines.size());
-			std::map<std::pair<size_t, size_t>, std::string> comments;
-			for (size_t index = 0; index < lines.size(); ++index)
-			{
-				if (multilineStrings[index])
-					continue;
-				auto commentPosition =
-					lines[index].find_first_not_of(" \t\r");
-				if (index == 0 &&
-					commentPosition == 0 &&
-					lines[index].starts_with(kUtf8Bom))
-				{
-					commentPosition =
-						lines[index].find_first_not_of(
-							" \t\r",
-							kUtf8Bom.size());
-				}
-				if (commentPosition != std::string::npos &&
-					lines[index][commentPosition] == '#')
-				{
-					comments.emplace(
-						std::pair{ index, commentPosition },
-						Trim(
-							std::string_view{ lines[index] }.substr(
-								commentPosition)));
-				}
-			}
-			CollectInlineComments(a_root, lines, comments);
-
-			std::vector<std::string> output;
-			output.reserve(comments.size());
-			for (auto& [position, comment] : comments)
-			{
-				(void)position;
-				output.push_back(std::move(comment));
-			}
-			return output;
-		}
-
-		void AppendMissingComments(
-			std::string& a_output,
-			const std::vector<std::string>& a_expected)
-		{
-			const auto parsed = toml::try_parse_str(a_output);
-			if (!parsed.is_ok())
-				return;
-			std::map<std::string, size_t> present;
-			for (const auto& comment :
-				CollectAllComments(a_output, parsed.unwrap()))
-				++present[comment];
-
-			std::vector<std::string> missing;
-			for (const auto& comment : a_expected)
-			{
-				auto& count = present[comment];
-				if (count)
-					--count;
-				else
-					missing.push_back(comment);
-			}
-			if (missing.empty())
-				return;
-
-			if (!a_output.empty() && a_output.back() != '\n')
-				a_output.push_back('\n');
-			if (!a_output.empty())
-				a_output.push_back('\n');
-			for (const auto& comment : missing)
-			{
-				a_output += comment;
-				a_output.push_back('\n');
-			}
-		}
-
-		[[nodiscard]] bool NormalizeOwnedSectionTables(
-			toml::value& a_root)
-		{
-			bool changed = false;
-			auto& root = a_root.as_table();
-			for (const auto* setting :
-				SettingRegistry::GetSingleton().Settings())
-			{
-				const auto position = root.find(
-					std::string{ setting->Section() });
-				if (position == root.end() ||
-					!position->second.is_table() ||
-					position->second.as_table_fmt().fmt ==
-						toml::table_format::multiline)
-					continue;
-				position->second.as_table_fmt().fmt =
-					toml::table_format::multiline;
-				changed = true;
-			}
-			return changed;
-		}
-
 		[[nodiscard]] bool IsIgnorableEmptyOwnedSection(
 			std::string_view a_key,
-			const toml::value& a_value)
+			const toml::ordered_value& a_value)
 		{
 			return a_value.is_table() &&
 				a_value.as_table().empty() &&
@@ -518,8 +222,8 @@ namespace Addictol
 		}
 
 		[[nodiscard]] bool SemanticallyEqual(
-			const toml::value& a_left,
-			const toml::value& a_right,
+			const toml::ordered_value& a_left,
+			const toml::ordered_value& a_right,
 			bool a_root = true)
 		{
 			if (a_left.type() != a_right.type())
@@ -595,10 +299,11 @@ namespace Addictol
 
 		[[nodiscard]] bool ParseDocument(
 			std::string_view a_text,
-			toml::value& a_output,
+			toml::ordered_value& a_output,
 			std::string& a_error)
 		{
-			auto parsed = toml::try_parse_str(std::string{ a_text });
+			auto parsed = toml::try_parse_str<toml::ordered_type_config>(
+				std::string{ a_text });
 			if (!parsed.is_ok())
 			{
 				a_error = "existing settings TOML could not be parsed";
@@ -614,11 +319,12 @@ namespace Addictol
 		}
 
 		[[nodiscard]] bool ValidateSerializedDocument(
-			const toml::value& a_expected,
+			const toml::ordered_value& a_expected,
 			std::string_view a_output,
 			std::string& a_error)
 		{
-			auto parsed = toml::try_parse_str(std::string{ a_output });
+			auto parsed = toml::try_parse_str<toml::ordered_type_config>(
+				std::string{ a_output });
 			if (!parsed.is_ok() || !parsed.unwrap().is_table())
 			{
 				a_error = "generated settings TOML could not be parsed";
@@ -632,37 +338,157 @@ namespace Addictol
 			return true;
 		}
 
-		[[nodiscard]] bool FormatPreservingComments(
-			const toml::value& a_document,
+		// Inline children have no comment slots; retain their notes on the
+		// containing assignment instead of letting the formatter discard them.
+		void MakeInline(
+			toml::ordered_value& a_value,
+			toml::ordered_value::comment_type& a_comments)
+		{
+			const auto& comments = a_value.comments();
+			a_comments.insert(a_comments.end(), comments.begin(), comments.end());
+			a_value.comments().clear();
+			if (a_value.is_table())
+			{
+				a_value.as_table_fmt().fmt = toml::table_format::oneline;
+				for (auto& [key, value] : a_value.as_table())
+				{
+					(void)key;
+					MakeInline(value, a_comments);
+				}
+			}
+			else if (a_value.is_array())
+			{
+				a_value.as_array_fmt().fmt = toml::array_format::oneline;
+				for (auto& value : a_value.as_array())
+					MakeInline(value, a_comments);
+			}
+		}
+
+		[[nodiscard]] std::string FormatAssignment(
+			const std::string& a_key,
+			toml::ordered_value a_value,
+			bool a_preserveComments = true)
+		{
+			toml::ordered_value::comment_type comments;
+			MakeInline(a_value, comments);
+			if (a_preserveComments)
+				a_value.comments() = std::move(comments);
+			// A single-entry root lets toml11 quote keys and retain attached comments.
+			toml::ordered_value root{ toml::ordered_table{} };
+			root.as_table().emplace(a_key, std::move(a_value));
+			return toml::format(root);
+		}
+
+		void AppendChunk(std::string& a_output, std::string a_chunk, bool a_separate = true)
+		{
+			while (!a_chunk.empty() && a_chunk.back() == '\n')
+				a_chunk.pop_back();
+			if (a_chunk.empty())
+				return;
+			if (a_separate)
+				a_output += '\n';
+			a_output += a_chunk;
+			a_output += '\n';
+		}
+
+		[[nodiscard]] bool RenderDocument(
+			const toml::ordered_value& a_document,
 			std::string_view a_source,
-			const std::vector<std::string>& a_comments,
 			std::string& a_output,
 			std::string& a_error)
 		{
-			a_output = toml::format(a_document);
-			if (!a_output.empty() && a_output.back() != '\n')
-				a_output.push_back('\n');
-			if (a_source.starts_with(kUtf8Bom) &&
-				!a_output.starts_with(kUtf8Bom))
-				a_output.insert(0, kUtf8Bom);
-			AppendMissingComments(a_output, a_comments);
-			return ValidateSerializedDocument(
-				a_document,
-				a_output,
-				a_error);
+			const auto& registry = SettingRegistry::GetSingleton();
+			const auto& root = a_document.as_table();
+			a_output = a_source.starts_with(kUtf8Bom) ?
+				std::string{ kUtf8Bom } : std::string{};
+			a_output += "# Addictol settings. Uncomment a line to change it; edits apply on the next launch.\n";
+
+			toml::ordered_value rootValues{ toml::ordered_table{} };
+			for (const auto& [key, value] : root)
+			{
+				if (!registry.ContainsSection(key) && !value.is_table())
+					rootValues.as_table().emplace(key, value);
+			}
+			AppendChunk(a_output, toml::format(rootValues));
+
+			std::string_view currentSection;
+			const toml::ordered_table* table = nullptr;
+			bool sectionStart = false;
+			for (const auto* setting : registry.Settings())
+			{
+				const auto section = std::string{ setting->Section() };
+				if (currentSection != section)
+				{
+					currentSection = setting->Section();
+					const auto position = root.find(section);
+					table = nullptr;
+					if (position != root.end())
+					{
+						if (!position->second.is_table())
+						{
+							a_error = "owned setting section is not a TOML table: " + section;
+							return false;
+						}
+						table = &position->second.as_table();
+					}
+					toml::ordered_value header{ toml::ordered_table{} };
+					header.as_table_fmt().fmt = toml::table_format::multiline;
+					AppendChunk(a_output, toml::format(section, header));
+					sectionStart = true;
+					if (table)
+					{
+						for (const auto& [key, value] : *table)
+						{
+							if (!registry.Find(section, key))
+							{
+								AppendChunk(a_output, FormatAssignment(key, value), !sectionStart);
+								sectionStart = false;
+							}
+						}
+					}
+				}
+
+				const auto key = std::string{ setting->Key() };
+				auto entry = "# " + std::string{ setting->Description() } + "\n";
+				if (table && table->contains(key))
+					entry += FormatAssignment(key, table->at(key), false);
+				else
+					entry += "# " + key + " = " + FormatDefault(*setting);
+				AppendChunk(a_output, std::move(entry), !sectionStart);
+				sectionStart = false;
+			}
+
+			for (const auto& [key, value] : root)
+			{
+				if (registry.ContainsSection(key) || !value.is_table())
+					continue;
+				auto tableValue = value;
+				// Root inline/dotted tables must become explicit headers here:
+				// otherwise their assignments would belong to the last owned section.
+				tableValue.as_table_fmt().fmt = toml::table_format::multiline;
+				AppendChunk(a_output, toml::format(key, tableValue));
+			}
+			if (!ValidateSerializedDocument(a_document, a_output, a_error))
+				return false;
+			a_error.clear();
+			return true;
 		}
 
-		void PreserveRemovedComments(
-			toml::value& a_section,
-			const toml::value& a_value)
+		[[nodiscard]] bool ParseUnmanagedDocument(
+			std::string_view a_source,
+			toml::ordered_value& a_document,
+			std::string& a_error)
 		{
-			auto& destination = a_section.comments();
-			const auto& source = a_value.comments();
-			destination.insert(destination.end(), source.begin(), source.end());
+			if (a_source.starts_with(kUtf8Bom))
+				a_source.remove_prefix(kUtf8Bom.size());
+			if (!ParseDocument(a_source, a_document, a_error))
+				return false;
+			const auto unmanaged = JoinLines(StripManagedHelp(a_source, a_document));
+			return ParseDocument(unmanaged, a_document, a_error);
 		}
 
 		[[nodiscard]] bool UpdateOwnedSettings(
-			toml::value& a_output,
+			toml::ordered_value& a_output,
 			std::span<const SettingValueSnapshot> a_settings,
 			std::string& a_error)
 		{
@@ -689,18 +515,16 @@ namespace Addictol
 						std::string{ item.setting->Key() });
 					if (valuePosition == table.end())
 						continue;
-					PreserveRemovedComments(
-						sectionPosition->second,
-						valuePosition->second);
 					table.erase(valuePosition);
 					continue;
 				}
 
 				if (sectionPosition == root.end())
 				{
-					sectionPosition = root.emplace(
+					root.emplace(
 						section,
-						toml::value{ toml::table{} }).first;
+						toml::ordered_value{ toml::ordered_table{} });
+					sectionPosition = root.find(section);
 				}
 				auto& table = sectionPosition->second.as_table();
 				const auto key = std::string{ item.setting->Key() };
@@ -710,27 +534,9 @@ namespace Addictol
 					table.emplace(key, ToTomlValue(item.value));
 					continue;
 				}
-				auto comments = valuePosition->second.comments();
 				valuePosition->second = ToTomlValue(item.value);
-				valuePosition->second.comments() = std::move(comments);
 			}
 			return true;
-		}
-
-		void RemoveEmptyTables(toml::value& a_output)
-		{
-			auto& root = a_output.as_table();
-			for (auto position = root.begin(); position != root.end();)
-			{
-				if (position->second.is_table() &&
-					position->second.as_table().empty() &&
-					position->second.comments().empty() &&
-					SettingRegistry::GetSingleton().ContainsSection(
-						position->first))
-					position = root.erase(position);
-				else
-					++position;
-			}
 		}
 
 		[[nodiscard]] std::filesystem::path TemporaryPath(
@@ -868,43 +674,10 @@ namespace Addictol
 	{
 		try
 		{
-			toml::value existing;
-			if (!ParseDocument(a_existingToml, existing, a_error))
+			toml::ordered_value document;
+			if (!ParseUnmanagedDocument(a_existingToml, document, a_error))
 				return false;
-			const auto unmanaged = JoinLines(
-				StripManagedHelp(a_existingToml, existing));
-			toml::value parsedUnmanaged;
-			if (!ParseDocument(unmanaged, parsedUnmanaged, a_error))
-				return false;
-			const auto expected = parsedUnmanaged;
-			std::string normalized;
-			std::string_view helpSource = unmanaged;
-			if (NormalizeOwnedSectionTables(parsedUnmanaged))
-			{
-				const auto comments =
-					CollectAllComments(unmanaged, parsedUnmanaged);
-				if (!FormatPreservingComments(
-						parsedUnmanaged,
-						unmanaged,
-						comments,
-						normalized,
-						a_error))
-					return false;
-				if (!ParseDocument(
-						normalized,
-						parsedUnmanaged,
-						a_error))
-					return false;
-				helpSource = normalized;
-			}
-			a_output = AddManagedHelp(helpSource, parsedUnmanaged);
-			if (!ValidateSerializedDocument(
-					expected,
-					a_output,
-					a_error))
-				return false;
-			a_error.clear();
-			return true;
+			return RenderDocument(document, a_existingToml, a_output, a_error);
 		}
 		catch (const std::exception& error)
 		{
@@ -936,37 +709,12 @@ namespace Addictol
 				}
 			}
 
-			toml::value existing;
-			if (!ParseDocument(a_existingToml, existing, a_error))
+			toml::ordered_value output;
+			if (!ParseUnmanagedDocument(a_existingToml, output, a_error))
 				return false;
-			const auto unmanaged = JoinLines(
-				StripManagedHelp(a_existingToml, existing));
-			toml::value output;
-			if (!ParseDocument(unmanaged, output, a_error))
-				return false;
-			const auto comments = CollectAllComments(unmanaged, output);
 			if (!UpdateOwnedSettings(output, a_settings, a_error))
 				return false;
-
-			RemoveEmptyTables(output);
-			(void)NormalizeOwnedSectionTables(output);
-			std::string formatted;
-			if (!FormatPreservingComments(
-					output,
-					unmanaged,
-					comments,
-					formatted,
-					a_error))
-				return false;
-
-			toml::value parsedFormatted;
-			if (!ParseDocument(formatted, parsedFormatted, a_error))
-				return false;
-			a_output = AddManagedHelp(formatted, parsedFormatted);
-			if (!ValidateSerializedDocument(output, a_output, a_error))
-				return false;
-			a_error.clear();
-			return true;
+			return RenderDocument(output, a_existingToml, a_output, a_error);
 		}
 		catch (const std::exception& error)
 		{
@@ -1063,13 +811,32 @@ namespace Addictol
 		}
 	}
 
+	std::filesystem::path ResolveSettingsPath(
+		const std::filesystem::path& a_directory) noexcept
+	{
+		const auto custom = a_directory / kAddictolCustomSettingsFileName;
+		std::error_code error;
+		if (std::filesystem::exists(custom, error) && !error)
+			return custom;
+		return a_directory / kAddictolSettingsFileName;
+	}
+
+	std::filesystem::path ResolveSettingsPath() noexcept
+	{
+		return ResolveSettingsPath(std::filesystem::path{ kAddictolSettingsDirectory });
+	}
+
 	void InitializeSettings() noexcept
 	{
-		InitializeSettings(std::filesystem::path{ kAddictolSettingsPath });
+		InitializeSettings(ResolveSettingsPath());
 	}
 
 	void InitializeSettings(const std::filesystem::path& a_path) noexcept
 	{
+		g_settingsStorePath = a_path.string();
+		if (a_path.filename() == kAddictolCustomSettingsFileName)
+			REX::INFO("Settings: using \"{}\""sv, g_settingsStorePath);
+
 		std::string documentationError;
 		if (!RefreshSettingsDocument(
 				a_path,
@@ -1081,7 +848,6 @@ namespace Addictol
 				documentationError);
 		}
 
-		g_settingsStorePath = a_path.string();
 		const auto config = REX::FTomlSettingStore::GetSingleton();
 		config->Init("", g_settingsStorePath.c_str());
 		config->Load();
@@ -1091,7 +857,8 @@ namespace Addictol
 	SettingsRepository& SettingsRepository::GetSingleton() noexcept
 	{
 		static SettingsRepository singleton{
-			std::filesystem::path{ kAddictolSettingsPath }
+			g_settingsStorePath.empty() ?
+				ResolveSettingsPath() : std::filesystem::path{ g_settingsStorePath }
 		};
 		return singleton;
 	}

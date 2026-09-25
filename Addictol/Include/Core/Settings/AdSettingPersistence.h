@@ -10,9 +10,9 @@
 
 namespace Addictol
 {
-	inline constexpr std::string_view kAddictolSettingsPath{
-		"Data/F4SE/Plugins/Addictol.toml"
-	};
+	inline constexpr std::string_view kAddictolSettingsDirectory{ "Data/F4SE/Plugins" };
+	inline constexpr std::string_view kAddictolSettingsFileName{ "Addictol.toml" };
+	inline constexpr std::string_view kAddictolCustomSettingsFileName{ "AddictolCustom.toml" };
 
 	struct SettingValueSnapshot
 	{
@@ -45,6 +45,9 @@ namespace Addictol
 		const std::filesystem::path& a_path,
 		std::string& a_error,
 		bool* a_changed = nullptr) noexcept;
+	[[nodiscard]] std::filesystem::path ResolveSettingsPath(
+		const std::filesystem::path& a_directory) noexcept;
+	[[nodiscard]] std::filesystem::path ResolveSettingsPath() noexcept;
 	void InitializeSettings() noexcept;
 	void InitializeSettings(const std::filesystem::path& a_path) noexcept;
 

@@ -24,7 +24,7 @@ namespace Addictol::Menu
 				"One Addictol DLL supports OG 1.10.163, NG 1.10.984, and AE 1.11.240." },
 			dmui::FaqEntry{
 				"Where is the configuration stored?",
-				"Addictol creates Data/F4SE/Plugins/Addictol.toml with registry-generated documentation. Uncomment or add assignments there to override factory defaults." }
+				"Addictol documents the active settings file in Data/F4SE/Plugins (AddictolCustom.toml if present, otherwise Addictol.toml). Uncomment a setting to override its factory default." }
 		};
 
 		struct ModCheck

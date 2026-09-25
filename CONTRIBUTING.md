@@ -241,8 +241,8 @@ A configurable module touches six places:
 5. `VC/Addictol.vcxproj`, plus the header and the `.filters` entries by convention.
 6. `Addictol/Include/Core/Settings/AdSettings.h` and the matching section source under
    `Addictol/Source/Core/Settings`, declaring the setting, factory default, and authoritative
-   user-facing description. Startup generates the documented `Addictol.toml` template from this
-   registry metadata.
+   user-facing description. Startup documents the active settings file from this registry
+   metadata (`AddictolCustom.toml` if present, otherwise `Addictol.toml`).
 
 ### Worked example
 
@@ -347,8 +347,11 @@ U32Setting uAdditionalScaleformPageSize{
 ```
 
 The C++ initializer is the factory default and the sole maintained default. Addictol creates and
-refreshes managed documentation in the user-owned `Data/F4SE/Plugins/Addictol.toml`; active values
-there are overrides. Do not add a populated TOML under `data/` or load `AddictolCustom.toml`.
+refreshes descriptions directly above assignments in the user-owned settings file under
+`Data/F4SE/Plugins`: `AddictolCustom.toml` if present, otherwise `Addictol.toml`, never merged.
+Active values there are overrides; Apply removes factory-valued assignments. Comments attached
+to unknown content are preserved, not comments on owned settings or free-floating notes.
+Do not add a populated TOML under `data/`.
 
 Default a new fix to `true` only if you are confident it is safe and well tested. Heuristics,
 anything that changes behaviour rather than fixing an outright bug, and anything you have not

@@ -79,16 +79,19 @@ normal installations. Development prereleases are published from `master` as
 
 The central registry exposes 116 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
 `[Telemetry]`, and `[Additional]`. On first launch, Addictol creates
-`Data\F4SE\Plugins\Addictol.toml` with every registry description and a commented factory value.
-Addictol refreshes those managed help comments on later launches while preserving active values,
-unknown entries, and personal notes placed outside the marked help blocks.
+`Data\F4SE\Plugins\Addictol.toml` with each description directly above its assignment:
+active overrides or commented factory defaults. Documentation is refreshed on later launches;
+unknown entries and their attached comments are preserved, but comments on Addictol settings
+and free-floating notes are replaced.
+If `AddictolCustom.toml` exists in the same directory, it is the only file loaded, refreshed,
+and saved by the menu; `Addictol.toml` is ignored. The files are never merged.
 Uncomment a generated assignment or add an override to edit settings without DearModdingUI.
 File edits are loaded on the next game launch.
 
 > [!WARNING]
-> Existing users must move the old shipped `Addictol.toml` aside, then rename
-> `AddictolCustom.toml` to `Addictol.toml` if they used one. There is no automatic migration.
-> Leaving the old full base file in place makes every active value in it an explicit override.
+> An old shipped full `Addictol.toml`, when active, still makes every assignment an explicit
+> override. Move it aside to start with factory defaults. Existing `AddictolCustom.toml` files
+> need no renaming; old managed-help blocks are converted automatically.
 
 ```toml
 [Fixes]
