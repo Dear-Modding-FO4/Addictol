@@ -182,6 +182,21 @@ namespace Addictol
 		Plugin::GetSingleton()->GetModules().ListenerAllPapyrus(a_vm);
 	}
 
+	// Shared first-load startup; settings must load before anything reads them.
+	static void InitializeStartup(const REL::Version& a_gameVersion) noexcept
+	{
+		REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
+		REX::INFO("Game version: {}.{}.{}.{}"sv, a_gameVersion.major(), a_gameVersion.minor(), a_gameVersion.patch(), a_gameVersion.build());
+
+		InitializeSettings();
+		LogControl::Install();
+		InitializeZlibBackendConfig();
+
+		AnalyzeF4SECriticalCompatibility();
+
+		REL::GetTrampoline().create(AD_TRAMPOLINE_SIZE);
+	}
+
 	bool Plugin::Init(const F4SE::LoadInterface* a_f4se)
 	{
 		if (isInit)
@@ -197,24 +212,7 @@ namespace Addictol
 			F4SE::Init(a_f4se);
 
 			if (!isPreloadInit)
-			{
-				auto game_ver = a_f4se->RuntimeVersion();
-				REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
-				REX::INFO("Game version: {}.{}.{}.{}"sv, game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
-
-				// Analyze F4SE Mods
-				AnalyzeF4SECriticalCompatibility();
-
-				// Get the Trampoline and Allocate
-				auto& trampoline = REL::GetTrampoline();
-				trampoline.create(AD_TRAMPOLINE_SIZE);
-
-				// Load the Config
-				InitializeSettings();
-				LogControl::Install();
-				InitializeZlibBackendConfig();
-
-			}
+				InitializeStartup(a_f4se->RuntimeVersion());
 
 			// Register all modules
 			AdRegisterModules();
@@ -258,21 +256,7 @@ namespace Addictol
 			// Preload Init
 			F4SE::Init(a_preloadf4se);
 
-			auto game_ver = a_preloadf4se->RuntimeVersion();
-			REX::INFO("" _PluginName " mod (ver: " VER_FILE_VERSION_STR ") Initializing..."sv);
-			REX::INFO("Game version: {}.{}.{}.{}"sv, game_ver.major(), game_ver.minor(), game_ver.patch(), game_ver.build());
-
-			// Analyze F4SE Mods
-			AnalyzeF4SECriticalCompatibility();
-
-			// Get the Trampoline and Allocate
-			auto& trampoline = REL::GetTrampoline();
-			trampoline.create(AD_TRAMPOLINE_SIZE);
-
-			// Load the Config
-			InitializeSettings();
-			LogControl::Install();
-			InitializeZlibBackendConfig();
+			InitializeStartup(a_preloadf4se->RuntimeVersion());
 
 			// Register preload all modules
 			AdRegisterPreloadModules();
