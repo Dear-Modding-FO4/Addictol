@@ -401,7 +401,7 @@ namespace Addictol
 			const auto& root = a_document.as_table();
 			a_output = a_source.starts_with(kUtf8Bom) ?
 				std::string{ kUtf8Bom } : std::string{};
-			a_output += "# Addictol settings. Uncomment a line to change it; edits apply on the next launch.\n";
+			a_output += "# ADDICTOL FALLOUT 4 PLUGIN SETTINGS\n# Uncomment a line to change it; edits apply on the next launch.\n";
 
 			toml::ordered_value rootValues{ toml::ordered_table{} };
 			for (const auto& [key, value] : root)
@@ -433,7 +433,8 @@ namespace Addictol
 					}
 					toml::ordered_value header{ toml::ordered_table{} };
 					header.as_table_fmt().fmt = toml::table_format::multiline;
-					AppendChunk(a_output, toml::format(section, header));
+					AppendChunk(a_output, '\n' + toml::format(section, header));
+					a_output += '\n';
 					sectionStart = true;
 					if (table)
 					{

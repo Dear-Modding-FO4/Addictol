@@ -56,7 +56,7 @@ namespace Addictol
 		"bPluginTiming"sv,
 		SettingDisplayCategory::kDiagnostics,
 		false,
-		"times f4se plugin query and load exports"sv,
+		"Times F4SE Plugin query and load exports"sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -65,7 +65,7 @@ namespace Addictol
 		"bFormLoadTiming"sv,
 		SettingDisplayCategory::kDiagnostics,
 		false,
-		"times form compilation and construction"sv,
+		"Times form compilation and construction"sv,
 		SettingApplyTiming::kNextLaunch
 	};
 }
