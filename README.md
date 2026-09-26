@@ -38,7 +38,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 
 ## Features
 
-The 91 modules cover the following areas. Most can be toggled independently; a small set of
+The 94 modules cover the following areas. Most can be toggled independently; a small set of
 core modules is mandatory.
 
 | Capability | Implementation |
@@ -77,7 +77,7 @@ normal installations. Development prereleases are published from `master` as
 
 ## Configuration
 
-The central registry exposes 116 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
+The central registry exposes 117 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
 `[Telemetry]`, and `[Additional]`. On first launch, Addictol creates
 `Data\F4SE\Plugins\Addictol.toml` with each description directly above its assignment:
 active overrides or commented factory defaults. Documentation is refreshed on later launches;
@@ -126,7 +126,7 @@ appearance in the host settings page behind the footer gear (or via `DearModding
 | Page | Contents |
 |---|---|
 | **Home** | Runtime, live module summary, project links, FAQ, and mod evaluation guide. |
-| **Settings** | All 116 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
+| **Settings** | All 117 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
 | **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
 | **Changelog** | Released versions and their notes from the canonical [changelog](CHANGELOG.md). |
 | **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels when telemetry or operation profiling is enabled. |

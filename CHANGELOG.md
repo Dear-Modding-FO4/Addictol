@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.0
+
+- Added the "Sprint Speed Mult" module.
+
 ## 1.6.0
 
 - Added the "AIProcess 3DUpdateFlag" module.

@@ -88,7 +88,7 @@ Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
-Addictol/Source/Modules/     one .cpp per feature module (91 total)
+Addictol/Source/Modules/     one .cpp per feature module (94 total)
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header

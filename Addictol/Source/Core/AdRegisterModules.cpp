@@ -74,6 +74,7 @@
 #include <Modules/AdModuleAttachLightCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
 #include <Modules/AdModuleSprintStutter.h>
+#include <Modules/AdModuleSprintSpeedMult.h>
 #include <Modules/AdModuleMoonRotation.h>
 #include <Modules/AdModuleCrashRemoveRef.h>
 #include <Modules/AdModuleClimateLoad.h>
@@ -169,6 +170,7 @@ static auto sModuleMagicKeywordCrash				= std::make_shared<Addictol::ModuleMagic
 static auto sModuleAttachLightCrash					= std::make_shared<Addictol::ModuleAttachLightCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
+static auto sModuleSprintSpeedMult					= std::make_shared<Addictol::ModuleSprintSpeedMult>();
 static auto sModuleMoonRotation						= std::make_shared<Addictol::ModuleMoonRotation>();
 static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRemoveRef>();
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
@@ -308,6 +310,7 @@ void AdRegisterModules()
 	modules.Register(sModuleCraftingMenuFix,				kGameDataReady);
 	modules.Register(sModuleNPCHealthOverflowFix,			kGameDataReady);
 	modules.Register(sModuleArmorPenetration,				kGameDataReady);
+	modules.Register(sModuleSprintSpeedMult,				kGameDataReady);
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);
