@@ -56,3 +56,4 @@
 .clangd
 *.lastcodeanalysissucceeded
 compile_commands.json
+__pycache__/
