@@ -41,6 +41,13 @@ def atomic_write(path: Path, content: bytes) -> None:
             temporary.unlink()
 
 
+def mutation_bytes(entry: dict[str, str], original: bytes) -> tuple[bytes, bytes]:
+    # Manifest strings use LF; checkouts may convert targets to CRLF.
+    newline = b"\r\n" if b"\r\n" in original else b"\n"
+    encode = lambda text: text.replace("\r\n", "\n").encode("utf-8").replace(b"\n", newline)
+    return encode(entry["find"]), encode(entry["replace"])
+
+
 def restore_target(path: Path, original: bytes, mutated: bytes, entry: dict[str, str]) -> None:
     global DEFERRED_INTERRUPT
     global RESTORING
@@ -53,8 +60,7 @@ def restore_target(path: Path, original: bytes, mutated: bytes, entry: dict[str,
         elif current == mutated:
             atomic_write(path, original)
         else:
-            find = entry["find"].encode("utf-8")
-            replacement = entry["replace"].encode("utf-8")
+            find, replacement = mutation_bytes(entry, original)
             if current.count(replacement) == 1 and current.count(find) == 0:
                 atomic_write(path, current.replace(replacement, find, 1))
                 raise MutationFailure(
@@ -154,8 +160,7 @@ def load_manifest() -> list[dict[str, str]]:
 def run_mutation(entry: dict[str, str], index: int, total: int) -> None:
     target = ROOT / entry["target"]
     original = target.read_bytes()
-    find = entry["find"].encode("utf-8")
-    replacement = entry["replace"].encode("utf-8")
+    find, replacement = mutation_bytes(entry, original)
     occurrences = original.count(find)
     if occurrences != 1:
         raise MutationFailure(

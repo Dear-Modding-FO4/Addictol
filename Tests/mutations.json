@@ -11,7 +11,7 @@
     "name": "voltek page links stay below the bump frontier",
     "target": "Depends/vmm/source/vmmpage.h",
     "find": "(next != none && next >= _bump) || ",
-    "replace": "",
+    "replace": "false || ",
     "check": "a corrupted free-list link is not followed",
     "message": "a block with a corrupted page link was consumed"
   },
@@ -162,24 +162,24 @@
   {
     "name": "zlib hook timing requires enabled telemetry",
     "target": "Addictol/Include/Zlib/AdZlibTelemetry.h",
-    "find": "const auto telemetryEnabled = Telemetry::EnabledRelaxed();",
-    "replace": "const auto telemetryEnabled = true;",
+    "find": "const bool enabled = Telemetry::EnabledRelaxed();",
+    "replace": "const bool enabled = true;",
     "check": "disabled telemetry leaves zlib counters untouched",
     "message": "disabled zlib instrumentation read the clock"
   },
   {
     "name": "zlib hook thread attribution requires enabled telemetry",
     "target": "Addictol/Include/Zlib/AdZlibTelemetry.h",
-    "find": "recordEnabled ? threadReader() : 0;",
-    "replace": "threadReader();",
+    "find": "record ? a_threadReader() : 0",
+    "replace": "a_threadReader()",
     "check": "disabled telemetry leaves zlib counters untouched",
     "message": "disabled zlib instrumentation read the thread id"
   },
   {
     "name": "zlib hook counters require enabled telemetry",
     "target": "Addictol/Include/Zlib/AdZlibTelemetry.h",
-    "find": "recorder(outcome, recordEnabled, currentThreadId);",
-    "replace": "recorder(outcome, true, currentThreadId);",
+    "find": "a_recorder(outcome, record,",
+    "replace": "a_recorder(outcome, true,",
     "check": "disabled telemetry leaves zlib counters untouched",
     "message": "disabled zlib instrumentation performed an atomic update"
   },
@@ -274,16 +274,16 @@
   {
     "name": "plugin timing series name stays public",
     "target": "Addictol/Include/Telemetry/AdLoadTiming.h",
-    "find": "\"plugin.query\",\r\n\t\t\"plugin.load\"",
-    "replace": "\"plugin.resolve\",\r\n\t\t\"plugin.load\"",
+    "find": "\"plugin.query\",\n\t\t\"plugin.load\"",
+    "replace": "\"plugin.resolve\",\n\t\t\"plugin.load\"",
     "check": "load timing series schema is stable",
     "message": "plugin timing series changed"
   },
   {
     "name": "disabled timing rejects records",
     "target": "Addictol/Include/Telemetry/AdTelemetry.h",
-    "find": "if (!m_active)\r\n\t\t\t\treturn false;",
-    "replace": "if (false)\r\n\t\t\t\treturn false;",
+    "find": "if (!m_active)\n\t\t\t\treturn false;",
+    "replace": "if (false)\n\t\t\t\treturn false;",
     "check": "disabled load timing produces zero rows",
     "message": "disabled timing buffer accepted an event"
   },
@@ -298,8 +298,8 @@
   {
     "name": "startup timing waits for hub start",
     "target": "Addictol/Include/Telemetry/AdTelemetry.h",
-    "find": "if (!m_active || !m_drainEnabled)\r\n\t\t\t\treturn 0;",
-    "replace": "if (!m_active)\r\n\t\t\t\treturn 0;",
+    "find": "if (!m_active || !m_drainEnabled)\n\t\t\t\treturn 0;",
+    "replace": "if (!m_active)\n\t\t\t\treturn 0;",
     "check": "load timing startup rows survive the initial clear",
     "message": "startup timing row drained before the hub started"
   },
@@ -386,8 +386,8 @@
   {
     "name": "settings numeric controls honor ranges",
     "target": "Addictol/Source/Core/Settings/AdSettingsModel.cpp",
-    "find": "if (!a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
-    "replace": "if (a_setting.NumericRange())\r\n\t\t\t\treturn SettingControlKind::kNumericInput;",
+    "find": "if (!a_setting.NumericRange())\n\t\t\t\treturn SettingControlKind::kNumericInput;",
+    "replace": "if (a_setting.NumericRange())\n\t\t\t\treturn SettingControlKind::kNumericInput;",
     "check": "settings reset predicate and control selection follow metadata",
     "message": "fully bounded number did not select a slider"
   },
