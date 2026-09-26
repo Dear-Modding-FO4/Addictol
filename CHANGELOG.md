@@ -2,7 +2,19 @@
 
 ## 1.7.0
 
+- Added the "Local Map Rotation" module.
+- Added the "Shader Reference Effect Lifetime" module.
 - Added the "Sprint Speed Mult" module.
+- Added an in-game changelog.
+- ControlSamplers: Fixed sampler lifetime handling.
+- LibDeflate: Added selectable stock, zlib, zlib-ng, ISA-L, and hybrid decompression backends.
+- LoadScreen: Removed the requirement for High FPS Physics Fix.
+- MemoryManager: Reworked Voltek and added mimalloc, rpmalloc, and stock allocator options.
+- Menu: Updated DearModdingUI integration and shared layouts.
+- MoonRotation: Corrected the moon's orbit, direction, daily rise timing, and apparent size.
+- Settings: Generate inline TOML documentation and save only nondefault overrides.
+- Telemetry: Added optional allocator and decompression operation profiling.
+- Other internal fixes and improvements.
 
 ## 1.6.0
 
@@ -27,9 +39,6 @@
 - ArchiveLimits: Added 1.11.240.0 support.
 - AudioSwitch: Reworked AudioProxy into AudioSwitch (XAudio2.7).
 - ControlSamplers: Fixed a rare startup crash.
-- CrashLogger: Added the .240 PDB (~43K symbols).
-- CrashLogger: Updated the .221 PDB (~43K symbols).
-- CrashLogger: Read AddictolCustom.toml overrides.
 - EscapeFreeze: Only release locks orphaned by a terminated owner thread.
 - FasterWorkshop: Fixed ClearBuiltMap never being called.
 - LoadOrder: Further fixes to prevent plugin shuffling.
