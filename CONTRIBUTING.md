@@ -569,18 +569,6 @@ the reported allocation failure counts rather than relying on exit status alone.
 
 The heap benchmark also reports bulk allocation and FIFO free separately (three rounds per size).
 
-### Mutation controls
-
-Run `python Tests/run_mutations.py` from the repository root to prove the named negative controls in
-`Tests/mutations.json`. The runner preserves the configured xmake mode, requires a green baseline,
-rebuilds and runs `vmm-tests` for each mutation, matches the exact named failure and message, restores
-the target byte-for-byte, then requires a green restored suite. It is a deliberate local check, not
-a CI gate, because every entry requires a rebuild.
-
-To add an entry, provide its unique exact `find` string, `replace` string, production `target`, and
-the exact `check` and `message` printed by the expected `[FAIL]` line. Run the complete manifest
-before submitting; a missing or repeated find string is a stale-manifest failure, never a skip.
-
 ## Submitting a pull request
 
 Target `master`. CI builds your branch and attaches an artifact you can download and test. A green
