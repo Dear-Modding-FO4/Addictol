@@ -397,7 +397,7 @@ namespace Addictol
 		"bFullPrecisionDecals"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Enables fixes for decal projection, effect-shader particles, and membrane shaders on full-precision meshes."sv,
+		"Enables fixes for decal projection and effect-shader particles on full-precision meshes."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

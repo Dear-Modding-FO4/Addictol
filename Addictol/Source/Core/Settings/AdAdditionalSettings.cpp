@@ -108,15 +108,6 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bAdditionalFullPrecisionDecalsMembrane{
-		"Additional"sv,
-		"bFullPrecisionDecalsMembrane"sv,
-		SettingDisplayCategory::kVisuals,
-		true,
-		"Fixes membrane shaders on full-precision meshes with a cached compact vertex buffer (needs bFullPrecisionDecals)."sv,
-		SettingApplyTiming::kNextLaunch
-	};
-
 	BoolSetting bAdditionalFullPrecisionDecalsEffectShaders{
 		"Additional"sv,
 		"bFullPrecisionDecalsEffectShaders"sv,

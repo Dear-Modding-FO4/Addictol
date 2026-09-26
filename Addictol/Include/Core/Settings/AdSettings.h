@@ -116,7 +116,6 @@ namespace Addictol
 	extern I32Setting nAdditionalSleepTimer;
 	extern I32Setting nAdditionalMaxLockCount;
 	extern BoolSetting bAdditionalMultiThreading;
-	extern BoolSetting bAdditionalFullPrecisionDecalsMembrane;
 	extern BoolSetting bAdditionalFullPrecisionDecalsEffectShaders;
 	extern I32Setting nAdditionalMaxPapyrusOpsPerFrame;
 	extern BoolSetting bAdditionalIgnorePreInstallBias;

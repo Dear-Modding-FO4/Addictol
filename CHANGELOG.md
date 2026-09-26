@@ -7,6 +7,7 @@
 - Added the "Sprint Speed Mult" module.
 - Added an in-game changelog.
 - ControlSamplers: Fixed sampler lifetime handling.
+- FullPrecisionDecals: Removed the membrane vertex-buffer swap, which caused single-frame screen flashes.
 - LibDeflate: Added selectable stock, zlib, zlib-ng, ISA-L, and hybrid decompression backends.
 - LoadScreen: Removed the requirement for High FPS Physics Fix.
 - MemoryManager: Reworked Voltek and added mimalloc, rpmalloc, and stock allocator options.
