@@ -11,7 +11,7 @@ namespace Addictol
 {
 	namespace sprintSpeedMultDetail
 	{
-		constexpr REL::ID s_doSetMoveMode{ 196994, 2231463, 2231463 };
+		constexpr REL::ID s_doSetMoveMode{ 196994, 2231463 };
 		RE::ActorValueInfo* s_speedMultAVIF;
 
 		struct DoSetMoveMode
