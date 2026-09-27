@@ -135,6 +135,7 @@ namespace vmm_tests
 	void run_shader_reference_effect_lifetime_checks(Runner& runner);
 	void run_telemetry_checks(Runner& runner);
 	void run_operation_profile_checks(Runner& runner);
+	void run_image_profiling_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
 	int run_benchmarks(std::string_view a_backend);

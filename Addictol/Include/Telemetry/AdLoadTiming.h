@@ -24,7 +24,9 @@ namespace Addictol::LoadTiming
 
 	inline constexpr std::array kPluginMetricSchema{
 		MetricDescriptor{ "plugin.overflow_events", Unit::kCount },
-		MetricDescriptor{ "plugin.name_failures", Unit::kCount }
+		MetricDescriptor{ "plugin.name_failures", Unit::kCount },
+		MetricDescriptor{ "plugin.callback_overflow", Unit::kCount },
+		MetricDescriptor{ "plugin.callback_series_overflow", Unit::kCount }
 	};
 	inline constexpr std::array kFormMetricSchema{
 		MetricDescriptor{ "esp.overflow_events", Unit::kCount }
@@ -38,6 +40,8 @@ namespace Addictol::LoadTiming
 	inline constexpr size_t kTESFileNameOffset{ 0x70 };
 	inline constexpr size_t kTESFileNameCapacity{ 260 };
 	inline constexpr size_t kPluginNameFailureMetric{ 1 };
+	inline constexpr size_t kPluginCallbackOverflowMetric{ 2 };
+	inline constexpr size_t kPluginCallbackSeriesOverflowMetric{ 3 };
 
 	[[nodiscard]] constexpr std::string_view FileNameFromPath(
 		std::string_view a_path) noexcept

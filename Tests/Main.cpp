@@ -58,6 +58,7 @@ int main(int argc, char** argv)
 	run_log_control_checks(runner);
 	run_telemetry_checks(runner);
 	run_operation_profile_checks(runner);
+	run_image_profiling_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
 	return runner.failures() == 0 ? 0 : 1;

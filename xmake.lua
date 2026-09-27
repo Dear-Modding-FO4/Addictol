@@ -280,6 +280,7 @@ target("vmm-tests", function()
     -- add source files
     add_files("Tests/**.cpp")
     add_files("Addictol/Source/Core/AdClock.cpp")
+    add_files("Addictol/Source/Core/AdIAT.cpp")
     add_files("Addictol/Source/Core/AdConfigValidation.cpp")
     add_files("Addictol/Source/Core/AdLogControl.cpp")
     add_files("Addictol/Source/Core/Settings/**.cpp")
@@ -288,6 +289,10 @@ target("vmm-tests", function()
     add_files("Addictol/Source/Memory/AdProfiledHeap.cpp")
     add_files("Addictol/Source/Telemetry/AdOperationProfile.cpp")
     add_files("Addictol/Source/Telemetry/AdTelemetryHub.cpp")
+    add_files("Addictol/Source/Telemetry/AdImageRegistry.cpp")
+    add_files("Addictol/Source/Telemetry/AdImageMemory.cpp")
+    add_files("Addictol/Source/Telemetry/AdImageSampling.cpp")
+    add_files("Addictol/Source/Telemetry/AdPluginCallbacks.cpp")
     add_files("Addictol/Source/Zlib/AdZlibBackend.cpp")
     add_files("Addictol/Source/Zlib/AdOwnedInflate.cpp")
     add_files("Addictol/Source/Zlib/AdZlibInstallation.cpp")
@@ -314,6 +319,7 @@ target("vmm-tests", function()
         "SPDLOG_COMPILED_LIB",
         "SPDLOG_USE_STD_FORMAT",
         "COMMONLIB_OPTION_TOML",
+        "XBYAK_NO_OP_NAMES",
         "AD_TELEMETRY_TESTS"
     )
 

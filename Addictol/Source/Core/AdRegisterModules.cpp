@@ -33,6 +33,8 @@
 #include <Modules/AdModuleINISettingCollection.h>
 #include <Modules/AdModulePipBoyLightInv.h>
 #include <Modules/AdModulePluginTiming.h>
+#include <Modules/AdModuleImageMemory.h>
+#include <Modules/AdModuleImageSampling.h>
 #include <Modules/AdModuleInteriorNavCut.h>
 #include <Modules/AdModuleControlSamplers.h>
 #include <Modules/AdModuleMagicEffectApplyEvent.h>
@@ -95,6 +97,16 @@
 #include <Modules/AdModuleArmorPenetration.h>
 #include <Modules/AdModuleLocalMapRotation.h>
 
+namespace
+{
+	template<class T>
+	std::shared_ptr<T> MakeProcessLifetimeModule()
+	{
+		// Foreign IATs and callbacks remain callable during other DLLs' static teardown.
+		return std::shared_ptr<T>{ new T, [](T*) {} };
+	}
+}
+
 // Create patches
 static auto sModuleThreads							= std::make_shared<Addictol::ModuleThreads>();
 static auto sModuleGreyMovie						= std::make_shared<Addictol::ModuleGreyMovie>();
@@ -128,7 +140,9 @@ static auto sModuleBSPreCulledObjects				= std::make_shared<Addictol::ModuleBSPr
 static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::ModuleTESObjectREFRGetEncounterZone>();
 static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
 static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
-static auto sModulePluginTiming						= std::make_shared<Addictol::ModulePluginTiming>();
+static auto sModulePluginTiming						= MakeProcessLifetimeModule<Addictol::ModulePluginTiming>();
+static auto sModuleImageMemory						= MakeProcessLifetimeModule<Addictol::ModuleImageMemory>();
+static auto sModuleImageSampling						= MakeProcessLifetimeModule<Addictol::ModuleImageSampling>();
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
 static auto sModuleControlSamplers					= std::make_shared<Addictol::ModuleControlSamplers>();
 static auto sModuleMagicEffectApplyEvent			= std::make_shared<Addictol::ModuleMagicEffectApplyEvent>();
@@ -205,6 +219,7 @@ void AdRegisterPreloadModules()
 	modules.Register(sModuleDpiScaling);
 	modules.Register(sModuleProcessIcon);
 	modules.Register(sModulePluginTiming);
+	modules.Register(sModuleImageMemory);
 }
 
 void AdRegisterModules()
@@ -221,6 +236,7 @@ void AdRegisterModules()
 	auto& modules = plugin->GetModules();
 
 	// Registers load stage patches
+	modules.Register(sModuleImageSampling);
 	modules.Register(sModuleGreyMovie);
 	modules.Register(sModulePackageAllocateLocation);
 	modules.Register(sModuleLibDeflate);

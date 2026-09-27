@@ -56,7 +56,7 @@ namespace Addictol
 		"bPluginTiming"sv,
 		SettingDisplayCategory::kDiagnostics,
 		false,
-		"Times F4SE Plugin query and load exports"sv,
+		"Times F4SE plugin exports and callbacks"sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -67,5 +67,33 @@ namespace Addictol
 		false,
 		"Times form compilation and construction"sv,
 		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bTelemetryImageMemory{
+		"Telemetry"sv,
+		"bImageMemory"sv,
+		SettingDisplayCategory::kDiagnostics,
+		false,
+		"Attributes allocation flow and live blocks of at least 64 KiB to non-system DLLs."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bTelemetryImageSampling{
+		"Telemetry"sv,
+		"bImageSampling"sv,
+		SettingDisplayCategory::kDiagnostics,
+		false,
+		"Samples active thread stacks to estimate CPU time by DLL; unavailable under Wine."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
+	U32Setting uTelemetryImageSampleHz{
+		"Telemetry"sv,
+		"uImageSampleHz"sv,
+		SettingDisplayCategory::kDiagnostics,
+		100,
+		"Sets image CPU samples per second; higher rates increase diagnostic overhead (needs bImageSampling)."sv,
+		SettingApplyTiming::kNextLaunch,
+		SettingNumericRange{ 10.0, 1000.0 }
 	};
 }

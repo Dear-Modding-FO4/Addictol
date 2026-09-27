@@ -1,6 +1,7 @@
 #include <REX/FModule.h>
 #include <REL/Utility.h>
 #include <Core/AdUtils.h>
+#include <Core/AdIAT.h>
 #include <Core/AdAssert.h>
 #include <detours/Detours.h>
 
@@ -171,13 +172,13 @@ namespace RELEX
 
 	uintptr_t DetourIAT(const char* a_importModule, const char* a_functionName, uintptr_t a_function) noexcept
 	{
-		return Detours::IATHook(REX::FModule::GetExecutingModule().GetBaseAddress(), a_importModule, a_functionName, a_function);
+		return PatchImport(REX::FModule::GetExecutingModule().GetBaseAddress(), a_importModule, a_functionName, a_function);
 	}
 
 	uintptr_t DetourIAT(uintptr_t a_targetModule, const char* a_importModule,
 		const char* a_functionName, uintptr_t a_function) noexcept
 	{
-		return Detours::IATHook(a_targetModule, a_importModule, a_functionName, a_function);
+		return PatchImport(a_targetModule, a_importModule, a_functionName, a_function);
 	}
 
 	uintptr_t DetourIATDelayed(const char* a_importModule, const char* a_functionName,

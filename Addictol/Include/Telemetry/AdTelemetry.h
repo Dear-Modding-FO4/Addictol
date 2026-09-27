@@ -321,10 +321,10 @@ namespace Addictol
 			return m_series.Record(a_series, a_bucket, a_ticks, a_threadId);
 		}
 
-		void CountMetric(size_t a_index) noexcept
+		void CountMetric(size_t a_index, uint64_t a_count = 1) noexcept
 		{
 			assert(a_index > 0 && a_index < MetricCount);
-			m_counters[a_index - 1].fetch_add(1, std::memory_order_relaxed);
+			m_counters[a_index - 1].fetch_add(a_count, std::memory_order_relaxed);
 		}
 
 	private:
@@ -343,8 +343,15 @@ namespace Addictol
 			}
 		}
 
+	protected:
 		void BeginInterval(uint64_t) noexcept override { m_series.EnableDrain(); }
 
+		[[nodiscard]] size_t DrainBurst(std::span<SeriesSample> a_out) noexcept
+		{
+			return m_series.Drain(a_out);
+		}
+
+	private:
 		[[nodiscard]] size_t DrainSeries(
 			std::span<SeriesSample> a_out) noexcept override
 		{

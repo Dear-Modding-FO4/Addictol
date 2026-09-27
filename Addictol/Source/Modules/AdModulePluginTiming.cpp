@@ -38,6 +38,11 @@ namespace Addictol
 			return false;
 		}
 		m_installAttempted = true;
+		if (!ImageRegistry::Get().Start())
+		{
+			Skip("image registry unavailable"sv);
+			return false;
+		}
 
 		const auto trampoline = F4SE::GetTrampolineInterface();
 		const auto proxy =
@@ -72,6 +77,7 @@ namespace Addictol
 			return false;
 		}
 
+		s_f4seModule = f4seModule;
 		const auto original = RELEX::DetourIAT(
 			reinterpret_cast<uintptr_t>(f4seModule),
 			"kernel32.dll",
@@ -89,7 +95,7 @@ namespace Addictol
 		if (RELEX::IsRuntimeOG())
 		{
 			REX::INFO(
-				"Plugin Timing: OG query rows are unavailable and load rows begin after Addictol"sv);
+				"Plugin Timing: OG partial coverage; exports and callbacks loaded before Addictol are missed"sv);
 		}
 		return true;
 	}
@@ -125,6 +131,7 @@ namespace Addictol
 			const auto name = s_instance->FindPluginName(a_module);
 			s_activeName = name.data();
 			s_activeNameLength = name.size();
+			s_activeModule = a_module;
 			s_originalLoad = reinterpret_cast<LoadFn>(original);
 			return reinterpret_cast<FARPROC>(&HookLoad);
 		}
@@ -150,12 +157,46 @@ namespace Addictol
 		const auto original = s_originalLoad;
 		if (!original)
 			return false;
+		const auto load = static_cast<const F4SE::Impl::F4SEInterface*>(a_f4se);
+		if (s_instance && load)
+		{
+			const auto f4se = ImageRegistry::Get().Resolve(reinterpret_cast<uintptr_t>(s_f4seModule));
+			const auto plugin = ImageRegistry::Get().Resolve(reinterpret_cast<uintptr_t>(s_activeModule));
+			if (f4se)
+				s_instance->m_callbacks.Install(*load, *f4se);
+			if (load->GetPluginHandle)
+				s_instance->m_callbacks.BeginLoad(load->GetPluginHandle(), plugin ? plugin->id : kInvalidImage);
+		}
 		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_f4se);
 		const auto end = Addictol::ReadQpc();
+		if (s_instance)
+			s_instance->m_callbacks.EndLoad();
 		if (s_instance && end >= start)
 			s_instance->RecordPlugin(LoadTiming::kPluginSeriesNames[1], end - start);
 		return result;
+	}
+
+	size_t ModulePluginTiming::SeriesCapacity() const noexcept
+	{
+		return ImageSeriesCapacity(bTelemetryPluginTiming.GetValue());
+	}
+
+	void ModulePluginTiming::BeginInterval(uint64_t a_qpc) noexcept
+	{
+		PluginTimingSource::BeginInterval(a_qpc);
+		m_callbacks.BeginInterval();
+	}
+
+	size_t ModulePluginTiming::DrainSeries(std::span<SeriesSample> a_out) noexcept
+	{
+		if (a_out.empty())
+			return 0;
+		CountMetric(LoadTiming::kPluginCallbackOverflowMetric, m_callbacks.TakeOverflow());
+		const auto count = DrainBurst(a_out.first(PluginTimingSource::SeriesCapacity()));
+		const auto callbacks = m_callbacks.Drain(a_out.subspan(count));
+		CountMetric(LoadTiming::kPluginCallbackSeriesOverflowMetric, m_callbacks.TakeSeriesOverflow());
+		return count + callbacks;
 	}
 
 	std::string_view ModulePluginTiming::FindPluginName(HMODULE a_module) noexcept

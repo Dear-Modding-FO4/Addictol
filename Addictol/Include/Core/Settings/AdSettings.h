@@ -103,6 +103,9 @@ namespace Addictol
 	extern U32Setting uTelemetryFrameRecordMs;
 	extern BoolSetting bTelemetryCsv;
 	extern BoolSetting bTelemetryPluginTiming;
+	extern BoolSetting bTelemetryImageMemory;
+	extern BoolSetting bTelemetryImageSampling;
+	extern U32Setting uTelemetryImageSampleHz;
 	extern BoolSetting bTelemetryFormLoadTiming;
 
 	extern BoolSetting bAdditionalDbgFacegenOutput;

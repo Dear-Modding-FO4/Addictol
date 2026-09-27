@@ -372,6 +372,23 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\.Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Addictol\Source\Core\AdIAT.cpp" />
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdImageRegistry.cpp" />
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdPluginCallbacks.cpp" />
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdImageMemory.cpp" />
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdImageSampling.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageMemory.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageSampling.cpp" />
+    <ClInclude Include="..\Addictol\Include\Core\AdIAT.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdImageRegistry.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdImageSeries.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdPluginCallbacks.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdImageMemory.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdImageSampling.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageMemory.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageSampling.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="StagePayload" AfterTargets="Build">
     <ItemGroup>

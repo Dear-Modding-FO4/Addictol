@@ -2,6 +2,7 @@
 
 #include <Core/AdModule.h>
 #include <Telemetry/AdLoadTiming.h>
+#include <Telemetry/AdPluginCallbacks.h>
 
 #include <Windows.h>
 
@@ -25,8 +26,11 @@ namespace Addictol
 
 		[[nodiscard]] virtual bool DoInstall(
 			[[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
+		[[nodiscard]] size_t SeriesCapacity() const noexcept override;
 
 	private:
+		void BeginInterval(uint64_t a_qpc) noexcept override;
+		[[nodiscard]] size_t DrainSeries(std::span<SeriesSample> a_out) noexcept override;
 		using GetProcAddressFn = FARPROC(WINAPI*)(HMODULE, LPCSTR);
 		using QueryFn = bool(*)(const void*, void*);
 		using LoadFn = bool(*)(const void*);
@@ -51,6 +55,8 @@ namespace Addictol
 		inline static QueryFn s_originalQuery{ nullptr };
 		inline static LoadFn s_originalLoad{ nullptr };
 		inline static HMODULE s_ownModule{ nullptr };
+		inline static HMODULE s_f4seModule{ nullptr };
+		inline static HMODULE s_activeModule{ nullptr };
 		inline static const char* s_activeName{ nullptr };
 		inline static size_t s_activeNameLength{ 0 };
 
@@ -59,5 +65,6 @@ namespace Addictol
 		char m_path[LoadTiming::kModulePathCapacity]{};
 		size_t m_pluginCount{ 0 };
 		bool m_installAttempted{ false };
+		PluginCallbacks m_callbacks;
 	};
 }
