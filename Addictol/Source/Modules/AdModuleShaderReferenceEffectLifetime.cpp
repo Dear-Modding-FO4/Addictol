@@ -117,9 +117,9 @@ namespace Addictol
 		using namespace shaderReferenceEffectLifetimeDetail;
 
 		const auto constructorTarget =
-			REL::ID{ 1546646, 2226732, 2226732 }.address();
+			REL::ID{ 1546646, 2226732 }.address();
 		const auto deletingDestructorTarget =
-			REL::ID{ 509, 2226770, 2226770 }.address();
+			REL::ID{ 509, 2226770 }.address();
 
 		const bool constructorValid = RELEX::Validate(constructorTarget,
 			{ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74,
