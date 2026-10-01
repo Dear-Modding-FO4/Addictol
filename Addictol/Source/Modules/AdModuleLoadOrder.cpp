@@ -166,6 +166,13 @@ namespace Addictol
 		RELEX::WriteSafe(targetLoadOrder1, { 0x90, 0x90 });
 		RELEX::WriteSafe(targetLoadOrder2, { 0xEB, 0x1A, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 });
 		RELEX::WriteSafe(targetLoadOrder3, { 0xEB, 0x2B, 0x90, 0x90 });
+		
+		auto exeMod = REX::FModule::GetExecutingModule();
+		if (exeMod.GetFileVersion() == F4SE::RUNTIME_1_11_240)
+		{
+			const auto targetProcessBlacklisted = REL::Relocation{ REL::ID{ 8517260 } }.address();
+			RELEX::WriteSafe(targetProcessBlacklisted, { 0x31, 0xC0, 0xC3, 0x90 });
+		}
 
 		// Validate the Funcs
 		return 	loadOrderDetail::ModManagerValidateDependencies::func != 0 &&
