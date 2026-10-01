@@ -1,13 +1,16 @@
 #pragma once
 
 #include <Memory/Heaps/AdHeapBackend.h>
+#include <vmapper.h>
 
 namespace Addictol::Heaps
 {
+	// VMM's own readable tail must cover the over-read budget, so Voltek needs no padding.
+	static_assert(voltek::core::region::readable_tail >= kOverreadPadding);
+
 	struct Voltek
 	{
 		static constexpr HeapKind kKind{ HeapKind::Voltek };
-		// VMM's per-block headers already keep the bytes past a block readable.
 		static constexpr size_t kTailPadding{ 0 };
 		static constexpr std::string_view kName{ "voltek" };
 

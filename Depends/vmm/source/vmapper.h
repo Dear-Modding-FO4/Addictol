@@ -23,6 +23,8 @@ namespace voltek
 		public:
 			inline static constexpr size_t granularity = 64 * 1024;
 			inline static constexpr size_t commit_granularity = 4 * 1024;
+			// The engine over-reads block ends (previs, Havok cloth).
+			inline static constexpr size_t readable_tail = 16;
 
 			[[nodiscard]] static char* reserve(size_t size) noexcept;
 			[[nodiscard]] static bool contains(const void* ptr) noexcept
@@ -64,6 +66,7 @@ namespace voltek
 			mapper& operator=(const mapper&) = delete;
 
 			void assign(char* base, size_t slot_size, size_t slot_count, retention_budget* retention = nullptr);
+			// Also commits readable_tail bytes past commit_size.
 			[[nodiscard]] void* allocate(size_t commit_size) noexcept;
 			void release(const void* slot) noexcept;
 			[[nodiscard]] bool contains(const void* ptr) const noexcept

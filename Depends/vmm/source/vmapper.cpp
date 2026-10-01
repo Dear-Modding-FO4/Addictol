@@ -52,7 +52,7 @@ namespace voltek
 
 		void* mapper::allocate(size_t commit_size) noexcept
 		{
-			if (!commit_size || commit_size > _slot_size)
+			if (!commit_size || commit_size > _slot_size || _slot_size - commit_size < region::readable_tail)
 				return nullptr;
 
 			size_t index = 0;
@@ -64,7 +64,7 @@ namespace voltek
 				return nullptr;
 
 			auto* slot = _base + index * _slot_size;
-			const auto pages = (commit_size + region::commit_granularity - 1) / region::commit_granularity;
+			const auto pages = (commit_size + region::readable_tail + region::commit_granularity - 1) / region::commit_granularity;
 			const auto previous_pages = _committed_pages[index];
 			if (pages > previous_pages)
 			{

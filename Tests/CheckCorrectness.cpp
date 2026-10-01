@@ -103,22 +103,42 @@ namespace vmm_tests
 		runner.test("mapper skips padding and reuses the lowest free slot", [] {
 			constexpr size_t count = 2051;
 			constexpr size_t stride = voltek::core::region::commit_granularity;
+			constexpr size_t fill = stride - voltek::core::region::readable_tail;
 			auto* base = static_cast<char*>(VirtualAlloc(nullptr, count * stride, MEM_RESERVE, PAGE_READWRITE));
 			require(base != nullptr, "mapper reservation failed");
 			voltek::core::mapper mapper;
 			mapper.assign(base, stride, count);
+			require(mapper.allocate(fill + 1) == nullptr, "mapper accepted a request without room for its readable tail");
 			for (size_t index = 0; index < count; ++index)
-				require(mapper.allocate(stride) == base + index * stride, "mapper did not select the lowest free slot");
-			require(mapper.allocate(stride) == nullptr && mapper.committed_bytes() == count * stride,
+				require(mapper.allocate(fill) == base + index * stride, "mapper did not select the lowest free slot");
+			require(mapper.allocate(fill) == nullptr && mapper.committed_bytes() == count * stride,
 				"mapper handed out padding or miscounted committed bytes");
 			mapper.release(base + 2049 * stride);
 			mapper.release(base + 7 * stride);
-			require(mapper.allocate(stride) == base + 7 * stride && mapper.allocate(stride) == base + 2049 * stride,
+			require(mapper.allocate(fill) == base + 7 * stride && mapper.allocate(fill) == base + 2049 * stride,
 				"mapper did not reuse released slots in address order");
 			for (size_t index = 0; index < count; ++index)
 				mapper.release(base + index * stride);
 			require(mapper.committed_bytes() == 0, "mapper retained decommitted bytes");
 			VirtualFree(base, 0, MEM_RELEASE);
+		});
+
+		// Previs reads the dword past a Tome blob; a page-flush block faulted.
+		runner.test("large blocks keep a readable tail at commit and slot boundaries", [] {
+			const auto tail_committed = [](const void* a_end) {
+				MEMORY_BASIC_INFORMATION info{};
+				const auto* last = static_cast<const char*>(a_end) + voltek::core::region::readable_tail - 1;
+				return VirtualQuery(last, &info, sizeof(info)) == sizeof(info) && info.State == MEM_COMMIT;
+			};
+			constexpr size_t previs_blob = 0x177FF0;
+			constexpr size_t slot_filling = mm::large_slot_minimum * 8 - sizeof(mm::block_base);
+			for (const auto size : { previs_blob, slot_filling })
+			{
+				auto* pointer = static_cast<char*>(voltek::scalable_alloc(size));
+				require(pointer != nullptr, "readable tail fixture allocation failed");
+				require(tail_committed(pointer + size), "large block ended on an uncommitted page");
+				require(voltek::scalable_free(pointer), "readable tail fixture free failed");
+			}
 		});
 
 		runner.test("large slots reuse committed memory within a shared budget", [] {
@@ -163,8 +183,8 @@ namespace vmm_tests
 			auto* smaller = static_cast<uint8_t*>(voltek::scalable_calloc(1, small));
 			require(smaller == pointer && sample().committed_bytes == grown_commit - (grown - small),
 				"smaller reuse did not trim its excess committed pages");
-			constexpr size_t small_commit = (small + sizeof(mm::block_base) + voltek::core::region::commit_granularity - 1) &
-				~(voltek::core::region::commit_granularity - 1);
+			constexpr size_t small_commit = (small + sizeof(mm::block_base) + voltek::core::region::readable_tail +
+				voltek::core::region::commit_granularity - 1) & ~(voltek::core::region::commit_granularity - 1);
 			MEMORY_BASIC_INFORMATION tail{};
 			require(VirtualQuery(reinterpret_cast<char*>(mm::get_block_handle_from_ptr(smaller)) + small_commit,
 				&tail, sizeof(tail)) == sizeof(tail) && tail.State == MEM_RESERVE,

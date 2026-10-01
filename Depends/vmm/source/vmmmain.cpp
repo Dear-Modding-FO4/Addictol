@@ -107,9 +107,14 @@ namespace voltek
 			return (value + alignment - 1) & ~(alignment - 1);
 		}
 
+		[[nodiscard]] constexpr size_t pool_slot_size(const class_geometry& geometry) noexcept
+		{
+			return round_up(geometry.body_bytes + core::region::readable_tail, core::region::granularity);
+		}
+
 		static_assert([] {
 			for (const auto& geometry : class_geometries)
-				if (pool_class_budget / round_up(geometry.body_bytes, core::region::granularity) > UINT16_MAX)
+				if (pool_class_budget / pool_slot_size(geometry) > UINT16_MAX)
 					return false;
 			return true;
 		}(), "page counts must fit the block header");
@@ -163,7 +168,7 @@ namespace voltek
 			cursor += core::region::granularity;
 			for (size_t index = 0; index < page_sources.size(); ++index)
 			{
-				const auto slot = round_up(class_geometries[index].body_bytes, core::region::granularity);
+				const auto slot = pool_slot_size(class_geometries[index]);
 				page_sources[index].assign(cursor, slot, pool_class_budget / slot);
 				cursor += pool_class_budget;
 			}
@@ -194,7 +199,7 @@ namespace voltek
 		{
 			for (size_t index = 0; index < large_sources.size(); ++index)
 			{
-				if (large_slot_size(index) < size)
+				if (large_slot_size(index) - core::region::readable_tail < size)
 					continue;
 				if (auto* block = large_sources[index].allocate(size))
 				{
