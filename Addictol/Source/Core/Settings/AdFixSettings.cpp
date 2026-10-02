@@ -580,4 +580,13 @@ namespace Addictol
 		"Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesRadioSilence{
+		"Fixes"sv,
+		"bFixesRadioSilence"sv,
+		SettingDisplayCategory::kGameplay,
+		false,
+		"[EXPERIMENTAL] Fixes an issue where Radio Signals can go silent after some time."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

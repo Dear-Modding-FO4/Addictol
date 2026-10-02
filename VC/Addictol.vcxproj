@@ -139,6 +139,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePluginTiming.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRadioSilence.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSafeExit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveAddedSoundCategories.cpp" />
@@ -293,6 +294,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePluginTiming.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRadioSilence.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSafeExit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveAddedSoundCategories.h" />

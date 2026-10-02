@@ -329,6 +329,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp">
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRadioSilence.cpp">
+      <Filter>Source\Modules\R</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp">
       <Filter>Source\Modules\R</Filter>
     </ClCompile>
@@ -748,6 +751,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h">
       <Filter>Include\Modules\P</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRadioSilence.h">
+      <Filter>Include\Modules\R</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h">
       <Filter>Include\Modules\R</Filter>
