@@ -3,12 +3,14 @@
 ## 1.7.0
 
 - Added the "Local Map Rotation" module.
+- Added the "Radio Silence" module [EXPERIMENTAL].
 - Added the "Shader Reference Effect Lifetime" module.
 - Added the "Sprint Speed Mult" module.
 - Added an in-game changelog.
 - ControlSamplers: Fixed sampler lifetime handling.
 - FullPrecisionDecals: Removed the membrane vertex-buffer swap, which caused single-frame screen flashes.
 - LibDeflate: Added selectable stock, zlib, zlib-ng, ISA-L, and hybrid decompression backends.
+- LoadOrder: Completely skip the Blacklist instead of deferring.
 - LoadScreen: Removed the requirement for High FPS Physics Fix.
 - MemoryManager: Reworked Voltek and added mimalloc, rpmalloc, and stock allocator options.
 - Menu: Updated DearModdingUI integration and shared layouts.
