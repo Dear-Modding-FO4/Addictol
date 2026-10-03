@@ -142,18 +142,20 @@ namespace Addictol::Menu
 			const std::vector<ModuleStatusSnapshot>& a_statuses,
 			const ModulesPageState& a_state) noexcept
 		{
-			const auto height = (std::max)(dmui::ui::GetContentRegionAvail().y, 160.0f);
+			dmui::ui::PanelScope panel{
+				"ModuleResults",
+				{ 0.0f, (std::max)(dmui::ui::GetContentRegionAvail().y, 160.0f) },
+				dmui::ui::PanelFlags::kScrollable };
+			if (!panel)
+				return;
 			if (!dmui::ui::BeginTable(
 					"##modules",
 					3,
 					dmui::ui::TableFlags::kBordersInnerH |
 						dmui::ui::TableFlags::kRowBg |
-						dmui::ui::TableFlags::kScrollY |
-						dmui::ui::TableFlags::kSizingStretchProp,
-					{ 0.0f, height }))
+						dmui::ui::TableFlags::kSizingStretchProp))
 				return;
 
-			dmui::ui::TableSetupScrollFreeze(0, 1);
 			dmui::ui::TableSetupColumn("Module", dmui::ui::TableColumnFlags::kWidthStretch, 2.0f);
 			dmui::ui::TableSetupColumn("Outcome", dmui::ui::TableColumnFlags::kWidthStretch, 1.0f);
 			dmui::ui::TableSetupColumn("Reason / detail", dmui::ui::TableColumnFlags::kWidthStretch, 2.0f);
@@ -202,13 +204,16 @@ namespace Addictol::Menu
 			Plugin::GetSingleton()->GetModules().ModuleStatuses();
 		const auto counts = TallyModuleOutcomes(statuses);
 
-		ReportPresentationResult(Client().DrawSectionHeader(
-			"Modules",
-			DearModdingUI::PhosphorGlyph::kPuzzlePiece));
-		DrawSummary(counts);
-		dmui::ui::Spacing();
-		DrawFilters(state);
-		dmui::ui::Spacing();
+		{
+			dmui::ui::PanelScope panel{ "ModuleSummary" };
+			if (panel)
+			{
+				ReportPresentationResult(Client().DrawSectionHeader(
+					"Modules", DearModdingUI::PhosphorGlyph::kPuzzlePiece));
+				DrawSummary(counts);
+				DrawFilters(state);
+			}
+		}
 		DrawModulesTable(statuses, state);
 	}
 }

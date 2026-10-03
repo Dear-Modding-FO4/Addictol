@@ -303,8 +303,12 @@ namespace Addictol
 
 		void DrawSeries() noexcept
 		{
+			dmui::ui::PanelScope panel{
+				"TelemetrySeriesPanel", { 0.0f, 260.0f }, dmui::ui::PanelFlags::kScrollable };
+			if (!panel)
+				return;
 			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Series", Menu::kHeadingText));
-			if (!dmui::ui::BeginTable("TelemetrySeries", 5, Menu::kDiagnosticTableFlags, dmui::ui::Vec2(0.0f, 260.0f)))
+			if (!dmui::ui::BeginTable("TelemetrySeries", 5, Menu::kStaticDiagnosticTableFlags))
 				return;
 			dmui::ui::TableSetupColumn("Series", dmui::ui::TableColumnFlags::kWidthStretch);
 			dmui::ui::TableSetupColumn("Bucket", dmui::ui::TableColumnFlags::kWidthStretch);

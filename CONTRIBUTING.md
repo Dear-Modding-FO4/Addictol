@@ -108,12 +108,11 @@ standalone DearModdingUI API repository through CommonLibF4's nested
 `lib/dearmoddingui-api` public dependency.
 
 Addictol packages only its own payload. DearModdingUI is a separate mod installed independently.
-The client draws through the negotiated `dmui::ui` interface and compiles no Dear
+The client draws through the ABI 2 `dmui::ui` interface and compiles no Dear
 ImGui sources. The host translates the DMUI-owned types and flags to its internal
 renderer; clients do not negotiate an ImGui version or receive its context.
-Use the host ABI and required-service negotiation rather than the product version
-to determine compatibility. This forwarding-only cutover requires a host exposing
-`DMUI_GetAPI`; pre-cutover hosts are unsupported.
+`Client::Connect()` requires an exact `DMUI_ABI_VERSION` match; older hosts are
+unsupported. There are no service bits, UI revisions, or table-size probes.
 Register categories before pages, reference their stable IDs, and keep external-link actions host-owned.
 
 Use the shared `dmui::DrawStyledText`, `DrawLabeledValue`, `FontGuard`, and keyed

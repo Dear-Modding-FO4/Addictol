@@ -14,12 +14,7 @@ namespace Addictol::Menu
 	using PanelDraw = MenuPanelDraw;
 
 	inline constexpr const char* kClientIconName{ "pill" };
-	inline constexpr dmui::ClientOptions kClientOptions{
-		.requiredServices =
-			DMUI_HOST_SERVICE_EXTERNAL_OPEN |
-			DMUI_HOST_SERVICE_NAVIGATION_ICONS,
-		.minimumUIAPISize = DMUI_UI_API_PLOT_LINES_SIZE
-	};
+	inline constexpr dmui::ClientOptions kClientOptions{};
 	inline constexpr dmui::CategoryDescriptor kGeneralCategory{
 		.id = "general",
 		.displayName = "General",
@@ -120,6 +115,9 @@ namespace Addictol::Menu
 	[[nodiscard]] std::optional<DMUI_StyleMetrics> StyleMetrics() noexcept;
 	void DrawRefreshFooter(uint64_t a_refreshTicks) noexcept;
 	void ReportStatus(
+		DMUI_StatusSeverity a_severity,
+		const char* a_message) noexcept;
+	void Notify(
 		DMUI_StatusSeverity a_severity,
 		const char* a_message) noexcept;
 

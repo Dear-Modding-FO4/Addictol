@@ -32,7 +32,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 | **Fallout 4** | OG **1.10.163**, NG **1.10.984**, or AE **1.11.240**. One DLL supports all three. |
 | **[Fallout 4 Script Extender (F4SE)](https://f4se.silverlock.org/)** | Required for the matching game runtime. |
 | **[Address Library for F4SE](https://www.nexusmods.com/fallout4/mods/47327)** | Required for the matching game runtime. Addictol will refuse to load without it. |
-| **[DearModdingUI](https://github.com/Dear-Modding-FO4/DearModdingUI)** | Install the standalone host separately (`1c5eb35` or later). Addictol continues without an in-game menu when the host is absent. |
+| **[DearModdingUI](https://github.com/Dear-Modding-FO4/DearModdingUI)** | Install an ABI 2 standalone host separately. Addictol continues without an in-game menu when the host is absent. |
 
 ---
 

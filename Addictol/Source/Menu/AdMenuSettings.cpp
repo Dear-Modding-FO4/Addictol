@@ -56,13 +56,13 @@ namespace Addictol::Menu
 			if (result.success)
 			{
 				CompleteSettingsDraftApply(g_draft, commit);
-				Menu::ReportStatus(
+				Menu::Notify(
 					DMUI_STATUS_SEVERITY_SUCCESS,
 					"Settings saved.");
 			}
 			else
 			{
-				Menu::ReportStatus(
+				Menu::Notify(
 					DMUI_STATUS_SEVERITY_ERROR,
 					result.error.c_str());
 				REX::WARN(

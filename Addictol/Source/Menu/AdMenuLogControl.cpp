@@ -77,37 +77,43 @@ namespace Addictol
 	{
 		Refresh();
 
-		ReportPresentationResult(dmui::DrawStyledText(
-			Menu::Client(), "Log control", { .fontRole = DMUI_FONT_ROLE_TITLE }));
-		ReportPresentationResult(dmui::DrawStyledText(
-			Menu::Client(), "Overrides apply to this session only; they reset when the game exits.",
-			Menu::kMutedText));
-		ReportPresentationResult(dmui::DrawStyledText(
-			Menu::Client(), "[Additional] sLogLevel and sLogFlushLevel are the persistent TOML controls.",
-			Menu::kMutedText));
-		dmui::ui::Separator();
+		if (dmui::ui::PanelScope panel{ "LogControlOverview" }; panel)
+		{
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "Log control", { .fontRole = DMUI_FONT_ROLE_TITLE }));
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "Overrides apply to this session only; they reset when the game exits.",
+				Menu::kMutedText));
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "[Additional] sLogLevel and sLogFlushLevel are the persistent TOML controls.",
+				Menu::kMutedText));
+		}
 
-		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Levels", Menu::kHeadingText));
-		ReportPresentationResult(dmui::DrawStyledText(
-			Menu::Client(), "Record level decides which lines are kept at all.", Menu::kMutedText));
-		DrawLevelCombo("Record level", s_cache.level, &LogControl::SetLevel);
-		ReportPresentationResult(dmui::DrawStyledText(
-			Menu::Client(), "Flush level forces a synchronous disk write at that level or higher.",
-			Menu::kMutedText));
-		DrawLevelCombo("Flush level", s_cache.flushLevel, &LogControl::SetFlushLevel);
+		if (dmui::ui::PanelScope panel{ "LogLevels" }; panel)
+		{
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Levels", Menu::kHeadingText));
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "Record level decides which lines are kept at all.", Menu::kMutedText));
+			DrawLevelCombo("Record level", s_cache.level, &LogControl::SetLevel);
+			ReportPresentationResult(dmui::DrawStyledText(
+				Menu::Client(), "Flush level forces a synchronous disk write at that level or higher.",
+				Menu::kMutedText));
+			DrawLevelCombo("Flush level", s_cache.flushLevel, &LogControl::SetFlushLevel);
+		}
+		if (dmui::ui::PanelScope panel{ "LogOutput" }; panel)
+		{
+			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Output", Menu::kHeadingText));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Menu::Client(), "Recent output", FormatLinesInLastMinute(s_cache.stats.linesPerMinute),
+				{ .valueStyle = Menu::kBodyText }));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Menu::Client(), "Lines written (session)", FormatCount(s_cache.stats.written),
+				{ .valueStyle = Menu::kBodyText }));
+			ReportPresentationResult(dmui::DrawLabeledValue(
+				Menu::Client(), "Flushes (session)", FormatCount(s_cache.stats.flushed),
+				{ .valueStyle = Menu::kBodyText }));
 
-		dmui::ui::Spacing();
-		ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Output", Menu::kHeadingText));
-		ReportPresentationResult(dmui::DrawLabeledValue(
-			Menu::Client(), "Recent output", FormatLinesInLastMinute(s_cache.stats.linesPerMinute),
-			{ .valueStyle = Menu::kBodyText }));
-		ReportPresentationResult(dmui::DrawLabeledValue(
-			Menu::Client(), "Lines written (session)", FormatCount(s_cache.stats.written),
-			{ .valueStyle = Menu::kBodyText }));
-		ReportPresentationResult(dmui::DrawLabeledValue(
-			Menu::Client(), "Flushes (session)", FormatCount(s_cache.stats.flushed),
-			{ .valueStyle = Menu::kBodyText }));
-
-		Menu::DrawRefreshFooter(s_cache.refreshTicks);
+			Menu::DrawRefreshFooter(s_cache.refreshTicks);
+		}
 	}
 }

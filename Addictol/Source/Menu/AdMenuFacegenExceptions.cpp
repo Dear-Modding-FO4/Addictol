@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cfloat>
 #include <cstring>
 
 namespace Addictol::Menu
@@ -25,7 +24,9 @@ namespace Addictol::Menu
 			std::vector<FacegenExceptionDraft> entries;
 			std::optional<size_t> editingIndex;
 			FacegenExceptionDraft editor;
-			std::string operationError;
+			bool editorOpen{ false };
+			bool editorPending{ false };
+			dmui::DialogSession confirmation;
 		};
 
 		FacegenExceptionsPageState g_pageState;
@@ -109,13 +110,14 @@ namespace Addictol::Menu
 			g_pageState.sourceRevision = a_snapshot.revision;
 			g_pageState.editingIndex.reset();
 			g_pageState.editor = {};
-			g_pageState.operationError.clear();
+			g_pageState.editorOpen = false;
+			g_pageState.editorPending = false;
 		}
 
 		void EnsureDraft(const FacegenExceptionSnapshot& a_snapshot)
 		{
 			if (!g_pageState.initialized ||
-				(!g_pageState.dirty &&
+				(!g_pageState.dirty && !g_pageState.editorOpen &&
 					g_pageState.sourceRevision != a_snapshot.revision))
 				RefreshDraft(a_snapshot);
 		}
@@ -124,7 +126,8 @@ namespace Addictol::Menu
 		{
 			g_pageState.editingIndex = g_pageState.entries.size();
 			g_pageState.editor = {};
-			g_pageState.operationError.clear();
+			g_pageState.editorOpen = true;
+			g_pageState.editorPending = true;
 		}
 
 		void BeginEdit(size_t a_index)
@@ -134,7 +137,8 @@ namespace Addictol::Menu
 			if (g_pageState.editor.pluginName &&
 				g_pageState.editor.pluginName->empty())
 				g_pageState.editor.pluginName.reset();
-			g_pageState.operationError.clear();
+			g_pageState.editorOpen = true;
+			g_pageState.editorPending = true;
 		}
 
 		void RemoveEntry(size_t a_index)
@@ -157,8 +161,22 @@ namespace Addictol::Menu
 			if (!g_pageState.editingIndex)
 				return;
 
+			constexpr auto popup = "Exception editor";
+			if (std::exchange(g_pageState.editorPending, false))
+				dmui::ui::OpenPopup(popup);
+			dmui::ui::ModalScope modal{ popup, g_pageState.editorOpen };
+			if (!g_pageState.editorOpen)
+			{
+				g_pageState.editingIndex.reset();
+				g_pageState.editor = {};
+				return;
+			}
+			if (!modal)
+				return;
+
 			const auto adding =
 				*g_pageState.editingIndex == g_pageState.entries.size();
+			const auto inputWidth = dmui::ui::CalcTextSize("00000000000000000000000000000000").x;
 			ReportPresentationResult(dmui::DrawStyledText(
 				Client(), adding ? "Add exception"sv : "Edit exception"sv, kHeadingText));
 
@@ -184,21 +202,21 @@ namespace Addictol::Menu
 				_TRUNCATE);
 
 			dmui::ui::TextUnformatted("Unique name");
-			dmui::ui::SetNextItemWidth(-FLT_MIN);
+			dmui::ui::SetNextItemWidth(inputWidth);
 			if (dmui::ui::InputText(
 					"##facegen_exception_key",
 					keyBuffer.data(),
 					keyBuffer.size()))
 				g_pageState.editor.key = keyBuffer.data();
 			dmui::ui::TextUnformatted("FormID");
-			dmui::ui::SetNextItemWidth(-FLT_MIN);
+			dmui::ui::SetNextItemWidth(inputWidth);
 			if (dmui::ui::InputText(
 					"##facegen_exception_formid",
 					formIDBuffer.data(),
 					formIDBuffer.size()))
 				g_pageState.editor.formID = formIDBuffer.data();
 			dmui::ui::TextUnformatted("Plugin name (optional)");
-			dmui::ui::SetNextItemWidth(-FLT_MIN);
+			dmui::ui::SetNextItemWidth(inputWidth);
 			if (dmui::ui::InputText(
 					"##facegen_exception_plugin",
 					pluginBuffer.data(),
@@ -253,6 +271,8 @@ namespace Addictol::Menu
 				g_pageState.dirty = true;
 				g_pageState.editingIndex.reset();
 				g_pageState.editor = {};
+				g_pageState.editorOpen = false;
+				dmui::ui::CloseCurrentPopup();
 			}
 			dmui::ui::EndDisabled();
 			dmui::ui::SameLine();
@@ -260,12 +280,27 @@ namespace Addictol::Menu
 			{
 				g_pageState.editingIndex.reset();
 				g_pageState.editor = {};
+				g_pageState.editorOpen = false;
+				dmui::ui::CloseCurrentPopup();
 			}
-			dmui::ui::Spacing();
 		}
 
-		void DrawEditActions(const FacegenExceptionSnapshot& a_snapshot)
+		void Confirm(const char* a_title, const char* a_body,
+			const char* a_acceptLabel, dmui::DialogSession::Submit a_submit)
 		{
+			if (!g_pageState.confirmation.Open(Client(), {
+					.kind = DMUI_DIALOG_KIND_CONFIRM,
+					.title = a_title,
+					.body = a_body,
+					.acceptLabel = a_acceptLabel,
+					.cancelLabel = "Cancel"
+				}, std::move(a_submit)))
+				Notify(DMUI_STATUS_SEVERITY_ERROR, "Could not open confirmation.");
+		}
+
+		void DrawEditActions()
+		{
+			dmui::ui::BeginDisabled(g_pageState.confirmation.Active());
 			if (dmui::ui::Button("Add exception"))
 				BeginAdd();
 			dmui::ui::SameLine();
@@ -277,14 +312,13 @@ namespace Addictol::Menu
 				if (result.success)
 				{
 					RefreshDraft(GetFacegenExceptionSnapshot());
-					Menu::ReportStatus(
+					Menu::Notify(
 						DMUI_STATUS_SEVERITY_SUCCESS,
 						"Facegen exceptions saved.");
 				}
 				else
 				{
-					g_pageState.operationError = result.error;
-					Menu::ReportStatus(
+					Menu::Notify(
 						DMUI_STATUS_SEVERITY_ERROR,
 						result.error.c_str());
 				}
@@ -293,37 +327,33 @@ namespace Addictol::Menu
 			dmui::ui::SameLine();
 			dmui::ui::BeginDisabled(!g_pageState.dirty);
 			if (dmui::ui::Button("Discard changes"))
-				RefreshDraft(a_snapshot);
+				Confirm("Discard changes?", "Discard all unsaved facegen exception changes?",
+					"Discard", [](std::string_view) -> std::optional<std::string> {
+						RefreshDraft(GetFacegenExceptionSnapshot());
+						return std::nullopt;
+					});
 			dmui::ui::EndDisabled();
 			dmui::ui::SameLine();
 			dmui::ui::BeginDisabled(g_pageState.dirty);
 			if (dmui::ui::Button("Reload from file"))
 			{
-				const auto result = ReloadFacegenExceptions();
-				RefreshDraft(GetFacegenExceptionSnapshot());
-				if (result.success)
-				{
-					Menu::ReportStatus(
-						DMUI_STATUS_SEVERITY_SUCCESS,
-						"Facegen exceptions reloaded.");
-				}
-				else
-				{
-					g_pageState.operationError = result.error;
-					Menu::ReportStatus(
-						DMUI_STATUS_SEVERITY_ERROR,
-						result.error.c_str());
-				}
+				Confirm("Reload exceptions?", "Replace the current facegen exceptions with the file contents?",
+					"Reload", [](std::string_view) -> std::optional<std::string> {
+						const auto result = ReloadFacegenExceptions();
+						RefreshDraft(GetFacegenExceptionSnapshot());
+						Menu::Notify(
+							result.success ? DMUI_STATUS_SEVERITY_SUCCESS : DMUI_STATUS_SEVERITY_ERROR,
+							result.success ? "Facegen exceptions reloaded." : result.error.c_str());
+						return std::nullopt;
+					});
 			}
+			dmui::ui::EndDisabled();
 			dmui::ui::EndDisabled();
 
 			if (g_pageState.dirty)
 				ReportPresentationResult(dmui::DrawStyledText(
 					Client(), "Unsaved changes. Save or discard before reloading from file.",
 					{ .tone = dmui::TextTone::kWarning }));
-			if (!g_pageState.operationError.empty())
-				ReportPresentationResult(dmui::DrawStyledText(
-					Client(), g_pageState.operationError, { .tone = dmui::TextTone::kError }));
 			ReportPresentationResult(dmui::DrawStyledText(
 				Client(), "Saved changes affect NPCs processed afterward. NPCs already using preprocessed head data must be reloaded.",
 				kMutedText));
@@ -492,8 +522,7 @@ namespace Addictol::Menu
 		void DrawUserExceptions(const FacegenExceptionSnapshot& a_snapshot)
 		{
 			ReportPresentationResult(dmui::DrawStyledText(Client(), "User-defined exceptions", kHeadingText));
-			DrawEditActions(a_snapshot);
-			DrawEditor();
+			DrawEditActions();
 			if (g_pageState.entries.empty())
 			{
 				DrawEmptyEntryState(a_snapshot);
@@ -567,6 +596,19 @@ namespace Addictol::Menu
 		}
 	}
 
+	void PollFacegenExceptionConfirmation() noexcept
+	{
+		if (!g_pageState.confirmation.Active())
+			return;
+		g_pageState.confirmation.Poll();
+		if (g_pageState.confirmation.LastResult() != DMUI_RESULT_OK)
+		{
+			REX::WARN("Menu: confirmation failed, result {}."sv,
+				DMUI_ResultToString(g_pageState.confirmation.LastResult()));
+			Notify(DMUI_STATUS_SEVERITY_ERROR, "Facegen exception confirmation failed.");
+		}
+	}
+
 	void DrawFacegenExceptionsPage([[maybe_unused]] void* a_userData) noexcept
 	{
 		const auto snapshot = GetFacegenExceptionSnapshot();
@@ -583,5 +625,6 @@ namespace Addictol::Menu
 		DrawPrimaryExceptions();
 		dmui::ui::Spacing();
 		DrawUserExceptions(snapshot);
+		DrawEditor();
 	}
 }

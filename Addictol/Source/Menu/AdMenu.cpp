@@ -32,7 +32,7 @@ namespace Addictol
 		static std::atomic<uint32_t> s_refreshMs{ kMenuMinRefreshMs };
 		static std::atomic<bool> s_connected{ false };
 		static std::vector<Menu::Panel> s_pendingPanels;
-		static DMUI_ThemeColors s_themeColors{ sizeof(DMUI_ThemeColors) };
+		static DMUI_ThemeColors s_themeColors{};
 
 		void Configure() noexcept
 		{
@@ -167,6 +167,16 @@ namespace Addictol
 		}
 	}
 
+	void Menu::Notify(
+		DMUI_StatusSeverity a_severity,
+		const char* a_message) noexcept
+	{
+		if (!Client().PostNotification(a_severity, a_message, 0, "Addictol"))
+			REX::WARN(
+				"Menu: notification rejected, result {}."sv,
+				DMUI_ResultToString(Client().LastResult()));
+	}
+
 	bool Menu::Install() noexcept
 	{
 		using namespace menuDetail;
@@ -199,6 +209,7 @@ namespace Addictol
 
 		Menu::BeginSettingsPageFrame();
 		if (!s_client.AddFrameObserver([] {
+				Menu::PollFacegenExceptionConfirmation();
 				const auto visible = s_client.IsMenuVisible();
 				if (visible)
 					Menu::EndSettingsPageFrame(*visible);

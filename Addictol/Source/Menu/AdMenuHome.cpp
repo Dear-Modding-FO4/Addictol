@@ -56,6 +56,9 @@ namespace Addictol::Menu
 
 		void DrawWelcomeSection() noexcept
 		{
+			dmui::ui::PanelScope panel{ "Welcome" };
+			if (!panel)
+				return;
 			ReportPresentationResult(dmui::DrawStyledText(
 				Client(), "Welcome to Addictol", { .fontRole = DMUI_FONT_ROLE_TITLE }));
 			dmui::ui::Spacing();
@@ -95,29 +98,33 @@ namespace Addictol::Menu
 				static_cast<unsigned long long>(counts[3]),
 				static_cast<unsigned long long>(counts[4]),
 				static_cast<unsigned long long>(total));
-			dmui::ui::Spacing();
 		}
 
 		void DrawQuickLinksSection() noexcept
 		{
+			dmui::ui::PanelScope panel{ "QuickLinks" };
+			if (!panel)
+				return;
 			ReportPresentationResult(Client().DrawSectionHeader(
 				"Quick Links",
 				DearModdingUI::FindPhosphorSlugGlyphOrZero("link")));
 			if (!Client().DrawLinkRow("Addictol.QuickLinks", kHomeQuickLinks))
 			{
 				const auto result = Client().LastResult();
-				ReportStatus(
+				Notify(
 					DMUI_STATUS_SEVERITY_ERROR,
 					"A project link failed. See Addictol.log for details.");
 				REX::WARN(
 					"Menu: project link row failed, result {}."sv,
 					DMUI_ResultToString(result));
 			}
-			dmui::ui::Spacing();
 		}
 
 		void DrawFaqSection() noexcept
 		{
+			dmui::ui::PanelScope panel{ "Faq" };
+			if (!panel)
+				return;
 			ReportPresentationResult(Client().DrawSectionHeader(
 				"FAQ",
 				DearModdingUI::PhosphorGlyph::kQuestion));
@@ -126,6 +133,9 @@ namespace Addictol::Menu
 
 		void DrawModdingStateSection() noexcept
 		{
+			dmui::ui::PanelScope panel{ "ModdingState" };
+			if (!panel)
+				return;
 			ReportPresentationResult(Client().DrawSectionHeader(
 				"On the state of F4SE mods",
 				DearModdingUI::PhosphorGlyph::kShieldCheck));
@@ -180,7 +190,6 @@ namespace Addictol::Menu
 				"guide that gets you to a stable Fallout 4 without guesswork. "
 				"Start there, then add.",
 				kProseText));
-			dmui::ui::Spacing();
 		}
 	}
 
@@ -219,5 +228,9 @@ namespace Addictol::Menu
 			static_cast<unsigned long long>(counts[4]),
 			static_cast<unsigned long long>(total));
 		dmui::ui::SetClipboardText(summary);
+		if (dmui::ui::LastResult() == DMUI_RESULT_OK)
+			Notify(DMUI_STATUS_SEVERITY_SUCCESS, "Diagnostics copied.");
+		else
+			Notify(DMUI_STATUS_SEVERITY_ERROR, "Could not copy diagnostics.");
 	}
 }
