@@ -38,8 +38,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 
 ## Features
 
-The 94 modules cover the following areas. Most can be toggled independently; a small set of
-core modules is mandatory.
+Most modules can be toggled independently; a small set of core modules is mandatory.
 
 | Capability | Implementation |
 |---|---|
@@ -77,69 +76,35 @@ normal installations. Development prereleases are published from `master` as
 
 ## Configuration
 
-The central registry exposes 117 settings through `[Patches]`, `[Fixes]`, `[Warnings]`,
-`[Telemetry]`, and `[Additional]`. On first launch, Addictol creates
-`Data\F4SE\Plugins\Addictol.toml` with each description directly above its assignment:
-active overrides or commented factory defaults. Documentation is refreshed on later launches;
-unknown entries and their attached comments are preserved, but comments on Addictol settings
-and free-floating notes are replaced.
-If `AddictolCustom.toml` exists in the same directory, it is the only file loaded, refreshed,
-and saved by the menu; `Addictol.toml` is ignored. The files are never merged.
-Uncomment a generated assignment or add an override to edit settings without DearModdingUI.
-File edits are loaded on the next game launch.
-
-> [!WARNING]
-> An old shipped full `Addictol.toml`, when active, still makes every assignment an explicit
-> override. Move it aside to start with factory defaults. Existing `AddictolCustom.toml` files
-> need no renaming; old managed-help blocks are converted automatically.
+On first launch, Addictol creates `Data\F4SE\Plugins\Addictol.toml` with every setting documented
+and commented out at its default. Uncomment a line to change it, or use the in-game menu:
 
 ```toml
 [Fixes]
 bUnalignedLoad = false
 ```
 
-Only active values that differ from factory defaults are retained when settings are applied through
-the menu. Reset fills the menu draft with C++ factory defaults; Revert restores the last committed
-values. Most changes take effect on the next launch, while settings marked immediate update when
-Apply succeeds.
+If `AddictolCustom.toml` exists in the same folder, it is used instead of `Addictol.toml`.
+Most changes take effect on the next launch.
 
 Addictol writes `Addictol.log` to `Documents\My Games\Fallout4\F4SE\`. It records which modules
 loaded, were disabled, or skipped; check it first when something is not working.
-
-`[Additional] sZlibBackend` selects the decompression backend (needs `[Patches] bLibDeflate`):
-`stock`, `zlib`, `zlib-ng`, `isa-l`, `hybrid-zlib-ng` (default), or `hybrid-isa-l`.
-
-### Operation profiling
-
-`[Telemetry] bOperationProfiling = true` records sampled allocator and decompression timings on the
-next launch, independently of `bEnabled`. Each run writes a capture to
-`Data\F4SE\Plugins\Addictol\Captures\<capture-id>\`. Profiling adds overhead; leave it off for normal play.
-With `[Additional] sAllocator = "stock"`, it times the game's own allocators instead of a replacement.
 
 ---
 
 ## Menu
 
-DearModdingUI owns the shared menu. Press **F11** to open it, or configure the toggle key and
-appearance in the host settings page behind the footer gear (or via `DearModdingUI.toml`).
+Press **End** to open the DearModdingUI menu (rebindable in its settings).
 
 | Page | Contents |
 |---|---|
 | **Home** | Runtime, live module summary, project links, FAQ, and mod evaluation guide. |
-| **Settings** | All 117 Addictol settings under Stability, Performance, Visuals, Audio, Gameplay, Interface, and Diagnostics. |
+| **Settings** | All Addictol settings, grouped by area. |
 | **Modules** | Every registration outcome, with search, outcome filters, skip reasons, and the config key for disabled modules. |
 | **Changelog** | Released versions and their notes from the canonical [changelog](CHANGELOG.md). |
 | **Telemetry** | Overview, Memory, Decompression, Stability, and Audio panels when telemetry or operation profiling is enabled. |
 | **Facegen Exceptions** | Facegen exception coverage, configuration state, and resolution failures. |
 | **Log Control** | Session-only record and flush levels with the live output rate. |
-
-Home, Settings, Modules, and Changelog appear under **General**. Telemetry, Facegen Exceptions, and
-Log Control appear under **Diagnostics**. Home uses DmUI's icon-bearing section headers and project-link buttons;
-GitHub and Nexus Mods open in your default browser through the host. Use the header action button to
-copy a diagnostic summary to the clipboard.
-
-Shared appearance, accessibility, and toggle-key controls live behind the footer gear. Addictol's
-refresh interval remains under **Settings > Interface**.
 
 ---
 
