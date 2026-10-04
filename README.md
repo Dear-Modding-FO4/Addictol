@@ -76,8 +76,8 @@ normal installations. Development prereleases are published from `master` as
 
 ## Configuration
 
-On first launch, Addictol creates `Data\F4SE\Plugins\Addictol.toml` with every setting documented
-and commented out at its default. Uncomment a line to change it, or use the in-game menu:
+Addictol ships `Data\F4SE\Plugins\Addictol.toml` with every setting documented and
+commented out at its default. Uncomment a line to change it, or use the in-game menu:
 
 ```toml
 [Fixes]
