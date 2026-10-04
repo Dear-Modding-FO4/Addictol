@@ -13,10 +13,10 @@
 - LoadOrder: Completely skip the Blacklist instead of deferring.
 - LoadScreen: Removed the requirement for High FPS Physics Fix.
 - MemoryManager: Reworked Voltek and added mimalloc, rpmalloc, and stock allocator options.
-- Menu: Updated DearModdingUI integration and shared layouts.
+- Menu: Requires DearModdingUI 0.2.0. Facegen exceptions are edited in a dialog, Discard and Reload ask for confirmation, and save results appear as notifications.
 - MoonRotation: Corrected the moon's orbit, direction, daily rise timing, and apparent size.
-- Settings: Generate inline TOML documentation and save only nondefault overrides.
-- Telemetry: Added optional allocator and decompression operation profiling.
+- Settings: Generate inline TOML documentation, save only nondefault overrides, and use AddictolCustom.toml instead of Addictol.toml when present.
+- Telemetry: Added optional allocator and decompression operation profiling, and per-DLL CPU, memory, and F4SE callback time attribution.
 - Other internal fixes and improvements.
 
 ## 1.6.0
