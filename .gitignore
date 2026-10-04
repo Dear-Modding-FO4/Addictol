@@ -42,6 +42,7 @@
 
 # other
 *.exp
+/Tools/.vs
 /VC/.vs/Addictol
 /.vs
 /.xmake/
