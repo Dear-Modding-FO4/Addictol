@@ -554,60 +554,6 @@ namespace Addictol
 			return a_target.parent_path() / name;
 		}
 
-		[[nodiscard]] bool WriteAtomically(
-			const std::filesystem::path& a_target,
-			std::string_view a_contents,
-			std::string& a_error)
-		{
-			std::error_code filesystemError;
-			if (!a_target.parent_path().empty())
-			{
-				std::filesystem::create_directories(
-					a_target.parent_path(),
-					filesystemError);
-				if (filesystemError)
-				{
-					a_error = "could not create the settings directory";
-					return false;
-				}
-			}
-
-			const auto temporary = TemporaryPath(a_target);
-			{
-				std::ofstream file{
-					temporary,
-					std::ios::binary | std::ios::trunc
-				};
-				if (!file)
-				{
-					a_error = "could not create a temporary settings file";
-					return false;
-				}
-				file.write(
-					a_contents.data(),
-					static_cast<std::streamsize>(a_contents.size()));
-				file.flush();
-				if (!file)
-				{
-					file.close();
-					std::filesystem::remove(temporary, filesystemError);
-					a_error = "could not write the temporary settings file";
-					return false;
-				}
-			}
-
-			if (!MoveFileExW(
-					temporary.c_str(),
-					a_target.c_str(),
-					MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED))
-			{
-				std::filesystem::remove(temporary, filesystemError);
-				a_error = "could not replace the settings file";
-				return false;
-			}
-			return true;
-		}
-
 		[[nodiscard]] bool ReadExistingFile(
 			const std::filesystem::path& a_path,
 			std::string& a_existing,
@@ -666,6 +612,60 @@ namespace Addictol
 				*a_changed = true;
 			return true;
 		}
+	}
+
+	[[nodiscard]] bool WriteAtomically(
+		const std::filesystem::path& a_target,
+		std::string_view a_contents,
+		std::string& a_error)
+	{
+		std::error_code filesystemError;
+		if (!a_target.parent_path().empty())
+		{
+			std::filesystem::create_directories(
+				a_target.parent_path(),
+				filesystemError);
+			if (filesystemError)
+			{
+				a_error = "could not create the settings directory";
+				return false;
+			}
+		}
+
+		const auto temporary = TemporaryPath(a_target);
+		{
+			std::ofstream file{
+				temporary,
+				std::ios::binary | std::ios::trunc
+			};
+			if (!file)
+			{
+				a_error = "could not create a temporary settings file";
+				return false;
+			}
+			file.write(
+				a_contents.data(),
+				static_cast<std::streamsize>(a_contents.size()));
+			file.flush();
+			if (!file)
+			{
+				file.close();
+				std::filesystem::remove(temporary, filesystemError);
+				a_error = "could not write the temporary settings file";
+				return false;
+			}
+		}
+
+		if (!MoveFileExW(
+			temporary.c_str(),
+			a_target.c_str(),
+			MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED))
+		{
+			std::filesystem::remove(temporary, filesystemError);
+			a_error = "could not replace the settings file";
+			return false;
+		}
+		return true;
 	}
 
 	bool BuildSettingsDocumentToml(
