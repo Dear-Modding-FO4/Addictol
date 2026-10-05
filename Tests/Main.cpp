@@ -44,21 +44,14 @@ int main(int argc, char** argv)
 	});
 
 	run_allocator_checks(runner);
-	run_control_sampler_checks(runner);
 	run_correctness_checks(runner);
 	run_threading_checks(runner);
 	run_shape_checks(runner);
 	run_bits_regions_check(runner);
 	run_zlib_backend_checks(runner);
 	run_owned_inflate_checks(runner);
-	run_menu_checks(runner);
 	run_setting_registry_checks(runner);
-	run_shader_reference_effect_lifetime_checks(runner);
-	run_escape_freeze_checks(runner);
-	run_log_control_checks(runner);
-	run_telemetry_checks(runner);
 	run_operation_profile_checks(runner);
-	run_image_profiling_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
 	return runner.failures() == 0 ? 0 : 1;

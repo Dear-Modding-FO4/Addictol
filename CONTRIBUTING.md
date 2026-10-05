@@ -14,9 +14,9 @@ patch unrelated code.
 **Fail closed.** A module that cannot apply itself safely must disable itself and log why. Trading
 a rare vanilla bug for a new crash is a regression, however correct the patch is in isolation.
 
-**Automated coverage starts at the allocator boundary.** CI builds and runs the deterministic
-`vmm-tests` checks through xmake. Plugin and runtime correctness still comes from reasoning about
-the engine and from running the game.
+**Automated tests cover only Addictol's own subsystems.** CI builds and runs the deterministic
+`vmm-tests` checks through xmake. Module and runtime correctness comes from reasoning about the
+engine and from running the game.
 
 ## Setting up
 
@@ -549,16 +549,14 @@ xmake build -P . -y vmm-tests
 .\.Build\Tests\vmm-tests.exe
 ```
 
-The default C++ runner covers VMM allocation, concurrency and memory shape; production codec serving
-and fallback; settings persistence; logging; telemetry; and menu/state helpers. Allocator shape checks
-run in isolated child processes. SIMD paths depend on CPU support. The runner has no per-suite selector.
+The runner covers only Addictol's own out-of-game subsystems, end to end: the VMM allocator and its
+heaps (allocation, concurrency and memory shape), the libdeflate decompression backend against zlib,
+the profiled-heap forwarding path, and settings file persistence (create, update, migrate, Apply/Reset
+and reload of real TOML). Allocator shape checks run in isolated child processes. SIMD paths depend on
+CPU support. The runner has no per-suite selector.
 
-The codec checks use Addictol's real libdeflate backend, with the original engine inflate callback
-simulated at the fallback boundary. DMUI host negotiation, Facegen INI round trips and runtime telemetry
-readers also use simulated boundaries; they do not exercise the live host, module save/reload or engine
-hooks. Signature fixtures test drift and rejection logic, not retail address resolution or in-game safety.
-Settings checks cover registry-derived documentation, factory defaults, override loading,
-comment-preserving persistence, and Reset/Apply/reload behavior.
+Do not add tests for a single module, or tests that simulate the game, its renderer or other plugins.
+Modules are validated in game; a passing simulation proves nothing about engine behavior.
 
 Run `.\.Build\Tests\vmm-tests.exe --bench=<backend>` (`voltek`, `mimalloc` or `rpmalloc`) for opt-in heap throughput,
 latency and churn-footprint measurements, written to `.Build\Tests\bench-<backend>.json`. Run one backend per

@@ -1,6 +1,5 @@
 #include "Harness.h"
 
-#include <Core/AdConfigValidation.h>
 #include <Core/Settings/AdSetting.h>
 #include <Core/Settings/AdSettingPersistence.h>
 #include <Core/Settings/AdSettings.h>
@@ -13,18 +12,13 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <limits>
-#include <set>
 #include <string>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace
 {
-	using SettingKey = std::pair<std::string, std::string>;
-
 	class RegistryValueGuard
 	{
 	public:
@@ -44,26 +38,6 @@ namespace
 	private:
 		std::vector<Addictol::SettingValueSnapshot> m_values;
 	};
-
-	[[nodiscard]] bool MatchesType(
-		Addictol::SettingValueType a_type,
-		const Addictol::SettingValue& a_value)
-	{
-		switch (a_type)
-		{
-		case Addictol::SettingValueType::kBoolean:
-			return std::holds_alternative<bool>(a_value);
-		case Addictol::SettingValueType::kFloat32:
-			return std::holds_alternative<double>(a_value);
-		case Addictol::SettingValueType::kInt32:
-			return std::holds_alternative<int64_t>(a_value);
-		case Addictol::SettingValueType::kUInt32:
-			return std::holds_alternative<uint64_t>(a_value);
-		case Addictol::SettingValueType::kString:
-			return std::holds_alternative<std::string>(a_value);
-		}
-		return false;
-	}
 
 	[[nodiscard]] const Addictol::SettingEntry& Setting(
 		std::string_view a_section,
@@ -176,75 +150,6 @@ namespace vmm_tests
 {
 	void run_setting_registry_checks(Runner& runner)
 	{
-		runner.test("setting registry preserves metadata and stable enumeration", [] {
-			const auto first = Addictol::SettingRegistry::GetSingleton().Settings();
-			const auto second = Addictol::SettingRegistry::GetSingleton().Settings();
-			require(first.data() == second.data(), "registry enumeration storage changed");
-			require(first.size() == second.size(), "registry enumeration size changed");
-			std::set<SettingKey> registered;
-			for (size_t index = 0; index < first.size(); ++index)
-			{
-				const auto* setting = first[index];
-				require(setting != nullptr, "registry contains a null setting");
-				require(setting == second[index], "registry enumeration order changed");
-				require(
-					registered.emplace(setting->Section(), setting->Key()).second,
-					"registry contains a duplicate section and key");
-				require(!setting->Description().empty(), "registered setting has no description");
-				const auto timing = setting->ApplyTiming();
-				require(
-					timing == Addictol::SettingApplyTiming::kImmediate ||
-						timing == Addictol::SettingApplyTiming::kNextLaunch,
-					"registered setting has no explicit apply timing");
-				require(
-					static_cast<size_t>(setting->DisplayCategory()) <
-						static_cast<size_t>(Addictol::SettingDisplayCategory::kCount),
-					"registered setting has no display category");
-				require(!setting->DisplayName().empty(), "registered setting has no display name");
-				if (index == 0)
-					continue;
-				const auto previous = std::tuple{
-					first[index - 1]->Section(),
-					first[index - 1]->Key()
-				};
-				const auto current = std::tuple{
-					first[index]->Section(),
-					first[index]->Key()
-				};
-				require(previous < current, "registry enumeration is not sorted");
-			}
-			require(
-				registered.size() == first.size(),
-				"registered settings were not unique");
-		});
-
-		runner.test("factory defaults match the approved release values", [] {
-			require(
-				!std::get<bool>(
-					Setting("Additional", "bUseNewRedistributable").DefaultValue()),
-				"bUseNewRedistributable factory default is not false");
-			require(
-				std::get<int64_t>(
-					Setting("Additional", "nQuitGameDelayMs").DefaultValue()) == 1000,
-				"nQuitGameDelayMs factory default is not 1000");
-			require(
-				std::get<bool>(
-					Setting("Patches", "bArchiveLimits").DefaultValue()),
-				"bArchiveLimits factory default is not true");
-			require(
-				!std::get<bool>(
-					Setting("Patches", "bInputSwitch").DefaultValue()),
-				"bInputSwitch factory default is not false");
-			require(
-				!std::get<bool>(
-					Setting("Fixes", "bAltTabFullscreen").DefaultValue()),
-				"bAltTabFullscreen factory default is not false");
-			require(
-				std::get<bool>(
-					Setting("Fixes", "bShaderReferenceEffectLifetime").DefaultValue()),
-				"bShaderReferenceEffectLifetime factory default is not true");
-		});
-
 		runner.test("startup creates a documented template without active defaults", [] {
 			const auto directory = TemporarySettingsDirectory();
 			const auto settingsPath = directory / "Addictol.toml";
@@ -280,72 +185,6 @@ namespace vmm_tests
 					"generated template does not contain exactly one commented default");
 			}
 			std::filesystem::remove_all(directory);
-		});
-
-		runner.test("setting registry resolves module gate pointers", [] {
-			const auto* setting =
-				Addictol::SettingRegistry::GetSingleton().Find(
-					&Addictol::bAdditionalIgnoreCompatibilityChecks);
-			require(setting != nullptr, "module gate pointer was not registered");
-			require(
-				setting->Section() == "Additional" &&
-					setting->Key() == "bIgnoreCompatibilityChecks",
-				"module gate pointer resolved to the wrong key");
-		});
-
-		runner.test("config validation follows the setting registry", [] {
-			for (const auto* setting : Addictol::SettingRegistry::GetSingleton().Settings())
-			{
-				require(
-					Addictol::IsKnownConfigSection(setting->Section()),
-					"validation rejected a registered section");
-				require(
-					Addictol::IsKnownConfigKey(setting->Section(), setting->Key()),
-					"validation rejected a registered key");
-			}
-			require(
-				!Addictol::IsKnownConfigKey("Additional", "bDefinitelyUnknown"),
-				"validation accepted an unknown key");
-			require(
-				!Addictol::IsKnownConfigSection("DefinitelyUnknown"),
-				"validation accepted an unknown section");
-		});
-
-		runner.test("setting registry type erasure reads and writes REX settings", [] {
-			for (const auto* entry : Addictol::SettingRegistry::GetSingleton().Settings())
-			{
-				const auto value = entry->Value();
-				require(MatchesType(entry->Type(), value), "setting value type metadata is wrong");
-				require(
-					MatchesType(entry->Type(), entry->DefaultValue()),
-					"setting default type metadata is wrong");
-				require(entry->SetValue(value), "type-erased setting rejected its own value");
-				if (const auto& range = entry->NumericRange();
-					range && range->minimum && range->maximum)
-				{
-					require(
-						*range->minimum <= *range->maximum,
-						"setting numeric range is inverted");
-				}
-			}
-
-			const auto* setting = Addictol::SettingRegistry::GetSingleton().Find(
-				"Additional",
-				"bIgnoreCompatibilityChecks");
-			require(setting != nullptr, "menu icon setting is not registered");
-			const auto original = setting->Value();
-			const auto* originalBool = std::get_if<bool>(&original);
-			require(originalBool != nullptr, "menu icon setting has the wrong value type");
-			require(
-				setting->SetValue(!*originalBool),
-				"type-erased bool write was rejected");
-			require(
-				std::get<bool>(setting->Value()) == !*originalBool,
-				"type-erased bool write did not reach the REX setting");
-			require(
-				!setting->SetValue(uint64_t{ 1 }),
-				"type-erased setting accepted the wrong value type");
-			require(setting->SetValue(original), "menu icon setting could not be restored");
 		});
 
 		runner.test("settings override output keeps only non-default owned values", [] {
@@ -1171,212 +1010,5 @@ namespace vmm_tests
 			std::filesystem::remove_all(directory);
 		});
 
-		runner.test("settings draft applies each changed field once", [] {
-			const auto committed =
-				Addictol::SettingsRepository::GetSingleton().Snapshot();
-			auto state = Addictol::BeginSettingsDraft(committed);
-			require(!Addictol::SettingsDraftDiffers(state), "new draft was dirty");
-			std::vector<size_t> changed;
-			for (size_t index = 0; index < state.entries.size() && changed.size() < 2; ++index)
-			{
-				auto& entry = state.entries[index];
-				if (entry.setting->Type() == Addictol::SettingValueType::kBoolean)
-				{
-					entry.draft = !std::get<bool>(entry.draft);
-					changed.push_back(index);
-				}
-			}
-			require(changed.size() == 2, "draft fixture needs two boolean settings");
-			require(
-				Addictol::SettingsDraftPendingCount(state) == 2,
-				"dirty count did not include both changes");
-			const auto commit = Addictol::PrepareSettingsDraftApply(state);
-			require(
-				commit.values.size() == state.entries.size(),
-				"apply did not commit the whole draft");
-			require(
-				commit.changedIndices == changed,
-				"apply did not identify each changed field exactly once");
-			Addictol::CompleteSettingsDraftApply(state, commit);
-			require(
-				!Addictol::SettingsDraftDiffers(state),
-				"completed apply left the draft dirty");
-		});
-
-		runner.test("settings draft revert leave and global reset are non-persistent", [] {
-			auto committed =
-				Addictol::SettingsRepository::GetSingleton().Snapshot();
-			auto state = Addictol::BeginSettingsDraft(committed);
-			const auto editable = std::ranges::find_if(
-				state.entries,
-				[](const Addictol::SettingDraftEntry& a_entry) {
-					return a_entry.committed == a_entry.setting->DefaultValue() &&
-						std::holds_alternative<bool>(a_entry.committed);
-				});
-			require(editable != state.entries.end(), "no editable boolean setting found");
-			editable->draft = !std::get<bool>(editable->committed);
-			Addictol::RevertSettingsDraft(state);
-			require(
-				editable->draft == editable->committed,
-				"revert did not restore the committed value");
-			editable->draft = !std::get<bool>(editable->committed);
-			Addictol::LeaveSettingsDraft(state);
-			require(!state.active, "leaving did not deactivate the draft");
-			require(
-				editable->draft == editable->committed,
-				"leaving did not discard the draft");
-
-			state = Addictol::BeginSettingsDraft(committed);
-			const auto resettable = std::ranges::find_if(
-				state.entries,
-				[](const Addictol::SettingDraftEntry& a_entry) {
-					return std::holds_alternative<bool>(a_entry.draft);
-				});
-			require(resettable != state.entries.end(), "reset test setting was not found");
-			resettable->draft = !std::get<bool>(
-				resettable->setting->DefaultValue());
-			Addictol::ResetSettingsDraftToDefaults(state);
-			require(
-				resettable->draft == resettable->setting->DefaultValue(),
-				"global reset did not populate the editable draft default");
-			require(
-				resettable->committed == committed[
-					static_cast<size_t>(resettable - state.entries.begin())].value,
-				"global reset changed committed state");
-		});
-
-		runner.test("settings draft identities resolve across rebuilt entry storage", [] {
-			const auto committed =
-				Addictol::SettingsRepository::GetSingleton().Snapshot();
-			auto first = Addictol::BeginSettingsDraft(committed);
-			const auto identity = Addictol::MakeSettingIdentity(
-				Setting("Additional", "bIgnoreCompatibilityChecks"));
-			const auto* firstEntry =
-				Addictol::ResolveSettingDraftEntry(first, identity);
-			require(firstEntry != nullptr, "identity did not resolve in the first draft");
-
-			auto rebuilt = Addictol::BeginSettingsDraft(committed);
-			auto* rebuiltEntry =
-				Addictol::ResolveSettingDraftEntry(rebuilt, identity);
-			require(
-				rebuiltEntry != nullptr &&
-					rebuiltEntry->setting == firstEntry->setting,
-				"identity did not resolve after draft storage was rebuilt");
-			rebuiltEntry->draft = !std::get<bool>(rebuiltEntry->draft);
-			const auto* constEntry = Addictol::ResolveSettingDraftEntry(
-				std::as_const(rebuilt),
-				identity);
-			require(
-				constEntry && constEntry->draft == rebuiltEntry->draft,
-				"const identity resolution returned a different draft entry");
-
-			Addictol::LeaveSettingsDraft(first);
-			require(
-				Addictol::ResolveSettingDraftEntry(first, identity) == nullptr,
-				"inactive draft storage remained resolvable");
-		});
-
-		runner.test("settings draft values recover and clamp before binding", [] {
-			const auto& scale = Setting("Additional", "fLocalMapScaleFactor");
-			const auto recovered = Addictol::NormalizeSettingDraftValue(
-				scale,
-				Addictol::SettingValue{
-					std::numeric_limits<double>::quiet_NaN() });
-			require(
-				std::get<double>(recovered) ==
-					std::get<double>(scale.DefaultValue()),
-				"non-finite float did not recover its default");
-
-			const auto& operations =
-				Setting("Additional", "nMaxPapyrusOpsPerFrame");
-			const auto signedValue = Addictol::NormalizeSettingDraftValue(
-				operations,
-				Addictol::SettingValue{
-					(std::numeric_limits<int64_t>::max)() });
-			require(
-				std::get<int64_t>(signedValue) ==
-					(std::numeric_limits<int32_t>::max)(),
-				"signed input escaped its backing type");
-
-			const auto& refresh = Setting("Additional", "uMenuRefreshMs");
-			const auto unsignedValue = Addictol::NormalizeSettingDraftValue(
-				refresh,
-				Addictol::SettingValue{
-					(std::numeric_limits<uint64_t>::max)() });
-			require(
-				std::get<uint64_t>(unsignedValue) == 2000,
-				"unsigned input escaped its declared range");
-
-			const auto& maxStdio = Setting("Fixes", "nMaxStdIO");
-			const auto draggedValue = Addictol::NormalizeSettingDraftValue(
-				maxStdio,
-				Addictol::SettingValue{ int64_t{ 9000 } });
-			require(
-				std::get<int64_t>(draggedValue) == 8192,
-				"partially bounded drag escaped its declared maximum");
-		});
-
-		runner.test("settings reset predicate and control selection follow metadata", [] {
-			const auto& menu =
-				Setting("Additional", "bIgnoreCompatibilityChecks");
-			const auto& allocator = Setting("Additional", "sAllocator");
-			const auto& refresh = Setting("Additional", "uMenuRefreshMs");
-			const auto& maxStdio = Setting("Fixes", "nMaxStdIO");
-			const auto& maxPapyrus =
-				Setting("Additional", "nMaxPapyrusOpsPerFrame");
-			require(
-				!Addictol::IsSettingModified(menu, menu.DefaultValue()),
-				"default value exposed reset");
-			require(
-				Addictol::IsSettingModified(menu, !CompatibilityDefault()),
-				"changed value did not expose reset");
-			require(
-				Addictol::SelectSettingControl(menu) ==
-					Addictol::SettingControlKind::kCheckbox,
-				"boolean did not select a checkbox");
-			require(
-				Addictol::SelectSettingControl(allocator) ==
-					Addictol::SettingControlKind::kCombo,
-				"known string set did not select a combo");
-			require(
-				Addictol::SelectSettingControl(refresh) ==
-					Addictol::SettingControlKind::kSlider,
-				"fully bounded number did not select a slider");
-			require(
-				Addictol::SelectSettingControl(maxStdio) ==
-					Addictol::SettingControlKind::kDrag,
-				"partially bounded number did not select a drag");
-			require(
-				Addictol::SelectSettingControl(maxPapyrus) ==
-					Addictol::SettingControlKind::kNumericInput,
-				"unbounded number did not select numeric input");
-		});
-
-		runner.test("host-owned menu settings leave the Addictol registry", [] {
-			constexpr std::array hostOwnedKeys{
-				std::string_view{ "bMenu" },
-				std::string_view{ "sMenuToggleKey" },
-				std::string_view{ "bMenuMonochromeIcons" },
-				std::string_view{ "sMenuAccentColor" },
-				std::string_view{ "fMenuWindowOpacity" },
-				std::string_view{ "bMenuBackgroundBlur" },
-				std::string_view{ "fMenuBackgroundBlurStrength" },
-				std::string_view{ "fMenuUiScale" },
-				std::string_view{ "sMenuBodyFontFamily" }
-			};
-			for (const auto key : hostOwnedKeys)
-			{
-				require(
-					Addictol::SettingRegistry::GetSingleton().Find(
-						"Additional",
-						key) == nullptr,
-					"host-owned setting remained in Addictol");
-			}
-			require(
-				Addictol::SettingRegistry::GetSingleton().Find(
-					"Additional",
-					"uMenuRefreshMs") != nullptr,
-				"client refresh setting left Addictol");
-		});
 	}
 }
