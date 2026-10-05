@@ -3,7 +3,7 @@
 
 #include <atomic>
 
-// Concept ported from SUP F4SE V1170 by Tomm (MIT). Original at https://www.nexusmods.com/fallout4/mods/17295
+// Concept ported from SUP F4SE V1170 by Tomm (MIT). Original at https://www.nexusmods.com/fallout4/mods/55419
 
 #include <RE/B/BGSKeyword.h>
 #include <RE/E/ExtraDataList.h>

@@ -1,3 +1,5 @@
+// Port: https://github.com/aers/EngineFixesSkyrim64/blob/master/src/patches/save_added_sound_categories.cpp
+
 #include <Modules/AdModuleSaveAddedSoundCategories.h>
 #include <Core/AdUtils.h>
 
