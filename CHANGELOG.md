@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- ShaderReferenceEffectLifetime: Detach shaders when their magic effect is destroyed instead of keeping the effect alive.
+
 ## 1.7.0
 
 - Added the "Local Map Rotation" module.

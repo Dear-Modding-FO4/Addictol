@@ -88,7 +88,7 @@ Addictol/Include/Telemetry/  telemetry interfaces and hub
 Addictol/Include/Menu/       menu interfaces and widgets
 Addictol/Include/Modules/    one header per feature module
 Addictol/Source/             mirrors the concern folders under Include
-Addictol/Source/Modules/     one .cpp per feature module (94 total)
+Addictol/Source/Modules/     one .cpp per feature module
 VC/                          MSBuild solution and project files
 Depends/                     submodules and vendored libraries
 Version/                     version resource and the tracked version header
@@ -144,8 +144,10 @@ identity, and exact source commit. Local builds do not claim a CI identity.
 ## Changelog
 
 `CHANGELOG.md` is the only maintained release history and the source for the in-game
-**General > Changelog** page. Keep released versions newest first using only the document title,
-`# Changelog`, `## MAJOR.MINOR.PATCH` headings, single-line `- ` bullets, and blank lines.
+**General > Changelog** page. Record user-visible changes under `## Unreleased` as they land;
+keep that heading only while it has bullets, since an empty section fails the in-game parser.
+Below it, keep released versions newest first using only the document title, `# Changelog`,
+`## MAJOR.MINOR.PATCH` headings, single-line `- ` bullets, and blank lines.
 Both builds embed the file directly in the DLL through the existing Windows resource script.
 
 ## Releases
@@ -160,8 +162,9 @@ The DLL version remains `MAJOR.MINOR.PATCH.0`.
 
 ### Stable releases
 
-1. Confirm `master` contains the intended code and `Version/resource_version2.h` reflects the release
-   version (do not edit it to the next version yet).
+1. Confirm `master` contains the intended code, `Version/resource_version2.h` reflects the release
+   version (do not edit it to the next version yet), and `## Unreleased` in `CHANGELOG.md` is
+   renamed to that version.
 2. Open **Actions > Release stable > Run workflow** on `master`.
 3. Enter the release **version** (e.g. `1.6.0`), **source_ref** (`master` or an exact commit SHA), and
    **next_version** (e.g. `1.7.0`).
