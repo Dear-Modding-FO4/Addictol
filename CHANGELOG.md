@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.7.1
 
-- ShaderReferenceEffectLifetime: Detach shaders when their magic effect is destroyed instead of keeping the effect alive.
 - Settings: Packages now ship with an auto-generated TOML configuration file.
+- ShaderReferenceEffectLifetime: Detach shaders when their magic effect is destroyed instead of keeping the effect alive.
+- SprintSpeedMult: Now disabled by default.
 
 ## 1.7.0
 

@@ -8,8 +8,8 @@
 #define STRINGIZE(s) STRINGIZE2(s)
 
 #define VERSION_MAJOR			1
-#define VERSION_MINOR			8
-#define VERSION_PATCH			0
+#define VERSION_MINOR			7
+#define VERSION_PATCH			1
 #define VERSION_REVISION		0
 
 #define IDR_CHANGELOG			101
