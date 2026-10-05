@@ -441,7 +441,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bSprintSpeedMult"sv,
 		SettingDisplayCategory::kGameplay,
-		true,
+		false,
 		"Makes the player's SpeedMult actor value affect third-person sprint speed, matching first person."sv,
 		SettingApplyTiming::kNextLaunch
 	};
