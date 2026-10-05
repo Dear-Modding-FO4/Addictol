@@ -1,129 +1,70 @@
 #include "Harness.h"
 
-#include <Core/AdDeferredOwnerRegistry.h>
+#include <Core/AdDependentRegistry.h>
 
 #include <atomic>
-#include <functional>
-#include <memory>
+#include <chrono>
 #include <thread>
 #include <vector>
-
-namespace
-{
-	struct LifetimeProbe
-	{
-		LifetimeProbe(
-			std::atomic_uint32_t& a_destroyed,
-			std::thread::id& a_destroyThread) :
-			destroyed(a_destroyed),
-			destroyThread(a_destroyThread)
-		{}
-
-		~LifetimeProbe()
-		{
-			destroyThread = std::this_thread::get_id();
-			++destroyed;
-		}
-
-		std::atomic_uint32_t& destroyed;
-		std::thread::id& destroyThread;
-	};
-}
 
 namespace vmm_tests
 {
 	void run_shader_reference_effect_lifetime_checks(Runner& runner)
 	{
-		using Registry =
-			Addictol::DeferredOwnerRegistry<uintptr_t, std::shared_ptr<LifetimeProbe>>;
+		using Registry = Addictol::DependentRegistry<uintptr_t, uintptr_t>;
 
-		runner.test("shader owner retires after final destructor at task boundary", [] {
+		runner.test("owner release detaches only its live shaders", [] {
 			Registry registry;
-			std::vector<Registry::Task> tasks;
-			std::atomic_uint32_t destroyed{};
-			std::thread::id destroyThread;
-			auto owner = std::make_shared<LifetimeProbe>(destroyed, destroyThread);
-			std::weak_ptr<LifetimeProbe> weakOwner = owner;
-			bool destructorFinished = false;
-			bool scheduledBeforeDestructor = false;
-			const auto schedule = [&](Registry::Task a_task) {
-				scheduledBeforeDestructor = !destructorFinished;
-				tasks.push_back(std::move(a_task));
-			};
+			registry.Link(0x10, 0x1000);
+			registry.Link(0x10, 0x2000);
+			registry.Link(0x20, 0x3000);
+			registry.Unlink(0x2000);
 
-			registry.Retain(0x1000, owner, schedule);
-			owner.reset();
+			std::vector<uintptr_t> detached;
+			registry.Release(0x10, [&](uintptr_t a_shader) { detached.push_back(a_shader); });
 
-			bool workerSawOwner = false;
-			bool destructorSawOwner = false;
-			int result = 0;
-			std::thread worker{ [&]() {
-				workerSawOwner = !weakOwner.expired();
-				result = registry.RetireAfter(
-					0x1000,
-					[&]() {
-						destructorSawOwner = !weakOwner.expired();
-						destructorFinished = true;
-						return 7;
-					},
-					schedule);
-			} };
-			worker.join();
+			require(detached == std::vector<uintptr_t>{ 0x1000 }, "release did not detach exactly the live shader");
+			require(registry.LinkedCount() == 1, "release disturbed another owner's shader");
 
-			require(workerSawOwner, "owner did not survive worker use");
-			require(destructorSawOwner, "owner was released before the shader destructor");
-			require(!scheduledBeforeDestructor, "owner queued before shader destructor completed");
-			require(result == 7, "shader destructor result was not preserved");
-			require(destroyed.load() == 0, "owner released before the queued task");
-			require(registry.RetainedCount() == 0, "retired shader remained registered");
-			require(registry.QueuedCount() == 1, "owner was not queued exactly once");
-			require(tasks.size() == 1, "retirement did not schedule exactly one task");
-
-			const auto taskThread = std::this_thread::get_id();
-			tasks.front()();
-			require(destroyed.load() == 1, "queued owner was not released exactly once");
-			require(destroyThread == taskThread, "owner released outside the task boundary");
-			require(registry.QueuedCount() == 0, "completed owner remained queued");
+			detached.clear();
+			registry.Release(0x10, [&](uintptr_t a_shader) { detached.push_back(a_shader); });
+			require(detached.empty(), "released owner detached shaders twice");
 		});
 
-		runner.test("shader rollback defers release across address reuse", [] {
+		runner.test("reused shader address follows its new owner", [] {
 			Registry registry;
-			std::vector<Registry::Task> tasks;
-			std::atomic_uint32_t firstDestroyed{};
-			std::atomic_uint32_t secondDestroyed{};
-			std::thread::id firstDestroyThread;
-			std::thread::id secondDestroyThread;
-			auto first =
-				std::make_shared<LifetimeProbe>(firstDestroyed, firstDestroyThread);
-			auto second =
-				std::make_shared<LifetimeProbe>(secondDestroyed, secondDestroyThread);
-			std::weak_ptr<LifetimeProbe> weakFirst = first;
-			std::weak_ptr<LifetimeProbe> weakSecond = second;
-			const auto schedule = [&tasks](Registry::Task a_task) {
-				tasks.push_back(std::move(a_task));
-			};
+			registry.Link(0x10, 0x1000);
+			registry.Link(0x20, 0x1000);
 
-			registry.Retain(0x3000, first, schedule);
-			first.reset();
-			registry.RetireAfter(0x3000, [&]() {
-				registry.Retain(0x3000, second, schedule);
-				second.reset();
-			}, schedule);
+			bool detachedFromOld = false;
+			registry.Release(0x10, [&](uintptr_t) { detachedFromOld = true; });
+			require(!detachedFromOld, "stale owner detached a reused shader address");
 
-			require(tasks.size() == 1, "reused address did not queue the old owner");
-			require(!weakFirst.expired(), "rollback released the old owner inline");
-			require(!weakSecond.expired(), "reused address lost the new owner pin");
-			require(registry.RetainedCount() == 1, "reused address retained multiple owners");
-			tasks.front()();
-			require(weakFirst.expired(), "reused address leaked the old owner");
-			require(!weakSecond.expired(), "old-owner task released the new owner");
+			bool detachedFromNew = false;
+			registry.Release(0x20, [&](uintptr_t) { detachedFromNew = true; });
+			require(detachedFromNew, "new owner did not detach its shader");
+			require(registry.LinkedCount() == 0, "released shaders remained linked");
+		});
 
-			registry.RetireAfter(0x3000, [] {}, schedule);
-			require(tasks.size() == 2, "new owner retirement was not scheduled");
-			tasks.back()();
-			require(weakSecond.expired(), "reused address leaked the new owner");
-			require(firstDestroyed.load() == 1, "old owner release count was not one");
-			require(secondDestroyed.load() == 1, "new owner release count was not one");
+		runner.test("shader teardown waits for an in-flight owner detach", [] {
+			Registry registry;
+			registry.Link(0x10, 0x1000);
+
+			std::atomic_bool unlinked{};
+			bool unlinkedDuringDetach = true;
+			std::thread teardown;
+			registry.Release(0x10, [&](uintptr_t a_shader) {
+				teardown = std::thread{ [&, a_shader]() {
+					registry.Unlink(a_shader);
+					unlinked = true;
+				} };
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				unlinkedDuringDetach = unlinked.load();
+			});
+			teardown.join();
+
+			require(!unlinkedDuringDetach, "shader unlinked while its owner was detaching it");
+			require(unlinked.load(), "shader teardown never completed");
 		});
 	}
 }

@@ -473,7 +473,7 @@
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Core\AdDeferredOwnerRegistry.h">
+    <ClInclude Include="..\Addictol\Include\Core\AdDependentRegistry.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdGameUtils.h">
