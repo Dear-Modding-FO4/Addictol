@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- SprintSpeedMult: Apply SpeedMult to third-person sprint on vanilla behavior graphs.
+
 ## 1.7.1
 
 - Settings: Packages now ship with an auto-generated TOML configuration file.
