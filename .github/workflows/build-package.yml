@@ -87,9 +87,13 @@ jobs:
         with:
           version: '3.02'
 
-      - name: Build
+      - name: Build Addictol
         working-directory: source
         run: msbuild /m /p:Configuration=Release /p:Platform=x64 .\VC
+
+      - name: Build AdSettingsGenerator
+        working-directory: source
+        run: msbuild /m /p:Configuration=Release /p:Platform=x64 .\Tools
 
       - name: Bundle package
         shell: pwsh
@@ -106,7 +110,7 @@ jobs:
 
           $plugins = (Resolve-Path '.\.Build\F4SE\Plugins').Path
           Get-ChildItem -Recurse -File -Path $plugins `
-            -Include 'Addictol.dll','Addictol.pdb','Addictol*.ini' |
+            -Include 'Addictol.dll','Addictol.pdb','Addictol.toml','Addictol*.ini' |
             ForEach-Object {
               $relative = $_.FullName.Substring($plugins.Length).TrimStart('\')
               $destination = Join-Path "$env:BUNDLE_NAME\f4se\plugins" $relative

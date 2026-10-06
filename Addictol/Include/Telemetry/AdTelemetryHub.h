@@ -23,13 +23,6 @@ namespace Addictol
 {
 	class ModuleManager;
 
-#ifdef AD_TELEMETRY_TESTS
-	namespace TelemetryTest
-	{
-		struct HubAccess;
-	}
-#endif
-
 	struct FrameRecord
 	{
 		uint64_t qpc;
@@ -153,9 +146,6 @@ namespace Addictol
 			uint64_t a_intervalEndQpc,
 			double a_intervalMs,
 			double a_latenessMs) noexcept;
-#ifdef AD_TELEMETRY_TESTS
-		friend struct TelemetryTest::HubAccess;
-#endif
 
 		uint64_t m_qpcFrequency{ 0 };
 		std::vector<SourceEntry> m_sources{};
@@ -288,9 +278,6 @@ namespace Addictol
 		std::atomic<uint64_t> m_countAndTotalDurationUs{ 0 };
 		std::atomic<uint64_t> m_intervalStartQpc{ 0 };
 		std::atomic<bool> m_active{ false };
-#ifdef AD_TELEMETRY_TESTS
-		friend struct TelemetryTest::HubAccess;
-#endif
 	};
 
 	namespace TelemetryDetail

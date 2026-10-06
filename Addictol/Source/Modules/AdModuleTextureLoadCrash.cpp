@@ -1,5 +1,8 @@
+// Original Idea: https://github.com/aers/EngineFixesSkyrim64/blob/master/src/fixes/texture_load_crash.h
+
 #include <Modules/AdModuleTextureLoadCrash.h>
 #include <Core/AdUtils.h>
+
 #include <RE/N/NiTexture.h>
 #include <RE/B/BSResourceNiBinaryStream.h>
 #include <RE/B/BSGraphics.h>
@@ -32,14 +35,14 @@ namespace Addictol
 
 		auto Renderer = reinterpret_cast<RE::BSGraphics::Renderer*>(BSGraphicsRenderer.address());
 		BSGraphicsRenderer_SetTextureLoadLevel(Renderer, a_texture->desiredDegradeLevel);
-		
+
 		auto texture = BSGraphicsRenderer_CreateTextureFromStream(Renderer, stream, static_cast<bool>(a_texture->isDDX),
 			static_cast<bool>(a_texture->isSRGB), static_cast<bool>(a_texture->flags & (1 << 6)));
 		a_texture->rendererTexture = texture;
 		if (texture)
 		{
 			// orig (psevdo c):
-			// if ((*(_DWORD*)(a2 + 24) & 0x40) != 0 && 
+			// if ((*(_DWORD*)(a2 + 24) & 0x40) != 0 &&
 			//		(unsigned __int8)BSGraphics::Renderer::CanTextureDegrade_BSGraphics::Texture__(&byte_1461E0900,
 			//		TextureFromStream_BSResourceNiBinaryStream__bool_bool_bool)) {
 			//			*(_DWORD*)(a2 + 24) |= 0x40u;
@@ -47,7 +50,7 @@ namespace Addictol
 			// else
 			//		*(_DWORD*)(a2 + 24) &= ~0x40u;
 			//
-			// perchik71: In fact, if one of the conditions is incorrect, the flag is disabled, which would be generally correct, 
+			// perchik71: In fact, if one of the conditions is incorrect, the flag is disabled, which would be generally correct,
 			// but I was confused that Bethesda sets the flag if two conditions match. But why...
 			// I assume that depending on the check, need to unset or set the flag.
 			// I should note that there is a function that calls this code, then unset the flag, possibly trying to fix a bug.
@@ -61,8 +64,8 @@ namespace Addictol
 			BSGraphicsRenderer_SetTextureLoadLevel(Renderer, 0);
 		}
 		else
-			// We inform you that it was not possible to create a texture, 
-			// the texture will be specified as nullptr, this will not lead to ctd directly 
+			// We inform you that it was not possible to create a texture,
+			// the texture will be specified as nullptr, this will not lead to ctd directly
 			// if it is not related to scaleform, namely pipboy.
 			// If you open pipboy and see the defects, you will get a ctd in a couple of seconds.
 			REX::WARN("Texture load failed \"{}\""sv, a_texture->name.c_str());

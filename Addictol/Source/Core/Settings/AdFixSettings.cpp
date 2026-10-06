@@ -27,7 +27,7 @@ namespace Addictol
 		"bInitTints"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Removes the block on loading NPCs tints of the Fallout4.esm file, as well as for NPCs with set the IsChargenPresent flag."sv,
+		"Removes a block when loading NPC tints from Fallout4.esm, as well as for NPCs with the IsChargenPresent flag set."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -109,7 +109,7 @@ namespace Addictol
 		"bMovementPlanner"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a bug where the the Movement Planner crashes with non-actors."sv,
+		"Fixes a bug where the Movement Planner crashes with non-actors."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -262,7 +262,7 @@ namespace Addictol
 		"bManyItems"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes drop items (now can drops more than 32.767, but generation stacks), similar with Drop7FFFPatch mods, supported 32-bit for containers."sv,
+		"Fixes the Item Stack Limit, allowing you to add / drop more than 32767 items (stacked generation), similar to the Add/Drop7FFFPatch mods."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -406,7 +406,7 @@ namespace Addictol
 		"bShaderReferenceEffectLifetime"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Prevents crashes when an actor with an active effect shader unloads by retaining its effect controller through shader teardown."sv,
+		"Prevents crashes when an actor with an active effect shader unloads by detaching the shader when its magic effect is destroyed."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -441,7 +441,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bSprintSpeedMult"sv,
 		SettingDisplayCategory::kGameplay,
-		true,
+		false,
 		"Makes the player's SpeedMult actor value affect third-person sprint speed, matching first person."sv,
 		SettingApplyTiming::kNextLaunch
 	};

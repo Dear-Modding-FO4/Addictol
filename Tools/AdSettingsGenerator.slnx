@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Release" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Depends/">
+    <Project Path="../Depends/commonlib-shared_vc22.vcxproj" Id="4b0c9a46-c909-40ab-929a-a3207e7f7908" />
+    <Project Path="../Depends/commonlibf4_vc22.vcxproj" Id="faf05090-9b74-4fbf-8d3e-f1e2d9ea032f" />
+    <Project Path="../Depends/spdlog_vc22.vcxproj" Id="3317c484-5b56-43bc-a2de-37a001905e7a" />
+  </Folder>
+  <Project Path="AdSettingsGenerator.vcxproj" Id="3d17d40e-68a8-4949-8d5f-449a9fa2421b">
+    <BuildDependency Project="../Depends/commonlib-shared_vc22.vcxproj" />
+    <BuildDependency Project="../Depends/commonlibf4_vc22.vcxproj" />
+    <BuildDependency Project="../Depends/spdlog_vc22.vcxproj" />
+  </Project>
+</Solution>

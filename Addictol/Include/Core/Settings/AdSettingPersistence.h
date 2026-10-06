@@ -27,6 +27,10 @@ namespace Addictol
 		std::string error;
 	};
 
+	[[nodiscard]] bool WriteAtomically(
+		const std::filesystem::path& a_target,
+		std::string_view a_contents,
+		std::string& a_error);
 	[[nodiscard]] bool BuildSettingsOverrideToml(
 		std::string_view a_existingToml,
 		std::span<const SettingValueSnapshot> a_settings,

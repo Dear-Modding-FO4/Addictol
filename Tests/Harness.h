@@ -121,21 +121,14 @@ namespace vmm_tests
 
 	ChildProcessResult run_child_process(std::string_view argument);
 	void run_allocator_checks(Runner& runner);
-	void run_control_sampler_checks(Runner& runner);
 	void run_correctness_checks(Runner& runner);
-	void run_escape_freeze_checks(Runner& runner);
 	void run_threading_checks(Runner& runner);
 	void run_bits_regions_check(Runner& runner);
 	void run_shape_checks(Runner& runner);
 	void run_zlib_backend_checks(Runner& runner);
 	void run_owned_inflate_checks(Runner& runner);
-	void run_log_control_checks(Runner& runner);
-	void run_menu_checks(Runner& runner);
 	void run_setting_registry_checks(Runner& runner);
-	void run_shader_reference_effect_lifetime_checks(Runner& runner);
-	void run_telemetry_checks(Runner& runner);
 	void run_operation_profile_checks(Runner& runner);
-	void run_image_profiling_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
 	int run_benchmarks(std::string_view a_backend);

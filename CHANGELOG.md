@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- SprintSpeedMult: Apply SpeedMult to third-person sprint on vanilla behavior graphs.
+
+## 1.7.1
+
+- Settings: Packages now ship with an auto-generated TOML configuration file.
+- ShaderReferenceEffectLifetime: Detach shaders when their magic effect is destroyed instead of keeping the effect alive.
+- SprintSpeedMult: Now disabled by default.
+
 ## 1.7.0
 
 - Added the "Local Map Rotation" module.

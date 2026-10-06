@@ -1,45 +1,41 @@
 #include <Modules/AdModuleShaderReferenceEffectLifetime.h>
-#include <Core/AdDeferredOwnerRegistry.h>
+#include <Core/AdDependentRegistry.h>
 #include <Core/AdUtils.h>
 
 #include <RE/A/ActiveEffect.h>
 #include <RE/A/ActiveEffectReferenceEffectController.h>
-#include <RE/B/BSTSmartPointer.h>
 #include <RE/R/ReferenceEffectController.h>
-#include <RE/RTTI.h>
 #include <RE/S/ShaderReferenceEffect.h>
 
 namespace Addictol
 {
 	namespace shaderReferenceEffectLifetimeDetail
 	{
-		using Owner = RE::BSTSmartPointer<RE::ActiveEffect>;
-		using Registry = DeferredOwnerRegistry<RE::ShaderReferenceEffect*, Owner>;
+		using Registry = DependentRegistry<RE::ActiveEffect*, RE::ShaderReferenceEffect*>;
 		using Constructor = RE::ShaderReferenceEffect* (__fastcall*)(
 			RE::ShaderReferenceEffect*, RE::ReferenceEffectController*);
-		using DeletingDestructor = void* (__fastcall*)(RE::ShaderReferenceEffect*, uint32_t);
+		using ShaderDeletingDestructor = void* (__fastcall*)(RE::ShaderReferenceEffect*, uint32_t);
+		using OwnerDestructor = void* (__fastcall*)(RE::ActiveEffect*);
+		using OwnerDeletingDestructor = void* (__fastcall*)(RE::ActiveEffect*, uint32_t);
 
 		static inline Constructor s_constructor{};
-		static inline DeletingDestructor s_deletingDestructor{};
+		static inline ShaderDeletingDestructor s_shaderDeletingDestructor{};
+		static inline OwnerDestructor s_ownerDestructor{};
+		static inline OwnerDeletingDestructor s_ownerDeletingDestructor{};
 		static inline uintptr_t s_activeEffectControllerVtable{};
 
 		[[nodiscard]] static Registry& GetRegistry()
 		{
-			// Exit-only queued pins stay retained instead of releasing engine objects during static teardown.
+			// Leaked so hooks running during static teardown never touch a destroyed registry.
 			static auto* registry = new Registry;
 			return *registry;
 		}
 
-		static void QueueRelease(Registry::Task a_task)
-		{
-			F4SE::GetTaskInterface()->AddTask(std::move(a_task));
-		}
-
-		[[nodiscard]] static Owner AcquireOwner(RE::ReferenceEffectController* a_controller)
+		[[nodiscard]] static RE::ActiveEffect* GetOwner(RE::ReferenceEffectController* a_controller)
 		{
 			if (!a_controller ||
 				*reinterpret_cast<uintptr_t*>(a_controller) != s_activeEffectControllerVtable)
-				return {};
+				return nullptr;
 
 			auto* controller =
 				static_cast<RE::ActiveEffectReferenceEffectController*>(a_controller);
@@ -48,10 +44,22 @@ namespace Addictol
 			{
 				REX::WARN(
 					"Shader Reference Effect Lifetime: controller owner does not match the verified embedded layout."sv);
-				return {};
+				return nullptr;
 			}
 
-			return Owner{ owner };
+			return owner;
+		}
+
+		// Vanilla StopHitEffects detach, which ~ActiveEffect skips once the target is cleared.
+		static void DetachShaders(RE::ActiveEffect* a_owner)
+		{
+			GetRegistry().Release(a_owner, [a_owner](RE::ShaderReferenceEffect* a_effect) {
+				if (a_effect->controller != std::addressof(a_owner->hitEffectController))
+					return;
+
+				a_effect->finished = true;
+				a_effect->controller = nullptr;
+			});
 		}
 
 		static RE::ShaderReferenceEffect* __fastcall HKConstructor(
@@ -61,26 +69,33 @@ namespace Addictol
 			auto* result = s_constructor(a_effect, a_controller);
 			if (result)
 			{
-				auto owner = AcquireOwner(a_controller);
-				if (owner)
-					GetRegistry().Retain(result, std::move(owner), QueueRelease);
+				if (auto* owner = GetOwner(a_controller))
+					GetRegistry().Link(owner, result);
 			}
 			return result;
 		}
 
-		static void* __fastcall HKDeletingDestructor(
+		static void* __fastcall HKShaderDeletingDestructor(
 			RE::ShaderReferenceEffect* a_effect,
 			uint32_t a_flags)
 		{
-			return GetRegistry().RetireAfter(
-				a_effect,
-				[a_effect, a_flags]() {
-					return s_deletingDestructor(a_effect, a_flags);
-				},
-				QueueRelease);
+			GetRegistry().Unlink(a_effect);
+			return s_shaderDeletingDestructor(a_effect, a_flags);
 		}
 
-		[[nodiscard]] static bool ValidateDeletingDestructor(uintptr_t a_target)
+		static void* __fastcall HKOwnerDestructor(RE::ActiveEffect* a_owner)
+		{
+			DetachShaders(a_owner);
+			return s_ownerDestructor(a_owner);
+		}
+
+		static void* __fastcall HKOwnerDeletingDestructor(RE::ActiveEffect* a_owner, uint32_t a_flags)
+		{
+			DetachShaders(a_owner);
+			return s_ownerDeletingDestructor(a_owner, a_flags);
+		}
+
+		[[nodiscard]] static bool ValidateShaderDeletingDestructor(uintptr_t a_target)
 		{
 			if (RELEX::IsRuntimeOG())
 			{
@@ -105,6 +120,24 @@ namespace Addictol
 			}
 			return false;
 		}
+
+		[[nodiscard]] static bool ValidateOwnerDestructor(uintptr_t a_target)
+		{
+			// mov [rsp+10h], rbx; push rdi; sub rsp, 20h; cmp qword ptr [rcx+58h], 0 (target); lea rax, vftable
+			return RELEX::Validate(a_target,
+				{ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x57, 0x48, 0x83,
+					0xEC, 0x20, 0x48, 0x83, 0x79, 0x58, 0x00, 0x48,
+					0x8D, 0x05 });
+		}
+
+		[[nodiscard]] static bool ValidateOwnerDeletingDestructor(uintptr_t a_target)
+		{
+			// NG/AE inline the ~ActiveEffect body, including its target-gated StopHitEffects call.
+			return RELEX::Validate(a_target,
+				{ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x74,
+					0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48,
+					0x83, 0x79, 0x58, 0x00, 0x48, 0x8D, 0x05 });
+		}
 	}
 
 	ModuleShaderReferenceEffectLifetime::ModuleShaderReferenceEffectLifetime() :
@@ -118,14 +151,21 @@ namespace Addictol
 
 		const auto constructorTarget =
 			REL::ID{ 1546646, 2226732 }.address();
-		const auto deletingDestructorTarget =
+		const auto shaderDeletingDestructorTarget =
 			REL::ID{ 509, 2226770 }.address();
+		const auto ownerDestructorTarget =
+			REL::ID{ 195712, 2225990 }.address();
+		// OG's base deleting destructor calls ~ActiveEffect instead of inlining it.
+		const auto ownerDeletingDestructorTarget =
+			RELEX::IsRuntimeOG() ? 0 : REL::ID{ 2226042 }.address();
 
 		const bool constructorValid = RELEX::Validate(constructorTarget,
 			{ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74,
 				0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xF2 });
 		if (!constructorValid ||
-			!ValidateDeletingDestructor(deletingDestructorTarget))
+			!ValidateShaderDeletingDestructor(shaderDeletingDestructorTarget) ||
+			!ValidateOwnerDestructor(ownerDestructorTarget) ||
+			(ownerDeletingDestructorTarget && !ValidateOwnerDeletingDestructor(ownerDeletingDestructorTarget)))
 		{
 			REX::WARN(
 				"Shader Reference Effect Lifetime: unsupported bytes or an existing hook conflict; patch not applied."sv);
@@ -141,14 +181,27 @@ namespace Addictol
 			return false;
 		}
 
-		s_deletingDestructor = reinterpret_cast<DeletingDestructor>(
+		// Unlink and detach hooks go in before Link so no linked shader can outlive its tracking.
+		s_shaderDeletingDestructor = reinterpret_cast<ShaderDeletingDestructor>(
 			RELEX::DetourJump(
-				deletingDestructorTarget,
-				reinterpret_cast<uintptr_t>(&HKDeletingDestructor)));
-		if (!s_deletingDestructor)
+				shaderDeletingDestructorTarget,
+				reinterpret_cast<uintptr_t>(&HKShaderDeletingDestructor)));
+		s_ownerDestructor = reinterpret_cast<OwnerDestructor>(
+			RELEX::DetourJump(
+				ownerDestructorTarget,
+				reinterpret_cast<uintptr_t>(&HKOwnerDestructor)));
+		if (ownerDeletingDestructorTarget)
+		{
+			s_ownerDeletingDestructor = reinterpret_cast<OwnerDeletingDestructor>(
+				RELEX::DetourJump(
+					ownerDeletingDestructorTarget,
+					reinterpret_cast<uintptr_t>(&HKOwnerDeletingDestructor)));
+		}
+		if (!s_shaderDeletingDestructor || !s_ownerDestructor ||
+			(ownerDeletingDestructorTarget && !s_ownerDeletingDestructor))
 		{
 			REX::WARN(
-				"Shader Reference Effect Lifetime: deleting-destructor detour failed; patch not applied."sv);
+				"Shader Reference Effect Lifetime: destructor detour failed; constructor not hooked, so no shader is tracked."sv);
 			return false;
 		}
 
@@ -159,7 +212,7 @@ namespace Addictol
 		if (!s_constructor)
 		{
 			REX::WARN(
-				"Shader Reference Effect Lifetime: constructor detour failed; retirement hook remains inert."sv);
+				"Shader Reference Effect Lifetime: constructor detour failed; destructor hooks remain inert."sv);
 			return false;
 		}
 
