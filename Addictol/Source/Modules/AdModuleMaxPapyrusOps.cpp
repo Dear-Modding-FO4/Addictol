@@ -78,7 +78,11 @@ namespace Addictol
 			}
 
 			a_this->RegisterForAllGameEvents();
-			a_this->saveLoad = false;
+
+			if (RELEX::IsRuntimeAE())
+				a_this->saveLoad = false;
+			else
+				*reinterpret_cast<bool*>(reinterpret_cast<std::byte*>(a_this) + 0x619) = false;
 
 			a_this->handlePolicy.DropSaveLoadRemapData();
 			a_this->objectBindPolicy.EndSaveLoad();
