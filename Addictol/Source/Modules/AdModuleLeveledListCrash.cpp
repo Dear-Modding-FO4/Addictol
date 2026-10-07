@@ -6,20 +6,19 @@
 
 namespace Addictol
 {
-	typedef void(AddScriptAddedLeveledObject_Signature)(RE::TESLeveledList*, RE::TESForm*, uint16_t, uint16_t, RE::TESForm*);
-	REL::Relocation<AddScriptAddedLeveledObject_Signature> AddScriptAddedLeveledObject_Original;
+	typedef RE::LEVELED_OBJECT* (AddLeveledObject_Signature)(RE::TESLeveledList*, std::uint16_t, std::uint16_t, std::int8_t, RE::TESForm*,
+		RE::ContainerItemExtra*);
+	REL::Relocation<AddLeveledObject_Signature> AddLeveledObject_Original;
 
 	// it's worth noting that this may be susceptible to the same issue as LeveledListEntryCount where
 	// entryCount is inaccurate sometimes, so we should keep an eye on it
-	static void AddScriptAddedLeveledObject_Hook(RE::TESLeveledList* a_this, RE::TESForm* a_owner, uint16_t a_level,
-		uint16_t a_count, RE::TESForm* a_form)
+	static RE::LEVELED_OBJECT* AddLeveledObject_Hook(RE::TESLeveledList* a_this, std::uint16_t a_level, std::uint16_t a_count,
+		std::int8_t a_chanceNone, RE::TESForm* a_item, RE::ContainerItemExtra* a_itemExtra)
 	{
 		if (!a_this)
-			return;
+			return nullptr;
 
-		// baseListCount can sometimes be -128, clamped to prevent a large uint32_t and a false trigger..
-		std::uint32_t entryCount = std::max<int8_t>(a_this->baseListCount, 0) + a_this->scriptListCount;
-		if (entryCount > 254)
+		if (a_this->baseListCount >= 255)
 		{
 			// warn
 			/*auto* formFile = a_form->GetFile(0);
@@ -27,12 +26,12 @@ namespace Addictol
 				a_form->GetFormID(), formFile ? formFile->GetFilename() : "MODNAME_NOT_FOUND"sv);*/
 
 			REX::INFO("LeveledListCrash: Prevented a problematic injection."sv);
-			return;
+			return nullptr;
 		}
 		else
 		{
 			// return original function
-			return AddScriptAddedLeveledObject_Original(a_this, a_owner, a_level, a_count, a_form);
+			return AddLeveledObject_Original(a_this, a_level, a_count, a_chanceNone, a_item, a_itemExtra);
 		}
 	}
 
@@ -54,7 +53,7 @@ namespace Addictol
 	bool ModuleLeveledListCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		REL::Relocation target{ REL::ID{ 860553, 2193269 }, REL::Offset{ 0x6C, 0x6D } };
-		AddScriptAddedLeveledObject_Original = target.write_call<5>(AddScriptAddedLeveledObject_Hook);
+		AddLeveledObject_Original = target.write_call<5>(AddLeveledObject_Hook);
 
 		return true;
 	}
