@@ -127,7 +127,7 @@ namespace Addictol
 		"bEscapeFreeze"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Samples condition-lock ownership and renderer frame progress, releasing only locks orphaned by a terminated owner thread."sv,
+		"Fixes a combat freeze (deadlock) in perk condition checks by evaluating them without the global condition lock."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

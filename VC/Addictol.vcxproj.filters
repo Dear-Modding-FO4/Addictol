@@ -467,9 +467,6 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h">
       <Filter>Include\Zlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h">
-      <Filter>Include\Modules\E</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h">
       <Filter>Include\Core</Filter>
     </ClInclude>

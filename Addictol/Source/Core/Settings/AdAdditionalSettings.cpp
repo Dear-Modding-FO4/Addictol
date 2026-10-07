@@ -79,26 +79,6 @@ namespace Addictol
 		SettingNumericRange{ 2048.0, 8192.0 }
 	};
 
-	I32Setting nAdditionalSleepTimer{
-		"Additional"sv,
-		"nSleepTimer"sv,
-		SettingDisplayCategory::kStability,
-		125,
-		"Sampling interval in milliseconds for Escape Freeze (needs bEscapeFreeze)."sv,
-		SettingApplyTiming::kNextLaunch,
-		SettingNumericRange{ 1.0, 60000.0 }
-	};
-
-	I32Setting nAdditionalMaxLockCount{
-		"Additional"sv,
-		"nMaxLockCount"sv,
-		SettingDisplayCategory::kStability,
-		8,
-		"Sampling threshold multiplier; total threshold is nSleepTimer x nMaxLockCount (needs bEscapeFreeze)."sv,
-		SettingApplyTiming::kNextLaunch,
-		SettingNumericRange{ 1.0, 1000000.0 }
-	};
-
 	BoolSetting bAdditionalMultiThreading{
 		"Additional"sv,
 		"bInteriorNavCutMultiThreading"sv,

@@ -413,19 +413,6 @@ namespace Addictol
 		MetricDescriptor{ "audio.memory_bytes", Unit::kBytes }
 	};
 
-	inline constexpr std::array kEscapeFreezeMetricSchema{
-		MetricDescriptor{ "escape.stall_candidates", Unit::kCount },
-		MetricDescriptor{ "escape.forced_orphan_releases", Unit::kCount },
-		MetricDescriptor{ "escape.aborted_orphan_releases", Unit::kCount },
-		MetricDescriptor{ "escape.renderer_resumptions_clean", Unit::kCount },
-		MetricDescriptor{ "escape.renderer_resumptions_after_release", Unit::kCount },
-		MetricDescriptor{ "escape.healthy_sample_sequences", Unit::kCount },
-		MetricDescriptor{ "escape.corrupt_count_observations", Unit::kCount },
-		MetricDescriptor{ "escape.owner_alive_observations", Unit::kCount },
-		MetricDescriptor{ "escape.owner_unknown_observations", Unit::kCount },
-		MetricDescriptor{ "escape.unresolved_candidates", Unit::kCount }
-	};
-
 	inline constexpr std::array kReferenceHandleMetricSchema{
 		MetricDescriptor{ "references.handle_count", Unit::kCount },
 		MetricDescriptor{ "references.handle_usage", Unit::kPercent }
@@ -442,7 +429,6 @@ namespace Addictol
 
 	using AudioPerformanceMetricSource =
 		SnapshotMetricSource<kAudioPerformanceMetricSchema.size()>;
-	using EscapeFreezeMetricSource = SnapshotMetricSource<kEscapeFreezeMetricSchema.size()>;
 	using ReferenceHandleMetricSource = SnapshotMetricSource<kReferenceHandleMetricSchema.size()>;
 	using ModuleOutcomeMetricSource = SnapshotMetricSource<kModuleOutcomeMetricSchema.size()>;
 

@@ -208,7 +208,6 @@
     <ClInclude Include="..\Addictol\Include\Core\AdModuleOutcome.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdModuleManager.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdDependentRegistry.h" />
-    <ClInclude Include="..\Addictol\Include\Modules\AdEscapeFreezeState.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdFacegenExceptions.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdUtils.h" />

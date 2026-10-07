@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- EscapeFreeze: Fixed the root cause of the combat freeze instead of releasing stuck locks; nSleepTimer and nMaxLockCount were removed.
 - SprintSpeedMult: Apply SpeedMult to third-person sprint on vanilla behavior graphs.
 
 ## 1.7.1
