@@ -3,6 +3,7 @@
 ## Unreleased
 
 - EscapeFreeze: Fixed the root cause of the combat freeze instead of releasing stuck locks; nSleepTimer and nMaxLockCount were removed.
+- FasterWorkshop: Fixed the Workshop Icon Lag Hook for NG.
 - LeveledListCrash: Fixed an issue where the module did not catch overflows.
 - MaxPapyrusOps: Fixed an incorrect offset being used for OG/NG.
 - SprintSpeedMult: Apply SpeedMult to third-person sprint on vanilla behavior graphs.
