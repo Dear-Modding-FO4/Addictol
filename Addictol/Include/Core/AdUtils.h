@@ -248,7 +248,7 @@ namespace RELEX
 
 	template<typename TR, typename T1, typename T2, typename T3, typename T4, typename T5>
 	__forceinline TR ThisVirtualCall(size_t a_reloff, const void* a_this, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) {
-		return (*(TR(__fastcall**)(const void*, T1, T2, T3, T4, T5))(*(__int64*)a_this + a_reloff))(a_this, a1, a2, a3, a4, a4, a5);
+		return (*(TR(__fastcall**)(const void*, T1, T2, T3, T4, T5))(*(__int64*)a_this + a_reloff))(a_this, a1, a2, a3, a4, a5);
 	}
 }
 
