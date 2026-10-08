@@ -365,7 +365,7 @@ namespace Addictol
 		else
 		{
 			REL::Relocation HookCheckForValidChildrenTarget{ REL::ID{ 934716, 2195480 }, REL::Offset{ 0x51, 0x4F } };
-			REL::Relocation HookIconLoadLagTarget{ REL::ID{ 1280212, 2224975 }, REL::Offset{ 0x3A5, 0x3A0 } };
+			REL::Relocation HookIconLoadLagTarget{ REL::ID{ 1280212, 2224975 }, REL::Offset{ 0x3A5, 0x39F, 0x3A0 } };
 
 			// Workshop Lag Fix
 			RELEX::DetourCall(HookCheckForValidChildrenTarget.address(), (uintptr_t)&fasterWorkshopDetail::CachedCheckForValidChildren);
