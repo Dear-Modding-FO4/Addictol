@@ -437,12 +437,12 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bFixesSprintSpeedMult{
+	BoolSetting bFixesThirdPersonSpeedMult{
 		"Fixes"sv,
-		"bSprintSpeedMult"sv,
+		"bThirdPersonSpeedMult"sv,
 		SettingDisplayCategory::kGameplay,
-		false,
-		"Makes the player's SpeedMult actor value affect third-person sprint speed, matching first person."sv,
+		true,
+		"Makes the player's SpeedMult actor value affect third-person sprint and sneak speeds, matching first person."sv,
 		SettingApplyTiming::kNextLaunch
 	};
 

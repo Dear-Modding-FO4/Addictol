@@ -353,9 +353,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintStutter.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSprintSpeedMult.cpp">
-      <Filter>Source\Modules\S</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStolenPowerArmorOwnership.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
@@ -369,6 +366,9 @@
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleThirdPersonSpeedMult.cpp">
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp">
@@ -773,9 +773,6 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintStutter.h">
       <Filter>Include\Modules\S</Filter>
     </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSprintSpeedMult.h">
-      <Filter>Include\Modules\S</Filter>
-    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStolenPowerArmorOwnership.h">
       <Filter>Include\Modules\S</Filter>
     </ClInclude>
@@ -789,6 +786,9 @@
       <Filter>Include\Modules\T</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleThirdPersonSpeedMult.h">
       <Filter>Include\Modules\T</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h">
