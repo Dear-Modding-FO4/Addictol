@@ -336,6 +336,7 @@ void AdRegisterModules()
 	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
 	modules.Register(sModuleUtilityShader,					kGameLoaded);
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
+	modules.Register(sModuleMoonRotation,					kGameLoaded);
 	modules.Register(sModuleMaxPapyrusOps,					kPostLoad);
 	modules.Register(sModulePapyrusGC,						kPostLoad);
 	modules.Register(sModuleMenu,							kPostPostLoad);

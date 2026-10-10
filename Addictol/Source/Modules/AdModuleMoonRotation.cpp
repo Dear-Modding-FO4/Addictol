@@ -9,22 +9,26 @@
 #include <RE/B/BSStringT.h>
 #include <RE/N/NiNode.h>
 #include <RE/B/BSTriShape.h>
+#include <RE/S/Sun.h>
 #include <RE/S/Sky.h>
 #include <RE/M/Moon.h>
 #include <RE/C/Calendar.h>
+#include <RE/S/Setting.h>
+#include <RE/T/TESClimate.h>
+#include <RE/N/NiDirectionalLight.h>
 
 namespace Addictol
 {
+	constexpr float NI_PI = static_cast<float>(3.1415926535897932);
+
+	// Function to convert degrees to radians
+	constexpr static double Deg2Rad(double a_degrees) noexcept
+	{
+		return a_degrees * (NI_PI / 180.0);
+	}
+
 	namespace Moon
 	{
-		constexpr float NI_PI = static_cast<float>(3.1415926535897932);
-
-		// Function to convert degrees to radians
-		constexpr static double Deg2Rad(double a_degrees) noexcept
-		{
-			return a_degrees * (NI_PI / 180.0);
-		}
-
 		class LunarRotationCalculator
 		{
 			// Degrees the moon rotates in exactly 1 hour (~50 min later every day)
@@ -106,6 +110,13 @@ namespace Addictol
 				root->local.translate.x -= 120.f;
 				root->local.translate.z -= 120.f;
 #endif
+				// Shadows follow the moon (see HookSunUpdate), without the offset applied below.
+				coordinate = root->local.translate;
+			}
+
+			const RE::NiPoint3& GetCoordinate() const noexcept
+			{
+				return coordinate;
 			}
 		};
 
@@ -116,7 +127,109 @@ namespace Addictol
 		static void HookUpdateDirection(RE::Moon* a_moon, RE::Sky* a_sky, float a_unk) noexcept
 		{
 			Update_orig(a_moon, a_sky, a_unk);
+
+			// Interior and sky-dome-only modes use the cell's own directional light.
+			if (a_sky->mode.none(RE::Sky::Mode::kFull))
+				return;
+
 			moon.Update(a_moon, a_sky);
+		}
+	}
+
+	namespace Sun
+	{
+		using TSunUpdateThunk = void(RE::Sun* a_sun, RE::Sky* a_sky, float a_unk);
+		static std::function<TSunUpdateThunk> SunUpdate_orig;
+
+		static auto fSunAlphaTransTime	= 0.5f;
+		static auto fSunShadowMinAngle	= .0f;
+		static auto fSunShadowScale		= .0f;
+
+		// Same window as Sun::Update: 1.0 while the sun is up, ramping over fSunAlphaTransTime around the middle
+		// of the climate's sunrise and sunset transitions.
+		[[nodiscard]] static float GetSunAlpha(const RE::Sky * a_sky) noexcept
+		{
+			const auto * climate = a_sky->currentClimate;
+			if (!climate)
+				return 1.f;
+			
+			constexpr float kHour = 0.16666667f;
+			const auto time = [&climate](std::size_t a_index) noexcept {
+				return static_cast<float>(static_cast<std::uint8_t>(climate->data[a_index])) * kHour;
+			};
+			
+			const float half		= fSunAlphaTransTime * 0.5f;
+			const float sunrise		= (time(1) + time(0)) * 0.5f;
+			const float sunset		= (time(3) + time(2)) * 0.5f;
+			const float riseBegin	= sunrise - half;
+			const float riseEnd		= sunrise + half;
+			const float setBegin	= sunset - half;
+			const float setEnd		= sunset + half;
+			const float hour		= a_sky->currentGameHour;
+			
+			if (riseBegin > hour || hour > setEnd)
+				return 0.f;
+			if (riseBegin >= hour || hour >= riseEnd)
+			{
+				if (setBegin < hour && hour < setEnd)
+					return 1.f - (hour - setBegin) / (setEnd - setBegin);
+				return 1.f;
+			}
+
+			return (hour - riseBegin) / (riseEnd - riseBegin);
+		}
+
+		static void HookSunUpdate(RE::Sun* a_sun, RE::Sky* a_sky, float a_unk) noexcept
+		{
+			SunUpdate_orig(a_sun, a_sky, a_unk);
+
+			// Interior and sky-dome-only modes use the cell's own directional light.
+			if (a_sky->mode.none(RE::Sky::Mode::kFull))
+				return;
+
+			const float night = 1.f - GetSunAlpha(a_sky);
+			if (night <= .0f)
+				return;
+
+			auto light = a_sun->light.get();
+			auto cloudLight = a_sun->cloudLight.get();
+			if (!light)
+				return;
+
+			RE::NiPoint3 moonDir = Moon::moon.GetCoordinate();
+			moonDir.Normalize();
+
+			const float elevation = std::fmaxf(std::fabsf(moonDir.z) + fSunShadowScale, fSunShadowMinAngle);
+
+			moonDir.x = -moonDir.x;
+			moonDir.y = -moonDir.y;
+			moonDir.z = -elevation;
+			moonDir.Normalize();
+
+			auto& row = light->local.rotate.entry[0];
+			
+			RE::NiPoint3 direction
+			{
+				row.x + (moonDir.x - row.x) * night,
+				row.y + (moonDir.y - row.y) * night,
+				row.z + (moonDir.z - row.z) * night
+			};
+			direction.Normalize();
+
+			if (direction == RE::NiPoint3::ZERO)
+				direction = moonDir;
+	
+			row.x = direction.x;
+			row.y = direction.y;
+			row.z = direction.z;
+
+			if (cloudLight)
+			{
+				auto& cloudRow = cloudLight->local.rotate.entry[0];
+				cloudRow.x = direction.x;
+				cloudRow.y = direction.y;
+				cloudRow.z = direction.z;
+			}
 		}
 	}
 
@@ -149,64 +262,49 @@ namespace Addictol
 
 	bool ModuleMoonRotation::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto targetInit = REL::ID{ 114988, 2208804 };
-		const auto targetUpdate = REL::ID{ 4410, 2208806 };
-
-		// Fixed rotation and direction
-
-#if 0
-		struct HookUpdateDirectionPatch : Xbyak::CodeGenerator
+		if (!a_msg)
 		{
-			HookUpdateDirectionPatch(uintptr_t targetAddr, uintptr_t funcAddr)
+			const auto targetInit = REL::ID{ 114988, 2208804 };
+			const auto targetUpdate = REL::ID{ 4410, 2208806 };
+
+			Moon::Update_orig = (Moon::TUpdateThunk*)RELEX::DetourJump(targetUpdate.address(),
+				reinterpret_cast<uintptr_t>(&Moon::HookUpdateDirection));
+
+			const auto target3 = REL::Relocation{ targetInit, REL::Offset{ 0x1E2, 0x1F7 } }.address();
+			if (!RELEX::Validate(target3, { 0x04, 0x48, 0x8B, 0x4E, 0x08 }))
 			{
-				// move sky ptr
-				mov(rdx, rdi);
-				// move moon ptr
-				mov(rcx, rsi);
-
-				// call our function
-				sub(rsp, 0x70);
-				movaps(ptr[rsp + 0x20], xmm4);
-				movaps(ptr[rsp + 0x30], xmm5);
-				movaps(ptr[rsp + 0x40], xmm8);
-				movaps(ptr[rsp + 0x50], xmm11);
-				movaps(ptr[rsp + 0x60], xmm6);
-				mov(rax, funcAddr);
-				call(rax);
-				movaps(xmm4, ptr[rsp + 0x20]);
-				movaps(xmm5, ptr[rsp + 0x30]);
-				movaps(xmm8, ptr[rsp + 0x40]);
-				movaps(xmm11, ptr[rsp + 0x50]);
-				movaps(xmm1, xmm8);
-				movaps(xmm6, ptr[rsp + 0x60]);
-				add(rsp, 0x70);
-
-				// return back (ret)
-				jmp(ptr[rip]);
-				dq(targetAddr + 5);
+				REX::WARN("Moon Rotation: unexpected bytes at target - skipping to avoid corruption."sv);
+				return false;
 			}
-		};
 
-		auto target2 = REL::Relocation(targetUpdate, REL::Offset{ 0x337 }).address();
-		RELEX::WriteSafeNop(target2, 0x14);	
-		RELEX::XbyakJump<HookUpdateDirectionPatch>(target2, target2,
-			reinterpret_cast<uintptr_t>(&Moon::HookUpdateDirection));
-#endif
+			// Fixed camera
+			// Flip the imm8 0x04 -> 0x03 in Moon::Init's or word ptr [node+0x140], 4.
+			RELEX::WriteSafe(target3, { 0x03 });
 
-		Moon::Update_orig = (Moon::TUpdateThunk*)RELEX::DetourJump(targetUpdate.address(),
-			reinterpret_cast<uintptr_t>(&Moon::HookUpdateDirection));
+			// Fixed shadows
+			// Sun::Update is virtual slot 2 of the Sun vtable on every runtime.
+			const REL::Relocation sunVTable{ RE::Sun::VTABLE[0] };
+			Sun::SunUpdate_orig = (Sun::TSunUpdateThunk*)RELEX::DetourVTable(sunVTable.address(),
+				reinterpret_cast<uintptr_t>(&Sun::HookSunUpdate), 2);
 
-		const auto target3 = REL::Relocation{ targetInit, REL::Offset{ 0x1E2, 0x1F7 } }.address();
-		if (!RELEX::Validate(target3, { 0x04, 0x48, 0x8B, 0x4E, 0x08 }))
+			return true;
+		}
+		else if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 		{
-			REX::WARN("Moon Rotation: unexpected bytes at target - skipping to avoid corruption."sv);
-			return false;
+			auto GetGameSettingFloat = [](std::string_view a_name, float a_default) noexcept
+				{
+					auto settings = RE::GameSettingCollection::GetSingleton();
+					auto setting = settings ? settings->GetSetting(a_name) : nullptr;
+					return setting ? setting->GetFloat() : a_default;
+				};
+
+			Sun::fSunAlphaTransTime	= GetGameSettingFloat("fSunAlphaTransTime"sv, .5f);
+			Sun::fSunShadowMinAngle	= static_cast<float>(Deg2Rad(GetGameSettingFloat("fSunShadowMinAngle"sv, 30.f)));
+			Sun::fSunShadowScale	= static_cast<float>(Deg2Rad(GetGameSettingFloat("fSunShadowScale"sv, .0f)));
+
+			return true;
 		}
 
-		// Fixed camera
-		// Flip the imm8 0x04 -> 0x03 in Moon::Init's or word ptr [node+0x140], 4.
-		RELEX::WriteSafe(target3, { 0x03 });
-
-		return true;
+		return false;
 	}
 }
