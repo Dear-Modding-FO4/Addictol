@@ -28,14 +28,14 @@ namespace Addictol
 			RELEX::WriteSafe(Target + 0x6B, { 0xEB, 0x2C, 0x90 });
 			RELEX::WriteSafe(Target + 0xCC, { 0xEB, 0x28, 0x90 });
 			
-			RELEX::WriteSafe(REL::ID(2197513).address() + 0x5B, { 0xEB });
+			RELEX::WriteSafe(REL::ID(2213411).address() + 0x64, { 0xEB });
 		}
 		else
 		{
 			RELEX::WriteSafe(REL::ID(375876).address(), { 0x31, 0xC0, 0xC3, 0x90 });		// xor eax, eax; ret;
 			RELEX::WriteSafe(REL::ID(109874).address(), { 0x31, 0xC0, 0xC3, 0x90 });		// xor eax, eax; ret;
 			RELEX::WriteSafe(REL::ID(1239016).address(), { 0x31, 0xC0, 0xC3, 0x90 });		// xor eax, eax; ret;
-			RELEX::WriteSafe(REL::Offset(0x52A80).address(), { 0x31, 0xC0, 0xC3, 0x90 });	// xor eax, eax; ret;
+			RELEX::WriteSafe(REL::ID(1425899).address(), { 0x31, 0xC0, 0xC3, 0x90 });		// xor eax, eax; ret;
 
 			auto Target = REL::ID(921453).address();
 			RELEX::WriteSafe(Target + 0x6B, { 0xEB, 0x2C, 0x90 });
