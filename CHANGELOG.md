@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- MoonRotation: Fixed directional light so that the light matches the movement of the moon.
 - EscapeFreeze: Fixed the root cause of the combat freeze instead of releasing stuck locks; nSleepTimer and nMaxLockCount were removed.
 - FasterWorkshop: Fixed the Workshop Icon Lag Hook for NG.
 - LeveledListCrash: Fixed an issue where the module did not catch overflows.

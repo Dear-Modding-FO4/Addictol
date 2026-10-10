@@ -114,7 +114,7 @@ namespace Addictol
 				coordinate = root->local.translate;
 			}
 
-			const RE::NiPoint3& GetCoordinate() const noexcept
+			[[nodiscard]] const RE::NiPoint3& GetCoordinate() const noexcept
 			{
 				return coordinate;
 			}
@@ -128,7 +128,6 @@ namespace Addictol
 		{
 			Update_orig(a_moon, a_sky, a_unk);
 
-			// Interior and sky-dome-only modes use the cell's own directional light.
 			if (a_sky->mode.none(RE::Sky::Mode::kFull))
 				return;
 
