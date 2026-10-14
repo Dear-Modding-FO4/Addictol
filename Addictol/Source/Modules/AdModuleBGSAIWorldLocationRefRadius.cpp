@@ -17,7 +17,7 @@ namespace Addictol
 				// code clobbered at target is placed here
 				movss(qword[rbx + 0x10], RELEX::IsRuntimeOG() ? xmm7 : xmm0);
 				// end clobbered code
-				test(rsi, rsi);    // nullptr check on rsi
+				cmp(qword[rsi], 0);  // nullptr check on rsi
 				jz("returnFunc");  // jump to returnFunc if rsi is null
 				jmp(ptr[rip + contLab]);
 
