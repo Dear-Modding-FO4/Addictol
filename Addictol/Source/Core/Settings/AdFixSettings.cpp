@@ -643,4 +643,13 @@ namespace Addictol
 		"Prevents repeatable quest stages from appending duplicate quest log nodes and deduplicates bloated quest logs on save load."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesCustomScale{
+		"Fixes"sv,
+		"bCustomScale"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		"Fixes ADS issues that occur when the player scale is changed."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

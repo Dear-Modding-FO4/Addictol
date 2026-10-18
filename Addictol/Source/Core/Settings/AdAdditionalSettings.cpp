@@ -133,4 +133,22 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ 100.0, 2000.0 }
 	};
+
+	BoolSetting bAdditionalUseCameraOverrideScale{
+		"Additional"sv,
+		"bUseCameraOverrideScaleFix"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		"Fix the screen issue when using Terminals (needs bCustomScale)."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bAdditionalUseCustomFurniturePosition{
+		"Additional"sv,
+		"bUseCustomFurniturePosition"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		"Change the position of the actor based on the scale of the actor when using furnitures (needs bCustomScale)."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

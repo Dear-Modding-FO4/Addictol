@@ -104,6 +104,7 @@
 #include <Modules/AdModuleLightOrder.h>
 #include <Modules/AdModuleLightPriority.h>
 #include <Modules/AdModuleRefExtended.h>
+#include <Modules/AdModuleCustomScale.h>
 
 namespace
 {
@@ -220,6 +221,7 @@ static auto sModuleQuestLogBloat					= std::make_shared<Addictol::ModuleQuestLog
 static auto sModuleLightOrder						= std::make_shared<Addictol::ModuleLightOrder>();
 static auto sModuleLightPriority					= std::make_shared<Addictol::ModuleLightPriority>();
 static auto sModuleRefExtended						= std::make_shared<Addictol::ModuleRefExtended>();
+static auto sModuleCustomScale						= std::make_shared<Addictol::ModuleCustomScale>();
 
 void AdRegisterPreloadModules()
 {
@@ -333,6 +335,7 @@ void AdRegisterModules()
 	modules.Register(sModuleLightOrder);
 	modules.Register(sModuleLightPriority);
 	modules.Register(sModuleRefExtended);
+	modules.Register(sModuleCustomScale);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);

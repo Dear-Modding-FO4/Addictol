@@ -100,6 +100,7 @@ namespace Addictol
 	extern BoolSetting bFixesLocalMapRotation;
 	extern BoolSetting bFixesRadioSilence;
 	extern BoolSetting bFixesQuestLogBloat;
+	extern BoolSetting bFixesCustomScale;
 
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;
@@ -130,4 +131,6 @@ namespace Addictol
 	extern BoolSetting bAdditionalIgnoreCompatibilityChecks;
 	extern F32Setting fAdditionalLocalMapScaleFactor;
 	extern U32Setting uAdditionalMenuRefreshMs;
+	extern BoolSetting bAdditionalUseCameraOverrideScale;
+	extern BoolSetting bAdditionalUseCustomFurniturePosition;
 }
