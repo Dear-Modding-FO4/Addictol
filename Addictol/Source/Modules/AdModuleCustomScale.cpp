@@ -5,6 +5,8 @@
 #include <xbyak/xbyak.h>
 
 #include <RE/B/BGSZoomData.h>
+#include <RE/B/BSAnimationGraphEvent.h>
+#include <RE/N/NiAVObject.h>
 #include <RE/P/PlayerCharacter.h>
 #include <RE/T/TESObjectWEAP.h>
 
@@ -19,6 +21,15 @@ namespace Addictol
 				using func_t = decltype(&Utils::GetScale);
 				static REL::Relocation<func_t> func{ REL::ID{ 911188, 2200892 } };
 				return func(a_reference);
+			}
+
+			void ModifyFirstPersonScale(RE::Actor* a_actor, float a_scale)
+			{
+				RE::NiAVObject* root = a_actor->Get3D(true);
+				if (!root)
+					return;
+
+				root->local.scale = a_scale;
 			}
 		}
 
@@ -152,6 +163,28 @@ namespace Addictol
 				}
 			};
 		}
+
+		namespace PlayerAnimEvents
+		{
+			struct ProcessEvent // Actor::ProcessEvent (BSAnimationGraphEvent)
+			{
+				static RE::BSEventNotifyControl thunk(RE::Actor* a_actor, const RE::BSAnimationGraphEvent& a_event, RE::BSTEventSource<RE::BSAnimationGraphEvent>* a_source)
+				{
+					RE::PlayerCharacter* playerCharacter = RE::PlayerCharacter::GetSingleton();
+					if (playerCharacter)
+					{
+						if (a_event.tag == "CameraOverrideStart")
+							Utils::ModifyFirstPersonScale(playerCharacter, 1.0f);
+						else if (a_event.tag == "cameraOverrideStop")
+							Utils::ModifyFirstPersonScale(playerCharacter, Utils::GetScale(playerCharacter));
+					}
+
+					return func(a_actor, a_event, a_source);
+				}
+
+				static inline REL::Relocation<decltype(thunk)> func;
+			};
+		}
 	}
 
 	ModuleCustomScale::ModuleCustomScale() :
@@ -171,20 +204,22 @@ namespace Addictol
 
 	bool ModuleCustomScale::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		// Zoom Patch (GetGeometryOffset)
+		// Shared Zoom Patch
 		auto target = REL::Relocation{ REL::ID{ 1344794, 2248270 }, REL::Offset{ 0x86, 0x84 } }.get();
 		RELEX::XbyakJump<customScaleDetail::ZoomData::GetGeometryOffsetPatch>(target, target, (uintptr_t)&customScaleDetail::ZoomData::GetZoomData);
 
-		// AE Inline (GetTranslationPatch)
+		// NG / AE Inline Zoom Patch
 		if (!RELEX::IsRuntimeOG())
 		{
 			target = REL::Relocation{ REL::ID{ 2248262 }, REL::Offset{ 0xB1 } }.get();
 			RELEX::XbyakJump<customScaleDetail::ZoomData::GetTranslationPatch>(target, target, (uintptr_t)&customScaleDetail::ZoomData::GetZoomData);
 		}
 
+		// Camera Override Scale Patch
 		if (bAdditionalUseCameraOverrideScale.GetValue())
 		{
-			//PlayerAnimEvents::Hooks_PlayerAnimEvents();
+			REL::Relocation vtable{ RE::PlayerCharacter::VTABLE[3] };
+			customScaleDetail::PlayerAnimEvents::ProcessEvent::func = vtable.write_vfunc(1, customScaleDetail::PlayerAnimEvents::ProcessEvent::thunk);
 		}
 
 		if (bAdditionalUseCustomFurniturePosition.GetValue())
