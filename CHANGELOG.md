@@ -18,6 +18,7 @@
 - LODDistance: Fixed cell object LOD flashing when references are enabled or built; no longer alters weapon mod filtering on NG/AE.
 - InteriorNavCut: Rebuild the navmesh only when interior workshop cuts change; removed bInteriorNavCutMultiThreading.
 - ThirdPersonSpeedMult: Reworked from SprintSpeedMult and enabled by default, apply SpeedMult to third-person sprint and sneak on vanilla behavior graphs.
+- ArmorPenetration: Now disabled by default.
 
 ## 1.7.1
 

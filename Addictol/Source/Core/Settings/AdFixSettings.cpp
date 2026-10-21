@@ -576,7 +576,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bFixesArmorPenetration"sv,
 		SettingDisplayCategory::kGameplay,
-		true,
+		false,
 		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."sv,
 		SettingApplyTiming::kNextLaunch
 	};
