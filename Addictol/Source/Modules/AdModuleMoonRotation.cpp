@@ -264,8 +264,8 @@ namespace Addictol
 	{
 		if (!a_msg)
 		{
-			const auto targetInit = REL::ID{ 114988, 2208804 };
-			const auto targetUpdate = REL::ID{ 4410, 2208806 };
+			const auto targetInit = RE::ID::Moon::Init;
+			const auto targetUpdate = RE::ID::Moon::Update;
 
 			Moon::Update_orig = (Moon::TUpdateThunk*)RELEX::DetourJump(targetUpdate.address(),
 				reinterpret_cast<uintptr_t>(&Moon::HookUpdateDirection));

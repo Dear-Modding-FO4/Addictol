@@ -52,7 +52,7 @@ namespace Addictol
 
 	bool ModuleLeveledListCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation target{ REL::ID{ 860553, 2193269 }, REL::Offset{ 0x6C, 0x6D } };
+		REL::Relocation target{ RE::ID::TESLeveledList::AddScriptAddedLeveledObject, REL::Offset{ 0x6C, 0x6D } };
 		AddLeveledObject_Original = target.write_call<5>(AddLeveledObject_Hook);
 
 		return true;

@@ -28,7 +28,7 @@ namespace Addictol
 
 	bool ModuleProfile::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		RELEX::DetourCall(REL::Relocation{ REL::ID{ 665510, 2228907 }, REL::Offset{ 0x3BE, 0x4A7, 0x538 } }.get(), 
+		RELEX::DetourCall(REL::Relocation{ RE::ID::Main::StartUp, REL::Offset{ 0x3BE, 0x4A7, 0x538 } }.get(), 
 			(uintptr_t)&hk_nullsub_C30008);
 
 		return true;

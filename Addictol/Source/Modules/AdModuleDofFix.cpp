@@ -75,10 +75,10 @@ namespace Addictol
 		g_viewmodelCameraGlobal = reinterpret_cast<void**>(REL::ID{ 300623, 2712879 }.address());
 		g_viewmodelAccumGlobal = reinterpret_cast<void**>(REL::ID{ 726120, 2712936 }.address());
 
-		const auto renderSceneTarget = REL::ID{ 1310228, 2317576 }.address();
+		const auto renderSceneTarget = RE::ID::BSShaderUtil::RenderScene.address();
 		OriginalRenderScene = reinterpret_cast<TRenderScene>(renderSceneTarget);
 
-		const auto renderEffectTarget = REL::ID{ 325252, 2316595 }.address();
+		const auto renderEffectTarget = RE::ID::ImageSpaceManager::RenderEffect.address();
 		*reinterpret_cast<std::uintptr_t*>(&OriginalRenderEffect) =
 			RELEX::DetourJump(renderEffectTarget, reinterpret_cast<std::uintptr_t>(&HookRenderEffect));
 		return OriginalRenderEffect != nullptr;

@@ -143,12 +143,12 @@ namespace Addictol
 
 			struct
 			{
-				RE::UI*& ui{ *reinterpret_cast<RE::UI**>(REL::ID{ 548587, 2689028, 4796314 }.address()) };
-				RE::BSReadWriteLock& menuMapRWLock{ *reinterpret_cast<RE::BSReadWriteLock*>(REL::ID{ 578487, 2707105 }.address()) };
-				RE::UIMessageQueue*& msgq{ *reinterpret_cast<RE::UIMessageQueue**>(REL::ID{ 82123, 2689091, 4796377 }.address()) };
-				RE::ControlMap*& controlMap{ *reinterpret_cast<RE::ControlMap**>(REL::ID{ 325206, 2692014, 4799307 }.address()) };
-				AddMessage_t* const addMessage{ reinterpret_cast<AddMessage_t*>(REL::ID{ 1182019, 2284929 }.address()) };
-				UpdateGamepadDependentButtonCodes_t* const updateGamepadDependentButtonCodes{ reinterpret_cast<UpdateGamepadDependentButtonCodes_t*>(REL::ID{ 190238, 2249714, 4483350 }.address()) };
+				RE::UI*& ui{ *reinterpret_cast<RE::UI**>(RE::ID::UI::Singleton.address()) };
+				RE::BSReadWriteLock& menuMapRWLock{ *reinterpret_cast<RE::BSReadWriteLock*>(RE::ID::UI::GetMenuMapRWLock.address()) };
+				RE::UIMessageQueue*& msgq{ *reinterpret_cast<RE::UIMessageQueue**>(RE::ID::UIMessageQueue::Singleton.address()) };
+				RE::ControlMap*& controlMap{ *reinterpret_cast<RE::ControlMap**>(RE::ID::ControlMap::Singleton.address()) };
+				AddMessage_t* const addMessage{ reinterpret_cast<AddMessage_t*>(RE::ID::UIMessageQueue::AddMessage.address()) };
+				UpdateGamepadDependentButtonCodes_t* const updateGamepadDependentButtonCodes{ reinterpret_cast<UpdateGamepadDependentButtonCodes_t*>(RE::ID::UIUtils::UpdateGamepadDependentButtonCodes.address()) };
 			} _proxied;  // this runs on a per-frame basis, so try to optimize perfomance
 
 			struct
@@ -249,32 +249,31 @@ namespace Addictol
 		{
 			// PipboyMenu::RefreshCursor
 			{
-				const auto target = REL::ID{ 1533778, 2224196 }.address();
+				const auto target = RE::ID::PipboyMenu::RefreshCursor.address();
 				RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(RefreshCursor));
 			}
 
 			// PipboyMenu::ProcessMessage - skip redundant input context switching
 			{
-				const auto target = REL::ID{ 643948, 2224181 }.address();
+				const auto target = RE::ID::PipboyMenu::ProcessMessage.address();
 				REL::WriteSafeFill(target + REL::Offset{ 0x57C, 0x5FB }.offset(), REL::NOP, 0x64);
 			}
 
 			// PipboyMenu::PipboyMenu - skip assigning cursor to renderer
 			{
-				const auto target = REL::ID{ 712982, 2224179 }.address();
+				const auto target = RE::ID::PipboyMenu::Ctor.address();
 				REL::WriteSafeFill(target + REL::Offset{ 0x132, 0x139 }.offset(), REL::NOP, 0x17);
 			}
 		}
 
 		inline void DisableDisconnectHandler()
 		{
-			REL::ID target{ 548136, 2249389 };
-			REL::WriteSafeFill(target.address() + REL::Offset{ 0x98, 0x9C, 0x94 }.offset(), REL::NOP, 0x4E);
+			REL::WriteSafeFill(RE::ID::MenuControls::RegisterHandlers.address() + REL::Offset{ 0x98, 0x9C, 0x94 }.offset(), REL::NOP, 0x4E);
 		}
 
 		inline void DisableKBMIgnore()
 		{
-			const auto target = REL::ID{ 647956, 2268334 }.address();
+			const auto target = RE::ID::ControlMap::MapToUserEvent.address();
 			REL::WriteSafeFill(target + REL::Offset{ 0x39, 0x40 }.offset(), REL::NOP, REL::Offset{ 0x6, 0x7 }.offset());
 		}
 
@@ -286,7 +285,7 @@ namespace Addictol
 
 		inline void InstallGamepadConnectedPatch()
 		{
-			const auto target = REL::ID{ 609928, 2268387 }.address();
+			const auto target = RE::ID::BSInputDeviceManager::IsGamepadConnected.address();
 			constexpr std::size_t size = 0x25;
 			REL::WriteSafeFill(target, REL::INT3, size);
 			RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(IsGamepadConnected));
@@ -300,7 +299,7 @@ namespace Addictol
 
 		inline void InstallUsingGamepadPatch()
 		{
-			const auto target = REL::ID{ 875683, 2268386 }.address();
+			const auto target = RE::ID::BSInputDeviceManager::QUsingGamepad.address();
 			constexpr std::size_t size = 0x25;
 			REL::WriteSafeFill(target, REL::INT3, size);
 			RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(UsingGamepad));
@@ -314,16 +313,16 @@ namespace Addictol
 
 		inline void InstallGamepadLookPatches()
 		{
-			const auto patch = [](REL::ID a_base, REL::Offset a_offset)
+			const auto patch = [](const REL::VariantID& a_base, REL::Offset a_offset)
 				{
 					auto& trampoline = REL::GetTrampoline();
 					trampoline.write_call<5>(a_base.address() + a_offset.offset(), UsingGamepadLook);
 				};
 
-			patch(REL::ID{ 1349441, 2223308 }, REL::Offset{ 0x58 });		// LevelUpMenu::ZoomGrid
-			patch(REL::ID{ 455462, 2234801 }, REL::Offset{ 0x43, 0x3C });	// PlayerControls::ProcessLookInput
-			patch(REL::ID{ 53721, 2234829 }, REL::Offset{ 0x56 });			// PlayerControlsUtils::ProcessLookControls
-			patch(REL::ID{ 1262531, 2248276 }, REL::Offset{ 0x1F });		// FirstPersonState::CalculatePitchOffsetChaseValue
+			patch(RE::ID::LevelUpMenu::ZoomGrid, REL::Offset{ 0x58 });
+			patch(RE::ID::PlayerControls::ProcessLookInput, REL::Offset{ 0x43, 0x3C });
+			patch(RE::ID::PlayerControlsUtils::ProcessLookControls, REL::Offset{ 0x56 });
+			patch(RE::ID::FirstPersonState::CalculatePitchOffsetChaseValue, REL::Offset{ 0x1F });
 		}
 
 		static void PipboyMenuPreDtor()
@@ -359,7 +358,7 @@ namespace Addictol
 
 		inline void InstallPipboyMenuStatePatches()
 		{
-			const auto patch = []<class T>(std::in_place_type_t<T>, REL::ID a_func, std::size_t a_size)
+			const auto patch = []<class T>(std::in_place_type_t<T>, REL::VariantID a_func, std::size_t a_size)
 			{
 				AdAssert(a_size >= 6);
 
@@ -373,7 +372,7 @@ namespace Addictol
 				trampoline.write_jmp<6>(target, trampoline.allocate(p));
 			};
 
-			patch(std::in_place_type<DtorPatch>, REL::ID{ 405150, 2224180 }, 0xA);
+			patch(std::in_place_type<DtorPatch>, RE::ID::PipboyMenu::Dtor, 0xA);
 		}
 
 		static int GetMappedKey([[maybe_unused]] std::monostate a_base, RE::BSFixedString a_control, int a_deviceType = 0xFF) noexcept

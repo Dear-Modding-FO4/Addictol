@@ -32,7 +32,7 @@ namespace Addictol
 		if (a_msg)
 			return false;
 
-		const auto target = REL::ID{ 531797, 2208883 }.address();
+		const auto target = RE::ID::Sky::LoadGame.address();
 
 		if (!RELEX::Validate(target, { 0x4C, 0x8B, 0xDC, 0x53, 0x55 }))
 			return false;

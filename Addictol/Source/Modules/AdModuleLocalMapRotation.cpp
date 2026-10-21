@@ -11,14 +11,14 @@ namespace Addictol
 		float GetNorthRotation(RE::TESObjectCELL* a_cell) // TESObjectCELL::GetNorthRotation()
 		{
 			using func_t = decltype(&GetNorthRotation);
-			static REL::Relocation<func_t> func{ REL::ID{ 915649, 2200402 } };
+			static REL::Relocation<func_t> func{ RE::ID::TESObjectCELL::GetNorthRotation };
 			return func(a_cell);
 		}
 
 		void GetLocalMapCameraExtents(RE::NiPoint3* a_topLeft, RE::NiPoint3* a_topRight, RE::NiPoint3* a_bottomLeft) // nsPipboy_LocalMap::GetLocalMapCameraExtents()
 		{
 			using func_t = decltype(&GetLocalMapCameraExtents);
-			static REL::Relocation<func_t> func{ REL::ID{ 1020638, 2224090 } };
+			static REL::Relocation<func_t> func{ RE::ID::nsPipboy_LocalMap::GetLocalMapCameraExtents };
 			return func(a_topLeft, a_topRight, a_bottomLeft);
 		}
 

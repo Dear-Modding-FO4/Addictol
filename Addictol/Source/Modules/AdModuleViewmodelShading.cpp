@@ -49,7 +49,7 @@ namespace Addictol
 		g_stateGlobal = reinterpret_cast<RE::BSShaderManager::State**>(REL::ID{ 1444212, 2712877 }.address());
 		g_accumulatorGlobal = reinterpret_cast<RE::BSShaderAccumulator**>(REL::ID{ 1430301, 2712932 }.address());
 
-		const auto target = REL::ID{ 76526, 2318293 }.address();
+		const auto target = RE::ID::DrawWorld::Move1stPersonToOrigin.address();
 		*reinterpret_cast<uintptr_t*>(&OriginalMove1stPersonToOrigin) =
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&HookMove1stPersonToOrigin));
 		return OriginalMove1stPersonToOrigin != nullptr;

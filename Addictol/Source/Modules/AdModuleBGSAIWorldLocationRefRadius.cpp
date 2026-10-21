@@ -39,7 +39,7 @@ namespace Addictol
 
 	bool ModuleBGSAIWorldLocationRefRadius::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto base = REL::Relocation{ REL::ID{ 964254, 2188379 } }.address();
+		const auto base = REL::Relocation{ RE::ID::BGSAIWorldLocationRefRadius::Ctor }.address();
 		const auto target = base + REL::Offset{ 0x52, 0x4E }.offset();
 		const auto returnAddr = base + REL::Offset{ 0x104, 0xF8 }.offset();
 		const std::size_t size = 0x5;

@@ -28,7 +28,7 @@ namespace Addictol
 			//	RELEX::WriteSafeNop(REL::ID(2192358).address() + 0x47, 0x3B);
 
 			// Skipping the entire section, can't delete the pointer, otherwise will go back to where started.
-			RELEX::WriteSafe(REL::ID(2207492).address() + 0xF3, { 0xE9, 0x7D, 0x00, 0x00, 0x00, 0x90 });
+			RELEX::WriteSafe(RE::ID::TESNPC::FreeTintingData.address() + 0xF3, { 0xE9, 0x7D, 0x00, 0x00, 0x00, 0x90 });
 		}
 		else
 		{
@@ -45,7 +45,7 @@ namespace Addictol
 			//RELEX::WriteSafeNop(REL::ID(1444263).address() + 0x54, 0x19);
 
 			// Skipping the entire section, can't delete the pointer, otherwise will go back to where started.
-			RELEX::WriteSafe(REL::ID(1264833).address() + 0xF9, { 0xE9, 0x9C, 0x00, 0x00, 0x00, 0x90 });
+			RELEX::WriteSafe(RE::ID::TESNPC::FreeTintingData.address() + 0xF9, { 0xE9, 0x9C, 0x00, 0x00, 0x00, 0x90 });
 		}
 
 		return true;

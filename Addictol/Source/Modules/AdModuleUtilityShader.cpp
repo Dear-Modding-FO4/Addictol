@@ -14,20 +14,20 @@ namespace Addictol
 		inline static std::uint64_t CreateVertexShaderFromBuffer(void* a_renderer, void* a_buffer, std::uint32_t a_size, std::uint32_t a_flags, std::uint64_t a_a5, std::uint64_t a_a6, std::uint64_t a_a7) noexcept
 		{
 			using func_t = std::uint64_t(*)(void*, void*, std::uint32_t, std::uint32_t, std::uint64_t, std::uint64_t, std::uint64_t);
-			static REL::Relocation<func_t> func{ REL::ID{ 1385342, 2276944 } };
+			static REL::Relocation<func_t> func{ RE::ID::BSGraphics::Renderer::CreateVertexShaderFromBuffer };
 			return func(a_renderer, a_buffer, a_size, a_flags, a_a5, a_a6, a_a7);
 		}
 
 		inline static std::uint64_t CreatePixelShaderFromBuffer(void* a_renderer, const void* a_buffer, std::uint32_t a_size, std::uint32_t a_flags, std::uint64_t a_a5, std::uint64_t a_a6) noexcept
 		{
 			using func_t = decltype(&CreatePixelShaderFromBuffer);
-			static REL::Relocation<func_t> func{ REL::ID{ 798751, 2276950 } };
+			static REL::Relocation<func_t> func{ RE::ID::BSGraphics::Renderer::CreatePixelShaderFromBuffer };
 			return func(a_renderer, a_buffer, a_size, a_flags, a_a5, a_a6);
 		}
 
 		inline std::uint64_t CreateShaders()
 		{
-			auto Renderer = reinterpret_cast<void*>(REL::ID{ 1378294, 2704525 }.address());
+			auto Renderer = reinterpret_cast<void*>(RE::ID::BSGraphics::Renderer::Singleton.address());
 			auto VertexBuffer = reinterpret_cast<void*>(REL::ID{ 571231, 2384579 }.address());
 			auto PixelBuffer = reinterpret_cast<void*>(REL::ID{ 716718, 2384580 }.address());
 			
@@ -142,7 +142,7 @@ namespace Addictol
 
 	bool ModuleUtilityShader::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation Base{ REL::ID{ 768994, 2319078 } };
+		REL::Relocation Base{ RE::ID::BSUtilityShader::CreateCommandBuffer };
 
 		if (RELEX::IsRuntimeOG())
 			utilityShaderDetail::CreateShadersOG();

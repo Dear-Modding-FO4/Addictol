@@ -76,13 +76,13 @@ namespace Addictol
 
 				if (installAnimNoOp)
 				{
-					RELEX::DetourJump(REL::ID(2249232).address(), (uintptr_t)&GetRandomLoadScreen);
+					RELEX::DetourJump(RE::ID::LoadingMenu::PopulateLoadScreens.address(), (uintptr_t)&GetRandomLoadScreen);
 				}
 				if (installDrawUIClear)
 				{
 					g_RendererData = (RE::BSGraphics::RendererData*)REL::ID(2704527).address();
-					origDrawUI = (decltype(&DrawUILoadScreen))(REL::ID(2222551).address());
-					RELEX::DetourCall(REL::ID(2249225).address() + 0x3CC, (uintptr_t)&DrawUILoadScreen);
+					origDrawUI = (decltype(&DrawUILoadScreen))(RE::ID::Interface3D::Renderer::RenderPostAA.address());
+					RELEX::DetourCall(RE::ID::LoadingMenu::Render.address() + 0x3CC, (uintptr_t)&DrawUILoadScreen);
 				}
 			}
 			else
@@ -90,9 +90,9 @@ namespace Addictol
 				// OG
 
 				g_RendererData = (RE::BSGraphics::RendererData*)REL::ID(235166).address();
-				RELEX::WriteSafe(REL::Relocation{ REL::ID(316170), REL::Offset(0x1B) }.get(), { 0xE9, 0x34, 0x02, 0x00, 0x00, 0x90 });
-				origDrawUI = (decltype(&DrawUILoadScreen))(REL::ID(386550).address());
-				RELEX::DetourCall(REL::ID(135719).address() + 0x414, (uintptr_t)&DrawUILoadScreen);
+				RELEX::WriteSafe(REL::Relocation{ RE::ID::LoadingMenu::PopulateLoadScreens, REL::Offset(0x1B) }.get(), { 0xE9, 0x34, 0x02, 0x00, 0x00, 0x90 });
+				origDrawUI = (decltype(&DrawUILoadScreen))(RE::ID::Interface3D::Renderer::RenderPostAA.address());
+				RELEX::DetourCall(RE::ID::LoadingMenu::Render.address() + 0x414, (uintptr_t)&DrawUILoadScreen);
 			}
 		}
 

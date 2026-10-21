@@ -41,7 +41,7 @@ namespace Addictol
 
 	bool ModulePipBoyLightInv::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto base = REL::ID{ 566261, 2233255 }.address();
+		const auto base = RE::ID::PlayerCharacter::UpdateActor3DPosition.address();
 
 		REL::Relocation target{ base + REL::Offset { 0xCB2, 0xC92 }.offset() };
 		REL::Relocation resume{ target.address() + 0x7 };

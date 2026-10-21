@@ -23,7 +23,7 @@ namespace Addictol
 	bool ModuleMovementPlanner::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		using namespace movementPlannerDetail;
-		REL::Relocation Target{ REL::ID{ 1403049, 2234683 }, 0x30 };
+		REL::Relocation Target{ RE::ID::MovementPlannerAgentWarp::Init, 0x30 };
 		CanWarpOnPathFailure::func = RELEX::DetourClassCall(Target, &CanWarpOnPathFailure::thunk);
 		return CanWarpOnPathFailure::func != 0;
 	}

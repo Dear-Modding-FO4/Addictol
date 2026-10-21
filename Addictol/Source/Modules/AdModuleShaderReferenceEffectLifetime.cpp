@@ -150,11 +150,11 @@ namespace Addictol
 		using namespace shaderReferenceEffectLifetimeDetail;
 
 		const auto constructorTarget =
-			REL::ID{ 1546646, 2226732 }.address();
+			RE::ID::ShaderReferenceEffect::Ctor.address();
 		const auto shaderDeletingDestructorTarget =
-			REL::ID{ 509, 2226770 }.address();
+			RE::ID::ShaderReferenceEffect::ScalarDeletingDtor.address();
 		const auto ownerDestructorTarget =
-			REL::ID{ 195712, 2225990 }.address();
+			RE::ID::ActiveEffect::Dtor.address();
 		// OG's base deleting destructor calls ~ActiveEffect instead of inlining it.
 		const auto ownerDeletingDestructorTarget =
 			RELEX::IsRuntimeOG() ? 0 : REL::ID{ 2226042 }.address();

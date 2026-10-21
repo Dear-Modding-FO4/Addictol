@@ -65,11 +65,11 @@ namespace Addictol
 		if (a_msg)
 			return false;
 
-		const auto targetSet		= REL::ID{ 236542,	2232389 }.address();
-		const auto targetClear		= REL::ID{ 1113891,	2232390 }.address();
-		const auto targetClearAll	= REL::ID{ 409001,	2232391 }.address();
-		const auto targetGet		= REL::ID{ 1286688,	2232392 }.address();
-		const auto targetGetAll		= REL::ID{ 582098,	2232393 }.address();
+		const auto targetSet		= RE::ID::AIProcess::Set3DUpdateFlag.address();
+		const auto targetClear		= RE::ID::AIProcess::Clear3DUpdateFlag.address();
+		const auto targetClearAll	= RE::ID::AIProcess::ClearAll3DUpdateFlags.address();
+		const auto targetGet		= RE::ID::AIProcess::Get3DUpdateFlag.address();
+		const auto targetGetAll		= RE::ID::AIProcess::GetAll3DUpdateFlags.address();
 		const auto checkCode		= std::initializer_list<uint8_t>{ 0x48, 0x8B, 0x41, 0x08 };
 
 		if (!RELEX::Validate(targetSet,			checkCode) ||

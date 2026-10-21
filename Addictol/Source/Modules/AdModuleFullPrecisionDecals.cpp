@@ -43,7 +43,7 @@ namespace Addictol
 			using CalculateBoneMatrices_t = void (*)(RE::BSGeometry*);
 
 			// CalculateBoneMatrices: OG 795227 -> RVA 0x1D23A20, NG 2277105 -> 0x1712E60, AE 2277105 -> 0x182DCD0.
-			static REL::Relocation<CalculateBoneMatrices_t> calculateBoneMatrices{ REL::ID{ 795227, 2277105 } };
+			static REL::Relocation<CalculateBoneMatrices_t> calculateBoneMatrices{ RE::ID::BSGraphics::Utility::CalculateBoneMatrices };
 
 			static void SetAttributeOffsetRaw(std::uint64_t& a_desc, Vertex::Attribute a_attribute, std::uint32_t a_offset)
 			{
@@ -745,20 +745,20 @@ namespace Addictol
 			if (RELEX::IsRuntimeOG())
 			{
 				return {
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x136, 0x135 } },
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x6D8, 0x67C } },
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x6F9, 0x6A6 } },
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x78C, 0x742 } },
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x136, 0x135 } },
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x6D8, 0x67C } },
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x6F9, 0x6A6 } },
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x78C, 0x742 } },
 					REL::Relocation<std::uintptr_t>{ REL::ID{ 1037836, 0 }, 0x37 },
 					REL::Relocation<std::uintptr_t>{ REL::ID{ 146786, 2194489 }, 0xA5 }
 				};
 			}
 
 			return {
-				REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x136, 0x135 } },
-				REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x6D8, 0x67C } },
-				REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x6F9, 0x6A6 } },
-				REL::Relocation<std::uintptr_t>{ REL::ID{ 825090, 2212077 }, REL::Offset{ 0x78C, 0x742 } },
+				REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x136, 0x135 } },
+				REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x6D8, 0x67C } },
+				REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x6F9, 0x6A6 } },
+				REL::Relocation<std::uintptr_t>{ RE::ID::BSTempEffectGeometryDecal::DecalProjection, REL::Offset{ 0x78C, 0x742 } },
 				REL::Relocation<std::uintptr_t>{ REL::ID{ 1037836, 2194489 }, 0xD0 },
 				REL::Relocation<std::uintptr_t>{ REL::ID{ 0, 2194489 }, 0x155 }
 			};
@@ -798,19 +798,19 @@ namespace Addictol
 			if (!ValidateCallSite(
 					"decal apply skinning"sv,
 					a_sites.applySkinning,
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 44611, 2277131 } }) ||
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSGraphics::Utility::ApplySkinningToGeometry }) ||
 				!ValidateCallSite(
 					"decal CreateVertexBuffer"sv,
 					a_sites.createVertexBuffer,
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 1379034, 2276868 } }) ||
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSGraphics::Renderer::CreateVertexBuffer }) ||
 				!ValidateCallSite(
 					"decal CreateTriShape"sv,
 					a_sites.createTriShape,
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 431090, 2276844 } }) ||
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSGraphics::Renderer::CreateTriShape2 }) ||
 				!ValidateCallSite(
 					"decal BSSubIndexTriShape constructor"sv,
 					a_sites.subIndexTriShapeCtor,
-					REL::Relocation<std::uintptr_t>{ REL::ID{ 1068780, 2275989 } }))
+					REL::Relocation<std::uintptr_t>{ RE::ID::BSSubIndexTriShape::Ctor }))
 			{
 				return false;
 			}

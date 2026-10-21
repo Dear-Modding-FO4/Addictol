@@ -28,7 +28,7 @@ namespace Addictol
 
 	bool ModuleMuzzleFlashLight::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::ID{ 976501, 2236921 }.address();
+		const auto target = RE::ID::MuzzleFlash::UpdateLight.address();
 		*reinterpret_cast<uintptr_t*>(&OriginalUpdateLight) =
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&HookUpdateLight));
 		return OriginalUpdateLight != nullptr;

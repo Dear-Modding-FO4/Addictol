@@ -153,11 +153,11 @@ namespace Addictol
 	{
 		auto& trampoline = REL::GetTrampoline();
 
-		const auto target = REL::ID{ 883019, 2318478 };
+		const auto target = RE::ID::BSMTAManager::RegisterObjects;
 		REL::WriteSafeFill(target.address(), REL::INT3, REL::Offset{ 0xC5, 0x14A }.offset());
 		RELEX::DetourJump(target.address(), reinterpret_cast<std::uintptr_t>(bsMTAManagerDetail::RegisterObjects));
 
-		bsMTAManagerDetail::Submit::func = trampoline.write_call<5>(REL::Relocation(REL::ID{ 485563, 2318474 }, REL::Offset{ 0x8E, 0x9F }).address(), bsMTAManagerDetail::Submit::thunk);
+		bsMTAManagerDetail::Submit::func = trampoline.write_call<5>(REL::Relocation(RE::ID::BSMTAManager::EndAccumulation, REL::Offset{ 0x8E, 0x9F }).address(), bsMTAManagerDetail::Submit::thunk);
 
 		return true;
 	}

@@ -234,16 +234,16 @@ namespace Addictol
 
 		static void Hook_Init()
 		{
-			*(uintptr_t*)&Details::Stream__Assign_Orig = REL::ID{ 933944, 2192397 }.address();
+			*(uintptr_t*)&Details::Stream__Assign_Orig = RE::ID::BSTSmartPointer::Assign_BSResourceStream.address();
 
 			if (RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::k1kAvailableArchitecture))
 			{
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_1024_Orig = REL::ID{ 908309, 2268030 }.address();
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_1024_Orig = REL::ID{ 1541972, 2269374 }.address();
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_1024_Orig = REL::ID{ 91377, 2269427 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_1024_Orig = RE::ID::BSTSmallIndexScatterTableUtil::NewTable.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_1024_Orig = RE::ID::BSTSmallIndexScatterTable::BaseInsert.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_1024_Orig = RE::ID::BSTSmallIndexScatterTable::Resize.address();
 				*(uintptr_t*)&Details::EndTable_1024 = REL::ID{ 916672, 2666314 }.address();
 
-				RELEX::DetourJump(REL::ID(2269366).address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index1024>);
+				RELEX::DetourJump(RE::ID::BSResource::Archive2::Index::AddDataFile.address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index1024>);
 
 				struct AddDataFromReaderPatch_AE : Xbyak::CodeGenerator
 				{
@@ -276,19 +276,19 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(2269367).address() + 0x14F;
+				auto target = RE::ID::BSResource::Archive2::Index::AddDataFromReader.address() + 0x14F;
 				RELEX::XbyakJump<AddDataFromReaderPatch_AE>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
 			}
 			else if 
 				(RELEX::IsRuntimeNG() || 
 				(RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)))
 			{
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig = REL::ID{ 908309, 2268030 }.address();
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig = REL::ID{ 1541972, 2269374 }.address();
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig = REL::ID{ 91377, 2269427 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig = RE::ID::BSTSmallIndexScatterTableUtil::NewTable.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig = RE::ID::BSTSmallIndexScatterTable::BaseInsert.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig = RE::ID::BSTSmallIndexScatterTable::Resize.address();
 				*(uintptr_t*)&Details::EndTable_256 = REL::ID{ 916672, 2666314 }.address();
 
-				RELEX::DetourJump(REL::ID(2269366).address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index256>);
+				RELEX::DetourJump(RE::ID::BSResource::Archive2::Index::AddDataFile.address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index256>);
 
 				struct AddDataFromReaderPatch_NG : Xbyak::CodeGenerator
 				{
@@ -321,17 +321,17 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(2269367).address() + 0xF5;
+				auto target = RE::ID::BSResource::Archive2::Index::AddDataFromReader.address() + 0xF5;
 				RELEX::XbyakJump<AddDataFromReaderPatch_NG>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
 			}
 			else
 			{
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig = REL::ID{ 908309, 2268030 }.address();
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig = REL::ID{ 1541972, 2269374 }.address();
-				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig = REL::ID{ 91377, 2269427 }.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableUtil__NewTable_256_Orig = RE::ID::BSTSmallIndexScatterTableUtil::NewTable.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Insert_256_Orig = RE::ID::BSTSmallIndexScatterTable::BaseInsert.address();
+				*(uintptr_t*)&Details::BSTSmallIndexScatterTableTraits__Resize_256_Orig = RE::ID::BSTSmallIndexScatterTable::Resize.address();
 				*(uintptr_t*)&Details::EndTable_256 = REL::ID{ 916672, 2666314 }.address();
 
-				RELEX::DetourJump(REL::ID(270048).address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index256>);
+				RELEX::DetourJump(RE::ID::BSResource::Archive2::Index::AddDataFile.address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index256>);
 
 				struct AddDataFromReaderPatch_OG : Xbyak::CodeGenerator
 				{
@@ -364,7 +364,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::ID(960903).address() + 0x207;
+				auto target = RE::ID::BSResource::Archive2::Index::AddDataFromReader.address() + 0x207;
 				RELEX::XbyakJump<AddDataFromReaderPatch_OG>(target, target, (uintptr_t)&PushGeneralArchiveIndex);
 			}
 		}
@@ -418,7 +418,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::Relocation(REL::ID{ 1298455, 2269311 }, 0xB5).address();
+				auto target = REL::Relocation(RE::ID::BSResource::SDirectory2::Retrieve_Stream, 0xB5).address();
 				RELEX::XbyakJump<FindGeneralPatch>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			{
@@ -434,7 +434,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::Relocation(REL::ID{ 1298455, 2269311 }, REL::Offset{ 0xD6, 0xC8 }).address();
+				auto target = REL::Relocation(RE::ID::BSResource::SDirectory2::Retrieve_Stream, REL::Offset{ 0xD6, 0xC8 }).address();
 				RELEX::XbyakJump<GetDataFilePatch>(target, target);
 			}
 			{
@@ -469,7 +469,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::Relocation(REL::ID{ 1298455, 2269311 }, REL::Offset{ 0x13F, 0x12F }).address();
+				auto target = REL::Relocation(RE::ID::BSResource::SDirectory2::Retrieve_Stream, REL::Offset{ 0x13F, 0x12F }).address();
 				RELEX::XbyakJump<FindGeneralPatch2>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			////////////////////////////////////////////////
@@ -508,7 +508,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::Relocation(REL::ID(2269323), 0x8C).address();
+				auto target = REL::Relocation(RE::ID::BSResource::SDirectory2::Retrieve_AsyncStream, 0x8C).address();
 				RELEX::XbyakJump<FindGeneralPatch_AE>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			else
@@ -544,7 +544,7 @@ namespace Addictol
 					}
 				};
 				
-				auto target = REL::Relocation(REL::ID{ 788223, 2269323 }, 0x8C).address();
+				auto target = REL::Relocation(RE::ID::BSResource::SDirectory2::Retrieve_AsyncStream, 0x8C).address();
 				RELEX::XbyakJump<FindGeneralPatch_OG_NG>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			{
@@ -560,7 +560,7 @@ namespace Addictol
 					}
 				};
 
-				auto target = REL::Relocation(REL::ID{ 788223, 2269323 }, REL::Offset{ 0xB5, 0xAD }).address();
+				auto target = REL::Relocation(RE::ID::BSResource::SDirectory2::Retrieve_AsyncStream, REL::Offset{ 0xB5, 0xAD }).address();
 				RELEX::XbyakJump<GetAsyncDataFilePatch>(target, target);
 			}
 			////////////////////////////////////////////////
@@ -1057,7 +1057,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID(2275576), REL::Offset{ 0x3D } }.get();
+					auto target = REL::Relocation{ RE::ID::BSTextureStreamer::Manager::StartStreamingChunks, REL::Offset{ 0x3D } }.get();
 
 					RELEX::XbyakJump<StartStreamingChunksPatch_NG_AE>(target, target, 
 						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
@@ -1098,7 +1098,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID(844246), REL::Offset{ 0x3D } }.get();
+					auto target = REL::Relocation{ RE::ID::BSTextureStreamer::Manager::StartStreamingChunks, REL::Offset{ 0x3D } }.get();
 					RELEX::XbyakJump<StartStreamingChunksPatch_OG>(target, target, (uintptr_t)&FindArchiveIndexByTextureRequest);
 				}
 				////////////////////////////////////////////////
@@ -1140,7 +1140,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID(2275577), REL::Offset{ 0x9AD } }.get();
+					auto target = REL::Relocation{ RE::ID::BSTextureStreamer::Manager::ThreadProc, REL::Offset{ 0x9AD } }.get();
 					RELEX::XbyakJump<DecompressStreamedLoadPatch_NG_AE>(target, target,
 						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
 						(uintptr_t)&FindArchiveIndexByTextureRequest :
@@ -1267,7 +1267,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID{ 917602, 2276914 }, REL::Offset{ 0x8B } }.get();
+					auto target = REL::Relocation{ RE::ID::BSGraphics::Renderer::CreateStreamingTexture, REL::Offset{ 0x8B } }.get();
 					if (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)
 						RELEX::XbyakJump<CreateStreamingTexturePatch_256>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
 					else
@@ -1307,7 +1307,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID{ 823682, 2277293 }, REL::Offset{ 0xA5, 0x95 } }.get();
+					auto target = REL::Relocation{ RE::ID::BSGraphics::CreateStreamingDDSTexture, REL::Offset{ 0xA5, 0x95 } }.get();
 					RELEX::XbyakJump<CreateStreamingDDSTexturePatch>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
 				}
 				////////////////////////////////////////////////
@@ -1343,7 +1343,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID(2275577), REL::Offset{ 0x10CB } }.get();
+					auto target = REL::Relocation{ RE::ID::BSTextureStreamer::Manager::ThreadProc, REL::Offset{ 0x10CB } }.get();
 					RELEX::XbyakJump<ThreadProcPatch_NG_AE>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
 				}
 				else
@@ -1378,7 +1378,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID(989173), REL::Offset{ 0x48F } }.get();
+					auto target = REL::Relocation{ RE::ID::BSTextureStreamer::Manager::ThreadProc, REL::Offset{ 0x48F } }.get();
 					RELEX::XbyakJump<ThreadProcPatch_OG>(target, target, (uintptr_t)&FindTexturesArchiveIndex);
 				}
 				////////////////////////////////////////////////
@@ -1433,7 +1433,7 @@ namespace Addictol
 						}
 					};
 
-					auto target = REL::Relocation{ REL::ID{ 979945, 2275550 }, REL::Offset{ 0x27, 0x32 } }.get();
+					auto target = REL::Relocation{ RE::ID::BSTextureStreamer::Manager::LoadChunks, REL::Offset{ 0x27, 0x32 } }.get();
 					RELEX::XbyakJump<LoadChunksPatch>(target, target,
 						(s_ArchiveArchitecture == ArchiveMode::kOldArchitecture) ?
 						(uintptr_t)&FindArchiveIndexByTextureRequest :

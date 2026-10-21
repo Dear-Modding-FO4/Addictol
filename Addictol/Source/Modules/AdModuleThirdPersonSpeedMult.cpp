@@ -10,10 +10,6 @@ namespace Addictol
 {
 	namespace thirdPersonSpeedMultDetail
 	{
-		constexpr REL::ID s_setSneaking{ 400155, 2230404 };
-		constexpr REL::ID s_doSetMoveMode{ 196994, 2231463 };
-		constexpr REL::ID s_clipGeneratorUpdate{ 935260, 2261061 };
-
 		// BShkbAnimationGraph embeds its hkbCharacter and stores the driven 3D root.
 		constexpr size_t s_graphCharacter = 0x1C8;
 		constexpr size_t s_graphTarget = 0x388;
@@ -197,7 +193,7 @@ namespace Addictol
 			return false;
 		}
 
-		const auto setSneaking = REL::Relocation<uintptr_t>{ thirdPersonSpeedMultDetail::s_setSneaking }.address();
+		const auto setSneaking = REL::Relocation<uintptr_t>{ RE::ID::Actor::SetSneaking }.address();
 		static constexpr std::initializer_list<std::optional<uint8_t>> s_setSneakingExpected{
 			0x48, 0x89, 0x5C, 0x24, std::nullopt, std::nullopt,
 			0x48, 0x83, 0xEC, 0x20, 0x8B, 0x81, 0x34, 0x01, 0x00, 0x00
@@ -208,7 +204,7 @@ namespace Addictol
 			return false;
 		}
 
-		const auto moveMode = REL::Relocation<uintptr_t>{ thirdPersonSpeedMultDetail::s_doSetMoveMode }.address();
+		const auto moveMode = REL::Relocation<uintptr_t>{ RE::ID::ActorState::DoSetMoveMode }.address();
 		static constexpr std::initializer_list<uint8_t> s_moveModeExpected{
 			0x81, 0x61, 0x08, 0x00, 0xC0, 0xFF, 0xFF,
 			0x0F, 0xB7, 0xC2, 0x25, 0xFF, 0x3F, 0x00, 0x00,
@@ -220,7 +216,7 @@ namespace Addictol
 			return false;
 		}
 
-		const auto clipUpdate = REL::Relocation<uintptr_t>{ thirdPersonSpeedMultDetail::s_clipGeneratorUpdate }.address();
+		const auto clipUpdate = REL::Relocation<uintptr_t>{ RE::ID::hkbClipGenerator::update }.address();
 		static constexpr std::initializer_list<uint8_t> s_clipUpdateExpected{
 			0x4C, 0x8B, 0xDC, 0x49, 0x89, 0x5B, 0x10, 0x56,
 			0x48, 0x81, 0xEC, 0xB0, 0x00, 0x00, 0x00

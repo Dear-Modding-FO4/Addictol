@@ -1195,14 +1195,14 @@ namespace Addictol
 
 			[[nodiscard]] static BSXAudio2Graph* GetSingleton()
 			{
-				static REL::Relocation<BSXAudio2Graph**> singleton{ REL::ID{ 1219921, 2703127 } };
+				static REL::Relocation<BSXAudio2Graph**> singleton{ RE::ID::BSXAudio2Graph::Singleton };
 				return *singleton;
 			}
 
 			[[nodiscard]] BSXAudio2Graph* Recreate()
 			{
 				using func_t = decltype(&BSXAudio2Graph::Recreate);
-				static REL::Relocation<func_t> func{ REL::ID{ 799447, 2267547 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSXAudio2Graph::Ctor };
 				return func(this);
 			}
 
@@ -1210,7 +1210,7 @@ namespace Addictol
 			void OnProcessingPassEnd() noexcept override
 			{
 				using func_t = decltype(&BSXAudio2Graph::OnProcessingPassEnd);
-				static REL::Relocation<func_t> func{ REL::ID{ 351273, 2267567 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSXAudio2Graph::OnProcessingPassEnd };
 				func(this);
 			}
 			void OnCriticalError([[maybe_unused]] HRESULT Error) noexcept override { return; }
@@ -1368,7 +1368,7 @@ namespace Addictol
 
 			[[nodiscard]] static BSXAudio2Audio* GetSingleton() noexcept
 			{
-				static REL::Relocation<BSXAudio2Audio**> singleton{ REL::ID{ 1565436, 2703127 } };
+				static REL::Relocation<BSXAudio2Audio**> singleton{ RE::ID::BSXAudio2Audio::Singleton };
 				return *singleton;
 			}
 
@@ -1425,77 +1425,77 @@ namespace Addictol
 			[[nodiscard]] static BSAudio* QPlatformInstance() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::QPlatformInstance);
-				static REL::Relocation<func_t> func{ REL::ID{ 1117951, 2267094 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::PlatformSingleton };
 				return func();
 			}
 
 			[[nodiscard]] static bool QInitialized() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::QInitialized);
-				static REL::Relocation<func_t> func{ REL::ID{ 1556964, 2267095 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::QInitialized };
 				return func();
 			}
 
 			void Init(RE::BSAudioInit& a_init) noexcept
 			{
 				using func_t = decltype(&BSAudioManager::Init);
-				static REL::Relocation<func_t> func{ REL::ID{ 40086, 2267098 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::Initialize };
 				func(this, a_init);
 			}
 
 			void Shutdown() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::Shutdown);
-				static REL::Relocation<func_t> func{ REL::ID{ 64750, 2267099 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::Shutdown };
 				func(this);
 			}
 
 			void ClearCache() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::ClearCache);
-				static REL::Relocation<func_t> func{ REL::ID{ 114073, 2267197 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::ClearCache };
 				func(this);
 			}
 
 			void KillAll(bool a_waitForCompletion = false, uint32_t a_waitMs = 1000) noexcept
 			{
 				using func_t = decltype(&BSAudioManager::KillAll);
-				static REL::Relocation<func_t> func{ REL::ID{ 580105, 2267108 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::KillAll };
 				func(this, a_waitForCompletion, a_waitMs);
 			}
 
 			void ClearMaps() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::ClearMaps);
-				static REL::Relocation<func_t> func{ REL::ID{ 583644, 2267194 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::ClearMaps };
 				func(this);
 			}
 
 			void Play(uint32_t a_soundFormID) const noexcept
 			{
 				using func_t = decltype(&BSAudioManager::Play);
-				static REL::Relocation<func_t> func{ REL::ID{ 590936, 2267115 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::Play };
 				func(this, a_soundFormID);
 			}
 
 			void PlayAfter(uint32_t a_soundFormID, uint64_t a_waitms) const noexcept
 			{
 				using func_t = decltype(&BSAudioManager::PlayAfter);
-				static REL::Relocation<func_t> func{ REL::ID{ 1108952, 2267116 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::PlayAfter };
 				func(this, a_soundFormID, a_waitms);
 			}
 
 			void SuspendAudioThread() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::SuspendAudioThread);
-				static REL::Relocation<func_t> func{ REL::ID{ 1366970, 2267100 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::SuspendAudioThread };
 				func(this);
 			}
 
 			void ResumeAudioThread() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::ResumeAudioThread);
-				static REL::Relocation<func_t> func{ REL::ID{ 1274072, 2267101 } };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::ResumeAudioThread };
 				func(this);
 			}
 		};
@@ -1535,7 +1535,7 @@ namespace Addictol
 
 			[[nodiscard]] static BGSMoviePlayer* GetSingleton() noexcept
 			{
-				return *REL::Relocation<BGSMoviePlayer**>(REL::ID{ 1429717, 2710691 });
+				return *REL::Relocation<BGSMoviePlayer**>(RE::ID::MoviePlayer::Singleton);
 			}
 		};
 	}
@@ -1858,10 +1858,10 @@ namespace Addictol
 
 		bool ProcessSound::Install() noexcept
 		{
-			REL::Relocation thumb(REL::ID{ 225971, 2267207 }, REL::Offset{ 0x34, 0x36 });
+			REL::Relocation thumb(RE::ID::BSAudioManagerThread::ThreadProc, REL::Offset{ 0x34, 0x36 });
 			if (RELEX::Validate(thumb.address(), { 0xE8 }))
 			{
-				*(uintptr_t*)&original = REL::ID{ 1450714, 2268796 }.address();
+				*(uintptr_t*)&original = RE::ID::BSSystemFileStreamer::Signal.address();
 				return RELEX::DetourCall(thumb.address(),
 					reinterpret_cast<uintptr_t>(&ThunkSignal)) != 0;
 			}

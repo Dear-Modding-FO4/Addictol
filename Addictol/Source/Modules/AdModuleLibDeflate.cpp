@@ -34,7 +34,7 @@ namespace Addictol
 		if (version != REL::Version{ 1, 10, 163, 0 } && version != REL::Version{ 1, 10, 984, 0 } &&
 			version != REL::Version{ 1, 11, 240, 0 })
 			return fail("unsupported runtime");
-		const auto anchor = REL::ID{ 224011, 2168026, 2168026 }.address();
+		const auto anchor = RE::ID::inflate.address();
 		const auto image = std::span{ reinterpret_cast<const uint8_t*>(anchor), ZLIB_INSTALL_IMAGE_SIZE };
 		for (size_t index = 0; index < ZLIB_ENTRIES.size(); ++index)
 		{

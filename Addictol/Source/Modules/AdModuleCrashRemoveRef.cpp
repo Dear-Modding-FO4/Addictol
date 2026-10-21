@@ -27,7 +27,7 @@ namespace Addictol
 	bool ModuleCrashRemoveRef::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		*((uintptr_t*)&BGSObjectVisibilityManager::RemoveReference_orig) = 
-			RELEX::DetourJump(REL::ID{ 1099652, 2194273 }.address(),
+			RELEX::DetourJump(RE::ID::BGSObjectVisibilityManager::RemoveReference.address(),
 			reinterpret_cast<uintptr_t>(&BGSObjectVisibilityManager::RemoveReference));
 
 		return BGSObjectVisibilityManager::RemoveReference_orig != nullptr;

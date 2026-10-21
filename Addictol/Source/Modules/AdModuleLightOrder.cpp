@@ -238,7 +238,7 @@ namespace Addictol
 	bool ModuleLightOrder::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// BSShaderPropertyLightData::RemoveLight: OG 0x28B9B50, NG 0x20E3220, AE 0x2240330.
-		const auto remove = REL::ID{ 981017, 2319061 }.address();
+		const auto remove = RE::ID::BSShaderPropertyLightData::RemoveLight.address();
 		// ShadowSceneNode::UpdateQueuedLight: OG 0x2810960, NG 0x205DA80, AE 0x21BAC20.
 		const auto update = RE::ID::ShadowSceneNode::UpdateQueuedLight.address();
 		// BSLight::AddFadeNodeLocked: OG 0x285B860, NG 0x20A0F70, AE 0x21FE110.

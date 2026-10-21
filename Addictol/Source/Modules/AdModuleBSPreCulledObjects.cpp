@@ -306,20 +306,20 @@ namespace Addictol
 			IDTo3DHandler() = default;
 			~IDTo3DHandler() = default;
 
-			AddToCullingGroup_t* const _addToCullingGroup{ reinterpret_cast<AddToCullingGroup_t*>(REL::ID{ 1175493, 2275917 }.address()) };
-			CallVisibilityCallbacks_t* const _callVisibilityCallbacks{ reinterpret_cast<CallVisibilityCallbacks_t*>(REL::ID{ 887475, 2317332 }.address()) };
-			RemoveVisibilityCallBackForID_t* const _removeVisibilityCallBackForID{ reinterpret_cast<RemoveVisibilityCallBackForID_t*>(REL::ID{ 136788, 2317308 }.address()) };
-			TrackVisibility_t* const _trackVisibility{ reinterpret_cast<TrackVisibility_t*>(REL::ID{ 1167260, 2317331 }.address()) };
+			AddToCullingGroup_t* const _addToCullingGroup{ reinterpret_cast<AddToCullingGroup_t*>(RE::ID::BSCullingGroup::Add.address()) };
+			CallVisibilityCallbacks_t* const _callVisibilityCallbacks{ reinterpret_cast<CallVisibilityCallbacks_t*>(RE::ID::BSPreCulledObjects::CallVisibilityCallbacks.address()) };
+			RemoveVisibilityCallBackForID_t* const _removeVisibilityCallBackForID{ reinterpret_cast<RemoveVisibilityCallBackForID_t*>(RE::ID::BSPreCulledObjects::RemoveVisibilityCallBackForID.address()) };
+			TrackVisibility_t* const _trackVisibility{ reinterpret_cast<TrackVisibility_t*>(RE::ID::BSPreCulledObjects::TrackVisibility.address()) };
 
-			const PreCulledObjects_t*& _preCulledDynamicObjects{ *reinterpret_cast<const PreCulledObjects_t**>(REL::ID{ 713154, 2712641 }.address()) };
-			const PreCulledObjects_t*& _preCulledDynamicRainObjects{ *reinterpret_cast<const PreCulledObjects_t**>(REL::ID{ 274004, 2712643 }.address()) };
-			const PreCulledObjects_t*& _preCulledDynamicShadowObjects{ *reinterpret_cast<const PreCulledObjects_t**>(REL::ID{ 932019, 2712642 }.address()) };
+			const PreCulledObjects_t*& _preCulledDynamicObjects{ *reinterpret_cast<const PreCulledObjects_t**>(RE::ID::BSPreCulledObjects::pPreCulledDynamicObjectsA.address()) };
+			const PreCulledObjects_t*& _preCulledDynamicRainObjects{ *reinterpret_cast<const PreCulledObjects_t**>(RE::ID::BSPreCulledObjects::pPreCulledDynamicRainObjectsA.address()) };
+			const PreCulledObjects_t*& _preCulledDynamicShadowObjects{ *reinterpret_cast<const PreCulledObjects_t**>(RE::ID::BSPreCulledObjects::pPreCulledDynamicShadowObjectsA.address()) };
 
-			const PreCulledIDs_t& _preCulledIDs{ *reinterpret_cast<PreCulledIDs_t*>(REL::ID{ 1370583, 2712646 }.address()) };
-			const PreCulledIDs_t& _preCulledRainIDs{ *reinterpret_cast<PreCulledIDs_t*>(REL::ID{ 1104804, 2712651 }.address()) };
-			const PreCulledIDs_t& _preCulledShadowIDs{ *reinterpret_cast<PreCulledIDs_t*>(REL::ID{ 446402, 2712649 }.address()) };
+			const PreCulledIDs_t& _preCulledIDs{ *reinterpret_cast<PreCulledIDs_t*>(RE::ID::BSPreCulledObjects::PreCulledIDA.address()) };
+			const PreCulledIDs_t& _preCulledRainIDs{ *reinterpret_cast<PreCulledIDs_t*>(RE::ID::BSPreCulledObjects::PreCulledRainIDA.address()) };
+			const PreCulledIDs_t& _preCulledShadowIDs{ *reinterpret_cast<PreCulledIDs_t*>(RE::ID::BSPreCulledObjects::PreCulledShadowIDA.address()) };
 
-			const RE::Setting& _usePreCulledObjects{ *reinterpret_cast<RE::Setting*>(REL::ID{ 1252712, 2677863, 4784531 }.address()) };
+			const RE::Setting& _usePreCulledObjects{ *reinterpret_cast<RE::Setting*>(RE::ID::BSPreCulledObjects::bUsePreCulledObjects.address()) };
 
 			lock_type _lock;    // replaces BSPreCulledObjects::IDMapLock
 			value_type _value;  // replaces BSPreCulledObjects::IDto3Dmap
@@ -437,7 +437,7 @@ namespace Addictol
 
 		inline static void WriteAddToCullingGroup() noexcept
 		{
-			const auto target = REL::ID{ 997287, 2317327 }.address();
+			const auto target = RE::ID::BSPreCulledObjects::AddToCullingGroup.address();
 			const auto size = REL::Offset{ 0x278, 0x4D9 }.offset();
 			REL::WriteSafeFill(target, REL::INT3, size);
 			RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(&AddToCullingGroup));
@@ -445,7 +445,7 @@ namespace Addictol
 
 		inline static void WriteAddToRainCullingGroup() noexcept
 		{
-			const auto target = REL::ID{ 410310, 2317329 }.address();
+			const auto target = RE::ID::BSPreCulledObjects::AddToRainCullingGroup.address();
 			const auto size = REL::Offset{ 0x218, 0x25F }.offset();
 			REL::WriteSafeFill(target, REL::INT3, size);
 			RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(&AddToRainCullingGroup));
@@ -453,7 +453,7 @@ namespace Addictol
 
 		inline static void WriteAddToShadowCullingGroup() noexcept
 		{
-			const auto target = REL::ID{ 1142692, 2317328 }.address();
+			const auto target = RE::ID::BSPreCulledObjects::AddToShadowCullingGroup.address();
 			const auto size = REL::Offset{ 0x259, 0x290 }.offset();
 			REL::WriteSafeFill(target, REL::INT3, size);
 			RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(&AddToShadowCullingGroup));
@@ -461,7 +461,7 @@ namespace Addictol
 
 		inline static void WriteUpdateIDto3DMap() noexcept
 		{
-			const auto target = REL::ID{ 1162647, 2317305 }.address();
+			const auto target = RE::ID::BSPreCulledObjects::UpdateIDto3DMap.address();
 			const auto size = REL::Offset{ 0x1AA, 0x4C3 }.offset();
 			REL::WriteSafeFill(target, REL::INT3, size);
 			RELEX::DetourJump(target, reinterpret_cast<std::uintptr_t>(&UpdateIDto3DMap));

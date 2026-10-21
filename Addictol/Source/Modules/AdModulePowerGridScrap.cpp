@@ -23,7 +23,7 @@ namespace RE::PowerUtils
 namespace Addictol
 {
 	using TDeleteWorkshopItem = void(__fastcall*)(RE::TESObjectREFR*);
-	static REL::Relocation<TDeleteWorkshopItem> g_DeleteWorkshopItem{ REL::ID{ 853152, 2195121 } };
+	static REL::Relocation<TDeleteWorkshopItem> g_DeleteWorkshopItem{ RE::ID::Workshop::DeleteWorkshopItem };
 
 	using TSetWantsDelete = void(__fastcall*)(RE::TESObjectREFR*, bool);
 	static TSetWantsDelete OriginalSetWantsDelete = nullptr;
@@ -114,7 +114,7 @@ namespace Addictol
 
 	bool ModulePowerGridScrap::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation(REL::VariantID{ 761346, 2201199 }).address();
+		const auto target = REL::Relocation(RE::ID::TESObjectREFR::SetWantsDelete).address();
 		OriginalSetWantsDelete = reinterpret_cast<TSetWantsDelete>(
 			RELEX::DetourJump(target, reinterpret_cast<uintptr_t>(&Hook_SetWantsDelete)));
 

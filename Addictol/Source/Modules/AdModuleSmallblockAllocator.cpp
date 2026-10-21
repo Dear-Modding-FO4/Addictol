@@ -110,8 +110,8 @@ namespace Addictol
 
 	bool ModuleSmallblockAllocator::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto allocSite = REL::ID{ 674967, 2268154 }.address();
-		const auto deallocSite = REL::ID{ 1552278, 2268155 }.address();
+		const auto allocSite = RE::ID::BSSmallBlockAllocatorUtil::UserPoolBase::BaseAllocate.address();
+		const auto deallocSite = RE::ID::BSSmallBlockAllocatorUtil::UserPoolBase::BaseDeallocate.address();
 
 		// Visper ships here because it works perfectly; the selected heap routes this traffic through VMM instead so the allocator profiler can see it.
 		const auto install = [allocSite, deallocSite]<typename Heap>() {

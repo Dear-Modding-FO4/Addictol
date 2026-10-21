@@ -20,7 +20,7 @@ namespace Addictol
 
 	bool ModuleIOCacher::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		auto id = REL::ID{ 165043, 2268775 };
+		auto id = RE::ID::BSSystemFile::DoOpen;
 
 		RELEX::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x84, 0x88 } }.get(), { 0x10 });
 		RELEX::WriteSafe(REL::Relocation{ id, REL::Offset{ 0x8D, 0x91 } }.get(), { 0x50 });

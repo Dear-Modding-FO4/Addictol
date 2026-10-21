@@ -29,7 +29,7 @@ namespace Addictol
 			return true;
 		}
 
-		const auto base = REL::ID{ 1118299, 2318909 }.address();
+		const auto base = RE::ID::BSShaderRenderTargets::Create.address();
 		const auto* bytes = reinterpret_cast<const std::uint8_t*>(base);
 
 		const auto* hit = std::search(bytes, bytes + kScanRange, kVanillaPattern.begin(), kVanillaPattern.end());

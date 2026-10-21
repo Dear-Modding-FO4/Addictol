@@ -46,7 +46,7 @@ namespace Addictol
 
 	bool ModuleSaveCompression::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation{ REL::ID{ 104318, 2228204 } }.address();
+		const auto target = REL::Relocation{ RE::ID::BGSSaveLoadUtilities::CompressBuffer }.address();
 
 		if (!(saveCompDetail::CompressBufferOrig = reinterpret_cast<saveCompDetail::TCompressBuffer>(
 			RELEX::TryDetourJump(target, reinterpret_cast<uintptr_t>(&saveCompDetail::CompressBuffer),

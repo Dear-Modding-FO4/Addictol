@@ -79,9 +79,9 @@ namespace Addictol
 	{
 		using namespace questLogBloatDetail;
 
-		const auto addEntryTarget = REL::ID{ 272757, 2232994, 2232994 }.address();
-		const auto loadGameTarget = REL::Relocation{ REL::ID{ 11049, 2233029, 2233029 }, REL::Offset{ 0x93C, 0xD13, 0xD13 } }.address();
-		const auto loadGameResume = REL::Relocation{ REL::ID{ 11049, 2233029, 2233029 }, REL::Offset{ 0x9B2, 0xD84, 0xD84 } }.address();
+		const auto addEntryTarget = RE::ID::PlayerCharacter::AddQuestStageItem.address();
+		const auto loadGameTarget = REL::Relocation{ RE::ID::PlayerCharacter::LoadGame, REL::Offset{ 0x93C, 0xD13, 0xD13 } }.address();
+		const auto loadGameResume = REL::Relocation{ RE::ID::PlayerCharacter::LoadGame, REL::Offset{ 0x9B2, 0xD84, 0xD84 } }.address();
 
 		// Validate both sites first so a mismatch never leaves a half-patch.
 		// mov [rsp+8], rbx; mov [rsp+18h], rsi

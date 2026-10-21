@@ -96,13 +96,13 @@ namespace Addictol
 	bool ModuleHighResLocalMaps::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		// Targets
-		const auto targetCreate 					= REL::ID{ 1118299, 2318909 }.address();
+		const auto targetCreate 					= RE::ID::BSShaderRenderTargets::Create.address();
 		const auto targetLocalMapOutput 			= targetCreate + REL::Offset{ 0x62D, 0x650 }.offset();
 		const auto targetCompanionMapOutput 		= targetCreate + REL::Offset{ 0x66B, 0x690 }.offset();
 		const auto targetCompanionMapPrimary 		= targetCreate + REL::Offset{ 0x717, 0x708 }.offset();
 		const auto targetCompanionMapSecondary 		= targetCreate + REL::Offset{ 0x6A5, 0x6CC }.offset();
 		const auto targetCompanionMapDepthStencil 	= targetCreate + REL::Offset{ 0x749, 0x73E }.offset();
-		const auto targetRender 					= REL::ID{ 213532, 2194685 }.address();
+		const auto targetRender 					= RE::ID::LocalMapRenderer::Render.address();
 		const auto targetRenderEffect 				= targetRender + REL::Offset{ 0x97E, 0xA3B }.offset();
 
 		// Validate

@@ -250,7 +250,7 @@ namespace Addictol
 		}
 
 		{
-			REL::Relocation site{ REL::ID{ 1512511, 2229916 }, REL::Offset{ 0x118, 0x11E } };
+			REL::Relocation site{ RE::ID::Actor::SetCommandState, REL::Offset{ 0x118, 0x11E } };
 
 			// 1. must be an E8 rel32 CALL
 			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
@@ -260,7 +260,7 @@ namespace Addictol
 				// 2. must still point at the vanilla command-enter handler
 				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
 				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation expectedCallee{ REL::ID{ 354559, 2233152 } };
+				REL::Relocation expectedCallee{ RE::ID::PlayerCharacter::SayCommand };
 
 				if (callTarget != expectedCallee.address())
 					REX::WARN("CompanionStrayBullet: command-enter call target unexpected (already patched or unsupported build). Hook A not applied."sv);

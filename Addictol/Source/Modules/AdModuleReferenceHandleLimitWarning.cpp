@@ -110,16 +110,16 @@ namespace Addictol
 			RELEX::DetourCall(REL::Relocation(RE::ID::BSPointerHandle::BSPointerHandleManagerInterface::CreateHandle,
 				REL::Offset{ 0xA5 }).address(), (uintptr_t)&HandleManager::OutOfEntriesMessage);
 			// Actor
-			RELEX::DetourCall(REL::Relocation(REL::VariantID{ 1317100, 2188675 }, REL::Offset{ 0xA5, 0xC6 }).address(),
+			RELEX::DetourCall(REL::Relocation(RE::ID::BSPointerHandle::BSPointerHandleManagerInterface::CreateHandle_Actor, REL::Offset{ 0xA5, 0xC6 }).address(),
 				(uintptr_t)&HandleManager::OutOfEntriesMessage);
 			// Hazard
-			RELEX::DetourCall(REL::Relocation(REL::VariantID{ 472884, 2226228 }, REL::Offset{ 0xA5, 0xC6 }).address(),
+			RELEX::DetourCall(REL::Relocation(RE::ID::BSPointerHandle::BSPointerHandleManagerInterface::CreateHandle_Hazard, REL::Offset{ 0xA5, 0xC6 }).address(),
 				(uintptr_t)&HandleManager::OutOfEntriesMessage);
 			// Projectile
-			RELEX::DetourCall(REL::Relocation(REL::VariantID{ 505174, 2228633 }, REL::Offset{ 0xA5, 0xC6 }).address(),
+			RELEX::DetourCall(REL::Relocation(RE::ID::BSPointerHandle::BSPointerHandleManagerInterface::CreateHandle_Projectile, REL::Offset{ 0xA5, 0xC6 }).address(),
 				(uintptr_t)&HandleManager::OutOfEntriesMessage);
 			// Explosion
-			RELEX::DetourCall(REL::Relocation(REL::VariantID{ 1478967, 2236714 }, REL::Offset{ 0xA5, 0xC6 }).address(),
+			RELEX::DetourCall(REL::Relocation(RE::ID::BSPointerHandle::BSPointerHandleManagerInterface::CreateHandle_Explosion, REL::Offset{ 0xA5, 0xC6 }).address(),
 				(uintptr_t)&HandleManager::OutOfEntriesMessage);
 
 			// Get actual manager

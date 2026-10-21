@@ -57,14 +57,14 @@ namespace Addictol
 			{
 				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 1321787 }, REL::Offset{ 0x05A } }.address(), EndSaveLoad);
 				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 1014572 }, REL::Offset{ 0x5CF } }.address(), EndSaveLoad);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 124452  }, REL::Offset{ 0x32F } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::Main::PerformGameReset, REL::Offset{ 0x32F } }.address(), EndSaveLoad);
 				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 371005  }, REL::Offset{ 0x478 } }.address(), EndSaveLoad);
 			}
 			else
 			{
 				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2228095 }, REL::Offset{ 0x0, 0x030, 0x030 } }.address(), EndSaveLoad);
 				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2228097 }, REL::Offset{ 0x0, 0x69E, 0x6A3 } }.address(), EndSaveLoad);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2228945 }, REL::Offset{ 0x0, 0x30B, 0x310 } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::Main::PerformGameReset, REL::Offset{ 0x0, 0x30B, 0x310 } }.address(), EndSaveLoad);
 			}
 		}
 

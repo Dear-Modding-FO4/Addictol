@@ -46,7 +46,7 @@ namespace Addictol
 
 	bool ModuleCreateD3DAndSwapchain::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation(REL::ID{ 224250, 2277018, 4492363 }, REL::Offset{ 0x114, 0x114, 0x10B }).address();
+		const auto target = REL::Relocation(RE::ID::BSGraphics::CreateD3DAndSwapChain, REL::Offset{ 0x114, 0x114, 0x10B }).address();
 		const std::size_t size = 0x7;
 
 		if (!RELEX::Validate(target, { 0x41, 0xFF, 0x52, 0x40, 0x45, 0x32, 0xF6 }))

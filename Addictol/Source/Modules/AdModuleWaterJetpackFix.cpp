@@ -30,7 +30,7 @@ namespace RE
 		void JetpackStop()
 		{
 			using func_t = decltype(&JetpackEffect::JetpackStop);
-			static REL::Relocation<func_t> func{ REL::ID{ 446875, 2226250 } };
+			static REL::Relocation<func_t> func{ RE::ID::JetpackEffect::JetpackStop };
 			return func(this);
 		}
 

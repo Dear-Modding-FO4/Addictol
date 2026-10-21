@@ -70,20 +70,20 @@ namespace Addictol
 
 	bool ModuleManyItemsFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		*(uintptr_t*)&DropItemIntoWorld_orig = REL::ID{ 1044135, 2200922 }.address();
-		*(uintptr_t*)&ExtraDataList__Ctor = REL::ID{ 1329859, 2190088 }.address();
-		*(uintptr_t*)&ExtraDataList__CopyExtraList_orig = REL::ID{ 561304, 2190094 }.address();
-		*(uintptr_t*)&ExtraDataList__SetCount_orig = REL::ID{ 1460465, 2190125 }.address();
+		*(uintptr_t*)&DropItemIntoWorld_orig = RE::ID::TESObjectREFR::DropItemIntoWorld.address();
+		*(uintptr_t*)&ExtraDataList__Ctor = RE::ID::ExtraDataList::Ctor.address();
+		*(uintptr_t*)&ExtraDataList__CopyExtraList_orig = RE::ID::ExtraDataList::CopyList.address();
+		*(uintptr_t*)&ExtraDataList__SetCount_orig = RE::ID::ExtraDataList::SetCount.address();
 
 		// Drop many items fix
-		RELEX::DetourCall(REL::Relocation{ REL::ID{ 943233, 2200919 }, REL::Offset{ 0x3BB, 0x541 } }.get(),
+		RELEX::DetourCall(REL::Relocation{ RE::ID::TESObjectREFR::RemoveItem, REL::Offset{ 0x3BB, 0x541 } }.get(),
 			(uintptr_t)&detail::HookDropItemIntoWorld);
 
 		// Many items fix to container
 		if (!RELEX::IsRuntimeOG())
-			RELEX::WriteSafe(REL::Relocation{ REL::ID(2200949), REL::Offset{ 0x531 } }.get(), { 0x44, 0x8B, 0x44, 0x24, 0x70, 0x90 });
+			RELEX::WriteSafe(REL::Relocation{ RE::ID::TESObjectREFR::AddInventoryItem, REL::Offset{ 0x531 } }.get(), { 0x44, 0x8B, 0x44, 0x24, 0x70, 0x90 });
 		else
-			RELEX::WriteSafe(REL::Relocation{ REL::ID(78185), REL::Offset{ 0x43E } }.get(), { 0x44, 0x8B, 0x44, 0x24, 0x74, 0x90 });
+			RELEX::WriteSafe(REL::Relocation{ RE::ID::TESObjectREFR::AddInventoryItem, REL::Offset{ 0x43E } }.get(), { 0x44, 0x8B, 0x44, 0x24, 0x74, 0x90 });
 
 		return true;
 	}

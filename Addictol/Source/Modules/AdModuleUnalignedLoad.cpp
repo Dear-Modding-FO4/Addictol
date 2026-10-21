@@ -9,7 +9,7 @@ namespace Addictol
 
 	bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		const auto target = REL::Relocation{ REL::ID{ 44611, 2277131 }, REL::Offset{ 0x174, 0x192 } }.address();
+		const auto target = REL::Relocation{ RE::ID::BSGraphics::Utility::ApplySkinningToGeometry, REL::Offset{ 0x174, 0x192 } }.address();
 
 		if (RELEX::IsRuntimeOG())
 		{
@@ -22,7 +22,7 @@ namespace Addictol
 				0x353,
 			};
 
-			const auto base = REL::Relocation{ REL::ID(768994) }.address();
+			const auto base = REL::Relocation{ RE::ID::BSUtilityShader::CreateCommandBuffer }.address();
 			for (const auto offset : offsets)
 			{
 				const uint8_t value = 0x11;

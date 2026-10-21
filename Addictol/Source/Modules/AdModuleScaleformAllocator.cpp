@@ -47,9 +47,9 @@ namespace Addictol
 		{
 			// vmm can't handle it
 #if 0
-			Init::func = RELEX::DetourJump(REL::ID{ 303712, 2284709 }.address(), (uintptr_t)&Init::thunk);
+			Init::func = RELEX::DetourJump(Scaleform::ID::System::Init.address(), (uintptr_t)&Init::thunk);
 #endif
-			SysAllocMapper::func = RELEX::DetourJump(REL::ID{ 347541, 2295435 }.address(), (uintptr_t)&SysAllocMapper::thunk);
+			SysAllocMapper::func = RELEX::DetourJump(Scaleform::ID::SysAllocMapper::Ctor.address(), (uintptr_t)&SysAllocMapper::thunk);
 		}
 
 		static void WriteSizes() noexcept

@@ -45,7 +45,7 @@ namespace Addictol
 
 	bool ModuleTESObjectREFRGetEncounterZone::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
-		REL::Relocation<uintptr_t> Target{ REL::ID{ 1413642, 2202627 } };
+		REL::Relocation<uintptr_t> Target{ RE::ID::TESObjectREFR::GetEncounterZone };
 
 		auto& trampoline = REL::GetTrampoline();
 

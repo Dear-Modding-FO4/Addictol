@@ -17,8 +17,6 @@ namespace Addictol
 	// A per-thread scratch replaces the global lock held across IsTrue (deadlock).
 	namespace escapeFreezeDetail
 	{
-		constexpr REL::ID s_checkConditionFilters{ 1055546, 2206531 };
-
 		constexpr size_t s_entryTabCount = 0x12;
 		constexpr size_t s_entryConditions = 0x20;
 
@@ -112,7 +110,7 @@ namespace Addictol
 	{
 		using namespace escapeFreezeDetail;
 
-		const auto target = REL::Relocation<uintptr_t>{ s_checkConditionFilters }.address();
+		const auto target = REL::Relocation<uintptr_t>{ RE::ID::BGSEntryPointPerkEntry::CheckConditionFilters }.address();
 		// mov [rsp+20h], r9; mov [rsp+8], rcx
 		if (!RELEX::Validate(target, { 0x4C, 0x89, 0x4C, 0x24, 0x20, 0x48, 0x89, 0x4C, 0x24, 0x08 }))
 		{

@@ -373,7 +373,7 @@ namespace Addictol
 		if (!RELEX::IsRuntimeOG())
 		{
 			uintptr_t Offset = REL::ID(2209307).address() + 0x483;
-			BSTextureDB::FacegenPathPrintf = REL::ID(2207434).address();
+			BSTextureDB::FacegenPathPrintf = RE::ID::TESNPC::GetFaceCustomizationTextureFileName.address();
 			BSTextureDB::CreateEntryID = REL::ID(2274880).address();
 
 			// Remove useless stuff.
@@ -392,12 +392,12 @@ namespace Addictol
 			// call
 			return 
 				(RELEX::DetourCall(Offset + 0x4A, BSTextureDB::FacegenPathPrintf) != 0) &&
-				(RELEX::DetourJump(REL::ID(2209308).address(), (uintptr_t)&CanUsePreprocessingHead) != 0);
+				(RELEX::DetourJump(RE::ID::BSFaceGenManager::CheckNPCUsesPreCalcFace.address(), (uintptr_t)&CanUsePreprocessingHead) != 0);
 		}
 		else
 		{
 			uintptr_t Offset = REL::ID(1211128).address() + 0x350;
-			BSTextureDB::FacegenPathPrintf = REL::ID(1464710).address();
+			BSTextureDB::FacegenPathPrintf = RE::ID::TESNPC::GetFaceCustomizationTextureFileName.address();
 			BSTextureDB::CreateEntryID = REL::ID(421736).address();
 
 			// Remove useless stuff.
@@ -416,7 +416,7 @@ namespace Addictol
 			// call
 			return
 				(RELEX::DetourCall(Offset + 0x4D, BSTextureDB::FacegenPathPrintf) != 0) &&
-				(RELEX::DetourJump(REL::ID(969238).address(), (uintptr_t)&CanUsePreprocessingHead) != 0);
+				(RELEX::DetourJump(RE::ID::BSFaceGenManager::CheckNPCUsesPreCalcFace.address(), (uintptr_t)&CanUsePreprocessingHead) != 0);
 		}
 	}
 

@@ -33,7 +33,7 @@ namespace Addictol
 	bool ModuleSafeExit::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{
 		auto& trampoline = REL::GetTrampoline();
-		trampoline.write_call<5>(REL::Relocation{ REL::ID{ 668528, 2718225, 4812562 }, REL::Offset{ 0x20, 0x20B, 0x20 } }.get(), Shutdown);
+		trampoline.write_call<5>(REL::Relocation{ RE::ID::WinMain, REL::Offset{ 0x20, 0x20B, 0x20 } }.get(), Shutdown);
 
 		return true;
 	}

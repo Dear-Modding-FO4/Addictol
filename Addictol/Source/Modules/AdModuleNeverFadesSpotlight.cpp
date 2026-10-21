@@ -86,7 +86,7 @@ namespace Addictol
 	{
 		// UpdateCamerasI: OG 0x28D9E40, NG 0x2112A90, AE 0x226FBA0.
 		const auto target = REL::Relocation<uintptr_t>{
-			REL::ID{ 398907, 2319641 }, REL::Offset{ 0x565, 0x54D }
+			RE::ID::BSShadowFrustumLight::UpdateCamerasI, REL::Offset{ 0x565, 0x54D }
 		}.address();
 
 		if (!neverFadesSpotlightDetail::ValidateDistanceGate(target))

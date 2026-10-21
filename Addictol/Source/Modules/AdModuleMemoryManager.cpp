@@ -37,7 +37,7 @@ namespace Addictol
 
 		inline static void CtorLong()
 		{
-			RELEX::WriteSafeNop(REL::ID{ 1305199, 2267866 }.address() + 0x1D, 0x15);
+			RELEX::WriteSafeNop(RE::ID::MemoryManager::AutoScrapBuffer::ctor2.address() + 0x1D, 0x15);
 		}
 
 		static void CtorShort()
@@ -85,7 +85,7 @@ namespace Addictol
 	public:
 		static void Install()
 		{
-			RELEX::WriteSafe(REL::ID{ 1557709, 2267868 }.address(), { 0xC3, 0x90, 0x90, 0x90 });
+			RELEX::WriteSafe(RE::ID::MemoryManager::CreatePoolStore.address(), { 0xC3, 0x90, 0x90, 0x90 });
 
 			CtorLong();
 			CtorShort();
@@ -111,12 +111,12 @@ namespace Addictol
 
 			std::array<uint64_t, 6> stub
 			{
-				REL::ID{ 550677,	2267990 }.address(),		// Clean
-				REL::ID{ 111657,	2267989 }.address(),		// ClearKeepPages
-				REL::ID{ 975239,	2267993 }.address(),		// InsertFreeBlock
-				REL::ID{ 84225,		2267994 }.address(),		// RemoveFreeBlock
-				REL::ID{ 1255203,	2267988 }.address(),		// SetKeepPages
-				REL::ID{ 912706,	2267982 }.address(),		// dtor
+				RE::ID::ScrapHeap::Clean.address(),
+				RE::ID::ScrapHeap::ClearKeepPages.address(),
+				RE::ID::ScrapHeap::InsertFreeBlock.address(),
+				RE::ID::ScrapHeap::RemoveFreeBlock.address(),
+				RE::ID::ScrapHeap::SetKeepPages.address(),
+				RE::ID::ScrapHeap::Dtor.address(),
 			};
 
 			for (const auto& address : stub)
@@ -127,7 +127,7 @@ namespace Addictol
 		{
 			RELEX::DetourJump(RE::ID::ScrapHeap::Allocate.address(), reinterpret_cast<uintptr_t>(&Allocate));
 			RELEX::DetourJump(RE::ID::ScrapHeap::Deallocate.address(), reinterpret_cast<uintptr_t>(&Deallocate));
-			RELEX::DetourJump(REL::ID{ 48809, 2267981 }.address(), reinterpret_cast<uintptr_t>(&Ctor));
+			RELEX::DetourJump(RE::ID::ScrapHeap::Ctor.address(), reinterpret_cast<uintptr_t>(&Ctor));
 		}
 	public:
 #if !AD_NO_EMPTYPOINTERS
@@ -178,7 +178,7 @@ namespace Addictol
 			// Default/Static/File heaps
 			/////////////////////////////////////////////////////////////////////
 
-			RELEX::WriteSafe(REL::ID{ 433356, 2228360 }.address(), { 0xC3, 0x90 });
+			RELEX::WriteSafe(RE::ID::MemoryManager::SpecifyMemoryLayout.address(), { 0xC3, 0x90 });
 		}
 	};
 
@@ -294,8 +294,8 @@ namespace Addictol
 			// Init stub
 			/////////////////////////////////////////////////////////////////////
 
-			RELEX::WriteSafe(REL::ID{ 597736, 2267875 }.address(), { 0xC3, 0x90 });
-			*(uint32_t*)REL::ID{ 1570354, 2688723, 4807763 }.address() = 2;
+			RELEX::WriteSafe(RE::ID::MemoryManager::UpdateInitState.address(), { 0xC3, 0x90 });
+			*(uint32_t*)RE::ID::MemoryManager::FlagsMemoryManager.address() = 2;
 
 			/////////////////////////////////////////////////////////////////////
 			// Functions stub
@@ -397,7 +397,7 @@ namespace Addictol
 
 		static void Install() noexcept
 		{
-			RELEX::DetourJump(REL::ID{ 760285, 2281069 }.address(), reinterpret_cast<uintptr_t>(&__ctor__));
+			RELEX::DetourJump(RE::ID::bhkThreadMemorySource::Ctor.address(), reinterpret_cast<uintptr_t>(&__ctor__));
 		}
 	};
 
