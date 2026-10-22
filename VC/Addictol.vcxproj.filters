@@ -209,6 +209,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEscapeFreeze.cpp">
       <Filter>Source\Modules\E</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleExtraDataNullCrash.cpp">
+      <Filter>Source\Modules\E</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp">
       <Filter>Source\Modules\F</Filter>
     </ClCompile>
@@ -639,6 +642,9 @@
       <Filter>Include\Modules\E</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEscapeFreeze.h">
+      <Filter>Include\Modules\E</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleExtraDataNullCrash.h">
       <Filter>Include\Modules\E</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h">

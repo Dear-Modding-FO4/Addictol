@@ -473,6 +473,15 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
+	BoolSetting bFixesExtraDataNullCrash{
+		"Fixes"sv,
+		"bExtraDataNullCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		"Fixes a crash when ExtraDataList::GetExtraData is invoked on a null ExtraDataList pointer (e.g. during scrap or object destruction)."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
 	BoolSetting bCrashRemoveRefFix{
 		"Fixes"sv,
 		"bCrashRemoveRefFix"sv,

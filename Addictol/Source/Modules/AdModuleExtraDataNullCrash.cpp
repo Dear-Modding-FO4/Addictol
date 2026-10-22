@@ -23,7 +23,7 @@ namespace Addictol
 	}
 
 	ModuleExtraDataNullCrash::ModuleExtraDataNullCrash() :
-		Module("ExtraDataList Null Crash", &bCrashRemoveRefFix)
+		Module("ExtraDataList Null Crash", &bFixesExtraDataNullCrash)
 	{}
 
 	bool ModuleExtraDataNullCrash::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

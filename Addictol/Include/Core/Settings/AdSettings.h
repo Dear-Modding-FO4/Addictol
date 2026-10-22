@@ -84,6 +84,7 @@ namespace Addictol
 	extern BoolSetting bFixesLightOrder;
 	extern BoolSetting bFixesLightPriority;
 	extern BoolSetting bCrashRemoveRefFix;
+	extern BoolSetting bFixesExtraDataNullCrash;
 	extern BoolSetting bClimateLoad;
 	extern BoolSetting bFixesMusicOverlap;
 	extern BoolSetting bFixesPuddleCubemaps;

@@ -102,6 +102,7 @@
 #include <Modules/AdModuleQuestLogBloat.h>
 #include <Modules/AdModuleLightOrder.h>
 #include <Modules/AdModuleLightPriority.h>
+#include <Modules/AdModuleExtraDataNullCrash.h>
 
 namespace
 {
@@ -216,6 +217,7 @@ static auto sModuleRadioSilence						= std::make_shared<Addictol::ModuleRadioSil
 static auto sModuleQuestLogBloat					= std::make_shared<Addictol::ModuleQuestLogBloat>();
 static auto sModuleLightOrder						= std::make_shared<Addictol::ModuleLightOrder>();
 static auto sModuleLightPriority					= std::make_shared<Addictol::ModuleLightPriority>();
+static auto sModuleExtraDataNullCrash				= std::make_shared<Addictol::ModuleExtraDataNullCrash>();
 
 void AdRegisterPreloadModules()
 {
@@ -327,6 +329,7 @@ void AdRegisterModules()
 	modules.Register(sModuleQuestLogBloat);
 	modules.Register(sModuleLightOrder);
 	modules.Register(sModuleLightPriority);
+	modules.Register(sModuleExtraDataNullCrash);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
