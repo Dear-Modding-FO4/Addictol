@@ -4,6 +4,7 @@
 
 - Added module [EXPERIMENTAL] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8.
 - Added the "Texture Create Crash" module. The deferred renderer queue registered textures without checking whether D3D11 created them, so a description the runtime refuses crashed the worker thread instead of failing the load.
+- ScaleformAllocator: Route Scaleform allocations through the selected heap backend and guard against dangling reference-count releases that corrupt Scaleform free-list links.
 - ControlSamplers: Mip bias now applies only to the engine's material samplers, fixing incorrect results in other plugins' effects (e.g. Community Shaders Volumetric Shadows) and engine reflections.
 - Added the "Effect Env Map Crash" module.
 - LightOrder: Fixed previs discarding object light lists, which left glass and other objects lit only by the sun. Ported from doodlum's Lighting Fixes.

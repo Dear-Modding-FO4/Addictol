@@ -64,7 +64,7 @@ namespace Addictol
 		"uScaleformPageSize"sv,
 		SettingDisplayCategory::kPerformance,
 		64ul,
-		"The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), number must be a multiple of 8 (needs bScaleformAllocator)."sv,
+		"The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), rounded down to a power of 2 (needs bScaleformAllocator)."sv,
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ 64.0, 2048.0 }
 	};
