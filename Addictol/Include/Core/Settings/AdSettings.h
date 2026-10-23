@@ -27,6 +27,7 @@ namespace Addictol
 	extern BoolSetting bPatchesSaveCompression;
 	extern BoolSetting bPatchesAudioSwitch;
 	extern BoolSetting bPatchesHighResLocalMaps;
+	extern BoolSetting bPatchesRefExtended;
 
 	extern BoolSetting bFixesGreyMovie;
 	extern BoolSetting bFixesPackageAllocateLocation;

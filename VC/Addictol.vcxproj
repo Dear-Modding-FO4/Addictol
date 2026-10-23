@@ -21,6 +21,7 @@
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdTelemetrySettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\Settings\AdWarningSettings.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdLogControl.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleRefExtended.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdOperationProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdProfiledHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Zlib\AdZlibOperationProfile.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettings.h" />
     <ClInclude Include="..\Addictol\Include\Core\Settings\AdSettingsModel.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdLogControl.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleRefExtended.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdOperationProfile.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdOperationProfileTable.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdProfiledHeap.h" />

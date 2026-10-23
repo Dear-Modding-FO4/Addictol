@@ -210,4 +210,15 @@ namespace Addictol
 		"Raises the Local Maps resolution, scales with fLocalMapScaleFactor. Affects the Companion app as well, can increase performance & VRAM cost."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bPatchesRefExtended{
+		"Patches"sv,
+		"bRefExtended"sv,
+		SettingDisplayCategory::kStability,
+		false,
+		"[Experimental] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8."
+		" For a large LO so you can play for more than 2 hours. Enable only if \"OUT OF HANDLE ARRAY ENTRIES.\" is triggered. Use at your own risk!"
+		" Mass change of the entire .exe, more than 15 thousand changes."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }
