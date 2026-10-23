@@ -33,8 +33,16 @@ namespace Addictol
 		Entries* handleEntries;
 		const RE::BSPointerHandle<RE::TESObjectREFR> nullHandle{};
 	public:
-		// 21 bits for handle, 5 for age, 1 for active = 26 bit test
+		// 21 bits for handle, 5 for age, 1 for active = 26 bit test (23 bits on AE with bRefExtended)
 		inline static constexpr uint32_t MAX_HANDLE_LIMIT = 1 << 21;
+		inline static constexpr uint32_t MAX_HANDLE_LIMIT_EXTENDED = 1 << 23;
+
+		[[nodiscard]] static uint32_t GetMaxHandleLimit() noexcept
+		{
+			return (RELEX::IsRuntimeAE() && bPatchesRefExtended.GetValue()) ?
+				MAX_HANDLE_LIMIT_EXTENDED :
+				MAX_HANDLE_LIMIT;
+		}
 
 		static uint32_t GetCount() noexcept;
 
@@ -52,9 +60,10 @@ namespace Addictol
 		if (!manager)
 			return 0;
 		static_assert(std::atomic_ref<uint32_t>::is_always_lock_free);
+		const auto limit = GetMaxHandleLimit();
 		const auto count =
 			std::atomic_ref<uint32_t>(manager->freeListTail).load(std::memory_order_relaxed);
-		return count != MAX_HANDLE_LIMIT - 1 ? count : 0;
+		return count != limit - 1 ? count : 0;
 	}
 
 	[[nodiscard]] static bool ReadReferenceHandleTelemetry(
@@ -64,14 +73,14 @@ namespace Addictol
 			return false;
 		const auto count = HandleManager::GetCount();
 		a_values = MetricDoubles(count,
-			ReferenceHandleUsagePercent(count, HandleManager::MAX_HANDLE_LIMIT));
+			ReferenceHandleUsagePercent(count, HandleManager::GetMaxHandleLimit()));
 		return true;
 	}
 
 	void HandleManager::DebugInfo(const std::string_view& a_eventName) noexcept
 	{
 		uint32_t count = HandleManager::GetCount();
-		double ratio = static_cast<double>(count) / static_cast<float>(MAX_HANDLE_LIMIT);
+		double ratio = static_cast<double>(count) / static_cast<float>(GetMaxHandleLimit());
 
 		REX::INFO("Reference Handle Count ({}): {}. Ratio: {:.1f}%"sv, a_eventName, count, ratio * 100.f);
 	}

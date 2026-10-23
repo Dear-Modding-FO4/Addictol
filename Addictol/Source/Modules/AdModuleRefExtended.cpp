@@ -189,6 +189,10 @@ namespace Addictol
 		static_assert(sizeof(BSPointerHandleManagerEntry_Original) == 0x10);
 		static_assert(sizeof(BSPointerHandleManagerEntry_Extended) == 0x10);
 
+		inline static uint32_t* data1{ nullptr };
+		inline static uint32_t* data2{ nullptr };
+		inline static RE::BSReadWriteLock* handleManagerLock{ nullptr };
+
 		template<typename _Ty, typename HandleType, typename HandleRef>
 		class IBSPointerHandleManager
 		{
@@ -201,8 +205,8 @@ namespace Addictol
 		public:
 			constexpr static _Ty INVALID_INDEX = (_Ty)-1;
 		public:
-			[[nodiscard]] inline static _Ty GetHead() noexcept { return FreeListHead; }
-			[[nodiscard]] inline static _Ty GetTail() noexcept { return FreeListTail; }
+			[[nodiscard]] inline static _Ty GetHead() noexcept { return data1 ? *data1 : FreeListHead; }
+			[[nodiscard]] inline static _Ty GetTail() noexcept { return data2 ? *data2 : FreeListTail; }
 
 			static IBSPointerHandleManagerEntry<_Ty, HandleType, HandleRef>* InitSDM()
 			{
@@ -216,21 +220,25 @@ namespace Addictol
 			static void CleanSDM()
 			{
 				FreeListHead = 0;
+				if (data1)
+					*data1 = 0;
 
 				for (_Ty i = 0; i < HandleType::MAX_HANDLE_COUNT; i++)
 				{
 					if ((i + 1) >= HandleType::MAX_HANDLE_COUNT)
-						HandleEntries[i].SetNextFreeEntry(i);
+						HandleEntries[i].SetNextFreeEntry(static_cast<uint32_t>(i));
 					else
-						HandleEntries[i].SetNextFreeEntry(i + 1);
+						HandleEntries[i].SetNextFreeEntry(static_cast<uint32_t>(i + 1));
 				}
 
 				FreeListTail = HandleType::MAX_HANDLE_COUNT - 1;
+				if (data2)
+					*data2 = static_cast<uint32_t>(HandleType::MAX_HANDLE_COUNT - 1);
 			}
 
 			static void KillSDM()
 			{
-				RE::BSAutoWriteLock guard{ HandleManagerLock };
+				RE::BSAutoWriteLock guard{ handleManagerLock ? *handleManagerLock : HandleManagerLock };
 
 				for (_Ty i = 0; i < HandleType::MAX_HANDLE_COUNT; i++)
 				{
@@ -245,13 +253,22 @@ namespace Addictol
 					arrayHandle.SetPointer(nullptr);
 					arrayHandle.SetNotInUse();
 
-					if (FreeListTail == INVALID_INDEX)
+					const auto tail = data2 ? *data2 : static_cast<uint32_t>(FreeListTail);
+					if (tail == UINT32_MAX)
+					{
 						FreeListHead = i;
+						if (data1)
+							*data1 = static_cast<uint32_t>(i);
+					}
 					else
-						HandleEntries[FreeListTail].SetNextFreeEntry(i);
+					{
+						HandleEntries[tail].SetNextFreeEntry(static_cast<uint32_t>(i));
+					}
 
-					arrayHandle.SetNextFreeEntry(i);
+					arrayHandle.SetNextFreeEntry(static_cast<uint32_t>(i));
 					FreeListTail = i;
+					if (data2)
+						*data2 = static_cast<uint32_t>(i);
 				}
 			}
 		};
@@ -532,8 +549,6 @@ namespace Addictol
 		}
 
 		std::atomic_bool extendedMode{ true };
-		uint32_t* data1{ nullptr };
-		uint32_t* data2{ nullptr };
 	}
 
 	ModuleRefExtended::ModuleRefExtended() :
@@ -567,6 +582,7 @@ namespace Addictol
 
 		RefExtendedExtendedDetail::data1 = (uint32_t*)data1.get();
 		RefExtendedExtendedDetail::data2 = (uint32_t*)data2.get();
+		RefExtendedExtendedDetail::handleManagerLock = reinterpret_cast<RE::BSReadWriteLock*>(RefExtendedExtendedDetail::data2 + 1);
 
 		auto addr = winMainAddr + 0x6D1;
 
@@ -712,7 +728,7 @@ namespace Addictol
 			addr = REL::ID(2234041).address();
 			memcpy((void*)(addr + 0x10B), &shift2, 1);
 			memcpy((void*)(addr + 0x1C8), &shift1, 1);
-			memcpy((void*)(addr + 0x1DC), &shift2, 1);
+			memcpy((void*)(addr + 0x1DA), &shift2, 1);
 			memcpy((void*)(addr + 0x210), &shift1, 1);
 			memcpy((void*)(addr + 0x21F), &shift2, 1);
 			memcpy((void*)(addr + 0x26F), &RefExtendedExtendedDetail::BSUntypedPointerHandle_Extended::MAX_HANDLE_COUNT, 4);
@@ -732,7 +748,7 @@ namespace Addictol
 			memcpy((void*)(addr + 0x194), &shift1, 1);
 			memcpy((void*)(addr + 0x1A3), &shift2, 1);
 			memcpy((void*)(addr + 0x1D7), &shift1, 1);
-			memcpy((void*)(addr + 0x1E3), &shift2, 1);
+			memcpy((void*)(addr + 0x1E6), &shift2, 1);
 			memcpy((void*)(addr + 0x233), &RefExtendedExtendedDetail::BSUntypedPointerHandle_Extended::MAX_HANDLE_COUNT, 4);
 			memcpy((void*)(addr + 0x274), &shift2, 1);
 			memcpy((void*)(addr + 0x278), &shift1, 1);
@@ -778,15 +794,18 @@ namespace Addictol
 				memcpy((void*)(addr + 0x130), &shift1, 1);
 			}
 
-			
-			//total += __InstallPatchByPatternMask("81 60 08 FF 03 00 00", 0, -1, 3, 
-			//	&RefExtendedExtendedDetail::BSHandleRefObject_Extremly::REF_COUNT_MASK, 4);		
-			//total += __InstallPatchByPatternMask("FF ? F7 ? FF 03 00 00", 0, -1, 4,
-			//	&RefExtendedExtendedDetail::BSHandleRefObject_Extremly::REF_COUNT_MASK, 4);
-			//total += __InstallPatchByPatternMask("41 F7 ? 24 38 FF 03 00 00", 0, -1, 5,
-			//	&RefExtendedExtendedDetail::BSHandleRefObject_Extremly::REF_COUNT_MASK, 4);
-			//total += __InstallPatchByPatternMask("41 FF ? 41 F7 ? FF 03 00 00", 0, -1, 6,
-			//	&RefExtendedExtendedDetail::BSHandleRefObject_Extremly::REF_COUNT_MASK, 4);
+			addr = REL::ID(2248131).address();
+			memcpy((void*)(addr + 0x9E), &shift1, 1);
+			memcpy((void*)(addr + 0xB5), &shift2, 1);
+
+			addr = REL::ID(2248134).address();
+			memcpy((void*)(addr + 0x8C), &shift1, 1);
+			memcpy((void*)(addr + 0xA3), &shift2, 1);
+
+			total += __InstallPatchByPatternMask("FF ? F7 ? FF 03 00 00", 0, -1, 4,
+				&RefExtendedExtendedDetail::BSHandleRefObject_Extremly::REF_COUNT_MASK, 4);
+			total += __InstallPatchByPatternMask("41 FF ? 41 F7 ? FF 03 00 00", 0, -1, 6,
+				&RefExtendedExtendedDetail::BSHandleRefObject_Extremly::REF_COUNT_MASK, 4);
 			
 			//REX::INFO(" REF_COUNT_MASK {} "sv, total);
 
@@ -848,7 +867,7 @@ namespace Addictol
 			//REX::INFO(" MAX_HANDLE_COUNT {} "sv, total);
 
 			// Change MASK_ACTIVE_BIT
-			total = __InstallPatchByPatternMask("F7 ? 00 00 00 04", 0, 2, 1,
+			total = __InstallPatchByPatternMask("F7 ? 00 00 00 04", 0, 2, 2,
 				&RefExtendedExtendedDetail::BSUntypedPointerHandle_Extended::MASK_ACTIVE_BIT, 4);
 			//REX::INFO(" MASK_ACTIVE_BIT {} "sv, total);
 		}
