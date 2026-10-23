@@ -2,6 +2,7 @@
 #include <Core/AdUtils.h>
 #include <Core/Settings/AdSettings.h>
 
+#include <RE/E/EXTRA_DATA_TYPE.h>
 #include <RE/E/ExtraDataList.h>
 
 namespace Addictol
@@ -10,7 +11,7 @@ namespace Addictol
 	{
 		struct ExtraDataList
 		{
-			static RE::BSExtraData* GetExtraData(RE::ExtraDataList* a_this, RE::ExtraDataType a_type) noexcept
+			static RE::BSExtraData* GetExtraData(RE::ExtraDataList* a_this, RE::EXTRA_DATA_TYPE a_type) noexcept
 			{
 				if (!a_this)
 					return nullptr;
