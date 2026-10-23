@@ -84,6 +84,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleShaderReferenceEffectLifetime.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureCreateCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMagicKeywordCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEffectEnvMapCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArmorPenetration.cpp" />
@@ -242,6 +243,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleShaderReferenceEffectLifetime.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureCreateCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMagicKeywordCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEffectEnvMapCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArmorPenetration.h" />

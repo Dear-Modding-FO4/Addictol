@@ -392,6 +392,15 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
+	BoolSetting bFixesTextureCreateCrash{
+		"Fixes"sv,
+		"bTextureCreateCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		"Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
 	BoolSetting bFixesFullPrecisionDecals{
 		"Fixes"sv,
 		"bFullPrecisionDecals"sv,

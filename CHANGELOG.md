@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the "Texture Create Crash" module. The deferred renderer queue registered textures without checking whether D3D11 created them, so a description the runtime refuses crashed the worker thread instead of failing the load.
 - ControlSamplers: Mip bias now applies only to the engine's material samplers, fixing incorrect results in other plugins' effects (e.g. Community Shaders Volumetric Shadows) and engine reflections.
 - Added the "Effect Env Map Crash" module.
 - LightOrder: Fixed previs discarding object light lists, which left glass and other objects lit only by the sun. Ported from doodlum's Lighting Fixes.
