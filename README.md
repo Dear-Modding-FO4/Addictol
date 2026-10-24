@@ -27,7 +27,7 @@ Baka MaxPapyrusOps, Interior NavCut Fix, and Faster Workshop alongside fixes dev
 
 ## Requirements
 
-| | |
+| Requirement | Details |
 |---|---|
 | **Fallout 4** | OG **1.10.163**, NG **1.10.984**, or AE **1.11.240**. One DLL supports all three. |
 | **[Fallout 4 Script Extender (F4SE)](https://f4se.silverlock.org/)** | Required for the matching game runtime. |
