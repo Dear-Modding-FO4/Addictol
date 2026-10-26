@@ -3,14 +3,20 @@
 #include <Modules/AdModuleDownwardAiming.h>
 #include <Core/AdUtils.h>
 
-#include <RE/N/NiPoint3.h>
-#include <RE/P/Projectile.h>
+#include <RE/A/AIProcess.h>
 #include <RE/A/Actor.h>
+#include <RE/C/CachedValues.h>
+#include <RE/N/NiPoint3.h>
+#include <RE/P/PlayerCharacter.h>
+#include <RE/P/Projectile.h>
 
 namespace Addictol
 {
 	namespace detail
 	{
+		// GetEyeVector's "cachedEyeLevel is valid" bit in CachedValues::flags.
+		inline constexpr uint32_t kCachedEyeLevelFlag = 1u << 9;
+
 		struct Projectile
 		{
 			static void Move(RE::Projectile* a_self, RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
@@ -19,8 +25,21 @@ namespace Addictol
 				if (refShooter && refShooter->Is(RE::Actor::FORM_ID))
 				{
 					const auto akShooter = static_cast<RE::Actor*>(refShooter.get());  // NOLINT(*-pro-type-static-cast-downcast)
-					[[maybe_unused]] RE::NiPoint3 direction;
-					akShooter->GetEyeVector(a_from, direction, true);
+					if (akShooter == RE::PlayerCharacter::GetSingleton())
+					{
+						[[maybe_unused]] RE::NiPoint3 direction;
+						akShooter->GetEyeVector(a_from, direction, true);
+					}
+					else if (const auto* const process = akShooter->currentProcess)
+					{
+						// Parallel projectile jobs must not build eye bones; use the cache only.
+						if (const auto* const cached = process->cachedValues;
+							cached && (cached->flags & kCachedEyeLevelFlag) != 0)
+						{
+							a_from = akShooter->data.location;
+							a_from.z += cached->cachedEyeLevel;
+						}
+					}
 				}
 
 				_Move(a_self, a_from, a_to);
