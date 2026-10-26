@@ -101,6 +101,7 @@ namespace Addictol
 	extern BoolSetting bFixesRadioSilence;
 	extern BoolSetting bFixesQuestLogBloat;
 	extern BoolSetting bFixesCustomScale;
+	extern BoolSetting bFixesArchiveStreamClose;
 
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;

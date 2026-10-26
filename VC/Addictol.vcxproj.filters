@@ -159,6 +159,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveLimits.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveStreamClose.cpp">
+      <Filter>Source\Modules\A</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArmorPenetration.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
@@ -595,6 +598,9 @@
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveLimits.h">
+      <Filter>Include\Modules\A</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveStreamClose.h">
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArmorPenetration.h">

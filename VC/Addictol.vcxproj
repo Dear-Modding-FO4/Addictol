@@ -97,6 +97,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSignedCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBethesdaNetCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveLimits.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleArchiveStreamClose.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBGSAIWorldLocationRefRadius.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSMTAManager.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleBSPreCulledObjects.cpp" />
@@ -258,6 +259,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSignedCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBethesdaNetCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveLimits.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleArchiveStreamClose.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBGSAIWorldLocationRefRadius.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSMTAManager.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleBSPreCulledObjects.h" />

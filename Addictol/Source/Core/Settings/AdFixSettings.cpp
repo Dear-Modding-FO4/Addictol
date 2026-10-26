@@ -652,4 +652,13 @@ namespace Addictol
 		"Fixes ADS issues that occur when the player scale is changed."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesArchiveStreamClose{
+		"Fixes"sv,
+		"bArchiveStreamClose"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		"Waits for in-flight BA2 streamer reads to finish before closing compressed archive streams, preventing heap corruption."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the "Archive Stream Close" module, fixing heap corruption when compressed BA2 streams close mid-read (#72).
+- DownwardAiming: Fixed a crash when NPCs fire projectiles during parallel projectile updates (#71).
 - Added module [EXPERIMENTAL] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8.
 - Added the "Custom Scale" module. Fixes issues such as ADS, Terminal and Furniture Positions when using a custom player scale.
 - Added the "Texture Create Crash" module. The deferred renderer queue registered textures without checking whether D3D11 created them, so a description the runtime refuses crashed the worker thread instead of failing the load.
