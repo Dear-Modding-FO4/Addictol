@@ -18,15 +18,18 @@ namespace Addictol
 {
 	namespace fasterWorkshopDetail
 	{
-		// resolved lazily, the id is OG-only and would hard-fail at static init on NG/AE
+		// resolved lazily, the offset is OG-only
 		static std::uintptr_t LeafNodeTargetOG() noexcept
 		{
-			static REL::Relocation target{ REL::ID{ 934716 }, REL::Offset{ 0x1EF } };
+			static REL::Relocation target{ RE::ID::Workshop::WorkshopMenuNode::BuildChildNodes, REL::Offset{ 0x1EF } };
 			return target.address();
 		}
 
 		// Constructible Object Map
 		std::unordered_map<const RE::BGSKeyword*, std::vector<const RE::BGSConstructibleObject*>> g_cobjMap;
+		// COBJs without filter keywords; vanilla lists them under the default filter
+		std::vector<const RE::BGSConstructibleObject*> g_uncategorized;
+		const RE::TESForm* g_defaultFilter{};
 
 		// ---- Game Functions ---- //
 
@@ -40,8 +43,21 @@ namespace Addictol
 		inline static void TryAddLeafNodeOG(void* unk1, const RE::BGSConstructibleObject* cobj) noexcept
 		{
 			using func_t = decltype(&TryAddLeafNodeOG);
-			static REL::Relocation<func_t> func{ REL::ID{ 281929 } };
+			static REL::Relocation<func_t> func{ RE::ID::Workshop::WorkshopMenuNode::TryAddRecipe };
 			return func(unk1, cobj);
+		}
+
+		// the filter vanilla maps to null, which selects keywordless recipes
+		static const RE::TESForm* GetDefaultFilter() noexcept
+		{
+			constexpr auto object = RE::DEFAULT_OBJECT::kWorkshopMiscItemKeyword;
+			if (RELEX::IsRuntimeOG())
+				return RE::BGSDefaultObjectManager::GetSingleton()->GetDefaultObject(object);
+
+			// NG/AE shifted this default object up by one
+			using func_t = RE::TESForm* (*)(std::uint32_t);
+			static REL::Relocation<func_t> func{ RE::ID::BGSDefaultObjectManager::GetDefaultObject };
+			return func(std::to_underlying(object) + 1);
 		}
 
 		// ---- Map Functions ---- //
@@ -54,6 +70,8 @@ namespace Addictol
 
 			g_cobjMap.clear();
 			g_cobjMap.reserve(3000);
+			g_uncategorized.clear();
+			g_defaultFilter = nullptr;
 
 			return true;
 		}
@@ -111,8 +129,10 @@ namespace Addictol
 					auto recipeFiltered{ std::span{object->filterKeywords.array, count} };
 
 					if (recipeFiltered.empty())
-						// Keyword Count is Empty
+					{
+						g_uncategorized.push_back(object);
 						continue;
+					}
 
 					for (int i{ 0 }; i < recipeFiltered.size(); ++i)
 					{
@@ -126,9 +146,16 @@ namespace Addictol
 
 						auto& keywordValue{ recipeFiltered[i] };
 						if (const RE::BGSKeyword* keyword{ GetKeywordByIndex(RE::KeywordType::kRecipeFilter, keywordValue.keywordIndex) }; keyword)
-							g_cobjMap[keyword].push_back(object);
+						{
+							// a repeated keyword would list the recipe twice
+							auto& bucket = g_cobjMap[keyword];
+							if (bucket.empty() || bucket.back() != object)
+								bucket.push_back(object);
+						}
 					}
 				}
+
+				g_defaultFilter = GetDefaultFilter();
 
 #if !AD_NOMESSAGE_FASTERWORKSHOP
 				REX::INFO("FasterWorkshop: Map Built. {} Map Key Elements. {} Total COBJ Elements Processed."sv, g_cobjMap.size(), objectArray.size());
@@ -148,28 +175,40 @@ namespace Addictol
 
 		// ---- Recipe Functions ---- //
 
-		inline static auto CachedCanShowRecipe(RE::BGSConstructibleObject* obj, RE::BGSKeyword* keyword) noexcept -> bool
+		// visits the recipes vanilla tests for a_filter, with the keyword it tests them against
+		template <class F>
+		static void ForEachCandidate(const RE::TESForm* a_filter, F&& a_func) noexcept
 		{
 			TryBuildMap();
 
-			auto it = g_cobjMap.find(keyword);
-			if (it != g_cobjMap.end())
+			if (a_filter && a_filter == g_defaultFilter)
 			{
-				for (auto* cobj : it->second)
+				for (auto* cobj : g_uncategorized)
 				{
-					if (obj == cobj && RE::Workshop::WorkshopCanShowRecipe(obj, keyword))
-						return true;
+					if (!a_func(cobj, nullptr))
+						return;
 				}
+				return;
 			}
 
-			return false;
+			auto it = g_cobjMap.find(static_cast<const RE::BGSKeyword*>(a_filter));
+			if (it == g_cobjMap.end())
+				return;
+
+			for (auto* cobj : it->second)
+			{
+				if (!a_func(cobj, const_cast<RE::BGSKeyword*>(it->first)))
+					return;
+			}
 		}
 
-		bool CachedCheckForValidChildren(void* ctx, const RE::BGSListForm* a_formList) noexcept
+		// a_node is the WorkshopMenuNode, whose first member is its filter keyword
+		bool CachedCheckForValidChildren(void* a_node, const RE::BGSListForm* a_formList) noexcept
 		{
 			if (!a_formList)
 				return false;
 
+			const auto nodeFilter = *static_cast<RE::TESForm**>(a_node);
 			for (auto form : a_formList->arrayOfForms)
 			{
 				if (!form)
@@ -177,26 +216,22 @@ namespace Addictol
 
 				if (form->formType == RE::ENUM_FORM_ID::kFLST)
 				{
-					if (CachedCheckForValidChildren(ctx, reinterpret_cast<RE::BGSListForm*>(form)))
+					if (CachedCheckForValidChildren(a_node, reinterpret_cast<RE::BGSListForm*>(form)))
 						return true;
 				}
 				else if (form->formType == RE::ENUM_FORM_ID::kKYWD)
 				{
-					if (form == ctx)
+					if (form == nodeFilter || form->IsDeleted())
 						continue;
 
-					TryBuildMap();
+					bool found{};
+					ForEachCandidate(form, [&](const RE::BGSConstructibleObject* a_cobj, RE::BGSKeyword* a_keyword) {
+						found = RE::Workshop::WorkshopCanShowRecipe(const_cast<RE::BGSConstructibleObject*>(a_cobj), a_keyword);
+						return !found;
+					});
 
-					auto keyword = reinterpret_cast<RE::BGSKeyword*>(form);
-					auto it = g_cobjMap.find(keyword);
-					if (keyword && it != g_cobjMap.end())
-					{
-						for (auto* cobj : it->second)
-						{
-							if (RE::Workshop::WorkshopCanShowRecipe(const_cast<RE::BGSConstructibleObject*>(cobj), keyword))
-								return true;
-						}
-					}
+					if (found)
+						return true;
 				}
 			}
 
@@ -209,16 +244,11 @@ namespace Addictol
 
 		inline static void HandlerLeafNode(void* unk1, const RE::BGSKeyword* keyword)
 		{
-			TryBuildMap();
-
-			auto it = g_cobjMap.find(keyword);
-			if (it != g_cobjMap.end())
-			{
-				for (auto* cobj : it->second)
-				{
-					TryAddLeafNodeOG(unk1, cobj);
-				}
-			}
+			// the OG callback maps the default filter to null itself
+			ForEachCandidate(keyword, [&](const RE::BGSConstructibleObject* a_cobj, RE::BGSKeyword*) {
+				TryAddLeafNodeOG(unk1, a_cobj);
+				return true;
+			});
 		}
 
 		struct LeafNodePatch : Xbyak::CodeGenerator
@@ -271,9 +301,6 @@ namespace Addictol
 			RE::TESForm*, const RE::BGSConstructibleObject*, RE::TESForm*);
 		TWorkshop__Workbench__AddRecipe Workshop__Workbench__AddRecipe;
 
-		using TGetDefaultObjectFromDefaultManager = RE::TESForm* (*)(std::uint32_t);
-		TGetDefaultObjectFromDefaultManager GetDefaultObjectFromDefaultManager;
-
 		static void Workshop__Workbench__ForEachInListAddRecipe(Workshop__Workbench__ListNode& a_node, const RE::BGSListForm* a_formList) noexcept
 		{
 			auto createdRecipe = a_node.recipe;
@@ -286,15 +313,14 @@ namespace Addictol
 			}
 		}
 
-		static void Workshop__Workbench__TryAddRecipe(Workshop__Workbench__MenuNode* a_menuNode, const RE::BGSConstructibleObject* a_formRecipe) noexcept
+		static void Workshop__Workbench__TryAddRecipe(Workshop__Workbench__MenuNode* a_menuNode, const RE::BGSConstructibleObject* a_formRecipe,
+			RE::BGSKeyword* a_keyword) noexcept
 		{
 			auto filter = a_menuNode->filterNode->keyword;
 			if (!a_formRecipe || !filter || filter->IsDeleted())
 				return;
 
-			// for OG 0x17E, but AE 0x17F, clib wrong
-			auto defaultObject = GetDefaultObjectFromDefaultManager(0x17F);
-			if (CachedCanShowRecipe(const_cast<RE::BGSConstructibleObject*>(a_formRecipe), (defaultObject == filter ? nullptr : filter)))
+			if (RE::Workshop::WorkshopCanShowRecipe(const_cast<RE::BGSConstructibleObject*>(a_formRecipe), a_keyword))
 			{
 				*a_menuNode->a2 = true;
 				Workshop__Workbench__Node node{ a_menuNode->node };
@@ -313,17 +339,10 @@ namespace Addictol
 		static void Workshop__Workbench__StoreAll([[maybe_unused]] RE::TESDataHandler* a_dataHandler,
 			[[maybe_unused]] const REX::EnumSet<RE::ENUM_FORM_ID, uint8_t> a_typeForm, Workshop__Workbench__MenuNode* a_menuNode) noexcept
 		{
-			auto filter = a_menuNode->filterNode->keyword;
-			TryBuildMap();
-
-			auto it = g_cobjMap.find(filter);
-			if (it != g_cobjMap.end())
-			{
-				for (auto* cobj : it->second)
-				{
-					Workshop__Workbench__TryAddRecipe(a_menuNode, cobj);
-				}
-			}
+			ForEachCandidate(a_menuNode->filterNode->keyword, [&](const RE::BGSConstructibleObject* a_cobj, RE::BGSKeyword* a_keyword) {
+				Workshop__Workbench__TryAddRecipe(a_menuNode, a_cobj, a_keyword);
+				return true;
+			});
 
 			/*auto& arrRecipeForm = a_dataHandler->GetFormArray<RE::BGSConstructibleObject>();
 			for (auto formRecipe : arrRecipeForm)
@@ -364,7 +383,7 @@ namespace Addictol
 			fasterWorkshopDetail::ClearBuiltMap();
 		else
 		{
-			REL::Relocation HookCheckForValidChildrenTarget{ REL::ID{ 934716, 2195480 }, REL::Offset{ 0x51, 0x4F } };
+			REL::Relocation HookCheckForValidChildrenTarget{ RE::ID::Workshop::WorkshopMenuNode::BuildChildNodes, REL::Offset{ 0x51, 0x4F } };
 			REL::Relocation HookIconLoadLagTarget{ RE::ID::WorkshopMenu::ProcessMessage, REL::Offset{ 0x3A5, 0x39F, 0x3A0 } };
 
 			// Workshop Lag Fix
@@ -374,10 +393,10 @@ namespace Addictol
 				RELEX::XbyakJump<fasterWorkshopDetail::LeafNodePatch>(fasterWorkshopDetail::LeafNodeTargetOG());
 			else
 			{
-				*(uintptr_t*)&fasterWorkshopDetail::Workshop__Workbench__AddRecipe = REL::ID(2195494).address();
-				*(uintptr_t*)&fasterWorkshopDetail::GetDefaultObjectFromDefaultManager = REL::ID(2192850).address();
+				*(uintptr_t*)&fasterWorkshopDetail::Workshop__Workbench__AddRecipe = REL::Relocation{ RE::ID::Workshop::WorkshopMenuNode::AddRecipe }.address();
 
-				RELEX::DetourJump(REL::ID(2195247).address(), (uintptr_t)&fasterWorkshopDetail::Workshop__Workbench__StoreAll);
+				RELEX::DetourJump(REL::Relocation{ RE::ID::Workshop::WorkshopMenuNode::AddRecipesForFilter }.address(),
+					(uintptr_t)&fasterWorkshopDetail::Workshop__Workbench__StoreAll);
 			}
 
 			// Icon Lag Fix

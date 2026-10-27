@@ -17,6 +17,7 @@
 - MoonRotation: Fixed directional light so that the light matches the movement of the moon.
 - EscapeFreeze: Fixed the root cause of the combat freeze instead of releasing stuck locks; nSleepTimer and nMaxLockCount were removed.
 - FasterWorkshop: Fixed the Workshop Icon Lag Hook for NG.
+- FasterWorkshop: Recipes without a filter keyword appear under the default category again, and a submenu's own keyword is skipped when checking for children, matching vanilla.
 - LeveledListCrash: Fixed an issue where the module did not catch overflows.
 - MaxPapyrusOps: Fixed an incorrect offset being used for OG/NG.
 - ReferenceHandleLimit: Queue the save-and-quit only once when reference handles run out.
