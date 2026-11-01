@@ -301,28 +301,14 @@ namespace Addictol::Menu
 						ApplyDraft();
 					}
 				},
-				.actionTooltips = {
-					.reset =
-						"Reset loads every Addictol setting's factory default "
-						"into the draft. Use Apply to save them.",
-					.revert =
-						"Revert discards pending edits and restores saved settings.",
-					.apply = [](size_t a_pending) {
-						return "Apply saves " + std::to_string(a_pending) +
-							" pending " +
-							(a_pending == 1 ? "change" : "changes") +
-							" to the settings file.";
-					}
-				},
 				.filterOptions = {
 					.showSearch = true,
-					.showModifiedOnly = true,
-					.searchHint = "Search settings..."
+					.showModifiedOnly = true
 				},
 				.notes = {
 					{
-						"Most settings take effect after the next game launch. "
-						"Only settings labeled \"Applies now\" update immediately.",
+						"Most settings take effect after the next game launch; "
+						"settings marked to apply immediately update right away.",
 						false
 					},
 					{
