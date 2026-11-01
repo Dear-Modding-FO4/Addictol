@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- AudioSwitch: Sounds are no longer muffled or silent after changing the default playback device; reverb, audio monitors and 3D audio follow the new device, and a failed or device-less switch keeps the current output and retries.
 - PapyrusGC: Fixed a memory leak on NG/AE where every Papyrus struct the garbage collector removed was destroyed but never freed.
 - MaxPapyrusOps: Fixed NG unfreezing the Papyrus VM through AE field offsets, which locked and wrote the wrong GameVM memory.
 - Added the "Papyrus Leaks" module, releasing Papyrus scripts the engine leaves bound to destroyed inventory items and to unused plugin-form wrappers; existing saves are cleaned on load (#73).

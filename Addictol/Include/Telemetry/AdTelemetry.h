@@ -437,10 +437,10 @@ namespace Addictol
 		const PerformanceData& a_performance) noexcept
 	{
 		return MetricDoubles(
-			a_performance.GlitchesSinceEngineStarted, a_performance.ActiveSourceVoiceCount,
-			a_performance.TotalSourceVoiceCount,
-			a_performance.CurrentLatencyInSamples,
-			a_performance.MemoryUsageInBytes);
+			a_performance.glitchesSinceEngineStarted, a_performance.activeSourceVoiceCount,
+			a_performance.totalSourceVoiceCount,
+			a_performance.currentLatencyInSamples,
+			a_performance.memoryUsageInBytes);
 	}
 
 	template<class PerformanceData, class Engine, class MasteringVoice>
