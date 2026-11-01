@@ -19,6 +19,15 @@ namespace Addictol
 		std::atomic<dmui::Client*> s_dmuiClient{ nullptr };
 		const ModuleManager* s_moduleManager{ nullptr };
 
+		struct VideoMemorySample
+		{
+			uint64_t used{ 0 };
+			uint64_t budget{ 0 };
+		};
+
+		// budget 0 means no sample yet
+		std::atomic<VideoMemorySample> s_videoMemory{};
+
 		[[nodiscard]] uint32_t CurrentThreadId() noexcept
 		{
 			return GetCurrentThreadId();
@@ -33,18 +42,29 @@ namespace Addictol
 			return true;
 		}
 
+		// Client results are shared with page draws; query only on the render thread
+		void SampleVideoMemory() noexcept
+		{
+			using clock = std::chrono::steady_clock;
+			static clock::time_point next{};
+			const auto now = clock::now();
+			const auto client = s_dmuiClient.load(std::memory_order_acquire);
+			if (!client || now < next)
+				return;
+			next = now + std::chrono::milliseconds{ (std::max)(uTelemetrySampleMs.GetValue(), 1u) };
+			if (const auto info = client->QueryVideoMemory())
+				s_videoMemory.store({ info->used, info->budget }, std::memory_order_release);
+		}
+
 		[[nodiscard]] bool ReadVideoMemory(
 			uint64_t& a_used,
 			uint64_t& a_budget) noexcept
 		{
-			const auto client = s_dmuiClient.load(std::memory_order_acquire);
-			if (!client)
+			const auto sample = s_videoMemory.load(std::memory_order_acquire);
+			if (!sample.budget)
 				return false;
-			const auto info = client->QueryVideoMemory();
-			if (!info)
-				return false;
-			a_used = info->used;
-			a_budget = info->budget;
+			a_used = sample.used;
+			a_budget = sample.budget;
 			return true;
 		}
 
@@ -157,6 +177,7 @@ namespace Addictol
 	void Telemetry::ObserveFrame() noexcept
 	{
 		TelemetryDetail::CaptureRenderThread(&CurrentThreadId);
+		SampleVideoMemory();
 		TelemetryDetail::ObserveFrame(
 			s_frameSource.load(std::memory_order_acquire),
 			&Addictol::ReadQpc);

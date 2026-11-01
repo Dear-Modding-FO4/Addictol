@@ -53,7 +53,7 @@ tools, and `Depends/` the submodules and vendored libraries. `commonlibf4` provi
 Crash logging ships separately as
 [AddictolCrashLogger](https://github.com/Dear-Modding-FO4/AddictolCrashLogger), and DearModdingUI
 is a separate mod. The menu draws only through DearModdingUI's `dmui::ui` interface; it compiles no
-Dear ImGui sources and requires an exact `DMUI_ABI_VERSION` match.
+Dear ImGui sources and requires a host serving DearModdingUI ABI major 2 (any minor).
 
 ## The module model
 
