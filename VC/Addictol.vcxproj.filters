@@ -276,6 +276,15 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp">
       <Filter>Source\Modules\I</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdInventoryHandles.cpp">
+      <Filter>Source\Modules\PapyrusLeaks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdModulePapyrusLeaks.cpp">
+      <Filter>Source\Modules\PapyrusLeaks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdNativeWrappers.cpp">
+      <Filter>Source\Modules\PapyrusLeaks</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp">
       <Filter>Source\Modules\I</Filter>
     </ClCompile>
@@ -717,6 +726,18 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h">
       <Filter>Include\Modules\I</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdInventoryHandles.h">
+      <Filter>Include\Modules\PapyrusLeaks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdModulePapyrusLeaks.h">
+      <Filter>Include\Modules\PapyrusLeaks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdNativeWrappers.h">
+      <Filter>Include\Modules\PapyrusLeaks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdPapyrusHandleKind.h">
+      <Filter>Include\Modules\PapyrusLeaks</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h">
       <Filter>Include\Modules\I</Filter>
     </ClInclude>
@@ -1021,6 +1042,12 @@
     </Filter>
     <Filter Include="Source\Modules\P">
       <UniqueIdentifier>{ce084078-3a41-4d40-b54a-7b327199e685}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Modules\PapyrusLeaks">
+      <UniqueIdentifier>{0cc056ff-b3a5-4907-a845-671da2f54716}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Modules\PapyrusLeaks">
+      <UniqueIdentifier>{082d7956-fd01-4e59-a1f5-0fcf65ac6385}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Modules\Q">
       <UniqueIdentifier>{4f2d8b1a-6c3e-4a97-b5d0-8e1f7a2c9d36}</UniqueIdentifier>

@@ -661,4 +661,13 @@ namespace Addictol
 		"Waits for in-flight BA2 streamer reads to finish before closing compressed archive streams, preventing heap corruption."sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bFixesPapyrusLeaks{
+		"Fixes"sv,
+		"bPapyrusLeaks"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		"Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

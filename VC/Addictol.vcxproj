@@ -125,6 +125,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInitTints.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInputSwitch.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleInteriorNavCut.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdInventoryHandles.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdModulePapyrusLeaks.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdNativeWrappers.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
@@ -287,6 +290,10 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInitTints.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInputSwitch.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleInteriorNavCut.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdInventoryHandles.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdModulePapyrusLeaks.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdNativeWrappers.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdPapyrusHandleKind.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />

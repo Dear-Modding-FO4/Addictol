@@ -106,6 +106,7 @@
 #include <Modules/AdModuleRefExtended.h>
 #include <Modules/AdModuleCustomScale.h>
 #include <Modules/AdModuleArchiveStreamClose.h>
+#include <Modules/PapyrusLeaks/AdModulePapyrusLeaks.h>
 
 namespace
 {
@@ -224,6 +225,7 @@ static auto sModuleLightPriority					= std::make_shared<Addictol::ModuleLightPri
 static auto sModuleRefExtended						= std::make_shared<Addictol::ModuleRefExtended>();
 static auto sModuleCustomScale						= std::make_shared<Addictol::ModuleCustomScale>();
 static auto sModuleArchiveStreamClose				= std::make_shared<Addictol::ModuleArchiveStreamClose>();
+static auto sModulePapyrusLeaks						= std::make_shared<Addictol::ModulePapyrusLeaks>();
 
 void AdRegisterPreloadModules()
 {
@@ -339,6 +341,7 @@ void AdRegisterModules()
 	modules.Register(sModuleRefExtended);
 	modules.Register(sModuleCustomScale);
 	modules.Register(sModuleArchiveStreamClose);
+	modules.Register(sModulePapyrusLeaks);
 
 	// Registers other patches
 	modules.Register(sModuleThreads,						kGameDataReady);
@@ -351,6 +354,7 @@ void AdRegisterModules()
 	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleFasterWorkshop,					kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
+	modules.Register(sModulePapyrusLeaks,					kGameDataReady);
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleCraftingMenuFix,				kGameDataReady);
