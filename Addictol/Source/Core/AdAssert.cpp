@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <RE/M/Main.h>
+
 static constexpr auto SIZE_ASSERT_BUFFERS = 4 * 1024;
 static char AdAssertBuffer[SIZE_ASSERT_BUFFERS]{};
 static char AdAssertMessage[SIZE_ASSERT_BUFFERS]{};
@@ -25,6 +27,10 @@ void AdAssertMsg(const char* SourceFile, int SourceLine, const char* Function, c
     vsnprintf(AdAssertBuffer, SIZE_ASSERT_BUFFERS, FormattedMessage, ap);
     sprintf(AdAssertMessage, "%s(%d) %s():\n\n%s", SourceFile, SourceLine, Function, AdAssertBuffer);
     va_end(ap);
+
+    // Stop game!!!
+    auto main = RE::Main::GetSingleton();
+    if (main) main->freezeTime = true;
 
     while (1)
     {
