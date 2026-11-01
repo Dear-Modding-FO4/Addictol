@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- PapyrusGC: Fixed a memory leak on NG/AE where every Papyrus struct the garbage collector removed was destroyed but never freed.
 - MaxPapyrusOps: Fixed NG unfreezing the Papyrus VM through AE field offsets, which locked and wrote the wrong GameVM memory.
 - Added the "Archive Stream Close" module, fixing heap corruption when compressed BA2 streams close mid-read (#72).
 - DownwardAiming: Fixed a crash when NPCs fire projectiles during parallel projectile updates (#71).

@@ -1,8 +1,6 @@
 #include <Modules/AdModulePapyrusGC.h>
 #include <Core/AdUtils.h>
 
-#include <cstring>
-
 #include <RE/B/BSScript_Array.h>
 #include <RE/B/BSScript_Struct.h>
 #include <RE/B/BSTArray.h>
@@ -24,78 +22,12 @@ namespace Addictol
 			return *var;
 		}
 
-		// Nukem9's:
-		// I'm explicitly defining this function because BSScript::Array and BSScript::Struct don't reimplement new[] and
-		// delete[] anywhere. I don't know if this is an issue with commonlib or an issue in my code. Noinline is strictly
-		// for debugging purposes.
-		//
-		// There's an additional performance benefit - this implementation can move trivial items very quickly.
+		// Like BSTArrayRemoveFast; the displaced pointer releases via engine delete.
 		template<typename T>
-		static void BSTArrayRemoveFastOG(RE::BSTArray<RE::BSTSmartPointer<T>>& a_elements, std::uint32_t a_index) noexcept
+		static void BSTArrayRemoveFast(RE::BSTArray<RE::BSTSmartPointer<T>>& a_elements, std::uint32_t a_index) noexcept
 		{
-			using RemoveFn = void(*)(RE::BSTArray<RE::BSTSmartPointer<T>>&, std::uint32_t, std::uint32_t);
-
-			if constexpr (std::is_same_v<T, RE::BSScript::Array>)
-			{
-				static REL::Relocation<RemoveFn> func{ REL::ID(430486) };
-				func(a_elements, a_index, 1);
-			}
-			else if constexpr (std::is_same_v<T, RE::BSScript::Struct>)
-			{
-				static REL::Relocation<RemoveFn> func{ REL::ID(1294396) };
-				func(a_elements, a_index, 1);
-			}
-			else
-				a_elements.erase(&a_elements[a_index]);
-		}
-
-		// AE: OG's typed BSTArrayRemoveFast does not exist on NG/AE. We cannot use
-		// CommonLibF4's BSTSmartPointer release path because its delete invokes a
-		// trivial compiler-generated destructor that doesn't clean up engine-
-		// allocated internals (BSTArray buffers, nested smart pointers, etc.).
-		// Instead: steal the pointer, compact via raw memcpy, and release through
-		// the engine's own typed destructor+deallocator.
-		template<typename T>
-		static void BSTArrayRemoveFastNG_AE(RE::BSTArray<RE::BSTSmartPointer<T>>& a_elements, std::uint32_t a_index) noexcept
-		{
-			if (a_elements.empty() || a_index >= a_elements.size())
-				return;
-
-			// Steal raw pointer and nullify the smart pointer slot so TryDetach
-			// (and thus CommonLibF4's delete) never fires on the doomed element.
-			auto doomed = a_elements[a_index].get();
-			std::memset(&a_elements[a_index], 0, sizeof(RE::BSTSmartPointer<T>));
-
-			// Compact: relocate last element into the gap via raw copy, then
-			// zero the vacated last slot. No ref counting triggered.
-			const uint32_t lastIndex = a_elements.size() - 1;
-			if (a_index != lastIndex)
-			{
-				std::memcpy(&a_elements[a_index], &a_elements[lastIndex], sizeof(RE::BSTSmartPointer<T>));
-				std::memset(&a_elements[lastIndex], 0, sizeof(RE::BSTSmartPointer<T>));
-			}
-
+			a_elements[a_index] = std::move(a_elements[a_elements.size() - 1]);
 			a_elements.pop_back();
-
-			// Decrement refcount from 1 to 0 (matching the engine's own pattern
-			// where ProcessCleanup atomically decrements before calling release).
-			(void)doomed->DecRef();
-
-			// Release through the engine's proper destructor/deallocator.
-			using ReleaseFn = void(*)(T*);
-			if constexpr (std::is_same_v<T, RE::BSScript::Array>)
-			{
-				static REL::Relocation<ReleaseFn> func1{ REL::ID(2314909) };
-				func1(doomed);
-
-				static REL::Relocation<void(*)(T*, uint32_t)> func2{ REL::ID{ 0, 2228364, 4471524 } };
-				func2(doomed, 0x30);
-			}
-			else if constexpr (std::is_same_v<T, RE::BSScript::Struct>)
-			{
-				static REL::Relocation<ReleaseFn> func{ REL::ID(2314957) };
-				func(doomed);
-			}
 		}
 
 		// Replaces the buggy ProcessArrayCleanup/ProcessStructCleanup loop logic.
@@ -120,11 +52,7 @@ namespace Addictol
 				if (a_elements[index]->QRefCount() == 1)
 				{
 					didGC = true;
-
-					if (RELEX::IsRuntimeOG())
-						BSTArrayRemoveFastOG(a_elements, index);
-					else
-						BSTArrayRemoveFastNG_AE(a_elements, index);
+					BSTArrayRemoveFast(a_elements, index);
 				}
 
 				if (index-- == 0)
