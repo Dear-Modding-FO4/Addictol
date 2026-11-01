@@ -79,10 +79,7 @@ namespace Addictol
 
 			a_this->RegisterForAllGameEvents();
 
-			if (RELEX::IsRuntimeAE())
-				a_this->saveLoad = false;
-			else
-				*reinterpret_cast<bool*>(reinterpret_cast<std::byte*>(a_this) + 0x619) = false;
+			a_this->GetRuntimeData().saveLoad = false;
 
 			a_this->handlePolicy.DropSaveLoadRemapData();
 			a_this->objectBindPolicy.EndSaveLoad();
@@ -90,16 +87,9 @@ namespace Addictol
 
 			if (RE::Script::GetProcessScripts())
 			{
-				if (RELEX::IsRuntimeAE())
-				{
-					const RE::BSAutoLock lock{ a_this->freezeLock };
-					a_this->frozen = false;
-				}
-				else
-				{
-					const RE::BSAutoLock lock{ *reinterpret_cast<RE::BSSpinLock*>(reinterpret_cast<std::byte*>(a_this) + 0x5F8) };
-					*reinterpret_cast<bool*>(reinterpret_cast<std::byte*>(a_this) + 0x600) = false;
-				}
+				auto& data = a_this->GetRuntimeData();
+				const RE::BSAutoLock lock{ data.freezeLock };
+				data.frozen = false;
 			}
 		}
 	};
@@ -130,8 +120,9 @@ namespace Addictol
 
 			if (RE::Script::GetProcessScripts())
 			{
-				GameVM->freezeLock.lock();
-				GameVM->frozen = false;
+				auto& data = GameVM->GetRuntimeData();
+				data.freezeLock.lock();
+				data.frozen = false;
 			}
 		}
 	};

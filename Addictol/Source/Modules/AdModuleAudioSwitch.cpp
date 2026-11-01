@@ -1425,7 +1425,7 @@ namespace Addictol
 			[[nodiscard]] static BSAudio* QPlatformInstance() noexcept
 			{
 				using func_t = decltype(&BSAudioManager::QPlatformInstance);
-				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::PlatformSingleton };
+				static REL::Relocation<func_t> func{ RE::ID::BSAudioManager::QPlatformInstance };
 				return func();
 			}
 
