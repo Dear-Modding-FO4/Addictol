@@ -1,5 +1,3 @@
-// credits original for sse : https://github.com/Exit-9B/AutoAudioSwitch/tree/main
-
 #include <Modules/AdModuleAudioSwitch.h>
 #include <Core/AdUtils.h>
 
