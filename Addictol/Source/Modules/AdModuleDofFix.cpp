@@ -7,8 +7,8 @@
 namespace Addictol
 {
 	// Worker takes 5 args (5th at [rsp+0x28]); forward all five or the original loads garbage.
-	// OG arg2 is the effect pointer; NG/AE arg2 is an index into effectList._data (+0x18).
-	using TRenderEffect = void(__fastcall*)(void*, std::uintptr_t, std::int32_t, std::int32_t, void*);
+	// arg2 is an index into effectList._data (+0x18) on every runtime.
+	using TRenderEffect = void(__fastcall*)(void*, std::uint32_t, std::int32_t, std::int32_t, void*);
 	static TRenderEffect OriginalRenderEffect = nullptr;
 
 	using TRenderScene = void(__fastcall*)(void*, void*, bool);
@@ -17,29 +17,24 @@ namespace Addictol
 	static std::uintptr_t g_dofVTable = 0;
 	static void** g_viewmodelCameraGlobal = nullptr;
 	static void** g_viewmodelAccumGlobal = nullptr;
-	static bool g_workerArgIsEffectPtr = false;
 
 	static constexpr std::size_t kEffectListData = 0x18;
 	static constexpr std::size_t kFirstPersonFlag = 0xB0;
 
-	static void __fastcall HookRenderEffect(void* a_manager, std::uintptr_t a_idxOrEffect, std::int32_t a_a3, std::int32_t a_a4, void* a_a5) noexcept
+	static void __fastcall HookRenderEffect(void* a_manager, std::uint32_t a_index, std::int32_t a_a3, std::int32_t a_a4, void* a_a5) noexcept
 	{
 		void* effect = nullptr;
-		if (g_workerArgIsEffectPtr)
-		{
-			effect = reinterpret_cast<void*>(a_idxOrEffect);
-		}
-		else if (a_manager)
+		if (a_manager)
 		{
 			void** data = *reinterpret_cast<void** const*>(reinterpret_cast<const std::byte*>(a_manager) + kEffectListData);
 			if (data)
-				effect = data[static_cast<std::uint32_t>(a_idxOrEffect)];
+				effect = data[a_index];
 		}
 
 		const bool isDof = effect && g_dofVTable && *reinterpret_cast<const std::uintptr_t*>(effect) == g_dofVTable;
 
 		if (OriginalRenderEffect)
-			OriginalRenderEffect(a_manager, a_idxOrEffect, a_a3, a_a4, a_a5);
+			OriginalRenderEffect(a_manager, a_index, a_a3, a_a4, a_a5);
 
 		if (!isDof || !OriginalRenderScene || !g_viewmodelCameraGlobal || !g_viewmodelAccumGlobal)
 			return;
@@ -68,8 +63,6 @@ namespace Addictol
 			REX::WARN("[DoFFix] Could not resolve ImageSpaceEffectDepthOfField vtable; skipping."sv);
 			return false;
 		}
-
-		g_workerArgIsEffectPtr = RELEX::IsRuntimeOG();
 
 		// Reuse the engine's camera + accumulator from BSShaderUtil::RenderScene for pipeline parity.
 		g_viewmodelCameraGlobal = reinterpret_cast<void**>(REL::ID{ 300623, 2712879 }.address());
