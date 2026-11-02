@@ -4,6 +4,7 @@
 
 - Menu: Settings page buttons, tooltips and search use the DearModdingUI host's language.
 - Telemetry: Video memory is sampled on the render thread, so a failed query can no longer disable the menu page being drawn.
+- ControlSamplers: Mip bias is left to Community Shaders when it is loaded, so it no longer overrides CS's upscaling bias or leaks into its other passes.
 - AudioSwitch: Sounds are no longer muffled or silent after changing the default playback device; reverb, audio monitors and 3D audio follow the new device, and a failed or device-less switch keeps the current output and retries.
 - PapyrusGC: Fixed a memory leak on NG/AE where every Papyrus struct the garbage collector removed was destroyed but never freed.
 - MaxPapyrusOps: Fixed NG unfreezing the Papyrus VM through AE field offsets, which locked and wrote the wrong GameVM memory.

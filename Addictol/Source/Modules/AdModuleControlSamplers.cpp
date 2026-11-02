@@ -39,6 +39,8 @@ namespace Addictol
 		static std::mutex s_mutex;
 		static SamplerTable* s_table{ nullptr };
 		static Microsoft::WRL::ComPtr<REX::W32::ID3D11Device> s_device;
+		// CS scales the bias to its upscaler's render size per pass
+		static bool s_mipBiasOwnedExternally{ false };
 		// Render-thread readers may retain any retired pointer until process exit.
 		static std::vector<Sampler> s_retiredSamplers;
 	}
@@ -96,7 +98,7 @@ namespace Addictol
 
 						// CLAMP samplers serve explicit-LOD reflections, not materials.
 						if (address == 3)
-							desc.mipLODBias = mipBias;
+							desc.mipLODBias = s_mipBiasOwnedExternally ? 0.f : mipBias;
 						if (filter == 3)
 							desc.maxAnisotropy = maxAnisotropy;
 
@@ -222,6 +224,9 @@ namespace Addictol
 			}
 
 			controlSamplersDetail::s_device = rendererData->device;
+			controlSamplersDetail::s_mipBiasOwnedExternally = F4SE::GetPluginInfo("FO4CommunityShaders"sv) != nullptr;
+			if (controlSamplersDetail::s_mipBiasOwnedExternally)
+				REX::INFO("Control Samplers: Community Shaders is loaded; leaving mip bias to it."sv);
 			controlSamplersDetail::s_table = reinterpret_cast<controlSamplersDetail::SamplerTable*>(REL::ID{ 44312, 2704455, 2704455 }.address());
 			return controlSamplersDetail::RebuildSamplersLocked();
 		}
