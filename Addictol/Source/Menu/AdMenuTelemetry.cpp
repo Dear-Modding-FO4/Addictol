@@ -3,6 +3,7 @@
 #include <Telemetry/AdTelemetryHub.h>
 #include <Menu/AdMenuTelemetry.h>
 #include <Menu/AdMenuFormatting.h>
+#include <Menu/AdMenuTable.h>
 
 #include <DearModdingUI/UI.h>
 
@@ -308,18 +309,43 @@ namespace Addictol
 			if (!panel)
 				return;
 			ReportPresentationResult(dmui::DrawStyledText(Menu::Client(), "Series", Menu::kHeadingText));
-			if (!dmui::ui::BeginTable("TelemetrySeries", 5, Menu::kStaticDiagnosticTableFlags))
+			if (!dmui::ui::BeginTable(
+					"TelemetrySeries", 5, Menu::SortableTableFlags(Menu::kStaticDiagnosticTableFlags)))
 				return;
+			constexpr auto kCountColumn =
+				dmui::ui::TableColumnFlags::kWidthFixed |
+				dmui::ui::TableColumnFlags::kPreferSortDescending;
 			dmui::ui::TableSetupColumn("Series", dmui::ui::TableColumnFlags::kWidthStretch);
 			dmui::ui::TableSetupColumn("Bucket", dmui::ui::TableColumnFlags::kWidthStretch);
-			dmui::ui::TableSetupColumn("Calls", dmui::ui::TableColumnFlags::kWidthFixed);
-			dmui::ui::TableSetupColumn("Ticks", dmui::ui::TableColumnFlags::kWidthFixed);
-			dmui::ui::TableSetupColumn("Bytes", dmui::ui::TableColumnFlags::kWidthFixed);
+			dmui::ui::TableSetupColumn("Calls", kCountColumn);
+			dmui::ui::TableSetupColumn("Ticks", kCountColumn);
+			dmui::ui::TableSetupColumn("Bytes", kCountColumn);
 			dmui::ui::TableHeadersRow();
+
+			std::vector<const SeriesSample*> rows;
 			for (const auto& sample : s_cache.current.series)
 			{
-				if (!sample.calls && !sample.ticks && !sample.bytes)
-					continue;
+				if (sample.calls || sample.ticks || sample.bytes)
+					rows.push_back(&sample);
+			}
+			Menu::SortTableRows(rows, [](int32_t a_column, const SeriesSample& a_lhs, const SeriesSample& a_rhs) -> std::weak_ordering {
+				switch (a_column)
+				{
+				case 1:
+					return a_lhs.bucket <=> a_rhs.bucket;
+				case 2:
+					return a_lhs.calls <=> a_rhs.calls;
+				case 3:
+					return a_lhs.ticks <=> a_rhs.ticks;
+				case 4:
+					return a_lhs.bytes <=> a_rhs.bytes;
+				default:
+					return a_lhs.series <=> a_rhs.series;
+				}
+			});
+			for (const auto* row : rows)
+			{
+				const auto& sample = *row;
 				dmui::ui::TableNextRow();
 				(void)dmui::ui::TableNextColumn();
 				dmui::ui::TextUnformatted(

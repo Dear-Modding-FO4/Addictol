@@ -7,6 +7,7 @@
 #include <Modules/AdFacegenExceptions.h>
 
 #include <DearModdingUI/UI.h>
+#include <RE/T/TESDataHandler.h>
 
 #include <algorithm>
 #include <array>
@@ -16,6 +17,17 @@ namespace Addictol::Menu
 {
 	namespace
 	{
+		struct EditorInputState
+		{
+			// Load order captured when the editor opens.
+			std::vector<std::string> plugins;
+			std::vector<size_t> completions;
+			size_t completionIndex{ 0 };
+			std::string plugin;
+			bool reloadPlugin{ false };
+			bool focusKey{ false };
+		};
+
 		struct FacegenExceptionsPageState
 		{
 			bool initialized{ false };
@@ -26,6 +38,7 @@ namespace Addictol::Menu
 			FacegenExceptionDraft editor;
 			bool editorOpen{ false };
 			bool editorPending{ false };
+			EditorInputState editorInput;
 			dmui::DialogSession confirmation;
 		};
 
@@ -156,6 +169,153 @@ namespace Addictol::Menu
 				--*g_pageState.editingIndex;
 		}
 
+		[[nodiscard]] std::vector<std::string> LoadedPluginNames()
+		{
+			std::vector<std::string> names;
+			const auto* dataHandler = RE::TESDataHandler::GetSingleton();
+			if (!dataHandler)
+				return names;
+			for (const auto* files : { &dataHandler->compiledFileCollection.files,
+					 &dataHandler->compiledFileCollection.smallFiles })
+			{
+				for (const auto* file : *files)
+				{
+					if (file)
+						names.emplace_back(file->filename);
+				}
+			}
+			return names;
+		}
+
+		void UpdatePluginCompletions()
+		{
+			auto& input = g_pageState.editorInput;
+			input.completions.clear();
+			input.completionIndex = 0;
+			const std::string_view typed = input.plugin;
+			if (typed.empty())
+				return;
+			for (size_t index = 0; index < input.plugins.size(); ++index)
+			{
+				const std::string_view name = input.plugins[index];
+				if (name.size() > typed.size() &&
+					FacegenExceptionKeysEqual(name.substr(0, typed.size()), typed))
+					input.completions.push_back(index);
+			}
+		}
+
+		void CloseEditor()
+		{
+			g_pageState.editingIndex.reset();
+			g_pageState.editor = {};
+			g_pageState.editorInput = {};
+			g_pageState.editorOpen = false;
+			dmui::ui::CloseCurrentPopup();
+		}
+
+		void CommitEditor(bool a_adding)
+		{
+			auto entry = g_pageState.editor;
+			TrimFacegenExceptionField(entry.key);
+			TrimFacegenExceptionField(entry.formID);
+			if (entry.pluginName)
+			{
+				TrimFacegenExceptionField(*entry.pluginName);
+				if (entry.pluginName->empty())
+					entry.pluginName.reset();
+			}
+			if (a_adding)
+				g_pageState.entries.push_back(std::move(entry));
+			else
+				g_pageState.entries[*g_pageState.editingIndex] = std::move(entry);
+			g_pageState.dirty = true;
+			CloseEditor();
+		}
+
+		// ABI 2.1 reports Enter, Escape, Tab and arrows; 2.0 hosts get a plain field.
+		[[nodiscard]] dmui::ui::TextEditState DrawEditorField(
+			const char* a_label,
+			const char* a_id,
+			std::string& a_text,
+			dmui::ui::TextEditFlags a_flags,
+			size_t a_cursor,
+			float a_width)
+		{
+			dmui::ui::TextUnformatted(a_label);
+			dmui::ui::SetNextItemWidth(a_width);
+			dmui::ui::TextEditState state{};
+			if (Client().AbiMinor() >= 1)
+			{
+				(void)dmui::ui::InputTextEditor(
+					a_id,
+					"",
+					a_text,
+					a_flags | dmui::ui::TextEditFlags::kCaptureCancel,
+					a_cursor,
+					state);
+				return state;
+			}
+			std::array<char, 256> buffer{};
+			strncpy_s(buffer.data(), buffer.size(), a_text.c_str(), _TRUNCATE);
+			if (dmui::ui::InputText(a_id, buffer.data(), buffer.size()))
+			{
+				a_text = buffer.data();
+				state.events = static_cast<uint32_t>(dmui::ui::TextEditEvents::kEdited);
+			}
+			return state;
+		}
+
+		void DrawPluginCompletions(const dmui::ui::TextEditState& a_state)
+		{
+			const auto& input = g_pageState.editorInput;
+			if (!a_state.active || input.completions.empty())
+				return;
+			const dmui::ui::Vec2 below{
+				a_state.caretPosition.x,
+				a_state.caretPosition.y + a_state.lineHeight
+			};
+			if (!dmui::ui::BeginTooltipAt(below))
+				return;
+			constexpr size_t kMaximumShown{ 8 };
+			const auto first = input.completionIndex < kMaximumShown ?
+				0 :
+				input.completionIndex - kMaximumShown + 1;
+			const auto last = (std::min)(input.completions.size(), first + kMaximumShown);
+			for (auto index = first; index < last; ++index)
+			{
+				const auto& name = input.plugins[input.completions[index]];
+				if (index == input.completionIndex)
+					dmui::ui::TextColored(dmui::ToUIVec4(ThemeColors().accent), "%s", name.c_str());
+				else
+					dmui::ui::TextUnformatted(name);
+			}
+			ReportPresentationResult(dmui::DrawStyledText(
+				Client(), "Tab completes, Up/Down selects", kMutedText));
+			dmui::ui::EndTooltip();
+		}
+
+		[[nodiscard]] bool HandlePluginField(const dmui::ui::TextEditState& a_state)
+		{
+			using dmui::ui::HasTextEditEvent;
+			using dmui::ui::TextEditEvents;
+			auto& input = g_pageState.editorInput;
+			if (HasTextEditEvent(a_state, TextEditEvents::kEdited))
+				UpdatePluginCompletions();
+			const auto count = input.completions.size();
+			if (count && HasTextEditEvent(a_state, TextEditEvents::kHistoryNext))
+				input.completionIndex = (input.completionIndex + 1) % count;
+			if (count && HasTextEditEvent(a_state, TextEditEvents::kHistoryPrevious))
+				input.completionIndex = (input.completionIndex + count - 1) % count;
+			if (count && HasTextEditEvent(a_state, TextEditEvents::kCompletion))
+			{
+				input.plugin = input.plugins[input.completions[input.completionIndex]];
+				input.reloadPlugin = true;
+				UpdatePluginCompletions();
+				return true;
+			}
+			return HasTextEditEvent(a_state, TextEditEvents::kEdited);
+		}
+
 		void DrawEditor()
 		{
 			if (!g_pageState.editingIndex)
@@ -163,70 +323,76 @@ namespace Addictol::Menu
 
 			constexpr auto popup = "Exception editor";
 			if (std::exchange(g_pageState.editorPending, false))
+			{
 				dmui::ui::OpenPopup(popup);
+				auto& input = g_pageState.editorInput;
+				input = {};
+				input.plugins = LoadedPluginNames();
+				input.plugin = g_pageState.editor.pluginName.value_or("");
+				input.focusKey = true;
+			}
 			dmui::ui::ModalScope modal{ popup, g_pageState.editorOpen };
 			if (!g_pageState.editorOpen)
 			{
 				g_pageState.editingIndex.reset();
 				g_pageState.editor = {};
+				g_pageState.editorInput = {};
 				return;
 			}
 			if (!modal)
 				return;
 
+			using dmui::ui::HasTextEditEvent;
+			using dmui::ui::TextEditEvents;
+			using dmui::ui::TextEditFlags;
+			auto& input = g_pageState.editorInput;
 			const auto adding =
 				*g_pageState.editingIndex == g_pageState.entries.size();
 			const auto inputWidth = dmui::ui::CalcTextSize("00000000000000000000000000000000").x;
 			ReportPresentationResult(dmui::DrawStyledText(
 				Client(), adding ? "Add exception"sv : "Edit exception"sv, kHeadingText));
 
-			std::array<char, 256> keyBuffer{};
-			std::array<char, 64> formIDBuffer{};
-			std::array<char, 256> pluginBuffer{};
-			strncpy_s(
-				keyBuffer.data(),
-				keyBuffer.size(),
-				g_pageState.editor.key.c_str(),
-				_TRUNCATE);
-			strncpy_s(
-				formIDBuffer.data(),
-				formIDBuffer.size(),
-				g_pageState.editor.formID.c_str(),
-				_TRUNCATE);
-			const auto pluginName =
-				g_pageState.editor.pluginName.value_or("");
-			strncpy_s(
-				pluginBuffer.data(),
-				pluginBuffer.size(),
-				pluginName.c_str(),
-				_TRUNCATE);
+			auto submitted = false;
+			auto canceled = false;
+			const auto track = [&](const dmui::ui::TextEditState& a_state) {
+				submitted = submitted || HasTextEditEvent(a_state, TextEditEvents::kSubmitted);
+				canceled = canceled || HasTextEditEvent(a_state, TextEditEvents::kCanceled);
+			};
 
-			dmui::ui::TextUnformatted("Unique name");
-			dmui::ui::SetNextItemWidth(inputWidth);
-			if (dmui::ui::InputText(
-					"##facegen_exception_key",
-					keyBuffer.data(),
-					keyBuffer.size()))
-				g_pageState.editor.key = keyBuffer.data();
-			dmui::ui::TextUnformatted("FormID");
-			dmui::ui::SetNextItemWidth(inputWidth);
-			if (dmui::ui::InputText(
-					"##facegen_exception_formid",
-					formIDBuffer.data(),
-					formIDBuffer.size()))
-				g_pageState.editor.formID = formIDBuffer.data();
-			dmui::ui::TextUnformatted("Plugin name (optional)");
-			dmui::ui::SetNextItemWidth(inputWidth);
-			if (dmui::ui::InputText(
-					"##facegen_exception_plugin",
-					pluginBuffer.data(),
-					pluginBuffer.size()))
+			track(DrawEditorField(
+				"Unique name",
+				"##facegen_exception_key",
+				g_pageState.editor.key,
+				std::exchange(input.focusKey, false) ? TextEditFlags::kRequestFocus : TextEditFlags::kNone,
+				0,
+				inputWidth));
+			track(DrawEditorField(
+				"FormID",
+				"##facegen_exception_formid",
+				g_pageState.editor.formID,
+				TextEditFlags::kNone,
+				0,
+				inputWidth));
+
+			auto pluginFlags = TextEditFlags::kHistoryKeys | TextEditFlags::kCompletionKey;
+			if (std::exchange(input.reloadPlugin, false))
+				pluginFlags |= TextEditFlags::kReload;
+			const auto pluginState = DrawEditorField(
+				"Plugin name (optional)",
+				"##facegen_exception_plugin",
+				input.plugin,
+				pluginFlags,
+				input.plugin.size(),
+				inputWidth);
+			track(pluginState);
+			if (HandlePluginField(pluginState))
 			{
-				if (pluginBuffer[0])
-					g_pageState.editor.pluginName = pluginBuffer.data();
-				else
+				if (input.plugin.empty())
 					g_pageState.editor.pluginName.reset();
+				else
+					g_pageState.editor.pluginName = input.plugin;
 			}
+			DrawPluginCompletions(pluginState);
 
 			const auto ignoredIndex =
 				adding ? std::optional<size_t>{} : g_pageState.editingIndex;
@@ -252,37 +418,15 @@ namespace Addictol::Menu
 					Client(), validation.message, { .tone = dmui::TextTone::kError }));
 
 			dmui::ui::BeginDisabled(!validation.valid);
-			if (dmui::ui::Button(adding ? "Add entry" : "Update entry"))
-			{
-				auto entry = g_pageState.editor;
-				TrimFacegenExceptionField(entry.key);
-				TrimFacegenExceptionField(entry.formID);
-				if (entry.pluginName)
-				{
-					TrimFacegenExceptionField(*entry.pluginName);
-					if (entry.pluginName->empty())
-						entry.pluginName.reset();
-				}
-				if (adding)
-					g_pageState.entries.push_back(std::move(entry));
-				else
-					g_pageState.entries[*g_pageState.editingIndex] =
-						std::move(entry);
-				g_pageState.dirty = true;
-				g_pageState.editingIndex.reset();
-				g_pageState.editor = {};
-				g_pageState.editorOpen = false;
-				dmui::ui::CloseCurrentPopup();
-			}
+			submitted = dmui::ui::Button(adding ? "Add entry" : "Update entry") || submitted;
 			dmui::ui::EndDisabled();
 			dmui::ui::SameLine();
-			if (dmui::ui::Button("Cancel"))
-			{
-				g_pageState.editingIndex.reset();
-				g_pageState.editor = {};
-				g_pageState.editorOpen = false;
-				dmui::ui::CloseCurrentPopup();
-			}
+			canceled = dmui::ui::Button("Cancel") || canceled;
+
+			if (canceled)
+				CloseEditor();
+			else if (submitted && validation.valid)
+				CommitEditor(adding);
 		}
 
 		void Confirm(const char* a_title, const char* a_body,
