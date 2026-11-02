@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.8.0
 
 - Menu: The facegen exception editor saves with Enter, cancels with Escape, and completes plugin names from the load order with Tab (DearModdingUI 2.1 hosts).
 - Menu: The Modules and Telemetry Series tables sort by clicking a column header, and failed or skipped modules are highlighted (DearModdingUI 2.2 hosts).
