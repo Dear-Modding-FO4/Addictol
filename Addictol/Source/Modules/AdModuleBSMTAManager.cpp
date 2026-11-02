@@ -3,6 +3,7 @@
 
 #include <RE/B/BSMTAManager.h>
 #include <RE/B/BSShaderAccumulator.h>
+#include <RE/T/TLS.h>
 
 namespace Addictol
 {
@@ -56,15 +57,14 @@ namespace Addictol
 
 			void reset()
 			{
+				auto& tasks = RE::BSMTAManager::GetRegisterObjectTasks();
 				_tid = std::this_thread::get_id();
 				_tasks = SplitInterval<THREAD_COUNT>(
-					std::span{ _proxyTasks.begin(), _proxyTasks.end() });
+					std::span{ tasks.begin(), tasks.end() });
 				_idx = 0;
 			}
 
 		private:
-			using RegisterObjectTasks_t = RE::BSTArray<RE::BSMTAManager::RegisterObjectTask>;
-
 			WorkManager() noexcept = default;
 			~WorkManager() noexcept = default;
 
@@ -73,61 +73,28 @@ namespace Addictol
 			std::thread::id _tid{};
 			std::array<std::span<RE::BSMTAManager::RegisterObjectTask>, THREAD_COUNT> _tasks{};
 			std::atomic_size_t _idx{ 0 };
-			RegisterObjectTasks_t& _proxyTasks{ *reinterpret_cast<RegisterObjectTasks_t*>(REL::ID{ 377203, 2712969 }.address()) };
 		};
 
-		class Cache
+		// Vanilla's RegisterObjectTask::Execute, inlined on NG/AE.
+		inline void ExecuteTask(RE::TLS& a_tls, const RE::BSMTAManager::RegisterObjectTask& a_task)
 		{
-		public:
-			Cache(const Cache&) = delete;
-			Cache(Cache&&) = delete;
-			Cache& operator=(const Cache&) = delete;
-			Cache& operator=(Cache&&) = delete;
-
-			[[nodiscard]] static Cache& GetSingleton() noexcept
-			{
-				static Cache singleton;
-				return singleton;
-			}
-
-			void ExecuteTask(RE::BSMTAManager::RegisterObjectTask& a_self) const
-			{
-				if (RELEX::IsRuntimeOG())
-				{
-					return _executeTask(a_self);
-				}
-				else
-				{
-					RE::BSShaderAccumulator* shaderAccumulator = *reinterpret_cast<RE::BSShaderAccumulator**>(shaderAccumulatorAddress);
-					void** vtable = *reinterpret_cast<void***>(shaderAccumulator);
-
-					using Func = void (*)(RE::BSShaderAccumulator*, RE::BSGeometry*);
-					auto func = reinterpret_cast<Func>(vtable[45]); // 0x168
-
-					return func(shaderAccumulator, a_self.geometry);
-				}
-			}
-
-		private:
-			using ExecuteTask_t = void(RE::BSMTAManager::RegisterObjectTask&);
-
-			Cache() noexcept = default;
-			~Cache() noexcept = default;
-
-			// OG-only id, resolving it on NG/AE hard-fails even though the call site is gated
-			ExecuteTask_t* const _executeTask{ RELEX::IsRuntimeOG() ?
-				reinterpret_cast<ExecuteTask_t*>(REL::ID{ 92771 }.address()) : nullptr };
-			uintptr_t shaderAccumulatorAddress = REL::ID{ 1301235, 2712963 }.address();
-		};
+			const RELEX::ScopeValue zPrePass{ a_tls.alphaGroupZPrePass, a_task.alphaGroupZPrePass };
+			const RELEX::ScopeValue grouping{ a_tls.groupingAlphas, a_task.groupingAlphas };
+			const RELEX::ScopeValue alphaGroup{ a_tls.currentAlphaGroup, a_task.currentAlphaGroup };
+			RE::BSMTAManager::GetShaderAccumulator()->RegisterObject(a_task.geometry);
+		}
 
 		inline void RegisterObjects(RE::BSMTAManager::JobData& a_jobData)
 		{
-			auto& cache = Cache::GetSingleton();
+			// Vanilla allocates the registered passes from memory context 30.
+			constexpr std::int32_t kRegisterObjectsMemoryContext{ 30 };
+			auto& tls = *RE::TLS::GetSingleton();
+			const RELEX::ScopeValue memoryContext{ tls.memoryContext, kRegisterObjectsMemoryContext };
 			for (auto& task : WorkManager::get().get_work()) {
 				task.owner = std::addressof(a_jobData);
 				task.registerBatchRendererPassIndex = a_jobData.registerBatchRendererPasses.size();
 				task.registerGeometryGroupPassIndex = a_jobData.registerGeometryGroupPasses.size();
-				cache.ExecuteTask(task);
+				ExecuteTask(tls, task);
 				task.registerBatchRendererPassCount = a_jobData.registerBatchRendererPasses.size() - task.registerBatchRendererPassIndex;
 				task.registerGeometryGroupPassCount = a_jobData.registerGeometryGroupPasses.size() - task.registerGeometryGroupPassIndex;
 			}

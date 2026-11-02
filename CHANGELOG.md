@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- BSMTAManager: Fixed NG/AE rendering crashes in alpha-tested geometry (e.g. seaweed and foliage LOD), caused by objects being registered without their alpha-group state.
+
 ## 1.8.0
 
 - Menu: The facegen exception editor saves with Enter, cancels with Escape, and completes plugin names from the load order with Tab (DearModdingUI 2.1 hosts).
