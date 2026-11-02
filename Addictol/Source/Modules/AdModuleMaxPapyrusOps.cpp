@@ -55,15 +55,15 @@ namespace Addictol
 
 			if (RELEX::IsRuntimeOG())
 			{
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 1321787 }, REL::Offset{ 0x05A } }.address(), EndSaveLoad);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 1014572 }, REL::Offset{ 0x5CF } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::BGSSaveLoadManager::EndSaveGame, REL::Offset{ 0x05A } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::BGSSaveLoadManager::EndLoadGame, REL::Offset{ 0x5CF } }.address(), EndSaveLoad);
 				trampoline.write_call<5>(REL::Relocation{ RE::ID::Main::PerformGameReset, REL::Offset{ 0x32F } }.address(), EndSaveLoad);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 371005  }, REL::Offset{ 0x478 } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::GameScript::GameVM::ReloadScripts, REL::Offset{ 0x478 } }.address(), EndSaveLoad);
 			}
 			else
 			{
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2228095 }, REL::Offset{ 0x0, 0x030, 0x030 } }.address(), EndSaveLoad);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2228097 }, REL::Offset{ 0x0, 0x69E, 0x6A3 } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::BGSSaveLoadManager::EndSaveGame, REL::Offset{ 0x0, 0x030, 0x030 } }.address(), EndSaveLoad);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::BGSSaveLoadManager::EndLoadGame, REL::Offset{ 0x0, 0x69E, 0x6A3 } }.address(), EndSaveLoad);
 				trampoline.write_call<5>(REL::Relocation{ RE::ID::Main::PerformGameReset, REL::Offset{ 0x0, 0x30B, 0x310 } }.address(), EndSaveLoad);
 			}
 		}
@@ -105,8 +105,8 @@ namespace Addictol
 			// Unnecessary on OG
 			if (!RELEX::IsRuntimeOG())
 			{
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2251339 }, REL::Offset{ 0x797 } }.address(), Lock);
-				static REL::Relocation target{ REL::ID{ 2251339 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x79C }.offset()) };
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::GameScript::GameVM::ReloadScripts, REL::Offset{ 0x797 } }.address(), Lock);
+				static REL::Relocation target{ RE::ID::GameScript::GameVM::ReloadScripts, static_cast<std::ptrdiff_t>(REL::Offset{ 0x79C }.offset()) };
 				target.write_fill(REL::NOP, 0x08);
 			}
 		}
@@ -137,13 +137,13 @@ namespace Addictol
 
 			if (RELEX::IsRuntimeOG())
 			{
-				_Freeze = trampoline.write_call<5>(REL::Relocation{ REL::ID{ 1238017 }, REL::Offset{ 0x370 } }.address(), Freeze);
+				_Freeze = trampoline.write_call<5>(REL::Relocation{ RE::ID::GameScript::GameVM::DumpPersistenceInformationToLog, REL::Offset{ 0x370 } }.address(), Freeze);
 			}
 			else
 			{
-				_Freeze = trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2251333 }, REL::Offset{ 0x119 } }.address(), Freeze);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2251336 }, REL::Offset{ 0x370 } }.address(), Freeze);
-				trampoline.write_call<5>(REL::Relocation{ REL::ID{ 2251364 }, REL::Offset{ 0x382 } }.address(), Freeze);
+				_Freeze = trampoline.write_call<5>(REL::Relocation{ RE::ID::GameScript::GameVM::DumpRunningStacksToLog, REL::Offset{ 0x119 } }.address(), Freeze);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::GameScript::GameVM::DumpPersistenceInformationToLog, REL::Offset{ 0x370 } }.address(), Freeze);
+				trampoline.write_call<5>(REL::Relocation{ RE::ID::GameScript::GameVM::HandleOverflows, REL::Offset{ 0x382 } }.address(), Freeze);
 			}
 		}
 
@@ -189,9 +189,9 @@ namespace Addictol
 				}
 			};
 
-			static REL::Relocation target{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4F0, 0xA64 }.offset()) };
-			static REL::Relocation loopin{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x0A0 }.offset()) };
-			static REL::Relocation loopex{ REL::ID{ 614585, 2315660 }, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4FD, 0xA77 }.offset()) };
+			static REL::Relocation target{ RE::ID::BSScript_Internal_CodeTasklet::Process, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4F0, 0xA64 }.offset()) };
+			static REL::Relocation loopin{ RE::ID::BSScript_Internal_CodeTasklet::Process, static_cast<std::ptrdiff_t>(REL::Offset{ 0x0A0 }.offset()) };
+			static REL::Relocation loopex{ RE::ID::BSScript_Internal_CodeTasklet::Process, static_cast<std::ptrdiff_t>(REL::Offset{ 0x4FD, 0xA77 }.offset()) };
 
 			auto code = PapyrusOpsPerFrame(loopin.address(), loopex.address());
 			target.write_fill(REL::NOP, loopex.address() - target.address());
