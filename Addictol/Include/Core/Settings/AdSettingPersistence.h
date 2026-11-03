@@ -53,7 +53,6 @@ namespace Addictol
 		const std::filesystem::path& a_directory) noexcept;
 	[[nodiscard]] std::filesystem::path ResolveSettingsPath() noexcept;
 	void InitializeSettings() noexcept;
-	void InitializeSettings(const std::filesystem::path& a_path) noexcept;
 
 	class SettingsRepository
 	{

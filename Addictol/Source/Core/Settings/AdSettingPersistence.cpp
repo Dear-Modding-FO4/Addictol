@@ -812,13 +812,8 @@ namespace Addictol
 		}
 	}
 
-	std::filesystem::path ResolveSettingsPath(
-		const std::filesystem::path& a_directory) noexcept
+	std::filesystem::path ResolveSettingsPath(const std::filesystem::path& a_directory) noexcept
 	{
-		const auto custom = a_directory / kAddictolCustomSettingsFileName;
-		std::error_code error;
-		if (std::filesystem::exists(custom, error) && !error)
-			return custom;
 		return a_directory / kAddictolSettingsFileName;
 	}
 
@@ -829,30 +824,27 @@ namespace Addictol
 
 	void InitializeSettings() noexcept
 	{
-		InitializeSettings(ResolveSettingsPath());
-	}
-
-	void InitializeSettings(const std::filesystem::path& a_path) noexcept
-	{
-		g_settingsStorePath = a_path.string();
-		if (a_path.filename() == kAddictolCustomSettingsFileName)
-			REX::INFO("Settings: using \"{}\""sv, g_settingsStorePath);
+		auto initialPath = std::filesystem::path{ kAddictolSettingsDirectory };
+		auto defaultSettings = initialPath / kAddictolSettingsFileName;
+		auto customSettings = initialPath / kAddictolCustomSettingsFileName;
 
 		std::string documentationError;
-		if (!RefreshSettingsDocument(
-				a_path,
-				documentationError))
-		{
-			REX::ERROR(
-				"Settings: could not create or refresh \"{}\": {}"sv,
-				a_path.string(),
-				documentationError);
-		}
+		if (!RefreshSettingsDocument(defaultSettings, documentationError))
+			REX::ERROR("Settings: could not create or refresh \"{}\": {}"sv, defaultSettings.string(), documentationError);
+		
+		g_settingsStorePath = defaultSettings.string();
+		auto settingsPriorityPath = customSettings.string();
+
+		std::error_code error;
+		if (std::filesystem::exists(defaultSettings, error) && !error)
+			ValidateConfigKeys(g_settingsStorePath.c_str());
+		
+		if (std::filesystem::exists(customSettings, error) && !error)
+			ValidateConfigKeys(settingsPriorityPath.c_str());
 
 		const auto config = REX::FTomlSettingStore::GetSingleton();
-		config->Init("", g_settingsStorePath.c_str());
+		config->Init(g_settingsStorePath.c_str(), settingsPriorityPath.c_str());
 		config->Load();
-		ValidateConfigKeys(g_settingsStorePath.c_str());
 	}
 
 	SettingsRepository& SettingsRepository::GetSingleton() noexcept
