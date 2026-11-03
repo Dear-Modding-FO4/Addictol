@@ -127,7 +127,6 @@ namespace vmm_tests
 	void run_shape_checks(Runner& runner);
 	void run_zlib_backend_checks(Runner& runner);
 	void run_owned_inflate_checks(Runner& runner);
-	void run_setting_registry_checks(Runner& runner);
 	void run_operation_profile_checks(Runner& runner);
 	int run_oversized_case();
 	int run_shape_case(std::string_view name);
