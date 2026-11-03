@@ -172,9 +172,9 @@ namespace Addictol
 				plugin->SetAsInstall();
 			}
 		}
-		else
-			// Listener after installed for modules
-			plugin->GetModules().ListenerLoadAllByMessage(a_msg);
+
+		// Startup messages reach listeners too, after any install they trigger.
+		plugin->GetModules().ListenerLoadAllByMessage(a_msg);
 	}
 
 	static void F4SEPapyrusListener(RE::BSScript::IVirtualMachine* a_vm) noexcept
