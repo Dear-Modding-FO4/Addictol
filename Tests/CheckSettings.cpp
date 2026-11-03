@@ -838,7 +838,7 @@ namespace vmm_tests
 
 			const auto resolved = Addictol::ResolveSettingsPath(directory);
 			require(resolved == customPath, "custom settings file was not preferred");
-			Addictol::InitializeSettings(resolved);
+			Addictol::InitializeSettings();
 			require(
 				canonical.DefaultValue() == canonicalDefault &&
 					custom.DefaultValue() == customDefault,
@@ -926,7 +926,7 @@ namespace vmm_tests
 						"bArchiveLimits"),
 				"Apply did not persist both non-default overrides");
 
-			Addictol::InitializeSettings(settingsPath);
+			Addictol::InitializeSettings();
 			require(
 				!std::get<bool>(nextLaunch.setting->Value()),
 				"next-launch setting was not loaded on restart-equivalent initialization");
@@ -956,7 +956,7 @@ namespace vmm_tests
 					toml::find<int64_t>(root, "ThirdParty", "value") == 9,
 				"reset lost user notes or unknown data");
 
-			Addictol::InitializeSettings(settingsPath);
+			Addictol::InitializeSettings();
 			require(
 				std::get<bool>(nextLaunch.setting->Value()),
 				"next-launch reset did not take effect after reload");
