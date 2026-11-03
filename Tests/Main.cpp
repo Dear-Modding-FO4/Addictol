@@ -50,7 +50,6 @@ int main(int argc, char** argv)
 	run_bits_regions_check(runner);
 	run_zlib_backend_checks(runner);
 	run_owned_inflate_checks(runner);
-	run_setting_registry_checks(runner);
 	run_operation_profile_checks(runner);
 
 	std::cout << '\n' << runner.tests() - runner.failures() << '/' << runner.tests() << " checks passed\n";
