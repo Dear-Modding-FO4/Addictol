@@ -3,6 +3,7 @@
 #include <Core/AdPlugin.h>
 #include <DearModdingUI/IconGlyphs.h>
 #include <Menu/AdMenu.h>
+#include <Menu/AdMenuTable.h>
 
 #include <DearModdingUI/UI.h>
 
@@ -151,32 +152,58 @@ namespace Addictol::Menu
 			if (!dmui::ui::BeginTable(
 					"##modules",
 					3,
-					dmui::ui::TableFlags::kBordersInnerH |
+					SortableTableFlags(
+						dmui::ui::TableFlags::kBordersInnerH |
 						dmui::ui::TableFlags::kRowBg |
-						dmui::ui::TableFlags::kSizingStretchProp))
+						dmui::ui::TableFlags::kSizingStretchProp)))
 				return;
 
 			dmui::ui::TableSetupColumn("Module", dmui::ui::TableColumnFlags::kWidthStretch, 2.0f);
-			dmui::ui::TableSetupColumn("Outcome", dmui::ui::TableColumnFlags::kWidthStretch, 1.0f);
-			dmui::ui::TableSetupColumn("Reason / detail", dmui::ui::TableColumnFlags::kWidthStretch, 2.0f);
+			dmui::ui::TableSetupColumn(
+				"Outcome",
+				dmui::ui::TableColumnFlags::kWidthStretch |
+					dmui::ui::TableColumnFlags::kPreferSortDescending,
+				1.0f);
+			dmui::ui::TableSetupColumn(
+				"Reason / detail",
+				dmui::ui::TableColumnFlags::kWidthStretch | dmui::ui::TableColumnFlags::kNoSort,
+				2.0f);
 			dmui::ui::TableHeadersRow();
 
-			size_t visibleCount{ 0 };
+			std::vector<const ModuleStatusSnapshot*> rows;
 			for (const auto& status : a_statuses)
 			{
-				if (!MatchesModuleStatus(
+				if (MatchesModuleStatus(
 						status.name,
 						status.outcome,
 						a_state.search,
 						a_state.filter))
-					continue;
+					rows.push_back(&status);
+			}
+			SortTableRows(rows, [](int32_t a_column, const ModuleStatusSnapshot& a_lhs, const ModuleStatusSnapshot& a_rhs) -> std::weak_ordering {
+				if (a_column == 1)
+				{
+					return ClassifyModuleOutcome(a_lhs.outcome).severity <=>
+						ClassifyModuleOutcome(a_rhs.outcome).severity;
+				}
+				return a_lhs.name <=> a_rhs.name;
+			});
+
+			size_t visibleCount{ 0 };
+			for (const auto* row : rows)
+			{
+				const auto& status = *row;
 				++visibleCount;
 				dmui::ui::PushID(static_cast<int>(visibleCount));
 				dmui::ui::TableNextRow();
+				const auto presentation = ClassifyModuleOutcome(status.outcome);
+				if (presentation.severity == ModuleOutcomeSeverity::kError)
+					TintTableRow(ThemeColors().statusError);
+				else if (presentation.severity == ModuleOutcomeSeverity::kWarning)
+					TintTableRow(ThemeColors().statusWarning);
 				(void)dmui::ui::TableSetColumnIndex(0);
 				DrawModuleName(status);
 				(void)dmui::ui::TableSetColumnIndex(1);
-				const auto presentation = ClassifyModuleOutcome(status.outcome);
 				dmui::ui::TextColored(
 					OutcomeColor(presentation.severity),
 					"%.*s",

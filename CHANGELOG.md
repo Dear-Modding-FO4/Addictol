@@ -2,8 +2,15 @@
 
 ## Unreleased
 
+- BSMTAManager: Fixed NG/AE rendering crashes in alpha-tested geometry (e.g. seaweed and foliage LOD), caused by objects being registered without their alpha-group state.
+
+## 1.8.0
+
+- Menu: The facegen exception editor saves with Enter, cancels with Escape, and completes plugin names from the load order with Tab (DearModdingUI 2.1 hosts).
+- Menu: The Modules and Telemetry Series tables sort by clicking a column header, and failed or skipped modules are highlighted (DearModdingUI 2.2 hosts).
 - Menu: Settings page buttons, tooltips and search use the DearModdingUI host's language.
 - Telemetry: Video memory is sampled on the render thread, so a failed query can no longer disable the menu page being drawn.
+- ControlSamplers: Mip bias is left to Community Shaders when it is loaded, so it no longer overrides CS's upscaling bias or leaks into its other passes.
 - AudioSwitch: Sounds are no longer muffled or silent after changing the default playback device; reverb, audio monitors and 3D audio follow the new device, and a failed or device-less switch keeps the current output and retries.
 - PapyrusGC: Fixed a memory leak on NG/AE where every Papyrus struct the garbage collector removed was destroyed but never freed.
 - MaxPapyrusOps: Fixed NG unfreezing the Papyrus VM through AE field offsets, which locked and wrote the wrong GameVM memory.

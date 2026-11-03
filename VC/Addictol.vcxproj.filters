@@ -927,6 +927,9 @@
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuTable.h">
+      <Filter>Include\Menu</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h">
       <Filter>Include\Menu</Filter>
     </ClInclude>

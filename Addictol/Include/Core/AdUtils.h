@@ -72,6 +72,23 @@ namespace RELEX
 		void Reset() const noexcept;
 	};
 
+	template <class T>
+	class ScopeValue
+	{
+		T& _slot;
+		T _saved;
+
+		ScopeValue(const ScopeValue&) = delete;
+		ScopeValue operator=(const ScopeValue&) = delete;
+	public:
+		ScopeValue(T& a_slot, T a_value) noexcept :
+			_slot{ a_slot },
+			_saved{ std::exchange(a_slot, a_value) }
+		{}
+
+		~ScopeValue() noexcept { _slot = _saved; }
+	};
+
 	void Write(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;
 	void WriteNop(uintptr_t a_target, size_t a_size) noexcept;
 	void WriteSafe(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;

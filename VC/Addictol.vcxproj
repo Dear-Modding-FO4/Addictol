@@ -210,6 +210,7 @@
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuHome.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuModules.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuSettings.h" />
+    <ClInclude Include="..\Addictol\Include\Menu\AdMenuTable.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTargets.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuTelemetry.h" />
     <ClInclude Include="..\Addictol\Include\Menu\AdMenuFormatting.h" />
