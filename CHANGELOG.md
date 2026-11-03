@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Telemetry: Form Load Timing also times startup: each step of the background game-data load, and how long the main menu waits before Continue can load.
 - BSMTAManager: Fixed NG/AE rendering crashes in alpha-tested geometry (e.g. seaweed and foliage LOD), caused by objects being registered without their alpha-group state.
 
 ## 1.8.0

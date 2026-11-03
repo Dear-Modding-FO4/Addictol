@@ -22,6 +22,45 @@ namespace Addictol::LoadTiming
 	// outer pass has no file argument
 	inline constexpr std::string_view kCompileBucket{ "all" };
 
+	// Main::StartUp opens the menu right after it starts the game-data thread.
+	inline constexpr std::string_view kStartupSeriesName{ "startup" };
+	inline constexpr std::string_view kLoadToMenuBucket{ "load_to_menu" };
+	inline constexpr std::string_view kLoadToDataReadyBucket{ "load_to_data_ready" };
+	inline constexpr std::string_view kMenuToDataReadyBucket{ "menu_to_data_ready" };
+	// Continue and New Game proceed once the game-data thread has finished.
+	inline constexpr std::string_view kLoadToCanLoadBucket{ "load_to_can_load" };
+	inline constexpr std::string_view kMenuToCanLoadBucket{ "menu_to_can_load" };
+
+	inline constexpr std::string_view kInitStepSeriesName{ "startup.init" };
+
+	enum class InitStepFunction : uint8_t
+	{
+		kInitGameData,
+		kThreadProc
+	};
+
+	// Time outside these calls is uninstrumented manager and system setup.
+	struct InitStepSite
+	{
+		std::string_view name;
+		InitStepFunction function;
+		uint32_t ogOffset;
+		uint32_t ngaeOffset;
+		uint8_t size;
+	};
+
+	inline constexpr std::array kInitStepSites{
+		InitStepSite{ "init_game_data", InitStepFunction::kThreadProc, 0x024, 0x024, 5 },
+		InitStepSite{ "register_archives", InitStepFunction::kInitGameData, 0x02D, 0x031, 5 },
+		InitStepSite{ "texture_streamer", InitStepFunction::kInitGameData, 0x032, 0x036, 5 },
+		InitStepSite{ "vm_init_wait", InitStepFunction::kInitGameData, 0x224, 0x33A, 6 },
+		InitStepSite{ "vm_post_thread_init", InitStepFunction::kInitGameData, 0x24B, 0x361, 5 },
+		InitStepSite{ "init_tes", InitStepFunction::kInitGameData, 0x25E, 0x374, 5 },
+		InitStepSite{ "post_init_tes", InitStepFunction::kInitGameData, 0x263, 0x379, 5 },
+		// F4SE dispatches kGameDataReady to every plugin inside this call.
+		InitStepSite{ "data_ready_dispatch", InitStepFunction::kInitGameData, 0x278, 0x38E, 5 }
+	};
+
 	inline constexpr std::array kPluginMetricSchema{
 		MetricDescriptor{ "plugin.overflow_events", Unit::kCount },
 		MetricDescriptor{ "plugin.name_failures", Unit::kCount },

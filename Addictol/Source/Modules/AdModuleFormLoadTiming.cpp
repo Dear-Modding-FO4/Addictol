@@ -61,6 +61,7 @@ namespace
 		return a_runtime == Addictol::LoadTiming::Runtime::kOG ? "OG" :
 			a_runtime == Addictol::LoadTiming::Runtime::kNG ? "NG" : "AE";
 	}
+
 }
 
 namespace Addictol
@@ -68,7 +69,10 @@ namespace Addictol
 	static_assert(offsetof(RE::TESFile, filename) == LoadTiming::kTESFileNameOffset);
 
 	ModuleFormLoadTiming::ModuleFormLoadTiming() :
-		Module("Form Load Timing", &bTelemetryFormLoadTiming),
+		Module(
+			"Form Load Timing",
+			&bTelemetryFormLoadTiming,
+			{ F4SE::MessagingInterface::kGameDataReady, F4SE::MessagingInterface::kGameLoaded }),
 		FormLoadTimingSource(LoadTiming::kFormMetricSchema)
 	{
 		s_instance = this;
@@ -159,8 +163,110 @@ namespace Addictol
 		}
 		s_originalCompileFiles = reinterpret_cast<CompileFilesFn>(compileOriginal);
 
+		InstallInitStepTimers();
+		m_loadQpc = Addictol::ReadQpc();
 		Activate(DebugThreadId());
 		return true;
+	}
+
+	template <size_t I>
+	uint64_t ModuleFormLoadTiming::TimedInitStep(
+		uint64_t a_1,
+		uint64_t a_2,
+		uint64_t a_3,
+		uint64_t a_4)
+	{
+		const auto start = Addictol::ReadQpc();
+		if constexpr (LoadTiming::kInitStepSites[I].function == LoadTiming::InitStepFunction::kThreadProc)
+		{
+			if (s_instance)
+				s_instance->m_menuQpc = start;
+		}
+		const auto result = s_initStepOriginals[I](a_1, a_2, a_3, a_4);
+		if (s_instance)
+			s_instance->RecordSpan(LoadTiming::kInitStepSeriesName, LoadTiming::kInitStepSites[I].name, start, Addictol::ReadQpc());
+		return result;
+	}
+
+	void ModuleFormLoadTiming::RecordSpan(
+		std::string_view a_series,
+		std::string_view a_bucket,
+		uint64_t a_from,
+		uint64_t a_to) noexcept
+	{
+		if (a_from && a_to >= a_from)
+			(void)Record(a_series, a_bucket, a_to - a_from, DebugThreadId());
+	}
+
+	void ModuleFormLoadTiming::InstallInitStepTimers() noexcept
+	{
+		const auto siteAddress = [](const LoadTiming::InitStepSite& a_site) {
+			const auto function = a_site.function == LoadTiming::InitStepFunction::kThreadProc ?
+				RE::ID::Main::InitGameDataThreadProc :
+				RE::ID::Main::InitGameData;
+			return REL::Relocation{ function, REL::Offset{ a_site.ogOffset, a_site.ngaeOffset } }.address();
+		};
+		for (const auto& site : LoadTiming::kInitStepSites)
+		{
+			const auto address = siteAddress(site);
+			if (!(site.size == 5 ? RELEX::Validate(address, { 0xE8 }) : RELEX::Validate(address, { 0xFF, 0x15 })))
+			{
+				REX::WARN(
+					"Form Load Timing: {} call site has unexpected bytes; startup step timers skipped"sv,
+					site.name);
+				return;
+			}
+		}
+
+		auto& trampoline = REL::GetTrampoline();
+		[&]<size_t... I>(std::index_sequence<I...>) {
+			((s_initStepOriginals[I] = reinterpret_cast<InitStepFn>(
+				  LoadTiming::kInitStepSites[I].size == 5 ?
+					  trampoline.write_call<5>(siteAddress(LoadTiming::kInitStepSites[I]), &TimedInitStep<I>) :
+					  // CALL6 returns the old pointer slot, not the function in it.
+					  *reinterpret_cast<const uintptr_t*>(
+						  trampoline.write_call<6>(siteAddress(LoadTiming::kInitStepSites[I]), &TimedInitStep<I>)))),
+				...);
+		}(std::make_index_sequence<LoadTiming::kInitStepSites.size()>{});
+	}
+
+	bool ModuleFormLoadTiming::DoListener(
+		F4SE::MessagingInterface::Message* a_msg) noexcept
+	{
+		// Listeners run even when installation was skipped.
+		if (!a_msg || !m_loadQpc)
+			return true;
+		// Sent from the game-data thread, like the CompileFiles records.
+		if (a_msg->type == F4SE::MessagingInterface::kGameDataReady && a_msg->data)
+			RecordStartupEndpoints();
+		// Sent once the game-data thread returns, after its completion event.
+		else if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
+			RecordCanLoadEndpoints();
+		return true;
+	}
+
+	void ModuleFormLoadTiming::RecordCanLoadEndpoints() noexcept
+	{
+		if (m_canLoadRecorded || !m_loadQpc)
+			return;
+		m_canLoadRecorded = true;
+		const auto canLoad = Addictol::ReadQpc();
+		RecordSpan(LoadTiming::kStartupSeriesName, LoadTiming::kLoadToCanLoadBucket, m_loadQpc, canLoad);
+		RecordSpan(LoadTiming::kStartupSeriesName, LoadTiming::kMenuToCanLoadBucket, m_menuQpc, canLoad);
+	}
+
+	void ModuleFormLoadTiming::RecordStartupEndpoints() noexcept
+	{
+		if (m_startupRecorded || !m_loadQpc)
+			return;
+		m_startupRecorded = true;
+		const auto ready = Addictol::ReadQpc();
+		RecordSpan(LoadTiming::kStartupSeriesName, LoadTiming::kLoadToDataReadyBucket, m_loadQpc, ready);
+		if (m_menuQpc)
+		{
+			RecordSpan(LoadTiming::kStartupSeriesName, LoadTiming::kLoadToMenuBucket, m_loadQpc, m_menuQpc);
+			RecordSpan(LoadTiming::kStartupSeriesName, LoadTiming::kMenuToDataReadyBucket, m_menuQpc, ready);
+		}
 	}
 
 	bool __fastcall ModuleFormLoadTiming::HookCompileFiles(
@@ -172,15 +278,8 @@ namespace Addictol
 			return false;
 		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_this, a_load);
-		const auto end = Addictol::ReadQpc();
-		if (s_instance && end >= start)
-		{
-			(void)s_instance->Record(
-				LoadTiming::kFormSeriesNames[0],
-				LoadTiming::kCompileBucket,
-				end - start,
-				DebugThreadId());
-		}
+		if (s_instance)
+			s_instance->RecordSpan(LoadTiming::kFormSeriesNames[0], LoadTiming::kCompileBucket, start, Addictol::ReadQpc());
 		return result;
 	}
 
@@ -199,15 +298,8 @@ namespace Addictol
 		};
 		const auto start = Addictol::ReadQpc();
 		const auto result = original(a_this, a_file, a_isFirst);
-		const auto end = Addictol::ReadQpc();
-		if (s_instance && end >= start)
-		{
-			(void)s_instance->Record(
-				LoadTiming::kFormSeriesNames[1],
-				bucket,
-				end - start,
-				DebugThreadId());
-		}
+		if (s_instance)
+			s_instance->RecordSpan(LoadTiming::kFormSeriesNames[1], bucket, start, Addictol::ReadQpc());
 		return result;
 	}
 }
