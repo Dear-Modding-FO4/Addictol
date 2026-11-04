@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- CreatedRefBaseCrash: Fixed a save-load crash when a created reference has lost its base object.
 - Added the "Slow Plugin Warning" module, logging a warning when an F4SE plugin takes over a second to load or handle a game event.
 - Telemetry: Added Save Load Timing, which times the native load steps, Papyrus restore, and the loading screen.
 - Telemetry: Form Load Timing also times startup: each step of the background game-data load, and how long the main menu waits before Continue can load.

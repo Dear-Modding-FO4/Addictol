@@ -77,6 +77,7 @@ namespace Addictol
 	extern BoolSetting bFixesShaderReferenceEffectLifetime;
 	extern BoolSetting bFixesMagicKeywordCrash;
 	extern BoolSetting bFixesEffectEnvMapCrash;
+	extern BoolSetting bFixesCreatedRefBaseCrash;
 	extern BoolSetting bFixesAttachLightCrash;
 	extern BoolSetting bFixesDownwardAiming;
 	extern BoolSetting bFixesSprintStutter;

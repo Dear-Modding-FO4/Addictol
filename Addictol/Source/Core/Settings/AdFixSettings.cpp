@@ -437,6 +437,15 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
+	BoolSetting bFixesCreatedRefBaseCrash{
+		"Fixes"sv,
+		"bCreatedRefBaseCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		"Fixes a crash while loading a save when a created reference has lost its base object."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
 	BoolSetting bFixesAttachLightCrash{
 		"Fixes"sv,
 		"bAttachLightCrash"sv,

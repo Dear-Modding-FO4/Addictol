@@ -77,6 +77,7 @@
 #include <Modules/AdModuleShaderReferenceEffectLifetime.h>
 #include <Modules/AdModuleMagicKeywordCrash.h>
 #include <Modules/AdModuleEffectEnvMapCrash.h>
+#include <Modules/AdModuleCreatedRefBaseCrash.h>
 #include <Modules/AdModuleAttachLightCrash.h>
 #include <Modules/AdModuleDownwardAiming.h>
 #include <Modules/AdModuleSprintStutter.h>
@@ -198,6 +199,7 @@ static auto sModuleFullPrecisionDecals				= std::make_shared<Addictol::ModuleFul
 static auto sModuleShaderReferenceEffectLifetime	= std::make_shared<Addictol::ModuleShaderReferenceEffectLifetime>();
 static auto sModuleMagicKeywordCrash				= std::make_shared<Addictol::ModuleMagicKeywordCrash>();
 static auto sModuleEffectEnvMapCrash				= std::make_shared<Addictol::ModuleEffectEnvMapCrash>();
+static auto sModuleCreatedRefBaseCrash				= std::make_shared<Addictol::ModuleCreatedRefBaseCrash>();
 static auto sModuleAttachLightCrash					= std::make_shared<Addictol::ModuleAttachLightCrash>();
 static auto sModuleDownwardAiming					= std::make_shared<Addictol::ModuleDownwardAiming>();
 static auto sModuleSprintStutter					= std::make_shared<Addictol::ModuleSprintStutter>();
@@ -323,6 +325,7 @@ void AdRegisterModules()
 	modules.Register(sModuleShaderReferenceEffectLifetime);
 	modules.Register(sModuleMagicKeywordCrash);
 	modules.Register(sModuleEffectEnvMapCrash);
+	modules.Register(sModuleCreatedRefBaseCrash);
 	modules.Register(sModuleAttachLightCrash);
 	modules.Register(sModuleDownwardAiming);
 	modules.Register(sModuleSprintStutter);
