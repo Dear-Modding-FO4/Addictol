@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Core/AdClock.h>
+#include <Core/AdUtils.h>
 #include <Telemetry/AdTelemetry.h>
 
 #include <array>
@@ -71,6 +73,37 @@ namespace Addictol::LoadTiming
 		MetricDescriptor{ "esp.overflow_events", Unit::kCount }
 	};
 
+	inline constexpr std::string_view kSaveSeriesName{ "save" };
+	// F4SE sends kPreLoadGame/kPostLoadGame around BGSSaveLoadGame::LoadGame.
+	inline constexpr std::string_view kPreLoadToPostLoadBucket{ "pre_load_to_post_load" };
+	inline constexpr std::string_view kPreLoadToLoadingClosedBucket{ "pre_load_to_loading_closed" };
+	inline constexpr std::string_view kSaveStepSeriesName{ "save.load" };
+	// GameVM::LoadGame restores Papyrus inside the global-data pass.
+	inline constexpr std::array<std::string_view, 4> kSaveStepNames{
+		"global_data",
+		"papyrus",
+		"init_forms",
+		"end_load_game"
+	};
+	inline constexpr std::array kSaveMetricSchema{
+		MetricDescriptor{ "save.overflow_events", Unit::kCount }
+	};
+	inline constexpr size_t kSaveBurstCapacity{ 256 };
+
+	// Forwards the four integer argument registers; timed calls take no floats.
+	using ForwardedCall = uint64_t (*)(uint64_t, uint64_t, uint64_t, uint64_t);
+
+	// Owner supplies s_timedOriginals, BeginTimedCall and EndTimedCall.
+	template <class Owner, size_t I>
+	uint64_t TimedForward(uint64_t a_1, uint64_t a_2, uint64_t a_3, uint64_t a_4)
+	{
+		const auto start = ReadQpc();
+		Owner::BeginTimedCall(I, start);
+		const auto result = Owner::s_timedOriginals[I](a_1, a_2, a_3, a_4);
+		Owner::EndTimedCall(I, start, ReadQpc());
+		return result;
+	}
+
 	inline constexpr size_t kPluginBurstCapacity{ 1024 };
 	inline constexpr size_t kFormBurstCapacity{ 4608 };
 	inline constexpr size_t kPluginNameCapacity{ 512 };
@@ -100,6 +133,19 @@ namespace Addictol::LoadTiming
 		kNG,
 		kAE
 	};
+
+	[[nodiscard]] inline Runtime CurrentRuntime() noexcept
+	{
+		return RELEX::IsRuntimeOG() ? Runtime::kOG :
+			RELEX::IsRuntimeAE() ? Runtime::kAE :
+			Runtime::kNG;
+	}
+
+	[[nodiscard]] constexpr std::string_view RuntimeName(Runtime a_runtime) noexcept
+	{
+		return a_runtime == Runtime::kOG ? "OG" :
+			a_runtime == Runtime::kNG ? "NG" : "AE";
+	}
 
 	struct TargetId
 	{

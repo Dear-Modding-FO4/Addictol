@@ -47,11 +47,11 @@ namespace Addictol
 		void RecordCanLoadEndpoints() noexcept;
 		void InstallInitStepTimers() noexcept;
 
-		template <size_t I>
-		static uint64_t TimedInitStep(uint64_t a_1, uint64_t a_2, uint64_t a_3, uint64_t a_4);
-
-		using InitStepFn = uint64_t (*)(uint64_t, uint64_t, uint64_t, uint64_t);
-		inline static std::array<InitStepFn, LoadTiming::kInitStepSites.size()> s_initStepOriginals{};
+		template <class, size_t>
+		friend uint64_t LoadTiming::TimedForward(uint64_t, uint64_t, uint64_t, uint64_t);
+		static void BeginTimedCall(size_t a_index, uint64_t a_start) noexcept;
+		static void EndTimedCall(size_t a_index, uint64_t a_start, uint64_t a_end) noexcept;
+		inline static std::array<LoadTiming::ForwardedCall, LoadTiming::kInitStepSites.size()> s_timedOriginals{};
 
 		uint64_t m_loadQpc{ 0 };
 		// Written and read on the game-data thread.

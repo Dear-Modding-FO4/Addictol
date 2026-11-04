@@ -246,6 +246,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp">
       <Filter>Source\Modules\F</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveLoadTiming.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFormLoadTiming.cpp">
       <Filter>Source\Modules\F</Filter>
     </ClCompile>
@@ -695,6 +698,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h">
       <Filter>Include\Modules\F</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveLoadTiming.h">
+      <Filter>Include\Modules\S</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFormLoadTiming.h">
       <Filter>Include\Modules\F</Filter>

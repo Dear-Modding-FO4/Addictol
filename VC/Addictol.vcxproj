@@ -116,6 +116,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFacegen.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFasterWorkshop.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleFormLoadTiming.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveLoadTiming.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResLocalMaps.cpp" />
@@ -282,6 +283,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFacegen.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFasterWorkshop.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleFormLoadTiming.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveLoadTiming.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResLocalMaps.h" />

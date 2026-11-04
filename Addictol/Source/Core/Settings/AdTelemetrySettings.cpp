@@ -69,6 +69,15 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
+	BoolSetting bTelemetrySaveLoadTiming{
+		"Telemetry"sv,
+		"bSaveLoadTiming"sv,
+		SettingDisplayCategory::kDiagnostics,
+		false,
+		"Times save loading: the native load steps, Papyrus restore, and the loading screen."sv,
+		SettingApplyTiming::kNextLaunch
+	};
+
 	BoolSetting bTelemetryImageMemory{
 		"Telemetry"sv,
 		"bImageMemory"sv,

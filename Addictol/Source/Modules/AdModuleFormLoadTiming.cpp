@@ -48,20 +48,6 @@ namespace
 #endif
 	}
 
-	[[nodiscard]] Addictol::LoadTiming::Runtime CurrentRuntime() noexcept
-	{
-		return RELEX::IsRuntimeOG() ? Addictol::LoadTiming::Runtime::kOG :
-			RELEX::IsRuntimeAE() ? Addictol::LoadTiming::Runtime::kAE :
-			Addictol::LoadTiming::Runtime::kNG;
-	}
-
-	[[nodiscard]] std::string_view RuntimeName(
-		Addictol::LoadTiming::Runtime a_runtime) noexcept
-	{
-		return a_runtime == Addictol::LoadTiming::Runtime::kOG ? "OG" :
-			a_runtime == Addictol::LoadTiming::Runtime::kNG ? "NG" : "AE";
-	}
-
 }
 
 namespace Addictol
@@ -88,7 +74,7 @@ namespace Addictol
 		}
 		m_installAttempted = true;
 
-		const auto runtime = CurrentRuntime();
+		const auto runtime = LoadTiming::CurrentRuntime();
 		const auto compileAddress = REL::ID{
 			LoadTiming::kCompileFilesId.og,
 			LoadTiming::kCompileFilesId.ng,
@@ -112,14 +98,14 @@ namespace Addictol
 			{
 				REX::ERROR(
 					"Form Load Timing: {} CompileFiles signature mismatch at {:016X}"sv,
-					RuntimeName(runtime),
+					LoadTiming::RuntimeName(runtime),
 					compileAddress);
 			}
 			if (!constructValid)
 			{
 				REX::ERROR(
 					"Form Load Timing: {} ConstructObjectList signature mismatch at {:016X}"sv,
-					RuntimeName(runtime),
+					LoadTiming::RuntimeName(runtime),
 					constructAddress);
 			}
 			Skip(
@@ -169,23 +155,16 @@ namespace Addictol
 		return true;
 	}
 
-	template <size_t I>
-	uint64_t ModuleFormLoadTiming::TimedInitStep(
-		uint64_t a_1,
-		uint64_t a_2,
-		uint64_t a_3,
-		uint64_t a_4)
+	void ModuleFormLoadTiming::BeginTimedCall(size_t a_index, uint64_t a_start) noexcept
 	{
-		const auto start = Addictol::ReadQpc();
-		if constexpr (LoadTiming::kInitStepSites[I].function == LoadTiming::InitStepFunction::kThreadProc)
-		{
-			if (s_instance)
-				s_instance->m_menuQpc = start;
-		}
-		const auto result = s_initStepOriginals[I](a_1, a_2, a_3, a_4);
+		if (s_instance && LoadTiming::kInitStepSites[a_index].function == LoadTiming::InitStepFunction::kThreadProc)
+			s_instance->m_menuQpc = a_start;
+	}
+
+	void ModuleFormLoadTiming::EndTimedCall(size_t a_index, uint64_t a_start, uint64_t a_end) noexcept
+	{
 		if (s_instance)
-			s_instance->RecordSpan(LoadTiming::kInitStepSeriesName, LoadTiming::kInitStepSites[I].name, start, Addictol::ReadQpc());
-		return result;
+			s_instance->RecordSpan(LoadTiming::kInitStepSeriesName, LoadTiming::kInitStepSites[a_index].name, a_start, a_end);
 	}
 
 	void ModuleFormLoadTiming::RecordSpan(
@@ -220,12 +199,12 @@ namespace Addictol
 
 		auto& trampoline = REL::GetTrampoline();
 		[&]<size_t... I>(std::index_sequence<I...>) {
-			((s_initStepOriginals[I] = reinterpret_cast<InitStepFn>(
+			((s_timedOriginals[I] = reinterpret_cast<LoadTiming::ForwardedCall>(
 				  LoadTiming::kInitStepSites[I].size == 5 ?
-					  trampoline.write_call<5>(siteAddress(LoadTiming::kInitStepSites[I]), &TimedInitStep<I>) :
+					  trampoline.write_call<5>(siteAddress(LoadTiming::kInitStepSites[I]), &LoadTiming::TimedForward<ModuleFormLoadTiming, I>) :
 					  // CALL6 returns the old pointer slot, not the function in it.
 					  *reinterpret_cast<const uintptr_t*>(
-						  trampoline.write_call<6>(siteAddress(LoadTiming::kInitStepSites[I]), &TimedInitStep<I>)))),
+						  trampoline.write_call<6>(siteAddress(LoadTiming::kInitStepSites[I]), &LoadTiming::TimedForward<ModuleFormLoadTiming, I>)))),
 				...);
 		}(std::make_index_sequence<LoadTiming::kInitStepSites.size()>{});
 	}

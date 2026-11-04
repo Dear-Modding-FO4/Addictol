@@ -118,6 +118,7 @@ namespace Addictol
 	extern BoolSetting bTelemetryImageSampling;
 	extern U32Setting uTelemetryImageSampleHz;
 	extern BoolSetting bTelemetryFormLoadTiming;
+	extern BoolSetting bTelemetrySaveLoadTiming;
 
 	extern BoolSetting bAdditionalDbgFacegenOutput;
 	extern BoolSetting bAdditionalUseNewRedistributable;

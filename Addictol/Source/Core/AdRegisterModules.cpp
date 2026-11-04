@@ -13,6 +13,7 @@
 #include <Modules/AdModuleActorIsHostileToActor.h>
 #include <Modules/AdModuleFacegen.h>
 #include <Modules/AdModuleFormLoadTiming.h>
+#include <Modules/AdModuleSaveLoadTiming.h>
 #include <Modules/AdModuleBGSAIWorldLocationRefRadius.h>
 #include <Modules/AdModuleSafeExit.h>
 #include <Modules/AdModuleUnalignedLoad.h>
@@ -132,6 +133,7 @@ static auto sModuleInitTints						= std::make_shared<Addictol::ModuleInitTints>(
 static auto sModuleActorIsHostileToActor			= std::make_shared<Addictol::ModuleActorIsHostileToActor>();
 static auto sModuleFacegen							= std::make_shared<Addictol::ModuleFacegen>();
 static auto sModuleFormLoadTiming					= std::make_shared<Addictol::ModuleFormLoadTiming>();
+static auto sModuleSaveLoadTiming					= std::make_shared<Addictol::ModuleSaveLoadTiming>();
 static auto sModuleBGSAIWorldLocationRefRadius		= std::make_shared<Addictol::ModuleBGSAIWorldLocationRefRadius>();
 static auto sModuleSafeExit							= std::make_shared<Addictol::ModuleSafeExit>();
 static auto sModuleUnalignedLoad					= std::make_shared<Addictol::ModuleUnalignedLoad>();
@@ -270,6 +272,7 @@ void AdRegisterModules()
 	modules.Register(sModuleActorIsHostileToActor);
 	modules.Register(sModuleFacegen);
 	modules.Register(sModuleFormLoadTiming);
+	modules.Register(sModuleSaveLoadTiming);
 	modules.Register(sModuleBGSAIWorldLocationRefRadius);
 	modules.Register(sModuleSafeExit);
 	modules.Register(sModuleUnalignedLoad);
