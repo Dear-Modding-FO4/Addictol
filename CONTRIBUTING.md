@@ -241,7 +241,7 @@ xmake build -P . -y vmm-tests
 ```
 
 The runner checks Addictol's out-of-game subsystems end to end: the VMM allocator and heaps,
-decompression backends against zlib, the profiled-heap path, and settings persistence. Do not add
+decompression backends against zlib, and the profiled-heap path. Do not add
 tests for a single module or tests that simulate the game; modules are validated in game.
 `--bench=<voltek|mimalloc|rpmalloc>` and `--bench-profile` run opt-in benchmarks into `.Build\Tests\`;
 run one backend per process.

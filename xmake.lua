@@ -280,7 +280,6 @@ target("vmm-tests", function()
     -- add source files
     add_files("Tests/**.cpp")
     add_files("Addictol/Source/Core/AdClock.cpp")
-    add_files("Addictol/Source/Core/AdIAT.cpp")
     add_files("Addictol/Source/Core/AdConfigValidation.cpp")
     add_files("Addictol/Source/Core/Settings/**.cpp")
     add_files("Addictol/Source/Memory/AdAllocator.cpp")
@@ -314,8 +313,7 @@ target("vmm-tests", function()
         "SPDLOG_COMPILED_LIB",
         "SPDLOG_USE_STD_FORMAT",
         "COMMONLIB_OPTION_TOML",
-        "XBYAK_NO_OP_NAMES",
-        "AD_TELEMETRY_TESTS"
+        "XBYAK_NO_OP_NAMES"
     )
 
     -- add libraries

@@ -595,22 +595,14 @@ namespace Addictol
 			std::string_view a_existing,
 			std::string_view a_output,
 			bool a_exists,
-			bool* a_changed,
 			std::string& a_error)
 		{
-			const auto changed = !a_exists || a_existing != a_output;
-			if (a_changed)
-				*a_changed = false;
-			if (!changed)
+			if (a_exists && a_existing == a_output)
 			{
 				a_error.clear();
 				return true;
 			}
-			if (!WriteAtomically(a_path, a_output, a_error))
-				return false;
-			if (a_changed)
-				*a_changed = true;
-			return true;
+			return WriteAtomically(a_path, a_output, a_error);
 		}
 	}
 
@@ -692,7 +684,7 @@ namespace Addictol
 		}
 	}
 
-	bool BuildSettingsOverrideToml(
+	static bool BuildSettingsOverrideToml(
 		std::string_view a_existingToml,
 		std::span<const SettingValueSnapshot> a_settings,
 		std::string& a_output,
@@ -732,8 +724,7 @@ namespace Addictol
 	bool WriteSettingsOverrideFile(
 		const std::filesystem::path& a_path,
 		std::span<const SettingValueSnapshot> a_settings,
-		std::string& a_error,
-		bool* a_changed) noexcept
+		std::string& a_error) noexcept
 	{
 		try
 		{
@@ -758,7 +749,6 @@ namespace Addictol
 				existing,
 				output,
 				exists,
-				a_changed,
 				a_error);
 		}
 		catch (const std::exception& error)
@@ -775,8 +765,7 @@ namespace Addictol
 
 	bool RefreshSettingsDocument(
 		const std::filesystem::path& a_path,
-		std::string& a_error,
-		bool* a_changed) noexcept
+		std::string& a_error) noexcept
 	{
 		try
 		{
@@ -797,7 +786,6 @@ namespace Addictol
 				existing,
 				output,
 				exists,
-				a_changed,
 				a_error);
 		}
 		catch (const std::exception& error)
@@ -812,14 +800,9 @@ namespace Addictol
 		}
 	}
 
-	std::filesystem::path ResolveSettingsPath(const std::filesystem::path& a_directory) noexcept
-	{
-		return a_directory / kAddictolSettingsFileName;
-	}
-
 	std::filesystem::path ResolveSettingsPath() noexcept
 	{
-		return ResolveSettingsPath(std::filesystem::path{ kAddictolSettingsDirectory });
+		return std::filesystem::path{ kAddictolSettingsDirectory } / kAddictolSettingsFileName;
 	}
 
 	void InitializeSettings() noexcept

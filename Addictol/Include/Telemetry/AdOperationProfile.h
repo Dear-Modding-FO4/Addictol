@@ -19,13 +19,6 @@ namespace Addictol
 {
 	class TelemetryHub;
 
-#ifdef AD_TELEMETRY_TESTS
-	namespace TelemetryTest
-	{
-		struct OperationProfileAccess;
-	}
-#endif
-
 	struct OperationProfileDescriptor
 	{
 		std::string_view series;
@@ -175,9 +168,6 @@ namespace Addictol
 		uint32_t descriptorIndex{ 0 };
 		uint32_t shardIndex{ 0 };
 		friend class OperationProfileSource;
-#ifdef AD_TELEMETRY_TESTS
-		friend struct TelemetryTest::OperationProfileAccess;
-#endif
 	};
 
 	class ScopedOperationProfileSuppression
@@ -231,6 +221,13 @@ namespace Addictol
 		[[nodiscard]] uint64_t CaptureGeneration() const noexcept;
 		[[nodiscard]] uint64_t AllOperationCount(size_t a_descriptorIndex) const noexcept;
 		[[nodiscard]] OperationProfileCounters Counters() const noexcept;
+
+		// Capture lifecycle: start, admit tokens, close admission, then drain.
+		[[nodiscard]] bool StartCapture() noexcept;
+		[[nodiscard]] uint64_t CloseCaptureAdmission() noexcept;
+		void Drain(std::span<MetricValue> a_out) noexcept override;
+		[[nodiscard]] size_t DrainSeries(
+			std::span<SeriesSample> a_out) noexcept override;
 
 	private:
 		[[nodiscard]] OperationProfileToken Begin(uint32_t a_descriptorIndex, bool a_measureLifetime) noexcept;
@@ -311,11 +308,6 @@ namespace Addictol
 			size_t count{ 0 };
 		};
 
-		void Drain(std::span<MetricValue> a_out) noexcept override;
-		[[nodiscard]] size_t DrainSeries(
-			std::span<SeriesSample> a_out) noexcept override;
-		[[nodiscard]] bool StartCapture() noexcept;
-		[[nodiscard]] uint64_t CloseCaptureAdmission() noexcept;
 		[[nodiscard]] size_t DurationBucketIndex(uint64_t a_ticks) const noexcept;
 		[[nodiscard]] std::string_view OwnString(std::string_view a_value);
 		void ResetCaptureState(CaptureState& a_state) noexcept;
@@ -344,9 +336,6 @@ namespace Addictol
 		bool m_valid{ false };
 
 		friend class TelemetryHub;
-#ifdef AD_TELEMETRY_TESTS
-		friend struct TelemetryTest::OperationProfileAccess;
-#endif
 	};
 
 	template<bool Enabled>

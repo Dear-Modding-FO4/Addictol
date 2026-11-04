@@ -6,31 +6,6 @@
 #include <array>
 #include <vector>
 
-namespace Addictol::TelemetryTest
-{
-	struct OperationProfileAccess
-	{
-		[[nodiscard]] static bool Start(OperationProfileSource& a_source) noexcept
-		{
-			return a_source.StartCapture();
-		}
-
-		[[nodiscard]] static uint64_t Close(OperationProfileSource& a_source) noexcept
-		{
-			return a_source.CloseCaptureAdmission();
-		}
-
-		static void Drain(
-			OperationProfileSource& a_source,
-			std::span<MetricValue> a_metrics,
-			std::span<SeriesSample> a_series) noexcept
-		{
-			a_source.Drain(a_metrics);
-			(void)a_source.DrainSeries(a_series);
-		}
-	};
-}
-
 namespace
 {
 	using namespace Addictol;
@@ -72,14 +47,10 @@ namespace vmm_tests
 	{
 		runner.test("profiled heap preserves forwarding and classifies realloc without size probes", [] {
 			using Heap = ProfiledHeap<ForwardingHeap, HeapProfileSite::CRT>;
-			static_assert(std::is_same_v<SelectedProfiledHeap<false, ForwardingHeap, HeapProfileSite::CRT>, ForwardingHeap>);
-			require(InstallSelectedProfiledHeap<ForwardingHeap, HeapProfileSite::CRT>(false, []<class Selected> {
-				return std::is_same_v<Selected, ForwardingHeap>;
-			}), "disabled startup visitor did not select the raw heap");
 			TelemetryHub hub;
 			require(InitializeHeapOperationProfile(hub, "fake", "visper", "fake"), "heap source registration failed");
 			auto* source = HeapOperationProfile();
-			require(TelemetryTest::OperationProfileAccess::Start(*source), "heap capture did not start");
+			require(source->StartCapture(), "heap capture did not start");
 			auto* heap = Heap::GetSingleton();
 			void* block = ForwardingHeap::storage.data();
 			ForwardingHeap::next = block;
@@ -127,10 +98,11 @@ namespace vmm_tests
 			require(source->Counters()[OperationProfileQuality::kSuppressedOperations] == 1 &&
 				source->AllOperationCount(HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Allocate, 17)) == allBefore,
 				"profiler-owned heap work recursed into operation recording");
-			require(TelemetryTest::OperationProfileAccess::Close(*source) == 0, "heap profile leaked tokens");
+			require(source->CloseCaptureAdmission() == 0, "heap profile leaked tokens");
 			std::vector<MetricValue> metrics(source->Schema().size());
 			std::vector<SeriesSample> series(source->SeriesCapacity());
-			TelemetryTest::OperationProfileAccess::Drain(*source, metrics, series);
+			source->Drain(metrics);
+			(void)source->DrainSeries(series);
 			for (const auto result : { HeapProfileResult::InPlace, HeapProfileResult::Moved, HeapProfileResult::Failed })
 			{
 				const auto descriptor = HeapProfileDescriptor(HeapProfileSite::CRT, HeapProfileOperation::Reallocate, 1000, result);

@@ -23,8 +23,6 @@ int main(int argc, char** argv)
 			return run_benchmarks(argument.substr(bench_prefix.size()));
 		if (argument == "--bench-profile")
 			return run_profile_benchmarks();
-		if (argument == "--oversized-case")
-			return run_oversized_case();
 		if (argument.starts_with(shape_prefix))
 			return run_shape_case(argument.substr(shape_prefix.size()));
 

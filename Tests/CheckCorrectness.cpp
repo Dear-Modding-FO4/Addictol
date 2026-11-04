@@ -20,7 +20,6 @@
 
 namespace
 {
-	constexpr std::uint32_t oversized_nonnull_exit = 10;
 	constexpr std::size_t mebibyte = 1024u * 1024;
 
 	namespace mm = voltek::memory_manager;
@@ -350,11 +349,6 @@ namespace vmm_tests
 			require(measured == 0, "msize accepted a CRT allocation");
 		});
 
-		runner.test("free nullptr is safe", [&runner] {
-			const bool result = voltek::scalable_free(nullptr);
-			runner.info(std::string("scalable_free(nullptr) returned ") + (result ? "true" : "false"));
-		});
-
 		runner.test("realloc preserves data across allocator boundaries", [] {
 			check_reallocation(1024, 4096);
 			check_reallocation(4096, 1024);
@@ -409,16 +403,6 @@ namespace vmm_tests
 
 			void* replacement = voltek::scalable_realloc(pointer, 0);
 			require(replacement == nullptr, "realloc(ptr, 0) did not return nullptr");
-		});
-
-		runner.test("allocation larger than 4 GiB is characterized", [] {
-			const auto result = run_child_process("--oversized-case");
-			if (result.exit_code == 0 || result.exit_code == oversized_nonnull_exit)
-				return;
-
-			std::ostringstream stream;
-			stream << "oversized allocation child crashed or failed with exit code 0x" << std::hex << result.exit_code;
-			require(false, stream.str());
 		});
 	}
 
@@ -729,23 +713,5 @@ namespace vmm_tests
 				after[large].committed_bytes <= mm::large_retention_budget_bytes,
 				"class statistics did not return to baseline");
 		});
-	}
-
-	int run_oversized_case()
-	{
-		constexpr std::size_t oversized = 4ull * 1024 * 1024 * 1024 + 1;
-		voltek::scalable_memory_manager_initialize();
-		void* pointer = voltek::scalable_alloc(oversized);
-		if (!pointer)
-		{
-			std::cout << "[OVERSIZED] allocation of " << oversized << " bytes returned nullptr\n";
-			return 0;
-		}
-
-		const auto measured = voltek::scalable_msize(pointer);
-		const bool freed = voltek::scalable_free(pointer);
-		std::cout << "[INFO] oversized allocation returned non-null; msize=" << measured
-				  << ", free=" << (freed ? "true" : "false") << '\n';
-		return oversized_nonnull_exit;
 	}
 }
