@@ -107,6 +107,7 @@ namespace Addictol
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;
 	extern BoolSetting bWarningsReferenceHandleLimit;
+	extern BoolSetting bWarningsSlowPlugin;
 
 	extern BoolSetting bTelemetryEnabled;
 	extern BoolSetting bTelemetryOperationProfiling;

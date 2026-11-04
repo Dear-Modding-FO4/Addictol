@@ -2,6 +2,7 @@
 
 #include <Core/AdClock.h>
 #include <Core/AdUtils.h>
+#include <Telemetry/AdSlowHandlerLog.h>
 #include <Telemetry/AdTelemetryHub.h>
 
 #include <F4SE/Interfaces.h>
@@ -23,7 +24,8 @@ namespace
 namespace Addictol
 {
 	ModulePluginTiming::ModulePluginTiming() :
-		Module("Plugin Timing", &bTelemetryPluginTiming),
+		// Mandatory host; each consumer has its own setting.
+		Module("Plugin Hooks", nullptr),
 		PluginTimingSource(LoadTiming::kPluginMetricSchema)
 	{
 		s_instance = this;
@@ -35,6 +37,12 @@ namespace Addictol
 		if (m_installAttempted)
 		{
 			Skip("installation already attempted"sv);
+			return false;
+		}
+		const auto series = bTelemetryPluginTiming.GetValue();
+		if (!series && !bWarningsSlowPlugin.GetValue())
+		{
+			Skip("neither plugin timing nor the slow plugin warning is enabled"sv);
 			return false;
 		}
 		m_installAttempted = true;
@@ -91,7 +99,11 @@ namespace Addictol
 		}
 
 		s_originalGetProcAddress = reinterpret_cast<GetProcAddressFn>(original);
-		Activate(DebugThreadId());
+		m_callbacks.EnableSeries(series);
+		if (series)
+			Activate(DebugThreadId());
+		if (bWarningsSlowPlugin.GetValue())
+			SlowHandlerLog::Get().Arm();
 		if (RELEX::IsRuntimeOG())
 		{
 			REX::INFO(
@@ -248,5 +260,7 @@ namespace Addictol
 			s_activeName ? s_activeNameLength : sizeof("(unknown)") - 1
 		};
 		(void)PluginTimingSource::Record(a_series, name, a_ticks, DebugThreadId());
+		if (auto& slow = SlowHandlerLog::Get(); slow.IsSlow(a_ticks))
+			slow.Report(name, a_series, a_ticks);
 	}
 }

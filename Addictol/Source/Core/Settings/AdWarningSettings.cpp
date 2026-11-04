@@ -30,4 +30,13 @@ namespace Addictol
 		"Warns if you are approaching the reference handle limit or exceed the reference handle limit. Terminate process if out of entries!"sv,
 		SettingApplyTiming::kNextLaunch
 	};
+
+	BoolSetting bWarningsSlowPlugin{
+		"Warnings"sv,
+		"bSlowPlugin"sv,
+		SettingDisplayCategory::kDiagnostics,
+		true,
+		"Warns when an F4SE plugin takes over a second to load or handle a game event, which delays the main menu."sv,
+		SettingApplyTiming::kNextLaunch
+	};
 }

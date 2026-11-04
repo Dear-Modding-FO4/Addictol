@@ -151,6 +151,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePowerGridScrap.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleProfile.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePluginTiming.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSlowPluginWarning.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleQuestLogBloat.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleRadioSilence.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleReferenceHandleLimitWarning.cpp" />
@@ -319,6 +320,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePowerGridScrap.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleProfile.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePluginTiming.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSlowPluginWarning.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleQuestLogBloat.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleRadioSilence.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleReferenceHandleLimitWarning.h" />
@@ -404,6 +406,7 @@
     <ClCompile Include="..\Addictol\Source\Core\AdIAT.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdImageRegistry.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdPluginCallbacks.cpp" />
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdSlowHandlerLog.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdImageMemory.cpp" />
     <ClCompile Include="..\Addictol\Source\Telemetry\AdImageSampling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleImageMemory.cpp" />
@@ -412,6 +415,7 @@
     <ClInclude Include="..\Addictol\Include\Telemetry\AdImageRegistry.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdImageSeries.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdPluginCallbacks.h" />
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdSlowHandlerLog.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdImageMemory.h" />
     <ClInclude Include="..\Addictol\Include\Telemetry\AdImageSampling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleImageMemory.h" />

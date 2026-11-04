@@ -381,6 +381,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePluginTiming.cpp">
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSlowPluginWarning.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModulePuddleCubemaps.cpp">
       <Filter>Source\Modules\P</Filter>
     </ClCompile>
@@ -837,6 +840,9 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePluginTiming.h">
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSlowPluginWarning.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModulePuddleCubemaps.h">
       <Filter>Include\Modules\P</Filter>
     </ClInclude>
@@ -1182,6 +1188,9 @@
     <ClCompile Include="..\Addictol\Source\Telemetry\AdPluginCallbacks.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Telemetry\AdSlowHandlerLog.cpp">
+      <Filter>Source\Telemetry</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Telemetry\AdImageMemory.cpp">
       <Filter>Source\Telemetry</Filter>
     </ClCompile>
@@ -1204,6 +1213,9 @@
       <Filter>Include\Telemetry</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdPluginCallbacks.h">
+      <Filter>Include\Telemetry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Telemetry\AdSlowHandlerLog.h">
       <Filter>Include\Telemetry</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Telemetry\AdImageMemory.h">

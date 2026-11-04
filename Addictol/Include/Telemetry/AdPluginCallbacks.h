@@ -19,6 +19,8 @@ namespace Addictol
 		void Install(const F4SE::Impl::F4SEInterface& a_load, const Image& a_f4se) noexcept;
 		void BeginLoad(F4SE::PluginHandle a_handle, ImageId a_image) noexcept;
 		void EndLoad() noexcept;
+		// Without series, callbacks are still wrapped for the slow handler log.
+		void EnableSeries(bool a_enabled) noexcept { m_series = a_enabled; }
 		[[nodiscard]] size_t Drain(std::span<SeriesSample> a_out) noexcept;
 		[[nodiscard]] uint64_t TakeOverflow() noexcept;
 		[[nodiscard]] uint64_t TakeSeriesOverflow() noexcept { return m_rows.TakeOverflow(); }
@@ -66,5 +68,6 @@ namespace Addictol
 		std::array<decltype(F4SE::Impl::F4SESerializationInterface::SetLoadCallback), 4> m_cosave{};
 		decltype(F4SE::Impl::F4SEPapyrusInterface::Register) m_papyrus{};
 		bool m_attempted{};
+		bool m_series{};
 	};
 }

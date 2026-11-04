@@ -1,6 +1,7 @@
 #include <Telemetry/AdPluginCallbacks.h>
 #include <Core/AdClock.h>
 #include <Core/AdIAT.h>
+#include <Telemetry/AdSlowHandlerLog.h>
 #include <REX/REX.h>
 
 #include <utility>
@@ -164,9 +165,15 @@ namespace Addictol
 
 	void PluginCallbacks::Record(const Slot& a_slot, size_t a_kind, uint64_t a_start) noexcept
 	{
-		auto& counter = m_rows.At(a_slot.image, a_kind);
-		counter.ticks.fetch_add(ReadQpc() - a_start, std::memory_order_relaxed);
-		counter.calls.fetch_add(1, std::memory_order_relaxed);
+		const auto ticks = ReadQpc() - a_start;
+		if (m_series)
+		{
+			auto& counter = m_rows.At(a_slot.image, a_kind);
+			counter.ticks.fetch_add(ticks, std::memory_order_relaxed);
+			counter.calls.fetch_add(1, std::memory_order_relaxed);
+		}
+		if (auto& slow = SlowHandlerLog::Get(); slow.IsSlow(ticks))
+			slow.Report(ImageRegistry::Get().At(a_slot.image)->name, s_kinds[a_kind].series, ticks);
 	}
 
 	template<size_t I>

@@ -34,6 +34,7 @@
 #include <Modules/AdModuleINISettingCollection.h>
 #include <Modules/AdModulePipBoyLightInv.h>
 #include <Modules/AdModulePluginTiming.h>
+#include <Modules/AdModuleSlowPluginWarning.h>
 #include <Modules/AdModuleImageMemory.h>
 #include <Modules/AdModuleImageSampling.h>
 #include <Modules/AdModuleInteriorNavCut.h>
@@ -154,6 +155,7 @@ static auto sModuleTESObjectREFRGetEncounterZone	= std::make_shared<Addictol::Mo
 static auto sModuleINISettingCollection				= std::make_shared<Addictol::ModuleINISettingCollection>();
 static auto sModulePipBoyLightInv					= std::make_shared<Addictol::ModulePipBoyLightInv>();
 static auto sModulePluginTiming						= MakeProcessLifetimeModule<Addictol::ModulePluginTiming>();
+static auto sModuleSlowPluginWarning				= std::make_shared<Addictol::ModuleSlowPluginWarning>();
 static auto sModuleImageMemory						= MakeProcessLifetimeModule<Addictol::ModuleImageMemory>();
 static auto sModuleImageSampling					= MakeProcessLifetimeModule<Addictol::ModuleImageSampling>();
 static auto sModuleInteriorNavCut					= std::make_shared<Addictol::ModuleInteriorNavCut>();
@@ -367,6 +369,7 @@ void AdRegisterModules()
 	modules.Register(sModuleEncounterZoneReset,				kGameLoaded);
 	modules.Register(sModuleInputSwitch,					kGameLoaded);
 	modules.Register(sModuleLoadScreen,						kGameLoaded);
+	modules.Register(sModuleSlowPluginWarning,				kGameLoaded);
 	modules.Register(sModuleSaveAddedSoundCategories,		kGameLoaded);
 	modules.Register(sModuleUtilityShader,					kGameLoaded);
 	modules.Register(sModuleReferenceHandleLimitWarning,	kGameLoaded);
