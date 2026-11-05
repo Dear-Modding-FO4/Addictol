@@ -4,12 +4,111 @@ namespace Addictol
 {
 	using namespace std::literals;
 
+	dmui::localize::LocalizeString lsPatchesThreads(
+		"$Setting_PatchesThreads",
+		"All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores."
+	);
+	dmui::localize::LocalizeString lsPatchesLibDeflate(
+		"$Setting_PatchesLibDeflate",
+		"Replaces the game's zlib decompression with the backend selected by sZlibBackend. If another mod already patches zlib, the game's zlib is left untouched."
+	);
+	dmui::localize::LocalizeString lsPatchesLoadScreen(
+		"$Setting_PatchesLoadScreen",
+		"Black loading screen with fixes for 21:9 display.Need High FPS Physics Fix mod, otherwise slowly loads game."
+	);
+	dmui::localize::LocalizeString lsPatchesProfile(
+		"$Setting_PatchesProfile",
+		"Added settings Pref.ini for default.ini, This provides an opportunity mods change settings Pref.ini."
+	);
+	dmui::localize::LocalizeString lsPatchesAchievements(
+		"$Setting_PatchesAchievements",
+		"Enables achievements on modded saves."
+	);
+	dmui::localize::LocalizeString lsPatchesFacegen(
+		"$Setting_PatchesFacegen",
+		"Enables facegen support and removes freezes."
+	);
+	dmui::localize::LocalizeString lsPatchesMemoryManager(
+		"$Setting_PatchesMemoryManager",
+		"Replaces the global memory manager with vmm allocator."
+	);
+	dmui::localize::LocalizeString lsPatchesSmallBlockAllocator(
+		"$Setting_PatchesSmallBlockAllocator",
+		"Replaces the small block memory allocators with visper allocator."
+	);
+	dmui::localize::LocalizeString lsPatchesSmallBlockAllocatorUseSelectedHeap(
+		"$Setting_PatchesSmallBlockAllocatorUseSelectedHeap",
+		"Routes small block allocations to the selected heap instead of visper."
+	);
+	dmui::localize::LocalizeString lsPatchesScaleformAllocator(
+		"$Setting_PatchesScaleformAllocator",
+		"Replaces the scaleform memory allocator with os allocator."
+	);
+	dmui::localize::LocalizeString lsPatchesBSMTAManager(
+		"$Setting_PatchesBSMTAManager",
+		"General rendering performance improvement."
+	);
+	dmui::localize::LocalizeString lsPatchesBSPreCulledObjects(
+		"$Setting_PatchesBSPreCulledObjects",
+		"General rendering performance improvement."
+	);
+	dmui::localize::LocalizeString lsPatchesINISettingCollection(
+		"$Setting_PatchesINISettingCollection",
+		"Improves startup times for large load orders by optimizing INI setting loading."
+	);
+	dmui::localize::LocalizeString lsPatchesArchiveLimits(
+		"$Setting_PatchesArchiveLimits",
+		"Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355."
+	);
+	dmui::localize::LocalizeString lsPatchesInputSwitch(
+		"$Setting_PatchesInputSwitch",
+		"Automatically swaps inputs between Keyboard + Mouse / Controller."
+	);
+	dmui::localize::LocalizeString lsPatchesFasterWorkshop(
+		"$Setting_PatchesFasterWorkshop",
+		"Alleviates lag while opening the Workshop menu."
+	);
+	dmui::localize::LocalizeString lsPatchesSaveAddedSoundCategories(
+		"$Setting_PatchesSaveAddedSoundCategories",
+		"Saves the volume of Sound Categories added by mods."
+	);
+	dmui::localize::LocalizeString lsPatchesCOMInit(
+		"$Setting_PatchesCOMInit",
+		"Blocks the use of incorrect COM interface initialization settings for mods."
+	);
+	dmui::localize::LocalizeString lsPatchesHighResBloom(
+		"$Setting_PatchesHighResBloom",
+		"Raises the bloom render - target resolution to reduce flicker on bright pixels(sun glints, neon, fire).Cost scales with nBloomScale."
+	);
+	dmui::localize::LocalizeString lsPatchesDpiScaling(
+		"$Setting_PatchesDpiScaling",
+		"Marks the process as DPI - aware so menus and cursor track correctly on high - DPI desktops."
+	);
+	dmui::localize::LocalizeString lsPatchesSaveCompression(
+		"$Setting_PatchesSaveCompression",
+		"Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves."
+	);
+	dmui::localize::LocalizeString lsPatchesAudioSwitch(
+		"$Setting_PatchesAudioSwitch",
+		"Allows seamless audio device switching for XAudio 2.7.Automatically switches to a newly selected default audio device."
+	);
+	dmui::localize::LocalizeString lsPatchesHighResLocalMaps(
+		"$Setting_PatchesHighResLocalMaps",
+		"Raises the Local Maps resolution, scales with fLocalMapScaleFactor.Affects the Companion app as well, can increase performance& VRAM cost."
+	);
+	dmui::localize::LocalizeString lsPatchesRefExtended(
+		"$Setting_PatchesRefExtended",
+		"[Experimental] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8. "
+		"For a large LO so you can play for more than 2 hours. Enable only if \"OUT OF HANDLE ARRAY ENTRIES.\" is triggered. "
+		"Use at your own risk! Mass change of the entire .exe, more than 15 thousand changes."
+	);
+
 	BoolSetting bPatchesThreads{
 		"Patches"sv,
 		"bThreads"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores."sv,
+		std::addressof(lsPatchesThreads),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -18,7 +117,7 @@ namespace Addictol
 		"bLibDeflate"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Replaces the game's zlib decompression with the backend selected by sZlibBackend. If another mod already patches zlib, the game's zlib is left untouched."sv,
+		std::addressof(lsPatchesLibDeflate),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -27,7 +126,7 @@ namespace Addictol
 		"bLoadScreen"sv,
 		SettingDisplayCategory::kInterface,
 		true,
-		"Black loading screen with fixes for 21:9 display. Need High FPS Physics Fix mod, otherwise slowly loads game."sv,
+		std::addressof(lsPatchesLoadScreen),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -36,7 +135,7 @@ namespace Addictol
 		"bProfile"sv,
 		SettingDisplayCategory::kInterface,
 		true,
-		"Added settings Pref.ini for default .ini, This provides an opportunity mods change settings Pref.ini."sv,
+		std::addressof(lsPatchesProfile),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -45,7 +144,7 @@ namespace Addictol
 		"bAchievements"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Enables achievements on modded saves."sv,
+		std::addressof(lsPatchesAchievements),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -54,7 +153,7 @@ namespace Addictol
 		"bFacegen"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Enables facegen support and removes freezes."sv,
+		std::addressof(lsPatchesFacegen),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -63,7 +162,7 @@ namespace Addictol
 		"bMemoryManager"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Replaces the global memory manager with vmm allocator."sv,
+		std::addressof(lsPatchesMemoryManager),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -72,7 +171,7 @@ namespace Addictol
 		"bSmallBlockAllocator"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Replaces the small block memory allocators with visper allocator."sv,
+		std::addressof(lsPatchesSmallBlockAllocator),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -81,7 +180,7 @@ namespace Addictol
 		"bSmallBlockAllocatorUseSelectedHeap"sv,
 		SettingDisplayCategory::kPerformance,
 		false,
-		"Routes small block allocations to the selected heap instead of visper."sv,
+		std::addressof(lsPatchesSmallBlockAllocatorUseSelectedHeap),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -90,7 +189,7 @@ namespace Addictol
 		"bScaleformAllocator"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Replaces the scaleform memory allocator with os allocator."sv,
+		std::addressof(lsPatchesScaleformAllocator),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -99,7 +198,7 @@ namespace Addictol
 		"bBSMTAManager"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"General rendering performance improvement."sv,
+		std::addressof(lsPatchesBSMTAManager),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -108,7 +207,7 @@ namespace Addictol
 		"bBSPreCulledObjects"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"General rendering performance improvement."sv,
+		std::addressof(lsPatchesBSPreCulledObjects),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -117,7 +216,7 @@ namespace Addictol
 		"bINISettingCollection"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Improves startup times for large load orders by optimizing INI setting loading."sv,
+		std::addressof(lsPatchesINISettingCollection),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -126,7 +225,7 @@ namespace Addictol
 		"bArchiveLimits"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355."sv,
+		std::addressof(lsPatchesArchiveLimits),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -135,7 +234,7 @@ namespace Addictol
 		"bInputSwitch"sv,
 		SettingDisplayCategory::kInterface,
 		false,
-		"Automatically swaps inputs between Keyboard + Mouse / Controller."sv,
+		std::addressof(lsPatchesInputSwitch),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -144,7 +243,7 @@ namespace Addictol
 		"bFasterWorkshop"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Alleviates lag while opening the Workshop menu."sv,
+		std::addressof(lsPatchesFasterWorkshop),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -153,7 +252,7 @@ namespace Addictol
 		"bSaveAddedSoundCategories"sv,
 		SettingDisplayCategory::kAudio,
 		true,
-		"Saves the volume of Sound Categories added by mods."sv,
+		std::addressof(lsPatchesSaveAddedSoundCategories),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -162,7 +261,7 @@ namespace Addictol
 		"bCOMInit"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Blocks the use of incorrect COM interface initialization settings for mods."sv,
+		std::addressof(lsPatchesCOMInit),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -171,7 +270,7 @@ namespace Addictol
 		"bHighResBloom"sv,
 		SettingDisplayCategory::kVisuals,
 		false,
-		"Raises the bloom render-target resolution to reduce flicker on bright pixels (sun glints, neon, fire). Cost scales with nBloomScale."sv,
+		std::addressof(lsPatchesHighResBloom),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -180,7 +279,7 @@ namespace Addictol
 		"bDpiScaling"sv,
 		SettingDisplayCategory::kInterface,
 		true,
-		"Marks the process as DPI-aware so menus and cursor track correctly on high-DPI desktops."sv,
+		std::addressof(lsPatchesDpiScaling),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -189,7 +288,7 @@ namespace Addictol
 		"bSaveCompression"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves."sv,
+		std::addressof(lsPatchesSaveCompression),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -198,7 +297,7 @@ namespace Addictol
 		"bAudioSwitch"sv,
 		SettingDisplayCategory::kAudio,
 		true,
-		"Allows seamless audio device switching for XAudio 2.7. Automatically switches to a newly selected default audio device."sv,
+		std::addressof(lsPatchesAudioSwitch),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -207,7 +306,7 @@ namespace Addictol
 		"bHighResLocalMaps"sv,
 		SettingDisplayCategory::kVisuals,
 		false,
-		"Raises the Local Maps resolution, scales with fLocalMapScaleFactor. Affects the Companion app as well, can increase performance & VRAM cost."sv,
+		std::addressof(lsPatchesHighResLocalMaps),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -216,9 +315,7 @@ namespace Addictol
 		"bRefExtended"sv,
 		SettingDisplayCategory::kStability,
 		false,
-		"[Experimental] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8."
-		" For a large LO so you can play for more than 2 hours. Enable only if \"OUT OF HANDLE ARRAY ENTRIES.\" is triggered. Use at your own risk!"
-		" Mass change of the entire .exe, more than 15 thousand changes."sv,
+		std::addressof(lsPatchesRefExtended),
 		SettingApplyTiming::kNextLaunch
 	};
 }

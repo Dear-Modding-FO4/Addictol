@@ -4,12 +4,313 @@ namespace Addictol
 {
 	using namespace std::literals;
 
+	dmui::localize::LocalizeString lsFixesGreyMovie(
+		"$Setting_FixesGreyMovie",
+		"Fixes a bug where movies that don't define \"BackgroundAlpha\" on their movie root could load with a grey background."
+	);
+	dmui::localize::LocalizeString lsFixesPackageAllocateLocation(
+		"$Setting_FixesPackageAllocateLocation",
+		"Fixes a crash when allocating the location for a package."
+	);
+	dmui::localize::LocalizeString lsFixesInitTints(
+		"$Setting_FixesInitTints",
+		"Removes a block when loading NPC tints from Fallout4.esm, as well as for NPCs with the IsChargenPresent flag set."
+	);
+	dmui::localize::LocalizeString lsFixesLODDistance(
+		"$Setting_FixesLODDistance",
+		"Fixes a loaded cell's distant object LOD briefly reappearing when a reference with distant LOD is enabled or built."
+	);
+	dmui::localize::LocalizeString lsFixesActorIsHostileToActor(
+		"$Setting_FixesActorIsHostileToActor",
+		"Fixes a crash when invoking Actor.IsHostileToActor with a none form."
+	);
+	dmui::localize::LocalizeString lsFixesBGSAIWorldLocationRefRadius(
+		"$Setting_FixesBGSAIWorldLocationRefRadius",
+		"Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null."
+	);
+	dmui::localize::LocalizeString lsFixesSafeExit(
+		"$Setting_FixesSafeExit",
+		"Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze."
+	);
+	dmui::localize::LocalizeString lsFixesUnalignedLoad(
+		"$Setting_FixesUnalignedLoad",
+		"Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory."
+	);
+	dmui::localize::LocalizeString lsFixesCellInit(
+		"$Setting_FixesCellInit",
+		"Fixes a crash where a form does not get converted to a form pointer on unloaded cells."
+	);
+	dmui::localize::LocalizeString lsFixesWorkbenchSwap(
+		"$Setting_FixesWorkbenchSwap",
+		"Fixes a crash when you are scrapping or swapping many inventory items in the workbench."
+	);
+	dmui::localize::LocalizeString lsFixesMaxStdIO(
+		"$Setting_FixesMaxStdIO",
+		"Sets the maximum stdio handles. -1 selects 512; the runtime cap is 2048 on OG and 8192 on NG/AE."
+	);
+	dmui::localize::LocalizeString lsFixesMovementPlanner(
+		"$Setting_FixesMovementPlanner",
+		"Fixes a bug where the Movement Planner crashes with non-actors."
+	);
+	dmui::localize::LocalizeString lsFixesCompanionStrayBullet(
+		"$Setting_FixesCompanionStrayBullet",
+		"Stops companions/teammates from shooting the player during and shortly after combat (re-equips their weapons on combat exit)."
+	);
+	dmui::localize::LocalizeString lsFixesEscapeFreeze(
+		"$Setting_FixesEscapeFreeze",
+		"Fixes a combat freeze (deadlock) in perk condition checks by evaluating them without the global condition lock."
+	);
+	dmui::localize::LocalizeString lsFixesIOChacher(
+		"$Setting_FixesIOChacher",
+		"Use disk cache for IO for less disk activity."
+	);
+	dmui::localize::LocalizeString lsCosaveIO(
+		"$CosaveIO",
+		"Buffers F4SE co-save reads into memory so loading a save issues one read instead of thousands of syscalls."
+	);
+	dmui::localize::LocalizeString lsFixesTESObjectREFRGetEncounterZone(
+		"$Setting_FixesTESObjectREFRGetEncounterZone",
+		"Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized."
+	);
+	dmui::localize::LocalizeString lsPatchesPipBoyLightInv(
+		"$PatchesPipBoyLightInv",
+		"Fixes a crash when you have the PipBoy light on and are checking the inventory."
+	);
+	dmui::localize::LocalizeString lsFixesInteriorNavCut(
+		"$Setting_FixesInteriorNavCut",
+		"Fixes the engine bug that causes Workshop Navmesh cuts to persist throughout all interior cells."
+	);
+	dmui::localize::LocalizeString lsFixesMagicEffectApplyEvent(
+		"$Setting_FixesMagicEffectApplyEvent",
+		"Fixes a crash when Magic Effect Apply events are dispatched on null references."
+	);
+	dmui::localize::LocalizeString lsFixesMagicEffectConditions(
+		"$Setting_FixesMagicEffectConditions",
+		"Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions."
+	);
+	dmui::localize::LocalizeString lsFixesEncounterZoneReset(
+		"$Setting_FixesEncounterZoneReset",
+		"Fixes encounter zones resetting immediately once you leave them on foot."
+	);
+	dmui::localize::LocalizeString lsLeveledListCrash(
+		"$LeveledListCrash",
+		"Prevents an issue where leveled lists can have over 255 entries, which will cause them to crash the game when they are resolved."
+	);
+	dmui::localize::LocalizeString lsFixesBakaMaxPapyrusOps(
+		"$Setting_FixesBakaMaxPapyrusOps",
+		"Fixes Script Page Allocation and the Toggle Scripts Command, adjusts the maximum papyrus operations per frame via nMaxPapyrusOpsPerFrame."
+	);
+	dmui::localize::LocalizeString lsFixesPapyrusGCBug(
+		"$Setting_FixesPapyrusGCBug",
+		"Fixes a critical bug in garbage collection that causes premature loop termination, preventing incremental GC starvation and \"Long Save Bug\"."
+	);
+	dmui::localize::LocalizeString lsFixesCreateD3DAndSwapchain(
+		"$Setting_FixesCreateD3DAndSwapchain",
+		"Fixes a crash on startup when enumerating certain monitor display modes."
+	);
+	dmui::localize::LocalizeString lsFixesCheckInternetAccess(
+		"$Setting_FixesCheckInternetAccess",
+		"Eliminates memory leaks if you have lost internet access."
+	);
+	dmui::localize::LocalizeString lsFixesStolenPowerArmorOwnership(
+		"$Setting_FixesStolenPowerArmorOwnership",
+		"Fixes an issue where the Player is never given proper ownership of stolen Power Armor Frames."
+	);
+	dmui::localize::LocalizeString lsFixesManyItems(
+		"$Setting_FixesManyItems",
+		"Fixes the Item Stack Limit, allowing you to add / drop more than 32767 items (stacked generation), similar to the Add/Drop7FFFPatch mods."
+	);
+	dmui::localize::LocalizeString lsFixesCombatMusic(
+		"$Setting_FixesCombatMusic",
+		"Fixes an issue where combat music can continue to loop when combat ends or when you load a save."
+	);
+	dmui::localize::LocalizeString lsFixesWorkbenchSound(
+		"$Setting_FixesWorkbenchSound",
+		"Fixes an issue where workbench sound effects loop infinitely on actors. This is commonly referred to as the \"Sewing Machine Sound Bug\"."
+	);
+	dmui::localize::LocalizeString lsFixesActorCauseSaveBloat(
+		"$Setting_FixesActorCauseSaveBloat",
+		"Removes unused ActorCause data from projectiles when a cell is unloaded to reduce save size."
+	);
+	dmui::localize::LocalizeString lsFixesAnimSignedCrash(
+		"$Setting_FixesAnimSignedCrash",
+		"Fixes a CTD when loading animations with high-bit-set 16-bit event IDs."
+	);
+	dmui::localize::LocalizeString lsFixesBethesdaNetCrash(
+		"$Setting_FixesBethesdaNetCrash",
+		"Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters."
+	);
+	dmui::localize::LocalizeString lsFixesUtilityShader(
+		"$Setting_FixesUtilityShader",
+		"Fixes a crash when a shader can't be found for a given technique id."
+	);
+	dmui::localize::LocalizeString lsFixesPipBoyCursorConstraints(
+		"$Setting_FixesPipBoyCursorConstraints",
+		"Automatically sets PipBoy Cursor Constraints based on PipBoy resolution for controllers."
+	);
+	dmui::localize::LocalizeString lsFixesMuzzleFlashLight(
+		"$Setting_FixesMuzzleFlashLight",
+		"Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends."
+	);
+	dmui::localize::LocalizeString lsFixesAltTabFullscreen(
+		"$Setting_FixesAltTabFullscreen",
+		"Forces exclusive-fullscreen swap chains to windowed at creation to avoid Alt-Tab hangs."
+	);
+	dmui::localize::LocalizeString lsFixesPowerGridScrap(
+		"$Setting_FixesPowerGridScrap",
+		"Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references."
+	);
+	dmui::localize::LocalizeString lsFixesViewmodelShading(
+		"$Setting_FixesViewmodelShading",
+		"Fixes wrong specular lighting on the first-person viewmodel caused by the eye-position vector missing the engine's per-frame light offset."
+	);
+	dmui::localize::LocalizeString lsFixesDofFix(
+		"$Setting_FixesDofFix",
+		"Fixes the first-person viewmodel getting blurred by depth-of-field (iron-sight ADS, dialogue camera) by re-rasterizing it after the DoF pass."
+	);
+	dmui::localize::LocalizeString lsFixesToggleGrassCommand(
+		"$Setting_FixesToggleGrassCommand",
+		"Fixes the \"ToggleGrass\" / \"tg\" command being a reference function in the AE versions of the game."
+	);
+	dmui::localize::LocalizeString lsFixesTextureLoadCrash(
+		"$Setting_FixesTextureLoadCrash",
+		"Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors."
+	);
+	dmui::localize::LocalizeString lsFixesTextureCreateCrash(
+		"$Setting_FixesTextureCreateCrash",
+		"Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4."
+	);
+	dmui::localize::LocalizeString lsFixesFullPrecisionDecals(
+		"$Setting_FixesFullPrecisionDecals",
+		"Enables fixes for decal projection and effect-shader particles on full-precision meshes."
+	);
+	dmui::localize::LocalizeString lsFixesShaderReferenceEffectLifetime(
+		"$Setting_FixesShaderReferenceEffectLifetime",
+		"Prevents crashes when an actor with an active effect shader unloads by detaching the shader when its magic effect is destroyed."
+	);
+	dmui::localize::LocalizeString lsFixesMagicKeywordCrash(
+		"$Setting_FixesMagicKeywordCrash",
+		"Fixes a crash when a magic effect item has no effect setting."
+	);
+	dmui::localize::LocalizeString lsFixesEffectEnvMapCrash(
+		"$Setting_FixesEffectEnvMapCrash",
+		"Fixes a crash when an effect shader material has environment mapping enabled but no environment texture."
+	);
+	dmui::localize::LocalizeString lsFixesCreatedRefBaseCrash(
+		"$Setting_FixesCreatedRefBaseCrash",
+		"Fixes a crash while loading a save when a created reference has lost its base object."
+	);
+	dmui::localize::LocalizeString lsFixesAttachLightCrash(
+		"$Setting_FixesAttachLightCrash",
+		"Fixes a crash when a light hit effect has no attach root."
+	);
+	dmui::localize::LocalizeString lsFixesDownwardAiming(
+		"$Setting_FixesDownwardAiming",
+		"Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge."
+	);
+	dmui::localize::LocalizeString lsFixesThirdPersonSpeedMult(
+		"$Setting_FixesThirdPersonSpeedMult",
+		"Makes the player's SpeedMult actor value affect third-person sprint and sneak speeds, matching first person."
+	);
+	dmui::localize::LocalizeString lsFixesSprintStutter(
+		"$Setting_FixesSprintStutter",
+		"Removes the first-person sprint camera micro-stutter by raising the position-delta snap threshold."
+	);
+	dmui::localize::LocalizeString lsFixesMoonRotation(
+		"$Setting_FixesMoonRotation",
+		"Corrects the lunar disc orientation during moon initialization."
+	);
+	dmui::localize::LocalizeString lsCrashRemoveRefFix(
+		"$CrashRemoveRefFix",
+		"Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR."
+	);
+	dmui::localize::LocalizeString lsClimateLoad(
+		"$ClimateLoad",
+		"Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior."
+	);
+	dmui::localize::LocalizeString lsFixesMusicOverlap(
+		"$Setting_FixesMusicOverlap",
+		"Fixes a bug where multiple music tracks are playing at the same time."
+	);
+	dmui::localize::LocalizeString lsFixesPuddleCubemaps(
+		"$Setting_FixesPuddleCubemaps",
+		"Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections)."
+	);
+	dmui::localize::LocalizeString lsFixesStringPoolRelease(
+		"$Setting_FixesStringPoolRelease",
+		"An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude)."
+	);
+	dmui::localize::LocalizeString lsFixesLoadOrder(
+		"$Setting_FixesLoadOrder",
+		"Fixes multiple AE Load Order issues when the Creations Platform is enabled, including plugins being disabled or moved, inability to toggle some plugins in-game, and a freeze while loading."
+	);
+	dmui::localize::LocalizeString lsFixesHUDMessageQueue(
+		"$Setting_FixesHUDMessageQueue",
+		"Fixes a crash related to queued HUD messages on NG & AE."
+	);
+	dmui::localize::LocalizeString lsFixesWaterJetpackFix(
+		"$Setting_FixesWaterJetpackFix",
+		"Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again."
+	);
+	dmui::localize::LocalizeString lsFixesCraftingMenuFix(
+		"$Setting_FixesCraftingMenuFix",
+		"Reduces the lag when browsing mod slots in the weapon/armor crafting menu. The menu stops walking the whole COBJ/OMOD form arrays on every slot switch."
+	);
+	dmui::localize::LocalizeString lsFixesAIProcess3DUpdateFlag(
+		"$Setting_FixesAIProcess3DUpdateFlag",
+		"Fixes a bug where there is no check for nullptr when AI for a character is disabled."
+	);
+	dmui::localize::LocalizeString lsFixesNPCHealthOverflowFix(
+		"$Setting_FixesNPCHealthOverflowFix",
+		"Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly."
+	);
+	dmui::localize::LocalizeString lsFixesArmorPenetration(
+		"$Setting_FixesArmorPenetration",
+		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."
+	);
+	dmui::localize::LocalizeString lsFixesLocalMapRotation(
+		"$Setting_FixesLocalMapRotation",
+		"Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be."
+	);
+	dmui::localize::LocalizeString lsFixesNeverFadesSpotlight(
+		"$Setting_FixesNeverFadesSpotlight",
+		"Fixes shadow-casting spotlights marked Never Fades being culled instead of skipping the distance check."
+	);
+	dmui::localize::LocalizeString lsFixesLightOrder(
+		"$Setting_FixesLightOrder",
+		"Fixes previs discarding object light lists, which left glass and other objects lit only by the sun."
+	);
+	dmui::localize::LocalizeString lsFixesLightPriority(
+		"$Setting_FixesLightPriority",
+		"Fixes objects lit by more than four lights receiving the four weakest instead of the four strongest."
+	);
+	dmui::localize::LocalizeString lsFixesRadioSilence(
+		"$Setting_FixesRadioSilence",
+		"[EXPERIMENTAL] Fixes an issue where Radio Signals can go silent after some time."
+	);
+	dmui::localize::LocalizeString lsFixesQuestLogBloat(
+		"$Setting_FixesQuestLogBloat",
+		"Prevents repeatable quest stages from appending duplicate quest log nodes and deduplicates bloated quest logs on save load."
+	);
+	dmui::localize::LocalizeString lsFixesCustomScale(
+		"$Setting_FixesCustomScale",
+		"Fixes ADS issues that occur when the player scale is changed."
+	);
+	dmui::localize::LocalizeString lsFixesArchiveStreamClose(
+		"$Setting_FixesArchiveStreamClose",
+		"Waits for in-flight BA2 streamer reads to finish before closing compressed archive streams, preventing heap corruption."
+	);
+	dmui::localize::LocalizeString lsFixesPapyrusLeaks(
+		"$Setting_FixesPapyrusLeaks",
+		"Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load."
+	);
+
 	BoolSetting bFixesGreyMovie{
 		"Fixes"sv,
 		"bGreyMovie"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes a bug where movies that don't define \"BackgroundAlpha\" on their movie root could load with a grey background."sv,
+		std::addressof(lsFixesGreyMovie),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -18,7 +319,7 @@ namespace Addictol
 		"bPackageAllocateLocation"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when allocating the location for a package."sv,
+		std::addressof(lsFixesPackageAllocateLocation),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -27,7 +328,7 @@ namespace Addictol
 		"bInitTints"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Removes a block when loading NPC tints from Fallout4.esm, as well as for NPCs with the IsChargenPresent flag set."sv,
+		std::addressof(lsFixesInitTints),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -36,7 +337,7 @@ namespace Addictol
 		"bLODDistance"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Fixes a loaded cell's distant object LOD briefly reappearing when a reference with distant LOD is enabled or built."sv,
+		std::addressof(lsFixesLODDistance),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -45,7 +346,7 @@ namespace Addictol
 		"bActorIsHostileToActor"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when invoking Actor.IsHostileToActor with a none form."sv,
+		std::addressof(lsFixesActorIsHostileToActor),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -54,7 +355,7 @@ namespace Addictol
 		"bBGSAIWorldLocationRefRadius"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null."sv,
+		std::addressof(lsFixesBGSAIWorldLocationRefRadius),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -63,7 +364,7 @@ namespace Addictol
 		"bSafeExit"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze."sv,
+		std::addressof(lsFixesSafeExit),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -72,7 +373,7 @@ namespace Addictol
 		"bUnalignedLoad"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory."sv,
+		std::addressof(lsFixesUnalignedLoad),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -81,7 +382,7 @@ namespace Addictol
 		"bCellInit"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash where a form does not get converted to a form pointer on unloaded cells."sv,
+		std::addressof(lsFixesCellInit),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -90,7 +391,7 @@ namespace Addictol
 		"bWorkbenchSwap"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when you are scrapping or swapping many inventory items in the workbench."sv,
+		std::addressof(lsFixesWorkbenchSwap),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -99,7 +400,7 @@ namespace Addictol
 		"nMaxStdIO"sv,
 		SettingDisplayCategory::kPerformance,
 		-1,
-		"Sets the maximum stdio handles. -1 selects 512; the runtime cap is 2048 on OG and 8192 on NG/AE."sv,
+		std::addressof(lsFixesMaxStdIO),
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ std::nullopt, 8192.0 }
 	};
@@ -109,7 +410,7 @@ namespace Addictol
 		"bMovementPlanner"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a bug where the Movement Planner crashes with non-actors."sv,
+		std::addressof(lsFixesMovementPlanner),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -118,7 +419,7 @@ namespace Addictol
 		"bCompanionStrayBullet"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Stops companions/teammates from shooting the player during and shortly after combat (re-equips their weapons on combat exit)."sv,
+		std::addressof(lsFixesCompanionStrayBullet),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -127,7 +428,7 @@ namespace Addictol
 		"bEscapeFreeze"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a combat freeze (deadlock) in perk condition checks by evaluating them without the global condition lock."sv,
+		std::addressof(lsFixesEscapeFreeze),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -136,7 +437,7 @@ namespace Addictol
 		"bIOCacher"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Use disk cache for IO for less disk activity."sv,
+		std::addressof(lsFixesIOChacher),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -145,7 +446,7 @@ namespace Addictol
 		"bCosaveIO"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Buffers F4SE co-save reads into memory so loading a save issues one read instead of thousands of syscalls."sv,
+		std::addressof(lsCosaveIO),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -154,7 +455,7 @@ namespace Addictol
 		"bTESObjectREFRGetEncounterZone"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized."sv,
+		std::addressof(lsFixesTESObjectREFRGetEncounterZone),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -163,7 +464,7 @@ namespace Addictol
 		"bPipBoyLightInv"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when you have the PipBoy light on and are checking the inventory."sv,
+		std::addressof(lsPatchesPipBoyLightInv),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -172,7 +473,7 @@ namespace Addictol
 		"bInteriorNavCut"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes the engine bug that causes Workshop Navmesh cuts to persist throughout all interior cells."sv,
+		std::addressof(lsFixesInteriorNavCut),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -181,7 +482,7 @@ namespace Addictol
 		"bMagicEffectApplyEvent"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when Magic Effect Apply events are dispatched on null references."sv,
+		std::addressof(lsFixesMagicEffectApplyEvent),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -190,7 +491,7 @@ namespace Addictol
 		"bMagicEffectConditions"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions."sv,
+		std::addressof(lsFixesMagicEffectConditions),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -199,7 +500,7 @@ namespace Addictol
 		"bEncounterZoneReset"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes encounter zones resetting immediately once you leave them on foot."sv,
+		std::addressof(lsFixesEncounterZoneReset),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -208,7 +509,7 @@ namespace Addictol
 		"bLeveledListCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Prevents an issue where leveled lists can have over 255 entries, which will cause them to crash the game when they are resolved."sv,
+		std::addressof(lsLeveledListCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -217,7 +518,7 @@ namespace Addictol
 		"bBakaMaxPapyrusOps"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Fixes Script Page Allocation and the Toggle Scripts Command, adjusts the maximum papyrus operations per frame via nMaxPapyrusOpsPerFrame."sv,
+		std::addressof(lsFixesBakaMaxPapyrusOps),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -226,7 +527,7 @@ namespace Addictol
 		"bPapyrusGCBug"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a critical bug in garbage collection that causes premature loop termination, preventing incremental GC starvation and \"Long Save Bug\"."sv,
+		std::addressof(lsFixesPapyrusGCBug),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -235,7 +536,7 @@ namespace Addictol
 		"bCreateD3DAndSwapchain"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash on startup when enumerating certain monitor display modes."sv,
+		std::addressof(lsFixesCreateD3DAndSwapchain),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -244,7 +545,7 @@ namespace Addictol
 		"bCheckInternetAccess"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Eliminates memory leaks if you have lost internet access."sv,
+		std::addressof(lsFixesCheckInternetAccess),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -253,7 +554,7 @@ namespace Addictol
 		"bStolenPowerArmorOwnership"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes an issue where the Player is never given proper ownership of stolen Power Armor Frames."sv,
+		std::addressof(lsFixesStolenPowerArmorOwnership),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -262,7 +563,7 @@ namespace Addictol
 		"bManyItems"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes the Item Stack Limit, allowing you to add / drop more than 32767 items (stacked generation), similar to the Add/Drop7FFFPatch mods."sv,
+		std::addressof(lsFixesManyItems),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -271,7 +572,7 @@ namespace Addictol
 		"bCombatMusic"sv,
 		SettingDisplayCategory::kAudio,
 		true,
-		"Fixes an issue where combat music can continue to loop when combat ends or when you load a save."sv,
+		std::addressof(lsFixesCombatMusic),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -280,7 +581,7 @@ namespace Addictol
 		"bWorkbenchSound"sv,
 		SettingDisplayCategory::kAudio,
 		true,
-		"Fixes an issue where workbench sound effects loop infinitely on actors. This is commonly referred to as the \"Sewing Machine Sound Bug\"."sv,
+		std::addressof(lsFixesWorkbenchSound),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -289,7 +590,7 @@ namespace Addictol
 		"bActorCauseSaveBloat"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Removes unused ActorCause data from projectiles when a cell is unloaded to reduce save size."sv,
+		std::addressof(lsFixesActorCauseSaveBloat),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -298,7 +599,7 @@ namespace Addictol
 		"bAnimSignedCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a CTD when loading animations with high-bit-set 16-bit event IDs."sv,
+		std::addressof(lsFixesAnimSignedCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -307,7 +608,7 @@ namespace Addictol
 		"bBethesdaNetCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters."sv,
+		std::addressof(lsFixesBethesdaNetCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -316,7 +617,7 @@ namespace Addictol
 		"bUtilityShader"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when a shader can't be found for a given technique id."sv,
+		std::addressof(lsFixesUtilityShader),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -325,7 +626,7 @@ namespace Addictol
 		"bPipBoyCursorConstraints"sv,
 		SettingDisplayCategory::kInterface,
 		true,
-		"Automatically sets PipBoy Cursor Constraints based on PipBoy resolution for controllers."sv,
+		std::addressof(lsFixesPipBoyCursorConstraints),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -334,7 +635,7 @@ namespace Addictol
 		"bMuzzleFlashLight"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends."sv,
+		std::addressof(lsFixesMuzzleFlashLight),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -343,7 +644,7 @@ namespace Addictol
 		"bAltTabFullscreen"sv,
 		SettingDisplayCategory::kInterface,
 		false,
-		"Forces exclusive-fullscreen swap chains to windowed at creation to avoid Alt-Tab hangs."sv,
+		std::addressof(lsFixesAltTabFullscreen),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -352,7 +653,7 @@ namespace Addictol
 		"bPowerGridScrap"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references."sv,
+		std::addressof(lsFixesPowerGridScrap),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -361,7 +662,7 @@ namespace Addictol
 		"bViewmodelShading"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes wrong specular lighting on the first-person viewmodel caused by the eye-position vector missing the engine's per-frame light offset."sv,
+		std::addressof(lsFixesViewmodelShading),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -370,7 +671,7 @@ namespace Addictol
 		"bDofFix"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes the first-person viewmodel getting blurred by depth-of-field (iron-sight ADS, dialogue camera) by re-rasterizing it after the DoF pass."sv,
+		std::addressof(lsFixesDofFix),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -379,7 +680,7 @@ namespace Addictol
 		"bToggleGrassCommand"sv,
 		SettingDisplayCategory::kInterface,
 		true,
-		"Fixes the \"ToggleGrass\" / \"tg\" command being a reference function in the AE versions of the game."sv,
+		std::addressof(lsFixesToggleGrassCommand),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -388,7 +689,7 @@ namespace Addictol
 		"bTextureLoadCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors."sv,
+		std::addressof(lsFixesTextureLoadCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -397,7 +698,7 @@ namespace Addictol
 		"bTextureCreateCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4."sv,
+		std::addressof(lsFixesTextureCreateCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -406,7 +707,7 @@ namespace Addictol
 		"bFullPrecisionDecals"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Enables fixes for decal projection and effect-shader particles on full-precision meshes."sv,
+		std::addressof(lsFixesFullPrecisionDecals),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -415,7 +716,7 @@ namespace Addictol
 		"bShaderReferenceEffectLifetime"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Prevents crashes when an actor with an active effect shader unloads by detaching the shader when its magic effect is destroyed."sv,
+		std::addressof(lsFixesShaderReferenceEffectLifetime),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -424,7 +725,7 @@ namespace Addictol
 		"bMagicKeywordCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when a magic effect item has no effect setting."sv,
+		std::addressof(lsFixesMagicKeywordCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -433,7 +734,7 @@ namespace Addictol
 		"bEffectEnvMapCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when an effect shader material has environment mapping enabled but no environment texture."sv,
+		std::addressof(lsFixesEffectEnvMapCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -442,7 +743,7 @@ namespace Addictol
 		"bCreatedRefBaseCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash while loading a save when a created reference has lost its base object."sv,
+		std::addressof(lsFixesCreatedRefBaseCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -451,7 +752,7 @@ namespace Addictol
 		"bAttachLightCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash when a light hit effect has no attach root."sv,
+		std::addressof(lsFixesAttachLightCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -460,7 +761,7 @@ namespace Addictol
 		"bDownwardAiming"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge."sv,
+		std::addressof(lsFixesDownwardAiming),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -469,7 +770,7 @@ namespace Addictol
 		"bThirdPersonSpeedMult"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Makes the player's SpeedMult actor value affect third-person sprint and sneak speeds, matching first person."sv,
+		std::addressof(lsFixesThirdPersonSpeedMult),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -478,7 +779,7 @@ namespace Addictol
 		"bSprintStutter"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Removes the first-person sprint camera micro-stutter by raising the position-delta snap threshold."sv,
+		std::addressof(lsFixesSprintStutter),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -487,7 +788,7 @@ namespace Addictol
 		"bMoonRotation"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Corrects the lunar disc orientation during moon initialization."sv,
+		std::addressof(lsFixesMoonRotation),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -496,7 +797,7 @@ namespace Addictol
 		"bCrashRemoveRefFix"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR."sv,
+		std::addressof(lsCrashRemoveRefFix),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -505,7 +806,7 @@ namespace Addictol
 		"bClimateLoad"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior."sv,
+		std::addressof(lsClimateLoad),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -514,7 +815,7 @@ namespace Addictol
 		"bMusicOverlap"sv,
 		SettingDisplayCategory::kAudio,
 		true,
-		"Fixes a bug where multiple music tracks are playing at the same time."sv,
+		std::addressof(lsFixesMusicOverlap),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -523,7 +824,7 @@ namespace Addictol
 		"bPuddleCubemaps"sv,
 		SettingDisplayCategory::kVisuals,
 		false,
-		"Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections)."sv,
+		std::addressof(lsFixesPuddleCubemaps),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -532,7 +833,7 @@ namespace Addictol
 		"bStringPoolRelease"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude)."sv,
+		std::addressof(lsFixesStringPoolRelease),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -541,7 +842,7 @@ namespace Addictol
 		"bLoadOrder"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes multiple AE Load Order issues when the Creations Platform is enabled, including plugins being disabled or moved, inability to toggle some plugins in-game, and a freeze while loading."sv,
+		std::addressof(lsFixesLoadOrder),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -550,7 +851,7 @@ namespace Addictol
 		"bHUDMessageQueue"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a crash related to queued HUD messages on NG & AE."sv,
+		std::addressof(lsFixesHUDMessageQueue),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -559,7 +860,7 @@ namespace Addictol
 		"bWaterJetpackFix"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again."sv,
+		std::addressof(lsFixesWaterJetpackFix),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -568,7 +869,7 @@ namespace Addictol
 		"bCraftingMenuFix"sv,
 		SettingDisplayCategory::kInterface,
 		true,
-		"Reduces the lag when browsing mod slots in the weapon/armor crafting menu. The menu stops walking the whole COBJ/OMOD form arrays on every slot switch."sv,
+		std::addressof(lsFixesCraftingMenuFix),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -577,7 +878,7 @@ namespace Addictol
 		"bAIProcess3DUpdateFlag"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Fixes a bug where there is no check for nullptr when AI for a character is disabled."sv,
+		std::addressof(lsFixesAIProcess3DUpdateFlag),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -586,7 +887,7 @@ namespace Addictol
 		"bNPCHealthOverflowFix"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly."sv,
+		std::addressof(lsFixesNPCHealthOverflowFix),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -595,7 +896,7 @@ namespace Addictol
 		"bFixesArmorPenetration"sv,
 		SettingDisplayCategory::kGameplay,
 		false,
-		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."sv,
+		std::addressof(lsFixesArmorPenetration),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -604,7 +905,7 @@ namespace Addictol
 		"bFixesLocalMapRotation"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be."sv,
+		std::addressof(lsFixesLocalMapRotation),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -613,7 +914,7 @@ namespace Addictol
 		"bNeverFadesSpotlight"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes shadow-casting spotlights marked Never Fades being culled instead of skipping the distance check."sv,
+		std::addressof(lsFixesNeverFadesSpotlight),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -622,7 +923,7 @@ namespace Addictol
 		"bLightOrder"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes previs discarding object light lists, which left glass and other objects lit only by the sun."sv,
+		std::addressof(lsFixesLightOrder),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -631,7 +932,7 @@ namespace Addictol
 		"bLightPriority"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes objects lit by more than four lights receiving the four weakest instead of the four strongest."sv,
+		std::addressof(lsFixesLightPriority),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -640,7 +941,7 @@ namespace Addictol
 		"bFixesRadioSilence"sv,
 		SettingDisplayCategory::kGameplay,
 		false,
-		"[EXPERIMENTAL] Fixes an issue where Radio Signals can go silent after some time."sv,
+		std::addressof(lsFixesRadioSilence),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -649,7 +950,7 @@ namespace Addictol
 		"bQuestLogBloat"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		"Prevents repeatable quest stages from appending duplicate quest log nodes and deduplicates bloated quest logs on save load."sv,
+		std::addressof(lsFixesQuestLogBloat),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -658,7 +959,7 @@ namespace Addictol
 		"bCustomScale"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fixes ADS issues that occur when the player scale is changed."sv,
+		std::addressof(lsFixesCustomScale),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -667,7 +968,7 @@ namespace Addictol
 		"bArchiveStreamClose"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Waits for in-flight BA2 streamer reads to finish before closing compressed archive streams, preventing heap corruption."sv,
+		std::addressof(lsFixesArchiveStreamClose),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -676,7 +977,7 @@ namespace Addictol
 		"bPapyrusLeaks"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		"Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load."sv,
+		std::addressof(lsFixesPapyrusLeaks),
 		SettingApplyTiming::kNextLaunch
 	};
 }

@@ -5,12 +5,77 @@ namespace Addictol
 {
 	using namespace std::literals;
 
+	dmui::localize::LocalizeString lsAdditionalDbgFacegenOutput(
+		"$Setting_AdditionalDbgFacegenOutput",
+		"Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen)."
+	);
+	dmui::localize::LocalizeString lsAdditionalUseNewRedistributable(
+		"$Setting_AdditionalUseNewRedistributable",
+		"Redirects OG's imported memory routines to Addictol's CRT; memory faults may be attributed to Addictol (needs bMemoryManager)."
+	);
+	dmui::localize::LocalizeString lsAdditionalAllocator(
+		"$Setting_AdditionalAllocator",
+		"Selects the allocator backend: stock (the game's own allocators), voltek, mimalloc, or rpmalloc."
+	);
+	dmui::localize::LocalizeString lsAdditionalZlibBackend(
+		"$Setting_AdditionalZlibBackend",
+		"Selects the zlib decompression backend: stock, zlib, zlib-ng, isa-l, hybrid-zlib-ng, or hybrid-isa-l. Hybrid modes try libdeflate first when a stream fits in one call (needs bLibDeflate)."
+	);
+	dmui::localize::LocalizeString lsAdditionalLogLevel(
+		"$Setting_AdditionalLogLevel",
+		"Sets the runtime log level: trace, debug, info, warn, error, critical, or off."
+	);
+	dmui::localize::LocalizeString lsAdditionalLogFlushLevel(
+		"$Setting_AdditionalLogFlushLevel",
+		"Flushes the log after messages at this level or higher: trace, debug, info, warn, error, critical, or off."
+	);
+	dmui::localize::LocalizeString lsAdditionalScaleformPageSize(
+		"$Setting_AdditionalScaleformPageSize",
+		"The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), rounded down to a power of 2 (needs bScaleformAllocator)."
+	);
+	dmui::localize::LocalizeString lsAdditionalScaleformHeapSize(
+		"$Setting_AdditionalScaleformHeapSize",
+		"The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (needs bScaleformAllocator)."
+	);
+	dmui::localize::LocalizeString lsAdditionalFullPrecisionDecalsEffectShaders(
+		"$Setting_AdditionalFullPrecisionDecalsEffectShaders",
+		"Fixes effect-shader particles on full-precision meshes (needs bFullPrecisionDecals)."
+	);
+	dmui::localize::LocalizeString lsAdditionalMaxPapyrusOpsPerFrame(
+		"$Setting_AdditionalMaxPapyrusOpsPerFrame",
+		"Maximum papyrus operations per frame. Higher number means better script performance on average."
+	);
+	dmui::localize::LocalizeString lsAdditionalBloomScale(
+		"$Setting_AdditionalBloomScale",
+		"Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth."
+	);
+	dmui::localize::LocalizeString lsAdditionalIgnoreCompatibilityChecks(
+		"$Setting_AdditionalIgnoreCompatibilityChecks",
+		"Ignore Mod Compatibility Checks."
+	);
+	dmui::localize::LocalizeString lsAdditionalLocalMapScaleFactor(
+		"$Setting_AdditionalLocalMapScaleFactor",
+		"Local Map Scale Factor (needs bHighResLocalMaps)."
+	);
+	dmui::localize::LocalizeString lsAdditionalMenuRefreshMs(
+		"$Setting_AdditionalMenuRefreshMs",
+		"How often an open Addictol tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000."
+	);
+	dmui::localize::LocalizeString lsAdditionalUseCameraOverrideScale(
+		"$Setting_AdditionalUseCameraOverrideScale",
+		"Fix the screen issue when using Terminals (needs bCustomScale)."
+	);
+	dmui::localize::LocalizeString lsAdditionalUseCustomFurniturePosition(
+		"$Setting_AdditionalUseCustomFurniturePosition",
+		"Change the position of the actor based on the scale of the actor when using furnitures (needs bCustomScale)."
+	);
+
 	BoolSetting bAdditionalDbgFacegenOutput{
 		"Additional"sv,
 		"bDbgFacegenOutput"sv,
 		SettingDisplayCategory::kDiagnostics,
 		false,
-		"Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen)."sv,
+		std::addressof(lsAdditionalDbgFacegenOutput),
 		SettingApplyTiming::kImmediate
 	};
 
@@ -19,7 +84,7 @@ namespace Addictol
 		"bUseNewRedistributable"sv,
 		SettingDisplayCategory::kStability,
 		false,
-		"Redirects OG's imported memory routines to Addictol's CRT; memory faults may be attributed to Addictol (needs bMemoryManager)."sv,
+		std::addressof(lsAdditionalUseNewRedistributable),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -28,7 +93,7 @@ namespace Addictol
 		"sAllocator"sv,
 		SettingDisplayCategory::kPerformance,
 		"voltek",
-		"Selects the allocator backend: stock (the game's own allocators), voltek, mimalloc, or rpmalloc."sv,
+		std::addressof(lsAdditionalAllocator),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -37,7 +102,7 @@ namespace Addictol
 		"sZlibBackend"sv,
 		SettingDisplayCategory::kPerformance,
 		std::string{ ZlibBackendKindName(DEFAULT_ZLIB_BACKEND) },
-		"Selects the zlib decompression backend: stock, zlib, zlib-ng, isa-l, hybrid-zlib-ng, or hybrid-isa-l. Hybrid modes try libdeflate first when a stream fits in one call (needs bLibDeflate)."sv,
+		std::addressof(lsAdditionalZlibBackend),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -46,7 +111,7 @@ namespace Addictol
 		"sLogLevel"sv,
 		SettingDisplayCategory::kDiagnostics,
 		"info",
-		"Sets the runtime log level: trace, debug, info, warn, error, critical, or off."sv,
+		std::addressof(lsAdditionalLogLevel),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -55,7 +120,7 @@ namespace Addictol
 		"sLogFlushLevel"sv,
 		SettingDisplayCategory::kDiagnostics,
 		"info",
-		"Flushes the log after messages at this level or higher: trace, debug, info, warn, error, critical, or off."sv,
+		std::addressof(lsAdditionalLogFlushLevel),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -64,7 +129,7 @@ namespace Addictol
 		"uScaleformPageSize"sv,
 		SettingDisplayCategory::kPerformance,
 		64ul,
-		"The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), rounded down to a power of 2 (needs bScaleformAllocator)."sv,
+		std::addressof(lsAdditionalScaleformPageSize),
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ 64.0, 2048.0 }
 	};
@@ -74,7 +139,7 @@ namespace Addictol
 		"uScaleformHeapSize"sv,
 		SettingDisplayCategory::kPerformance,
 		2048ul,
-		"The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (needs bScaleformAllocator)."sv,
+		std::addressof(lsAdditionalScaleformHeapSize),
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ 2048.0, 8192.0 }
 	};
@@ -84,7 +149,7 @@ namespace Addictol
 		"bFullPrecisionDecalsEffectShaders"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		"Fixes effect-shader particles on full-precision meshes (needs bFullPrecisionDecals)."sv,
+		std::addressof(lsAdditionalFullPrecisionDecalsEffectShaders),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -93,7 +158,7 @@ namespace Addictol
 		"nMaxPapyrusOpsPerFrame"sv,
 		SettingDisplayCategory::kPerformance,
 		500,
-		"Maximum papyrus operations per frame. Higher number means better script performance on average."sv,
+		std::addressof(lsAdditionalMaxPapyrusOpsPerFrame),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -102,7 +167,7 @@ namespace Addictol
 		"nBloomScale"sv,
 		SettingDisplayCategory::kVisuals,
 		2,
-		"Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth."sv,
+		std::addressof(lsAdditionalBloomScale),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -111,7 +176,7 @@ namespace Addictol
 		"bIgnoreCompatibilityChecks"sv,
 		SettingDisplayCategory::kDiagnostics,
 		false,
-		"Ignore Mod Compatibility Checks."sv,
+		std::addressof(lsAdditionalIgnoreCompatibilityChecks),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -120,7 +185,7 @@ namespace Addictol
 		"fLocalMapScaleFactor"sv,
 		SettingDisplayCategory::kVisuals,
 		1.5f,
-		"Local Map Scale Factor (needs bHighResLocalMaps)."sv,
+		std::addressof(lsAdditionalLocalMapScaleFactor),
 		SettingApplyTiming::kImmediate
 	};
 
@@ -129,7 +194,7 @@ namespace Addictol
 		"uMenuRefreshMs"sv,
 		SettingDisplayCategory::kInterface,
 		250,
-		"How often an open Addictol tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000."sv,
+		std::addressof(lsAdditionalMenuRefreshMs),
 		SettingApplyTiming::kNextLaunch,
 		SettingNumericRange{ 100.0, 2000.0 }
 	};
@@ -139,7 +204,7 @@ namespace Addictol
 		"bUseCameraOverrideScaleFix"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Fix the screen issue when using Terminals (needs bCustomScale)."sv,
+		std::addressof(lsAdditionalUseCameraOverrideScale),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -148,7 +213,7 @@ namespace Addictol
 		"bUseCustomFurniturePosition"sv,
 		SettingDisplayCategory::kGameplay,
 		true,
-		"Change the position of the actor based on the scale of the actor when using furnitures (needs bCustomScale)."sv,
+		std::addressof(lsAdditionalUseCustomFurniturePosition),
 		SettingApplyTiming::kNextLaunch
 	};
 }

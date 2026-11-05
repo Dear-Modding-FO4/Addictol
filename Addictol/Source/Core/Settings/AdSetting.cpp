@@ -49,7 +49,7 @@ namespace Addictol
 		std::string_view a_key,
 		SettingDisplayCategory a_displayCategory,
 		SettingValueType a_type,
-		std::string_view a_description,
+		dmui::localize::LocalizeString* a_description,
 		SettingApplyTiming a_applyTiming,
 		std::optional<SettingNumericRange> a_numericRange,
 		void* a_setting,

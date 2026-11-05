@@ -15,6 +15,8 @@
 #include <variant>
 #include <vector>
 
+#include <DearModdingUI/Localization.h>
+
 namespace Addictol
 {
 	enum class SettingValueType : uint8_t
@@ -68,7 +70,7 @@ namespace Addictol
 		[[nodiscard]] SettingValue DefaultValue() const;
 		[[nodiscard]] SettingValue Value() const;
 		[[nodiscard]] bool SetValue(const SettingValue& a_value) const;
-		[[nodiscard]] std::string_view Description() const noexcept { return m_description; }
+		[[nodiscard]] std::string_view Description() const noexcept { return m_description ? m_description->GetValue() : "<LOOKUP LOCSTRING>"; }
 		[[nodiscard]] SettingApplyTiming ApplyTiming() const noexcept { return m_applyTiming; }
 		[[nodiscard]] const std::optional<SettingNumericRange>& NumericRange() const noexcept
 		{
@@ -87,7 +89,7 @@ namespace Addictol
 			std::string_view a_key,
 			SettingDisplayCategory a_displayCategory,
 			SettingValueType a_type,
-			std::string_view a_description,
+			dmui::localize::LocalizeString* a_description,
 			SettingApplyTiming a_applyTiming,
 			std::optional<SettingNumericRange> a_numericRange,
 			void* a_setting,
@@ -100,7 +102,7 @@ namespace Addictol
 		std::string m_displayName;
 		SettingDisplayCategory m_displayCategory;
 		SettingValueType m_type;
-		std::string m_description;
+		dmui::localize::LocalizeString* m_description;
 		SettingApplyTiming m_applyTiming;
 		std::optional<SettingNumericRange> m_numericRange;
 		void* m_setting;
@@ -229,7 +231,7 @@ namespace Addictol
 			std::string_view a_key,
 			SettingDisplayCategory a_displayCategory,
 			T a_default,
-			std::string_view a_description,
+			dmui::localize::LocalizeString* a_description,
 			SettingApplyTiming a_applyTiming,
 			std::optional<SettingNumericRange> a_numericRange = std::nullopt) :
 			Base(a_section, a_key, std::move(a_default))
