@@ -1,0 +1,130 @@
+$Setting_AdditionalDbgFacegenOutput	Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen).
+$Setting_AdditionalUseNewRedistributable	Redirects OG's imported memory routines to Addictol's CRT; memory faults may be attributed to Addictol (needs bMemoryManager).
+$Setting_AdditionalAllocator	Selects the allocator backend: stock (the game's own allocators), voltek, mimalloc, or rpmalloc.
+$Setting_AdditionalZlibBackend	Selects the zlib decompression backend: stock, zlib, zlib-ng, isa-l, hybrid-zlib-ng, or hybrid-isa-l. Hybrid modes try libdeflate first when a stream fits in one call (needs bLibDeflate).
+$Setting_AdditionalLogLevel	Sets the runtime log level: trace, debug, info, warn, error, critical, or off.
+$Setting_AdditionalLogFlushLevel	Flushes the log after messages at this level or higher: trace, debug, info, warn, error, critical, or off.
+$Setting_AdditionalScaleformPageSize	The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), rounded down to a power of 2 (needs bScaleformAllocator).
+$Setting_AdditionalScaleformHeapSize	The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (needs bScaleformAllocator).
+$Setting_AdditionalFullPrecisionDecalsEffectShaders	Fixes effect-shader particles on full-precision meshes (needs bFullPrecisionDecals).
+$Setting_AdditionalMaxPapyrusOpsPerFrame	Maximum papyrus operations per frame. Higher number means better script performance on average.
+$Setting_AdditionalBloomScale	Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth.
+$Setting_AdditionalIgnoreCompatibilityChecks	Ignore Mod Compatibility Checks.
+$Setting_AdditionalLocalMapScaleFactor	Local Map Scale Factor (needs bHighResLocalMaps).
+$Setting_AdditionalMenuRefreshMs	How often an open Addictol tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000.
+$Setting_AdditionalUseCameraOverrideScale	Fix the screen issue when using Terminals (needs bCustomScale).
+$Setting_AdditionalUseCustomFurniturePosition	Change the position of the actor based on the scale of the actor when using furnitures (needs bCustomScale).
+$Setting_FixesGreyMovie	Fixes a bug where movies that don't define "BackgroundAlpha" on their movie root could load with a grey background.
+$Setting_FixesPackageAllocateLocation	Fixes a crash when allocating the location for a package.
+$Setting_FixesInitTints	Removes a block when loading NPC tints from Fallout4.esm, as well as for NPCs with the IsChargenPresent flag set.
+$Setting_FixesLODDistance	Fixes a loaded cell's distant object LOD briefly reappearing when a reference with distant LOD is enabled or built.
+$Setting_FixesActorIsHostileToActor	Fixes a crash when invoking Actor.IsHostileToActor with a none form.
+$Setting_FixesBGSAIWorldLocationRefRadius	Fixes a crash with BGSAIWorldLocationRefRadius when the target ref is null.
+$Setting_FixesSafeExit	Fixes crashes/freezes related to exiting the game. Covers both F4SE-plugin shutdown crashes and the quit-to-desktop freeze.
+$Setting_FixesUnalignedLoad	Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory.
+$Setting_FixesCellInit	Fixes a crash where a form does not get converted to a form pointer on unloaded cells.
+$Setting_FixesWorkbenchSwap	Fixes a crash when you are scrapping or swapping many inventory items in the workbench.
+$Setting_FixesMaxStdIO	Sets the maximum stdio handles. -1 selects 512; the runtime cap is 2048 on OG and 8192 on NG/AE.
+$Setting_FixesMovementPlanner	Fixes a bug where the Movement Planner crashes with non-actors.
+$Setting_FixesCompanionStrayBullet	Stops companions/teammates from shooting the player during and shortly after combat (re-equips their weapons on combat exit).
+$Setting_FixesEscapeFreeze	Fixes a combat freeze (deadlock) in perk condition checks by evaluating them without the global condition lock.
+$Setting_FixesIOChacher	Use disk cache for IO for less disk activity.
+$Setting_FixesCosaveIO	Buffers F4SE co-save reads into memory so loading a save issues one read instead of thousands of syscalls.
+$Setting_FixesTESObjectREFRGetEncounterZone	Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized.
+$Setting_FixesPipBoyLightInv	Fixes a crash when you have the PipBoy light on and are checking the inventory.
+$Setting_FixesInteriorNavCut	Fixes the engine bug that causes Workshop Navmesh cuts to persist throughout all interior cells.
+$Setting_FixesMagicEffectApplyEvent	Fixes a crash when Magic Effect Apply events are dispatched on null references.
+$Setting_FixesMagicEffectConditions	Fixes a floating-point precision bug where magic-effect conditions eventually stop being re-evaluated during long sessions.
+$Setting_FixesEncounterZoneReset	Fixes encounter zones resetting immediately once you leave them on foot.
+$Setting_FixesLeveledListCrash	Prevents an issue where leveled lists can have over 255 entries, which will cause them to crash the game when they are resolved.
+$Setting_FixesBakaMaxPapyrusOps	Fixes Script Page Allocation and the Toggle Scripts Command, adjusts the maximum papyrus operations per frame via nMaxPapyrusOpsPerFrame.
+$Setting_FixesPapyrusGCBug	Fixes a critical bug in garbage collection that causes premature loop termination, preventing incremental GC starvation and "Long Save Bug".
+$Setting_FixesCreateD3DAndSwapchain	Fixes a crash on startup when enumerating certain monitor display modes.
+$Setting_FixesCheckInternetAccess	Eliminates memory leaks if you have lost internet access.
+$Setting_FixesStolenPowerArmorOwnership	Fixes an issue where the Player is never given proper ownership of stolen Power Armor Frames.
+$Setting_FixesManyItems	Fixes the Item Stack Limit, allowing you to add / drop more than 32767 items (stacked generation), similar to the Add/Drop7FFFPatch mods.
+$Setting_FixesCombatMusic	Fixes an issue where combat music can continue to loop when combat ends or when you load a save.
+$Setting_FixesWorkbenchSound	Fixes an issue where workbench sound effects loop infinitely on actors. This is commonly referred to as the "Sewing Machine Sound Bug".
+$Setting_FixesActorCauseSaveBloat	Removes unused ActorCause data from projectiles when a cell is unloaded to reduce save size.
+$Setting_FixesAnimSignedCrash	Fixes a CTD when loading animations with high-bit-set 16-bit event IDs.
+$Setting_FixesBethesdaNetCrash	Fixes a startup CTD on non-English Windows installs caused by Bethesda.net response headers containing non-ASCII characters.
+$Setting_FixesUtilityShader	Fixes a crash when a shader can't be found for a given technique id.
+$Setting_FixesPipBoyCursorConstraints	Automatically sets PipBoy Cursor Constraints based on PipBoy resolution for controllers.
+$Setting_FixesMuzzleFlashLight	Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends.
+$Setting_FixesAltTabFullscreen	Forces exclusive-fullscreen swap chains to windowed at creation to avoid Alt-Tab hangs.
+$Setting_FixesPowerGridScrap	Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
+$Setting_FixesViewmodelShading	Fixes wrong specular lighting on the first-person viewmodel caused by the eye-position vector missing the engine's per-frame light offset.
+$Setting_FixesDofFix	Fixes the first-person viewmodel getting blurred by depth-of-field (iron-sight ADS, dialogue camera) by re-rasterizing it after the DoF pass.
+$Setting_FixesToggleGrassCommand	Fixes the "ToggleGrass" / "tg" command being a reference function in the AE versions of the game.
+$Setting_FixesTextureLoadCrash	Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors.
+$Setting_FixesTextureCreateCrash	Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4.
+$Setting_FixesFullPrecisionDecals	Enables fixes for decal projection and effect-shader particles on full-precision meshes.
+$Setting_FixesShaderReferenceEffectLifetime	Prevents crashes when an actor with an active effect shader unloads by detaching the shader when its magic effect is destroyed.
+$Setting_FixesMagicKeywordCrash	Fixes a crash when a magic effect item has no effect setting.
+$Setting_FixesEffectEnvMapCrash	Fixes a crash when an effect shader material has environment mapping enabled but no environment texture.
+$Setting_FixesCreatedRefBaseCrash	Fixes a crash while loading a save when a created reference has lost its base object.
+$Setting_FixesAttachLightCrash	Fixes a crash when a light hit effect has no attach root.
+$Setting_FixesDownwardAiming	Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.
+$Setting_FixesThirdPersonSpeedMult	Makes the player's SpeedMult actor value affect third-person sprint and sneak speeds, matching first person.
+$Setting_FixesSprintStutter	Removes the first-person sprint camera micro-stutter by raising the position-delta snap threshold.
+$Setting_FixesMoonRotation	Corrects the lunar disc orientation during moon initialization.
+$Setting_FixesCrashRemoveRefFix	Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR.
+$Setting_FixesClimateLoad	Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior.
+$Setting_FixesMusicOverlap	Fixes a bug where multiple music tracks are playing at the same time.
+$Setting_FixesPuddleCubemaps	Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections).
+$Setting_FixesStringPoolRelease	An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude).
+$Setting_FixesLoadOrder	Fixes multiple AE Load Order issues when the Creations Platform is enabled, including plugins being disabled or moved, inability to toggle some plugins in-game, and a freeze while loading.
+$Setting_FixesHUDMessageQueue	Fixes a crash related to queued HUD messages on NG & AE.
+$Setting_FixesWaterJetpackFix	Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again.
+$Setting_FixesCraftingMenuFix	Reduces the lag when browsing mod slots in the weapon/armor crafting menu. The menu stops walking the whole COBJ/OMOD form arrays on every slot switch.
+$Setting_FixesAIProcess3DUpdateFlag	Fixes a bug where there is no check for nullptr when AI for a character is disabled.
+$Setting_FixesNPCHealthOverflowFix	Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly.
+$Setting_FixesArmorPenetration	Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons.
+$Setting_FixesLocalMapRotation	Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be.
+$Setting_FixesNeverFadesSpotlight	Fixes shadow-casting spotlights marked Never Fades being culled instead of skipping the distance check.
+$Setting_FixesLightOrder	Fixes previs discarding object light lists, which left glass and other objects lit only by the sun.
+$Setting_FixesLightPriority	Fixes objects lit by more than four lights receiving the four weakest instead of the four strongest.
+$Setting_FixesRadioSilence	[EXPERIMENTAL] Fixes an issue where Radio Signals can go silent after some time.
+$Setting_FixesQuestLogBloat	Prevents repeatable quest stages from appending duplicate quest log nodes and deduplicates bloated quest logs on save load.
+$Setting_FixesCustomScale	Fixes ADS issues that occur when the player scale is changed.
+$Setting_FixesArchiveStreamClose	Waits for in-flight BA2 streamer reads to finish before closing compressed archive streams, preventing heap corruption.
+$Setting_FixesPapyrusLeaks	Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load.
+$Setting_PatchesThreads	All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores.
+$Setting_PatchesLibDeflate	Replaces the game's zlib decompression with the backend selected by sZlibBackend. If another mod already patches zlib, the game's zlib is left untouched.
+$Setting_PatchesLoadScreen	Black loading screen with fixes for 21:9 display.Need High FPS Physics Fix mod, otherwise slowly loads game.
+$Setting_PatchesProfile	Added settings Pref.ini for default.ini, This provides an opportunity mods change settings Pref.ini.
+$Setting_PatchesAchievements	Enables achievements on modded saves.
+$Setting_PatchesFacegen	Enables facegen support and removes freezes.
+$Setting_PatchesMemoryManager	Replaces the global memory manager with vmm allocator.
+$Setting_PatchesSmallBlockAllocator	Replaces the small block memory allocators with visper allocator.
+$Setting_PatchesSmallBlockAllocatorUseSelectedHeap	Routes small block allocations to the selected heap instead of visper.
+$Setting_PatchesScaleformAllocator	Replaces the scaleform memory allocator with os allocator.
+$Setting_PatchesBSMTAManager	General rendering performance improvement.
+$Setting_PatchesBSPreCulledObjects	General rendering performance improvement.
+$Setting_PatchesINISettingCollection	Improves startup times for large load orders by optimizing INI setting loading.
+$Setting_PatchesArchiveLimits	Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355.
+$Setting_PatchesInputSwitch	Automatically swaps inputs between Keyboard + Mouse / Controller.
+$Setting_PatchesFasterWorkshop	Alleviates lag while opening the Workshop menu.
+$Setting_PatchesSaveAddedSoundCategories	Saves the volume of Sound Categories added by mods.
+$Setting_PatchesCOMInit	Blocks the use of incorrect COM interface initialization settings for mods.
+$Setting_PatchesHighResBloom	Raises the bloom render - target resolution to reduce flicker on bright pixels(sun glints, neon, fire).Cost scales with nBloomScale.
+$Setting_PatchesDpiScaling	Marks the process as DPI - aware so menus and cursor track correctly on high - DPI desktops.
+$Setting_PatchesSaveCompression	Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves.
+$Setting_PatchesAudioSwitch	Allows seamless audio device switching for XAudio 2.7.Automatically switches to a newly selected default audio device.
+$Setting_PatchesHighResLocalMaps	Raises the Local Maps resolution, scales with fLocalMapScaleFactor.Affects the Companion app as well, can increase performance& VRAM cost.
+$Setting_PatchesRefExtended	[Experimental] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8. For a large LO so you can play for more than 2 hours. Enable only if "OUT OF HANDLE ARRAY ENTRIES." is triggered. Use at your own risk! Mass change of the entire .exe, more than 15 thousand changes.
+$Setting_TelemetryEnabled	Enables low-overhead sampled telemetry.
+$Setting_TelemetryOperationProfiling	Enables sampled operation profiling captures on the next launch.
+$Setting_TelemetrySampleMs	Sets the telemetry sampling cadence in milliseconds.
+$Setting_TelemetryFrameRecordMs	Sets the threshold above which individual frames are recorded.
+$Setting_TelemetryCsv	Exports sampled telemetry to AddictolTelemetry.csv and AddictolSeries.csv.
+$Setting_TelemetryPluginTiming	Times F4SE plugin exports and callbacks.
+$Setting_TelemetryFormLoadTiming	Times form compilation and construction.
+$Setting_TelemetrySaveLoadTiming	Times save loading: the native load steps, Papyrus restore, and the loading screen.
+$Setting_TelemetryImageMemory	Attributes allocation flow and live blocks of at least 64 KiB to non-system DLLs.
+$Setting_TelemetryImageSampling	Samples active thread stacks to estimate CPU time by DLL; unavailable under Wine.
+$Setting_TelemetryImageSampleHz	Sets image CPU samples per second; higher rates increase diagnostic overhead (needs bImageSampling).
+$Setting_WarningsImageSpaceAdapter	Warns on bad IMAD definitions which will corrupt your memory and crash your game.
+$Setting_WarningsDuplicateAddonNodeIndex	Warns if you have two AddonNode forms with the same index in your load order, which will cause errors with visual effects.
+$Setting_WarningsReferenceHandleLimit	Warns if you are approaching the reference handle limit or exceed the reference handle limit. Terminate process if out of entries!
+$Setting_WarningsSlowPlugin	Warns when an F4SE plugin takes over a second to load or handle a game event, which delays the main menu.

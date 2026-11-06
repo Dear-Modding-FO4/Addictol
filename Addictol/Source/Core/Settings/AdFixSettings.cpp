@@ -64,16 +64,16 @@ namespace Addictol
 		"$Setting_FixesIOChacher",
 		"Use disk cache for IO for less disk activity."
 	);
-	dmui::localize::LocalizeString lsCosaveIO(
-		"$CosaveIO",
+	dmui::localize::LocalizeString lsFixesCosaveIO(
+		"$Setting_FixesCosaveIO",
 		"Buffers F4SE co-save reads into memory so loading a save issues one read instead of thousands of syscalls."
 	);
 	dmui::localize::LocalizeString lsFixesTESObjectREFRGetEncounterZone(
 		"$Setting_FixesTESObjectREFRGetEncounterZone",
 		"Fixes a crash when looking up the Encounter Zone on a reference that has not yet been initialized."
 	);
-	dmui::localize::LocalizeString lsPatchesPipBoyLightInv(
-		"$PatchesPipBoyLightInv",
+	dmui::localize::LocalizeString lsFixesPipBoyLightInv(
+		"$Setting_FixesPipBoyLightInv",
 		"Fixes a crash when you have the PipBoy light on and are checking the inventory."
 	);
 	dmui::localize::LocalizeString lsFixesInteriorNavCut(
@@ -92,8 +92,8 @@ namespace Addictol
 		"$Setting_FixesEncounterZoneReset",
 		"Fixes encounter zones resetting immediately once you leave them on foot."
 	);
-	dmui::localize::LocalizeString lsLeveledListCrash(
-		"$LeveledListCrash",
+	dmui::localize::LocalizeString lsFixesLeveledListCrash(
+		"$Setting_FixesLeveledListCrash",
 		"Prevents an issue where leveled lists can have over 255 entries, which will cause them to crash the game when they are resolved."
 	);
 	dmui::localize::LocalizeString lsFixesBakaMaxPapyrusOps(
@@ -220,12 +220,12 @@ namespace Addictol
 		"$Setting_FixesMoonRotation",
 		"Corrects the lunar disc orientation during moon initialization."
 	);
-	dmui::localize::LocalizeString lsCrashRemoveRefFix(
-		"$CrashRemoveRefFix",
+	dmui::localize::LocalizeString lsFixesCrashRemoveRefFix(
+		"$Setting_FixesCrashRemoveRefFix",
 		"Fixes a crash where remove reference function BGSObjectVisibilityManager class send no TESObjectREFR."
 	);
-	dmui::localize::LocalizeString lsClimateLoad(
-		"$ClimateLoad",
+	dmui::localize::LocalizeString lsFixesClimateLoad(
+		"$Setting_FixesClimateLoad",
 		"Fixes a bug where the game fails to properly apply sunrise and sunset data from Climate records if you load a saved game in an interior."
 	);
 	dmui::localize::LocalizeString lsFixesMusicOverlap(
@@ -441,12 +441,12 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bCosaveIO{
+	BoolSetting bFixesCosaveIO{
 		"Fixes"sv,
 		"bCosaveIO"sv,
 		SettingDisplayCategory::kPerformance,
 		true,
-		std::addressof(lsCosaveIO),
+		std::addressof(lsFixesCosaveIO),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -459,12 +459,12 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bPatchesPipBoyLightInv{
+	BoolSetting bFixesPipBoyLightInv{
 		"Fixes"sv,
 		"bPipBoyLightInv"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		std::addressof(lsPatchesPipBoyLightInv),
+		std::addressof(lsFixesPipBoyLightInv),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -504,12 +504,12 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bLeveledListCrash{
+	BoolSetting bFixesLeveledListCrash{
 		"Fixes"sv,
 		"bLeveledListCrash"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		std::addressof(lsLeveledListCrash),
+		std::addressof(lsFixesLeveledListCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
@@ -792,21 +792,21 @@ namespace Addictol
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bCrashRemoveRefFix{
+	BoolSetting bFixesCrashRemoveRefFix{
 		"Fixes"sv,
 		"bCrashRemoveRefFix"sv,
 		SettingDisplayCategory::kStability,
 		true,
-		std::addressof(lsCrashRemoveRefFix),
+		std::addressof(lsFixesCrashRemoveRefFix),
 		SettingApplyTiming::kNextLaunch
 	};
 
-	BoolSetting bClimateLoad{
+	BoolSetting bFixesClimateLoad{
 		"Fixes"sv,
 		"bClimateLoad"sv,
 		SettingDisplayCategory::kVisuals,
 		true,
-		std::addressof(lsClimateLoad),
+		std::addressof(lsFixesClimateLoad),
 		SettingApplyTiming::kNextLaunch
 	};
 

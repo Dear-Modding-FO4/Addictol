@@ -49,8 +49,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimalloc_vc22", "..\Depends
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rpmalloc_vc22", "..\Depends\rpmalloc_vc22.vcxproj", "{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdSettingsGenerator", "..\Tools\AdSettingsGenerator.vcxproj", "{3D17D40E-68A8-4949-8D5F-449A9FA2421B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -163,14 +161,6 @@ Global
 		{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}.Release|x64.Build.0 = Release|x64
 		{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}.Release|x86.ActiveCfg = Release|x64
 		{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}.Release|x86.Build.0 = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x64.ActiveCfg = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x64.Build.0 = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x86.ActiveCfg = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x86.Build.0 = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x64.ActiveCfg = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x64.Build.0 = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x86.ActiveCfg = Release|x64
-		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

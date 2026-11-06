@@ -36,7 +36,7 @@ namespace Addictol
 	}
 
 	ModuleLeveledListCrash::ModuleLeveledListCrash() :
-		Module("Leveled List Crash", &bLeveledListCrash)
+		Module("Leveled List Crash", &bFixesLeveledListCrash)
 	{}
 
 	bool ModuleLeveledListCrash::DoQuery() const noexcept

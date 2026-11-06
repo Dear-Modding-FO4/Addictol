@@ -44,14 +44,14 @@ namespace Addictol
 	extern BoolSetting bFixesCompanionStrayBullet;
 	extern BoolSetting bFixesEscapeFreeze;
 	extern BoolSetting bFixesIOChacher;
-	extern BoolSetting bCosaveIO;
+	extern BoolSetting bFixesCosaveIO;
 	extern BoolSetting bFixesTESObjectREFRGetEncounterZone;
-	extern BoolSetting bPatchesPipBoyLightInv;
+	extern BoolSetting bFixesPipBoyLightInv;
 	extern BoolSetting bFixesInteriorNavCut;
 	extern BoolSetting bFixesMagicEffectApplyEvent;
 	extern BoolSetting bFixesMagicEffectConditions;
 	extern BoolSetting bFixesEncounterZoneReset;
-	extern BoolSetting bLeveledListCrash;
+	extern BoolSetting bFixesLeveledListCrash;
 	extern BoolSetting bFixesBakaMaxPapyrusOps;
 	extern BoolSetting bFixesPapyrusGCBug;
 	extern BoolSetting bFixesCreateD3DAndSwapchain;
@@ -86,8 +86,8 @@ namespace Addictol
 	extern BoolSetting bFixesNeverFadesSpotlight;
 	extern BoolSetting bFixesLightOrder;
 	extern BoolSetting bFixesLightPriority;
-	extern BoolSetting bCrashRemoveRefFix;
-	extern BoolSetting bClimateLoad;
+	extern BoolSetting bFixesCrashRemoveRefFix;
+	extern BoolSetting bFixesClimateLoad;
 	extern BoolSetting bFixesMusicOverlap;
 	extern BoolSetting bFixesPuddleCubemaps;
 	extern BoolSetting bFixesStringPoolRelease;

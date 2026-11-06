@@ -24,7 +24,7 @@ namespace Addictol
 	};
 
 	ModuleClimateLoadFix::ModuleClimateLoadFix() :
-		Module("Climate Load", &bClimateLoad)
+		Module("Climate Load", &bFixesClimateLoad)
 	{}
 
 	bool ModuleClimateLoadFix::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

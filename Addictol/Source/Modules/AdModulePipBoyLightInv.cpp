@@ -36,7 +36,7 @@ namespace Addictol
 	}
 
 	ModulePipBoyLightInv::ModulePipBoyLightInv() :
-		Module("PipBoy Light Env", &bPatchesPipBoyLightInv)
+		Module("PipBoy Light Env", &bFixesPipBoyLightInv)
 	{}
 
 	bool ModulePipBoyLightInv::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept

@@ -361,7 +361,7 @@ namespace Addictol
 	}
 
 	ModuleCosaveIO::ModuleCosaveIO() :
-		Module("Cosave IO", &bCosaveIO)
+		Module("Cosave IO", &bFixesCosaveIO)
 	{}
 
 	bool ModuleCosaveIO::DoQuery() const noexcept

@@ -21,7 +21,7 @@ namespace Addictol
 	};
 
 	ModuleCrashRemoveRef::ModuleCrashRemoveRef() :
-		Module("Crash Remove Ref", &bCrashRemoveRefFix)
+		Module("Crash Remove Ref", &bFixesCrashRemoveRefFix)
 	{}
 
 	bool ModuleCrashRemoveRef::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
