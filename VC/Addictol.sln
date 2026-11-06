@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.10.36631.13
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Addictol", "Addictol.vcxproj", "{D2D12A6F-D62F-4FBB-A9AC-4DF3378187CF}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -48,6 +48,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimalloc_vc22", "..\Depends\mimalloc_vc22.vcxproj", "{8C1F4E2A-6B3D-4F5A-9E21-3D7A5C9B1E01}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rpmalloc_vc22", "..\Depends\rpmalloc_vc22.vcxproj", "{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdSettingsGenerator", "..\Tools\AdSettingsGenerator.vcxproj", "{3D17D40E-68A8-4949-8D5F-449A9FA2421B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -161,6 +163,14 @@ Global
 		{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}.Release|x64.Build.0 = Release|x64
 		{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}.Release|x86.ActiveCfg = Release|x64
 		{5E7B2D14-9A0C-4C6E-B3F8-71D2A4E6C902}.Release|x86.Build.0 = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x64.ActiveCfg = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x64.Build.0 = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x86.ActiveCfg = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Debug|x86.Build.0 = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x64.ActiveCfg = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x64.Build.0 = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x86.ActiveCfg = Release|x64
+		{3D17D40E-68A8-4949-8D5F-449A9FA2421B}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

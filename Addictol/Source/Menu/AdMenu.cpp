@@ -10,7 +10,6 @@
 #include <Core/AdPlugin.h>
 #include <Core/AdUtils.h>
 #include <Telemetry/AdTelemetryHub.h>
-#include <DearModdingUI/Localization.h>
 
 #include <REX/REX.h>
 #include <resource_version2.h>
@@ -197,8 +196,6 @@ namespace Addictol
 				DMUI_ResultToString(s_client.LastResult()));
 			return false;
 		}
-
-		dmui::localize::LocalizationManager::GetSingleton()->Load(_PluginName".txt");
 
 		for (const auto& category : { Menu::kGeneralCategory, Menu::kDiagnosticsCategory })
 		{

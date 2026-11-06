@@ -5,6 +5,7 @@
 #include <Menu/AdMenu.h>
 #include <Zlib/AdZlibBackend.h>
 #include <Telemetry/AdTelemetryHub.h>
+#include <DearModdingUI/Localization.h>
 
 #include <RE/B/BSCRC32.h>
 #include <RE/B/BSScriptUtil.h>
@@ -141,6 +142,9 @@ namespace Addictol
 
 			if (a_msg->type == F4SE::MessagingInterface::kGameLoaded)
 			{
+				auto localizeMgr = dmui::localize::LocalizationManager::GetSingleton();
+				localizeMgr->Load(_PluginName);
+
 				if (!bAdditionalIgnoreCompatibilityChecks.GetValue())
 				{
 					const auto incompatibleMods = AnalyzeGameCollectionCriticalCompatibility();
