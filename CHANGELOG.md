@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- ControlSamplers: Stopped logging an error at startup when Community Shaders is not installed.
 - CreatedRefBaseCrash: Fixed a save-load crash when a created reference has lost its base object.
 - Added the "Slow Plugin Warning" module, logging a warning when an F4SE plugin takes over a second to load or handle a game event.
 - Telemetry: Added Save Load Timing, which times the native load steps, Papyrus restore, and the loading screen.

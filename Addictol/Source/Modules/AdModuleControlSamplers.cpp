@@ -224,7 +224,7 @@ namespace Addictol
 			}
 
 			controlSamplersDetail::s_device = rendererData->device;
-			controlSamplersDetail::s_mipBiasOwnedExternally = F4SE::GetPluginInfo("FO4CommunityShaders"sv) != nullptr;
+			controlSamplersDetail::s_mipBiasOwnedExternally = IsModDLLPresent("FO4CommunityShaders.dll");
 			if (controlSamplersDetail::s_mipBiasOwnedExternally)
 				REX::INFO("Control Samplers: Community Shaders is loaded; leaving mip bias to it."sv);
 			controlSamplersDetail::s_table = reinterpret_cast<controlSamplersDetail::SamplerTable*>(REL::ID{ 44312, 2704455, 2704455 }.address());
