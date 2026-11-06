@@ -91,10 +91,6 @@ jobs:
         working-directory: source
         run: msbuild /m /p:Configuration=Release /p:Platform=x64 .\VC
 
-      - name: Build AdSettingsGenerator
-        working-directory: source
-        run: msbuild /m /p:Configuration=Release /p:Platform=x64 .\Tools
-
       - name: Bundle package
         shell: pwsh
         working-directory: source

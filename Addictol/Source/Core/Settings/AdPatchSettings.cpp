@@ -4,99 +4,99 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	dmui::localize::LocalizeString lsPatchesThreads(
+	static dmui::localize::LocalizeString lsPatchesThreads(
 		"$Setting_PatchesThreads",
 		"All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores."
 	);
-	dmui::localize::LocalizeString lsPatchesLibDeflate(
+	static dmui::localize::LocalizeString lsPatchesLibDeflate(
 		"$Setting_PatchesLibDeflate",
 		"Replaces the game's zlib decompression with the backend selected by sZlibBackend. If another mod already patches zlib, the game's zlib is left untouched."
 	);
-	dmui::localize::LocalizeString lsPatchesLoadScreen(
+	static dmui::localize::LocalizeString lsPatchesLoadScreen(
 		"$Setting_PatchesLoadScreen",
 		"Black loading screen with fixes for 21:9 display.Need High FPS Physics Fix mod, otherwise slowly loads game."
 	);
-	dmui::localize::LocalizeString lsPatchesProfile(
+	static dmui::localize::LocalizeString lsPatchesProfile(
 		"$Setting_PatchesProfile",
 		"Added settings Pref.ini for default.ini, This provides an opportunity mods change settings Pref.ini."
 	);
-	dmui::localize::LocalizeString lsPatchesAchievements(
+	static dmui::localize::LocalizeString lsPatchesAchievements(
 		"$Setting_PatchesAchievements",
 		"Enables achievements on modded saves."
 	);
-	dmui::localize::LocalizeString lsPatchesFacegen(
+	static dmui::localize::LocalizeString lsPatchesFacegen(
 		"$Setting_PatchesFacegen",
 		"Enables facegen support and removes freezes."
 	);
-	dmui::localize::LocalizeString lsPatchesMemoryManager(
+	static dmui::localize::LocalizeString lsPatchesMemoryManager(
 		"$Setting_PatchesMemoryManager",
 		"Replaces the global memory manager with vmm allocator."
 	);
-	dmui::localize::LocalizeString lsPatchesSmallBlockAllocator(
+	static dmui::localize::LocalizeString lsPatchesSmallBlockAllocator(
 		"$Setting_PatchesSmallBlockAllocator",
 		"Replaces the small block memory allocators with visper allocator."
 	);
-	dmui::localize::LocalizeString lsPatchesSmallBlockAllocatorUseSelectedHeap(
+	static dmui::localize::LocalizeString lsPatchesSmallBlockAllocatorUseSelectedHeap(
 		"$Setting_PatchesSmallBlockAllocatorUseSelectedHeap",
 		"Routes small block allocations to the selected heap instead of visper."
 	);
-	dmui::localize::LocalizeString lsPatchesScaleformAllocator(
+	static dmui::localize::LocalizeString lsPatchesScaleformAllocator(
 		"$Setting_PatchesScaleformAllocator",
 		"Replaces the scaleform memory allocator with os allocator."
 	);
-	dmui::localize::LocalizeString lsPatchesBSMTAManager(
+	static dmui::localize::LocalizeString lsPatchesBSMTAManager(
 		"$Setting_PatchesBSMTAManager",
 		"General rendering performance improvement."
 	);
-	dmui::localize::LocalizeString lsPatchesBSPreCulledObjects(
+	static dmui::localize::LocalizeString lsPatchesBSPreCulledObjects(
 		"$Setting_PatchesBSPreCulledObjects",
 		"General rendering performance improvement."
 	);
-	dmui::localize::LocalizeString lsPatchesINISettingCollection(
+	static dmui::localize::LocalizeString lsPatchesINISettingCollection(
 		"$Setting_PatchesINISettingCollection",
 		"Improves startup times for large load orders by optimizing INI setting loading."
 	);
-	dmui::localize::LocalizeString lsPatchesArchiveLimits(
+	static dmui::localize::LocalizeString lsPatchesArchiveLimits(
 		"$Setting_PatchesArchiveLimits",
 		"Increases the allowed number of archives from 255 GNRL and from 254 DX10 to 65355."
 	);
-	dmui::localize::LocalizeString lsPatchesInputSwitch(
+	static dmui::localize::LocalizeString lsPatchesInputSwitch(
 		"$Setting_PatchesInputSwitch",
 		"Automatically swaps inputs between Keyboard + Mouse / Controller."
 	);
-	dmui::localize::LocalizeString lsPatchesFasterWorkshop(
+	static dmui::localize::LocalizeString lsPatchesFasterWorkshop(
 		"$Setting_PatchesFasterWorkshop",
 		"Alleviates lag while opening the Workshop menu."
 	);
-	dmui::localize::LocalizeString lsPatchesSaveAddedSoundCategories(
+	static dmui::localize::LocalizeString lsPatchesSaveAddedSoundCategories(
 		"$Setting_PatchesSaveAddedSoundCategories",
 		"Saves the volume of Sound Categories added by mods."
 	);
-	dmui::localize::LocalizeString lsPatchesCOMInit(
+	static dmui::localize::LocalizeString lsPatchesCOMInit(
 		"$Setting_PatchesCOMInit",
 		"Blocks the use of incorrect COM interface initialization settings for mods."
 	);
-	dmui::localize::LocalizeString lsPatchesHighResBloom(
+	static dmui::localize::LocalizeString lsPatchesHighResBloom(
 		"$Setting_PatchesHighResBloom",
 		"Raises the bloom render - target resolution to reduce flicker on bright pixels(sun glints, neon, fire).Cost scales with nBloomScale."
 	);
-	dmui::localize::LocalizeString lsPatchesDpiScaling(
+	static dmui::localize::LocalizeString lsPatchesDpiScaling(
 		"$Setting_PatchesDpiScaling",
 		"Marks the process as DPI - aware so menus and cursor track correctly on high - DPI desktops."
 	);
-	dmui::localize::LocalizeString lsPatchesSaveCompression(
+	static dmui::localize::LocalizeString lsPatchesSaveCompression(
 		"$Setting_PatchesSaveCompression",
 		"Swaps the engine's save compression to libdeflate (zlib level 6) for faster, slightly smaller saves."
 	);
-	dmui::localize::LocalizeString lsPatchesAudioSwitch(
+	static dmui::localize::LocalizeString lsPatchesAudioSwitch(
 		"$Setting_PatchesAudioSwitch",
 		"Allows seamless audio device switching for XAudio 2.7.Automatically switches to a newly selected default audio device."
 	);
-	dmui::localize::LocalizeString lsPatchesHighResLocalMaps(
+	static dmui::localize::LocalizeString lsPatchesHighResLocalMaps(
 		"$Setting_PatchesHighResLocalMaps",
 		"Raises the Local Maps resolution, scales with fLocalMapScaleFactor.Affects the Companion app as well, can increase performance& VRAM cost."
 	);
-	dmui::localize::LocalizeString lsPatchesRefExtended(
+	static dmui::localize::LocalizeString lsPatchesRefExtended(
 		"$Setting_PatchesRefExtended",
 		"[Experimental] [AE latest only] Increase from 2^21 to 2^23 available BSPointerHandle's by reducing the internal QRefCount counter from 2^10 to 2^8. "
 		"For a large LO so you can play for more than 2 hours. Enable only if \"OUT OF HANDLE ARRAY ENTRIES.\" is triggered. "

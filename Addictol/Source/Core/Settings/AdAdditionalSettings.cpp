@@ -5,67 +5,67 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	dmui::localize::LocalizeString lsAdditionalDbgFacegenOutput(
+	static dmui::localize::LocalizeString lsAdditionalDbgFacegenOutput(
 		"$Setting_AdditionalDbgFacegenOutput",
 		"Debugging messages about the presence of facegen in the NPC in console and log (needs bFacegen)."
 	);
-	dmui::localize::LocalizeString lsAdditionalUseNewRedistributable(
+	static dmui::localize::LocalizeString lsAdditionalUseNewRedistributable(
 		"$Setting_AdditionalUseNewRedistributable",
 		"Redirects OG's imported memory routines to Addictol's CRT; memory faults may be attributed to Addictol (needs bMemoryManager)."
 	);
-	dmui::localize::LocalizeString lsAdditionalAllocator(
+	static dmui::localize::LocalizeString lsAdditionalAllocator(
 		"$Setting_AdditionalAllocator",
 		"Selects the allocator backend: stock (the game's own allocators), voltek, mimalloc, or rpmalloc."
 	);
-	dmui::localize::LocalizeString lsAdditionalZlibBackend(
+	static dmui::localize::LocalizeString lsAdditionalZlibBackend(
 		"$Setting_AdditionalZlibBackend",
 		"Selects the zlib decompression backend: stock, zlib, zlib-ng, isa-l, hybrid-zlib-ng, or hybrid-isa-l. Hybrid modes try libdeflate first when a stream fits in one call (needs bLibDeflate)."
 	);
-	dmui::localize::LocalizeString lsAdditionalLogLevel(
+	static dmui::localize::LocalizeString lsAdditionalLogLevel(
 		"$Setting_AdditionalLogLevel",
 		"Sets the runtime log level: trace, debug, info, warn, error, critical, or off."
 	);
-	dmui::localize::LocalizeString lsAdditionalLogFlushLevel(
+	static dmui::localize::LocalizeString lsAdditionalLogFlushLevel(
 		"$Setting_AdditionalLogFlushLevel",
 		"Flushes the log after messages at this level or higher: trace, debug, info, warn, error, critical, or off."
 	);
-	dmui::localize::LocalizeString lsAdditionalScaleformPageSize(
+	static dmui::localize::LocalizeString lsAdditionalScaleformPageSize(
 		"$Setting_AdditionalScaleformPageSize",
 		"The page size (in KB), vanilla size is 64. More, better, but the higher the memory consumption. Limit 2Mb (2048), rounded down to a power of 2 (needs bScaleformAllocator)."
 	);
-	dmui::localize::LocalizeString lsAdditionalScaleformHeapSize(
+	static dmui::localize::LocalizeString lsAdditionalScaleformHeapSize(
 		"$Setting_AdditionalScaleformHeapSize",
 		"The heap size (in MB), vanilla size is 2048. This is all the available memory, out of memory = CTD. Limit 8Gb (8192), number must be a multiple of 8 (needs bScaleformAllocator)."
 	);
-	dmui::localize::LocalizeString lsAdditionalFullPrecisionDecalsEffectShaders(
+	static dmui::localize::LocalizeString lsAdditionalFullPrecisionDecalsEffectShaders(
 		"$Setting_AdditionalFullPrecisionDecalsEffectShaders",
 		"Fixes effect-shader particles on full-precision meshes (needs bFullPrecisionDecals)."
 	);
-	dmui::localize::LocalizeString lsAdditionalMaxPapyrusOpsPerFrame(
+	static dmui::localize::LocalizeString lsAdditionalMaxPapyrusOpsPerFrame(
 		"$Setting_AdditionalMaxPapyrusOpsPerFrame",
 		"Maximum papyrus operations per frame. Higher number means better script performance on average."
 	);
-	dmui::localize::LocalizeString lsAdditionalBloomScale(
+	static dmui::localize::LocalizeString lsAdditionalBloomScale(
 		"$Setting_AdditionalBloomScale",
 		"Bloom render-target downsample factor (needs bHighResBloom). 1 = full screen (highest quality, highest GPU cost), 2 = half (recommended), 4 = vanilla quarter, 8 = eighth."
 	);
-	dmui::localize::LocalizeString lsAdditionalIgnoreCompatibilityChecks(
+	static dmui::localize::LocalizeString lsAdditionalIgnoreCompatibilityChecks(
 		"$Setting_AdditionalIgnoreCompatibilityChecks",
 		"Ignore Mod Compatibility Checks."
 	);
-	dmui::localize::LocalizeString lsAdditionalLocalMapScaleFactor(
+	static dmui::localize::LocalizeString lsAdditionalLocalMapScaleFactor(
 		"$Setting_AdditionalLocalMapScaleFactor",
 		"Local Map Scale Factor (needs bHighResLocalMaps)."
 	);
-	dmui::localize::LocalizeString lsAdditionalMenuRefreshMs(
+	static dmui::localize::LocalizeString lsAdditionalMenuRefreshMs(
 		"$Setting_AdditionalMenuRefreshMs",
 		"How often an open Addictol tab refreshes its copy of plugin data, in milliseconds. Clamped to 100-2000."
 	);
-	dmui::localize::LocalizeString lsAdditionalUseCameraOverrideScale(
+	static dmui::localize::LocalizeString lsAdditionalUseCameraOverrideScale(
 		"$Setting_AdditionalUseCameraOverrideScale",
 		"Fix the screen issue when using Terminals (needs bCustomScale)."
 	);
-	dmui::localize::LocalizeString lsAdditionalUseCustomFurniturePosition(
+	static dmui::localize::LocalizeString lsAdditionalUseCustomFurniturePosition(
 		"$Setting_AdditionalUseCustomFurniturePosition",
 		"Change the position of the actor based on the scale of the actor when using furnitures (needs bCustomScale)."
 	);

@@ -4,47 +4,47 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	dmui::localize::LocalizeString lsTelemetryEnabled(
+	static dmui::localize::LocalizeString lsTelemetryEnabled(
 		"$Setting_TelemetryEnabled",
 		"Enables low-overhead sampled telemetry."
 	);
-	dmui::localize::LocalizeString lsTelemetryOperationProfiling(
+	static dmui::localize::LocalizeString lsTelemetryOperationProfiling(
 		"$Setting_TelemetryOperationProfiling",
 		"Enables sampled operation profiling captures on the next launch."
 	);
-	dmui::localize::LocalizeString lsTelemetrySampleMs(
+	static dmui::localize::LocalizeString lsTelemetrySampleMs(
 		"$Setting_TelemetrySampleMs",
 		"Sets the telemetry sampling cadence in milliseconds."
 	);
-	dmui::localize::LocalizeString lsTelemetryFrameRecordMs(
+	static dmui::localize::LocalizeString lsTelemetryFrameRecordMs(
 		"$Setting_TelemetryFrameRecordMs",
 		"Sets the threshold above which individual frames are recorded."
 	);
-	dmui::localize::LocalizeString lsTelemetryCsv(
+	static dmui::localize::LocalizeString lsTelemetryCsv(
 		"$Setting_TelemetryCsv",
 		"Exports sampled telemetry to AddictolTelemetry.csv and AddictolSeries.csv."
 	);
-	dmui::localize::LocalizeString lsTelemetryPluginTiming(
+	static dmui::localize::LocalizeString lsTelemetryPluginTiming(
 		"$Setting_TelemetryPluginTiming",
 		"Times F4SE plugin exports and callbacks."
 	);
-	dmui::localize::LocalizeString lsTelemetryFormLoadTiming(
+	static dmui::localize::LocalizeString lsTelemetryFormLoadTiming(
 		"$Setting_TelemetryFormLoadTiming",
 		"Times form compilation and construction."
 	);
-	dmui::localize::LocalizeString lsTelemetrySaveLoadTiming(
+	static dmui::localize::LocalizeString lsTelemetrySaveLoadTiming(
 		"$Setting_TelemetrySaveLoadTiming",
 		"Times save loading: the native load steps, Papyrus restore, and the loading screen."
 	);
-	dmui::localize::LocalizeString lsTelemetryImageMemory(
+	static dmui::localize::LocalizeString lsTelemetryImageMemory(
 		"$Setting_TelemetryImageMemory",
 		"Attributes allocation flow and live blocks of at least 64 KiB to non-system DLLs."
 	);
-	dmui::localize::LocalizeString lsTelemetryImageSampling(
+	static dmui::localize::LocalizeString lsTelemetryImageSampling(
 		"$Setting_TelemetryImageSampling",
 		"Samples active thread stacks to estimate CPU time by DLL; unavailable under Wine."
 	);
-	dmui::localize::LocalizeString lsTelemetryImageSampleHz(
+	static dmui::localize::LocalizeString lsTelemetryImageSampleHz(
 		"$Setting_TelemetryImageSampleHz",
 		"Sets image CPU samples per second; higher rates increase diagnostic overhead (needs bImageSampling)."
 	);

@@ -70,7 +70,7 @@ namespace Addictol
 		[[nodiscard]] SettingValue DefaultValue() const;
 		[[nodiscard]] SettingValue Value() const;
 		[[nodiscard]] bool SetValue(const SettingValue& a_value) const;
-		[[nodiscard]] std::string_view Description() const noexcept { return m_description ? m_description->GetValue() : "<LOOKUP LOCSTRING>"; }
+		[[nodiscard]] std::string Description() const noexcept { return m_description ? m_description->GetValue() : "<LOOKUP LOCSTRING>"; }
 		[[nodiscard]] SettingApplyTiming ApplyTiming() const noexcept { return m_applyTiming; }
 		[[nodiscard]] const std::optional<SettingNumericRange>& NumericRange() const noexcept
 		{

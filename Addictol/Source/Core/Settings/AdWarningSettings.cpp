@@ -4,19 +4,19 @@ namespace Addictol
 {
 	using namespace std::literals;
 
-	dmui::localize::LocalizeString lsWarningsImageSpaceAdapter(
+	static dmui::localize::LocalizeString lsWarningsImageSpaceAdapter(
 		"$Setting_WarningsImageSpaceAdapter",
 		"Warns on bad IMAD definitions which will corrupt your memory and crash your game."
 	);
-	dmui::localize::LocalizeString lsWarningsDuplicateAddonNodeIndex(
+	static dmui::localize::LocalizeString lsWarningsDuplicateAddonNodeIndex(
 		"$Setting_WarningsDuplicateAddonNodeIndex",
 		"Warns if you have two AddonNode forms with the same index in your load order, which will cause errors with visual effects."
 	);
-	dmui::localize::LocalizeString lsWarningsReferenceHandleLimit(
+	static dmui::localize::LocalizeString lsWarningsReferenceHandleLimit(
 		"$Setting_WarningsReferenceHandleLimit",
 		"Warns if you are approaching the reference handle limit or exceed the reference handle limit. Terminate process if out of entries!"
 	);
-	dmui::localize::LocalizeString lsWarningsSlowPlugin(
+	static dmui::localize::LocalizeString lsWarningsSlowPlugin(
 		"$Setting_WarningsSlowPlugin",
 		"Warns when an F4SE plugin takes over a second to load or handle a game event, which delays the main menu."
 	);
