@@ -15,7 +15,7 @@ namespace Addictol
 	);
 	static dmui::localize::LocalizeString lsAdditionalAllocator(
 		"$Setting_AdditionalAllocator",
-		"Selects the allocator backend: stock (the game's own allocators), voltek, mimalloc, or rpmalloc."
+		"Selects the allocator backend: stock, voltek, mimalloc, or rpmalloc. stock is the game's own allocators, voltek is Addictol's default and recommended allocators, mimalloc and rpmalloc are experimental and may cause issues."
 	);
 	static dmui::localize::LocalizeString lsAdditionalZlibBackend(
 		"$Setting_AdditionalZlibBackend",
