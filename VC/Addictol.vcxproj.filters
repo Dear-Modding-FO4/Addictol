@@ -321,6 +321,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEffectEnvMapCrash.cpp">
       <Filter>Source\Modules\E</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleNavmeshLocationCrash.cpp">
+      <Filter>Source\Modules\N</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp">
       <Filter>Source\Modules\M</Filter>
     </ClCompile>
@@ -779,6 +782,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEffectEnvMapCrash.h">
       <Filter>Include\Modules\E</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleNavmeshLocationCrash.h">
+      <Filter>Include\Modules\N</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h">
       <Filter>Include\Modules\M</Filter>

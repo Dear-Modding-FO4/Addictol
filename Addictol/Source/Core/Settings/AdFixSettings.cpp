@@ -192,6 +192,10 @@ namespace Addictol
 		"$Setting_FixesEffectEnvMapCrash",
 		"Fixes a crash when an effect shader material has environment mapping enabled but no environment texture."
 	);
+	static dmui::localize::LocalizeString lsFixesNavmeshLocationCrash(
+		"$Setting_FixesNavmeshLocationCrash",
+		"Fixes a crash when combat AI searches the navmesh for a valid location to attack from or return to."
+	);
 	static dmui::localize::LocalizeString lsFixesCreatedRefBaseCrash(
 		"$Setting_FixesCreatedRefBaseCrash",
 		"Fixes a crash while loading a save when a created reference has lost its base object."
@@ -722,6 +726,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesEffectEnvMapCrash),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesNavmeshLocationCrash{
+		"Fixes"sv,
+		"bNavmeshLocationCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesNavmeshLocationCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
