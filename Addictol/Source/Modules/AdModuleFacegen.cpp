@@ -457,7 +457,7 @@ namespace Addictol
 				return false;
 		}
 		// check exists diffuse texture.
-		static char buf[REX::W32::MAX_PATH]{};
+		char buf[REX::W32::MAX_PATH]{};
 		bool result = BSTextureDB::FormatPath__And__ExistIn(a_NPC, buf, REX::W32::MAX_PATH, 0);
 		if (!result && bAdditionalDbgFacegenOutput.GetValue())
 		{
