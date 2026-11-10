@@ -280,6 +280,7 @@ void AdRegisterModules()
 	modules.Register(sModuleBGSAIWorldLocationRefRadius);
 	modules.Register(sModuleSafeExit);
 	modules.Register(sModuleThreads);
+	modules.Register(sModuleLeveledListCrash);
 	modules.Register(sModuleUnalignedLoad);
 	modules.Register(sModuleCellInit);
 	modules.Register(sModuleMemoryManager);
@@ -359,7 +360,6 @@ void AdRegisterModules()
 	modules.Register(sModulePuddleCubemaps,					kGameDataReady);
 	modules.Register(sModuleControlSamplers,				kGameDataReady);
 	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
-	modules.Register(sModuleLeveledListCrash,				kGameDataReady);
 	modules.Register(sModuleFasterWorkshop,					kGameDataReady);
 	modules.Register(sModuleCombatMusic,					kGameDataReady);
 	modules.Register(sModulePapyrusLeaks,					kGameDataReady);

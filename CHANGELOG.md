@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- LeveledListCrash: Guards every way a leveled list grows, including plugin and save loading, and no longer refuses entries that reuse an empty slot.
 - Threads: Installs at startup, so the engine's IO and model-loader threads no longer stay below normal priority.
 - LoadScreen: Fixed frames that could skip drawing the loading UI.
 - Removed the "Alt-Tab Fullscreen" module; set bFull Screen=0 and bBorderless=1 in Fallout4Prefs.ini for borderless fullscreen.
