@@ -279,6 +279,7 @@ void AdRegisterModules()
 	modules.Register(sModuleSaveLoadTiming);
 	modules.Register(sModuleBGSAIWorldLocationRefRadius);
 	modules.Register(sModuleSafeExit);
+	modules.Register(sModuleThreads);
 	modules.Register(sModuleUnalignedLoad);
 	modules.Register(sModuleCellInit);
 	modules.Register(sModuleMemoryManager);
@@ -352,7 +353,6 @@ void AdRegisterModules()
 	modules.Register(sModulePapyrusLeaks);
 
 	// Registers other patches
-	modules.Register(sModuleThreads,						kGameDataReady);
 	modules.Register(sModuleFacegen,						kGameDataReady);
 	modules.Register(sModuleSafeExit,						kGameDataReady);
 	modules.Register(sModuleInteriorNavCut,					kGameDataReady);
