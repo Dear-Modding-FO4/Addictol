@@ -51,7 +51,6 @@ $Setting_FixesBethesdaNetCrash	Fixes a startup CTD on non-English Windows instal
 $Setting_FixesUtilityShader	Fixes a crash when a shader can't be found for a given technique id.
 $Setting_FixesPipBoyCursorConstraints	Automatically sets PipBoy Cursor Constraints based on PipBoy resolution for controllers.
 $Setting_FixesMuzzleFlashLight	Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends.
-$Setting_FixesAltTabFullscreen	Forces exclusive-fullscreen swap chains to windowed at creation to avoid Alt-Tab hangs.
 $Setting_FixesPowerGridScrap	Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references.
 $Setting_FixesViewmodelShading	Fixes wrong specular lighting on the first-person viewmodel caused by the eye-position vector missing the engine's per-frame light offset.
 $Setting_FixesDofFix	Fixes the first-person viewmodel getting blurred by depth-of-field (iron-sight ADS, dialogue camera) by re-rasterizing it after the DoF pass.

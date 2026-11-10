@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- LoadScreen: Fixed frames that could skip drawing the loading UI.
+- Removed the "Alt-Tab Fullscreen" module; set bFull Screen=0 and bBorderless=1 in Fallout4Prefs.ini for borderless fullscreen.
 - ControlSamplers: Stopped logging an error at startup when Community Shaders is not installed.
 - CreatedRefBaseCrash: Fixed a save-load crash when a created reference has lost its base object.
 - Added the "Slow Plugin Warning" module, logging a warning when an F4SE plugin takes over a second to load or handle a game event.

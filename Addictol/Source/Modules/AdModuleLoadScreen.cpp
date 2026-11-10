@@ -4,28 +4,18 @@
 
 namespace Addictol
 {
-	static RE::BSGraphics::RendererData* g_RendererData{ nullptr };
 	static void DrawUILoadScreen(uint32_t a_unk) noexcept;
 	decltype(&DrawUILoadScreen) origDrawUI{ nullptr };
 
 	static void DrawUILoadScreen(uint32_t a_unk) noexcept
 	{
-		REX::W32::ID3D11Texture2D* backBuffer{ nullptr };
-		g_RendererData->renderWindow[0].swapChain->GetBuffer(0, REX::W32::IID_ID3D11Texture2D, (void**)&backBuffer);
-		if (!backBuffer)
-			return;
-
-		REX::W32::ID3D11RenderTargetView* backTarget{ nullptr };
-		g_RendererData->device->CreateRenderTargetView(backBuffer, NULL, &backTarget);
-		backBuffer->Release();
-		if (!backTarget)
-			return;
-
 		// fix black screen for ultra wide monitors
-		static const float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		g_RendererData->context->ClearRenderTargetView(backTarget, color);
-
-		backTarget->Release();
+		const auto rendererData = RE::BSGraphics::GetRendererData();
+		if (const auto backTarget = rendererData->renderWindow[0].swapChainRenderTarget.rtView)
+		{
+			static constexpr float color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+			rendererData->context->ClearRenderTargetView(backTarget, color);
+		}
 		origDrawUI(a_unk);
 	}
 
@@ -51,11 +41,11 @@ namespace Addictol
 			if (!RELEX::IsRuntimeOG())
 			{
 				//	 We don't override the user's HFPF config.
-				//   DisableAnimationOnLoadingScreens=true - HFPF NOPs 5 bytes at REL::ID(2227631)+0x223
-				//   DisableBlackLoadingScreens=true - HFPF flips byte at REL::ID(2249217)+0x116 (0x75 -> 0xEB)
+				//   DisableAnimationOnLoadingScreens=true - HFPF NOPs 5 bytes at ServingThread::ThreadProc+0x223
+				//   DisableBlackLoadingScreens=true - HFPF flips byte at LoadingMenu::ProcessMessage+0x116 (0x75 -> 0xEB)
 				static constexpr std::uint8_t hfpfAnimNop[] = { 0x0F, 0x1F, 0x44, 0x00, 0x00 };
-				const auto* const animSite = reinterpret_cast<const std::uint8_t*>(REL::ID(2227631).address() + 0x223);
-				const auto* const blackSite = reinterpret_cast<const std::uint8_t*>(REL::ID(2249217).address() + 0x116);
+				const auto* const animSite = reinterpret_cast<const std::uint8_t*>(REL::Relocation{ RE::ID::JobListManager::ServingThread::ThreadProc, REL::Offset(0x223) }.address());
+				const auto* const blackSite = reinterpret_cast<const std::uint8_t*>(REL::Relocation{ RE::ID::LoadingMenu::ProcessMessage, REL::Offset(0x116) }.address());
 
 				const bool hfpfAnimDisabled = std::memcmp(animSite, hfpfAnimNop, sizeof(hfpfAnimNop)) == 0;
 				const bool hfpfBlackDisabled = *blackSite == 0xEB;
@@ -80,7 +70,6 @@ namespace Addictol
 				}
 				if (installDrawUIClear)
 				{
-					g_RendererData = (RE::BSGraphics::RendererData*)REL::ID(2704527).address();
 					origDrawUI = (decltype(&DrawUILoadScreen))(RE::ID::Interface3D::Renderer::RenderPostAA.address());
 					RELEX::DetourCall(RE::ID::LoadingMenu::Render.address() + 0x3CC, (uintptr_t)&DrawUILoadScreen);
 				}
@@ -89,7 +78,6 @@ namespace Addictol
 			{
 				// OG
 
-				g_RendererData = (RE::BSGraphics::RendererData*)REL::ID(235166).address();
 				RELEX::WriteSafe(REL::Relocation{ RE::ID::LoadingMenu::PopulateLoadScreens, REL::Offset(0x1B) }.get(), { 0xE9, 0x34, 0x02, 0x00, 0x00, 0x90 });
 				origDrawUI = (decltype(&DrawUILoadScreen))(RE::ID::Interface3D::Renderer::RenderPostAA.address());
 				RELEX::DetourCall(RE::ID::LoadingMenu::Render.address() + 0x414, (uintptr_t)&DrawUILoadScreen);

@@ -66,7 +66,6 @@ namespace Addictol
 	extern BoolSetting bFixesUtilityShader;
 	extern BoolSetting bFixesPipBoyCursorConstraints;
 	extern BoolSetting bFixesMuzzleFlashLight;
-	extern BoolSetting bFixesAltTabFullscreen;
 	extern BoolSetting bFixesPowerGridScrap;
 	extern BoolSetting bFixesViewmodelShading;
 	extern BoolSetting bFixesDofFix;

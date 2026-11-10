@@ -152,10 +152,6 @@ namespace Addictol
 		"$Setting_FixesMuzzleFlashLight",
 		"Fixes a bug where the muzzle-flash light keeps illuminating the scene after the flash ends."
 	);
-	static dmui::localize::LocalizeString lsFixesAltTabFullscreen(
-		"$Setting_FixesAltTabFullscreen",
-		"Forces exclusive-fullscreen swap chains to windowed at creation to avoid Alt-Tab hangs."
-	);
 	static dmui::localize::LocalizeString lsFixesPowerGridScrap(
 		"$Setting_FixesPowerGridScrap",
 		"Fixes a CTD when scrapping or wiring after a settlement mod has been removed, by cleaning up orphan power-grid entries left behind by deleted references."
@@ -636,15 +632,6 @@ namespace Addictol
 		SettingDisplayCategory::kVisuals,
 		true,
 		std::addressof(lsFixesMuzzleFlashLight),
-		SettingApplyTiming::kNextLaunch
-	};
-
-	BoolSetting bFixesAltTabFullscreen{
-		"Fixes"sv,
-		"bAltTabFullscreen"sv,
-		SettingDisplayCategory::kInterface,
-		false,
-		std::addressof(lsFixesAltTabFullscreen),
 		SettingApplyTiming::kNextLaunch
 	};
 

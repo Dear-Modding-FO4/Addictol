@@ -62,7 +62,6 @@
 #include <Modules/AdModuleBethesdaNetCrash.h>
 #include <Modules/AdModuleMuzzleFlashLight.h>
 #include <Modules/AdModuleHighResBloom.h>
-#include <Modules/AdModuleAltTabFullscreen.h>
 #include <Modules/AdModulePowerGridScrap.h>
 #include <Modules/AdModuleDpiScaling.h>
 #include <Modules/AdModuleViewmodelShading.h>
@@ -184,7 +183,6 @@ static auto sModuleAnimSignedCrash					= std::make_shared<Addictol::ModuleAnimSi
 static auto sModuleBethesdaNetCrash					= std::make_shared<Addictol::ModuleBethesdaNetCrash>();
 static auto sModuleMuzzleFlashLight					= std::make_shared<Addictol::ModuleMuzzleFlashLight>();
 static auto sModuleHighResBloom						= std::make_shared<Addictol::ModuleHighResBloom>();
-static auto sModuleAltTabFullscreen					= std::make_shared<Addictol::ModuleAltTabFullscreen>();
 static auto sModulePowerGridScrap					= std::make_shared<Addictol::ModulePowerGridScrap>();
 static auto sModuleDpiScaling						= std::make_shared<Addictol::ModuleDpiScaling>();
 static auto sModuleViewmodelShading					= std::make_shared<Addictol::ModuleViewmodelShading>();
@@ -313,7 +311,6 @@ void AdRegisterModules()
 	modules.Register(sModuleBethesdaNetCrash);
 	modules.Register(sModuleMuzzleFlashLight);
 	modules.Register(sModuleHighResBloom);
-	modules.Register(sModuleAltTabFullscreen);
 	modules.Register(sModulePowerGridScrap);
 	modules.Register(sModuleViewmodelShading);
 	modules.Register(sModuleDofFix);

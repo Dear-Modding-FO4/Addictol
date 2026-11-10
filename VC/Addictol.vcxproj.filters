@@ -150,9 +150,6 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAIProcess3DUpdateFlag.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
-    <ClCompile Include="..\Addictol\Source\Modules\AdModuleAltTabFullscreen.cpp">
-      <Filter>Source\Modules\A</Filter>
-    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAnimSignedCrash.cpp">
       <Filter>Source\Modules\A</Filter>
     </ClCompile>
@@ -607,9 +604,6 @@
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAIProcess3DUpdateFlag.h">
-      <Filter>Include\Modules\A</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Addictol\Include\Modules\AdModuleAltTabFullscreen.h">
       <Filter>Include\Modules\A</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAnimSignedCrash.h">
