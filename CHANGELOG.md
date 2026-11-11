@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added the "Warn To Leave Crash" module, fixing a crash when a home owner warns the player to leave and pursues them. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
+- Added the "Skinned Decal Crash" module, fixing crashes and memory corruption when several projectiles hit the same character in one frame. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - UtilityShader: Fixed NG/AE crashes in alpha-tested LOD shadows that the fix let through.
 - Added the "Effect Item Conditions" module: conditions of an effect whose magic effect is missing or the wrong type no longer attach to the previous effect.
 - Fixed preload modules that skip, such as Plugin Hooks with both of its features off, being reported as failed installs.

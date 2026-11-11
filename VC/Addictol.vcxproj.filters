@@ -333,6 +333,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWarnToLeaveCrash.cpp">
       <Filter>Source\Modules\W</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSkinnedDecalCrash.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp">
       <Filter>Source\Modules\M</Filter>
     </ClCompile>
@@ -803,6 +806,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWarnToLeaveCrash.h">
       <Filter>Include\Modules\W</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSkinnedDecalCrash.h">
+      <Filter>Include\Modules\S</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h">
       <Filter>Include\Modules\M</Filter>

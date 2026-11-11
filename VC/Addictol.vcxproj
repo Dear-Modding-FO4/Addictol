@@ -90,6 +90,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleEffectEnvMapCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleNavmeshLocationCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleWarnToLeaveCrash.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSkinnedDecalCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleArmorPenetration.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAttachLightCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp" />
@@ -262,6 +263,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleEffectEnvMapCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleNavmeshLocationCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleWarnToLeaveCrash.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSkinnedDecalCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleArmorPenetration.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAttachLightCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h" />
