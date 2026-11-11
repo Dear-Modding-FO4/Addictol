@@ -162,8 +162,6 @@ namespace Addictol
 		{
 			{
 				const std::scoped_lock lock{ self.m_updateMutex };
-				if (!self.m_snapshot.load(std::memory_order_relaxed))
-					self.Reconcile();
 				Event event;
 				while (self.Pop(event))
 				{

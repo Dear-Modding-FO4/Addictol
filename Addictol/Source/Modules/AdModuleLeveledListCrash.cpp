@@ -9,14 +9,14 @@ namespace Addictol
 {
 	namespace leveledListCrashDetail
 	{
-		using AddLeveledObjectFn = RE::LEVELED_OBJECT* (*)(RE::TESLeveledList*, std::uint16_t, std::uint16_t, std::int8_t, RE::TESForm*,
+		using AddLeveledObjectFn = RE::LEVELED_OBJECT* (*)(RE::TESLeveledList*, uint16_t, uint16_t, int8_t, RE::TESForm*,
 			RE::ContainerItemExtra*);
 		static AddLeveledObjectFn s_originalAddLeveledObject{ nullptr };
 
-		// Mirrors the engine's scan: an empty slot within the level-sorted prefix is reused without growing.
-		[[nodiscard]] static bool HasReusableSlot(const RE::TESLeveledList& a_list, std::uint16_t a_level) noexcept
+		// Mirrors the engine: it reuses a null slot before the first higher level.
+		[[nodiscard]] static bool HasReusableSlot(const RE::TESLeveledList& a_list, uint16_t a_level) noexcept
 		{
-			for (std::uint32_t index = 0; a_list.leveledLists && index < a_list.baseListCount; ++index)
+			for (uint32_t index = 0; a_list.leveledLists && index < a_list.baseListCount; ++index)
 			{
 				const auto& entry = a_list.leveledLists[index];
 				if (entry.level > a_level)
@@ -27,9 +27,9 @@ namespace Addictol
 			return false;
 		}
 
-		// Every add path (plugin load, save replay, Papyrus, console) lands here; the u8 count wraps past 255.
-		static RE::LEVELED_OBJECT* AddLeveledObject(RE::TESLeveledList* a_this, std::uint16_t a_level, std::uint16_t a_count,
-			std::int8_t a_chanceNone, RE::TESForm* a_item, RE::ContainerItemExtra* a_itemExtra)
+		// The u8 count wraps past 255, whichever path adds the entry.
+		static RE::LEVELED_OBJECT* HKAddLeveledObject(RE::TESLeveledList* a_this, uint16_t a_level, uint16_t a_count,
+			int8_t a_chanceNone, RE::TESForm* a_item, RE::ContainerItemExtra* a_itemExtra)
 		{
 			if (a_this->baseListCount == 0xFF && !HasReusableSlot(*a_this, a_level))
 			{
@@ -60,11 +60,14 @@ namespace Addictol
 	{
 		using namespace leveledListCrashDetail;
 
-		const auto original = RELEX::DetourJump(REL::Relocation{ RE::ID::TESLeveledList::AddLeveledObject },
-			reinterpret_cast<uintptr_t>(&AddLeveledObject));
+		const auto target = RE::ID::TESLeveledList::AddLeveledObject.address();
+		const auto hook = reinterpret_cast<uintptr_t>(&HKAddLeveledObject);
+		const auto original = RELEX::IsRuntimeOG() ?
+			RELEX::TryDetourJump(target, hook, { 0x44, 0x88, 0x4C, 0x24, 0x20, 0x66, 0x44, 0x89, 0x44, 0x24, 0x18 }) :
+			RELEX::TryDetourJump(target, hook, { 0x48, 0x89, 0x5C, 0x24, 0x10, 0x44, 0x88, 0x4C, 0x24, 0x20 });
 		if (!original)
 		{
-			Skip("AddLeveledObject detour installation failed"sv);
+			Skip("AddLeveledObject prologue does not match; unsupported runtime or another plugin owns it"sv);
 			return false;
 		}
 		s_originalAddLeveledObject = reinterpret_cast<AddLeveledObjectFn>(original);

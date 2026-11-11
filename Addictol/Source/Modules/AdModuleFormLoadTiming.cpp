@@ -177,7 +177,8 @@ namespace Addictol
 		const auto& site = LoadTiming::kInitStepSites[a_index];
 		if (!s_instance || site.function == LoadTiming::InitStepFunction::kWinMain)
 			return;
-		const auto series = site.function == LoadTiming::InitStepFunction::kStartUp ?
+		const auto series = site.function == LoadTiming::InitStepFunction::kStartUp ||
+				site.function == LoadTiming::InitStepFunction::kStartUpArchive ?
 			LoadTiming::kPreMenuStepSeriesName :
 			LoadTiming::kInitStepSeriesName;
 		s_instance->RecordSpan(series, site.name, a_start, a_end);
@@ -195,17 +196,25 @@ namespace Addictol
 
 	void ModuleFormLoadTiming::InstallInitStepTimers() noexcept
 	{
-		const auto siteAddress = [](const LoadTiming::InitStepSite& a_site) {
+		const auto og = RELEX::IsRuntimeOG();
+		const auto applies = [og](const LoadTiming::InitStepSite& a_site) { return a_site.og || !og; };
+		const auto siteAddress = [og](const LoadTiming::InitStepSite& a_site) {
 			constexpr std::array kFunctions{
 				RE::ID::WinMain,
 				RE::ID::Main::StartUp,
+				RE::ID::Main::InitStartUpArchive,
 				RE::ID::Main::InitGameData,
 				RE::ID::Main::InitGameDataThreadProc
 			};
-			return REL::Relocation{ kFunctions[std::to_underlying(a_site.function)], a_site.offset }.address();
+			const auto function = a_site.function == LoadTiming::InitStepFunction::kStartUpArchive && !og ?
+				LoadTiming::InitStepFunction::kStartUp :
+				a_site.function;
+			return REL::Relocation{ kFunctions[std::to_underlying(function)], a_site.offset }.address();
 		};
 		for (const auto& site : LoadTiming::kInitStepSites)
 		{
+			if (!applies(site))
+				continue;
 			const auto address = siteAddress(site);
 			if (!(site.size == 5 ? RELEX::Validate(address, { 0xE8 }) : RELEX::Validate(address, { 0xFF, 0x15 })))
 			{
@@ -217,14 +226,19 @@ namespace Addictol
 		}
 
 		auto& trampoline = REL::GetTrampoline();
+		const auto install = [&]<size_t I>() {
+			constexpr auto& site = LoadTiming::kInitStepSites[I];
+			if (!applies(site))
+				return;
+			constexpr auto thunk = &LoadTiming::TimedForward<ModuleFormLoadTiming, I>;
+			s_timedOriginals[I] = reinterpret_cast<LoadTiming::ForwardedCall>(
+				site.size == 5 ?
+					trampoline.write_call<5>(siteAddress(site), thunk) :
+					// CALL6 returns the old pointer slot, not the function in it.
+					*reinterpret_cast<const uintptr_t*>(trampoline.write_call<6>(siteAddress(site), thunk)));
+		};
 		[&]<size_t... I>(std::index_sequence<I...>) {
-			((s_timedOriginals[I] = reinterpret_cast<LoadTiming::ForwardedCall>(
-				  LoadTiming::kInitStepSites[I].size == 5 ?
-					  trampoline.write_call<5>(siteAddress(LoadTiming::kInitStepSites[I]), &LoadTiming::TimedForward<ModuleFormLoadTiming, I>) :
-					  // CALL6 returns the old pointer slot, not the function in it.
-					  *reinterpret_cast<const uintptr_t*>(
-						  trampoline.write_call<6>(siteAddress(LoadTiming::kInitStepSites[I]), &LoadTiming::TimedForward<ModuleFormLoadTiming, I>)))),
-				...);
+			(install.template operator()<I>(), ...);
 		}(std::make_index_sequence<LoadTiming::kInitStepSites.size()>{});
 	}
 

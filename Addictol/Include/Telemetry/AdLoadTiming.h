@@ -41,6 +41,7 @@ namespace Addictol::LoadTiming
 	{
 		kWinMain,
 		kStartUp,
+		kStartUpArchive,
 		kInitGameData,
 		kThreadProc
 	};
@@ -52,6 +53,7 @@ namespace Addictol::LoadTiming
 		InitStepFunction function;
 		REL::Offset offset;
 		uint8_t size;
+		bool og{ true };
 	};
 
 	inline constexpr std::array kInitStepSites{
@@ -60,7 +62,12 @@ namespace Addictol::LoadTiming
 		InitStepSite{ "havok", InitStepFunction::kStartUp, REL::Offset{ 0x16F, 0x239, 0x2CA }, 5 },
 		// OG calls Main_InitRenderer; NG/AE inline it around Renderer::Init.
 		InitStepSite{ "renderer", InitStepFunction::kStartUp, REL::Offset{ 0x716, 0xBDD, 0xC6D }, 5 },
-		InitStepSite{ "startup_archives", InitStepFunction::kStartUp, REL::Offset{ 0x78B, 0xCAA, 0xD3A }, 5 },
+		// OG calls Main_InitStartUpArchive; NG/AE inline it into StartUp.
+		InitStepSite{ "archive_lists", InitStepFunction::kStartUpArchive, REL::Offset{ 0x028, 0xCAA, 0xD3A }, 5 },
+		InitStepSite{ "loose_files", InitStepFunction::kStartUpArchive, REL::Offset{ 0x051, 0xCD3, 0xD63 }, 5 },
+		InitStepSite{ "data_prefix", InitStepFunction::kStartUpArchive, REL::Offset{ 0x070, 0xCEB, 0xD7B }, 5 },
+		// OG tail-jumps to RefreshFromSources, so there is no call to time.
+		InitStepSite{ "texture_refresh", InitStepFunction::kStartUpArchive, REL::Offset{ 0, 0xCF0, 0xD80 }, 5, false },
 		InitStepSite{ "scene_graph", InitStepFunction::kStartUp, REL::Offset{ 0x9C4, 0xF1A, 0xFAA }, 5 },
 		InitStepSite{ "ui_systems", InitStepFunction::kStartUp, REL::Offset{ 0x9C9, 0xF1F, 0xFAF }, 5 },
 		InitStepSite{ "movie_player", InitStepFunction::kStartUp, REL::Offset{ 0xA65, 0xFBB, 0x1050 }, 5 },
