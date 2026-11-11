@@ -447,6 +447,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureLoadCrash.cpp">
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureArraySliceCrash.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTextureCreateCrash.cpp">
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
@@ -922,6 +925,9 @@
       <Filter>Include\Modules\T</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureLoadCrash.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureArraySliceCrash.h">
       <Filter>Include\Modules\T</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTextureCreateCrash.h">

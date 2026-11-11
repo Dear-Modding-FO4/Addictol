@@ -176,6 +176,10 @@ namespace Addictol
 		"$Setting_FixesTextureCreateCrash",
 		"Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4."
 	);
+	static dmui::localize::LocalizeString lsFixesTextureArraySliceCrash(
+		"$Setting_FixesTextureArraySliceCrash",
+		"Fixes a crash when the texture streamer uploads into a texture array, such as an NPC's face tints, that was released while the slice was being read."
+	);
 	static dmui::localize::LocalizeString lsFixesFullPrecisionDecals(
 		"$Setting_FixesFullPrecisionDecals",
 		"Enables fixes for decal projection and effect-shader particles on full-precision meshes."
@@ -710,6 +714,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesTextureCreateCrash),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesTextureArraySliceCrash{
+		"Fixes"sv,
+		"bTextureArraySliceCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesTextureArraySliceCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 

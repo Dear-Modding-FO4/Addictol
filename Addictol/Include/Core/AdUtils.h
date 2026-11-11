@@ -164,6 +164,7 @@ namespace RELEX
 
 	// Resolves the rel32, which differs per build, to prove the call target.
 	[[nodiscard]] bool IsCallTo(uintptr_t a_site, uintptr_t a_callee) noexcept;
+	[[nodiscard]] bool IsJumpTo(uintptr_t a_site, uintptr_t a_callee) noexcept;
 
 	// Redirects a class member virtual function (__thiscall) to another
 	template<typename T>

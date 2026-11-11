@@ -72,6 +72,7 @@
 #include <Modules/AdModuleToggleGrassCommand.h>
 #include <Modules/AdModuleTextureLoadCrash.h>
 #include <Modules/AdModuleTextureCreateCrash.h>
+#include <Modules/AdModuleTextureArraySliceCrash.h>
 #include <Modules/AdModuleFullPrecisionDecals.h>
 #include <Modules/AdModuleShaderReferenceEffectLifetime.h>
 #include <Modules/AdModuleMagicKeywordCrash.h>
@@ -199,6 +200,7 @@ static auto sModuleReferenceHandleLimitWarning		= std::make_shared<Addictol::Mod
 static auto sModuleToggleGrassCommand				= std::make_shared<Addictol::ModuleToggleGrassCommand>();
 static auto sModuleTextureLoadCrash					= std::make_shared<Addictol::ModuleTextureLoadCrash>();
 static auto sModuleTextureCreateCrash				= std::make_shared<Addictol::ModuleTextureCreateCrash>();
+static auto sModuleTextureArraySliceCrash			= std::make_shared<Addictol::ModuleTextureArraySliceCrash>();
 static auto sModuleFullPrecisionDecals				= std::make_shared<Addictol::ModuleFullPrecisionDecals>();
 static auto sModuleShaderReferenceEffectLifetime	= std::make_shared<Addictol::ModuleShaderReferenceEffectLifetime>();
 static auto sModuleMagicKeywordCrash				= std::make_shared<Addictol::ModuleMagicKeywordCrash>();
@@ -332,6 +334,7 @@ void AdRegisterModules()
 	modules.Register(sModuleToggleGrassCommand);
 	modules.Register(sModuleTextureLoadCrash);
 	modules.Register(sModuleTextureCreateCrash);
+	modules.Register(sModuleTextureArraySliceCrash);
 	modules.Register(sModuleFullPrecisionDecals);
 	modules.Register(sModuleShaderReferenceEffectLifetime);
 	modules.Register(sModuleMagicKeywordCrash);

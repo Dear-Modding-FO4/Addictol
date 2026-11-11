@@ -250,6 +250,11 @@ namespace RELEX
 	{
 		return Validate(a_site, { 0xE8 }) && DetourCheckRel32AndReturnDestAddress(a_site) == a_callee;
 	}
+
+	bool IsJumpTo(uintptr_t a_site, uintptr_t a_callee) noexcept
+	{
+		return Validate(a_site, { 0xE9 }) && DetourCheckRel32AndReturnDestAddress(a_site) == a_callee;
+	}
 }
 
 namespace Addictol

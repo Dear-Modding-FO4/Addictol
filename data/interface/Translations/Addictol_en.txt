@@ -56,6 +56,7 @@ $Setting_FixesViewmodelShading	Fixes wrong specular lighting on the first-person
 $Setting_FixesDofFix	Fixes the first-person viewmodel getting blurred by depth-of-field (iron-sight ADS, dialogue camera) by re-rasterizing it after the DoF pass.
 $Setting_FixesToggleGrassCommand	Fixes the "ToggleGrass" / "tg" command being a reference function in the AE versions of the game.
 $Setting_FixesTextureLoadCrash	Fixes a crash if NiTexture is nullptr when created, fixes degrade level and also logs texture load errors.
+$Setting_FixesTextureArraySliceCrash	Fixes a crash when the texture streamer uploads into a texture array, such as an NPC's face tints, that was released while the slice was being read.
 $Setting_FixesTextureCreateCrash	Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4.
 $Setting_FixesFullPrecisionDecals	Enables fixes for decal projection and effect-shader particles on full-precision meshes.
 $Setting_FixesShaderReferenceEffectLifetime	Prevents crashes when an actor with an active effect shader unloads by detaching the shader when its magic effect is destroyed.
