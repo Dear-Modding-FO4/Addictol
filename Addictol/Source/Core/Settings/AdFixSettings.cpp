@@ -762,7 +762,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bWarnToLeaveCrash"sv,
 		SettingDisplayCategory::kStability,
-		false,
+		true,
 		std::addressof(lsFixesWarnToLeaveCrash),
 		SettingApplyTiming::kNextLaunch
 	};
@@ -771,7 +771,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bSkinnedDecalCrash"sv,
 		SettingDisplayCategory::kStability,
-		false,
+		true,
 		std::addressof(lsFixesSkinnedDecalCrash),
 		SettingApplyTiming::kNextLaunch
 	};
@@ -780,7 +780,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bFootIkRaycastCrash"sv,
 		SettingDisplayCategory::kStability,
-		false,
+		true,
 		std::addressof(lsFixesFootIkRaycastCrash),
 		SettingApplyTiming::kNextLaunch
 	};
