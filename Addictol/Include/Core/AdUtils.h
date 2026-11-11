@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <string>
 #include <initializer_list>
 #include <span>
@@ -173,6 +174,9 @@ namespace RELEX
 	uintptr_t TryDetourCall(uintptr_t a_target, uintptr_t a_function,
 		const std::initializer_list<uint8_t>& a_expected) noexcept;
 
+	// Resolves the rel32, which differs per build, to prove the call target.
+	[[nodiscard]] bool IsCallTo(uintptr_t a_site, uintptr_t a_callee) noexcept;
+
 	// Redirects a class member virtual function (__thiscall) to another
 	template<typename T>
 	[[nodiscard]] inline static uintptr_t DetourClassVTable(uintptr_t a_target, T a_function, uint32_t a_index) noexcept
@@ -314,6 +318,23 @@ namespace Addictol
 
 	extern StdTimer globalStdTimer;
 	extern QpcTimer globalQpcTimer;
+
+	// Lets the first reports of a repeating event through, then mutes the rest.
+	class LogLimiter
+	{
+	public:
+		constexpr LogLimiter(uint32_t a_limit, std::string_view a_mutedNotice) noexcept :
+			m_limit(a_limit), m_mutedNotice(a_mutedNotice)
+		{}
+
+		// The report's 1-based number while it should be logged, otherwise 0.
+		[[nodiscard]] uint32_t Take() noexcept;
+
+	private:
+		std::atomic_uint32_t m_count{ 0 };
+		uint32_t m_limit;
+		std::string_view m_mutedNotice;
+	};
 
 	[[nodiscard]] uint32_t Extend16(uint32_t a_in) noexcept;
 	[[nodiscard]] uint32_t Extend8(uint32_t a_in) noexcept;

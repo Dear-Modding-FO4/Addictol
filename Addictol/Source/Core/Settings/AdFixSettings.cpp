@@ -236,6 +236,10 @@ namespace Addictol
 		"$Setting_FixesPuddleCubemaps",
 		"Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections)."
 	);
+	static dmui::localize::LocalizeString lsFixesCubemapArray(
+		"$Setting_FixesCubemapArray",
+		"Fixes material cubemap reflections turning off when one cubemap has an unexpected size, format or mip count, by converting every cubemap into a fixed 128x128 array (replaces the Fix Cubemaps xEdit script)."
+	);
 	static dmui::localize::LocalizeString lsFixesStringPoolRelease(
 		"$Setting_FixesStringPoolRelease",
 		"An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude)."
@@ -825,6 +829,15 @@ namespace Addictol
 		SettingDisplayCategory::kVisuals,
 		false,
 		std::addressof(lsFixesPuddleCubemaps),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesCubemapArray{
+		"Fixes"sv,
+		"bCubemapArray"sv,
+		SettingDisplayCategory::kVisuals,
+		true,
+		std::addressof(lsFixesCubemapArray),
 		SettingApplyTiming::kNextLaunch
 	};
 

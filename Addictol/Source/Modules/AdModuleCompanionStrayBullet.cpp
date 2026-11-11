@@ -226,51 +226,30 @@ namespace Addictol
 		{
 			REL::Relocation site{ REL::ID{ 369646, 2216401 }, REL::Offset{ 0x1B8, 0x257 } };
 
-			// 1. must be an E8 rel32 CALL
-			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
-				REX::WARN("CompanionStrayBullet: combat-exit call-site is not a CALL (E8); Hook B not applied."sv);
+			// Another mod may have redirected it, or this is an unsupported build.
+			REL::Relocation expectedCallee{ REL::ID{ 1512408, 2238049 } };
+			if (!RELEX::IsCallTo(site.address(), expectedCallee.address()))
+				REX::WARN("CompanionStrayBullet: combat-exit call site is not a call to vanilla HandleOnCombatExit. Hook B not applied."sv);
 			else
 			{
-				// 2. must still point at vanilla HandleOnCombatExit (else another mod redirected it, or wrong build)
-				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
-				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation expectedCallee{ REL::ID{ 1512408, 2238049 } };
-
-				if (callTarget != expectedCallee.address())
-					REX::WARN("CompanionStrayBullet: combat-exit call target unexpected (already patched or unsupported build). Hook B not applied."sv);
-				else
-				{
-					// 3. safe to patch
-					companionStrayBulletDetail::s_lastPatchMs.store(companionStrayBulletDetail::NowMs(), std::memory_order_relaxed);
-					companionStrayBulletDetail::HandleOnCombatExit::func =
-						trampoline.write_call<5>(site.address(), companionStrayBulletDetail::HandleOnCombatExit::thunk);
-					installed = true;
-				}
+				companionStrayBulletDetail::s_lastPatchMs.store(companionStrayBulletDetail::NowMs(), std::memory_order_relaxed);
+				companionStrayBulletDetail::HandleOnCombatExit::func =
+					trampoline.write_call<5>(site.address(), companionStrayBulletDetail::HandleOnCombatExit::thunk);
+				installed = true;
 			}
 		}
 
 		{
 			REL::Relocation site{ RE::ID::Actor::SetCommandState, REL::Offset{ 0x118, 0x11E } };
 
-			// 1. must be an E8 rel32 CALL
-			if (*reinterpret_cast<const std::uint8_t *>(site.address()) != 0xE8)
-				REX::WARN("CompanionStrayBullet: command-enter call-site is not a CALL (E8); Hook A not applied."sv);
+			REL::Relocation expectedCallee{ RE::ID::PlayerCharacter::SayCommand };
+			if (!RELEX::IsCallTo(site.address(), expectedCallee.address()))
+				REX::WARN("CompanionStrayBullet: command-enter call site is not a call to the vanilla handler. Hook A not applied."sv);
 			else
 			{
-				// 2. must still point at the vanilla command-enter handler
-				const std::int32_t rel = *reinterpret_cast<const std::int32_t *>(site.address() + 1);
-				const std::uintptr_t callTarget = site.address() + 5 + rel;
-				REL::Relocation expectedCallee{ RE::ID::PlayerCharacter::SayCommand };
-
-				if (callTarget != expectedCallee.address())
-					REX::WARN("CompanionStrayBullet: command-enter call target unexpected (already patched or unsupported build). Hook A not applied."sv);
-				else
-				{
-					// 3. safe to patch
-					companionStrayBulletDetail::HandleOnCommandEnter::func =
-						trampoline.write_call<5>(site.address(), companionStrayBulletDetail::HandleOnCommandEnter::thunk);
-					installed = true;
-				}
+				companionStrayBulletDetail::HandleOnCommandEnter::func =
+					trampoline.write_call<5>(site.address(), companionStrayBulletDetail::HandleOnCommandEnter::thunk);
+				installed = true;
 			}
 		}
 

@@ -769,24 +769,9 @@ namespace Addictol
 			const REL::Relocation<std::uintptr_t>& a_site,
 			const REL::Relocation<std::uintptr_t>& a_expectedTarget) noexcept
 		{
-			const auto site = a_site.address();
-			const auto opcode = *reinterpret_cast<const std::uint8_t*>(site);
-			if (opcode != 0xE8)
+			if (!RELEX::IsCallTo(a_site.address(), a_expectedTarget.address()))
 			{
-				REX::WARN("Full Precision Decals: {} call-site opcode mismatch; expected E8, found {:02X}. Patch was not applied."sv, a_name, opcode);
-				return false;
-			}
-
-			std::int32_t displacement{ 0 };
-			std::memcpy(std::addressof(displacement), reinterpret_cast<const void*>(site + 1), sizeof(displacement));
-			const auto actualTarget = static_cast<std::uintptr_t>(static_cast<std::intptr_t>(site + 5) + displacement);
-			if (actualTarget != a_expectedTarget.address())
-			{
-				REX::WARN(
-					"Full Precision Decals: {} call target mismatch; expected 0x{:X}, found 0x{:X}. Patch was not applied."sv,
-					a_name,
-					a_expectedTarget.address(),
-					actualTarget);
+				REX::WARN("Full Precision Decals: {} call site is not a call to 0x{:X}. Patch was not applied."sv, a_name, a_expectedTarget.address());
 				return false;
 			}
 

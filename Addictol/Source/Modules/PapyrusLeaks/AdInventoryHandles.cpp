@@ -136,7 +136,7 @@ namespace Addictol::PapyrusLeaks
 		const auto clear = REL::Relocation{ RE::ID::BGSInventoryList::Clear }.address();
 		for (const auto site : ClearCallSites())
 		{
-			if (!RELEX::Validate(site, { 0xE8 }) || site + 5 + *reinterpret_cast<const int32_t*>(site + 1) != clear)
+			if (!RELEX::IsCallTo(site, clear))
 				return "a BGSInventoryList::Clear call site moved"sv;
 		}
 

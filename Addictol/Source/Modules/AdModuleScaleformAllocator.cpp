@@ -8,7 +8,6 @@
 #include <Scaleform/R/RefCountBase.h>
 #include <Scaleform/S/SysAlloc.h>
 
-#include <atomic>
 #include <bit>
 #include <intrin.h>
 
@@ -16,14 +15,8 @@ namespace Addictol
 {
 	namespace scaleformAllocatorDetail
 	{
-		inline constexpr uint32_t kMaxDiagnosticLogs{ 16 };
 		inline constexpr int32_t kMaxValidRefCount{ 0x00FFFFFF };
-		static std::atomic<uint32_t> s_diagnosticLogs{ 0 };
-
-		[[nodiscard]] static bool ShouldLogDiagnostic() noexcept
-		{
-			return s_diagnosticLogs.fetch_add(1, std::memory_order_relaxed) < kMaxDiagnosticLogs;
-		}
+		static LogLimiter s_diagnostics{ 16, "Scaleform Allocator: further diagnostics will not be logged"sv };
 
 		// Free-list headers overwrite +0x00/+0x08 with 16-byte-aligned links.
 		[[nodiscard]] static bool IsValidLiveRefCountObject(const char* a_kind, const void* a_this, int32_t a_refCount, const void* a_caller) noexcept
@@ -39,7 +32,7 @@ namespace Addictol
 
 			if (a_refCount <= 0 || a_refCount > kMaxValidRefCount || !vtable || (vtable & 0x7) != 0 || raw0 == addr || raw8 == addr)
 			{
-				if (ShouldLogDiagnostic())
+				if (s_diagnostics.Take())
 				{
 					REX::WARN("Scaleform Allocator: blocked invalid {}::Release on {:p} (vtable={:#x}, refCount={}) from {:p}"sv,
 						a_kind, a_this, vtable, a_refCount, a_caller);
@@ -97,7 +90,7 @@ namespace Addictol
 			if (healed != orig)
 			{
 				a_slot = healed;
-				if (ShouldLogDiagnostic())
+				if (s_diagnostics.Take())
 				{
 					REX::WARN("Scaleform Allocator: healed corrupted FreeBin {} {:#x} -> {:#x}"sv,
 						a_label, reinterpret_cast<uintptr_t>(orig), reinterpret_cast<uintptr_t>(healed));

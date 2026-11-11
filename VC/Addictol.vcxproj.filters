@@ -213,6 +213,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCrashRemoveRef.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleCubemapArray.cpp">
+      <Filter>Source\Modules\C</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreateD3DAndSwapchain.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
@@ -670,6 +673,9 @@
       <Filter>Include\Modules\C</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCrashRemoveRef.h">
+      <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleCubemapArray.h">
       <Filter>Include\Modules\C</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreateD3DAndSwapchain.h">

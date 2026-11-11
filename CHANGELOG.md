@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the "Cubemap Array" module, fixing material cubemap reflections that turn off or scramble when one cubemap has an unexpected size, format or mip count; it replaces the Fix Cubemaps xEdit script.
 - LeveledListCrash: Guards every way a leveled list grows, including plugin and save loading, and no longer refuses entries that reuse an empty slot.
 - Threads: Installs at startup, so the engine's IO and model-loader threads no longer stay below normal priority.
 - Telemetry: Fixed a startup hang on OG when plugin timing, image memory, image sampling, or the slow plugin warning is enabled.

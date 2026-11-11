@@ -90,6 +90,7 @@ namespace Addictol
 	extern BoolSetting bFixesClimateLoad;
 	extern BoolSetting bFixesMusicOverlap;
 	extern BoolSetting bFixesPuddleCubemaps;
+	extern BoolSetting bFixesCubemapArray;
 	extern BoolSetting bFixesStringPoolRelease;
 	extern BoolSetting bFixesLoadOrder;
 	extern BoolSetting bFixesHUDMessageQueue;

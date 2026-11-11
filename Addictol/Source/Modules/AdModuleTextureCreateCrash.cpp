@@ -3,7 +3,6 @@
 #include <REL/REL.h>
 
 #include <array>
-#include <atomic>
 
 namespace Addictol
 {
@@ -12,8 +11,7 @@ namespace Addictol
 		// First use of the argument is `mov rax, [rcx]`, the ID3D11Texture2D vtable.
 		static inline REL::Relocation<void(void*)> RegisterD3DTexture{ REL::ID{ 788672, 2277287 } };
 
-		static std::atomic_uint32_t s_refusedCount{ 0 };
-		static constexpr uint32_t s_maxLoggedRefusals{ 8 };
+		static LogLimiter s_refusals{ 8, "Texture Create Crash: further refused textures will not be logged"sv };
 
 		// BSD3DResourceCreator's worker never checks the HRESULT:
 		//
@@ -34,25 +32,10 @@ namespace Addictol
 				return;
 			}
 
-			const auto count = s_refusedCount.fetch_add(1, std::memory_order_relaxed) + 1;
-			if (count <= s_maxLoggedRefusals)
-			{
-				REX::WARN("Texture Create Crash: D3D11 refused a texture description, skipped its registration (#{})"sv, count);
-				if (count == s_maxLoggedRefusals)
-					REX::WARN("Texture Create Crash: further refused textures will not be logged"sv);
-			}
+			if (const auto report = s_refusals.Take())
+				REX::WARN("Texture Create Crash: D3D11 refused a texture description, skipped its registration (#{})"sv, report);
 		}
 
-		// The rel32 differs per build, so it cannot go in the expected bytes - resolving it is
-		// what proves the offset still lands on the right call.
-		[[nodiscard]] static bool IsCallToRegisterD3DTexture(uintptr_t a_site) noexcept
-		{
-			if (!RELEX::Validate(a_site, { 0xE8 }))
-				return false;
-
-			const auto relative = *reinterpret_cast<const int32_t*>(a_site + 1);
-			return (a_site + 5 + static_cast<intptr_t>(relative)) == RegisterD3DTexture.address();
-		}
 	}
 
 	ModuleTextureCreateCrash::ModuleTextureCreateCrash() :
@@ -75,7 +58,7 @@ namespace Addictol
 		// Check all of them before writing any, so an odd layout cannot half patch the renderer.
 		for (const auto site : sites)
 		{
-			if (!IsCallToRegisterD3DTexture(site))
+			if (!RELEX::IsCallTo(site, RegisterD3DTexture.address()))
 			{
 				REX::ERROR("Texture Create Crash: no RegisterD3DTexture call at 0x{:X}, nothing was patched"sv, site);
 				return false;

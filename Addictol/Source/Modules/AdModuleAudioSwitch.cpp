@@ -468,12 +468,7 @@ namespace Addictol
 
 		[[nodiscard]] static bool IsSignalCallSiteVanilla() noexcept
 		{
-			const auto site = SignalCallSite().address();
-			if (!RELEX::Validate(site, { 0xE8 }))
-				return false;
-
-			const auto target = site + 5 + *reinterpret_cast<const int32_t*>(site + 1);
-			return target == REL::Relocation<uintptr_t>{ RE::ID::BSSystemFileStreamer::Signal }.address();
+			return RELEX::IsCallTo(SignalCallSite().address(), REL::Relocation<uintptr_t>{ RE::ID::BSSystemFileStreamer::Signal }.address());
 		}
 	}
 

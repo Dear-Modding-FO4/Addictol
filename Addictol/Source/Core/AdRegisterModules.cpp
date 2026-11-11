@@ -88,6 +88,7 @@
 #include <Modules/AdModuleClimateLoad.h>
 #include <Modules/AdModuleMusicOverlap.h>
 #include <Modules/AdModulePuddleCubemaps.h>
+#include <Modules/AdModuleCubemapArray.h>
 #include <Modules/AdModuleCompanionStrayBullet.h>
 #include <Modules/AdModuleAudioSwitch.h>
 #include <Modules/AdModuleStringPoolRelease.h>
@@ -210,6 +211,7 @@ static auto sModuleCrashRemoveRef					= std::make_shared<Addictol::ModuleCrashRe
 static auto sModuleClimateLoadFix					= std::make_shared<Addictol::ModuleClimateLoadFix>();
 static auto sModuleMusicOverlap						= std::make_shared<Addictol::ModuleMusicOverlap>();
 static auto sModulePuddleCubemaps					= std::make_shared<Addictol::ModulePuddleCubemaps>();
+static auto sModuleCubemapArray						= std::make_shared<Addictol::ModuleCubemapArray>();
 static auto sModuleCompanionStrayBullet				= std::make_shared<Addictol::ModuleCompanionStrayBullet>();
 static auto sModuleAudioSwitch						= std::make_shared<Addictol::ModuleAudioSwitch>();
 static auto sModuleStringPoolRelease				= std::make_shared<Addictol::ModuleStringPoolRelease>();
@@ -358,6 +360,7 @@ void AdRegisterModules()
 	modules.Register(sModuleSafeExit,						kGameDataReady);
 	modules.Register(sModuleInteriorNavCut,					kGameDataReady);
 	modules.Register(sModulePuddleCubemaps,					kGameDataReady);
+	modules.Register(sModuleCubemapArray,					kGameDataReady);
 	modules.Register(sModuleControlSamplers,				kGameDataReady);
 	modules.Register(sModuleDuplicateAddonNodeIndex,		kGameDataReady);
 	modules.Register(sModuleFasterWorkshop,					kGameDataReady);

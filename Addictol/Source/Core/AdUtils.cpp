@@ -245,12 +245,28 @@ namespace RELEX
 	{
 		return Validate(a_target, a_expected) ? DetourCall(a_target, a_function) : 0;
 	}
+
+	bool IsCallTo(uintptr_t a_site, uintptr_t a_callee) noexcept
+	{
+		return Validate(a_site, { 0xE8 }) && DetourCheckRel32AndReturnDestAddress(a_site) == a_callee;
+	}
 }
 
 namespace Addictol
 {
 	StdTimer globalStdTimer{};
 	QpcTimer globalQpcTimer{};
+
+	uint32_t LogLimiter::Take() noexcept
+	{
+		const auto count = m_count.fetch_add(1, std::memory_order_relaxed);
+		if (count < m_limit)
+			return count + 1;
+
+		if (count == m_limit)
+			REX::INFO("{}"sv, m_mutedNotice);
+		return 0;
+	}
 
 	QpcTimer::QpcTimer() noexcept :
 		freq(GetQpcFrequency())
