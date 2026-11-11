@@ -104,19 +104,22 @@ namespace Addictol
 				Patch(std::uintptr_t a_data)
 				{
 					if (RELEX::IsRuntimeOG())
+					{
 						mov(rax, a_data);
+						ret();
+					}
 					else
 					{
-						test(rax, rax);
+						// The caller already spilled the result to [rsp+38h], past our return.
+						cmp(qword[rsp + 0x40], 0);
 						jnz("skip");
 						mov(rax, a_data);
+						mov(qword[rsp + 0x40], rax);
 
 						L("skip");
 						mov(r11, reinterpret_cast<std::uintptr_t>(&::LeaveCriticalSection));
 						jmp(r11);
 					}
-
-					ret();
 				}
 			};
 
@@ -139,6 +142,29 @@ namespace Addictol
 	ModuleUtilityShader::ModuleUtilityShader() :
 		Module("Utility Shader", &bFixesUtilityShader)
 	{}
+
+	bool ModuleUtilityShader::DoQuery() const noexcept
+	{
+		const auto base = REL::Relocation{ RE::ID::BSUtilityShader::CreateCommandBuffer }.address();
+
+		const bool vanilla = RELEX::IsRuntimeOG() ?
+			// mov r13, [rbp+22F0h]
+			RELEX::Validate(base + 0x150, { 0x4C, 0x8B, 0xAD, 0xF0, 0x22, 0x00, 0x00 }) &&
+				// mov rax, [rbp+22F0h]; mov [rsp+60h], rax
+				RELEX::Validate(base + 0x1A4, { 0x48, 0x8B, 0x85, 0xF0, 0x22, 0x00, 0x00, 0x48, 0x89, 0x44, 0x24, 0x60 }) :
+			// cmovnz r13, rax; lea rcx, [r14+20h]; call [LeaveCriticalSection]
+			RELEX::Validate(base + 0x13E, { 0x4C, 0x0F, 0x45, 0xE8, 0x49, 0x8D, 0x4E, 0x20, 0xFF, 0x15 }) &&
+				// cmovnz rdx, rax; mov [rsp+38h], rdx; lea rcx, [r14+48h]; call [iat]
+				RELEX::Validate(base + 0x1A4, { 0x48, 0x0F, 0x45, 0xD0, 0x48, 0x89, 0x54, 0x24, 0x38, 0x49, 0x8D, 0x4E, 0x48, 0xFF, 0x15 });
+
+		if (!vanilla)
+		{
+			Skip("BSUtilityShader::CreateCommandBuffer does not match the expected shader lookups"sv);
+			return false;
+		}
+
+		return true;
+	}
 
 	bool ModuleUtilityShader::DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg) noexcept
 	{

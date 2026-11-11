@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- UtilityShader: Fixed NG/AE crashes in alpha-tested LOD shadows that the fix let through.
 - Added the "Effect Item Conditions" module: conditions of an effect whose magic effect is missing or the wrong type no longer attach to the previous effect.
 - Fixed preload modules that skip, such as Plugin Hooks with both of its features off, being reported as failed installs.
 - StringPoolRelease: Logs which code released an invalid string instead of silently swallowing the crash.
