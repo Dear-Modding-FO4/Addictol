@@ -176,6 +176,10 @@ namespace Addictol
 		"$Setting_FixesTextureCreateCrash",
 		"Fixes a crash when the renderer registers a texture that D3D11 refused to create, such as a block-compressed texture whose top mip is not a multiple of 4."
 	);
+	static dmui::localize::LocalizeString lsFixesSaveInitialDataCrash(
+		"$Setting_FixesSaveInitialDataCrash",
+		"Fixes a crash when a script releases a created reference that has no cell, such as an item that was moved into an inventory."
+	);
 	static dmui::localize::LocalizeString lsFixesTextureArraySliceCrash(
 		"$Setting_FixesTextureArraySliceCrash",
 		"Fixes a crash when the texture streamer uploads into a texture array, such as an NPC's face tints, that was released while the slice was being read."
@@ -714,6 +718,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesTextureCreateCrash),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesSaveInitialDataCrash{
+		"Fixes"sv,
+		"bSaveInitialDataCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesSaveInitialDataCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 

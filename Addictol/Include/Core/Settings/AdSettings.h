@@ -73,6 +73,7 @@ namespace Addictol
 	extern BoolSetting bFixesTextureLoadCrash;
 	extern BoolSetting bFixesTextureCreateCrash;
 	extern BoolSetting bFixesTextureArraySliceCrash;
+	extern BoolSetting bFixesSaveInitialDataCrash;
 	extern BoolSetting bFixesFullPrecisionDecals;
 	extern BoolSetting bFixesShaderReferenceEffectLifetime;
 	extern BoolSetting bFixesMagicKeywordCrash;

@@ -423,6 +423,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveInitialDataCrash.cpp">
+      <Filter>Source\Modules\S</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
@@ -901,6 +904,9 @@
       <Filter>Include\Modules\S</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h">
+      <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveInitialDataCrash.h">
       <Filter>Include\Modules\S</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h">

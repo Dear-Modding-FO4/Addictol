@@ -77,6 +77,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLightPriority.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAIProcess3DUpdateFlag.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveCompression.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleSaveInitialDataCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleDpiScaling.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleMusicOverlap.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleNPCHealthOverflowFix.cpp" />
@@ -252,6 +253,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLightPriority.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAIProcess3DUpdateFlag.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveCompression.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleSaveInitialDataCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleDpiScaling.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleMusicOverlap.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleNPCHealthOverflowFix.h" />

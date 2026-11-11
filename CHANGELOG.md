@@ -5,6 +5,7 @@
 - Added the "Warn To Leave Crash" module, fixing a crash when a home owner warns the player to leave and pursues them. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - Added the "Skinned Decal Crash" module, fixing crashes and memory corruption when several projectiles hit the same character in one frame. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - Added the "Foot IK Raycast Crash" module, fixing a use-after-free crash when more than 50 characters with foot IK are loaded at once. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
+- Added the "Save Initial Data Crash" module, fixing a crash when a script lets go of a created reference that has no cell, such as an item now held in an inventory.
 - CreateD3DAndSwapchain: Fixed an OG/NG startup crash when no fullscreen display mode matches the configured resolution.
 - Added the "Texture Array Slice Crash" module, fixing a crash when a texture array, such as an NPC's face tints, is released while the streamer is still loading one of its slices.
 - TextureCreateCrash: A streaming texture whose mip change D3D11 refuses keeps its current texture instead of losing it.
