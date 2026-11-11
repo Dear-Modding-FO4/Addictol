@@ -95,18 +95,6 @@ namespace RELEX
 	void WriteSafe(uintptr_t a_target, const std::initializer_list<uint8_t>& a_data) noexcept;
 	void WriteSafeNop(uintptr_t a_target, size_t a_size) noexcept;
 
-	template<typename T>
-	inline void WriteT(uintptr_t a_target, T& Data) noexcept
-	{
-		Write(a_target, reinterpret_cast<uint8_t*>(&Data), sizeof(T));
-	}
-
-	template<typename T>
-	inline void WriteSafeT(uintptr_t a_target, T& Data) noexcept
-	{
-		WriteSafe(a_target, reinterpret_cast<uint8_t*>(&Data), sizeof(T));
-	}
-
 	[[nodiscard]] bool IsRuntimeOG() noexcept;
 	[[nodiscard]] bool IsRuntimeNG() noexcept;
 	[[nodiscard]] bool IsRuntimeAE() noexcept;
