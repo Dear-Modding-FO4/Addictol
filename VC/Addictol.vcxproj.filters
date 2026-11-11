@@ -330,6 +330,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleNavmeshLocationCrash.cpp">
       <Filter>Source\Modules\N</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleWarnToLeaveCrash.cpp">
+      <Filter>Source\Modules\W</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleManyItemsFix.cpp">
       <Filter>Source\Modules\M</Filter>
     </ClCompile>
@@ -797,6 +800,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleNavmeshLocationCrash.h">
       <Filter>Include\Modules\N</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleWarnToLeaveCrash.h">
+      <Filter>Include\Modules\W</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleManyItemsFix.h">
       <Filter>Include\Modules\M</Filter>

@@ -196,6 +196,10 @@ namespace Addictol
 		"$Setting_FixesNavmeshLocationCrash",
 		"Fixes a crash when combat AI searches the navmesh for a valid location to attack from or return to."
 	);
+	static dmui::localize::LocalizeString lsFixesWarnToLeaveCrash(
+		"$Setting_FixesWarnToLeaveCrash",
+		"Fixes a crash when a home owner warns the player to leave and starts to pursue them."
+	);
 	static dmui::localize::LocalizeString lsFixesEffectItemConditions(
 		"$Setting_FixesEffectItemConditions",
 		"Stops conditions of an effect whose magic effect is missing or the wrong type from attaching to the previous effect."
@@ -743,6 +747,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesNavmeshLocationCrash),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesWarnToLeaveCrash{
+		"Fixes"sv,
+		"bWarnToLeaveCrash"sv,
+		SettingDisplayCategory::kStability,
+		false,
+		std::addressof(lsFixesWarnToLeaveCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 
