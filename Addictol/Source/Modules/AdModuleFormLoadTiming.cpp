@@ -157,14 +157,30 @@ namespace Addictol
 
 	void ModuleFormLoadTiming::BeginTimedCall(size_t a_index, uint64_t a_start) noexcept
 	{
-		if (s_instance && LoadTiming::kInitStepSites[a_index].function == LoadTiming::InitStepFunction::kThreadProc)
+		if (!s_instance)
+			return;
+		switch (LoadTiming::kInitStepSites[a_index].function)
+		{
+		case LoadTiming::InitStepFunction::kWinMain:
+			s_instance->RecordSpan(LoadTiming::kStartupSeriesName, LoadTiming::kLoadToStartUpBucket, s_instance->m_loadQpc, a_start);
+			break;
+		case LoadTiming::InitStepFunction::kThreadProc:
 			s_instance->m_menuQpc = a_start;
+			break;
+		default:
+			break;
+		}
 	}
 
 	void ModuleFormLoadTiming::EndTimedCall(size_t a_index, uint64_t a_start, uint64_t a_end) noexcept
 	{
-		if (s_instance)
-			s_instance->RecordSpan(LoadTiming::kInitStepSeriesName, LoadTiming::kInitStepSites[a_index].name, a_start, a_end);
+		const auto& site = LoadTiming::kInitStepSites[a_index];
+		if (!s_instance || site.function == LoadTiming::InitStepFunction::kWinMain)
+			return;
+		const auto series = site.function == LoadTiming::InitStepFunction::kStartUp ?
+			LoadTiming::kPreMenuStepSeriesName :
+			LoadTiming::kInitStepSeriesName;
+		s_instance->RecordSpan(series, site.name, a_start, a_end);
 	}
 
 	void ModuleFormLoadTiming::RecordSpan(
@@ -180,10 +196,13 @@ namespace Addictol
 	void ModuleFormLoadTiming::InstallInitStepTimers() noexcept
 	{
 		const auto siteAddress = [](const LoadTiming::InitStepSite& a_site) {
-			const auto function = a_site.function == LoadTiming::InitStepFunction::kThreadProc ?
-				RE::ID::Main::InitGameDataThreadProc :
-				RE::ID::Main::InitGameData;
-			return REL::Relocation{ function, REL::Offset{ a_site.ogOffset, a_site.ngaeOffset } }.address();
+			constexpr std::array kFunctions{
+				RE::ID::WinMain,
+				RE::ID::Main::StartUp,
+				RE::ID::Main::InitGameData,
+				RE::ID::Main::InitGameDataThreadProc
+			};
+			return REL::Relocation{ kFunctions[std::to_underlying(a_site.function)], a_site.offset }.address();
 		};
 		for (const auto& site : LoadTiming::kInitStepSites)
 		{
