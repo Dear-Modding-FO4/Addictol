@@ -4,6 +4,7 @@
 
 - LeveledListCrash: Guards every way a leveled list grows, including plugin and save loading, and no longer refuses entries that reuse an empty slot.
 - Threads: Installs at startup, so the engine's IO and model-loader threads no longer stay below normal priority.
+- Telemetry: Fixed a startup hang on OG when plugin timing, image memory, image sampling, or the slow plugin warning is enabled.
 - LoadScreen: Fixed frames that could skip drawing the loading UI.
 - Removed the "Alt-Tab Fullscreen" module; set bFull Screen=0 and bBorderless=1 in Fallout4Prefs.ini for borderless fullscreen.
 - Added the "Navmesh Location Crash" module, fixing a use-after-free crash when combat AI searches the navmesh for a valid location to attack from or return to.

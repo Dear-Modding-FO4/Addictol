@@ -95,7 +95,6 @@ namespace Addictol
 		std::array<Subscription, 4> m_consumers{};
 		size_t m_consumerCount{};
 		HANDLE m_event{};
-		HANDLE m_ready{};
 		void* m_cookie{};
 		uintptr_t m_ownBase{};
 		wchar_t m_windows[1024]{};

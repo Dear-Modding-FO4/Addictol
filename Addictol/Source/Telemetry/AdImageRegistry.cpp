@@ -84,14 +84,17 @@ namespace Addictol
 			return false;
 		m_ownBase = reinterpret_cast<uintptr_t>(own);
 		m_event = CreateEventW(nullptr, FALSE, FALSE, nullptr);
-		m_ready = CreateEventW(nullptr, TRUE, FALSE, nullptr);
-		if (!m_event || !m_ready || registration(0, &Notify, this, &m_cookie) < 0)
+		if (!m_event || registration(0, &Notify, this, &m_cookie) < 0)
 		{
 			if (m_event)
 				CloseHandle(m_event);
-			if (m_ready)
-				CloseHandle(m_ready);
 			return false;
+		}
+		{
+			// OG F4SE loads plugins under the loader lock, so no thread can start yet.
+			const std::scoped_lock update{ m_updateMutex };
+			Reconcile();
+			Publish();
 		}
 		const auto thread = CreateThread(nullptr, 0, &Worker, this, 0, nullptr);
 		if (!thread)
@@ -100,14 +103,10 @@ namespace Addictol
 			const auto unregister = reinterpret_cast<Unregister>(
 				GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "LdrUnregisterDllNotification"));
 			if (unregister && unregister(m_cookie) >= 0)
-			{
 				CloseHandle(m_event);
-				CloseHandle(m_ready);
-			}
 			return false;
 		}
 		CloseHandle(thread);
-		WaitForSingleObject(m_ready, INFINITE);
 		m_started = Count() != 0 && m_snapshot.load(std::memory_order_acquire) != nullptr;
 		if (m_started)
 			REX::INFO("Image Registry: active, {} images"sv, Count());
@@ -182,7 +181,6 @@ namespace Addictol
 				}
 				self.Publish();
 			}
-			SetEvent(self.m_ready);
 			WaitForSingleObject(self.m_event, INFINITE);
 		}
 	}
