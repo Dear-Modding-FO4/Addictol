@@ -112,6 +112,8 @@ namespace Addictol::Menu
 	[[nodiscard]] dmui::Client& Client() noexcept;
 	[[nodiscard]] const DMUI_ThemeColors& ThemeColors() noexcept;
 	void ReportPresentationResult(bool a_succeeded) noexcept;
+	// Asks the host for a named icon; 0 (no icon) when it has none or the call fails.
+	[[nodiscard]] char32_t IconGlyph(const char* a_name, const char* a_label) noexcept;
 	[[nodiscard]] std::optional<DMUI_StyleMetrics> StyleMetrics() noexcept;
 	void DrawRefreshFooter(uint64_t a_refreshTicks) noexcept;
 	void ReportStatus(

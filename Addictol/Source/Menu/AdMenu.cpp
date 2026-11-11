@@ -136,6 +136,11 @@ namespace Addictol
 		}
 	}
 
+	char32_t Menu::IconGlyph(const char* a_name, const char* a_label) noexcept
+	{
+		return Client().ResolveIconGlyph(a_label, a_name).value_or(0);
+	}
+
 	std::optional<DMUI_StyleMetrics> Menu::StyleMetrics() noexcept
 	{
 		auto metrics = Client().GetStyleMetrics();

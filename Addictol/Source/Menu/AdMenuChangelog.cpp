@@ -73,9 +73,8 @@ namespace Addictol::Menu
 
 	void DrawChangelogPage([[maybe_unused]] void* a_userData) noexcept
 	{
-		ReportPresentationResult(Client().DrawSectionHeader(
-			"Changelog",
-			DearModdingUI::FindPhosphorSlugGlyphOrZero("notebook")));
+		static const auto changelogGlyph = IconGlyph("notebook", "Changelog");
+		ReportPresentationResult(Client().DrawSectionHeader("Changelog", changelogGlyph));
 
 		dmui::FontGuard font{ Client(), DMUI_FONT_ROLE_BODY };
 		if (!font.Pushed())

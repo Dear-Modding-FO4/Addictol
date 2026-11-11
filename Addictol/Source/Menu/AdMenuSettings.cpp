@@ -29,8 +29,9 @@ namespace Addictol::Menu
 		[[nodiscard]] char32_t CategoryGlyph(
 			SettingDisplayCategory a_category) noexcept
 		{
-			return DearModdingUI::ResolveNamedIconGlyphOrZero(
-				SettingDisplayCategoryIconName(a_category));
+			// The names are literals, so data() is null-terminated.
+			const auto name = SettingDisplayCategoryIconName(a_category).data();
+			return IconGlyph(name, name);
 		}
 
 		void EnsureDraft()

@@ -3,6 +3,7 @@
 #include <Core/AdPlugin.h>
 #include <Menu/AdMenu.h>
 
+#include <DearModdingUI/IconGlyphs.h>
 #include <DearModdingUI/UI.h>
 
 #include <array>
@@ -69,9 +70,8 @@ namespace Addictol::Menu
 				"inspect live diagnostics and runtime behavior.",
 				kProseText));
 			dmui::ui::Spacing();
-			ReportPresentationResult(Client().DrawSectionHeader(
-				"Overview",
-				DearModdingUI::FindPhosphorSlugGlyphOrZero("info")));
+			static const auto overviewGlyph = IconGlyph("info", "Overview");
+			ReportPresentationResult(Client().DrawSectionHeader("Overview", overviewGlyph));
 
 			const auto counts =
 				Plugin::GetSingleton()->GetModules().ModuleOutcomeCounts();
@@ -105,10 +105,33 @@ namespace Addictol::Menu
 			dmui::ui::PanelScope panel{ "QuickLinks" };
 			if (!panel)
 				return;
-			ReportPresentationResult(Client().DrawSectionHeader(
-				"Quick Links",
-				DearModdingUI::FindPhosphorSlugGlyphOrZero("link")));
-			if (!Client().DrawLinkRow("Addictol.QuickLinks", kHomeQuickLinks))
+			static const auto quickLinksGlyph = IconGlyph("link", "Quick Links");
+			ReportPresentationResult(Client().DrawSectionHeader("Quick Links", quickLinksGlyph));
+
+			// Built on first draw: the host resolves icon names, so the client must be connected.
+			static const std::array links{
+				dmui::Link{
+					.label = "Nexus Mods",
+					.external = {
+						.targetKind = DMUI_EXTERNAL_TARGET_URI,
+						.target = "https://www.nexusmods.com/fallout4/mods/84214"
+					},
+					.note = "Open Addictol on Nexus Mods in your browser.",
+					.glyph = IconGlyph("arrow-square-out", "Nexus Mods"),
+					.action = dmui::LinkAction::kOpenExternal
+				},
+				dmui::Link{
+					.label = "GitHub",
+					.external = {
+						.targetKind = DMUI_EXTERNAL_TARGET_URI,
+						.target = "https://github.com/Dear-Modding-FO4/Addictol"
+					},
+					.note = "Open Addictol on GitHub in your browser.",
+					.glyph = IconGlyph("github-logo", "GitHub"),
+					.action = dmui::LinkAction::kOpenExternal
+				}
+			};
+			if (!Client().DrawLinkRow("Addictol.QuickLinks", links))
 			{
 				const auto result = Client().LastResult();
 				Notify(
