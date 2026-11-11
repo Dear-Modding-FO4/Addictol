@@ -106,6 +106,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCheckInternetAccess.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCombatMusic.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreatedRefBaseCrash.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEffectItemConditions.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCOMInit.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleControlSamplers.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCosaveIO.cpp" />
@@ -275,6 +276,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCellInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreatedRefBaseCrash.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEffectItemConditions.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCombatMusic.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCOMInit.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleControlSamplers.h" />

@@ -186,6 +186,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCreatedRefBaseCrash.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleEffectItemConditions.cpp">
+      <Filter>Source\Modules\E</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleCheckInternetAccess.cpp">
       <Filter>Source\Modules\C</Filter>
     </ClCompile>
@@ -647,6 +650,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCreatedRefBaseCrash.h">
       <Filter>Include\Modules\C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleEffectItemConditions.h">
+      <Filter>Include\Modules\E</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleCheckInternetAccess.h">
       <Filter>Include\Modules\C</Filter>

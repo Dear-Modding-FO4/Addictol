@@ -62,6 +62,7 @@ $Setting_FixesShaderReferenceEffectLifetime	Prevents crashes when an actor with 
 $Setting_FixesMagicKeywordCrash	Fixes a crash when a magic effect item has no effect setting.
 $Setting_FixesEffectEnvMapCrash	Fixes a crash when an effect shader material has environment mapping enabled but no environment texture.
 $Setting_FixesNavmeshLocationCrash	Fixes a crash when combat AI searches the navmesh for a valid location to attack from or return to.
+$Setting_FixesEffectItemConditions	Stops conditions of an effect whose magic effect is missing or the wrong type from attaching to the previous effect.
 $Setting_FixesCreatedRefBaseCrash	Fixes a crash while loading a save when a created reference has lost its base object.
 $Setting_FixesAttachLightCrash	Fixes a crash when a light hit effect has no attach root.
 $Setting_FixesDownwardAiming	Fixes a bug where shots don't fire properly if you're aiming downward while crouching on a ridge.

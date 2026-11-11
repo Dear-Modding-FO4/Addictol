@@ -196,6 +196,10 @@ namespace Addictol
 		"$Setting_FixesNavmeshLocationCrash",
 		"Fixes a crash when combat AI searches the navmesh for a valid location to attack from or return to."
 	);
+	static dmui::localize::LocalizeString lsFixesEffectItemConditions(
+		"$Setting_FixesEffectItemConditions",
+		"Stops conditions of an effect whose magic effect is missing or the wrong type from attaching to the previous effect."
+	);
 	static dmui::localize::LocalizeString lsFixesCreatedRefBaseCrash(
 		"$Setting_FixesCreatedRefBaseCrash",
 		"Fixes a crash while loading a save when a created reference has lost its base object."
@@ -739,6 +743,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesNavmeshLocationCrash),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesEffectItemConditions{
+		"Fixes"sv,
+		"bEffectItemConditions"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		std::addressof(lsFixesEffectItemConditions),
 		SettingApplyTiming::kNextLaunch
 	};
 

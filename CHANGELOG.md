@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the "Effect Item Conditions" module: conditions of an effect whose magic effect is missing or the wrong type no longer attach to the previous effect.
 - Fixed preload modules that skip, such as Plugin Hooks with both of its features off, being reported as failed installs.
 - StringPoolRelease: Logs which code released an invalid string instead of silently swallowing the crash.
 - Added the "Cubemap Array" module, fixing material cubemap reflections that turn off or scramble when one cubemap has an unexpected size, format or mip count; it replaces the Fix Cubemaps xEdit script.
