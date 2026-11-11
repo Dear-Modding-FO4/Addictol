@@ -360,6 +360,15 @@ namespace Addictol
 	[[nodiscard]] bool IsWineFakeDLL(const char* moduleName) noexcept;
 	[[nodiscard]] bool IsModDLLPresent(const char* moduleName) noexcept;
 
+	// A code address as module plus offset, so logged locations survive ASLR.
+	struct CodeLocation
+	{
+		char module[260]{ "unknown" };
+		uintptr_t offset{ 0 };
+	};
+
+	[[nodiscard]] CodeLocation LocateCode(const void* a_address) noexcept;
+
 	template <class T>
 	void emplace_vtable(T* a_ptr)
 	{

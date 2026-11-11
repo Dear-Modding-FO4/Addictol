@@ -73,7 +73,7 @@ $Setting_FixesClimateLoad	Fixes a bug where the game fails to properly apply sun
 $Setting_FixesMusicOverlap	Fixes a bug where multiple music tracks are playing at the same time.
 $Setting_FixesPuddleCubemaps	Blanks each worldspace's water environment-map cubemap to remove flicker on water puddles / blood pools (also removes water cubemap reflections).
 $Setting_FixesCubemapArray	Fixes material cubemap reflections turning off when one cubemap has an unexpected size, format or mip count, by converting every cubemap into a fixed 128x128 array (replaces the Fix Cubemaps xEdit script).
-$Setting_FixesStringPoolRelease	An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude).
+$Setting_FixesStringPoolRelease	Catches the crash when the game releases an invalid string and logs which code released it.
 $Setting_FixesLoadOrder	Fixes multiple AE Load Order issues when the Creations Platform is enabled, including plugins being disabled or moved, inability to toggle some plugins in-game, and a freeze while loading.
 $Setting_FixesHUDMessageQueue	Fixes a crash related to queued HUD messages on NG & AE.
 $Setting_FixesWaterJetpackFix	Fixes a bug where entering water does not reset the Jetpack's state, allowing the Player to Jump / Fly again.

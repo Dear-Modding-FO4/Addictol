@@ -242,7 +242,7 @@ namespace Addictol
 	);
 	static dmui::localize::LocalizeString lsFixesStringPoolRelease(
 		"$Setting_FixesStringPoolRelease",
-		"An attempt to not shutdown the game due to a garbage Entry, although I'm sure it's caused by pool overflow (fix really is rude)."
+		"Catches the crash when the game releases an invalid string and logs which code released it."
 	);
 	static dmui::localize::LocalizeString lsFixesLoadOrder(
 		"$Setting_FixesLoadOrder",

@@ -34,8 +34,9 @@ namespace Addictol
 			{
 				if (s_diagnostics.Take())
 				{
-					REX::WARN("Scaleform Allocator: blocked invalid {}::Release on {:p} (vtable={:#x}, refCount={}) from {:p}"sv,
-						a_kind, a_this, vtable, a_refCount, a_caller);
+					const auto caller = LocateCode(a_caller);
+					REX::WARN("Scaleform Allocator: blocked invalid {}::Release on {:p} (vtable={:#x}, refCount={}) from {}+{:#x}"sv,
+						a_kind, a_this, vtable, a_refCount, caller.module, caller.offset);
 				}
 				return false;
 			}

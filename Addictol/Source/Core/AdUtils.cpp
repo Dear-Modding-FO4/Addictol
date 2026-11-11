@@ -539,4 +539,25 @@ namespace Addictol
 		return std::filesystem::exists(
 			std::format("{}\\{}", path.substr(0, lastSlash), moduleName), error);
 	}
+
+	CodeLocation LocateCode(const void* a_address) noexcept
+	{
+		CodeLocation location;
+		location.offset = reinterpret_cast<uintptr_t>(a_address);
+
+		HMODULE module{ nullptr };
+		char path[std::size(CodeLocation{}.module)]{};
+		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+				static_cast<LPCSTR>(a_address), &module) ||
+			!GetModuleFileNameA(module, path, static_cast<DWORD>(std::size(path))))
+			return location;
+
+		const std::string_view name{ path };
+		const auto file = name.substr(name.find_last_of("\\/") + 1);
+		const auto length = std::min(file.size(), std::size(location.module) - 1);
+		std::memcpy(location.module, file.data(), length);
+		location.module[length] = '\0';
+		location.offset -= reinterpret_cast<uintptr_t>(module);
+		return location;
+	}
 }
