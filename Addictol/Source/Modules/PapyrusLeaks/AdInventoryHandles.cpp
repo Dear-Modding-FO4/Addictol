@@ -149,10 +149,13 @@ namespace Addictol::PapyrusLeaks
 
 	bool InventoryHandles::Install() noexcept
 	{
+		// CheckSites proved every site calls Clear, so the original never goes unset
+		s_clear = reinterpret_cast<decltype(s_clear)>(REL::Relocation{ RE::ID::BGSInventoryList::Clear }.address());
+		bool installed = true;
 		for (const auto site : ClearCallSites())
-			s_clear = reinterpret_cast<decltype(s_clear)>(RELEX::DetourCall(site, reinterpret_cast<uintptr_t>(&HKClear)));
+			installed &= RELEX::DetourCall(site, reinterpret_cast<uintptr_t>(&HKClear)) != 0;
 		s_removeStacksIf = reinterpret_cast<decltype(s_removeStacksIf)>(RELEX::DetourJump(RemoveStacksIfEntry(), reinterpret_cast<uintptr_t>(&HKRemoveStacksIf)));
-		return s_clear && s_removeStacksIf;
+		return installed && s_removeStacksIf;
 	}
 
 	void InventoryHandles::RegisterSinks() noexcept

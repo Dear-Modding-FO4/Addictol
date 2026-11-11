@@ -145,14 +145,14 @@ namespace RELEX
 	{
 		auto destAddress = DetourCheckRel32AndReturnDestAddress(a_target);
 		auto detourAddress = Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_JUMP);
-		return destAddress ? destAddress : detourAddress;
+		return detourAddress && destAddress ? destAddress : detourAddress;
 	}
 
 	uintptr_t DetourCall(uintptr_t a_target, uintptr_t a_function) noexcept
 	{
 		auto destAddress = DetourCheckRel32AndReturnDestAddress(a_target);
 		auto detourAddress = Detours::X64::DetourFunction(a_target, a_function, Detours::X64Option::USE_REL32_CALL);
-		return destAddress ? destAddress : detourAddress;
+		return detourAddress && destAddress ? destAddress : detourAddress;
 	}
 
 	uintptr_t DetourJump(const REL::Relocation<>& a_target, uintptr_t a_function) noexcept
