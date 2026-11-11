@@ -95,8 +95,9 @@ A configurable module touches six places:
 4. `Addictol/Source/Core/AdRegisterModules.cpp`: the `#include`, a `static auto sModule<Name> =
    std::make_shared<...>()`, and the `modules.Register(...)` call.
 5. `VC/Addictol.vcxproj` and `.filters`.
-6. The setting in `Addictol/Include/Core/Settings/AdSettings.h` and its section source under
-   `Addictol/Source/Core/Settings`.
+6. The setting in `Addictol/Include/Core/Settings/AdSettings.h`, its section source under
+   `Addictol/Source/Core/Settings`, and its description in
+   `data/interface/Translations/Addictol_en.txt`.
 
 `ModuleUnalignedLoad` is about as small as a real module gets:
 
@@ -126,15 +127,23 @@ bool ModuleUnalignedLoad::DoInstall([[maybe_unused]] F4SE::MessagingInterface::M
 Each setting is declared once, in the registry under `Addictol/Source/Core/Settings`:
 
 ```cpp
+static dmui::localize::LocalizeString lsFixesUnalignedLoad(
+	"$Setting_FixesUnalignedLoad",
+	"Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory."
+);
+
 BoolSetting bFixesUnalignedLoad{
 	"Fixes"sv,
 	"bUnalignedLoad"sv,
 	SettingDisplayCategory::kStability,
 	true,
-	"Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory."sv,
+	std::addressof(lsFixesUnalignedLoad),
 	SettingApplyTiming::kNextLaunch
 };
 ```
+
+The `LocalizeString` text is the fallback; repeat it under the same `$Setting_` key in
+`data/interface/Translations/Addictol_en.txt`.
 
 The types are `BoolSetting`, `F32Setting`, `I32Setting`, `U32Setting` and `StrSetting`; numeric
 settings can append a `SettingNumericRange`. Use `kImmediate` only when a write changes
