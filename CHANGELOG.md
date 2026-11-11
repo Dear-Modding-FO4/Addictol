@@ -5,6 +5,7 @@
 - Added the "Warn To Leave Crash" module, fixing a crash when a home owner warns the player to leave and pursues them. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - Added the "Skinned Decal Crash" module, fixing crashes and memory corruption when several projectiles hit the same character in one frame. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - Added the "Foot IK Raycast Crash" module, fixing a use-after-free crash when more than 50 characters with foot IK are loaded at once. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
+- TextureCreateCrash: A streaming texture whose mip change D3D11 refuses keeps its current texture instead of losing it.
 - UtilityShader: Fixed NG/AE crashes in alpha-tested LOD shadows that the fix let through.
 - Added the "Effect Item Conditions" module: conditions of an effect whose magic effect is missing or the wrong type no longer attach to the previous effect.
 - Fixed preload modules that skip, such as Plugin Hooks with both of its features off, being reported as failed installs.

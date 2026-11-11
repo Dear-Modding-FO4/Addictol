@@ -4,6 +4,10 @@
 
 #include <array>
 
+#include <xbyak/xbyak.h>
+
+#undef ERROR
+
 namespace Addictol
 {
 	namespace textureCreateCrashDetail
@@ -36,6 +40,37 @@ namespace Addictol
 				REX::WARN("Texture Create Crash: D3D11 refused a texture description, skipped its registration (#{})"sv, report);
 		}
 
+		// A refused mip-change copy has no texture; swapping it nulls the live one.
+		static inline REL::Relocation<uintptr_t> DeferredCopySwap{ REL::ID{ 762228, 2277456 }, REL::Offset{ 0x80 } };
+
+		struct SwapGuard : Xbyak::CodeGenerator
+		{
+			SwapGuard(uintptr_t a_swap, uintptr_t a_release)
+			{
+				Xbyak::Label swapLab;
+				Xbyak::Label releaseLab;
+
+				mov(r14, qword[rbx]);
+				cmp(dword[r14 + 0x34], 1);
+				jbe("release");
+				cmp(qword[rbx + 0x8], 0);
+				jz("keep");
+				jmp(ptr[rip + swapLab]);
+
+				// Keep the old texture and mip, idle again as a finished swap leaves it.
+				L("keep");
+				or_(byte[r14 + 0x3F], 0xFD);
+
+				L("release");
+				jmp(ptr[rip + releaseLab]);
+
+				L(swapLab);
+				dq(a_swap);
+
+				L(releaseLab);
+				dq(a_release);
+			}
+		};
 	}
 
 	ModuleTextureCreateCrash::ModuleTextureCreateCrash() :
@@ -60,9 +95,23 @@ namespace Addictol
 		{
 			if (!RELEX::IsCallTo(site, RegisterD3DTexture.address()))
 			{
-				REX::ERROR("Texture Create Crash: no RegisterD3DTexture call at 0x{:X}, nothing was patched"sv, site);
+				Skip("a RegisterD3DTexture call site moved; unsupported runtime or another plugin patched it"sv);
 				return false;
 			}
+		}
+
+		// mov r14, [rbx]; cmp dword ptr [r14+34h], 1; jbe +0xEA
+		const auto swap = DeferredCopySwap.address();
+		if (!RELEX::Validate(swap, { 0x4C, 0x8B, 0x33, 0x41, 0x83, 0x7E, 0x34, 0x01, 0x0F, 0x86, 0xEA, 0x00, 0x00, 0x00 }))
+		{
+			Skip("the deferred texture copy swap does not match; unsupported runtime or another plugin patched it"sv);
+			return false;
+		}
+
+		if (RELEX::XbyakJump<SwapGuard>(swap, swap + 0xE, swap + 0xE + 0xEA) == 0)
+		{
+			REX::ERROR("Texture Create Crash: failed to patch the deferred texture copy swap at 0x{:X}"sv, swap);
+			return false;
 		}
 
 		for (const auto site : sites)
