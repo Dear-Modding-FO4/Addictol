@@ -35,7 +35,11 @@ namespace Addictol
 		skipped = true;
 		skipReason.assign(a_reason);
 
-		F4SE::GetTaskInterface()->AddTask([a_name = name, a_reason]()
+		// Preload has no task interface; the log still records the reason.
+		const auto* tasks = F4SE::GetTaskInterface();
+		if (!tasks)
+			return;
+		tasks->AddTask([a_name = name, a_reason]()
 		{
 			if (auto* log = RE::ConsoleLog::GetSingleton())
 				log->Log("Addictol module '{}' skipped: {}.", a_name, a_reason);

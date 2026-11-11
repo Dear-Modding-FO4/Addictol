@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed preload modules that skip, such as Plugin Hooks with both of its features off, being reported as failed installs.
 - StringPoolRelease: Logs which code released an invalid string instead of silently swallowing the crash.
 - Added the "Cubemap Array" module, fixing material cubemap reflections that turn off or scramble when one cubemap has an unexpected size, format or mip count; it replaces the Fix Cubemaps xEdit script.
 - LeveledListCrash: Also guards plugin and save loading, and no longer refuses entries that reuse an empty slot.
