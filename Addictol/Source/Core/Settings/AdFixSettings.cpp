@@ -204,6 +204,10 @@ namespace Addictol
 		"$Setting_FixesSkinnedDecalCrash",
 		"Fixes crashes and memory corruption when several projectiles hit the same character in one frame."
 	);
+	static dmui::localize::LocalizeString lsFixesFootIkRaycastCrash(
+		"$Setting_FixesFootIkRaycastCrash",
+		"Fixes a crash when more than 50 characters with foot IK are loaded at once."
+	);
 	static dmui::localize::LocalizeString lsFixesEffectItemConditions(
 		"$Setting_FixesEffectItemConditions",
 		"Stops conditions of an effect whose magic effect is missing or the wrong type from attaching to the previous effect."
@@ -769,6 +773,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		false,
 		std::addressof(lsFixesSkinnedDecalCrash),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesFootIkRaycastCrash{
+		"Fixes"sv,
+		"bFootIkRaycastCrash"sv,
+		SettingDisplayCategory::kStability,
+		false,
+		std::addressof(lsFixesFootIkRaycastCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 

@@ -79,6 +79,7 @@
 #include <Modules/AdModuleNavmeshLocationCrash.h>
 #include <Modules/AdModuleWarnToLeaveCrash.h>
 #include <Modules/AdModuleSkinnedDecalCrash.h>
+#include <Modules/AdModuleFootIkRaycastCrash.h>
 #include <Modules/AdModuleCreatedRefBaseCrash.h>
 #include <Modules/AdModuleEffectItemConditions.h>
 #include <Modules/AdModuleAttachLightCrash.h>
@@ -205,6 +206,7 @@ static auto sModuleEffectEnvMapCrash				= std::make_shared<Addictol::ModuleEffec
 static auto sModuleNavmeshLocationCrash				= std::make_shared<Addictol::ModuleNavmeshLocationCrash>();
 static auto sModuleWarnToLeaveCrash					= std::make_shared<Addictol::ModuleWarnToLeaveCrash>();
 static auto sModuleSkinnedDecalCrash				= std::make_shared<Addictol::ModuleSkinnedDecalCrash>();
+static auto sModuleFootIkRaycastCrash				= std::make_shared<Addictol::ModuleFootIkRaycastCrash>();
 static auto sModuleCreatedRefBaseCrash				= std::make_shared<Addictol::ModuleCreatedRefBaseCrash>();
 static auto sModuleEffectItemConditions				= std::make_shared<Addictol::ModuleEffectItemConditions>();
 static auto sModuleAttachLightCrash					= std::make_shared<Addictol::ModuleAttachLightCrash>();
@@ -337,6 +339,7 @@ void AdRegisterModules()
 	modules.Register(sModuleNavmeshLocationCrash);
 	modules.Register(sModuleWarnToLeaveCrash);
 	modules.Register(sModuleSkinnedDecalCrash);
+	modules.Register(sModuleFootIkRaycastCrash);
 	modules.Register(sModuleCreatedRefBaseCrash);
 	modules.Register(sModuleEffectItemConditions);
 	modules.Register(sModuleAttachLightCrash);

@@ -79,6 +79,7 @@ namespace Addictol
 	extern BoolSetting bFixesNavmeshLocationCrash;
 	extern BoolSetting bFixesWarnToLeaveCrash;
 	extern BoolSetting bFixesSkinnedDecalCrash;
+	extern BoolSetting bFixesFootIkRaycastCrash;
 	extern BoolSetting bFixesCreatedRefBaseCrash;
 	extern BoolSetting bFixesEffectItemConditions;
 	extern BoolSetting bFixesAttachLightCrash;
