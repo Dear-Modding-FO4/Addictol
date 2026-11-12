@@ -217,8 +217,9 @@ worker threads needs a comment and `std::atomic` or a lock.
   `Try` variants). Do not hand-roll hooks.
 - **IAT and COM vtable detours** for anything Direct3D or DXGI. COM slots are stable across all
   three runtimes, so no Address Library id is needed. Prefer this to byte patching the renderer.
-- **Xbyak code caves** for real replacement logic, entered with `RELEX::XbyakJump` / `XbyakCall`
-  or a hand-written `E9` jump:
+- **Xbyak code caves** for real replacement logic: derive the cave from `RELEX::Stub`
+  (`Core/AdXbyak.h`), branch out with `JumpTo` / `CallTo`, and enter it with `RELEX::XbyakJump` /
+  `XbyakCall` or a hand-written `E9` jump:
 
 ```cpp
 const auto rel = static_cast<int32_t>(dst - (src + 5));

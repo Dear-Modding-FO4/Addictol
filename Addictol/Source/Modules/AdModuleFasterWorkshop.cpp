@@ -10,7 +10,7 @@
 #include <RE/T/TESFormUtil.h>
 #include <RE/W/Workshop.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 #define AD_NOMESSAGE_FASTERWORKSHOP 1
 
@@ -251,23 +251,15 @@ namespace Addictol
 			});
 		}
 
-		struct LeafNodePatch : Xbyak::CodeGenerator
+		struct LeafNodePatch : RELEX::Stub
 		{
-			LeafNodePatch() : Xbyak::CodeGenerator()
+			LeafNodePatch() : RELEX::Stub()
 			{
-				Xbyak::Label continueLabel, handler;
-
 				lea(rcx, ptr[rbp - 0x28]);
 				mov(rdx, ptr[rbp - 0x28]);
 				mov(rdx, ptr[rdx]);
-				call(ptr[rip + handler]);
-				jmp(ptr[rip + continueLabel]);
-
-				L(continueLabel);
-				dq(LeafNodeTargetOG() + 0x23);
-
-				L(handler);
-				dq((uintptr_t)&HandlerLeafNode);
+				CallTo(reinterpret_cast<uintptr_t>(&HandlerLeafNode));
+				JumpTo(LeafNodeTargetOG() + 0x23);
 			}
 		};
 

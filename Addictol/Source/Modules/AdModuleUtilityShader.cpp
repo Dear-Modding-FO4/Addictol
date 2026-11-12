@@ -5,7 +5,7 @@
 #include <RE/B/BSGraphics.h>
 
 #include <Windows.h>
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -61,7 +61,7 @@ namespace Addictol
 
 		void PatchVertexShader(std::uintptr_t a_base)
 		{
-			struct Patch : Xbyak::CodeGenerator
+			struct Patch : RELEX::Stub
 			{
 				Patch(std::uintptr_t a_data)
 				{
@@ -99,7 +99,7 @@ namespace Addictol
 
 		void PatchPixelShader(std::uintptr_t a_base)
 		{
-			struct Patch : Xbyak::CodeGenerator
+			struct Patch : RELEX::Stub
 			{
 				Patch(std::uintptr_t a_data)
 				{

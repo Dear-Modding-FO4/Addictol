@@ -1,13 +1,13 @@
 #include <Modules/AdModuleHUDMessageQueue.h>
 #include <Core/AdUtils.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	namespace hudMessageQueueDetail
 	{
-		struct PrimaryPatch : Xbyak::CodeGenerator
+		struct PrimaryPatch : RELEX::Stub
 		{
 			explicit PrimaryPatch(std::uintptr_t a_resumeAddress, std::uintptr_t a_epilogueAddress)
 			{
@@ -17,8 +17,7 @@ namespace Addictol
 
 				// Valid Path
 				mov(rdi, ptr[rcx + 0x0C0]);
-				jmp(ptr[rip]);
-				dq(a_resumeAddress);
+				JumpTo(a_resumeAddress);
 
 				// Nullptr Path
 				L("nullptr");
@@ -33,12 +32,11 @@ namespace Addictol
 				
 				// Function Epilogue
 				L("epilogue");
-				jmp(ptr[rip]);
-				dq(a_epilogueAddress);
+				JumpTo(a_epilogueAddress);
 			}
 		};
 
-		struct SecondaryPatch : Xbyak::CodeGenerator
+		struct SecondaryPatch : RELEX::Stub
 		{
 			explicit SecondaryPatch(std::uintptr_t a_resumeAddress)
 			{
@@ -56,8 +54,7 @@ namespace Addictol
 
 				// Valid Path
 				mov(qword[rsp + 0x8], rbx);
-				jmp(ptr[rip]);
-				dq(a_resumeAddress);
+				JumpTo(a_resumeAddress);
 
 				// Nullptr Path
 				L("nullptr");
@@ -66,7 +63,7 @@ namespace Addictol
 			}
 		};
 
-		struct ValidateRangePatch : Xbyak::CodeGenerator
+		struct ValidateRangePatch : RELEX::Stub
 		{
 			explicit ValidateRangePatch(std::uintptr_t a_resumeAddress)
 			{
@@ -92,8 +89,7 @@ namespace Addictol
 
 				// Valid Path
 				L("resume");
-				jmp(ptr[rip]);
-				dq(a_resumeAddress);
+				JumpTo(a_resumeAddress);
 			}
 		};
 	}

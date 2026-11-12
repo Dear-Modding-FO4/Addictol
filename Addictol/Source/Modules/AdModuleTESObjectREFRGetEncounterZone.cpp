@@ -8,8 +8,6 @@
 #include <RE/T/TESObjectREFR.h>
 #include <RE/T/TESFormUtil.h>
 
-#include <xbyak/xbyak.h>
-
 namespace Addictol
 {
 	namespace tesObjectREFRGetEncounterZoneDetail

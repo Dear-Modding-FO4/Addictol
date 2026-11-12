@@ -7,7 +7,7 @@
 #include <Core/AdUtils.h>
 #include <string.h>
 #include <stdio.h>
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 #include <algorithm>
 #include <tuple>
 
@@ -18,7 +18,6 @@
 #define AD_NO_EMPTYPOINTERS 1
 
 #undef MEM_RELEASE
-#undef ERROR
 
 #include <RE/M/MemoryManager.h>
 #include <RE/B/BSThreadEvent.h>
@@ -43,7 +42,7 @@ namespace Addictol
 		static void CtorShort()
 		{
 			struct Patch :
-				Xbyak::CodeGenerator
+				RELEX::Stub
 			{
 				Patch()
 				{
@@ -65,7 +64,7 @@ namespace Addictol
 		static void Dtor()
 		{
 			struct Patch :
-				Xbyak::CodeGenerator
+				RELEX::Stub
 			{
 				Patch()
 				{

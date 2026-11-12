@@ -2,7 +2,7 @@
 #include <Core/AdUtils.h>
 
 #include <RE/P/PlayerCharacter.h>
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -56,7 +56,7 @@ namespace Addictol
 				log.insert_after(match.prev, a_item);
 		}
 
-		struct LoadGameStub : Xbyak::CodeGenerator
+		struct LoadGameStub : RELEX::Stub
 		{
 			LoadGameStub(uintptr_t a_resume, uintptr_t a_func)
 			{
@@ -65,8 +65,7 @@ namespace Addictol
 				mov(rax, a_func);
 				call(rax);
 
-				jmp(ptr[rip]);
-				dq(a_resume);
+				JumpTo(a_resume);
 			}
 		};
 	}

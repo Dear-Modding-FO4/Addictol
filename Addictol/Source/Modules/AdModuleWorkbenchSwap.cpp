@@ -1,25 +1,20 @@
 #include <Modules/AdModuleWorkbenchSwap.h>
 #include <Core/AdUtils.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	namespace workbenchSwapDetail
 	{
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			explicit Patch(std::uintptr_t a_dest)
 			{
-				Xbyak::Label retLab;
-
 				lock();
 				and_(dword[rdi + 0x4], 0xFFFFFFF);
 				mov(rcx, 1);
-				jmp(ptr[rip + retLab]);
-
-				L(retLab);
-				dq(a_dest);
+				JumpTo(a_dest);
 			}
 		};
 	}

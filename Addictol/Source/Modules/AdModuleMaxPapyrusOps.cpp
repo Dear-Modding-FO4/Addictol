@@ -6,7 +6,7 @@
 #include <RE/G/GameScript.h>
 #include <RE/S/Script.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -165,7 +165,7 @@ namespace Addictol
 		static void Install()
 		{
 			// Needs some OG changes
-			struct PapyrusOpsPerFrame : Xbyak::CodeGenerator
+			struct PapyrusOpsPerFrame : RELEX::Stub
 			{
 				PapyrusOpsPerFrame(std::uintptr_t a_begin, std::uintptr_t a_end)
 				{

@@ -2,7 +2,7 @@
 
 #include <Modules/AdModuleCustomScale.h>
 #include <Core/AdUtils.h>
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 #include <RE/B/BSAnimationGraphEvent.h>
 #include <RE/B/BSFurnitureMarker.h>
@@ -79,14 +79,10 @@ namespace Addictol
 				return &cameraOffset;
 			}
 
-			struct GetGeometryOffsetPatch : Xbyak::CodeGenerator // FirstPersonState::GetGeometryOffset
+			struct GetGeometryOffsetPatch : RELEX::Stub // FirstPersonState::GetGeometryOffset
 			{
 				GetGeometryOffsetPatch(std::uintptr_t a_targetAddr, std::uintptr_t a_funcAddr)
 				{
-					Xbyak::Label funcLabel;
-					Xbyak::Label jmpLabel;
-					Xbyak::Label retnLabel;
-
 					push(rbx);
 					push(rcx);
 					push(rdx);
@@ -94,7 +90,7 @@ namespace Addictol
 					sub(rsp, 0x20);
 					movdqu(ptr[rsp], xmm6);
 
-					call(ptr[rip + funcLabel]);
+					CallTo(a_funcAddr);
 
 					movdqu(xmm6, ptr[rsp]);
 					add(rsp, 0x20);
@@ -126,30 +122,17 @@ namespace Addictol
 						movaps(ptr[rsp + 0x50], xmm6);
 						movss(xmm6, ptr[rax]);
 					}
-					jmp(ptr[rip + jmpLabel]);
+					JumpTo(a_targetAddr + (RELEX::IsRuntimeOG() ? 0x33 : 0x43));
 
 					L("RETURN");
-					jmp(ptr[rip + retnLabel]);
-
-					L(funcLabel);
-					dq(a_funcAddr);
-
-					L(retnLabel);
-					dq(a_targetAddr + 0x13);
-
-					L(jmpLabel);
-					dq(a_targetAddr + (RELEX::IsRuntimeOG() ? 0x33 : 0x43));
+					JumpTo(a_targetAddr + 0x13);
 				}
 			};
 
-			struct GetTranslationPatch : Xbyak::CodeGenerator // FirstPersonState::GetTranslation
+			struct GetTranslationPatch : RELEX::Stub // FirstPersonState::GetTranslation
 			{
 				GetTranslationPatch(std::uintptr_t a_targetAddr, std::uintptr_t a_funcAddr)
 				{
-					Xbyak::Label funcLabel;
-					Xbyak::Label jmpLabel;
-					Xbyak::Label retnLabel;
-
 					push(rbx);
 					push(rcx);
 					push(rdx);
@@ -157,7 +140,7 @@ namespace Addictol
 					sub(rsp, 0x20);
 					movdqu(ptr[rsp], xmm6);
 
-					call(ptr[rip + funcLabel]);
+					CallTo(a_funcAddr);
 
 					movdqu(xmm6, ptr[rsp]);
 					add(rsp, 0x20);
@@ -177,19 +160,10 @@ namespace Addictol
 					mulss(xmm6, ptr[rdx + 0x78]);
 					movaps(xmm5, xmm2);
 					movss(xmm4, ptr[rax + 0x8]);
-					jmp(ptr[rip + jmpLabel]);
+					JumpTo(a_targetAddr + 0x3B);
 
 					L("RETURN");
-					jmp(ptr[rip + retnLabel]);
-
-					L(funcLabel);
-					dq(a_funcAddr);
-
-					L(retnLabel);
-					dq(a_targetAddr + 0x13);
-
-					L(jmpLabel);
-					dq(a_targetAddr + 0x3B);
+					JumpTo(a_targetAddr + 0x13);
 				}
 			};
 		}
@@ -330,13 +304,10 @@ namespace Addictol
 				return &furniturePos;
 			}
 
-			struct PlayFurnitureAnimationPatch : Xbyak::CodeGenerator // PlayFurnitureAnimation
+			struct PlayFurnitureAnimationPatch : RELEX::Stub // PlayFurnitureAnimation
 			{
 				PlayFurnitureAnimationPatch(std::uintptr_t a_targetAddr, std::uintptr_t a_funcAddr)
 				{
-					Xbyak::Label funcLabel;
-					Xbyak::Label retnLabel;
-
 					push(rcx);
 					push(rdx);
 					sub(rsp, 0x10);
@@ -349,7 +320,7 @@ namespace Addictol
 
 					mov(rcx, rbx);
 					mov(rdx, r14);
-					call(ptr[rip + funcLabel]);
+					CallTo(a_funcAddr);
 
 					add(rsp, 0x20);
 					movdqu(xmm2, ptr[rsp]);
@@ -383,37 +354,28 @@ namespace Addictol
 						movss(ptr[rbp + 0x38], xmm0);
 						movss(xmm0, ptr[rdi]);
 					}
-					jmp(ptr[rip + retnLabel]);
+					JumpTo(a_targetAddr + 0x05);
 
 					L("RETURN");
 					if (RELEX::IsRuntimeOG())
 						movss(ptr[rbp - 0x68], xmm0);
 					else
 						movss(ptr[rbp + 0x34], xmm1);
-					jmp(ptr[rip + retnLabel]);
-
-					L(funcLabel);
-					dq(a_funcAddr);
-
-					L(retnLabel);
-					dq(a_targetAddr + 0x05);
+					JumpTo(a_targetAddr + 0x05);
 				}
 			};
 
-			struct InitializeChairBedQuickPositionPatch : Xbyak::CodeGenerator // Actor::InitializeChairBedQuickPosition
+			struct InitializeChairBedQuickPositionPatch : RELEX::Stub // Actor::InitializeChairBedQuickPosition
 			{
 				InitializeChairBedQuickPositionPatch(std::uintptr_t a_targetAddr, std::uintptr_t a_funcAddr)
 				{
-					Xbyak::Label funcLabel;
-					Xbyak::Label retnLabel;
-
 					push(rcx);
 					push(rdx);
 					sub(rsp, 0x20);
 
 					mov(rcx, rsi);
 					mov(rdx, rbx);
-					call(ptr[rip + funcLabel]);
+					CallTo(a_funcAddr);
 
 					add(rsp, 0x20);
 					pop(rdx);
@@ -443,13 +405,7 @@ namespace Addictol
 
 					L("RETURN");
 					movss(xmm0, ptr[r14]);
-					jmp(ptr[rip + retnLabel]);
-
-					L(funcLabel);
-					dq(a_funcAddr);
-
-					L(retnLabel);
-					dq(a_targetAddr + 0x05);
+					JumpTo(a_targetAddr + 0x05);
 				}
 			};
 		}

@@ -7,9 +7,7 @@
 #include <REX/W32/D3DCOMPILER.h>
 
 #include <wrl/client.h>
-#include <xbyak/xbyak.h>
-
-#undef ERROR
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -383,7 +381,7 @@ float4 PSMain(Interpolants a_in) : SV_Target
 		}
 
 		struct AdmissionPatch :
-			Xbyak::CodeGenerator
+			RELEX::Stub
 		{
 			AdmissionPatch(bool a_og, uintptr_t a_join)
 			{
@@ -399,8 +397,7 @@ float4 PSMain(Interpolants a_in) : SV_Target
 				// rsp is 16-aligned; the function's own 0x20 home space at rsp is free.
 				mov(rax, reinterpret_cast<uintptr_t>(&IsAdmissible));
 				call(rax);
-				jmp(ptr[rip]);
-				dq(a_join);
+				JumpTo(a_join);
 			}
 		};
 	}

@@ -4,9 +4,7 @@
 
 #include <array>
 
-#include <xbyak/xbyak.h>
-
-#undef ERROR
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -43,32 +41,23 @@ namespace Addictol
 		// A refused mip-change copy has no texture; swapping it nulls the live one.
 		static inline REL::Relocation<uintptr_t> DeferredCopySwap{ REL::ID{ 762228, 2277456 }, REL::Offset{ 0x80 } };
 
-		struct SwapGuard : Xbyak::CodeGenerator
+		struct SwapGuard : RELEX::Stub
 		{
 			SwapGuard(uintptr_t a_swap, uintptr_t a_release)
 			{
-				Xbyak::Label swapLab;
-				Xbyak::Label releaseLab;
-
 				mov(r14, qword[rbx]);
 				cmp(dword[r14 + 0x34], 1);
 				jbe("release");
 				cmp(qword[rbx + 0x8], 0);
 				jz("keep");
-				jmp(ptr[rip + swapLab]);
+				JumpTo(a_swap);
 
 				// Keep the old texture and mip, idle again as a finished swap leaves it.
 				L("keep");
 				or_(byte[r14 + 0x3F], 0xFD);
 
 				L("release");
-				jmp(ptr[rip + releaseLab]);
-
-				L(swapLab);
-				dq(a_swap);
-
-				L(releaseLab);
-				dq(a_release);
+				JumpTo(a_release);
 			}
 		};
 	}

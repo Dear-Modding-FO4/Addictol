@@ -1,34 +1,28 @@
 #include <Modules/AdModuleEffectEnvMapCrash.h>
 #include <Core/AdUtils.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	// The env slot nulls its texture bind, then reads that null texture's min LOD.
 	namespace effectEnvMapCrashDetail
 	{
-		struct NullGuard : Xbyak::CodeGenerator
+		struct NullGuard : RELEX::Stub
 		{
 			NullGuard(bool a_og, uintptr_t a_resume, uintptr_t a_skip)
 			{
 				// OG reads it from r11 in Renderer::SetTexture; NG/AE inline it on r8.
 				const auto& texture = a_og ? r11 : r8;
 				const auto& lod = a_og ? eax : ecx;
-				Xbyak::Label resume;
-				Xbyak::Label skip;
 				Xbyak::Label noTexture;
 
 				test(texture, texture);
 				jz(noTexture);
 				movzx(lod, byte[texture + 0x3C]);
-				jmp(ptr[rip + resume]);
+				JumpTo(a_resume);
 				L(noTexture);
-				jmp(ptr[rip + skip]);
-				L(resume);
-				dq(a_resume);
-				L(skip);
-				dq(a_skip);
+				JumpTo(a_skip);
 			}
 		};
 	}

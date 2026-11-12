@@ -235,6 +235,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdFacegenExceptions.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdPlugin.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdUtils.h" />
+    <ClInclude Include="..\Addictol\Include\Core\AdXbyak.h" />
     <ClInclude Include="..\Addictol\Include\Memory\AdVisperMemoryAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAchievements.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleAudioSwitch.h" />

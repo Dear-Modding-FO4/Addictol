@@ -1,10 +1,5 @@
 #include <Modules/AdModuleMoonRotation.h>
 #include <Core/AdUtils.h>
-#include <xbyak/xbyak.h>
-
-#undef MEM_RELEASE
-#undef ERROR
-#undef MAX_PATH
 
 #include <RE/B/BSStringT.h>
 #include <RE/N/NiNode.h>

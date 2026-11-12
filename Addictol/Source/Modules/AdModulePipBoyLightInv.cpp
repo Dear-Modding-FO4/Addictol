@@ -1,19 +1,16 @@
 #include <Modules/AdModulePipBoyLightInv.h>
 #include <Core/AdUtils.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	namespace pipBoyDetail
 	{
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			explicit Patch(std::uintptr_t a_dest, std::uintptr_t a_rtn, std::uintptr_t a_rbx_offset)
 			{
-				Xbyak::Label contLab;
-				Xbyak::Label retLab;
-
 				test(rbx, rbx);
 				jz("returnFunc");
 				mov(rcx, dword[rbx + a_rbx_offset]);
@@ -21,16 +18,10 @@ namespace Addictol
 				jz("returnFunc");
 				test(rax, rax);
 				jz("returnFunc");
-				jmp(ptr[rip + contLab]);
+				JumpTo(a_dest);
 
 				L("returnFunc");
-				jmp(ptr[rip + retLab]);
-
-				L(contLab);
-				dq(a_dest);
-
-				L(retLab);
-				dq(a_rtn);
+				JumpTo(a_rtn);
 			}
 		};
 	}

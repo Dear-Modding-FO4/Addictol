@@ -522,6 +522,9 @@
     <ClInclude Include="..\Addictol\Include\Core\AdUtils.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\AdXbyak.h">
+      <Filter>Include\Core</Filter>
+    </ClInclude>
     <ClInclude Include="..\Addictol\Include\Core\AdAssert.h">
       <Filter>Include\Core</Filter>
     </ClInclude>

@@ -1,34 +1,25 @@
 #include <Modules/AdModuleBGSAIWorldLocationRefRadius.h>
 #include <Core/AdUtils.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	namespace bgsAIWorldLocationRefRadiusDetail
 	{
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			explicit Patch(std::uintptr_t a_dest, std::uintptr_t a_rtn)
 			{
-				Xbyak::Label contLab;
-				Xbyak::Label retLab;
-
 				// code clobbered at target is placed here
 				movss(qword[rbx + 0x10], RELEX::IsRuntimeOG() ? xmm7 : xmm0);
 				// end clobbered code
 				cmp(qword[rsi], 0);  // nullptr check on rsi
 				jz("returnFunc");  // jump to returnFunc if rsi is null
-				jmp(ptr[rip + contLab]);
+				JumpTo(a_dest);
 
 				L("returnFunc");
-				jmp(ptr[rip + retLab]);
-
-				L(contLab);
-				dq(a_dest);
-
-				L(retLab);
-				dq(a_rtn);
+				JumpTo(a_rtn);
 			}
 		};
 	}

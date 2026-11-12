@@ -2,9 +2,7 @@
 #include <Core/AdUtils.h>
 
 #include <dxgi.h>
-#include <xbyak/xbyak.h>
-
-#undef ERROR
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -27,7 +25,7 @@ namespace Addictol
 			return result;
 		}
 
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			Patch(std::uintptr_t resumeAddr, std::uintptr_t funcAddr)
 			{
@@ -36,21 +34,16 @@ namespace Addictol
 
 				xor_(r14b, r14b);
 
-				jmp(ptr[rip]);
-				dq(resumeAddr);
+				JumpTo(resumeAddr);
 			}
 		};
 
 		// OG/NG skip the windowed refresh query on the no-mode fallback, leaving 0/0.
-		struct WindowedRefresh : Xbyak::CodeGenerator
+		struct WindowedRefresh : RELEX::Stub
 		{
 			WindowedRefresh(std::uintptr_t a_freeModes, std::uintptr_t a_rendererData, std::uintptr_t a_refreshQuery, std::uintptr_t a_resume)
 			{
-				Xbyak::Label freeLab;
-				Xbyak::Label refreshLab;
-				Xbyak::Label resumeLab;
-
-				call(ptr[rip + freeLab]);
+				CallTo(a_freeModes);
 				xor_(esi, esi);
 				mov(rcx, a_rendererData);
 				mov(rcx, qword[rcx]);
@@ -58,19 +51,10 @@ namespace Addictol
 				// A matched mode keeps fullscreen and its own refresh rate, as AE checks.
 				cmp(byte[rcx + 0x30], sil);
 				jne("resume");
-				jmp(ptr[rip + refreshLab]);
+				JumpTo(a_refreshQuery);
 
 				L("resume");
-				jmp(ptr[rip + resumeLab]);
-
-				L(freeLab);
-				dq(a_freeModes);
-
-				L(refreshLab);
-				dq(a_refreshQuery);
-
-				L(resumeLab);
-				dq(a_resume);
+				JumpTo(a_resume);
 			}
 		};
 	}

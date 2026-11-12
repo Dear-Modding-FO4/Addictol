@@ -1,10 +1,9 @@
 #include <Modules/AdModuleArchiveLimits.h>
 #include <Core/AdUtils.h>
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 #include <unordered_dense/unordered_dense.h>
 
 #undef MEM_RELEASE
-#undef ERROR
 #undef MAX_PATH
 
 #include <RE/B/BSTEvent.h>
@@ -245,7 +244,7 @@ namespace Addictol
 
 				RELEX::DetourJump(RE::ID::BSResource::Archive2::Index::AddDataFile.address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index1024>);
 
-				struct AddDataFromReaderPatch_AE : Xbyak::CodeGenerator
+				struct AddDataFromReaderPatch_AE : RELEX::Stub
 				{
 					AddDataFromReaderPatch_AE(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
 					{
@@ -271,8 +270,7 @@ namespace Addictol
 						pop(rax);
 
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(targetAddr + 5);
+						JumpTo(targetAddr + 5);
 					}
 				};
 
@@ -290,7 +288,7 @@ namespace Addictol
 
 				RELEX::DetourJump(RE::ID::BSResource::Archive2::Index::AddDataFile.address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index256>);
 
-				struct AddDataFromReaderPatch_NG : Xbyak::CodeGenerator
+				struct AddDataFromReaderPatch_NG : RELEX::Stub
 				{
 					AddDataFromReaderPatch_NG(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
 					{
@@ -316,8 +314,7 @@ namespace Addictol
 						pop(rax);
 
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(targetAddr + 5);
+						JumpTo(targetAddr + 5);
 					}
 				};
 
@@ -333,7 +330,7 @@ namespace Addictol
 
 				RELEX::DetourJump(RE::ID::BSResource::Archive2::Index::AddDataFile.address(), (uintptr_t)&AddDataFile<RE::BSResource::Archive2::Index256>);
 
-				struct AddDataFromReaderPatch_OG : Xbyak::CodeGenerator
+				struct AddDataFromReaderPatch_OG : RELEX::Stub
 				{
 					AddDataFromReaderPatch_OG(std::uintptr_t targetAddr, std::uintptr_t funcAddr)
 					{
@@ -359,8 +356,7 @@ namespace Addictol
 						pop(rax);
 
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(targetAddr + 5);
+						JumpTo(targetAddr + 5);
 					}
 				};
 
@@ -389,17 +385,14 @@ namespace Addictol
 			// DEFAULT
 			////////////////////////////////////////////////
 			{
-				struct FindGeneralPatch : Xbyak::CodeGenerator
+				struct FindGeneralPatch : RELEX::Stub
 				{
 					FindGeneralPatch(uintptr_t target, uintptr_t funcAddr)
 					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
 						push(rcx);
 						sub(rsp, 0x28);
 						lea(rcx, ptr[rbp + 0x148]);
-						call(ptr[rip + funcLabel]);
+						CallTo(funcAddr);
 						add(rsp, 0x28);
 						pop(rcx);
 
@@ -408,13 +401,7 @@ namespace Addictol
 						movzx(eax, byte[rbp + 0x154]);
 
 						L("RET");
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(target + 7);
-
-						L(funcLabel);
-						dq(funcAddr);
+						JumpTo(target + 7);
 					}
 				};
 
@@ -422,15 +409,14 @@ namespace Addictol
 				RELEX::XbyakJump<FindGeneralPatch>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			{
-				struct GetDataFilePatch : Xbyak::CodeGenerator
+				struct GetDataFilePatch : RELEX::Stub
 				{
 					explicit GetDataFilePatch(uintptr_t target)
 					{
 						mov(rcx, (uintptr_t)g_managerArchiveManager->dataFiles);
 						mov(rdx, ptr[rcx + rax * 8]);
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(target + 5);
+						JumpTo(target + 5);
 					}
 				};
 
@@ -438,18 +424,15 @@ namespace Addictol
 				RELEX::XbyakJump<GetDataFilePatch>(target, target);
 			}
 			{
-				struct FindGeneralPatch2 : Xbyak::CodeGenerator
+				struct FindGeneralPatch2 : RELEX::Stub
 				{
 					FindGeneralPatch2(uintptr_t target, uintptr_t funcAddr)
 					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
 						push(rcx);
 						sub(rsp, 0x28);
 
 						lea(rcx, ptr[rbp + 0x148]);
-						call(ptr[rip + funcLabel]);
+						CallTo(funcAddr);
 
 						add(rsp, 0x28);
 						pop(rcx);
@@ -459,13 +442,7 @@ namespace Addictol
 						movzx(eax, byte[rbp + 0x154]);
 
 						L("RET");
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(target + 7);
-
-						L(funcLabel);
-						dq(funcAddr);
+						JumpTo(target + 7);
 					}
 				};
 
@@ -477,18 +454,15 @@ namespace Addictol
 			////////////////////////////////////////////////
 			if (RELEX::IsRuntimeAE())
 			{
-				struct FindGeneralPatch_AE : Xbyak::CodeGenerator
+				struct FindGeneralPatch_AE : RELEX::Stub
 				{
 					FindGeneralPatch_AE(uintptr_t target, uintptr_t funcAddr)
 					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
 						push(rcx);
 						sub(rsp, 0x28);
 
 						lea(rcx, ptr[rdi + 0x148]);
-						call(ptr[rip + funcLabel]);
+						CallTo(funcAddr);
 
 						add(rsp, 0x28);
 						pop(rcx);
@@ -498,13 +472,7 @@ namespace Addictol
 						movzx(eax, byte[rdi + 0x154]);
 
 						L("RET");
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(target + 7);
-
-						L(funcLabel);
-						dq(funcAddr);
+						JumpTo(target + 7);
 					}
 				};
 
@@ -513,18 +481,15 @@ namespace Addictol
 			}
 			else
 			{
-				struct FindGeneralPatch_OG_NG : Xbyak::CodeGenerator
+				struct FindGeneralPatch_OG_NG : RELEX::Stub
 				{
 					FindGeneralPatch_OG_NG(uintptr_t target, uintptr_t funcAddr)
 					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
 						push(rcx);
 						sub(rsp, 0x28);
 
 						lea(rcx, ptr[rsi + 0x148]);
-						call(ptr[rip + funcLabel]);
+						CallTo(funcAddr);
 
 						add(rsp, 0x28);
 						pop(rcx);
@@ -534,13 +499,7 @@ namespace Addictol
 						movzx(eax, byte[rsi + 0x154]);
 
 						L("RET");
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(target + 7);
-
-						L(funcLabel);
-						dq(funcAddr);
+						JumpTo(target + 7);
 					}
 				};
 				
@@ -548,15 +507,14 @@ namespace Addictol
 				RELEX::XbyakJump<FindGeneralPatch_OG_NG>(target, target, (uintptr_t)&FindGeneralArchiveIndex);
 			}
 			{
-				struct GetAsyncDataFilePatch : Xbyak::CodeGenerator
+				struct GetAsyncDataFilePatch : RELEX::Stub
 				{
 					explicit GetAsyncDataFilePatch(uintptr_t target)
 					{
 						mov(rcx, (uintptr_t)g_managerArchiveManager->asyncDataFiles);
 						mov(rdx, ptr[rcx + rax * 8]);
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(target + 5);
+						JumpTo(target + 5);
 					}
 				};
 
@@ -568,13 +526,10 @@ namespace Addictol
 			////////////////////////////////////////////////
 			if (!RELEX::IsRuntimeOG())
 			{
-				struct ReplicateDirToPatch_NG_AE : Xbyak::CodeGenerator
+				struct ReplicateDirToPatch_NG_AE : RELEX::Stub
 				{
 					ReplicateDirToPatch_NG_AE(uintptr_t targetAddr, uintptr_t funcAddr)
 					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
 						push(rsi);
 						push(rcx);
 						push(rbx);
@@ -585,7 +540,7 @@ namespace Addictol
 
 						lea(rcx, ptr[rdi]);
 						mov(edx, ebx);
-						call(ptr[rip + funcLabel]);
+						CallTo(funcAddr);
 
 						add(rsp, 0x20);
 						pop(rdi);
@@ -597,13 +552,7 @@ namespace Addictol
 
 						mov(ptr[rdi + 0x8], ebx);
 						mov(ptr[rdi], ecx);
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(targetAddr + 0x5);
-
-						L(funcLabel);
-						dq(funcAddr);
+						JumpTo(targetAddr + 0x5);
 					}
 				};
 				
@@ -612,13 +561,10 @@ namespace Addictol
 			}
 			else
 			{
-				struct ReplicateDirToPatch_OG : Xbyak::CodeGenerator
+				struct ReplicateDirToPatch_OG : RELEX::Stub
 				{
 					ReplicateDirToPatch_OG(uintptr_t targetAddr, uintptr_t funcAddr)
 					{
-						Xbyak::Label retnLabel;
-						Xbyak::Label funcLabel;
-
 						push(rsi);
 						push(rcx);
 						push(rbx);
@@ -629,7 +575,7 @@ namespace Addictol
 
 						lea(rcx, ptr[rdi]);
 						mov(edx, ebx);
-						call(ptr[rip + funcLabel]);
+						CallTo(funcAddr);
 
 						add(rsp, 0x20);
 						pop(rax);
@@ -641,13 +587,7 @@ namespace Addictol
 
 						mov(ptr[rdi + 0x8], ebx);
 						mov(ptr[rbp - 0x48], ebx);
-						jmp(ptr[rip + retnLabel]);
-
-						L(retnLabel);
-						dq(targetAddr + 0x6);
-
-						L(funcLabel);
-						dq(funcAddr);
+						JumpTo(targetAddr + 0x6);
 					}
 				};
 
@@ -661,7 +601,7 @@ namespace Addictol
 	{
 		static void Hook_Init()
 		{
-			struct BSScaleformImageLoader : Xbyak::CodeGenerator
+			struct BSScaleformImageLoader : RELEX::Stub
 			{
 				explicit BSScaleformImageLoader(uintptr_t target)
 				{
@@ -671,8 +611,7 @@ namespace Addictol
 					ret();
 					L("JMP");
 					// return back (ret)
-					jmp(ptr[rip]);
-					dq(target);
+					JumpTo(target);
 				}
 			};
 
@@ -698,7 +637,7 @@ namespace Addictol
 						{ 0x45, 0x89, 0xEF, 0x90 });
 				}
 
-				struct AddDataFilePatch_NG_AE : Xbyak::CodeGenerator
+				struct AddDataFilePatch_NG_AE : RELEX::Stub
 				{
 					explicit AddDataFilePatch_NG_AE(uintptr_t target)
 					{
@@ -733,8 +672,7 @@ namespace Addictol
 						pop(rbx);
 
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(target + 0x38);
+						JumpTo(target + 0x38);
 					}
 				};
 
@@ -747,7 +685,7 @@ namespace Addictol
 				RELEX::WriteSafe(REL::Relocation{ REL::ID(1388147), REL::Offset{ 0x406 } }.get(),
 					{ 0x45, 0x8B, 0xCC, 0x90 });
 
-				struct AddDataFilePatch_OG : Xbyak::CodeGenerator
+				struct AddDataFilePatch_OG : RELEX::Stub
 				{
 					explicit AddDataFilePatch_OG(std::uintptr_t target)
 					{
@@ -781,8 +719,7 @@ namespace Addictol
 						pop(rbx);
 
 						// return back (ret)
-						jmp(ptr[rip]);
-						dq(target + 0x23);
+						JumpTo(target + 0x23);
 					}
 				};
 				
@@ -908,13 +845,10 @@ namespace Addictol
 				////////////////////////////////////////////////
 				if (RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::k1kAvailableArchitecture))
 				{
-					struct ProcessEventPatch_AE : Xbyak::CodeGenerator
+					struct ProcessEventPatch_AE : RELEX::Stub
 					{
 						ProcessEventPatch_AE(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							mov(ptr[rsp + 0x6C], r13w);
 
 							push(rcx);
@@ -924,19 +858,13 @@ namespace Addictol
 							lea(rcx, ptr[rsp + 0x90]);
 							movzx(edx, r13w);
 
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 
 							add(rsp, 0x20);
 							pop(rdx);
 							pop(rcx);
 
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 0x5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 0x5);
 						}
 					};
 
@@ -947,13 +875,10 @@ namespace Addictol
 					(RELEX::IsRuntimeNG() ||
 						(RELEX::IsRuntimeAE() && (s_ArchiveArchitecture == ArchiveMode::kOldArchitecture)))
 				{
-					struct ProcessEventPatch_NG : Xbyak::CodeGenerator
+					struct ProcessEventPatch_NG : RELEX::Stub
 					{
 						ProcessEventPatch_NG(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							mov(ptr[rsp + 0x3C], r13b);
 
 							push(rcx);
@@ -963,19 +888,13 @@ namespace Addictol
 							lea(rcx, ptr[rsp + 0x60]);
 							movzx(edx, r13w);
 
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 
 							add(rsp, 0x20);
 							pop(rdx);
 							pop(rcx);
 
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 0x5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 0x5);
 						}
 					};
 					
@@ -984,13 +903,10 @@ namespace Addictol
 				}
 				else
 				{
-					struct ProcessEventPatch_OG : Xbyak::CodeGenerator
+					struct ProcessEventPatch_OG : RELEX::Stub
 					{
 						ProcessEventPatch_OG(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							mov(ptr[rsp + 0x5C], r12b);
 
 							push(rcx);
@@ -1000,19 +916,13 @@ namespace Addictol
 							lea(rcx, ptr[rsp + 0x80]);
 							mov(edx, r12d);
 
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 
 							add(rsp, 0x20);
 							pop(rdx);
 							pop(rcx);
 
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 0x5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 0x5);
 						}
 					};
 
@@ -1025,18 +935,15 @@ namespace Addictol
 				////////////////////////////////////////////////
 				if (!RELEX::IsRuntimeOG())
 				{
-					struct StartStreamingChunksPatch_NG_AE : Xbyak::CodeGenerator
+					struct StartStreamingChunksPatch_NG_AE : RELEX::Stub
 					{
 						StartStreamingChunksPatch_NG_AE(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rcx);
 							push(rdx);
 							sub(rsp, 0x20);
 							lea(rcx, ptr[r14]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 							mov(r8d, eax);
 							add(rsp, 0x20);
 							pop(rdx);
@@ -1047,13 +954,7 @@ namespace Addictol
 							movzx(r8d, byte[r14 + 0xC]);
 
 							L("RET");
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 5);
 						}
 					};
 
@@ -1066,18 +967,15 @@ namespace Addictol
 				}
 				else
 				{
-					struct StartStreamingChunksPatch_OG : Xbyak::CodeGenerator
+					struct StartStreamingChunksPatch_OG : RELEX::Stub
 					{
 						StartStreamingChunksPatch_OG(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rcx);
 							push(rax);
 							sub(rsp, 0x20);
 							lea(rcx, ptr[r14]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 							mov(edx, eax);
 							add(rsp, 0x20);
 							pop(rax);
@@ -1088,13 +986,7 @@ namespace Addictol
 							movzx(edx, byte[r14 + 0xC]);
 
 							L("RET");
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 5);
 						}
 					};
 
@@ -1106,19 +998,16 @@ namespace Addictol
 				////////////////////////////////////////////////
 				if (!RELEX::IsRuntimeOG())
 				{
-					struct DecompressStreamedLoadPatch_NG_AE : Xbyak::CodeGenerator
+					struct DecompressStreamedLoadPatch_NG_AE : RELEX::Stub
 					{
 						DecompressStreamedLoadPatch_NG_AE(std::uintptr_t target, std::uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rax);
 							push(rcx);
 							push(rdx);
 							sub(rsp, 0x28);
 							lea(rcx, ptr[r13]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 							mov(r8d, eax);
 							add(rsp, 0x28);
 							pop(rdx);
@@ -1130,13 +1019,7 @@ namespace Addictol
 							movzx(r8d, byte[r13 + 0xC]);
 
 							L("RET");
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 5);
 						}
 					};
 
@@ -1148,18 +1031,15 @@ namespace Addictol
 				}
 				else
 				{
-					struct DecompressStreamedLoadPatch_OG : Xbyak::CodeGenerator
+					struct DecompressStreamedLoadPatch_OG : RELEX::Stub
 					{
 						DecompressStreamedLoadPatch_OG(std::uintptr_t target, std::uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rax);
 							push(rdx);
 							sub(rsp, 0x20);
 							lea(rcx, ptr[r15]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 							mov(ecx, eax);
 							add(rsp, 0x20);
 							pop(rdx);
@@ -1170,13 +1050,7 @@ namespace Addictol
 							movzx(ecx, byte[r15 + 0xC]);
 
 							L("RET");
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 5);
 						}
 					};
 
@@ -1190,19 +1064,16 @@ namespace Addictol
 				// BSGraphics::Renderer::CreateStreamingTexture
 				////////////////////////////////////////////////
 				{
-					struct CreateStreamingTexturePatch_256 : Xbyak::CodeGenerator
+					struct CreateStreamingTexturePatch_256 : RELEX::Stub
 					{
 						CreateStreamingTexturePatch_256(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rax);
 							push(rcx);
 							sub(rsp, 0x20);
 
 							lea(rcx, ptr[rsi]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 
 							mov(edx, eax);
 
@@ -1219,29 +1090,20 @@ namespace Addictol
 							L("RET");
 							movzx(edx, byte[rcx + 0x3C]);
 							mov(ptr[rax + 6], dl);
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 0xD);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 0xD);
 						}
 					};
 
-					struct CreateStreamingTexturePatch_1024 : Xbyak::CodeGenerator
+					struct CreateStreamingTexturePatch_1024 : RELEX::Stub
 					{
 						CreateStreamingTexturePatch_1024(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rax);
 							push(rcx);
 							sub(rsp, 0x20);
 
 							lea(rcx, ptr[rsi]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 
 							mov(edx, eax);
 
@@ -1257,13 +1119,7 @@ namespace Addictol
 							L("RET");
 							movzx(edx, byte[rcx + 0x3C]);
 							mov(ptr[rax + 8], dx);
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 0xD);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 0xD);
 						}
 					};
 
@@ -1277,17 +1133,14 @@ namespace Addictol
 				// BSGraphics::CreateStreamingDDSTexture
 				////////////////////////////////////////////////
 				{
-					struct CreateStreamingDDSTexturePatch : Xbyak::CodeGenerator
+					struct CreateStreamingDDSTexturePatch : RELEX::Stub
 					{
 						CreateStreamingDDSTexturePatch(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rcx);
 							sub(rsp, 0x28);
 							lea(rcx, ptr[rsi]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 							add(rsp, 0x28);
 							pop(rcx);
 
@@ -1297,13 +1150,7 @@ namespace Addictol
 
 							L("RET");
 							mov(ptr[r14 + 0x12], ax);
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 5);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 5);
 						}
 					};
 
@@ -1315,16 +1162,13 @@ namespace Addictol
 				////////////////////////////////////////////////
 				if (!RELEX::IsRuntimeOG())
 				{
-					struct ThreadProcPatch_NG_AE : Xbyak::CodeGenerator
+					struct ThreadProcPatch_NG_AE : RELEX::Stub
 					{
 						ThreadProcPatch_NG_AE(uintptr_t a_target, uintptr_t a_funcAddr)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							sub(rsp, 0x20);
 							lea(rcx, ptr[r13]);
-							call(ptr[rip + funcLabel]);
+							CallTo(a_funcAddr);
 							mov(r8d, eax);
 							add(rsp, 0x20);
 
@@ -1333,13 +1177,7 @@ namespace Addictol
 							movzx(r8d, byte[r13 + 0xC]);
 
 							L("RET");
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(a_target + 5);
-
-							L(funcLabel);
-							dq(a_funcAddr);
+							JumpTo(a_target + 5);
 						}
 					};
 
@@ -1348,17 +1186,14 @@ namespace Addictol
 				}
 				else
 				{
-					struct ThreadProcPatch_OG : Xbyak::CodeGenerator
+					struct ThreadProcPatch_OG : RELEX::Stub
 					{
 						ThreadProcPatch_OG(uintptr_t a_target, uintptr_t a_funcAddr)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rax);
 							sub(rsp, 0x28);
 							lea(rcx, ptr[r14]);
-							call(ptr[rip + funcLabel]);
+							CallTo(a_funcAddr);
 							mov(ecx, eax);
 							add(rsp, 0x28);
 							pop(rax);
@@ -1368,13 +1203,7 @@ namespace Addictol
 							movzx(ecx, byte[r14 + 0xC]);
 
 							L("RET");
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(a_target + 5);
-
-							L(funcLabel);
-							dq(a_funcAddr);
+							JumpTo(a_target + 5);
 						}
 					};
 
@@ -1385,13 +1214,10 @@ namespace Addictol
 				// LoadChunks
 				////////////////////////////////////////////////
 				{
-					struct LoadChunksPatch : Xbyak::CodeGenerator
+					struct LoadChunksPatch : RELEX::Stub
 					{
 						LoadChunksPatch(uintptr_t target, uintptr_t func)
 						{
-							Xbyak::Label retnLabel;
-							Xbyak::Label funcLabel;
-
 							push(rax);
 							push(rcx);
 							push(rdx);
@@ -1401,7 +1227,7 @@ namespace Addictol
 							push(r11);
 							sub(rsp, 0x28);
 							lea(rcx, ptr[rdx]);
-							call(ptr[rip + funcLabel]);
+							CallTo(func);
 							mov(ebx, eax);
 							add(rsp, 0x28);
 							pop(r11);
@@ -1423,13 +1249,7 @@ namespace Addictol
 								movzx(edi, byte[rdx + 0xE]);
 							if (RELEX::IsRuntimeOG()) 
 								cmp(dword[rdx + 0x104], 1);
-							jmp(ptr[rip + retnLabel]);
-
-							L(retnLabel);
-							dq(target + 8);
-
-							L(funcLabel);
-							dq(func);
+							JumpTo(target + 8);
 						}
 					};
 

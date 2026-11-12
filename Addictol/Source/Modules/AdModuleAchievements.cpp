@@ -2,13 +2,13 @@
 #include <Core/AdUtils.h>
 #include <Core/AdAssert.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	namespace achievementsDetail
 	{
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			Patch()
 			{

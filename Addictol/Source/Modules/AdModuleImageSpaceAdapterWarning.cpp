@@ -3,23 +3,18 @@
 
 #include <RE/T/TESImageSpaceModifier.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	namespace imadDetail
 	{
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			Patch(std::uintptr_t a_dst)
 			{
-				Xbyak::Label dst;
-
 				mov(r8, RELEX::IsRuntimeOG() ? r14 : r15);
-				jmp(ptr[rip + dst]);
-
-				L(dst);
-				dq(a_dst);
+				JumpTo(a_dst);
 			}
 		};
 

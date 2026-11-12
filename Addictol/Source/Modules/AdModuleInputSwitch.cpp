@@ -22,7 +22,7 @@
 #include <RE/U/UI.h>
 #include <RE/U/UIMessageQueue.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -334,7 +334,7 @@ namespace Addictol
 			}
 		}
 
-		struct DtorPatch : Xbyak::CodeGenerator
+		struct DtorPatch : RELEX::Stub
 		{
 			DtorPatch(std::uintptr_t a_ret)
 			{

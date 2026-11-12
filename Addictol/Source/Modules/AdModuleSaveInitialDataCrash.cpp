@@ -3,9 +3,7 @@
 
 #include <array>
 
-#include <xbyak/xbyak.h>
-
-#undef ERROR
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -14,13 +12,10 @@ namespace Addictol
 		static inline REL::Relocation<uintptr_t> SaveInitialData{ RE::ID::BGSSaveLoadInitialData::SaveInitialData };
 
 		// A ref with no cell has no save location; UnloadForm expects that.
-		struct LocationGuard : Xbyak::CodeGenerator
+		struct LocationGuard : RELEX::Stub
 		{
 			LocationGuard(uintptr_t a_setNumericID, uintptr_t a_resume)
 			{
-				Xbyak::Label setLab;
-				Xbyak::Label resumeLab;
-
 				// OG loads the index after the form ID; NG/AE load it before.
 				if (RELEX::IsRuntimeOG())
 					lea(rcx, ptr[rbp - 9]);
@@ -29,16 +24,10 @@ namespace Addictol
 				test(rax, rax);
 				jz("skip");
 				mov(edx, dword[rax + 0x14]);
-				call(ptr[rip + setLab]);
+				CallTo(a_setNumericID);
 
 				L("skip");
-				jmp(ptr[rip + resumeLab]);
-
-				L(setLab);
-				dq(a_setNumericID);
-
-				L(resumeLab);
-				dq(a_resume);
+				JumpTo(a_resume);
 			}
 		};
 	}

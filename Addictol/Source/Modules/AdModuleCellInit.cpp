@@ -4,7 +4,7 @@
 #include <RE/E/ExtraLocation.h>
 #include "RE/T/TESFormUtil.h"
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
@@ -29,7 +29,7 @@ namespace Addictol
 			return loc;
 		}
 
-		struct Patch : Xbyak::CodeGenerator
+		struct Patch : RELEX::Stub
 		{
 			explicit Patch(std::uintptr_t a_target)
 			{

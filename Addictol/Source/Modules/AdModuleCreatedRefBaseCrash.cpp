@@ -1,19 +1,17 @@
 #include <Modules/AdModuleCreatedRefBaseCrash.h>
 #include <Core/AdUtils.h>
 
-#include <xbyak/xbyak.h>
+#include <Core/AdXbyak.h>
 
 namespace Addictol
 {
 	// A null original base now takes the engine's own mismatch rebuild branch.
 	namespace createdRefBaseCrashDetail
 	{
-		struct BaseGuard : Xbyak::CodeGenerator
+		struct BaseGuard : RELEX::Stub
 		{
 			BaseGuard(uintptr_t a_mismatch, uintptr_t a_match)
 			{
-				Xbyak::Label mismatch;
-				Xbyak::Label match;
 				Xbyak::Label toMismatch;
 				Xbyak::Label toMatch;
 
@@ -22,13 +20,9 @@ namespace Addictol
 				cmp(dword[rax + 0x14], ecx);
 				jz(toMatch);
 				L(toMismatch);
-				jmp(ptr[rip + mismatch]);
+				JumpTo(a_mismatch);
 				L(toMatch);
-				jmp(ptr[rip + match]);
-				L(mismatch);
-				dq(a_mismatch);
-				L(match);
-				dq(a_match);
+				JumpTo(a_match);
 			}
 		};
 	}
