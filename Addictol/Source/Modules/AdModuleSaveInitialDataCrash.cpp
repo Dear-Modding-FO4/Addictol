@@ -11,7 +11,7 @@ namespace Addictol
 {
 	namespace saveInitialDataCrashDetail
 	{
-		static inline REL::Relocation<uintptr_t> SaveInitialData{ REL::ID{ 662910, 2228015 } };
+		static inline REL::Relocation<uintptr_t> SaveInitialData{ RE::ID::BGSSaveLoadInitialData::SaveInitialData };
 
 		// A ref with no cell has no save location; UnloadForm expects that.
 		struct LocationGuard : Xbyak::CodeGenerator

@@ -28,15 +28,15 @@ namespace Addictol
 		inline std::uint64_t CreateShaders()
 		{
 			auto Renderer = reinterpret_cast<void*>(RE::ID::BSGraphics::Renderer::Singleton.address());
-			auto VertexBuffer = reinterpret_cast<void*>(REL::ID{ 571231, 2384579 }.address());
-			auto PixelBuffer = reinterpret_cast<void*>(REL::ID{ 716718, 2384580 }.address());
+			auto VertexBuffer = reinterpret_cast<void*>(RE::ID::MoviePlayer::VertexShaderData.address());
+			auto PixelBuffer = reinterpret_cast<void*>(RE::ID::MoviePlayer::PixelShaderData.address());
 			
 			auto VertexShader = CreateVertexShaderFromBuffer(Renderer, VertexBuffer, 0x27C, 0, 0x0C0300000000FFF, 0, 0);
-			REL::Relocation<std::uint64_t*> VertexShaderQWord{ REL::ID{ 67091, 2710692 } };
+			REL::Relocation<std::uint64_t*> VertexShaderQWord{ RE::ID::MoviePlayer::VertexShader };
 			*VertexShaderQWord = VertexShader;
 
 			auto PixelShader = CreatePixelShaderFromBuffer(Renderer, PixelBuffer, 0x2B8, 0, 0, 0);
-			REL::Relocation<std::uint64_t*> PixelShaderQWord{ REL::ID{ 286285, 2710693 } };
+			REL::Relocation<std::uint64_t*> PixelShaderQWord{ RE::ID::MoviePlayer::PixelShader };
 			*PixelShaderQWord = PixelShader;
 
 			return PixelShader;
@@ -44,7 +44,7 @@ namespace Addictol
 
 		inline void CreateShadersOG()
 		{
-			REL::Relocation<void()> func{ REL::ID{ 527640 } };
+			REL::Relocation<void()> func{ RE::ID::MoviePlayer::CreateShaders };
 			func();
 		}
 
@@ -83,7 +83,7 @@ namespace Addictol
 			};
 
 			// Vertex Shader
-			REL::Relocation<RE::BSGraphics::VertexShader**> vertexShader{ REL::ID{ 67091, 2710692 } };
+			REL::Relocation<RE::BSGraphics::VertexShader**> vertexShader{ RE::ID::MoviePlayer::VertexShader };
 			AdAssert(*vertexShader != nullptr);
 
 			// Setup the Patch
@@ -124,7 +124,7 @@ namespace Addictol
 			};
 
 			// Pixel Shader
-			REL::Relocation<RE::BSGraphics::PixelShader**> pixelShader{ REL::ID{ 286285, 2710693 } };
+			REL::Relocation<RE::BSGraphics::PixelShader**> pixelShader{ RE::ID::MoviePlayer::PixelShader };
 			AdAssert(*pixelShader != nullptr);
 
 			// Setup the Patch
