@@ -108,24 +108,30 @@ namespace Addictol
 		const auto createRenderTarget				= RE::ID::BSGraphics::RenderTargetManager::CreateRenderTarget.address();
 		const auto createDepthStencilTarget			= RE::ID::BSGraphics::RenderTargetManager::CreateDepthStencilTarget.address();
 
-		// Validate
-		if (!RELEX::IsCallTo(targetLocalMapOutput, 						createRenderTarget) ||
-			!RELEX::IsCallTo(targetCompanionMapOutput, 					createRenderTarget) ||
-			!RELEX::IsCallTo(targetCompanionMapPrimary, 				createRenderTarget) ||
-			!RELEX::IsCallTo(targetCompanionMapSecondary, 				createRenderTarget) ||
-			!RELEX::IsCallTo(targetCompanionMapDepthStencil, 			createDepthStencilTarget) ||
-			!RELEX::Validate(targetRenderEffect, { 0xE8 }) ||
-			!RELEX::Validate(targetRender, { 0x48, 0x8B, 0xC4, 0x88, 0x50, 0x10 }))
-			return false;
+		const REL::Relocation<uint32_t*> targetCompanionMapCellCap{ REL::ID{ 945604 } };
 
+		// Validate
+		if (!RELEX::IsCallTo(targetLocalMapOutput, 				createRenderTarget) 		||
+			!RELEX::IsCallTo(targetCompanionMapOutput, 			createRenderTarget) 		||
+			!RELEX::IsCallTo(targetCompanionMapPrimary, 		createRenderTarget) 		||
+			!RELEX::IsCallTo(targetCompanionMapSecondary, 		createRenderTarget) 		||
+			!RELEX::IsCallTo(targetCompanionMapDepthStencil, 	createDepthStencilTarget) 	||
+			!RELEX::Validate(targetRenderEffect, { 0xE8 }) 									||
+			!RELEX::Validate(targetRender, { 0x48, 0x8B, 0xC4, 0x88, 0x50, 0x10 })			||
+			*targetCompanionMapCellCap != 5)
+			return false;
+		
+		// Lift the Companion Map Cell Cap
+		*targetCompanionMapCellCap = 0xFFFF;
+		
 		// Upsample the Render and Depth Stencil Targets
 		// Originals first, so no installed thunk can run without one
 		highResLocalMapsDetail::CreateRenderTarget::func = createRenderTarget;
 		highResLocalMapsDetail::CreateDepthStencilTarget::func = createDepthStencilTarget;
 		bool installed = RELEX::DetourClassCall(targetLocalMapOutput, &highResLocalMapsDetail::CreateRenderTarget::thunk_capture) != 0;		// 19 Local Map Output
-		installed &= RELEX::DetourClassCall(targetCompanionMapOutput, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale) != 0;			// 20 Companion Map Output
-		installed &= RELEX::DetourClassCall(targetCompanionMapPrimary, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale) != 0;			// 23 Companion Map Primary
-		installed &= RELEX::DetourClassCall(targetCompanionMapSecondary, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale) != 0;		// 21 Companion Map Secondary
+		installed &= RELEX::DetourClassCall(targetCompanionMapOutput, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale) != 0;		// 20 Companion Map Output
+		installed &= RELEX::DetourClassCall(targetCompanionMapPrimary, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale) != 0;		// 23 Companion Map Primary
+		installed &= RELEX::DetourClassCall(targetCompanionMapSecondary, &highResLocalMapsDetail::CreateRenderTarget::thunk_scale) != 0;	// 21 Companion Map Secondary
 		installed &= RELEX::DetourClassCall(targetCompanionMapDepthStencil, &highResLocalMapsDetail::CreateDepthStencilTarget::thunk) != 0;	// 11 Companion Map Depth Stencil
 
 		// Use the Companion app's Render Targets

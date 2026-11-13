@@ -26,6 +26,7 @@
 - Telemetry: Added Save Load Timing, which times the native load steps, Papyrus restore, and the loading screen.
 - Telemetry: Form Load Timing also times startup: each step before the main menu and of the background game-data load, and how long the main menu waits before Continue can load.
 - BSMTAManager: Fixed NG/AE rendering crashes in alpha-tested geometry (e.g. seaweed and foliage LOD), caused by objects being registered without their alpha-group state.
+- HighResLocalMaps: Lifted the Cell Cap which caused certain areas to appear as if they were empty.
 
 ## 1.8.0
 
