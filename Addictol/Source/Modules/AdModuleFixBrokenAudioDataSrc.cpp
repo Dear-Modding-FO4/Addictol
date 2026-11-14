@@ -28,7 +28,7 @@ namespace Addictol
 		auto relOff2 = REL::Relocation(REL::ID{ 363610, 2267597 });
 		auto off2 = RELEX::IsRuntimeAE() ? 0x273 : 218;
 
-		if (!RELEX::Validate(relOff.address() + off, { 0x0F, 0x86 }))
+		if (!RELEX::Validate(relOff2.address() + off2, { 0x0F, 0x86 }))
 		{
 			REX::WARN("Module ModuleFixBrokenAudioDataSrc return failed, no match validate code"sv);
 			return false;
