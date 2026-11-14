@@ -336,6 +336,10 @@ namespace Addictol
 		"$Setting_FixesPapyrusLeaks",
 		"Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load."
 	);
+	static dmui::localize::LocalizeString lsFixesBrokenAudioDataSrc(
+		"$Setting_FixesPapyrusLeaks",
+		"When reading audio in an archive larger than 4GB, overflow occurs and the negative value of available is required for reading, block this."
+	);
 
 	BoolSetting bFixesGreyMovie{
 		"Fixes"sv,
@@ -1082,6 +1086,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesPapyrusLeaks),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesBrokenAudioDataSrc{
+		"Fixes"sv,
+		"bBrokenAudioDataSrc"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesBrokenAudioDataSrc),
 		SettingApplyTiming::kNextLaunch
 	};
 }

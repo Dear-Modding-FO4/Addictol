@@ -117,6 +117,7 @@
 #include <Modules/AdModuleRefExtended.h>
 #include <Modules/AdModuleCustomScale.h>
 #include <Modules/AdModuleArchiveStreamClose.h>
+#include <Modules/AdModuleFixBrokenAudioDataSrc.h>
 #include <Modules/PapyrusLeaks/AdModulePapyrusLeaks.h>
 
 namespace
@@ -247,6 +248,7 @@ static auto sModuleLightPriority					= std::make_shared<Addictol::ModuleLightPri
 static auto sModuleRefExtended						= std::make_shared<Addictol::ModuleRefExtended>();
 static auto sModuleCustomScale						= std::make_shared<Addictol::ModuleCustomScale>();
 static auto sModuleArchiveStreamClose				= std::make_shared<Addictol::ModuleArchiveStreamClose>();
+static auto sModuleFixBrokenAudioDataSrc			= std::make_shared<Addictol::ModuleFixBrokenAudioDataSrc>();
 static auto sModulePapyrusLeaks						= std::make_shared<Addictol::ModulePapyrusLeaks>();
 
 void AdRegisterPreloadModules()
@@ -373,6 +375,7 @@ void AdRegisterModules()
 	modules.Register(sModuleRefExtended);
 	modules.Register(sModuleCustomScale);
 	modules.Register(sModuleArchiveStreamClose);
+	modules.Register(sModuleFixBrokenAudioDataSrc);
 	modules.Register(sModulePapyrusLeaks);
 
 	// Registers other patches

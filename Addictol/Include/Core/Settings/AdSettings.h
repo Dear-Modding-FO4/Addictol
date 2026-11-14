@@ -112,6 +112,7 @@ namespace Addictol
 	extern BoolSetting bFixesCustomScale;
 	extern BoolSetting bFixesArchiveStreamClose;
 	extern BoolSetting bFixesPapyrusLeaks;
+	extern BoolSetting bFixesBrokenAudioDataSrc;
 
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;

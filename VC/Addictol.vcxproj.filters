@@ -22,6 +22,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleRefExtended.cpp">
       <Filter>Source\Modules\R</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFixBrokenAudioDataSrc.cpp">
+      <Filter>Source\Modules\F</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Addictol\Source\Zlib\AdOwnedInflate.cpp">
@@ -1022,6 +1025,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleRefExtended.h">
       <Filter>Include\Modules\R</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFixBrokenAudioDataSrc.h">
+      <Filter>Include\Modules\F</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

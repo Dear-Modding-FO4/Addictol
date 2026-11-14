@@ -1,0 +1,16 @@
+#pragma once
+
+#include <Core/AdModule.h>
+
+namespace Addictol
+{
+	class ModuleFixBrokenAudioDataSrc :
+		public Module
+	{
+	public:
+		ModuleFixBrokenAudioDataSrc();
+		virtual ~ModuleFixBrokenAudioDataSrc() = default;
+
+		[[nodiscard]] virtual bool DoInstall([[maybe_unused]] F4SE::MessagingInterface::Message* a_msg = nullptr) noexcept override;
+	};
+}
