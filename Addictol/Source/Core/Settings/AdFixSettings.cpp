@@ -1017,7 +1017,7 @@ namespace Addictol
 		"Fixes"sv,
 		"bNeverFadesSpotlight"sv,
 		SettingDisplayCategory::kVisuals,
-		true,
+		false,
 		std::addressof(lsFixesNeverFadesSpotlight),
 		SettingApplyTiming::kNextLaunch
 	};

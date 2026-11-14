@@ -28,6 +28,7 @@
 - BSMTAManager: Fixed NG/AE rendering crashes in alpha-tested geometry (e.g. seaweed and foliage LOD), caused by objects being registered without their alpha-group state.
 - HighResLocalMaps: Lifted the Cell Cap which caused certain areas to appear as if they were empty.
 - Added the "Grim Reaper's Sprint AP Fix" module, fixes Grim Reaper's Sprint refilling Action Points only up to the permanent cap.
+- NeverFadesSpotlight: Now disabled by default to avoid unintended spotlights from appearing for example at the Starlight Drive In.
 
 ## 1.8.0
 
