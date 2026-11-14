@@ -1,13 +1,17 @@
 #include <Modules/AdModuleGrimReaperAPFix.h>
 #include <Core/AdUtils.h>
 
+#include <RE/A/ACTOR_VALUE_MODIFIER.h>
 #include <RE/A/ActorValue.h>
 #include <RE/A/ActorValueOwner.h>
 #include <RE/B/BGSEntryPoint.h>
 #include <RE/P/PlayerCharacter.h>
 
 #include <atomic>
+#include <cstring>
 #include <intrin.h>
+
+#include <Windows.h>
 
 namespace Addictol
 {
@@ -57,7 +61,7 @@ namespace Addictol
 				return;
 
 			const auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!player || a_self != static_cast<RE::ActorValueOwner*>(player))
+			if (!player || a_self != static_cast<const RE::ActorValueOwner*>(player))
 				return;
 
 			const auto* actorValues = RE::ActorValue::GetSingleton();
@@ -145,14 +149,14 @@ namespace Addictol
 		if (a_msg && a_msg->type != F4SE::MessagingInterface::kGameDataReady)
 			return true;
 
-		auto* player = RE::PlayerCharacter::GetSingleton();
+		const auto* player = RE::PlayerCharacter::GetSingleton();
 		if (!player)
 		{
 			Skip("player is unavailable"sv);
 			return false;
 		}
 
-		const auto ownerAddress = reinterpret_cast<std::uintptr_t>(static_cast<RE::ActorValueOwner*>(player));
+		const auto ownerAddress = reinterpret_cast<std::uintptr_t>(static_cast<const RE::ActorValueOwner*>(player));
 		if (ownerAddress - reinterpret_cast<std::uintptr_t>(player) != grimReaperAPFixDetail::kAVOwnerInPlayer)
 		{
 			Skip("PlayerCharacter ActorValueOwner sub-object is not at the expected offset"sv);
