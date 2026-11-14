@@ -21,12 +21,22 @@ namespace Addictol
 
 		if (!RELEX::Validate(relOff.address() + off, { 0x0F, 0x86 }))
 		{
-			REX::WARN("Module ModuleFixBrokenAudioDataSrc return failed, no match validate code");
+			REX::WARN("Module ModuleFixBrokenAudioDataSrc return failed, no match validate code"sv);
+			return false;
+		}
+
+		auto relOff2 = REL::Relocation(REL::ID{ 363610, 2267597 });
+		auto off2 = RELEX::IsRuntimeAE() ? 0x273 : 218;
+
+		if (!RELEX::Validate(relOff.address() + off, { 0x0F, 0x86 }))
+		{
+			REX::WARN("Module ModuleFixBrokenAudioDataSrc return failed, no match validate code"sv);
 			return false;
 		}
 
 		// sets as jle (so check sign, if more 2Gb then skips) 
 		RELEX::WriteSafe(relOff.address() + off + 1, { 0x8E });
+		RELEX::WriteSafe(relOff2.address() + off2 + 1, { 0x8E });
 
 		// TODO: We can probably read the sound, but we don't know its exact size, so it's worth considering.
 
