@@ -292,6 +292,10 @@ namespace Addictol
 		"$Setting_FixesNPCHealthOverflowFix",
 		"Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly."
 	);
+	static dmui::localize::LocalizeString lsFixesGrimReaperAPFix(
+		"$Setting_FixesGrimReaperAPFix",
+		"Fixes Grim Reaper's Sprint refilling Action Points only up to the permanent cap, leaving temporary bonuses from alcohol, food and chems unfilled."
+	);
 	static dmui::localize::LocalizeString lsFixesArmorPenetration(
 		"$Setting_FixesArmorPenetration",
 		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."
@@ -979,6 +983,15 @@ namespace Addictol
 		SettingDisplayCategory::kGameplay,
 		true,
 		std::addressof(lsFixesNPCHealthOverflowFix),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesGrimReaperAPFix{
+		"Fixes"sv,
+		"bGrimReaperAPFix"sv,
+		SettingDisplayCategory::kGameplay,
+		true,
+		std::addressof(lsFixesGrimReaperAPFix),
 		SettingApplyTiming::kNextLaunch
 	};
 

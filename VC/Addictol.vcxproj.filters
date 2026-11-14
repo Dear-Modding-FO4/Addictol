@@ -261,6 +261,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleGreyMovie.cpp">
       <Filter>Source\Modules\G</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleGrimReaperAPFix.cpp">
+      <Filter>Source\Modules\G</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleHighResBloom.cpp">
       <Filter>Source\Modules\H</Filter>
     </ClCompile>
@@ -742,6 +745,9 @@
       <Filter>Include\Modules\F</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleGreyMovie.h">
+      <Filter>Include\Modules\G</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleGrimReaperAPFix.h">
       <Filter>Include\Modules\G</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleHighResBloom.h">
