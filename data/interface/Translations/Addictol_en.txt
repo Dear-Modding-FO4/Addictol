@@ -86,6 +86,7 @@ $Setting_FixesWaterJetpackFix	Fixes a bug where entering water does not reset th
 $Setting_FixesCraftingMenuFix	Reduces the lag when browsing mod slots in the weapon/armor crafting menu. The menu stops walking the whole COBJ/OMOD form arrays on every slot switch.
 $Setting_FixesAIProcess3DUpdateFlag	Fixes a bug where there is no check for nullptr when AI for a character is disabled.
 $Setting_FixesNPCHealthOverflowFix	Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly.
+$Setting_FixesGrimReaperAPFix	Fixes Grim Reaper's Sprint refilling Action Points only up to the permanent cap, leaving temporary bonuses from alcohol, food and chems unfilled.
 $Setting_FixesArmorPenetration	Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons.
 $Setting_FixesLocalMapRotation	Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be.
 $Setting_FixesNeverFadesSpotlight	Fixes shadow-casting spotlights marked Never Fades being culled instead of skipping the distance check.
