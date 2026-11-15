@@ -33,7 +33,7 @@
 - HighResLocalMaps: Lifted the Cell Cap which caused certain areas to appear as if they were empty.
 - Added the "Grim Reaper's Sprint AP Fix" module, fixes Grim Reaper's Sprint refilling Action Points only up to the permanent cap.
 - NeverFadesSpotlight: Now disabled by default to avoid unintended spotlights from appearing for example at the Starlight Drive In.
-- BrokenAudioDataSrc: When reading wrong audio XWM format, overflow occurs and the negative value of available is required for reading, block this.
+- Added the "Fix Broken AudioDataSrc" module, fixing a crash, or a "BIG REQUESTED SIZE" assertion, when a streamed sound's data chunk claims more bytes than its file holds (#75).
 
 ## 1.8.0
 

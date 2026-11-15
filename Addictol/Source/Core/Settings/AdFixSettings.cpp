@@ -337,8 +337,8 @@ namespace Addictol
 		"Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load."
 	);
 	static dmui::localize::LocalizeString lsFixesBrokenAudioDataSrc(
-		"$Setting_FixesPapyrusLeaks",
-		"When reading audio in an archive larger than 4GB, overflow occurs and the negative value of available is required for reading, block this."
+		"$Setting_FixesBrokenAudioDataSrc",
+		"Fixes a crash when a streamed WAV or XWM sound's data chunk claims more bytes than the file holds, which made the game request about 4 GB of memory."
 	);
 	static dmui::localize::LocalizeString lsFixesFileCacheFreeze(
 		"$Setting_FixesFileCacheFreeze",
