@@ -278,7 +278,7 @@ namespace Addictol
 
 					if (monitor.m_voice)
 						std::exchange(monitor.m_voice, nullptr)->DestroyVoice();
-					monitor.m_apo->m_peak = 0.0f;
+					monitor.m_apo->m_amplitude = 0.0f;
 
 					REX::W32::XAUDIO2_EFFECT_DESCRIPTOR effect{ monitor.m_apo, TRUE, 1 };
 					REX::W32::XAUDIO2_EFFECT_CHAIN chain{ 1, &effect };
