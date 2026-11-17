@@ -4,13 +4,14 @@
 #include <Core/AdAssert.h>
 
 #include <RE/B/BSInputDeviceManager.h>
+#include <RE/B/BSInputEventReceiver.h>
 #include <RE/B/BSInputEventUser.h>
 #include <RE/B/BSScriptUtil.h>
 #include <RE/B/BSUIMessageData.h>
+#include <RE/B/ButtonEvent.h>
 #include <RE/C/ControlMap.h>
 #include <RE/C/CursorMenu.h>
 #include <RE/F/FlatScreenModel.h>
-#include <RE/I/IDEvent.h>
 #include <RE/I/INPUT_DEVICE.h>
 #include <RE/I/InputEvent.h>
 #include <RE/M/MenuControls.h>
@@ -19,6 +20,7 @@
 #include <RE/P/PIPBOY_PAGES.h>
 #include <RE/P/PipboyManager.h>
 #include <RE/P/PipboyMenu.h>
+#include <RE/T/ThumbstickEvent.h>
 #include <RE/U/UI.h>
 #include <RE/U/UIMessageQueue.h>
 
@@ -44,6 +46,145 @@ namespace Addictol
 
 	namespace inputSwitchDetail
 	{
+		enum class Device
+		{
+			none,
+			kbm,
+			gamepad
+		};
+
+		// Decides the active device from each frame's input before the game reads it.
+		class DeviceTracker
+		{
+		public:
+			[[nodiscard]] static DeviceTracker& GetSingleton() noexcept
+			{
+				static DeviceTracker singleton;
+				return singleton;
+			}
+
+			DeviceTracker(const DeviceTracker&) = delete;
+			DeviceTracker& operator=(const DeviceTracker&) = delete;
+
+			// Main thread, ahead of PlayerControls' own handlers.
+			void Scan(const RE::InputEvent* a_queueHead) noexcept
+			{
+				for (auto event = a_queueHead; event; event = event->next)
+				{
+					auto source = Device::none;
+					switch (*event->device)
+					{
+					case RE::INPUT_DEVICE::kKeyboard:
+					case RE::INPUT_DEVICE::kMouse:
+						source = Device::kbm;
+						break;
+					case RE::INPUT_DEVICE::kGamepad:
+						source = Device::gamepad;
+						break;
+					default:
+						continue;
+					}
+
+					// The look vector carries no device, so it follows its last writer exactly.
+					if (WritesLookVector(*event))
+					{
+						_looking = source;
+					}
+
+					if (source != _device && IsDeliberate(*event))
+					{
+						SwitchTo(source);
+					}
+				}
+			}
+
+			[[nodiscard]] Device ActiveDevice() const noexcept { return _device; }
+			[[nodiscard]] bool IsGamepadActiveDevice() const noexcept { return _device == Device::gamepad; }
+			[[nodiscard]] bool IsGamepadActiveLooking() const noexcept { return _looking == Device::gamepad; }
+
+		private:
+			static constexpr int32_t kMouseCountsToSwitch = 32;
+			// A longer pause starts a new burst, which filters sensor noise.
+			static constexpr std::chrono::milliseconds kMouseBurstGap{ 200 };
+			static constexpr float kStickMagnitudeToSwitch = 0.3f;
+
+			DeviceTracker() = default;
+
+			// Matches LookHandler; both events overwrite lookInputVec.
+			[[nodiscard]] static bool WritesLookVector(const RE::InputEvent& a_event)
+			{
+				static const RE::BSFixedString look{ "Look"sv };
+				switch (*a_event.eventType)
+				{
+				case RE::INPUT_EVENT_TYPE::kMouseMove:
+				case RE::INPUT_EVENT_TYPE::kThumbstick:
+					return a_event.QUserEvent() == look;
+				default:
+					return false;
+				}
+			}
+
+			// Cursor moves are excluded: Windows reports them without the mouse moving.
+			[[nodiscard]] bool IsDeliberate(const RE::InputEvent& a_event) noexcept
+			{
+				if (const auto button = a_event.As<RE::ButtonEvent>(); button)
+				{
+					return button->QJustPressed();
+				}
+
+				if (const auto mouse = a_event.As<RE::MouseMoveEvent>(); mouse)
+				{
+					const auto now = std::chrono::steady_clock::now();
+					if (now - _lastMouseMotion > kMouseBurstGap)
+					{
+						_mouseTravel = 0;
+					}
+
+					_lastMouseMotion = now;
+					_mouseTravel += std::abs(mouse->mouseInputX) + std::abs(mouse->mouseInputY);
+					return _mouseTravel >= kMouseCountsToSwitch;
+				}
+
+				if (const auto stick = a_event.As<RE::ThumbstickEvent>(); stick)
+				{
+					return std::hypot(stick->xValue, stick->yValue) >= kStickMagnitudeToSwitch;
+				}
+
+				return false;
+			}
+
+			void SwitchTo(Device a_device) noexcept
+			{
+				_mouseTravel = 0;
+				_device = a_device;
+			}
+
+			// Written on the main thread, read from the UI job and Papyrus.
+			std::atomic<Device> _device{ Device::none };
+			std::atomic<Device> _looking{ Device::none };
+
+			int32_t _mouseTravel{ 0 };
+			std::chrono::steady_clock::time_point _lastMouseMotion;
+		};
+
+		struct PerformInputProcessing  // PlayerControls::PerformInputProcessing
+		{
+			static void thunk(RE::BSInputEventReceiver* a_self, const RE::InputEvent* a_queueHead)
+			{
+				DeviceTracker::GetSingleton().Scan(a_queueHead);
+				func(a_self, a_queueHead);
+			}
+
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		inline void InstallDeviceTracker()
+		{
+			REL::Relocation vtable{ RE::VTABLE::PlayerControls[0] };
+			PerformInputProcessing::func = vtable.write_vfunc(0, PerformInputProcessing::thunk);
+		}
+
+		// Tells the menus about a swap; stays in MenuControls so it runs on the UI job.
 		class DeviceSwapHandler : public RE::BSInputEventUser
 		{
 		public:
@@ -56,63 +197,24 @@ namespace Addictol
 			DeviceSwapHandler(const DeviceSwapHandler&) = delete;
 			DeviceSwapHandler& operator=(const DeviceSwapHandler&) = delete;
 
-			bool ShouldHandleEvent(const RE::InputEvent* a_event) override
+			bool ShouldHandleEvent(const RE::InputEvent*) override
 			{
-				if (a_event)
+				const auto device = DeviceTracker::GetSingleton().ActiveDevice();
+				if (device != _applied)
 				{
-					const auto& event = *a_event;
-					auto input = Device::none;
-					switch (*event.device)
+					_applied = device;
+					UpdateControls(device == Device::gamepad);
+
+					if (_proxied.controlMap &&
+						ShouldClearKeyboardMouseIgnore(
+							Menu::Client().IsMenuVisible().value_or(false)))
 					{
-					case RE::INPUT_DEVICE::kKeyboard:
-					case RE::INPUT_DEVICE::kMouse:
-						input = Device::kbm;
-						break;
-					case RE::INPUT_DEVICE::kGamepad:
-						input = Device::gamepad;
-						break;
-					}
-
-					if (input != Device::none && _active.device != input)
-					{
-						_active.device = input;
-						UpdateControls();
-
-						if (_proxied.controlMap &&
-							ShouldClearKeyboardMouseIgnore(
-								Menu::Client().IsMenuVisible().value_or(false)))
-						{
-							_proxied.controlMap->SetIgnoreKeyboardMouse(false);
-						}
-					}
-
-					if (const auto id = event.As<RE::IDEvent>(); id)
-					{
-						auto& control = id->strUserEvent;
-						const auto trySet = [&](auto& a_device) noexcept
-							{
-								if (const auto mouse = event.As<RE::MouseMoveEvent>(); mouse && (mouse->mouseInputX != 0 || mouse->mouseInputY != 0))
-								{
-									a_device = input;
-								}
-								else
-								{
-									a_device = input;
-								}
-							};
-
-						if (control == _strings.look)
-						{
-							trySet(_active.looking);
-						}
+						_proxied.controlMap->SetIgnoreKeyboardMouse(false);
 					}
 				}
 
 				return false;
 			}
-
-			[[nodiscard]] bool IsGamepadActiveDevice() const noexcept { return _active.device == Device::gamepad; }
-			[[nodiscard]] bool IsGamepadActiveLooking() const noexcept { return _active.looking == Device::gamepad; }
 
 		private:
 			using AddMessage_t = void(RE::UIMessageQueue&, const RE::BSFixedString&, RE::UI_MESSAGE_TYPE);
@@ -120,14 +222,7 @@ namespace Addictol
 
 			DeviceSwapHandler() = default;
 
-			enum class Device
-			{
-				none,
-				kbm,
-				gamepad
-			};
-
-			void UpdateControls()
+			void UpdateControls(bool a_gamepad)
 			{
 				if (_proxied.ui && _proxied.msgq)
 				{
@@ -138,7 +233,7 @@ namespace Addictol
 					}
 				}
 
-				_proxied.updateGamepadDependentButtonCodes(IsGamepadActiveDevice());
+				_proxied.updateGamepadDependentButtonCodes(a_gamepad);
 			}
 
 			struct
@@ -151,16 +246,7 @@ namespace Addictol
 				UpdateGamepadDependentButtonCodes_t* const updateGamepadDependentButtonCodes{ reinterpret_cast<UpdateGamepadDependentButtonCodes_t*>(RE::ID::UIUtils::UpdateGamepadDependentButtonCodes.address()) };
 			} _proxied;  // this runs on a per-frame basis, so try to optimize perfomance
 
-			struct
-			{
-				RE::BSFixedString look{ "Look"sv };
-			} _strings;  // use optimized pointer comparison instead of slow string comparison
-
-			struct
-			{
-				std::atomic<Device> device{ Device::none };
-				std::atomic<Device> looking{ Device::none };
-			} _active;
+			Device _applied{ Device::none };
 		};
 
 		inline void RefreshCursor(RE::PipboyMenu& a_self)
@@ -172,12 +258,13 @@ namespace Addictol
 			const auto manager = RE::PipboyManager::GetSingleton();
 
 			bool cursorEnabled = false;
-			if (REL::Relocation<RE::PIPBOY_PAGES*> curPage{ REL::ID{ 1287022, 2696944, 4804316 } }; *curPage == RE::PIPBOY_PAGES::kMap) // OG: 1287022, NG: 2696944
+			if (REL::Relocation<RE::PIPBOY_PAGES*> curPage{ RE::ID::PipboyMenu::CurrentPage }; *curPage == RE::PIPBOY_PAGES::kMap)
 			{
 				cursorEnabled = !a_self.showingModalMessage;
 			}
 
-			const auto gamepadMenuing = DeviceSwapHandler::GetSingleton()->IsGamepadActiveDevice();
+			const auto& tracker = DeviceTracker::GetSingleton();
+			const auto gamepadMenuing = tracker.IsGamepadActiveDevice();
 			if (!gamepadMenuing)
 			{
 				cursorEnabled = true;
@@ -219,18 +306,27 @@ namespace Addictol
 
 			if (cursorEnabled && cursor && manager)
 			{
+				const auto swapped = assignedCursor != a_self.AssignsCursorToRenderer();
 				if (gamepadMenuing)
 				{
-					if (assignedCursor != a_self.AssignsCursorToRenderer())
+					// Constrains first: centering needs the Pip-Boy screen's bounds.
+					manager->UpdateCursorConstraint(true);
+					if (swapped)
 					{
 						cursor->CenterCursor();
 					}
-
-					manager->UpdateCursorConstraint(true);
 				}
 				else
 				{
 					cursor->ClearConstraints();
+					if (swapped)
+					{
+						// The two cursors use different spaces, so restart mid-screen.
+						cursor->CenterCursor();
+						// Main::Run_WindowsMessageLoop then moves the OS cursor to match.
+						cursor->forceOSCursorPos = true;
+					}
+
 					if (const auto model = RE::FlatScreenModel::GetSingleton(); model)
 					{
 						constexpr enumeration flags{ UIMF::kAssignCursorToRenderer };
@@ -279,8 +375,7 @@ namespace Addictol
 
 		inline bool IsGamepadConnected(const RE::BSInputDeviceManager&)
 		{
-			const auto handler = DeviceSwapHandler::GetSingleton();
-			return handler->IsGamepadActiveDevice();
+			return DeviceTracker::GetSingleton().IsGamepadActiveDevice();
 		}
 
 		inline void InstallGamepadConnectedPatch()
@@ -293,8 +388,7 @@ namespace Addictol
 
 		inline bool UsingGamepad(const RE::BSInputDeviceManager&)
 		{
-			const auto handler = DeviceSwapHandler::GetSingleton();
-			return handler->IsGamepadActiveDevice();
+			return DeviceTracker::GetSingleton().IsGamepadActiveDevice();
 		}
 
 		inline void InstallUsingGamepadPatch()
@@ -307,8 +401,7 @@ namespace Addictol
 
 		inline bool UsingGamepadLook(const RE::BSInputDeviceManager&)
 		{
-			const auto handler = DeviceSwapHandler::GetSingleton();
-			return handler->IsGamepadActiveLooking();
+			return DeviceTracker::GetSingleton().IsGamepadActiveLooking();
 		}
 
 		inline void InstallGamepadLookPatches()
@@ -389,9 +482,7 @@ namespace Addictol
 			else
 			{
 				// Auto-Select Current Device
-				const auto handler = DeviceSwapHandler::GetSingleton();
-
-				if (handler && handler->IsGamepadActiveDevice())
+				if (DeviceTracker::GetSingleton().IsGamepadActiveDevice())
 				{
 					// Gamepad
 					a_deviceType = (int)RE::INPUT_DEVICE::kGamepad;
@@ -445,6 +536,7 @@ namespace Addictol
 		}
 		else
 		{
+			inputSwitchDetail::InstallDeviceTracker();
 			inputSwitchDetail::DisableDisconnectHandler();
 			inputSwitchDetail::DisableKBMIgnore();
 			inputSwitchDetail::InstallRefreshCursorPatch();
