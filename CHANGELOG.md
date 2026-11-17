@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the "File Cache Freeze" module, fixing loading that hangs forever once the game's file cache runs out of free entries.
 - Added the "Warn To Leave Crash" module, fixing a crash when a home owner warns the player to leave and pursues them. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - Added the "Skinned Decal Crash" module, fixing crashes and memory corruption when several projectiles hit the same character in one frame. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.
 - Added the "Foot IK Raycast Crash" module, fixing a use-after-free crash when more than 50 characters with foot IK are loaded at once. Bug found by Yuof's Crash Fix Compendium for Skyrim; reimplemented for Fallout 4.

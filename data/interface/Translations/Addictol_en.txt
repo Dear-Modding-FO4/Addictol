@@ -97,6 +97,7 @@ $Setting_FixesQuestLogBloat	Prevents repeatable quest stages from appending dupl
 $Setting_FixesCustomScale	Fixes ADS issues that occur when the player scale is changed.
 $Setting_FixesArchiveStreamClose	Waits for in-flight BA2 streamer reads to finish before closing compressed archive streams, preventing heap corruption.
 $Setting_FixesPapyrusLeaks	Releases Papyrus scripts the engine leaves bound to destroyed inventory items and unused plugin-form wrappers; existing saves are cleaned on load.
+$Setting_FixesFileCacheFreeze	Fixes loading hanging forever once the game's file cache runs out of free entries.
 $Setting_PatchesThreads	All threads have priority above idle, process above normal, for adequate latency, prohibition on changing processor cores.
 $Setting_PatchesLibDeflate	Replaces the game's zlib decompression with the backend selected by sZlibBackend. If another mod already patches zlib, the game's zlib is left untouched.
 $Setting_PatchesLoadScreen	Black loading screen with fixes for 21:9 display.Need High FPS Physics Fix mod, otherwise slowly loads game.

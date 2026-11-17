@@ -170,6 +170,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleSmallblockAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleScaleformAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStolenPowerArmorOwnership.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFileCacheFreeze.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleTESObjectREFRGetEncounterZone.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleUnalignedLoad.cpp" />
@@ -350,6 +351,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleScaleformAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleSmallblockAllocator.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStolenPowerArmorOwnership.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFileCacheFreeze.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleTESObjectREFRGetEncounterZone.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleUnalignedLoad.h" />

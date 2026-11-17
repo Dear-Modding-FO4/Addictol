@@ -444,6 +444,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStolenPowerArmorOwnership.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleFileCacheFreeze.cpp">
+      <Filter>Source\Modules\F</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleStringPoolRelease.cpp">
       <Filter>Source\Modules\S</Filter>
     </ClCompile>
@@ -932,6 +935,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStolenPowerArmorOwnership.h">
       <Filter>Include\Modules\S</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleFileCacheFreeze.h">
+      <Filter>Include\Modules\F</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleStringPoolRelease.h">
       <Filter>Include\Modules\S</Filter>

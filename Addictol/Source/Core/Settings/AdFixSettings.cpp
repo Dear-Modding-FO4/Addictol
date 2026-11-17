@@ -340,6 +340,10 @@ namespace Addictol
 		"$Setting_FixesPapyrusLeaks",
 		"When reading audio in an archive larger than 4GB, overflow occurs and the negative value of available is required for reading, block this."
 	);
+	static dmui::localize::LocalizeString lsFixesFileCacheFreeze(
+		"$Setting_FixesFileCacheFreeze",
+		"Fixes loading hanging forever once the game's file cache runs out of free entries."
+	);
 
 	BoolSetting bFixesGreyMovie{
 		"Fixes"sv,
@@ -1095,6 +1099,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesBrokenAudioDataSrc),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesFileCacheFreeze{
+		"Fixes"sv,
+		"bFileCacheFreeze"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesFileCacheFreeze),
 		SettingApplyTiming::kNextLaunch
 	};
 }
