@@ -1,4 +1,5 @@
 #include <Modules/AdModuleCubemapArray.h>
+#include <Core/AdD3D11StateGuard.h>
 #include <Core/AdUtils.h>
 
 #include <RE/B/BSGraphics.h>
@@ -126,13 +127,6 @@ float4 PSMain(Interpolants a_in) : SV_Target
 					return false;
 				}
 
-				// Replayed with a full state restore so the engine's bindings survive.
-				if (a_device->CreateDeferredContext(0, &m_recorder) < 0)
-				{
-					REX::ERROR("Cubemap Array: failed to create the conversion context"sv);
-					return false;
-				}
-
 				// Drawing into the live array would make D3D unbind it under the engine.
 				W32::D3D11_TEXTURE2D_DESC scratchDesc{};
 				scratchDesc.width = s_size;
@@ -229,16 +223,10 @@ float4 PSMain(Interpolants a_in) : SV_Target
 				if (s_conversions.Take())
 					REX::INFO("Cubemap Array: converting a {}x{} cube with {} mips in DXGI format {}"sv, desc.width, desc.height, desc.mipLevels, std::to_underlying(desc.format));
 
-				Render(a_source.srView, desc.width, desc.mipLevels);
-				CopyFaces(m_recorder.Get(), a_array, a_firstFace, m_scratch.Get(), s_mipCount);
-
-				ComPtr<W32::ID3D11CommandList> commands;
-				if (m_recorder->FinishCommandList(false, &commands) < 0)
-				{
-					REX::ERROR("Cubemap Array: failed to record a cube conversion"sv);
-					return;
-				}
-				a_context->ExecuteCommandList(commands.Get(), true);
+				// Engine's context: wrappers like ENB only unwrap calls made on theirs.
+				const D3D11StateGuard state{ a_context };
+				Render(a_context, a_source.srView, desc.width, desc.mipLevels);
+				CopyFaces(a_context, a_array, a_firstFace, m_scratch.Get(), s_mipCount);
 			}
 
 		private:
@@ -269,21 +257,26 @@ float4 PSMain(Interpolants a_in) : SV_Target
 			}
 
 			// Same-size source mips are kept; others halve the mip above, like texconv.
-			void Render(W32::ID3D11ShaderResourceView* a_source, uint32_t a_width, uint32_t a_sourceMips) noexcept
+			void Render(W32::ID3D11DeviceContext* a_context, W32::ID3D11ShaderResourceView* a_source, uint32_t a_width, uint32_t a_sourceMips) noexcept
 			{
-				auto* const context = m_recorder.Get();
-				context->IASetPrimitiveTopology(W32::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
-				context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
-				context->PSSetSamplers(0, 1, m_sampler.GetAddressOf());
-				context->PSSetConstantBuffers(0, 1, m_params.GetAddressOf());
-				context->RSSetState(m_rasterizer.Get());
+				a_context->IASetPrimitiveTopology(W32::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				a_context->IASetInputLayout(nullptr);
+				a_context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
+				a_context->HSSetShader(nullptr, nullptr, 0);
+				a_context->DSSetShader(nullptr, nullptr, 0);
+				a_context->GSSetShader(nullptr, nullptr, 0);
+				a_context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
+				a_context->PSSetSamplers(0, 1, m_sampler.GetAddressOf());
+				a_context->PSSetConstantBuffers(0, 1, m_params.GetAddressOf());
+				a_context->RSSetState(m_rasterizer.Get());
+				a_context->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+				a_context->OMSetDepthStencilState(nullptr, 0);
 
 				for (uint32_t mip = 0; mip < s_mipCount; ++mip)
 				{
 					const uint32_t size = s_size >> mip;
 					const W32::D3D11_VIEWPORT viewport{ 0.0f, 0.0f, static_cast<float>(size), static_cast<float>(size), 0.0f, 1.0f };
-					context->RSSetViewports(1, &viewport);
+					a_context->RSSetViewports(1, &viewport);
 
 					DrawParams params{};
 					params.texel = 1.0f / static_cast<float>(size);
@@ -306,16 +299,15 @@ float4 PSMain(Interpolants a_in) : SV_Target
 					for (uint32_t face = 0; face < s_faceCount; ++face)
 					{
 						params.face = face;
-						context->UpdateSubresource(m_params.Get(), 0, nullptr, &params, 0, 0);
+						a_context->UpdateSubresource(m_params.Get(), 0, nullptr, &params, 0, 0);
 						// Target first: the previous-mip view never overlaps it, so both stay bound.
-						context->OMSetRenderTargets(1, m_targets[face][mip].GetAddressOf(), nullptr);
-						context->PSSetShaderResources(0, 2, views);
-						context->Draw(3, 0);
+						a_context->OMSetRenderTargets(1, m_targets[face][mip].GetAddressOf(), nullptr);
+						a_context->PSSetShaderResources(0, 2, views);
+						a_context->Draw(3, 0);
 					}
 				}
 			}
 
-			ComPtr<W32::ID3D11DeviceContext>      m_recorder;
 			ComPtr<W32::ID3D11VertexShader>       m_vertexShader;
 			ComPtr<W32::ID3D11PixelShader>        m_pixelShader;
 			ComPtr<W32::ID3D11Texture2D>          m_scratch;

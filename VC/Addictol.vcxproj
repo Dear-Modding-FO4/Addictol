@@ -59,6 +59,7 @@
     <ClCompile Include="..\Addictol\Source\Memory\Heaps\AdVoltekHeap.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdRegisterModules.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdClock.cpp" />
+    <ClCompile Include="..\Addictol\Source\Core\AdD3D11StateGuard.cpp" />
     <ClCompile Include="..\Addictol\Source\Core\AdUtils.cpp" />
     <ClCompile Include="..\Addictol\Source\Memory\AdVisperMemoryAllocator.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleAchievements.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackend.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdOwnedInflate.h" />
     <ClInclude Include="..\Addictol\Include\Core\AdDetourBatch.h" />
+    <ClInclude Include="..\Addictol\Include\Core\AdD3D11StateGuard.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInstallation.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibHooks.h" />
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibBackendRegistry.h" />

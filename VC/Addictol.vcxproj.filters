@@ -4,10 +4,16 @@
     <ClCompile Include="..\Addictol\Source\Core\AdDetourBatch.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Core\AdD3D11StateGuard.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Zlib\AdZlibInstallation.cpp">
       <Filter>Source\Zlib</Filter>
     </ClCompile>
     <ClInclude Include="..\Addictol\Include\Core\AdDetourBatch.h">
+      <Filter>Include\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Core\AdD3D11StateGuard.h">
       <Filter>Include\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Zlib\AdZlibInstallation.h">
