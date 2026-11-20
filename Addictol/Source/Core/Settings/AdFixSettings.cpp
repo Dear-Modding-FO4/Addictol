@@ -344,6 +344,10 @@ namespace Addictol
 		"$Setting_FixesFileCacheFreeze",
 		"Fixes loading hanging forever once the game's file cache runs out of free entries."
 	);
+	static dmui::localize::LocalizeString lsFixesTintRaceCrash(
+		"$Setting_FixesTintRaceCrash",
+		"Fixes a save load crash when an NPC has tint data but no race."
+	);
 
 	BoolSetting bFixesGreyMovie{
 		"Fixes"sv,
@@ -1108,6 +1112,15 @@ namespace Addictol
 		SettingDisplayCategory::kStability,
 		true,
 		std::addressof(lsFixesFileCacheFreeze),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesTintRaceCrash{
+		"Fixes"sv,
+		"bTintRaceCrash"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesTintRaceCrash),
 		SettingApplyTiming::kNextLaunch
 	};
 }

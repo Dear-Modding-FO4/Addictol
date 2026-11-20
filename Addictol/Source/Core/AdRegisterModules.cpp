@@ -120,6 +120,7 @@
 #include <Modules/AdModuleFixBrokenAudioDataSrc.h>
 #include <Modules/PapyrusLeaks/AdModulePapyrusLeaks.h>
 #include <Modules/AdModuleFileCacheFreeze.h>
+#include <Modules/AdModuleTintRaceCrash.h>
 
 namespace
 {
@@ -251,7 +252,8 @@ static auto sModuleCustomScale						= std::make_shared<Addictol::ModuleCustomSca
 static auto sModuleArchiveStreamClose				= std::make_shared<Addictol::ModuleArchiveStreamClose>();
 static auto sModuleFixBrokenAudioDataSrc			= std::make_shared<Addictol::ModuleFixBrokenAudioDataSrc>();
 static auto sModulePapyrusLeaks						= std::make_shared<Addictol::ModulePapyrusLeaks>();
-static auto sModuleFileCacheFreeze				= std::make_shared<Addictol::ModuleFileCacheFreeze>();
+static auto sModuleFileCacheFreeze					= std::make_shared<Addictol::ModuleFileCacheFreeze>();
+static auto sModuleTintRaceCrash					= std::make_shared<Addictol::ModuleTintRaceCrash>();
 
 void AdRegisterPreloadModules()
 {
@@ -380,6 +382,7 @@ void AdRegisterModules()
 	modules.Register(sModuleFixBrokenAudioDataSrc);
 	modules.Register(sModulePapyrusLeaks);
 	modules.Register(sModuleFileCacheFreeze);
+	modules.Register(sModuleTintRaceCrash);
 
 	// Registers other patches
 	modules.Register(sModuleFacegen,						kGameDataReady);

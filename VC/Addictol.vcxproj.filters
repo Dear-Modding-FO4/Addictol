@@ -477,6 +477,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleThreads.cpp">
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleTintRaceCrash.cpp">
+      <Filter>Source\Modules\T</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleToggleGrassCommand.cpp">
       <Filter>Source\Modules\T</Filter>
     </ClCompile>
@@ -967,6 +970,9 @@
       <Filter>Include\Modules\T</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleThreads.h">
+      <Filter>Include\Modules\T</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleTintRaceCrash.h">
       <Filter>Include\Modules\T</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleToggleGrassCommand.h">

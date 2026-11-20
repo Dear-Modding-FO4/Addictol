@@ -114,6 +114,7 @@ namespace Addictol
 	extern BoolSetting bFixesPapyrusLeaks;
 	extern BoolSetting bFixesBrokenAudioDataSrc;
 	extern BoolSetting bFixesFileCacheFreeze;
+	extern BoolSetting bFixesTintRaceCrash;
 
 	extern BoolSetting bWarningsImageSpaceAdapter;
 	extern BoolSetting bWarningsDuplicateAddonNodeIndex;
