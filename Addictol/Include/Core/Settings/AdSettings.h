@@ -105,6 +105,7 @@ namespace Addictol
 	extern BoolSetting bFixesAIProcess3DUpdateFlag;
 	extern BoolSetting bFixesNPCHealthOverflowFix;
 	extern BoolSetting bFixesGrimReaperAPFix;
+	extern BoolSetting bFixesLeveledItemHealth;
 	extern BoolSetting bFixesArmorPenetration;
 	extern BoolSetting bFixesLocalMapRotation;
 	extern BoolSetting bFixesRadioSilence;

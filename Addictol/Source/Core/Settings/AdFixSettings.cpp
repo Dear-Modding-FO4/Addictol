@@ -296,6 +296,10 @@ namespace Addictol
 		"$Setting_FixesGrimReaperAPFix",
 		"Fixes Grim Reaper's Sprint refilling Action Points only up to the permanent cap, leaving temporary bonuses from alcohol, food and chems unfilled."
 	);
+	static dmui::localize::LocalizeString lsFixesLeveledItemHealth(
+		"$Setting_FixesLeveledItemHealth",
+		"Fixes TESObjectREFR::InitLeveledItems writing leveled item health past its scrap array when a leveled list at container entry 16 or later carries a health other than 100%, which corrupts the heap."
+	);
 	static dmui::localize::LocalizeString lsFixesArmorPenetration(
 		"$Setting_FixesArmorPenetration",
 		"Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons."
@@ -1004,6 +1008,15 @@ namespace Addictol
 		SettingDisplayCategory::kGameplay,
 		true,
 		std::addressof(lsFixesGrimReaperAPFix),
+		SettingApplyTiming::kNextLaunch
+	};
+
+	BoolSetting bFixesLeveledItemHealth{
+		"Fixes"sv,
+		"bLeveledItemHealth"sv,
+		SettingDisplayCategory::kStability,
+		true,
+		std::addressof(lsFixesLeveledItemHealth),
 		SettingApplyTiming::kNextLaunch
 	};
 

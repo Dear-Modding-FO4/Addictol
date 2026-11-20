@@ -57,6 +57,7 @@
 - Added the "Effect Env Map Crash" module.
 - LightOrder: Fixed previs discarding object light lists, which left glass and other objects lit only by the sun. Ported from doodlum's Lighting Fixes.
 - LightPriority: Fixed objects lit by more than four lights receiving the four weakest instead of the four strongest. Ported from doodlum's Lighting Fixes.
+- Added the "Leveled Item Health" module, fixing heap corruption when a leveled list at container entry 16 or later carries a health other than 100%, such as on NPCs after a death reload.
 - QuestLogBloat: Repeatable quest stages no longer add duplicate quest log entries, and saves already bloated by them load without freezing.
 - NeverFadesSpotlight: Fixed shadow-casting spotlights marked Never Fades being culled instead of skipping the distance check.
 - MoonRotation: Fixed directional light so that the light matches the movement of the moon.

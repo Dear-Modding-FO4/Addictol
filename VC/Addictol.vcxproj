@@ -141,6 +141,7 @@
     <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdModulePapyrusLeaks.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\PapyrusLeaks\AdNativeWrappers.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp" />
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledItemHealth.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLibDeflate.cpp" />
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLoadOrder.cpp" />
@@ -324,6 +325,7 @@
     <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdNativeWrappers.h" />
     <ClInclude Include="..\Addictol\Include\Modules\PapyrusLeaks\AdPapyrusHandleKind.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h" />
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledItemHealth.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLibDeflate.h" />
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLoadOrder.h" />

@@ -88,6 +88,7 @@ $Setting_FixesAIProcess3DUpdateFlag	Fixes a bug where there is no check for null
 $Setting_FixesNPCHealthOverflowFix	Fixes auto-calculated NPC health and action points wrapping negative on high level NPCs, which could make them drop dead instantly.
 $Setting_FixesBrokenAudioDataSrc	Fixes a crash when a streamed WAV or XWM sound's data chunk claims more bytes than the file holds, which made the game request about 4 GB of memory.
 $Setting_FixesGrimReaperAPFix	Fixes Grim Reaper's Sprint refilling Action Points only up to the permanent cap, leaving temporary bonuses from alcohol, food and chems unfilled.
+$Setting_FixesLeveledItemHealth	Fixes TESObjectREFR::InitLeveledItems writing leveled item health past its scrap array when a leveled list at container entry 16 or later carries a health other than 100%, which corrupts the heap.
 $Setting_FixesArmorPenetration	Fixes an issue where Armor Penetration does not get reset when unequipping or changing Weapons.
 $Setting_FixesLocalMapRotation	Fixes an issue where Player Map Markers in rotated cells are not placed where you expect them to be.
 $Setting_FixesNeverFadesSpotlight	Fixes shadow-casting spotlights marked Never Fades being culled instead of skipping the distance check.

@@ -106,6 +106,7 @@
 #include <Modules/AdModuleAIProcess3DUpdateFlag.h>
 #include <Modules/AdModuleHighResLocalMaps.h>
 #include <Modules/AdModuleMenu.h>
+#include <Modules/AdModuleLeveledItemHealth.h>
 #include <Modules/AdModuleNPCHealthOverflowFix.h>
 #include <Modules/AdModuleGrimReaperAPFix.h>
 #include <Modules/AdModuleArmorPenetration.h>
@@ -239,6 +240,7 @@ static auto sModuleCraftingMenuFix					= std::make_shared<Addictol::ModuleCrafti
 static auto sModuleAIProcess3DUpdateFlag			= std::make_shared<Addictol::ModuleAIProcess3DUpdateFlag>();
 static auto sModuleHighResLocalMaps					= std::make_shared<Addictol::ModuleHighResLocalMaps>();
 static auto sModuleMenu								= std::make_shared<Addictol::ModuleMenu>();
+static auto sModuleLeveledItemHealth				= std::make_shared<Addictol::ModuleLeveledItemHealth>();
 static auto sModuleNPCHealthOverflowFix				= std::make_shared<Addictol::ModuleNPCHealthOverflowFix>();
 static auto sModuleGrimReaperAPFix					= std::make_shared<Addictol::ModuleGrimReaperAPFix>();
 static auto sModuleArmorPenetration					= std::make_shared<Addictol::ModuleArmorPenetration>();
@@ -398,6 +400,7 @@ void AdRegisterModules()
 	modules.Register(sModulePipBoyCursorConstraints,		kGameDataReady);
 	modules.Register(sModuleCompanionStrayBullet,			kGameDataReady);
 	modules.Register(sModuleCraftingMenuFix,				kGameDataReady);
+	modules.Register(sModuleLeveledItemHealth,				kGameDataReady);
 	modules.Register(sModuleNPCHealthOverflowFix,			kGameDataReady);
 	modules.Register(sModuleGrimReaperAPFix,				kGameDataReady);
 	modules.Register(sModuleArmorPenetration,				kGameDataReady);

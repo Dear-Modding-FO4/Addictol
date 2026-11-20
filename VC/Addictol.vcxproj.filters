@@ -309,6 +309,9 @@
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleIOCacher.cpp">
       <Filter>Source\Modules\I</Filter>
     </ClCompile>
+    <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledItemHealth.cpp">
+      <Filter>Source\Modules\L</Filter>
+    </ClCompile>
     <ClCompile Include="..\Addictol\Source\Modules\AdModuleLeveledListCrash.cpp">
       <Filter>Source\Modules\L</Filter>
     </ClCompile>
@@ -803,6 +806,9 @@
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleIOCacher.h">
       <Filter>Include\Modules\I</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledItemHealth.h">
+      <Filter>Include\Modules\L</Filter>
     </ClInclude>
     <ClInclude Include="..\Addictol\Include\Modules\AdModuleLeveledListCrash.h">
       <Filter>Include\Modules\L</Filter>
