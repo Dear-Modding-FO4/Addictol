@@ -88,9 +88,9 @@ namespace Addictol
 			return true;
 		}
 
-		// imul r15,rax,58h, then the loop: mov rax,[rbp-29h] ... add rcx,r15
+		// mov eax,r12d / imul r15,rax,58h, then the loop: mov rax,[rbp-29h] ... add rcx,r15
 		const auto loop = target + 12;
-		if (!RELEX::Validate(target, { 0x4C, 0x6B, 0xF8, 0x58 }) ||
+		if (!RELEX::Validate(target + 3, { 0x4C, 0x6B, 0xF8, 0x58 }) ||
 			!RELEX::Validate(loop, { 0x48, 0x8B, 0x45, 0xD7 }) ||
 			!RELEX::Validate(loop + 17, { 0x49, 0x03, 0xCF }))
 		{
